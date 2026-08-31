@@ -14,6 +14,7 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../domain/services/builtin_content_names.dart';
 import '../../domain/services/world_blueprint_converter.dart';
+import 'pdf_library_service.dart';
 
 /// `assets/worlds/` altındaki paketlenmiş dünyaları kurar / kaldırır.
 ///
@@ -121,7 +122,8 @@ class BundledWorldsInstaller {
     }
 
     // Medyayı önce diske çıkar — converter mutlak yolları yazabilsin.
-    final mediaRoot = await _extractMedia(dir, base, manifest, report);
+    final mediaRoot = await _extractMedia(dir, base, manifest, report,
+        worldName: worldName);
 
     final converter = WorldBlueprintConverter(
       packageName: manifest['slug'] as String? ?? dir,
@@ -132,7 +134,7 @@ class BundledWorldsInstaller {
       fieldKeys: blueprintFieldKeys(),
       relationTargets: blueprintRelationTargets(),
       mediaResolver: (rel) {
-        final f = File(p.join(mediaRoot, p.joinAll(p.posix.split(rel))));
+        final f = _mediaTarget(mediaRoot, worldName, rel);
         return f.existsSync() ? f.path : null;
       },
     );
@@ -256,14 +258,15 @@ class BundledWorldsInstaller {
     String dir,
     String base,
     Map<String, dynamic> manifest,
-    InstallReport report,
-  ) async {
+    InstallReport report, {
+    required String worldName,
+  }) async {
     final root = p.join(AppPaths.worldsDir, '_bundled', dir);
     final files = _mediaPaths(manifest['files']);
     if (files.isEmpty) return root;
 
     for (final rel in files) {
-      final target = File(p.join(root, p.joinAll(p.posix.split(rel))));
+      final target = _mediaTarget(root, worldName, rel);
       if (await target.exists()) continue;
       try {
         final bytes = await rootBundle.load('$base/$rel');
@@ -276,6 +279,15 @@ class BundledWorldsInstaller {
     }
     return root;
   }
+
+  /// Paketlenmiş bir medya yolunun diskteki karşılığı. PDF'ler `_bundled/`
+  /// altına değil dünyanın PDF kütüphanesine (`{world}/pdfs/`) düşer — PDF
+  /// sekmesi listeyi o klasörden okuyor (bkz. `PdfLibraryService`).
+  static File _mediaTarget(String root, String worldName, String rel) =>
+      p.extension(rel).toLowerCase() == '.pdf'
+          ? File(p.join(
+              PdfLibraryService.libraryDir(worldName), p.posix.basename(rel)))
+          : File(p.join(root, p.joinAll(p.posix.split(rel))));
 
   /// Manifest'in `files.cover_image` yolunu diske çıkarılmış mutlak yola
   /// çevirir — dünya kartının banner'ı bunu okuyor.

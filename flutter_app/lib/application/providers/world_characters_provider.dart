@@ -88,6 +88,12 @@ class WorldCharactersNotifier
 
   bool _bootstrapped = false;
 
+  /// Bootstrap fetch uçarken `applyMirror` ile gelen id'ler. Publish anında
+  /// [CharacterListNotifier.pushOwnedCharacters] iyimser satırları koyar ama
+  /// bulut yazması henüz inmemiştir; merge etmezsek fetch sonucu bunları
+  /// siler ve multiplayer'a geçince karakterler kaybolur.
+  Set<String> _localDuringFetch = {};
+
   Future<void> bootstrap() async {
     if (_bootstrapped) return;
     _bootstrapped = true;
@@ -96,7 +102,15 @@ class WorldCharactersNotifier
       return;
     }
     try {
+      _localDuringFetch = {};
       final rows = await _service.listWorldCharacters(worldId);
+      final byId = {for (final r in rows) r.id: r};
+      for (final r in state.valueOrNull ?? const <WorldCharacterRow>[]) {
+        if (_localDuringFetch.contains(r.id)) byId[r.id] = r;
+      }
+      rows
+        ..clear()
+        ..addAll(byId.values);
       rows.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       state = AsyncValue.data(rows);
     } catch (e, st) {
@@ -108,6 +122,7 @@ class WorldCharactersNotifier
   /// CDC INSERT/UPDATE veya manuel UI refresh'i için granular upsert.
   void applyMirror(WorldCharacterRow row) {
     if (row.worldId != worldId) return;
+    _localDuringFetch.add(row.id);
     final list = [...(state.valueOrNull ?? const <WorldCharacterRow>[])];
     final idx = list.indexWhere((r) => r.id == row.id);
     if (idx >= 0) {
