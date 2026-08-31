@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
@@ -367,7 +367,7 @@ class _FeatCard extends StatelessWidget {
             ExpandableMarkdown(
               data: feat.description,
               styleSheet:
-                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                  dmMarkdownStyle(context).copyWith(
                 p: TextStyle(
                   fontSize: 11,
                   color: palette.sidebarLabelSecondary,

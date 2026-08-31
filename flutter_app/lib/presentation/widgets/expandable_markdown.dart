@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../theme/markdown_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// A description block that collapses to a short plain-text preview and, on
@@ -127,7 +128,7 @@ class _ExpandableMarkdownState extends State<ExpandableMarkdown> {
       fontWeight: FontWeight.w700,
     );
     final sheet =
-        widget.styleSheet ?? MarkdownStyleSheet.fromTheme(Theme.of(context));
+        widget.styleSheet ?? dmMarkdownStyle(context);
     return sheet.copyWith(
       p: base,
       h1: heading,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
@@ -171,7 +171,7 @@ class _SubclassRow extends StatelessWidget {
           : ExpandableMarkdown(
               data: entity.description,
               styleSheet:
-                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                  dmMarkdownStyle(context).copyWith(
                 p: locked
                     ? TextStyle(color: Theme.of(context).disabledColor)
                     : null,

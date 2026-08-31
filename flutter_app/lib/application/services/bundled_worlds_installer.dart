@@ -166,6 +166,8 @@ class BundledWorldsInstaller {
         'installed_from': 'assets',
         if (manifest['description'] != null)
           'description': manifest['description'],
+        if (_coverPath(mediaRoot, manifest) != null)
+          'cover_image_path': _coverPath(mediaRoot, manifest),
       },
     };
 
@@ -273,6 +275,16 @@ class BundledWorldsInstaller {
       }
     }
     return root;
+  }
+
+  /// Manifest'in `files.cover_image` yolunu diske çıkarılmış mutlak yola
+  /// çevirir — dünya kartının banner'ı bunu okuyor.
+  static String? _coverPath(String mediaRoot, Map<String, dynamic> manifest) {
+    final files = manifest['files'];
+    final rel = files is Map ? files['cover_image'] : null;
+    if (rel is! String || rel.isEmpty) return null;
+    final f = File(p.join(mediaRoot, p.joinAll(p.posix.split(rel))));
+    return f.existsSync() ? f.path : null;
   }
 
   /// Manifest `files` bloğundan her string yaprağı toplar (`pdf`,

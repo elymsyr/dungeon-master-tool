@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -152,9 +153,7 @@ class VersionIndicatorButton extends ConsumerWidget {
                             mode: LaunchMode.externalApplication);
                       }
                     },
-                    styleSheet: MarkdownStyleSheet.fromTheme(
-                      Theme.of(context),
-                    ).copyWith(
+                    styleSheet: dmMarkdownStyle(context).copyWith(
                       p: const TextStyle(fontSize: 13, height: 1.4),
                     ),
                   )

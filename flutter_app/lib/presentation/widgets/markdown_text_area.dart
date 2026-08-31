@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -335,7 +336,7 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
       code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
       a: TextStyle(color: palette?.htmlLink),
       listBullet: TextStyle(fontSize: 13, color: baseColor ?? palette?.htmlText),
-    );
+    ).withDmBlockquote(context);
   }
 
   // --------------- build ---------------
