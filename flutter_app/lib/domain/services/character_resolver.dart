@@ -73,14 +73,39 @@ class CharacterResolver {
     final warnings = <String>[];
 
     // ── 1. Raw choice reads ─────────────────────────────────────────────
-    final featIds = _readStringList(fields['feat_ids']);
+    // `feat_ids` / `race_id` / `background_id` / `subclass_id` wizard'ın
+    // yazdığı **id-anahtarlı** seçim alanları. Blueprint ya da paket
+    // kaynaklı bir PC bunları taşımaz; elinde yalnız şemanın relation
+    // alanları vardır (`feats`, `species_ref`, `background_ref`,
+    // `subclass_refs`). Karşılığı okunmazsa sınıf/tür/background hiç
+    // uygulanmaz — kart sınıf özelliği, trait ve yetkinlik olmadan çözülür.
+    //
+    var featIds = _readStringList(fields['feat_ids']);
+    if (featIds.isEmpty) {
+      featIds = resolveEntityRefList(fields['feats'], entitiesById);
+    }
     final equipmentChoices = _readStringMap(fields['equipment_choices']);
-    final subclassId = _readNullableString(fields['subclass_id']);
-    final classLevels = _readIntMap(fields['class_levels']);
-    final raceId = _readNullableString(fields['race_id']);
+    final subclassRefs =
+        resolveEntityRefList(fields['subclass_refs'], entitiesById);
+    final subclassId = _readNullableString(fields['subclass_id']) ??
+        (subclassRefs.isEmpty ? null : subclassRefs.first);
+    final classLevels = _resolveClassLevels(fields['class_levels'], entitiesById);
+    final raceId = _readNullableString(fields['race_id']) ??
+        resolveEntityRef(fields['species_ref'], entitiesById);
     final subspeciesId = _readNullableString(fields['subspecies_id']);
-    final backgroundId = _readNullableString(fields['background_id']);
-    final baseAbilities = _readIntMap(fields['base_abilities']);
+    final backgroundId = _readNullableString(fields['background_id']) ??
+        resolveEntityRef(fields['background_ref'], entitiesById);
+    // `base_abilities` yoksa `stat_block`. Boş bırakılınca resolver tüm
+    // yetenekleri 10 varsayıyor; AC, spell save DC, initiative ve beceri
+    // modifikatörlerinin hepsi bundan türediği için paket kaynaklı bir PC
+    // DEX 16 ile 11 AC gösteriyordu. Yalnız `base_abilities` boşken
+    // devreye girer — kartın kendi kaydı her zaman kazanır.
+    //
+    // Not: bir background `asi_fixed_ability_ref` taşıyorsa (SRD'de yok,
+    // yalnız üçüncü parti içerikte olabilir) o +1 zaten nihai olan
+    // `stat_block`'un üstüne biner.
+    var baseAbilities = _readIntMap(fields['base_abilities']);
+    if (baseAbilities.isEmpty) baseAbilities = _readIntMap(fields['stat_block']);
     // Per-feat recorded ASI ability picks: `{featId: {ABBR: amount}}`. When a
     // feat with `asi_amount > 0` has a recorded pick the resolver applies it
     // verbatim (honoring the user's choice) instead of the first-option
@@ -1151,6 +1176,27 @@ class CharacterResolver {
 
   static String? _readNullableString(Object? raw) =>
       raw is String && raw.isNotEmpty ? raw : null;
+
+  /// `class_levels` anahtarı wizard'da class entity **id**'sidir; blueprint
+  /// kaynaklı bir kartta sınıfın **adı** olur (`{"Fighter": 2}`) — id ile
+  /// aranınca "Missing class entity Fighter" düşer ve sınıfın hiçbir
+  /// özelliği uygulanmaz. Ad → id çevrilir; çevrilemeyen anahtar aynen
+  /// bırakılır ki uyarı gerçekten eksik sınıf için düşsün.
+  static Map<String, int> _resolveClassLevels(
+    Object? raw,
+    Map<String, Entity> byId,
+  ) {
+    final src = _readIntMap(raw);
+    if (src.isEmpty) return src;
+    final out = <String, int>{};
+    for (final entry in src.entries) {
+      final key = byId.containsKey(entry.key)
+          ? entry.key
+          : (findEntityIdByName(byId, 'class', entry.key) ?? entry.key);
+      out[key] = entry.value;
+    }
+    return out;
+  }
 
   static Map<String, int> _readIntMap(Object? raw) {
     if (raw is! Map) return const {};

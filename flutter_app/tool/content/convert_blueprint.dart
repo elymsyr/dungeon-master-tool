@@ -74,6 +74,9 @@ void main(List<String> args) {
   final counts = result.counts;
   stdout.writeln('${result.entities.length} entities '
       '(${counts.entries.map((e) => '${e.key}=${e.value}').join(', ')})');
+  // PC'ler entity değil: kurulumda dünyanın Characters sekmesine ownersız
+  // karakter olarak yazılıyorlar.
+  stdout.writeln('${result.characters.length} player character(s)');
 
   if (result.hasErrors) {
     stderr.writeln('✗ ${result.errors.length} unresolved reference(s) — '
@@ -98,9 +101,10 @@ void main(List<String> args) {
       'game_system': manifest['system'],
       'source': manifest['title'],
       'pack_version': manifest['version'],
-      'counts': counts,
+      'counts': {...counts, 'player-character': result.characters.length},
     },
     'entities': result.entities,
+    'characters': result.characters,
   };
   File(target).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(pkg));
   stdout.writeln('✓ wrote $target');

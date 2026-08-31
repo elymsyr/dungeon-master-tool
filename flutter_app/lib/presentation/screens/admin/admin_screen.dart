@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/admin_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/first_party_catalog_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/package_provider.dart';
@@ -295,6 +296,9 @@ class _DashboardTab extends ConsumerWidget {
       // yetmiyor, yeni kurulan dünya yenilenene kadar görünmüyordu.
       ref.invalidate(campaignListProvider);
       ref.invalidate(packageListProvider);
+      // PC'ler artık world_characters'a yazılıyor — liste tazelenmezse
+      // Characters sekmesi kurulumdan sonra boş görünüyor.
+      ref.invalidate(characterListProvider);
       messenger.showSnackBar(SnackBar(content: Text(summary)));
     } catch (e) {
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(

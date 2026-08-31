@@ -53,6 +53,13 @@ void main() {
             '--check` for the full report',
       );
       expect(result.entities, isNotEmpty);
+      // PC'ler entity değil; `Entity.fromJson`'ın beklediği biçimde
+      // gelmezlerse kurulum karakteri hiç yazamaz.
+      for (final c in result.characters) {
+        expect(c['id'], isA<String>());
+        expect(c['categorySlug'], 'player-character');
+        expect(c['fields'], isA<Map<String, dynamic>>());
+      }
     });
 
     test('bundled world "${w['title']}" is declared in pubspec assets', () {

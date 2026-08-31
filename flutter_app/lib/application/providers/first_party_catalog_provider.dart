@@ -10,6 +10,7 @@ import '../services/bundled_worlds_installer.dart';
 import '../services/cover_image_bundler.dart';
 import '../services/package_payload_importer.dart';
 import 'campaign_provider.dart';
+import 'character_provider.dart';
 import 'package_provider.dart';
 
 /// Long-lived catalog service (native HttpClient inside).
@@ -30,7 +31,10 @@ final assetsPacksAvailableProvider = FutureProvider<bool>(
 /// Admin-only bundled worlds installer — reads from `assets/worlds/` and
 /// converts world-blueprint format to world entities via CampaignRepository.
 final bundledWorldsInstallerProvider = Provider<BundledWorldsInstaller>(
-    (ref) => BundledWorldsInstaller(ref.read(campaignRepositoryProvider)));
+    (ref) => BundledWorldsInstaller(
+          ref.read(campaignRepositoryProvider),
+          ref.read(characterRepositoryProvider),
+        ));
 
 /// Whether bundled worlds are present in this build.
 final bundledWorldsAvailableProvider = FutureProvider<bool>(

@@ -95,9 +95,11 @@ class WorldBlueprintConverter {
 
     // ── Pass 1: id'leri bas, blueprint-içi isim indeksini kur ────────────
     final localIndex = <String, Set<String>>{};
-    final pending = <({String slug, Map<String, dynamic> mapping})>[];
+    final pending =
+        <({String slug, Map<String, dynamic> mapping, bool character})>[];
 
-    void register(String slug, Object? rawItem, String origin) {
+    void register(String slug, Object? rawItem, String origin,
+        {bool character = false}) {
       if (rawItem is! Map) {
         issues.add(BlueprintIssue.error(origin, '', 'entry is not an object'));
         return;
@@ -121,7 +123,11 @@ class WorldBlueprintConverter {
         ));
         return;
       }
-      pending.add((slug: slug, mapping: Map<String, dynamic>.from(mapping)));
+      pending.add((
+        slug: slug,
+        mapping: Map<String, dynamic>.from(mapping),
+        character: character,
+      ));
     }
 
     final categories = worldBlueprint?['categories'];
@@ -151,24 +157,61 @@ class WorldBlueprintConverter {
     final characters = characterBlueprint?['characters'];
     if (characters is List) {
       for (final item in characters) {
-        register('player-character', item, 'characters');
+        register('player-character', item, 'characters', character: true);
       }
     }
 
     // ── Pass 2: entity gövdelerini kur, ref'leri çöz ─────────────────────
+    final characterRows = <Map<String, dynamic>>[];
     for (final row in pending) {
       final name = row.mapping['name'] as String;
       final id = entityId(row.slug, name);
-      entities[id] = _buildEntity(
+      final built = _buildEntity(
         slug: row.slug,
         mapping: row.mapping,
         localIndex: localIndex,
         issues: issues,
       );
+      if (row.character) {
+        characterRows.add(_characterEntity(id, built));
+      } else {
+        entities[id] = built;
+      }
     }
 
-    return BlueprintConversion(entities: entities, issues: issues);
+    return BlueprintConversion(
+      entities: entities,
+      characters: characterRows,
+      issues: issues,
+    );
   }
+
+  /// Wire entity satırı → `Entity.toJson()` biçimi.
+  ///
+  /// PC'ler world entity'si olarak yazılmaz: `player-character` kategorisi
+  /// Database sekmesinin kategori listesinden zaten çıkarılıyor
+  /// (`kPlayerCategorySlugs`), yani orada duran bir PC hiçbir ekranda
+  /// görünmüyordu. `BundledWorldsInstaller` bunları `world_characters`'a
+  /// ownersız (unclaimed) gerçek karakter olarak yazar — dünyanın Characters
+  /// sekmesi.
+  static Map<String, dynamic> _characterEntity(
+    String id,
+    Map<String, dynamic> row,
+  ) =>
+      {
+        'id': id,
+        'name': row['name'],
+        'categorySlug': row['type'],
+        'source': row['source'],
+        'description': row['description'],
+        'images': row['images'],
+        'imagePath': row['image_path'],
+        'tags': row['tags'],
+        'dmNotes': row['dm_notes'],
+        'pdfs': row['pdfs'],
+        'locationId': row['location_id'],
+        'fields': row['attributes'],
+      };
 
   Map<String, dynamic> _buildEntity({
     required String slug,
@@ -414,9 +457,19 @@ class BlueprintIssue {
 }
 
 class BlueprintConversion {
-  const BlueprintConversion({required this.entities, required this.issues});
+  const BlueprintConversion({
+    required this.entities,
+    required this.issues,
+    this.characters = const [],
+  });
 
   final Map<String, Map<String, dynamic>> entities;
+
+  /// Blueprint'in `characters` bloğu — `Entity.toJson()` biçiminde, world
+  /// entity'si **değil**. Kuran taraf bunları ownersız `Character` satırına
+  /// sarar.
+  final List<Map<String, dynamic>> characters;
+
   final List<BlueprintIssue> issues;
 
   Iterable<BlueprintIssue> get errors =>
