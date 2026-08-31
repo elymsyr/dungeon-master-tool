@@ -424,7 +424,12 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.spellSlotGrid('spell_slots', 'Spell Slots', g: grpSpells);
   fb.relation('spells_known', 'Spells', const ['spell'],
       isList: true, hasEquip: true, g: grpSpells);
-  fb.proficiencyTable('class_resources', 'Class Resources', g: grpFeatures);
+  // 'Class Resources' grubunun şema alanı yok. Sayılabilir sınıf kaynakları
+  // (Rage, Bardic Inspiration…) resolver'dan türetilir ve editörde
+  // `ClassResourcesTracker` olarak çizilir; saklanan tek şey kalan kullanım
+  // (`granted_pool_uses_remaining`). Buradaki eski `class_resources`
+  // proficiencyTable'ı hiçbir zaman doldurulmadı ve editör tarafından
+  // gizleniyordu.
   fb.relation('trinket_ref', 'Trinket', const ['trinket']);
   // Free-text trinket — the wizard's personality step writes the rolled or
   // typed string here (the SRD d100 trinket table ships as flavor text, not
@@ -465,8 +470,8 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
       FieldGroup(groupId: grpCostWeight, name: 'Currency', gridColumns: 5, orderIndex: 5),
       FieldGroup(groupId: grpResistances, name: 'Defenses', gridColumns: 1, orderIndex: 6),
       FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 7),
-      FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 8),
-      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 9),
+      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 8),
+      FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 9),
       FieldGroup(groupId: grpRules, name: 'Roleplay', gridColumns: 1, orderIndex: 10),
     ],
     orderIndex: orderIndex,

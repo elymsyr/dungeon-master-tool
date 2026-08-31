@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/account_gate.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/character_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/role_provider.dart';
@@ -238,6 +239,11 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             templateHash: templateHash,
           );
       ref.read(onlineWorldIdsProvider.notifier).add(widget.campaignId);
+      // Bu dünyanın yerel karakterlerini aynaya taşı — aksi halde sidebar
+      // bulut listesine döndüğünde boş görünür.
+      await ref
+          .read(characterListProvider.notifier)
+          .pushOwnedCharacters(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(widget.campaignId));

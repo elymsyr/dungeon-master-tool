@@ -38,29 +38,46 @@ class CharacterStatLine {
 class CharacterRaceClassIds {
   final String? raceId;
   final String? classId;
-  const CharacterRaceClassIds({this.raceId, this.classId});
+
+  /// Yumuşak ref zarfından (`{slug|_lookup, name}`) okunan ham ad. Paketlenmiş
+  /// dünyalardan gelen PC'lerde `species_ref` / `class_refs` id'ye çözülmemiş
+  /// zarf olarak duruyor; id yoksa çip bu adı gösteriyor ("—" yerine).
+  final String? raceName;
+  final String? className;
+  const CharacterRaceClassIds({
+    this.raceId,
+    this.classId,
+    this.raceName,
+    this.className,
+  });
 }
 
 CharacterRaceClassIds characterRaceClassIds(Character character) {
   final fields = character.entity.fields;
-  String? firstId(Iterable<String> keys) {
+  // (id, zarftaki ad) — ikisi de bulunamazsa (null, null).
+  (String?, String?) first(Iterable<String> keys) {
+    String? name;
     for (final k in keys) {
-      final v = fields[k];
-      if (v is String && v.isNotEmpty) return v;
-      if (v is List) {
-        final s = v.whereType<String>().firstWhere(
-              (e) => e.isNotEmpty,
-              orElse: () => '',
-            );
-        if (s.isNotEmpty) return s;
+      for (final v in [
+        fields[k],
+        if (fields[k] is List) ...(fields[k] as List),
+      ]) {
+        if (v is String && v.isNotEmpty) return (v, null);
+        if (v is Map && v['name'] is String && (v['name'] as String).isNotEmpty) {
+          name ??= v['name'] as String;
+        }
       }
     }
-    return null;
+    return (null, name);
   }
 
+  final (raceId, raceName) = first(const ['species_ref', 'race']);
+  final (classId, className) = first(const ['class_refs', 'class_']);
   return CharacterRaceClassIds(
-    raceId: firstId(const ['species_ref', 'race']),
-    classId: firstId(const ['class_refs', 'class_']),
+    raceId: raceId,
+    classId: classId,
+    raceName: raceName,
+    className: className,
   );
 }
 
@@ -78,10 +95,12 @@ List<CharacterStatLine> characterStatLines(
   String? ownerLabel,
 }) {
   final ids = characterRaceClassIds(character);
+  final rid = ids.raceId;
+  final cid = ids.classId;
   final raceName =
-      ids.raceId == null ? '—' : (entities[ids.raceId]?.name ?? '—');
+      (rid == null ? null : entities[rid]?.name) ?? ids.raceName ?? '—';
   final className =
-      ids.classId == null ? '—' : (entities[ids.classId]?.name ?? '—');
+      (cid == null ? null : entities[cid]?.name) ?? ids.className ?? '—';
   // `subspecies_id` holds the subspecies entity id (new model) or, for legacy
   // saves, the option name. Resolve the entity name; fall back to the raw value
   // only when it's a readable name, never a bare id.

@@ -350,5 +350,46 @@ void main() {
       expect(pool['max'], 1);
       expect(pool['recharge'], 'long_rest');
     });
+
+    test('a pack-shaped pool_ref resolves to the same row as the builtin id',
+        () {
+      // Built-in içerikte `pool_ref` yüklenirken id'ye dönüyor, `.pkg.json`
+      // ve blueprint kaynaklı içerikte `{_lookup, name}` zarfı olarak
+      // kalabiliyor. Resolver ikisini de aynı id'ye çevirmezse sayfadaki
+      // sayaç, aynı sınıfın nereden geldiğine göre var ya da yok oluyor.
+      final bard = find('class', 'Bard');
+      final feat = find('feat', 'Bardic Inspiration');
+      final poolRow = (feat.fields['resource_pool_grants'] as List).first as Map;
+      expect(poolRow['pool_ref'], isA<String>(),
+          reason: 'builtin map ships resolved ids');
+
+      final enveloped = <String, Entity>{
+        ...entities,
+        feat.id: feat.copyWith(fields: {
+          ...feat.fields,
+          'resource_pool_grants': [
+            {
+              ...poolRow.cast<String, dynamic>(),
+              'pool_ref': const {
+                '_lookup': 'resource-pool',
+                'name': 'pool:bardic_inspiration',
+              },
+            },
+          ],
+        }),
+      };
+
+      final choices = {
+        'class_levels': {bard.id: 5},
+        'base_abilities': abilities,
+      };
+      final fromBuiltin = CharacterResolver.resolve(pc(choices), entities);
+      final fromPack = CharacterResolver.resolve(pc(choices), enveloped);
+      expect(fromPack.resourcePools, fromBuiltin.resourcePools);
+      expect(
+        fromPack.resourcePools.map((p) => p['pool_ref']),
+        contains(find('resource-pool', 'pool:bardic_inspiration').id),
+      );
+    });
   });
 }

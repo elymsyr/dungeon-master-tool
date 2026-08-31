@@ -7,9 +7,11 @@ import '../screens/database/entity_card.dart';
 
 /// Read-only summary of grants computed by [CharacterResolver] but not always
 /// mirrored on the PC entity's raw ref fields — senses, damage resistances /
-/// immunities / vulnerabilities, and condition immunities. Renders as a
-/// collapsible card so it doesn't push the editable schema fields down on
-/// every sheet load.
+/// immunities / vulnerabilities, and condition immunities.
+///
+/// Tamamen pasif: burada tıklanacak bir şey yok. Sayılabilir sınıf kaynakları
+/// (Rage, Bardic Inspiration, Sorcery Points…) buradan çıkarıldı, sayfanın
+/// "Class Resources" grubunda `ClassResourcesTracker` olarak yaşıyorlar.
 class ResolvedGrantsCard extends StatelessWidget {
   final EffectiveCharacter effective;
   final Map<String, Entity> entities;
@@ -26,24 +28,6 @@ class ResolvedGrantsCard extends StatelessWidget {
   final List<String> extraSkillProfIds;
   final List<String> extraToolProfIds;
 
-  /// Remaining-uses map for granted resource pools, keyed by entity id
-  /// (e.g. innate spell id). Missing keys default to pool max.
-  final Map<String, int> poolRemaining;
-
-  /// Fires when player taps -/+ or rest button. Receives the full updated
-  /// map (sparse — only non-default entries kept).
-  final ValueChanged<Map<String, int>>? onPoolRemainingChanged;
-
-  /// Current spell-slot state (remaining counts by spell level). Optional —
-  /// when present the Sorcerer Font-of-Magic conversion button surfaces on
-  /// the `pool:sorcery_points` row.
-  final Map<int, int>? spellSlotsRemaining;
-  final Map<int, int>? spellSlotsMax;
-
-  /// Fires when Font of Magic conversion mutates the slot map. Receives the
-  /// full updated remaining map.
-  final ValueChanged<Map<int, int>>? onSpellSlotsRemainingChanged;
-
   const ResolvedGrantsCard({
     super.key,
     required this.effective,
@@ -52,12 +36,22 @@ class ResolvedGrantsCard extends StatelessWidget {
     this.characterLevel = 1,
     this.extraSkillProfIds = const [],
     this.extraToolProfIds = const [],
-    this.poolRemaining = const {},
-    this.onPoolRemainingChanged,
-    this.spellSlotsRemaining,
-    this.spellSlotsMax,
-    this.onSpellSlotsRemainingChanged,
   });
+
+  /// Satır rengini temaya oturtur: ham Material tonunun **rengini** korur
+  /// (satırlar birbirinden ayırt edilebilsin diye), doygunluk/parlaklığı
+  /// kart zeminine göre seçer ve bir miktar tema accent'ine karıştırır.
+  /// Böylece koyu/açık her palette aynı okunabilirlikte çıkıyor.
+  Color _tone(Color raw) {
+    final dark = ThemeData.estimateBrightnessForColor(palette.featureCardBg) ==
+        Brightness.dark;
+    final h = HSLColor.fromColor(raw);
+    final toned = h
+        .withSaturation((h.saturation * 0.85).clamp(0.35, 0.8))
+        .withLightness(dark ? 0.62 : 0.42)
+        .toColor();
+    return Color.lerp(toned, palette.featureCardAccent, 0.18)!;
+  }
 
   static final _uuidRe = RegExp(
       r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
@@ -70,19 +64,6 @@ class ResolvedGrantsCard extends StatelessWidget {
     // etc.) aren't UUIDs, so they still pass through for prettifying.
     if (_uuidRe.hasMatch(id)) return 'Unknown';
     return id;
-  }
-
-  /// Pretty display name for resource-pool entities whose canonical names use
-  /// snake_case `pool:` prefixes (e.g. `pool:rage_uses` → "Rage Uses"). Other
-  /// entity types (innate spells) pass through untouched.
-  String _displayPoolName(String raw) {
-    if (!raw.startsWith('pool:')) return raw;
-    final core = raw.substring(5).replaceAll('_', ' ');
-    return core
-        .split(' ')
-        .where((s) => s.isNotEmpty)
-        .map((w) => w[0].toUpperCase() + w.substring(1))
-        .join(' ');
   }
 
   /// Optional range suffix for sense chips (`Darkvision 120 ft`). Returns the
@@ -108,6 +89,7 @@ class ResolvedGrantsCard extends StatelessWidget {
     bool withRange = false,
   }) {
     if (ids.isEmpty) return const SizedBox.shrink();
+    chipColor = _tone(chipColor);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Wrap(
@@ -132,7 +114,7 @@ class ResolvedGrantsCard extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: chipColor.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(palette.chipBorderRadius),
                 border: Border.all(
                   color: chipColor.withValues(alpha: 0.4),
                   width: 0.5,
@@ -155,6 +137,7 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// `mode N ft` since speeds aren't entity ids.
   Widget _extraSpeedsRow(Map<String, int> speeds, Color chipColor) {
     if (speeds.isEmpty) return const SizedBox.shrink();
+    chipColor = _tone(chipColor);
     final entries = speeds.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => a.key.compareTo(b.key));
     if (entries.isEmpty) return const SizedBox.shrink();
@@ -182,7 +165,7 @@ class ResolvedGrantsCard extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: chipColor.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(palette.chipBorderRadius),
                 border: Border.all(
                   color: chipColor.withValues(alpha: 0.4),
                   width: 0.5,
@@ -205,6 +188,7 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// the HP / initiative bonus notes. Hidden when [chips] is empty.
   Widget _textChipRow(String label, List<String> chips, Color chipColor) {
     if (chips.isEmpty) return const SizedBox.shrink();
+    chipColor = _tone(chipColor);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Wrap(
@@ -229,7 +213,7 @@ class ResolvedGrantsCard extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: chipColor.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(palette.chipBorderRadius),
                 border: Border.all(
                   color: chipColor.withValues(alpha: 0.4),
                   width: 0.5,
@@ -300,6 +284,7 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// so the player knows what to set it to when not wearing armor.
   Widget _unarmoredFormulasBlock(List<Map<String, dynamic>> formulas) {
     if (formulas.isEmpty) return const SizedBox.shrink();
+    final unarmoredColor = _tone(Colors.blueGrey);
     String describe(Map<String, dynamic> eff) {
       final payload = eff['payload'];
       if (payload is! Map) return 'Unarmored AC';
@@ -339,10 +324,10 @@ class ResolvedGrantsCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.blueGrey.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                color: unarmoredColor.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(palette.chipBorderRadius),
                 border: Border.all(
-                  color: Colors.blueGrey.withValues(alpha: 0.4),
+                  color: unarmoredColor.withValues(alpha: 0.4),
                   width: 0.5,
                 ),
               ),
@@ -415,238 +400,6 @@ class ResolvedGrantsCard extends StatelessWidget {
     );
   }
 
-  /// Pool entries whose `pool_ref` resolves to a known entity id. Covers both
-  /// innate-spell pools (pool_ref = spell id) and class pools (pool_ref =
-  /// resource-pool Tier-0 id like `pool:rage_uses`). `_displayPoolName`
-  /// pretty-prints the `pool:` prefix on render.
-  List<Map<String, dynamic>> _grantedPoolEntries() {
-    final out = <Map<String, dynamic>>[];
-    for (final p in effective.resourcePools) {
-      final ref = p['pool_ref'];
-      if (ref is! String) continue;
-      if (!entities.containsKey(ref)) continue;
-      final maxRaw = p['max'];
-      final max = maxRaw is int ? maxRaw : int.tryParse('$maxRaw') ?? 0;
-      if (max <= 0) continue;
-      out.add(p);
-    }
-    return out;
-  }
-
-  Widget _poolCounterRow(Map<String, dynamic> entry) {
-    final id = entry['pool_ref'] as String;
-    final maxRaw = entry['max'];
-    final max = maxRaw is int ? maxRaw : int.tryParse('$maxRaw') ?? 1;
-    final cur = poolRemaining[id] ?? max;
-    final rawName = _nameOf(id);
-    final name = _displayPoolName(rawName);
-    final sources = effective.grantSources[id] ?? const <String>[];
-    final sourceTxt = sources.isEmpty ? '' : ' — ${sources.join(', ')}';
-    final readOnly = onPoolRemainingChanged == null;
-
-    void emit(int next) {
-      if (readOnly) return;
-      final clamped = next.clamp(0, max);
-      final updated = Map<String, int>.from(poolRemaining);
-      if (clamped == max) {
-        updated.remove(id);
-      } else {
-        updated[id] = clamped;
-      }
-      onPoolRemainingChanged!(updated);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '$name$sourceTxt',
-              style: TextStyle(fontSize: 12, color: palette.srdInk),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            iconSize: 18,
-            tooltip: 'Spend one',
-            onPressed: readOnly || cur <= 0 ? null : () => emit(cur - 1),
-            icon: const Icon(Icons.remove_circle_outline),
-          ),
-          SizedBox(
-            width: 48,
-            child: Text(
-              '$cur / $max',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: palette.srdInk,
-              ),
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            iconSize: 18,
-            tooltip: 'Restore one',
-            onPressed: readOnly || cur >= max ? null : () => emit(cur + 1),
-            icon: const Icon(Icons.add_circle_outline),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            iconSize: 18,
-            tooltip: 'Reset (long rest)',
-            onPressed: readOnly || cur >= max ? null : () => emit(max),
-            icon: const Icon(Icons.bedtime_outlined),
-          ),
-          if (id == 'pool:sorcery_points' &&
-              spellSlotsMax != null &&
-              spellSlotsRemaining != null &&
-              onSpellSlotsRemainingChanged != null &&
-              !readOnly)
-            Builder(
-              builder: (context) => IconButton(
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 28, minHeight: 28),
-                iconSize: 18,
-                tooltip: 'Font of Magic — convert',
-                onPressed: () => _openFontOfMagic(context, id, cur, max),
-                icon: const Icon(Icons.swap_horiz),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // SRD §2.4 Sorcerer Font of Magic conversion table. Index = slot level.
-  static const _spToSlotCost = <int, int>{1: 2, 2: 3, 3: 5, 4: 6, 5: 7};
-
-  Future<void> _openFontOfMagic(
-    BuildContext context,
-    String poolId,
-    int spCurrent,
-    int spMax,
-  ) async {
-    final maxBySlot = Map<int, int>.from(spellSlotsMax!);
-    final remBySlot = Map<int, int>.from(spellSlotsRemaining!);
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setState) {
-            void convertSlotToSp(int lvl) {
-              final cur = remBySlot[lvl] ?? 0;
-              if (cur <= 0) return;
-              if (spCurrent + lvl > spMax) return;
-              remBySlot[lvl] = cur - 1;
-              spCurrent += lvl;
-              onSpellSlotsRemainingChanged!(Map<int, int>.from(remBySlot));
-              final updated = Map<String, int>.from(poolRemaining);
-              if (spCurrent == spMax) {
-                updated.remove(poolId);
-              } else {
-                updated[poolId] = spCurrent;
-              }
-              onPoolRemainingChanged!(updated);
-              setState(() {});
-            }
-
-            void convertSpToSlot(int lvl) {
-              final cost = _spToSlotCost[lvl];
-              if (cost == null) return;
-              if (spCurrent < cost) return;
-              final cap = maxBySlot[lvl] ?? 0;
-              final cur = remBySlot[lvl] ?? 0;
-              if (cur >= cap) return;
-              spCurrent -= cost;
-              remBySlot[lvl] = cur + 1;
-              onSpellSlotsRemainingChanged!(Map<int, int>.from(remBySlot));
-              final updated = Map<String, int>.from(poolRemaining);
-              if (spCurrent == spMax) {
-                updated.remove(poolId);
-              } else {
-                updated[poolId] = spCurrent;
-              }
-              onPoolRemainingChanged!(updated);
-              setState(() {});
-            }
-
-            return AlertDialog(
-              title: const Text('Font of Magic'),
-              content: SizedBox(
-                width: 360,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Sorcery Points: $spCurrent / $spMax'),
-                    const SizedBox(height: 12),
-                    const Text('Slot → SP (refund slot for SP equal to slot level):',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final lvl
-                            in (maxBySlot.keys.toList()..sort()))
-                          ElevatedButton(
-                            onPressed: ((remBySlot[lvl] ?? 0) > 0 &&
-                                    spCurrent + lvl <= spMax)
-                                ? () => convertSlotToSp(lvl)
-                                : null,
-                            child: Text(
-                                'L$lvl → +$lvl SP (${remBySlot[lvl] ?? 0}/${maxBySlot[lvl] ?? 0})'),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('SP → Slot (spend SP to create a slot):',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final entry in _spToSlotCost.entries)
-                          if (maxBySlot.containsKey(entry.key))
-                            ElevatedButton(
-                              onPressed: (spCurrent >= entry.value &&
-                                      (remBySlot[entry.key] ?? 0) <
-                                          (maxBySlot[entry.key] ?? 0))
-                                  ? () => convertSpToSlot(entry.key)
-                                  : null,
-                              child: Text(
-                                  '${entry.value} SP → L${entry.key} slot'),
-                            ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Done'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   /// Resolver warnings (unapplied effect kinds, dropped rows). Rendered so
   /// "I authored an effect and nothing happened" is visible instead of silent.
   Widget _warningsBlock(List<String> warnings) {
@@ -698,7 +451,6 @@ class ResolvedGrantsCard extends StatelessWidget {
     final actions = effective.grantedActionIds;
     final bonusActions = effective.grantedBonusActionIds;
     final reactions = effective.grantedReactionIds;
-    final pools = _grantedPoolEntries();
     final extraSpeeds = effective.extraSpeeds;
     final conditional = effective.conditionalGrants;
     final mechanicalNotes = effective.mechanicalNotes;
@@ -724,7 +476,6 @@ class ResolvedGrantsCard extends StatelessWidget {
         actions.isEmpty &&
         bonusActions.isEmpty &&
         reactions.isEmpty &&
-        pools.isEmpty &&
         extraSpeeds.isEmpty &&
         conditional.isEmpty &&
         mechanicalNotes.isEmpty &&
@@ -781,19 +532,6 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Free Casts', freeCast, Colors.deepPurple),
             _chipRow('Ritual Book', ritualBook, Colors.brown),
             _chipRow('Active Conditions', activeConditions, Colors.redAccent),
-            if (pools.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Granted Pools',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: palette.sidebarLabelSecondary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              for (final p in pools) _poolCounterRow(p),
-            ],
             if (warnings.isNotEmpty) _warningsBlock(warnings),
           ],
         ),

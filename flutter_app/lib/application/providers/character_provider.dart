@@ -220,8 +220,11 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     }
   }
 
-  /// Dünya açılışında bir kez: sahibi bu kullanıcı olan karakterleri buluta
-  /// yeniden yazar. Doğrudan-yazma yolunun çevrimdışı telafisi — LWW olduğu
+  /// Dünya online olduğunda bir kez: sahibi bu kullanıcı olan (veya hiç
+  /// sahibi olmayan — paketlenmiş dünyaların claim edilebilir PC'leri)
+  /// karakterleri buluta yazar. Bu olmadan multiplayer'a geçince sidebar
+  /// bulut-kaynaklı [WorldCharactersView]'e döner ve hiç push edilmemiş
+  /// yerel karakterler kaybolmuş gibi görünür. Doğrudan-yazma yolunun çevrimdışı telafisi — LWW olduğu
   /// için kaçan bir yazmayı yakalamaya yeter.
   ///
   /// ponytail: kalıcı kuyruk yok. Gerçekten dayanıklı bir kuyruk gerekirse
@@ -233,7 +236,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     for (final c in state.valueOrNull ?? const <Character>[]) {
       if (c.worldId != worldId) continue;
       if (uid != null && c.ownerId != null && c.ownerId != uid) continue;
-      await _pushCharacterToMirror(worldId: worldId, character: c);
+      // `_mirrorPush` hem buluta yazar hem de `worldCharactersProvider`'a
+      // iyimser satırı koyar — bootstrap yarışını beklemeden görünür olur.
+      _mirrorPush(c);
     }
   }
 
@@ -976,6 +981,11 @@ final characterByIdProvider = Provider.family<Character?, String>((ref, id) {
 /// either the character entity or the campaign-wide entity map changes.
 ///
 /// Returns null when the character is missing.
+///
+/// **Anahtar `Character.id`, `entity.id` DEĞİL.** `create()` ikisine ayrı
+/// uuid basıyor; entity id ile çağrılınca provider sessizce null döner ve
+/// çağıran taraf (grants kartı, rest/level-up yetenek okuması) hiç
+/// çözümlenmemiş gibi davranır.
 final effectiveCharacterProvider =
     Provider.family<EffectiveCharacter?, String>((ref, id) {
   final pc = ref.watch(characterByIdProvider(id));

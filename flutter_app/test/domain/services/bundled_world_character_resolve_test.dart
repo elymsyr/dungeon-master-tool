@@ -83,6 +83,26 @@ void main() {
         for (final id in eff.classLevels.keys) {
           expect(entities[id]?.categorySlug, 'class', reason: '$name → $id');
         }
+        expect(eff.activeFeatures, isNotEmpty,
+            reason: '$name resolved no class feature');
+        // Sayılabilir kaynaklar (Rage, Bardic Inspiration…) sayfada yalnız
+        // `pool_ref` çözülmüş bir id olduğunda çiziliyor. Paketlenmiş
+        // dünyadan gelen kart, wizard'la kurulanla aynı satırı üretmeli.
+        for (final p in eff.resourcePools) {
+          expect(p['pool_ref'], isA<String>(), reason: '$name pool_ref');
+          expect(entities.containsKey(p['pool_ref']), isTrue,
+              reason: '$name pool ${p['pool_ref']}');
+        }
+        // Ability scores drive AC, spell save DC, initiative and every skill
+        // modifier. A card carrying only `stat_block` must not resolve to
+        // all-10s.
+        final stat = pc.entity.fields['stat_block'];
+        if (stat is Map && stat.isNotEmpty) {
+          for (final e in stat.entries) {
+            expect(eff.effectiveAbilities['${e.key}'], e.value,
+                reason: '$name ${e.key}');
+          }
+        }
       }
     });
   }
