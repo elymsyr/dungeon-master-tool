@@ -23,6 +23,8 @@ tags: [moc]
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
 - [[first_party_catalog_provider]] — official catalog **install** side: `requires` closure, banner, `installedFrom: 'official'`. Install-only — no upgrade path for an already-installed pack.
 - [[bundled_packs_bootstrap]] — first-boot SRD install.
+- [[world_blueprint_converter]] · [[builtin_content_names]] — the single blueprint → entity translation, and the schema-derived catalogues it validates against. Ref tiers: Tier-0 `_lookup` → in-blueprint `_ref` → SRD soft ref → **error**.
+- [[bundled_worlds_installer]] — what the admin "bundled worlds" toggle runs: extracts media to disk, converts, and saves the world **with the built-in schema** so the SRD pack is linked (without it every soft ref dangles).
 - [[builtin_package_provider]] — SRD pack id + read-only SRD reference overlay (`srdReferenceEntitiesProvider`).
 - [[package_source_entities]] — installed packages as an entity map, and the **one ordering rule** for layering them over the built-in SRD: the package the user picked wins a name collision (audit L1).
 - [[entity_link]] — the single "open this entity" entry point every ref renderer taps through, and the test for whether a ref is openable at all (audit U3).

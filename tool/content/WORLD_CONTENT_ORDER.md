@@ -67,9 +67,16 @@ eklenecekse (ör. Shadowdark-specific class, race, feat) önce buraya eklenir.
 `feat_refs`, `spell_refs` gibi referansların hepsi SRD pack'de mevcut mu?
 Eksik varsa önce SRD'ye eklenir.
 
-**Önemli:** Tier-1 entity'leri `world-blueprint.json`'a **DOĞRUDAN EKLENMEZ**.
-Bunlar paket (package) seviyesinde yönetilir. World-blueprint'teki reference'lar
-(sadece isim veya slug ile) SRD pack'deki entity'leri指向 eder.
+**Önemli:** SRD 5.2.1'de **birebir aynı isimle** bulunan Tier-1 içeriği
+`world-blueprint.json`'a **DOĞRUDAN EKLENMEZ** — sadece referans verilir
+(`{"lookup": "weapon", "match": "name", "value": "Longsword"}`), converter bunu
+soft ref'e çevirir ve okuma anında SRD paketinden çözülür.
+
+SRD'de **olmayan** dünyaya özgü Tier-1 içeriği (ör. `Cutlass`, `Broadsword`,
+custom trait, custom background, custom language) `world-blueprint.json`'a
+kendi kategorisi altında entity olarak eklenir; referans o zaman pack-içi hard
+ref olur. Üçüncü bir seçenek yok: ne SRD'de ne blueprint'te olan bir isim
+build'i kırar (`--check`).
 
 ---
 
@@ -140,7 +147,8 @@ PC'ler `blueprint.json`'a yazılır, `world-blueprint.json`'a DEĞİL.
 | 4.3 | `world-blueprint.json` oluştur | Tier 2 entity'leri |
 | 4.4 | `blueprint.json` oluştur | Tier 3 PC'leri |
 | 4.5 | `pubspec.yaml` güncelle | `assets/worlds/` declaration |
-| 4.6 | `.pkg.json` üret | `convert_blueprint.dart` ile |
+| 4.6 | Doğrula | `cd flutter_app && dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir> --check` |
+| 4.7 | `.pkg.json` üret | Aynı komut `--check` olmadan |
 
 ---
 
@@ -177,9 +185,11 @@ Her kategori eklenirken:
 - [ ] `trap_refs` mevcut trap'leri mi gösteriyor?
 - [ ] `scene_refs` mevcut scene'leri mi gösteriyor?
 - [ ] `quest_refs` mevcut quest'leri mi gösteriyor?
-- [ ] `image_path` dosyası media klasöründe mevcut mu?
+- [ ] `image_path` dosyası media klasöründe mevcut ve `manifest.json` → `files` içinde listeli mi?
+- [ ] `mapping` içindeki her anahtar kategori şemasında var mı?
 - [ ] `tags` doğru mu?
 - [ ] `description` dolu mu?
+- [ ] `--check` hatasız geçiyor mu?
 
 ---
 
@@ -195,4 +205,11 @@ Shadowdark için D&D5e SRD schema'sı kullanılır. Farklılıklar:
   Tier 1 Monster kategorisine eklenmeli VEYA world-blueprint'te inline stat block
 - **Alignment:** SRD'de mevcut (Chaotic Good, etc.)
 
-**Tüm mundo-specific content için:** Önce Tier 1'e ekle, sonra Tier 2'de referans ver.
+**Tüm dünyaya özgü içerik için:** Önce entity olarak ekle, sonra referans ver.
+
+Tier-0 lookup'lar da (dil, alignment, illumination…) aynı kuralı izler: şemanın
+seed listesinde olmayan bir değer (`Arabic`, `Persian`) `world-blueprint.json`'da
+o kategori altında entity olarak tanımlanmalı, yoksa `{_lookup}` zarfı hedefsiz kalır.
+
+Şemadaki seed değerleri sabittir — `Dim Light` değil `Dim`, `Bright Light` değil
+`Bright`, `True Neutral` değil `Neutral`, `Neutral` (attitude) değil `Indifferent`.

@@ -1273,6 +1273,7 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
   fb.relation('size_ref', 'Size', const ['size'], required_: true);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.text('tags_line', 'Tags (e.g. "(goblinoid)")');
+  fb.textarea('description', 'Description');
   fb.relation('alignment_ref', 'Alignment', const ['alignment']);
   // Audit B10: `alignment_ref` is a single Tier-0 relation, so "any alignment"
   // and "chaotic neutral or chaotic evil" have no home in it. They ship as
@@ -1334,8 +1335,11 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
   fb.integer('legendary_action_uses', 'Legendary Action Uses', min: 0, max: 5, g: grpTraitsActions);
   fb.relation('legendary_action_refs', 'Legendary Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
   fb.relation('lair_action_refs', 'Lair Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.markdown('traits_md', 'Traits & Features', g: grpTraitsActions);
   fb.relation('spell_refs', 'Spells', const ['spell'], isList: true, g: grpSpells);
+  fb.markdown('spells_md', 'Spellcasting', g: grpSpells);
   fb.relation('gear_refs', 'Gear', const ['adventuring-gear', 'weapon', 'armor'], isList: true, g: grpTraitsActions);
+  fb.markdown('equipment_md', 'Equipment & Gear', g: grpTraitsActions);
 
   return _mk(
     schemaId: schemaId,

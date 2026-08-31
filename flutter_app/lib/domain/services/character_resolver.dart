@@ -1099,7 +1099,11 @@ class CharacterResolver {
     if (raw is! List) return;
     for (final row in raw) {
       if (row is Map) {
-        if (row['equipped'] == true) yield row['id'];
+        // `id` yoksa satırın kendisi bir ref zarfıdır (`{_ref|slug|_lookup,
+        // name, equipped}`) — paket/blueprint kaynaklı envanter böyle gelir.
+        // Yalnız `row['id']` okumak, kuşanılmış zırhı/silahı AC ve saldırı
+        // hesabından sessizce düşürüyordu.
+        if (row['equipped'] == true) yield row['id'] ?? row;
       }
     }
   }
