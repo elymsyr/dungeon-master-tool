@@ -11,21 +11,22 @@ import 'package:uuid/uuid.dart';
 /// entity'sinin 25'i sessizce DB'ye hiç yazılmıyordu. Kategori listesi artık
 /// şemadan türetiliyor, kopya da yok.
 ///
-/// Ref çözümleme sırası — `tool/content/README.md` kural 3 ve
-/// `WORLD_CONTENT_ORDER.md` tier zinciriyle birebir:
+/// Ref çözümleme sırası — `tool/content/WORLD_CONTENT_ORDER.md` Tier-1
+/// "üç durum" kuralı ve tier zinciriyle birebir:
 ///
 ///  1. **Tier-0 lookup** (`ability`, `language`, …) → `{_lookup, name}`.
 ///  2. **Aynı blueprint'te tanımlı** → `{_ref, name}` (hard ref, install
 ///     sırasında UUID'ye çözülür).
-///  3. **Built-in SRD paketinde var** → `{slug, name}` soft ref. Kural 3:
-///     SRD'de olan içerik yeniden üretilmez, referans verilir.
+///  3. **Built-in SRD paketinde var** → `{slug, name}` soft ref: SRD'de olan
+///     içerik yeniden üretilmez, referans verilir.
 ///  4. **Hiçbiri** → [BlueprintIssueLevel.error]. Soft ref yine yazılır ama
 ///     çağıran build'i kesmelidir: çözülemeyen soft ref okuma anında
 ///     *sessizce* düşer (bkz. `entity_ref.dart`), yani hata bastırılırsa
 ///     kullanıcı eksik listeyi hiç öğrenemez.
 ///
-/// Kural 4 pratikte şunu zorlar: bir ekipmanı envantere koymadan önce onu
-/// bir `weapon`/`armor`/`adventuring-gear` entity'si olarak eklemek zorundasın.
+/// "Önce entity, sonra referans" pratikte şunu zorlar: bir ekipmanı envantere
+/// koymadan önce onu bir `weapon`/`armor`/`adventuring-gear` entity'si olarak
+/// eklemek zorundasın.
 class WorldBlueprintConverter {
   WorldBlueprintConverter({
     required this.packageName,
