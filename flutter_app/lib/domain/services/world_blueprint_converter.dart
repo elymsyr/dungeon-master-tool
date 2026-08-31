@@ -81,6 +81,13 @@ class WorldBlueprintConverter {
     caseSensitive: false,
   );
 
+  /// Markdown metnindeki entity mention'ı: `@[Ad](entity:<slug>/<Ad>)`.
+  /// Blueprint elle yazılıyor, entity id'leri ise burada üretiliyor — yazar
+  /// uuid bilemez, o yüzden hedefi `kategori/isim` ile gösterir. Zaten uuid
+  /// yazılmış bir link (`entity:9f2b...`) `/` içermediği için eşleşmez;
+  /// dönüşüm idempotent.
+  static final _mentionRe = RegExp(r'\]\(entity:([a-z0-9-]+)/([^)]+)\)');
+
   String entityId(String slug, String name) =>
       _uuid.v5(_namespace, '$packageName:$slug:${name.toLowerCase().trim()}');
 
@@ -340,11 +347,52 @@ class WorldBlueprintConverter {
       ];
     }
 
-    if (value is String && _mediaLike.hasMatch(value)) {
-      return _resolveMedia(value, origin: origin, path: path, issues: issues);
+    if (value is String) {
+      if (_mediaLike.hasMatch(value)) {
+        return _resolveMedia(value, origin: origin, path: path, issues: issues);
+      }
+      return _resolveMentions(
+        value,
+        origin: origin,
+        path: path,
+        localIndex: localIndex,
+        issues: issues,
+      );
     }
 
     return value;
+  }
+
+  /// `@[Ad](entity:npc/Ad)` → `@[Ad](entity:<uuid>)`.
+  ///
+  /// `markdown_text_area.dart` bir link'i ancak href'i entity id'siyse
+  /// gezinilebilir yapar; çözülmemiş bir `entity:npc/Ad` href'i tıklanınca
+  /// hiçbir şey açmaz. Hedef bu blueprint'te tanımlı değilse hata: SRD ya da
+  /// Tier-0 satırlarının id'si başka bir namespace'ten geliyor, oraya link
+  /// verilemez.
+  String _resolveMentions(
+    String text, {
+    required String origin,
+    required String path,
+    required Map<String, Set<String>> localIndex,
+    required List<BlueprintIssue> issues,
+  }) {
+    if (!text.contains('](entity:')) return text;
+    return text.replaceAllMapped(_mentionRe, (m) {
+      final slug = m[1]!;
+      final name = m[2]!.trim();
+      if (!(localIndex[slug]?.contains(name) ?? false)) {
+        issues.add(BlueprintIssue.error(
+          origin,
+          path,
+          'mention targets `$slug` → "$name", which this blueprint does not '
+              'declare — the link would open nothing. Author the entity first, '
+              'or drop the link',
+        ));
+        return m[0]!;
+      }
+      return '](entity:${entityId(slug, name)})';
+    });
   }
 
   Map<String, dynamic> _refEnvelope({

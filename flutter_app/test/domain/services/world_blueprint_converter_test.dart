@@ -202,6 +202,42 @@ void main() {
     });
   });
 
+  group('markdown entity mentions', () {
+    test('`entity:<slug>/<name>` becomes the target entity id', () {
+      final c = build();
+      final r = c.convert(
+        worldBlueprint: world({
+          'npc': [
+            {'name': 'Varazdat'},
+            {
+              'name': 'Guard',
+              'goals': 'Serve @[Varazdat](entity:npc/Varazdat) forever.',
+            },
+          ],
+        }),
+      );
+      expect(r.hasErrors, isFalse);
+      final guard = r.entities[c.entityId('npc', 'Guard')]!;
+      expect(
+        (guard['attributes'] as Map)['goals'],
+        'Serve @[Varazdat](entity:${c.entityId('npc', 'Varazdat')}) forever.',
+      );
+    });
+
+    test('a mention with no matching entity is an error', () {
+      // Çözülmemiş href tıklanınca hiçbir şey açmaz — sessiz ölü link.
+      final r = build().convert(
+        worldBlueprint: world({
+          'npc': [
+            {'name': 'Guard', 'goals': 'Find @[Nobody](entity:npc/Nobody).'},
+          ],
+        }),
+      );
+      expect(r.hasErrors, isTrue);
+      expect(r.errors.single.message, contains('Nobody'));
+    });
+  });
+
   test('a field the category schema does not declare is an error', () {
     final r = build(fieldKeys: {
       'npc': {'name', 'traits_md'},

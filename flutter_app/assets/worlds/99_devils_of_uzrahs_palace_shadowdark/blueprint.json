@@ -165,7 +165,7 @@
         "ideals": "Code of Honor. Hospitality is sacred. Never break your word.",
         "bonds": "Fascinated by history. Keeps tiny packets of desert salt to throw at evil spirits.",
         "flaws": "Honesty - must obey the law. Guilt Complex. Selfless.",
-        "backstory": "Ghazi Holy Warrior of the Arabian lands. A man of deep faith and rigid honor, Jamal carries the weight of his vows like armor heavier than any steel. Age 43, 6' tall, 175 lb.\n\n**Skills (GCS detail):** Animal Handling (Equines) 11, Armoury (Melee Weapons) 10, Bow 12, Broadsword 14, Climbing 10, Cooking 10, Diplomacy 10, Disarming 15, Falconry 10, First Aid 12, History (Arabian) 11, Knife 12, Law (Arabian) 9, Occultism 10, Riding (Equines) 12, Shield 13, Shortsword 12, Soldier 11, Spear 12, Tactics 10, Theology (Islam) 10, Throwing 11, Thrown Weapon (Spear) 13\n\n**Equipment (GCS detail):** Scale Light Pot Helm, Boots, Small Shield, Javelin, Scimitar, Dagger, Rope 3/4\" 10 yards, Pouch (Bandages, Personal Basics, Prayer Charms), Scale Light Arm Armor, Scale Medium Torso Armor",
+        "backstory": "Months ago, you swore your blade to protect a wealthy caravan master of Al Shihr as\nhis wagons crossed the burning deserts beyond the Empty Quarter. But beneath a moonless sky, raiders\ndescended upon the caravan with fire and arrows, and though you slew many, too many innocents died\nscreaming in the dark while you still drew breath.\n\nEver since, shame has followed you like a second shadow. You now wander, praying that you can find\nwealth enough to repay the ruined merchant and restore the honor you believe you forfeited upon the\nsands that terrible night.\n\n## Shadowdark Sheet (as printed)\n\n**Jamal the Black Spear** — Human **Fighter**, Level 3, Lawful, Guard. AC 18, HP 14.\n\nSTR 16 (+3) · DEX 9 (-1) · CON 14 (+2) · INT 10 (+0) · WIS 16 (+3) · CHA 12 (+1)\n\n**Attacks:** Spear (+6 to hit, 1d6+1 dmg) · Scimitar (+5 to hit, 1d8 dmg)\n\n**Gear:** Chainmail, Round shield, Spear, Scimitar, Flint & steel, Backpack, Mirror, Torch, Torch,\nGrappling hook\n\n**Languages:** You know Common (Arabic) and Persian.\n**Weapons:** All.\n**Armor:** All armor and shields.\n\n- **Hauler:** Add your CON modifier, if positive, to your gear slots.\n- **Spear Mastery:** You gain +1 to attack and damage with that weapon type. In addition, add half your\n  level to these rolls (round down).\n- **Grit:** Choose Strength or Dexterity. You have advantage on checks of that type to overcome an\n  opposing force, such as kicking open a stuck door (Strength) or slipping free of rusty chains\n  (Dexterity).\n- **Human Ambition and Fighter Talent:** +2 to hit on melee and ranged attacks.\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Animal Handling (Equines) 11, Armoury (Melee Weapons) 10, Bow 12, Broadsword 14, Climbing 10, Cooking 10, Diplomacy 10, Disarming 15, Falconry 10, First Aid 12, History (Arabian) 11, Knife 12, Law (Arabian) 9, Occultism 10, Riding (Equines) 12, Shield 13, Shortsword 12, Soldier 11, Spear 12, Tactics 10, Theology (Islam) 10, Throwing 11, Thrown Weapon (Spear) 13\n\n**Equipment (GCS detail):** Scale Light Pot Helm, Boots, Small Shield, Javelin, Scimitar, Dagger, Rope 3/4\" 10 yards, Pouch (Bandages, Personal Basics, Prayer Charms), Scale Light Arm Armor, Scale Medium Torso Armor",
         "imagePath": "media/Tokens/PC-Jamal.webp",
         "trait_refs": [
           {
@@ -265,7 +265,8 @@
         "eyes": "Brown",
         "skin": "Brown",
         "hair": "Brown",
-        "appearance": "*Ghazi Holy Warrior* · Male · Right-handed · born May 28"
+        "appearance": "*Ghazi Holy Warrior* · Male · Right-handed · born May 28",
+        "description": "Ghazi Holy Warrior · Human Fighter · Level 3 · Lawful · Guard"
       }
     },
     {
@@ -417,7 +418,7 @@
         "ideals": "Comfortable Wealth. Starting wealth is twice normal.",
         "bonds": "Deeply vain about her hair. Mistaken Identity - someone important thinks she is someone else.",
         "flaws": "Impulsiveness. Curious. Greedy. Gregarious.",
-        "backstory": "A fire-touched sorceress of noble blood, Farah carries flames in her veins and ambition in her heart. Her past is wrapped in mistaken identity - someone powerful believes she is another. Age 24, 5'8\", 125 lb.\n\n**Skills (GCS detail):** Sex Appeal 10, Research 11, Knife 12, Intimidation 11, Fast-Talk 12, Fast-Draw (Sword) 13, Current Affairs (People) 12, Innate Attack (Beam) 12, Innate Attack (Breath) 12, Climbing 11, Broadsword 13, Axe/Mace 11\n\n**Spells (GCS detail):** Fire College: Breathe Fire 12, Create Fire 12, Extinguish Fire 12, Fireproof 12, Flame Jet 12, Flaming Weapon 13, Heat 12, Ignite Fire 12, Resist Fire 12, Shape Fire 12, Smoke 12\n\n**Equipment (GCS detail):** Shoes, Cloth Padded Arm Armor, Mail Fine Torso Armor, Thrusting Broadsword, 3 pt Powerstone, Dagger Fine, Backpack Small (Personal Basics, Ointment: Attractiveness, Lacquered Journal)",
+        "backstory": "You were born to wealth in the courts of Persia, but found luxury far less exciting\nthan danger, treasure, and forbidden magic.\n\nFire has always fascinated you, and now you wield flame and shamshir with equal skill, delighting in the\nterror both inspire. Unfortunately, reckless expeditions and extravagant living have nearly ruined you,\nand you desperately need a treasure worthy of your reputation. The legends of treasure-laden islands in\nthe Arabian Sea burn in your thoughts like living embers.\n\nWorse still, your beauty and noble bearing constantly cause strangers to mistake you for the Princess of\nPersia... a misunderstanding you rarely correct when it proves useful.\n\n## Shadowdark Sheet (as printed)\n\n**Farah Fireborn** — Human **Ras-Godai**, Level 3, Neutral, Noble. AC 15, HP 11.\n\nSTR 14 (+2) · DEX 13 (+1) · CON 10 (+0) · INT 12 (+1) · WIS 13 (+1) · CHA 11 (+0)\n\n**Attacks:** Flaming scimitar (+2 to hit, 1d8+2 dmg)\n\n**Gear:** Leather armor, +1 flame scimitar, Backpack, Flask, Flint & steel, Torch, Torch, Potion of\nhealing\n\n**Languages:** You know Common (Arabic), Persian, Diabolic\n**Weapons:** Blowgun, bolas, dagger, razor chain, scimitar, shuriken, spear\n**Armor:** Leather armor.\n\n- **Black Lotus Assassin:** You have advantage on checks to sneak and hide. Your attacks deal triple\n  damage against targets that are unaware of your presence.\n- **Smoke Step:** 3/day, teleport to a location you can see within near. This does not use your action.\n- **Black Lotus:** You deal +1 damage with melee weapons.\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Sex Appeal 10, Research 11, Knife 12, Intimidation 11, Fast-Talk 12, Fast-Draw (Sword) 13, Current Affairs (People) 12, Innate Attack (Beam) 12, Innate Attack (Breath) 12, Climbing 11, Broadsword 13, Axe/Mace 11\n\n**Spells (GCS detail):** Fire College: Breathe Fire 12, Create Fire 12, Extinguish Fire 12, Fireproof 12, Flame Jet 12, Flaming Weapon 13, Heat 12, Ignite Fire 12, Resist Fire 12, Shape Fire 12, Smoke 12\n\n**Equipment (GCS detail):** Shoes, Cloth Padded Arm Armor, Mail Fine Torso Armor, Thrusting Broadsword, 3 pt Powerstone, Dagger Fine, Backpack Small (Personal Basics, Ointment: Attractiveness, Lacquered Journal)",
         "spells_known": [
           {
             "lookup": "spell",
@@ -487,7 +488,8 @@
         "eyes": "Brown",
         "skin": "Brown",
         "hair": "Black",
-        "appearance": "Female · Right-handed · born June 22"
+        "appearance": "Female · Right-handed · born June 22",
+        "description": "The Princess of Persia · Human Ras-Godai · Level 3 · Neutral · Noble"
       }
     },
     {
@@ -646,7 +648,7 @@
         "ideals": "Freedom. Everyone should be free to live as they choose.",
         "bonds": "Owes a debt to a powerful merchant prince.",
         "flaws": "Greed. Cannot resist a valuable target.",
-        "backstory": "The Son of Darkness, Ibn al-Aswad is a thief of legendary skill who operates in the shadows of Basra's bazaars. Age 19, 5'8\", 125 lb.\n\n**Skills (GCS detail):** Area Knowledge (Al-Shihr) 12, Carousing 12, Climbing 13, Current Affairs (Al-Shihr) 12, Filch 12, Knife 12, Lockpicking 13, Merchant 11, Pickpocket 13, Scrounging 14, Search 13, Sex Appeal 12, Shadowing 12, Shortsword 13, Stealth 13, Streetwise 12, Traps 12\n\n**Equipment (GCS detail):** Shortsword Fine, Leather Pouch (Personal Basics, Lockpicks), Dagger, Shoes, Prince's Turban",
+        "backstory": "You grew up sleeping beneath market stalls, surviving through charm, quick feet, and\nfast fingers. One evening, while fleeing palace guards across the rooftops, you accidentally stumbled\ninto the chambers of the infamous Indian sorcerer SANGTARASH the Gem-maker. There you discovered the\nDjellaba of Fate, a magnificent robe stitched with impossible patterns said to twist luck itself around\nits wearer. You stole it immediately, of course, though not before accidentally setting the wizard's\nbeard on fire and escaping through a window three stories above the street. Since then, fortune seems\nstrangely drawn to you, and you've spent most of your days gambling, flirting, and outrunning the man\nwho would very much like his magical robe returned.\n\n## Shadowdark Sheet (as printed)\n\n**Ibn al-Aswad** — Human **Thief**, Level 3, Neutral, Street thief. AC 14, HP 8.\n\nSTR 11 (+0) · DEX 16 (+3) · CON 11 (+0) · INT 10 (+0) · WIS 16 (+3) · CHA 14 (+2)\n\n**Attacks:** Shortsword (+0 to hit, 1d6 dmg) · Thrown Dagger (+3 to hit, 1d4 dmg)\n\n**Gear:** Leather armor, Dagger, Shortsword, Rations, Crowbar, Backpack, Arrows (x20), Torch, Flint &\nsteel, Djellaba of Fate\n\n**Languages:** You know Common (Arabic) and Persian.\n**Weapons:** Club, crossbow, dagger, shortbow, shortsword.\n**Armor:** Leather.\n\n- **Backstab:** If you hit a creature who is unaware of your attack, you deal an extra 3 weapon dice of\n  damage. Add additional weapon dice of damage equal to half your level (round down).\n- **Thievery:** You are adept at thieving skills and have the necessary tools of the trade secreted on\n  your person (they take up no gear slots). You are trained in the following tasks and have advantage on\n  any associated checks: Climbing, sneaking and hiding, applying disguises, finding and disabling traps,\n  delicate tasks such as picking pockets and opening locks\n- **Djellaba of Fate:** +1 AC (may be worn over leather). If you die, you will come back to life with\n  1d4 hit points after a few minutes, but this only works once!\n\n*The man who wants the robe back is @[Sangtarash](entity:npc/Sangtarash), and he is in the builder\ntunnels beneath the palace.*\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Area Knowledge (Al-Shihr) 12, Carousing 12, Climbing 13, Current Affairs (Al-Shihr) 12, Filch 12, Knife 12, Lockpicking 13, Merchant 11, Pickpocket 13, Scrounging 14, Search 13, Sex Appeal 12, Shadowing 12, Shortsword 13, Stealth 13, Streetwise 12, Traps 12\n\n**Equipment (GCS detail):** Shortsword Fine, Leather Pouch (Personal Basics, Lockpicks), Dagger, Shoes, Prince's Turban",
         "imagePath": "media/Tokens/PC-Ibn-Al-Aswad.webp",
         "trait_refs": [
           {
@@ -704,7 +706,8 @@
         "eyes": "Brown",
         "skin": "Olive",
         "hair": "Brown",
-        "appearance": "*The Handsome Hyena of Al-Shihr* · Male · Right-handed · born September 2"
+        "appearance": "*The Handsome Hyena of Al-Shihr* · Male · Right-handed · born September 2",
+        "description": "The Handsome Hyena of Al-Shihr · Human Thief · Level 3 · Neutral · Street thief"
       }
     },
     {
@@ -869,7 +872,7 @@
         "ideals": "Faith. The gods work through us.",
         "bonds": "Devoted to healing the sick and protecting the innocent.",
         "flaws": "Self-sacrificing to a fault.",
-        "backstory": "A priestess of the old faith, Naja carries the blessing of the moon goddess. Her mace is inscribed with prayers in a forgotten tongue. Age 30, 5'7\", 110 lb.\n\n**Skills (GCS detail):** Animal Handling (Sheep) 9, Area Knowledge (Zagros Mountains) 11, Armoury (Missile Weapons) 9, Bow 15, Broadsword 14, Climbing 13, Fast-Draw (Arrow) 14, Fast-Draw (Knife) 14, First Aid 12, Games (Chess) 10, Hiking 11, Intimidation 9, Knife 13, Musical Instrument (Reed Flute) 8, Navigation (Land) 9, Observation 11, Poetry 9, Riding (Camel) 12, Riding (Equines) 12, Sling 12, Survival (Desert) 13, Tracking 12\n\n**Equipment (GCS detail):** Large Knife, Pouch (Personal Basics, Extra Bowstring, Sling Stone x10), Sling, Shoes, Reflex Bow, Shoulder Quiver (Arrow x12)",
+        "backstory": "As a Bedouin, you have lived your whole life with your family in the desert, but you\nthink that life is cursed. Your sheep died, poisoned by what can only be a genie's curse. Your brother\nfell ill, and has strange blue fingers now. Even your bow, which has saved your life on a dozen\noccasions, works against you, snapping at the most inopportune times. Fortunately, Allah must have been\nwatching, as a group of travelers frightened away that jackal pack just as the dogs had you surrounded.\nYour people believe strongly that one honorable favor deserves another, so you agreed to safely\naccompany them to the ports of Al-Shihr.\n\n## Shadowdark Sheet (as printed)\n\n**Naja** — Human **Thief**, Level 3, Lawful, Bedouin. AC 12, HP 14.\n\nSTR 13 (+1) · DEX 16 (+3) · CON 13 (+1) · INT 10 (+0) · WIS 13 (+1) · CHA 13 (+1)\n\n**Attacks:** Longbow (+4 to hit, 1d8+1 dmg) · Staff (+1 to hit, 1d6 dmg)\n\n**Gear:** Leather armor, Longbow, Staff, Arrows (x20), Backpack, Rations (x2), Lantern, Torch, Flint &\nsteel\n\n**Languages:** You know Common (Arabic) and Persian.\n**Weapons:** Dagger, longbow, longsword, shortbow, shortsword, spear, staff.\n**Armor:** Leather armor, chainmail\n\n- **Wayfinder:** You have advantage on checks associated with Navigation, Tracking, Bushcraft, Stealth,\n  Wild animals\n- **Human Ambition:** +1 to ranged attacks and damage\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Animal Handling (Sheep) 9, Area Knowledge (Zagros Mountains) 11, Armoury (Missile Weapons) 9, Bow 15, Broadsword 14, Climbing 13, Fast-Draw (Arrow) 14, Fast-Draw (Knife) 14, First Aid 12, Games (Chess) 10, Hiking 11, Intimidation 9, Knife 13, Musical Instrument (Reed Flute) 8, Navigation (Land) 9, Observation 11, Poetry 9, Riding (Camel) 12, Riding (Equines) 12, Sling 12, Survival (Desert) 13, Tracking 12\n\n**Equipment (GCS detail):** Large Knife, Pouch (Personal Basics, Extra Bowstring, Sling Stone x10), Sling, Shoes, Reflex Bow, Shoulder Quiver (Arrow x12)",
         "imagePath": "media/Tokens/PC-Naja.webp",
         "trait_refs": [
           {
@@ -977,7 +980,8 @@
         "eyes": "Green",
         "skin": "Tanned",
         "hair": "Black",
-        "appearance": "*The Green Eyes of the Desert* · Female · Right-handed · born June 27"
+        "appearance": "*The Green Eyes of the Desert* · Female · Right-handed · born June 27",
+        "description": "Bedouin Guide · Human Thief (Wayfinder) · Level 3 · Lawful · Bedouin"
       }
     },
     {
@@ -1125,7 +1129,7 @@
         "ideals": "Loyalty. A pirate's word is their bond.",
         "bonds": "Sworn to find the legendary White Shark's treasure.",
         "flaws": "Reckless. Overconfident in combat.",
-        "backstory": "A weathered sea dog who has sailed every water from the Pearl Seas to the Burning Coast. Palmtree earned his name from the tattoo on his chest. Age 31, 5'10\", 225 lb.\n\n**Skills (GCS detail):** Animal Handling (Monkeys) 8, Boating (Unpowered) 11, Brawling 13, Carousing 13, Climbing 12, Crossbow 13, Fast-Draw (Knife) 13, Fast-Talk 8, Fishing 10, Ground Fighting 11, Knife 13, Lockpicking 8, Merchant 9, Seamanship 10, Search 10, Shortsword 12, Smuggling 9, Survival (Salt-Water Sea) 10, Swimming 13\n\n**Equipment (GCS detail):** Shoes Leather, Shortsword Cheap, Brass Knuckles, Pearl Necklace, Large Knife, Lockpicks",
+        "backstory": "You came to the island on a small dhow, hoping to get a share of the White Shark of\nBasra's great treasure - a man you sailed with 10 years ago for a short time. But all that you got was\nhorror.\n\nFirst, a giant killed your friends. Then you were chased by horrible hyena creatures with intelligent\neyes. Finally, you found a hiding place, but for the last two nights you've been haunted by nightmares\nof a Chain Ghast, a cloaked, ghost-like spectre who whips you with chains before vanishing again. Now,\nyou've lost all hope of escaping this cursed palace...!\n\n**Backup Character!** — he is also the survivor the party finds in @[9. A Terrified Survivor](entity:location/9. A Terrified Survivor);\nsee @[Hassan \"Palmtree\" Al-Bahr](entity:npc/Hassan \"Palmtree\" Al-Bahr).\n\n## Shadowdark Sheet (as printed)\n\n**\"Palmtree\"** — Human **Sea Dog**, Level 2, Neutral, Barbarian. AC 12, HP 12.\n\nSTR 16 (+3) · DEX 9 (-1) · CON 12 (+1) · INT 9 (-1) · WIS 13 (+1) · CHA 13 (+1)\n\n**Attacks:** Shortsword (+3 to hit, 1d6 dmg)\n\n**Gear:** Leather armor, Shortsword, Backpack, Flint & steel, Torch, Torch, Torch, Pearl necklace,\nPotion of healing\n\n**Languages:** You know Common (Arabic) and Persian.\n**Weapons:** Dagger, greataxe, handaxe, longbow, longsword, spear.\n**Armor:** Chainmail, Leather armor, Round shield, Shield\n\n- **Seafarer:** You have advantage on checks related to navigating and crewing boats.\n- **Shield Wall:** If you wield a shield, you can use your action to take a defensive stance. Your AC\n  becomes 20 during this time.\n- **Sea Superstitions:** Each day, your purpose aligns with an old superstition. Choose one of the below\n  options after you complete a rest; you gain its benefits until you complete your next rest.\n  - *Pirate's Vengeance.* You regain 1d4 HP every time you kill an enemy.\n  - *Luck of the Sea.* You gain a luck token if you don't have one. Each time you use a luck token, add\n    1d6 to your roll.\n  - *Pirate's Oath.* You have advantage on checks to lie, sneak, and hide.\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Animal Handling (Monkeys) 8, Boating (Unpowered) 11, Brawling 13, Carousing 13, Climbing 12, Crossbow 13, Fast-Draw (Knife) 13, Fast-Talk 8, Fishing 10, Ground Fighting 11, Knife 13, Lockpicking 8, Merchant 9, Seamanship 10, Search 10, Shortsword 12, Smuggling 9, Survival (Salt-Water Sea) 10, Swimming 13\n\n**Equipment (GCS detail):** Shoes Leather, Shortsword Cheap, Brass Knuckles, Pearl Necklace, Large Knife, Lockpicks",
         "imagePath": "media/Tokens/Palmtree-the-Pirate.webp",
         "trait_refs": [
           {
@@ -1215,7 +1219,8 @@
         "eyes": "Brown",
         "skin": "Dark Brown",
         "hair": "Black",
-        "appearance": "Male · Right-handed · born July 8"
+        "appearance": "Male · Right-handed · born July 8",
+        "description": "Pirate Survivor · Human Sea Dog (Barbarian) · Level 2 · Neutral · BACKUP CHARACTER"
       }
     },
     {
@@ -1373,7 +1378,7 @@
         "ideals": "Knowledge. The universe is a puzzle to be solved.",
         "bonds": "Searching for the lost mathematical proofs of the ancients.",
         "flaws": "Absent-minded. Forgets practical matters while lost in thought.",
-        "backstory": "A scholar of the mystic arts, Qasim believes all magic can be reduced to numbers. His 'digitology' is considered eccentric by mainstream wizards. Age 35, 5'10\", 150 lb.\n\n**Skills (GCS detail):** Astronomy (Observational) 13, Climbing 10, Gambling 13, History (Arabian) 11, Innate Attack (Beam) 13, Knife 12, Mathematics (Pure) 12, Occultism 12, Poisons 11, Research 12, Shortsword 11, Staff 12, Streetwise 12, Thaumatology 14, Alchemy 10, Fast-Talk 12\n\n**Spells (GCS detail):** Earth/Stone College: Apportation 15, Create Water 15, Darkness 15, Mud Jet 15, Continual Light 15, Flash 15, Rain of Stones 15, Stone to Earth 15, Seek Earth 15, Flesh to Stone 15, Sand Jet 15, Shape Darkness 15, Purify Water 15, Create Earth 15, Earth to Stone 15, Shape Earth 15, Shape Water 15, Seek Fire 15, Stone Missile 15 (1d+1 cr/point), Stone to Flesh 15, Animate Object 14, Light 15, History 15, Seek Water 15, Seeker 15, Ancient History 15, Trace 15, Prehistory 15\n\n**Equipment (GCS detail):** 5 pt Powerstone, Oak Rod Enchanted with Staff, Leather Light Pot Helm Padded, Quarterstaff Enchanted with Staff",
+        "backstory": "You belong to the secretive Guild of Digitologists, a brotherhood who believes all\nmagic is merely hidden mathematics written into the bones of the world. Before casting even the simplest\nspell, you mutter geometric proofs beneath your breath, sketch numerals in the air, and calculate\ncelestial ratios like a scholar balancing an impossible equation. Unfortunately, you apply that same\nconfidence to games of chance. Three times now you have lost your fortune in the gambling dens after\nconvincing yourself you had discovered patterns hidden within dice throws and card draws. You now seek a\nnew source of incoming... because your debts are once again multiplying faster than you can subtract\nthem.\n\n## Shadowdark Sheet (as printed)\n\n**Qasim the Digitologist** — Human **Wizard**, Level 3, Lawful, Digitologist Guildsman. AC 6, HP 9.\n\nSTR 8 (-1) · DEX 16 (+3) · CON 9 (-1) · INT 15 (+2) · WIS 11 (+0) · CHA 6 (-2)\n\n**Attacks:** Flaming scimitar (+2 to hit, 1d8+1 dmg)\n\n**Gear:** Dagger, Staff, Backpack, Flask, Rations, Rations, Equations book, Potion of healing\n\n**Languages:** You know Common (Arabic), Persian, Greek, Diabolic\n**Weapons:** Dagger, staff\n**Armor:** None\n\n- **Learning Spells:** You can permanently learn a wizard spell from a scroll by studying it for a day\n  and succeeding on a DC 15 INT check. You always expend the spell scroll. Spells you learn in this way\n  don't count toward known spells.\n- **Human Ambition:** +1 to spellcasting rolls\n\n**Spells**\n\n- **Alarm** (DC 11) – Close. Alarm an object.\n- **Charm Person** (DC 11) – Near. Beguile a human level 1-2. Lasts d8 days.\n- **Light** (DC 11) – Close. Object glows for 1 hour (real-time).\n- **Magic Missile** (DC 11) – Far. Advantage to cast. 1d4 dmg to one target.\n- **Mirror Image** (DC 12) – Self. Create 2 illusions that take the first hit. Lasts 5 rounds.\n- **Sleep** (DC 11) – Near. Foes level 1-2 fall asleep.\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Astronomy (Observational) 13, Climbing 10, Gambling 13, History (Arabian) 11, Innate Attack (Beam) 13, Knife 12, Mathematics (Pure) 12, Occultism 12, Poisons 11, Research 12, Shortsword 11, Staff 12, Streetwise 12, Thaumatology 14, Alchemy 10, Fast-Talk 12\n\n**Spells (GCS detail):** Earth/Stone College: Apportation 15, Create Water 15, Darkness 15, Mud Jet 15, Continual Light 15, Flash 15, Rain of Stones 15, Stone to Earth 15, Seek Earth 15, Flesh to Stone 15, Sand Jet 15, Shape Darkness 15, Purify Water 15, Create Earth 15, Earth to Stone 15, Shape Earth 15, Shape Water 15, Seek Fire 15, Stone Missile 15 (1d+1 cr/point), Stone to Flesh 15, Animate Object 14, Light 15, History 15, Seek Water 15, Seeker 15, Ancient History 15, Trace 15, Prehistory 15\n\n**Equipment (GCS detail):** 5 pt Powerstone, Oak Rod Enchanted with Staff, Leather Light Pot Helm Padded, Quarterstaff Enchanted with Staff",
         "spells_known": [
           {
             "lookup": "spell",
@@ -1444,7 +1449,8 @@
         "skin": "Brown",
         "hair": "Black",
         "appearance": "*The Counter of Stars* · Male · Left-handed · born December 18",
-        "allies_organizations": "Guild of Digitalogists"
+        "allies_organizations": "Guild of Digitalogists",
+        "description": "The Digitologist · Human Wizard · Level 3 · Lawful · Digitologist Guildsman"
       }
     },
     {
@@ -1609,7 +1615,7 @@
         "ideals": "Balance. Nature demands equilibrium.",
         "bonds": "Tracks a rare creature that once saved her life.",
         "flaws": "Solitary. Struggles in crowds and cities.",
-        "backstory": "Known only as The Owl, this silent ranger has watched over the borderlands for years. Few have seen her face; fewer have earned her trust. Age 25, 5'10\", 170 lb.\n\n**Skills (GCS detail):** Acrobatics 12, Armoury (Melee Weapons) 10, Bow 13, Broadsword 14, Climbing 13, Counterattack (Broadsword) 12, Detect Lies 10, Gesture 12, Hidden Lore (Demon Lore) 10, Intimidation 11, Knife 13, Seamanship 11, Singing 13, Sleight of Hand 11, Stealth 14, Swimming 12, Tactics 9, Thrown Weapon (Knife) 13, Two-Handed Sword 14\n\n**Equipment (GCS detail):** Bronze Facemask, Shoes, Longsword Cheap, Backpack Small (Personal Basics), Layered Cloth Light Torso Armor, Short Bow, Gloves Light Leather, Shoulder Quiver (Arrow Bodkin x12), Worn Cloak",
+        "backstory": "For many years you were the unwilling servant of a cruel sorcerer who hid his face\nbehind silk veils and commanded spirits whose names should never be spoken aloud. You fought his\nenemies, guarded his chambers, and watched innocent people vanish into his experiments. When you\nfinally escaped, the sorcerer laid a curse upon you: if you ever reveal your true name or face, death\nwill swiftly find you. Now you wander beneath cloak and bronze mask, your old identity buried like a\ncorpse beneath the dunes. In the port city of Al Shihr you have become a quiet protector of the\ndesperate and forgotten, taking coin only from those who can afford it and offering your sword freely\nto those who cannot.\n\n## Shadowdark Sheet (as printed)\n\n**The Owl of Al-Shihr** — Human **Desert Rider**, Level 3, Lawful, Ex-slave. AC 19, HP 11.\n\nSTR 16 (+3) · DEX 9 (-1) · CON 11 (+0) · INT 11 (+0) · WIS 13 (+1) · CHA 8 (-1)\n\n**Attacks:** Longsword (+3 to hit, 1d8+1 dmg) · Shortbow (+0 to hit, 1d6+1 dmg)\n\n**Gear:** Leather armor, Longsword, Shortbow, Rations, Flint & steel, Backpack, Arrows (x20), Lantern,\nOil flask, Bronze facemask\n\n**Languages:** You know Common (Arabic) and Latin.\n**Weapons:** Club, dagger, javelin, longsword, pike, scimitar, shortbow, spear, whip.\n**Armor:** leather, shields.\n\n- **Charge:** 4/day, you can charge into combat by moving at least near before attacking. Each time you\n  do this, your melee attacks deal double damage that round.\n- **Expert Rider:** AC bonus when riding increases to +1. Mount's level increases by 1.\n- **Human Ambition:** You do +1 damage.\n\n---\n\n## GCS Sheet Detail\n\n**Skills:** Acrobatics 12, Armoury (Melee Weapons) 10, Bow 13, Broadsword 14, Climbing 13, Counterattack (Broadsword) 12, Detect Lies 10, Gesture 12, Hidden Lore (Demon Lore) 10, Intimidation 11, Knife 13, Seamanship 11, Singing 13, Sleight of Hand 11, Stealth 14, Swimming 12, Tactics 9, Thrown Weapon (Knife) 13, Two-Handed Sword 14\n\n**Equipment (GCS detail):** Bronze Facemask, Shoes, Longsword Cheap, Backpack Small (Personal Basics), Layered Cloth Light Torso Armor, Short Bow, Gloves Light Leather, Shoulder Quiver (Arrow Bodkin x12), Worn Cloak",
         "trait_refs": [
           {
             "lookup": "trait",
@@ -1703,52 +1709,8 @@
         "eyes": "Green",
         "skin": "Light Brown",
         "hair": "Brown",
-        "appearance": "*The Owl of Al-Shihr* · Male · Right-handed · born December 8"
-      }
-    },
-    {
-      "mapping": {
-        "name": "Singer",
-        "species_ref": {
-          "lookup": "species",
-          "match": "name",
-          "value": "Human"
-        },
-        "class_refs": [
-          {
-            "lookup": "class",
-            "match": "name",
-            "value": "Bard"
-          }
-        ],
-        "class_levels": {
-          "Bard": 3
-        },
-        "background_ref": {
-          "lookup": "background",
-          "match": "name",
-          "value": "Entertainer"
-        },
-        "alignment_ref": {
-          "lookup": "alignment",
-          "match": "name",
-          "value": "Chaotic Good"
-        },
-        "combat_stats": {
-          "level": 3
-        },
-        "languages": [
-          {
-            "lookup": "language",
-            "match": "name",
-            "value": "Common"
-          },
-          {
-            "lookup": "language",
-            "match": "name",
-            "value": "Arabic"
-          }
-        ],
+        "appearance": "*The Owl of Al-Shihr* · Male · Right-handed · born December 8",
+        "description": "The Owl of Al-Shihr · Human Desert Rider · Level 3 · Lawful · Ex-slave",
         "imagePath": "media/Tokens/PC-Singer.webp"
       }
     }

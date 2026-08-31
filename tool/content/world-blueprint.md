@@ -52,9 +52,20 @@ aktararak `world-blueprint.json` dosyasını doldurmak.
 
 4. **Metin alanları** — Markdown formatında yazın. Uzun açıklamalar için `description_long` kullanın.
 
-5. **DM-only alanlar** — `secrets`, `tactics` gibi alanlar oyuncu ekranında gizlenir.
+5. **Entity mention'ları (markdown içi link)** — Bir metin başka bir entity'den
+   bahsediyorsa link bırakın:
+   ```
+   "description_long": "Kapıyı @[Rafiq al-Sayyid](entity:npc/Rafiq al-Sayyid) açar."
+   ```
+   Biçim: `@[Görünen Ad](entity:<kategori-slug>/<Entity Adı>)`. `<Entity Adı>`
+   **aynı blueprint'te tanımlı** olmalı; converter onu entity id'sine çevirir ve
+   uygulamada link tıklanabilir olur (`markdown_text_area.dart`). Hedef bu
+   blueprint'te yoksa build hata verir — SRD ve Tier-0 satırlarının id'si başka
+   namespace'ten geldiği için onlara link verilemez.
 
-6. **Yazılmayan alanlar** — Şema default'unu alır, yazmanıza gerek yok.
+6. **DM-only alanlar** — `secrets`, `tactics` gibi alanlar oyuncu ekranında gizlenir.
+
+7. **Yazılmayan alanlar** — Şema default'unu alır, yazmanıza gerek yok.
 
 ## 3. Kategori Sözleşmeleri
 
