@@ -5,7 +5,10 @@
 > için alan adları, tipleri ve JSON şekilleri burada tanımlıdır.
 > 
 > **Agent Notu:** Bu dosyayı referans alarak `world-blueprint.json` oluşturun.
-> Alanları doldururken kaynak PDF/inçerikten bilgiyi doğru kategoriye aktarın.
+> Alanları doldururken kaynak PDF/içerikten bilgiyi doğru kategoriye aktarın —
+> **birebir**, özetlemeden. Süreç, çıkarma ve doğrulama: [README.md](README.md).
+> Bu dosyadaki tüm örnekler (`The Sunken Keep`, `Amara the Pale`…) **uydurmadır**,
+> sadece biçim gösterir; kendi aktarımında kaynakta geçen adları kullan.
 
 ## 1. World Entity Nedir?
 
@@ -41,13 +44,13 @@ aktararak `world-blueprint.json` dosyasını doldurmak.
 
 2. **Relation alanları** — `{lookup, match, value}` formatında yazın:
    ```json
-   "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"}
+   "location_ref": {"lookup": "location", "match": "name", "value": "The Antechamber"}
    ```
    `match` türleri: `"name"` (varsayılan), `"slug"`, `"abbreviation"`, `"manual"`.
 
 3. **Medya alanları** — Dosya yollarını modül dizinine göre relative yazın:
    ```json
-   "map": "media/Maps/Uzrahs-Palace-1.webp"
+   "map": "media/Maps/Sunken-Keep-1.webp"
    ```
 
 4. **Metin alanları** — Markdown formatında yazın. Uzun açıklamalar için `description_long` kullanın.
@@ -752,10 +755,12 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
 
 **Kaynak kontrolü:** Her entity'ye `source` alanını ekleyin:
 ```json
-"source": "99 Devils of Uzrah's Palace, Shadowdark"
+"source": "Örnek Macera, Shadowdark"
 ```
 
 ### Örnek world blueprint
+
+Aşağıdaki içerik uydurma; sadece JSON biçimini gösterir.
 
 ```json
 {
@@ -773,7 +778,7 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
           "level": 9,
           "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Neutral"},
           "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Sunken Keep"},
           "stat_block": {"STR": 8, "DEX": 14, "CON": 12, "INT": 18, "WIS": 13, "CHA": 15},
           "combat_stats": {"hp": 44, "max_hp": 44, "ac": 12, "speed": "30 ft"},
           "description": "Sarayın son kütüphanecisi, partiye rehberlik eder.",
@@ -783,22 +788,22 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
     ],
     "location": [
       {
-        "source_name": "Uzrah's Palace",
+        "source_name": "The Sunken Keep",
         "mapping": {
-          "name": "Uzrah's Palace",
+          "name": "The Sunken Keep",
           "danger_level": "Deadly",
           "environment": "Dev harabeleri",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim"},
           "description_long": "Çölün ortasında, 99 şeytanın beklediği saray.",
-          "map": "media/Maps/Uzrahs-Palace-1.webp"
+          "map": "media/Maps/Sunken-Keep-1.webp"
         }
       },
       {
-        "source_name": "The Gate Hall",
+        "source_name": "The Antechamber",
         "mapping": {
-          "name": "The Gate Hall",
+          "name": "The Antechamber",
           "danger_level": "High",
-          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "The Sunken Keep"},
           "description_long": "Giriş holü; tavan 60 ft."
         }
       }
@@ -809,7 +814,7 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
         "mapping": {
           "name": "Arrival at the Gate",
           "status": "Planned",
-          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Antechamber"},
           "beats": "1. Kapı gıcırdar ve kapanır.\n2. Parti feneri fark eder.\n3. İlk şeytan görünür.",
           "npc_refs": [{"lookup": "npc", "match": "name", "value": "Amara the Pale"}]
         }
@@ -831,15 +836,15 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
     ],
     "encounter": [
       {
-        "source_name": "Gate Hall Ambush",
+        "source_name": "Antechamber Ambush",
         "mapping": {
-          "name": "Gate Hall Ambush",
-          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "name": "Antechamber Ambush",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Antechamber"},
           "difficulty": "Moderate",
           "monsters_refs": [
             {"lookup": "monster", "match": "name", "value": "Imp", "count": 4}
           ],
-          "trap_refs": [{"lookup": "trap", "match": "name", "value": "Gate Spikes"}],
+          "trap_refs": [{"lookup": "trap", "match": "name", "value": "Floor Spikes"}],
           "setup": "Parti holün ortasına vardığında imps gölgelerden çıkar.",
           "tactics": "İmpler önce büyücüye odaklanır, iki turda bir geri çekilir.",
           "xp_budget": 800
@@ -848,9 +853,9 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
     ],
     "trap": [
       {
-        "source_name": "Gate Spikes",
+        "source_name": "Floor Spikes",
         "mapping": {
-          "name": "Gate Spikes",
+          "name": "Floor Spikes",
           "trigger_kind": "Pressure",
           "trigger": "Giriş holünün orta taşına basılınca.",
           "save_dc": 14,
@@ -891,7 +896,7 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
       "from_name": "Amara the Pale",
       "from_field": "location_ref",
       "to_category": "location",
-      "to_name": "Uzrah's Palace"
+      "to_name": "The Sunken Keep"
     }
   ]
 }
@@ -909,21 +914,21 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
 
 | Kaynak Tür | Uygulama Kategorisi | Ne Zaman Kullanılır | Örnek |
 |---|---|---|---|
-| Person / Character | `npc` |faction liderleri, mağazacılar, rehberler, önemli karakterler | "The White Shark of Basra", "Ibrahim the Drifted Lord" |
-| Place / Region / Room | `location` | Mekanlar, binalar, bölgeler, odalar (hiyerarşik) | "Uzrah's Palace", "The Gate Hall", "The Upper Level" |
-| Combat / Encounter | `encounter` | Savaş planları, canavar/NPC grupları | "Gate Hall Ambush", "The Efreet's Lair" |
-| Quest / Mission / Goal | `quest` | Görevler, macera arc'ları, hedefler | "Reach the Palace", "Stop the White Shark" |
-| Scene / Beat / Act | `scene` | Senaryo akışı, sahne planları, beat listesi | "Arrival at the Island", "The Efreet's Revelation" |
+| Person / Character | `npc` |faction liderleri, mağazacılar, rehberler, önemli karakterler | "Amara the Pale", "Karim the Drifted Lord" |
+| Place / Region / Room | `location` | Mekanlar, binalar, bölgeler, odalar (hiyerarşik) | "The Sunken Keep", "The Antechamber", "The Upper Level" |
+| Combat / Encounter | `encounter` | Savaş planları, canavar/NPC grupları | "Antechamber Ambush", "The Keeper's Lair" |
+| Quest / Mission / Goal | `quest` | Görevler, macera arc'ları, hedefler | "Reach the Keep", "Stop the Binding" |
+| Scene / Beat / Act | `scene` | Senaryo akışı, sahne planları, beat listesi | "Arrival at the Gate", "The Keeper's Revelation" |
 | Trap / Hazard | `trap` | Tuzaklar, mekanik tuzaklar | "Collapsing Ceiling", "Flame Jet" |
 | Poison | `poison` | Zehirler (poison_kind zorunlu: Contact/Ingested/Inhaled/Injury) | "Assassin's Blood", "Crawler Mucus" |
 | Curse | `curse` | Lanetler, mekanikler `mechanical_notes` düz metin | "Mummy's Rot", "Bag of Devouring" |
-| Environmental Effect | `environmental-effect` | Çevresel etkiler, aura'lar, hava koşulları | "Efreet's Fire Aura", "Crumbling Ruins" |
+| Environmental Effect | `environmental-effect` | Çevresel etkiler, aura'lar, hava koşulları | "Guardian's Fire Aura", "Crumbling Ruins" |
 | Hireling | `hireling` | Kiralık askerler (daily_cost_cp + skilled zorunlu) | "Mercenary Guard", "Porter" |
 | Service | `service` | Hizmetler (kind + cost_cp zorunlu: Spellcasting/Transport/Shelter/Other) | "Healing", "Transportation" |
-| Handout / Lore / Document | `lore` | Dünya bilgisi, el yazmaları, tarihçe | "The History of Uzrah's Palace" |
-| Campaign Guide / Overview | `campaign` | Genel kampanya notları, macera özeti | "99 Devils of Uzrah's Palace" |
-| Magic Item | → `magic-item` (Tier-1) | World'e eklenen özel eşyalar (SRD'de yoksa) | "Vizier's Artifact", "Blessed Scimitar" |
-| Monster / Creature | → `monster` (Tier-1) | Özel yaratıklar (SRD'de yoksa) | "Dodecaphage", "Ghul-Bird" |
+| Handout / Lore / Document | `lore` | Dünya bilgisi, el yazmaları, tarihçe | "The History of the Keep" |
+| Campaign Guide / Overview | `campaign` | Genel kampanya notları, macera özeti | "The Sunken Keep" |
+| Magic Item | → `magic-item` (Tier-1) | World'e eklenen özel eşyalar (SRD'de yoksa) | "Keeper's Artifact", "Blessed Scimitar" |
+| Monster / Creature | → `monster` (Tier-1) | Özel yaratıklar (SRD'de yoksa) | "Clockwork Hound", "Ash Crow" |
 
 ### 6.2 Medya Eşleştirme
 
@@ -951,17 +956,17 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
 | Sınıf (Fighter, Wizard...) | Evet → `class` lookup | Blueprint'e ekleme, referans ver |
 | Irk (Human, Elf...) | Evet → `species` lookup | Blueprint'e ekleme, referans ver |
 | Background (Soldier, Sage...) | Evet → `background` lookup | Blueprint'e ekleme, referans ver |
-| Özel canavar (Dodecaphage...) | Hayır → `monster` entity oluştur | Blueprint'e ekle |
-| Özel eşya (Vizier's Ring...) | Hayır → `magic-item` entity oluştur | Blueprint'e ekle |
-| Özel tuzak (Palace Spikes...) | Hayır → `trap` entity oluştur | Blueprint'e ekle |
+| Özel canavar (Clockwork Hound...) | Hayır → `monster` entity oluştur | Blueprint'e ekle |
+| Özel eşya (Keeper's Ring...) | Hayır → `magic-item` entity oluştur | Blueprint'e ekle |
+| Özel tuzak (Keep Spikes...) | Hayır → `trap` entity oluştur | Blueprint'e ekle |
 | Özel zehir (Custom Poison...) | Hayır → `poison` entity oluştur | Blueprint'e ekle |
 
 ### 6.4 Hiyerarşi Kuralları
 
 | Durum | Kural | Örnek |
 |---|---|---|
-| Ana mekan | `parent_location_ref` boş | "Uzrah's Palace" |
-| Alt mekan | `parent_location_ref` ile üst mekana bağla | "The Gate Hall" → "Uzrah's Palace" |
-| Encounter mekanı | `encounter.location_ref` ile location'a bağla | "Gate Hall Ambush" → "The Gate Hall" |
-| NPC mekanı | `npc.location_ref` ile location'a bağla | "The White Shark" → "The Treasure Hall" |
-| Scene mekanı | `scene.location_ref` ile location'a bağla | "The Efreet's Revelation" → "The Treasure Hall" |
+| Ana mekan | `parent_location_ref` boş | "The Sunken Keep" |
+| Alt mekan | `parent_location_ref` ile üst mekana bağla | "The Antechamber" → "The Sunken Keep" |
+| Encounter mekanı | `encounter.location_ref` ile location'a bağla | "Antechamber Ambush" → "The Antechamber" |
+| NPC mekanı | `npc.location_ref` ile location'a bağla | "Amara the Pale" → "The Vault" |
+| Scene mekanı | `scene.location_ref` ile location'a bağla | "The Keeper's Revelation" → "The Vault" |

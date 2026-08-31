@@ -75,12 +75,15 @@ dart run tool/migrate_pack_assets.dart [--dry-run]        # rewrite bundled .pkg
 
 dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir> --check   # validate a bundled world
 dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir>           # → <slug>.pkg.json
+python tool/content/audit_coverage.py source.txt assets/worlds/<dir>             # source text → world coverage
 ```
 
 `build_packs` exits non-zero on any unresolved `_ref`, so a broken pack can never ship.
 `convert_blueprint` does the same for bundled worlds: an unresolved ref, a field the
-category schema does not declare, or a missing media file is a non-zero exit. Both the
-CLI and `BundledWorldsInstaller` go through the one converter in
+category schema does not declare, or a missing media file is a non-zero exit. It validates
+structure, not fidelity — `audit_coverage.py` checks that the source text actually reached
+the blueprint (non-zero under 95% sentence coverage). Both the CLI and
+`BundledWorldsInstaller` go through the one converter in
 [world_blueprint_converter.dart](flutter_app/lib/domain/services/world_blueprint_converter.dart);
 authoring rules live in [tool/content/README.md](tool/content/README.md).
 

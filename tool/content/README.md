@@ -1,166 +1,129 @@
-# Content Export Rehberi
+# Content Export — Aktarım Süreci
 
-Bu dosya, agent'lar tarafından içerik aktarımı yapılırken kullanılacak yönergedir.
+Kaynak (PDF + medya) → `assets/worlds/<dir>/` → `.pkg.json`.
+Bu dosya **süreci** anlatır. Alan sözleşmeleri ayrı:
+[world-blueprint.md](world-blueprint.md) (Tier-2 entity alanları),
+[character-blueprint.md](character-blueprint.md) (PC alanları),
+[WORLD_CONTENT_ORDER.md](WORLD_CONTENT_ORDER.md) (ekleme sırası + Tier kuralları).
 
-## Genel Kurallar
+## 0. Değişmez kural: eksiksiz ve değiştirilmemiş
 
-1. **İçerik değiştirilmez** — Orijinal dosyalar (PDF, görsel, karakter dosyası) aynen paketlenir.
-2. **Blueprint'ler oluşturulur** — `manifest.json`, `blueprint.json`, `world-blueprint.json` hazırlanır.
-3. **Built-in paket tekrar eklenmez** — SRD 5.2.1'de **birebir aynı isimle** var olan içerik (canavar, sihir, eşya vb.) referans olarak kullanılır, yeniden oluşturulmaz.
-4. **Önce entity, sonra referans** — Referans verilecek her şey önce kendi kategorisinde
-   bir entity olarak var olmalı. Bir ekipmanı envantere koyacaksan önce `weapon` /
-   `armor` / `adventuring-gear` / `magic-item` olarak ekle, sonra `inventory`'ye
-   referans ver. Aynı kural trait, feat, spell, language, background için de geçerli.
-   SRD'de yoksa ve blueprint'te de yoksa referans **sessizce düşer** — build bunu hata sayar.
-5. **Dosya yolları relative** — Tüm referanslar modül dizinine göreceli olmalı.
-6. **Medya doğru eşleştirilir** — Battlemap'ler location'a, token'lar encounter'a, handout'lar lore'a bağlanır.
-   Her medya yolu `manifest.json`'ın `files` bloğunda listelenmeli; installer yalnız orada
-   listelenen dosyaları diske çıkarır ve `image_path`'i mutlak yola çevirir.
-7. **Alan adları şemadan gelir** — `mapping` içindeki her anahtar kategori şemasında
-   tanımlı olmalı. Şemada olmayan bir anahtar (`spell_refs` yerine `spells_known`,
-   `traits` yerine `traits_md`) hiçbir widget tarafından okunmaz; veri sessizce kaybolur.
-8. **Ref zarfını elle yazma** — her referans `{"lookup": "<kategori>", "match": "name",
-   "value": "<ad>"}` biçiminde yazılır. `lookup` **hedef kategorinin** slug'ıdır, içeriğin
-   kendi slug'ı değil: `{"slug": "gust-of-wind", "name": "Gust of Wind"}` yanlıştır ve artık
-   hata verir (doğrusu `lookup: "spell"`). `equipped`, `quantity`, `prepared` gibi satır-yanı
-   alanlar aynı objeye yazılır.
-9. **Hedef kategori alanla uyuşmalı** — şema her relation alanı için izin verilen
-   kategorileri belirtir (`monster.gear_refs` → `adventuring-gear` / `weapon` / `armor`).
-   Uymayan satır okuma anında atılır; converter bunu build-time'da keser.
-10. **Serbest metin alanı listenin yerine geçmez** — `equipment_md` / `spells_md` /
-    `traits_md` kaynağı olduğu gibi korumak içindir. Aynı içerik **ayrıca**
-    `equipment_refs` / `gear_refs` / `spell_refs` / `trait_refs` olarak da bağlanmalı;
-    yoksa uygulamada ekipman/büyü listesi boş görünür.
-11. **PC'ler entity değil karakter** — `blueprint.json` içindeki oyuncu karakterleri world
-    entity'si olarak yazılmaz; kurulum onları dünyanın **Characters** sekmesine *ownersız*
-    (unclaimed) karakter olarak yazar. Database sekmesi `player-character` kategorisini
-    listelemiyor, dolayısıyla entity olarak yazılan bir PC hiçbir ekranda görünmez.
-    `--check` çıktısı entity sayısının altında ayrı bir "player character(s)" satırı verir.
+Kaynaktaki **her cümle** dünyaya girer. Özetleme, yeniden yazma, "kendi
+cümlelerinle anlat" **yok** — metin birebir taşınır, sadece markdown biçimi ve
+entity link'i eklenir.
 
-## Doğrulama — her aktarımdan sonra çalıştır
+Bu kuralın gerekçesi somut: bu depodaki ilk 99 Devils aktarımı `--check`'ten
+temiz geçmişti ama PDF metninin **%0**'ını içeriyordu; anlatı katmanı baştan
+sona uydurulmuştu (PDF'te olmayan mekanlar, yanlış tür/rol verilen NPC'ler).
+`--check` şema ve referans doğrular, **içerik sadakatini doğrulamaz**. O yüzden
+adım 5'teki kapsam denetimi zorunludur.
+
+Uydurma yasağı: kaynakta olmayan mekan/NPC/olay **ekleme**. Kaynak bir alanı
+(ör. `danger_level`) söylemiyorsa alanı boş bırak, tahmin etme.
+
+## 1. Metni çıkar
+
+```bash
+pdftotext -enc UTF-8 adventure.pdf source.txt      # okuma sırası — DOĞRU
+```
+
+`-layout` **kullanma**: iki sütunlu sayfalarda stat block'ları cümlelerin
+ortasına sokar. `-enc UTF-8` şart, yoksa çıktı bozuk kodlanır.
+
+Görsel sayfalar (handout, el yazması, harita üstü yazı) `pdftotext`'e düşmez —
+sayfayı **görsel olarak oku** ve metni elle transkript et. Bunları atlamak
+kapsam denetiminde görünmez, çünkü kaynak metinde de yoklar; sayfa sayfa
+kontrol et.
+
+## 2. Kategorilere böl
+
+Eşleme tablosu: [world-blueprint.md § 6.1](world-blueprint.md).
+Kabaca: numaralı oda/alan → `location` (**başlığı PDF'te yazdığı gibi**,
+`"14. Hall of Discoveries"`), anlatı akışı → `scene`, el yazması → `lore`,
+kural kutusu → `trap` / `environmental-effect`, giriş+arka plan+lisans →
+`campaign.pages`.
+
+Stat block'lar: SRD'de birebir aynı isimle varsa referans ver, yoksa entity
+oluştur; **stat block metnini ayrıca `traits_md`'ye birebir yapıştır** —
+kaynak sistem (Shadowdark, OSR…) 5e alanlarına birebir oturmaz, sayı uydurmak
+yerine ham blok korunur.
+
+## 3. Blueprint'i yaz
+
+Sıra ve bağımlılıklar: [WORLD_CONTENT_ORDER.md](WORLD_CONTENT_ORDER.md).
+
+1. **Önce entity, sonra referans** — referans verilecek her şey önce kendi
+   kategorisinde entity olmalı. Ne SRD'de ne blueprint'te olan isim build'i kırar.
+2. **Ref zarfı** — `{"lookup": "<hedef kategori>", "match": "name", "value": "<ad>"}`.
+   `lookup` **hedefin** slug'ı. `{"slug": ..., "name": ...}` yazımı hatadır.
+3. **Hedef kategori alanla uyuşmalı** — şema her relation alanı için izinli
+   kategorileri belirtir (`encounter.monsters_refs` → `monster`/`animal`; oraya
+   `npc` koyarsan satır düşer). Uymuyorsa **alanı değiştir**, entity'yi zorlama.
+4. **Alan adları şemadan gelir** — şemada olmayan anahtar sessizce kaybolur
+   (`spells_known` ✓ / `spell_refs` ✗ PC'de).
+5. **Serbest metin listenin yerine geçmez** — `equipment_md` kaynağı korur ama
+   listeyi doldurmaz; aynı içerik **ayrıca** `*_refs` olarak bağlanmalı.
+6. **PC'ler `blueprint.json`'a** — world entity'si değil; `world-blueprint.json`'a
+   yazılan PC hiçbir ekranda görünmez.
+7. **Lookup değerleri seed listesinden** — `Dim` (`Dim Light` değil), `Neutral`
+   (alignment) / `Indifferent` (attitude), `Trivial|Low|Moderate|High|Deadly`.
+8. **Medya** — yollar modül dizinine relative **ve** `manifest.json` → `files`
+   içinde listeli olmalı; installer sadece orada listelenenleri diske çıkarır.
+
+## 4. Entity link'i bırak (uygulamanın kazancı)
+
+Bir metin başka bir entity'den bahsediyorsa link bırak:
+
+```json
+"description_long": "Kapıyı @[Rafiq al-Sayyid](entity:npc/Rafiq al-Sayyid) açar."
+```
+
+Biçim `@[Görünen Ad](entity:<kategori-slug>/<Entity Adı>)`; converter bunu entity
+id'sine çevirir, uygulamada tıklanabilir olur. Hedef **aynı blueprint'te** tanımlı
+olmalı, yoksa build hata verir (SRD/Tier-0 satırlarına link verilemez — id'leri
+başka namespace'ten gelir). Hem `world-blueprint.json` hem `blueprint.json` için
+geçerli. İlk anlamlı geçişte link ver, her tekrarında değil.
+
+## 5. Doğrula — ikisi de zorunlu
 
 ```bash
 cd flutter_app
+# a) şema + referans + medya
 dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir> --check
+# b) içerik sadakati
+python tool/content/audit_coverage.py source.txt assets/worlds/<dir>
 ```
 
-Çözülemeyen tek bir ref, şemada olmayan tek bir alan, eksik tek bir medya dosyası
-bile **non-zero exit** demektir ve rapor tam olarak hangi entity'nin hangi alanının
-bozuk olduğunu yazar. Temiz çıktı alınmadan aktarım bitmiş sayılmaz.
-`--check`'i düşürünce aynı komut `.pkg.json` üretir.
+(a) tek çözülemeyen ref / şema dışı alan / eksik medyada non-zero döner ve hangi
+entity'nin hangi alanı bozuk yazar.
 
-`test/domain/services/bundled_worlds_blueprint_test.dart` aynı doğrulamayı
-`assets/worlds/` altındaki her dünya için CI'da tekrarlar.
+(b) kaynağın her cümlesini blueprint metninde arar, eşiğin altındakileri listeler.
+**Hedef %95+.** Kalan her satırı tek tek `grep`le doğrula — normal kalıntılar:
+iki sütunlu sayfa başlıkları, ham stat sayı satırları (`16 +3 9 -1 …`), link
+sınırına denk gelen kelimeler. Bunların dışında bir şey listeleniyorsa o metin
+gerçekten aktarılmamıştır. (Referans: eski hatalı aktarım %0.0, düzeltilmiş
+aktarım %97.7 verir.)
 
-## Aktarım Adımları
+CI: `test/domain/services/bundled_worlds_blueprint_test.dart` (a)'yı
+`assets/worlds/` altındaki her dünya için tekrarlar.
 
-### 1. PDF'i Oku ve Anla
-- PDF'i open5e veya benzeri araçlarla parse et
-- İçeriği kategorilere ayır: canavarlar, mekanlar, encounter'lar,NPC'ler, tuzaklar, öğeler
-- Hangi içeriğin SRD'de olduğunu kontrol et
+Temiz `--check` + %95 kapsam alınmadan aktarım bitmiş sayılmaz.
 
-### 2. World Blueprint Oluştur
-`world-blueprint.json` dosyasında şu kategorileri doldur:
+## 6. Paketle
 
-| Kategori | Ne Zaman Kullanılır |
-|---|---|
-| `npc` |faction liderleri, mağazacılar, rehberler, önemli karakterler |
-| `location` | Mekanlar, binalar, bölgeler (hiyerarşik) |
-| `encounter` | Savaş planları, canavar grupları |
-| `quest` | Görevler, macera arc'ları |
-| `scene` | Senaryo akışı, beat listesi |
-| `trap` | Tuzaklar ve mekanikler |
-| `environmental-effect` | Çevresel etkiler |
-| `lore` | Dünya bilgisi, el yazmaları |
-| `campaign` | Genel kampanya notları |
-
-### 3. Karakter Blueprint Oluştur
-`blueprint.json` dosyasında PC'leri tanımla.
-
-### 4. Medyayı Eşleştir
-- **Battlemap'ler** → `location.map` veya `location.battlemaps`
-- **Token/resimler** → `npc.imagePath` veya `encounter.monsters_refs`
-- **PDF'ler** → `lore.pdfs` veya `campaign.pdfs`
-- **Handout'lar** → `lore.pages` (markdown olarak)
-
-### 5. Kaynak Bilgisi Ekle
-Her entity'ye `source` alanını doldur:
-```json
-"source": "99 Devils of Uzrah's Palace, Shadowdark"
+```bash
+dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir>   # → <slug>.pkg.json
 ```
 
-### 6. Cross-Referansları Kur
-Entity'ler arası ilişkileri `cross_references` dizisinde tanımla.
+`pubspec.yaml` → `assets/worlds/` deklarasyonunu ve `manifest.json` → `files`
+listesini güncellemeyi unutma.
 
-## Karar Verme Noktaları
+## Kontrol listesi
 
-Agent olarak şu kararları sen vermelisin:
-
-1. **İçerik eşleme** — PDF'teki bir tablo NPC mi, encounter mı, location mu?
-2. **Medya atama** — Bir görsel hangi entity'ye ait?
-3. **SRD kontrolü** — Bu canavar zaten SRD'de var mı?
-4. **Hiyerarşi** — Location'lar nasıl sıralanmalı?
-5. **Açıklama yazımı** — Entity için kısa ve net açıklama
-
-## Blueprint Formatı
-
-Detaylar için:
-- [world-blueprint.md](world-blueprint.md) — World entity alanları
-- [character-blueprint.md](character-blueprint.md) — PC alanları
-
-## Örnek Eşleme
-
-### World Kategorileri
-
-| PDF İçeriği | Uygulama Kategorisi | Medya | Örnek |
-|---|---|---|---|
-| Canavar stat block'u | `monster` (SRD'de yoksa) | Token → `encounter.monsters_refs` | "Dodecaphage" |
-| Mekan açıklaması + harita | `location` | `map` alanına battlemap | "The Gate Hall" → `media/Maps/Upper-Level.webp` |
-| Encounter notları | `encounter` | `monsters_refs` + `trap_refs` | "Gate Hall Ambush" |
-| NPC portresi | `npc` | `imagePath` → `media/Tokens/NPC.webp` | "The White Shark of Basra" |
-| El yazması metin | `lore` | `pages` (markdown) + `pdfs` | "The History of Uzrah's Palace" |
-| Tuzak mekaniği | `trap` | — | "Collapsing Ceiling" |
-| Quest açıklaması | `quest` | — | "Reach the Palace" |
-| Sahne akışı | `scene` | `beats` (markdown) | "The Efreet's Revelation" |
-| Lanet | `curse` | `mechanical_notes` | "Mummy's Rot" |
-| Zehir | `poison` | `poison_kind` zorunlu | "Assassin's Blood" |
-| Çevre etkisi | `environmental-effect` | `damage_dice` + `effect` | "Efreet's Fire Aura" |
-| Kampanya özeti | `campaign` | `pdfs` | "99 Devils of Uzrah's Palace" |
-
-### Karakter Alanları
-
-| PDF İçeriği | Uygulama Alanı | Format |
-|---|---|---|
-| İsim | `name` | Entity name |
-| Irk/Species | `species_ref` | relation→species |
-| Sınıf | `class_refs` | relation→class |
-| Seviye | `class_levels` | `{classId: level}` |
-| Background | `background_ref` | relation→background |
-| Hizalama | `alignment_ref` | relation→alignment |
-| Yetenek değerleri | `stat_block` | `{STR:16, DEX:14, ...}` |
-| Can puanı | `combat_stats.hp/max_hp` | int |
-| Zırh sınıfı | `combat_stats.ac` | int |
-| Hız | `combat_stats.speed` | text `"30 ft"` |
-| Beceriler | `skills` | proficiencyTable |
-| Kurtulma taslakları | `saving_throws` | proficiencyTable |
-| Eşyalar | `inventory` | relation list → `weapon` / `armor` / `adventuring-gear` / `magic-item` |
-| Büyüler | `spells_known` | relation list → `spell` (`spell_refs` **değil**) |
-| Yetenekler / özellikler | `trait_refs` | relation list → `trait` |
-| Feat'ler | `feats` | relation list → `feat` |
-| Alet yetkinlikleri | `tool_proficiencies` | relation list → `tool` |
-| Duyular | `senses` | relation list → `sense` |
-| Portre | `imagePath` | `media/Tokens/…` |
-| Kişilik | `personality_traits` | markdown |
-| Geçmiş | `backstory` | markdown |
-
-## Kontrol Listesi
-
-- [ ] Tüm SRD dışı içerik blueprint'e eklendi
-- [ ] Medya dosyaları doğru entity'lere atandı
-- [ ] `source` alanları dolduruldu
-- [ ] Cross-referanslar tutarlı
-- [ ] Built-in paket tekrar eklenmedi
-- [ ] Location hiyerarşisi doğru kuruldu
-- [ ] Encounter'lar doğru canavarlara bağlandı
-- [ ] Her referansın hedefi ya SRD'de ya blueprint'te var
-- [ ] `--check` temiz çıktı verdi
+- [ ] `pdftotext -enc UTF-8` (layout'suz) + görsel sayfalar elle transkript
+- [ ] Her entity'de `source` dolu
+- [ ] Numaralı alanlar PDF'teki adıyla, hiyerarşi `parent_location_ref` ile kurulu
+- [ ] SRD'de olan içerik tekrar yazılmadı, referans verildi
+- [ ] Bahsedilen entity'lere `@[...](entity:slug/Ad)` link'i bırakıldı
+- [ ] `--check` temiz
+- [ ] `audit_coverage.py` %95+ ve kalan satırlar tek tek doğrulandı

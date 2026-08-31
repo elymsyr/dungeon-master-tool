@@ -6,6 +6,7 @@
 > 
 > **Agent Notu:** Bu dosyayı referans alarak `blueprint.json` oluşturun.
 > Kaynak PDF/GCS dosyalarından karakter bilgilerini buradaki alanlara eşleştirin.
+> Süreç, doğrulama ve içerik sadakati kuralları: [README.md](README.md).
 
 ## 1. Karakter Nedir?
 
@@ -30,7 +31,7 @@ buradaki alanlara aktararak `blueprint.json` dosyasını doldurmak.
 
 **Kaynak kontrol:** Her karaktere `source` alanını ekleyin:
 ```json
-"source": "99 Devils of Uzrah's Palace, Shadowdark"
+"source": "Örnek Macera, Shadowdark"
 ```
 
 ## 2. Alanlar Nasıl Doldurulur?
@@ -46,9 +47,21 @@ buradaki alanlara aktararak `blueprint.json` dosyasını doldurmak.
 
 3. **Sayısal alanlar** — Doğru tipi kullanın (int, text, dice).
 
-4. **Metin alanları** — Markdown formatında yazın.
+4. **Metin alanları** — Markdown formatında yazın. `description`, `backstory`,
+   `personality_traits` gibi alanlara kaynaktaki metin **birebir** taşınır;
+   özetleme yok ([README § 0](README.md)). Kaynak sistemin sayısal sayfası 5e
+   alanlarına oturmuyorsa ham sayfayı `backstory` içine bir markdown bölümü
+   olarak yapıştır — sayı uydurma.
 
-5. **Yazılmayan alanlar** — Şema default'unu alır.
+5. **Entity mention'ları** — Metin bir world entity'sinden bahsediyorsa link bırak:
+   ```json
+   "backstory": "@[Amara the Pale](entity:npc/Amara the Pale) ona borçlu."
+   ```
+   Biçim `@[Görünen Ad](entity:<kategori-slug>/<Entity Adı>)`; hedef
+   `world-blueprint.json`'da tanımlı olmalı, converter id'ye çevirir. Hedef yoksa
+   build hata verir.
+
+6. **Yazılmayan alanlar** — Şema default'unu alır.
 
 **`match` türleri:**
 - `"name"` — İsim ile eşle (en yaygın)
@@ -308,7 +321,7 @@ Background kartı: `granted_skill_refs`, `granted_tool_refs`,
         ],
         "gp": 10,
         "personality_traits": "Loud and boastful, laughs at danger.",
-        "backstory": "The Black Spear of Basra, feared pirate of the southern seas..."
+        "backstory": "Bir zamanlar güney denizlerinin korkulan korsanı..."
       }
     }
   ]
