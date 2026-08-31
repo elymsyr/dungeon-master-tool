@@ -35,6 +35,7 @@ import 'pending_choice_resolver_dialog.dart';
 import '../../../core/services/perf_probe.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character/effective_character.dart';
+import '../../../domain/entities/schema/builtin/groups.dart' show grpFeatures;
 import '../../../domain/entities/schema/rule_config.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
@@ -60,6 +61,7 @@ import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
 import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/quota_snackbar.dart';
+import '../../widgets/class_resources_card.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
 
@@ -1028,7 +1030,10 @@ class _CharacterEditorScreenState
 
     for (final g in groupsInOrder) {
       final list = fieldsByGroup[g.groupId] ?? const <FieldSchema>[];
-      if (list.isEmpty) continue;
+      // "Class Resources" grubunun şema alanı yok; içeriği tamamen
+      // resolver'dan türeyen havuz takipçisi. Boş diye atlanmamalı.
+      final isClassResources = g.groupId == grpFeatures;
+      if (list.isEmpty && !isClassResources) continue;
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
       // Identity group splices in the subspecies / ancestry picker right
       // after the species_ref tile so the lineage choice sits next to its
@@ -1040,6 +1045,9 @@ class _CharacterEditorScreenState
         if (f.fieldKey == 'species_ref') {
           children.add(_subspeciesPickerTile(character));
         }
+      }
+      if (isClassResources) {
+        children.add(_classResourcesTracker(palette, character));
       }
       widgets.add(EntityCardCollapsibleGroupCard(
         group: g,
@@ -1064,7 +1072,7 @@ class _CharacterEditorScreenState
     final w = _working;
     if (w == null) return;
     final effective =
-        ref.read(effectiveCharacterProvider(w.entity.id));
+        ref.read(effectiveCharacterProvider(w.id));
     if (effective == null) return;
     final fields = w.entity.fields;
 
@@ -1104,11 +1112,9 @@ class _CharacterEditorScreenState
   List<Widget> _renderResolvedGrants(
       DmToolColors palette, Character character) {
     final effective =
-        ref.watch(effectiveCharacterProvider(character.entity.id));
+        ref.watch(effectiveCharacterProvider(character.id));
     if (effective == null) return const [];
     final entities = _readEntitiesFor(character);
-    final remaining = _readGrantedPoolRemaining(character);
-    final (slotsMax, slotsRemaining) = _readSpellSlotsState(character);
     final level = _asInt(character.entity.fields['level'], 1);
     final (extraSkillProfIds, extraToolProfIds) =
         _extraResolvedProficiencies(character, effective, entities);
@@ -1120,13 +1126,28 @@ class _CharacterEditorScreenState
         characterLevel: level,
         extraSkillProfIds: extraSkillProfIds,
         extraToolProfIds: extraToolProfIds,
-        poolRemaining: remaining,
-        onPoolRemainingChanged: _writeGrantedPoolRemaining,
-        spellSlotsMax: slotsMax,
-        spellSlotsRemaining: slotsRemaining,
-        onSpellSlotsRemainingChanged: _writeSpellSlotsRemaining,
       ),
     ];
+  }
+
+  /// Sayılabilir sınıf kaynakları — "Class Resources" grubuna gömülür.
+  /// Kapasite resolver'dan türetilir, saklanmaz; böylece wizard'la elde
+  /// kurulan karakterle paketlenmiş dünyadan gelen karakter aynı satırları
+  /// gösterir. Havuz yoksa `SizedBox.shrink()`.
+  Widget _classResourcesTracker(DmToolColors palette, Character character) {
+    final effective = ref.watch(effectiveCharacterProvider(character.id));
+    if (effective == null) return const SizedBox.shrink();
+    final (slotsMax, slotsRemaining) = _readSpellSlotsState(character);
+    return ClassResourcesTracker(
+      effective: effective,
+      entities: _readEntitiesFor(character),
+      palette: palette,
+      poolRemaining: _readGrantedPoolRemaining(character),
+      onPoolRemainingChanged: _writeGrantedPoolRemaining,
+      spellSlotsMax: slotsMax,
+      spellSlotsRemaining: slotsRemaining,
+      onSpellSlotsRemainingChanged: _writeSpellSlotsRemaining,
+    );
   }
 
   /// Resolver-granted skill / tool proficiencies that aren't already checked
@@ -2451,36 +2472,12 @@ class _CharacterEditorScreenState
       updated['pending_choices'] = next;
     }
 
-    // SRD §1.5: class resource pool maxes (Rage, Ki, Bardic Inspiration,
-    // …) computed from class+subclass features. The character carries
-    // *remaining* counts forward where they existed before and adds the
-    // delta as fresh capacity; a pool that goes away (rare) is dropped.
-    if (plan.newResourcePools.isNotEmpty ||
-        plan.prevResourcePools.isNotEmpty) {
-      final maxOut = <String, dynamic>{};
-      final remainingOut = <String, dynamic>{};
-      final prevRemainingRaw = updated['class_resource_pools_remaining'];
-      int prevRem(String pool, int prevMax) {
-        if (prevRemainingRaw is Map) {
-          final v = prevRemainingRaw[pool];
-          if (v is int) return v;
-          if (v is String) return int.tryParse(v) ?? prevMax;
-        }
-        return prevMax;
-      }
-
-      for (final entry in plan.newResourcePools.entries) {
-        final pool = entry.key;
-        final newMax = entry.value;
-        maxOut[pool] = newMax;
-        final prevMax = plan.prevResourcePools[pool] ?? 0;
-        final base = prevRem(pool, prevMax);
-        final delta = newMax - prevMax;
-        remainingOut[pool] = (base + delta).clamp(0, newMax);
-      }
-      updated['class_resource_pools'] = maxOut;
-      updated['class_resource_pools_remaining'] = remainingOut;
-    }
+    // Havuz maksimumları burada YAZILMAZ. Kapasite `CharacterResolver`'ın
+    // türettiği bir değer (seviye tablosu / `cha_mod_min_1`); kopyasını
+    // karaktere yazmak, aynı sınıfın wizard'la kurulan ve paketlenmiş
+    // dünyadan gelen kopyalarını ayrıştırıyordu. Sayfadaki tek yer
+    // `ClassResourcesTracker`, kalan kullanım `granted_pool_uses_remaining`.
+    // (Eski `class_resource_pools` / `_remaining` alanlarını kimse okumuyordu.)
 
     // Per-level grant absorption — mirrors PR-A1 wizard logic for the
     // level-up path. Walk the class & subclass feature tables for rows
@@ -2973,7 +2970,7 @@ class _CharacterEditorScreenState
         character.entity.fields['base_abilities'] is Map &&
             (character.entity.fields['base_abilities'] as Map).isNotEmpty;
     final eff = hasBaseAbilities
-        ? ref.read(effectiveCharacterProvider(character.entity.id))
+        ? ref.read(effectiveCharacterProvider(character.id))
         : null;
     final resolved = eff?.effectiveAbilities ?? const <String, int>{};
     final out = <String, int>{};
@@ -2988,6 +2985,37 @@ class _CharacterEditorScreenState
       out[k] = resolved[k] ?? _asInt(fallback, 10);
     }
     return out;
+  }
+
+  /// Class Resources satırlarını dinlenmeye bağlar: `resource_pool_grants`
+  /// satırındaki `recharge` alanı dinlenmeyle eşleşen havuzların kalan-kullanım
+  /// kaydı silinir (eksik anahtar = dolu, [ClassResourcesTracker] ile aynı
+  /// sözleşme). Uzun dinlenme kısa dinlenme havuzlarını da tazeler; `recharge`
+  /// boş olan havuzlara (ör. yalnız level-up ile dolanlar) dokunulmaz.
+  void _rechargePools(
+    Character character,
+    Map<String, dynamic> updated, {
+    required bool long,
+  }) {
+    final remaining = Map<String, int>.from(
+      _readGrantedPoolRemaining(character),
+    );
+    if (remaining.isEmpty) return;
+    final effective = ref.read(effectiveCharacterProvider(character.id));
+    if (effective == null) return;
+    for (final p in effective.resourcePools) {
+      final id = p['pool_ref'];
+      if (id is! String) continue;
+      final recharge = p['recharge']?.toString();
+      if (recharge == 'short_rest' || (long && recharge == 'long_rest')) {
+        remaining.remove(id);
+      }
+    }
+    if (remaining.isEmpty) {
+      updated.remove('granted_pool_uses_remaining');
+    } else {
+      updated['granted_pool_uses_remaining'] = remaining;
+    }
   }
 
   Future<void> _shortRest(Character character) async {
@@ -3022,12 +3050,14 @@ class _CharacterEditorScreenState
     if (spent == null || !mounted) return;
     final dice = spent.dice;
     final restored = spent.restored;
-    if (dice <= 0) return;
 
     final newHp = (hp + restored).clamp(0, maxHp);
     final newHdRemaining = (hdRemaining - dice).clamp(0, maxHd);
     final updated = _writeHp(fields, hp: newHp);
     updated['hit_dice_remaining'] = newHdRemaining;
+    // Sıfır hit dice harcanan kısa dinlenme de geçerli bir dinlenmedir —
+    // havuzlar yine tazelenir.
+    _rechargePools(character, updated, long: false);
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));
@@ -3070,6 +3100,7 @@ class _CharacterEditorScreenState
 
     final updated = maxHp > 0 ? _writeHp(fields, hp: maxHp) : {...fields};
     updated['hit_dice_remaining'] = newHd;
+    _rechargePools(character, updated, long: true);
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));
@@ -3717,8 +3748,11 @@ class _StatChipsHeader extends ConsumerWidget {
     final pkgEntities =
         withCharacterPackages(ref.watch, const <String, Entity>{}, character);
 
-    String resolve(String? id) {
-      if (id == null) return '—';
+    // [fallback] = yumuşak ref zarfındaki ham ad; id çözülemezse çip onu
+    // gösteriyor (paketlenmiş dünyadan gelen PC'lerde species/class id'ye
+    // çözülmemiş olabiliyor).
+    String resolve(String? id, [String? fallback]) {
+      if (id == null) return fallback ?? '—';
       if (useCampaign) {
         final name =
             ref.watch(entityProvider.select((m) => m[id]?.name));
@@ -3729,7 +3763,8 @@ class _StatChipsHeader extends ConsumerWidget {
       );
       if (builtinName != null && builtinName.isNotEmpty) return builtinName;
       final pkgName = pkgEntities[id]?.name;
-      return (pkgName != null && pkgName.isNotEmpty) ? pkgName : '—';
+      if (pkgName != null && pkgName.isNotEmpty) return pkgName;
+      return fallback ?? '—';
     }
 
     // On phone the header is squeezed by the 200-px portrait, so the chip
@@ -3745,8 +3780,8 @@ class _StatChipsHeader extends ConsumerWidget {
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(
           character,
-          raceName: resolve(ids.raceId),
-          className: resolve(ids.classId),
+          raceName: resolve(ids.raceId, ids.raceName),
+          className: resolve(ids.classId, ids.className),
           subspeciesName: () {
             final raw = character.entity.fields['subspecies_id'];
             if (raw is! String || raw.isEmpty) return '';

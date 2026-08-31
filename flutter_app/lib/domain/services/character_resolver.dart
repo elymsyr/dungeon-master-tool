@@ -291,7 +291,14 @@ class CharacterResolver {
           entitiesById: entitiesById,
         );
         resourcePools.add(<String, dynamic>{
-          'pool_ref': row['pool_ref'],
+          // Havuz kimliği id'ye çözülür. Built-in SRD haritasında `_lookup`
+          // zarfları zaten id'ye dönmüş geliyor, pakete/blueprint'e dayanan
+          // içerikte `{_lookup|slug, name}` olarak kalabiliyor — ham
+          // bırakılınca sayfa satırı String beklediği için havuz sessizce
+          // düşüyordu, yani aynı sınıf nereden geldiğine göre farklı
+          // görünüyordu. Çözülemeyen değer aynen kalır.
+          'pool_ref': _resolveRef(row['pool_ref'], entitiesById) ??
+              row['pool_ref'],
           'max': scaled ?? formula ?? row['count'],
           'recharge': row['recharge'],
         });

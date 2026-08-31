@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/resource_pool_resolver.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-29
+updated: 2026-08-31
 tags: [file]
 ---
 
@@ -37,6 +37,6 @@ tags: [file]
 
 ## Notes
 - `count_formula` support in pools was a deliberate May-2026 fix (shared `evalCountFormula` helper threaded through `planLevelUp` via `_classLevelsForLevel`). The `count_by_level` table replaced the old `scales_with` DSL in the 2026-07-28 rule-system removal.
-- Pools are keyed by *name* (that name is what `class_resource_pools` stores on the PC). `pool_ref` is accepted in **both** shapes — an unresolved `{_lookup/slug, name}` placeholder *and* a resolved id string, looked up through the entity map by `_poolName`. An id that resolves to nothing is skipped rather than keyed by the raw uuid.
+- Pools are keyed by *name*. **This resolver only feeds the level-up dialog's "what changes" preview**; the sheet's live capacity comes from `CharacterResolver.resourcePools`, keyed by entity **id**. (Until 2026-08-31 the level-up apply path also wrote a copy of the maxes to `class_resource_pools` / `class_resource_pools_remaining` on the PC — nothing ever read those fields and the write is gone.) `pool_ref` is accepted in **both** shapes — an unresolved `{_lookup/slug, name}` placeholder *and* a resolved id string, looked up through the entity map by `_poolName`. An id that resolves to nothing is skipped rather than keyed by the raw uuid.
 - **Fixed 2026-07-29:** only the placeholder shape was accepted, so against a resolved entity map (`buildBuiltinSrdEntities()` — i.e. every shipped pack) this returned empty and the level-up dialog showed **no resource pools for any class**. [[character_resolver]] never had the bug, which is why the sheet was right and only the preview was wrong. Pinned by `test/domain/services/grant_reader_agreement_test.dart`, which walks all 12 SRD classes at 12 levels and demands the two readers agree.
 - `_isAutoGranted` is duplicated across this file, `extra_attack_resolver.dart`, and `weapon_mastery_resolver.dart`.

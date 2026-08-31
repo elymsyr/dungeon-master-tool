@@ -38,8 +38,10 @@ Map<String, int> resolveResourcePoolsAt({
       if (row is! Map) continue;
       // `pool_ref` arrives either as an unresolved `{slug, name}` placeholder
       // (hand-authored / freshly imported content) or as the entity id the
-      // pack builder resolved it to. Both must key the same pool name, since
-      // that name is what `class_resource_pools` stores on the character.
+      // pack builder resolved it to. Both must key the same pool *name* —
+      // this resolver only feeds the level-up dialog's "what changes"
+      // preview, which lists pools by name. The sheet's live capacity comes
+      // from `CharacterResolver.resourcePools`, never from here.
       final poolName = _poolName(row['pool_ref'], entities);
       if (poolName == null || poolName.isEmpty) continue;
 
