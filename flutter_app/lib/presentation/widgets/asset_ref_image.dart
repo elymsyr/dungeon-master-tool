@@ -110,3 +110,37 @@ class _AssetRefImageState extends ConsumerState<AssetRefImage> {
     );
   }
 }
+
+/// Fullscreen, pan/zoom preview of a single image ref.
+void showAssetRefFullScreen(BuildContext context, String imagePath) {
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: Stack(
+        children: [
+          InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            // Ekran genişliğinin 2x'i kadar decode — 4x zoom'da makul
+            // keskinlik, full-res photo'nun unbounded RGBA RAM'i olmadan.
+            child: AssetRefImage(
+              ref: AssetRef(imagePath),
+              fit: BoxFit.contain,
+              cacheWidth:
+                  cachePxFromLogical(ctx, MediaQuery.sizeOf(ctx).width * 2),
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(ctx),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}

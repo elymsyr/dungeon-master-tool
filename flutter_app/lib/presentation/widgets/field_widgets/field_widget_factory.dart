@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
@@ -32,7 +33,6 @@ import '../../screens/map/world_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
 import '../markdown_text_area.dart';
-import '../perf/image_cache_size.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
 import 'structured_list_field_widgets.dart';
@@ -2552,9 +2552,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                             }
                           },
                           styleSheet:
-                              MarkdownStyleSheet.fromTheme(
-                                Theme.of(context),
-                              ).copyWith(
+                              dmMarkdownStyle(context).copyWith(
                                 p: TextStyle(
                                   fontSize: 12,
                                   height: 1.35,
@@ -3604,40 +3602,6 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
     ));
   }
 
-  void _showFullScreen(BuildContext context, String imagePath) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4.0,
-              // U3: ekran genişliğinin 2x'i kadar decode — 4x zoom'da
-              // makul keskinlik, ama full-res photo'nun unbounded RGBA
-              // RAM'i (4000px → ~64MB) önlenir.
-              child: AssetRefImage(
-                ref: AssetRef(imagePath),
-                fit: BoxFit.contain,
-                cacheWidth:
-                    cachePxFromLogical(ctx, MediaQuery.sizeOf(ctx).width * 2),
-              ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(ctx),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final images = _images;
@@ -3666,7 +3630,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                   children: [
                     GestureDetector(
                       onTap: () =>
-                          _showFullScreen(context, images[_currentIndex]),
+                          showAssetRefFullScreen(context, images[_currentIndex]),
                       child: ClipRRect(
                         borderRadius: palette?.cbr ?? BorderRadius.circular(4),
                         child: AssetRefImage(

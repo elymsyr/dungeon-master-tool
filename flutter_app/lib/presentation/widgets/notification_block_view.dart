@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../theme/markdown_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
@@ -31,7 +32,7 @@ class MarkdownBlockView extends StatelessWidget {
     return MarkdownBody(
       data: block.text,
       selectable: false,
-      styleSheet: notificationMarkdownStyle(palette),
+      styleSheet: notificationMarkdownStyle(palette).withDmBlockquote(context),
       onTapLink: (text, href, title) async {
         if (href == null) return;
         final uri = Uri.tryParse(href);

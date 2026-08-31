@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../theme/markdown_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../application/character_creation/pending_choices.dart';
@@ -1720,7 +1721,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
                         MarkdownBody(
                           data: description,
                           styleSheet:
-                              MarkdownStyleSheet.fromTheme(Theme.of(context))
+                              dmMarkdownStyle(context)
                                   .copyWith(
                             p: TextStyle(fontSize: 11, color: hint),
                           ),

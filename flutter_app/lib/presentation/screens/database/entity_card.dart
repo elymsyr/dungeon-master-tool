@@ -1175,6 +1175,10 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTap: widget.images.isEmpty
+            ? null
+            : () => showAssetRefFullScreen(
+                context, widget.images[_currentIndex]),
         child: Container(
           width: 200,
           height: 260,

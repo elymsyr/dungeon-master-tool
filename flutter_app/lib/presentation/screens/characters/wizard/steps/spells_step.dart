@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../../theme/markdown_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/caster_progression.dart';
@@ -368,7 +368,7 @@ class _SpellRow extends StatelessWidget {
                     ExpandableMarkdown(
                       data: description,
                       styleSheet:
-                          MarkdownStyleSheet.fromTheme(Theme.of(context))
+                          dmMarkdownStyle(context)
                               .copyWith(
                         p: TextStyle(
                           fontSize: 11,
