@@ -11,6 +11,14 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
+- **Marketplace package download fails with "Bad state: Catalog payload unavailable"** —
+  Downloading a package (e.g. open5e-a5e-ag) from the marketplace throws
+  `Bad state: Catalog payload unavailable`. Reproducible on GitHub release builds and dev
+  builds alike (`flutter run -d` included). Needs investigation.
+- **Marketplace world download silently fails on GitHub builds** — When downloading a world
+  from the marketplace on a GitHub release build, no error is shown but the world does not
+  download; the UI says "retry". Same flow on `flutter run -d` works fine. Likely a
+  build-mode or routing difference.
 - **Deleting a world bricks its characters** — A character claimed from an installed world
   can no longer be opened once that world is deleted; the sheet fails to load instead of
   simply losing its world link. Characters should survive world deletion and stay
