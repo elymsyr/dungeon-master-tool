@@ -2,7 +2,7 @@
 
 Living list of what is deferred, broken-on-purpose, or a real bug still being tracked.
 **This file is the source of truth** — the `### Known issues` section of each release note
-in [RELEASE_NOTES.md](../RELEASE_NOTES.md) is filled in from here at release time (copy the
+in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (copy the
 items that are still open on the release date; do not edit past releases afterwards).
 
 **Last reviewed:** September 2026 (v15.0.0)
