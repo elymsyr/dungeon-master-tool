@@ -4387,28 +4387,11 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
     this.entityFields,
   });
 
-  List<Map<String, dynamic>> get _rows {
-    if (value is Map && (value as Map)['rows'] is List) {
-      final list = (value as Map)['rows'] as List;
-      if (list.isNotEmpty) {
-        return list
-            .map<Map<String, dynamic>>(
-              (r) => Map<String, dynamic>.from(r as Map),
-            )
-            .toList();
-      }
-    }
-    // Fallback: schema-provided default rows (preset skills / saves) when
-    // the entity's stored value is missing/empty. Lets cards filled before
-    // defaults landed still render the canonical row list.
-    final dv = schema.defaultValue;
-    if (dv is Map && dv['rows'] is List) {
-      return (dv['rows'] as List)
-          .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r as Map))
-          .toList();
-    }
-    return const [];
-  }
+  /// Preset satir listesi + kayitli degerler. Blueprint/paket verisi tabloyu
+  /// kisa yazar (yalniz proficient satirlar), o yuzden replace degil merge:
+  /// eksik satirlar schema default'undan gelir.
+  List<Map<String, dynamic>> get _rows => List<Map<String, dynamic>>.from(
+      mergeProficiencyRows(schema.defaultValue, value)['rows'] as List);
 
   int? _abilityScore(String ability) {
     final sb = entityFields?['stat_block'];

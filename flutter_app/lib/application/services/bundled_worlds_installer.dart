@@ -16,10 +16,13 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import '../../domain/entities/schema/dnd5e_constants.dart';
+import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../domain/services/builtin_content_names.dart';
 import '../../domain/services/world_blueprint_converter.dart';
+import '../providers/character_provider.dart' show kPlayerCategorySlugs;
 import 'pdf_library_service.dart';
 
 /// `assets/worlds/` altındaki paketlenmiş dünyaları kurar / kaldırır.
@@ -367,9 +370,31 @@ class BundledWorldsInstaller {
           '${characters.length} character(s) not installed');
       return;
     }
+    // Blueprint PC'leri proficiency tablolarini kisa yazar (yalniz proficient
+    // satirlar). Tablonun tamamini burada tamamla: hem sheet tam gorunsun hem
+    // de sonraki "skill sec" akislari var olan satiri bulup isaretleyebilsin.
+    final profDefaults = <String, Object?>{
+      for (final c in build.schema.categories)
+        if (kPlayerCategorySlugs.contains(c.slug))
+          for (final f in c.fields)
+            if (f.fieldType == FieldType.proficiencyTable)
+              f.fieldKey: f.defaultValue,
+    };
+
     final now = DateTime.now().toUtc().toIso8601String();
     for (var json in characters) {
       var id = json['id'] as String;
+      final fields = json['fields'];
+      if (fields is Map && profDefaults.isNotEmpty) {
+        json = {
+          ...json,
+          'fields': <String, dynamic>{
+            ...fields.cast<String, dynamic>(),
+            for (final e in profDefaults.entries)
+              e.key: mergeProficiencyRows(e.value, fields[e.key]),
+          },
+        };
+      }
       try {
         if (await _chars.exists(id)) {
           // Blueprint id'leri deterministik: aynı dünyayı ikinci kez kurmak
