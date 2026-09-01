@@ -19,6 +19,8 @@ This release rebuilds how ready-made worlds get into the app. Bundled adventures
 - **Bundled world media actually installs** — Maps, tokens, handouts and character sheets now reach your device in release builds, not just debug.
 - **Entity cross-links in bundled world text** — Names mentioned in a bundled world's descriptions resolve to tappable entity links.
 - **Offline SRD package** — The full SRD 5.2.1 content pack is bundled in the app, so it imports with no network connection.
+- **Official worlds in the Marketplace** — Bundled adventures now appear as installable cards under Marketplace → Official, downloaded from the official catalog with no account needed.
+- **Re-installing never overwrites** — A world or package installed twice lands as `… (Copy)` instead of clobbering the copy you already edited.
 - **Fullscreen image viewer** — Tap any entity image for a pan/zoom fullscreen preview.
 - **Richer NPC and monster sheets** — New Description, Backstory, Traits & Features, Spellcasting and Equipment & Gear fields for free-text stat blocks.
 
@@ -58,6 +60,16 @@ Flutter asset folders are not recursive, so earlier builds shipped only the top-
 
 Bundled world descriptions can reference other entities inline. Mentions are resolved to real entity IDs when the world is converted, so a name that appears in a scene description becomes a link to that NPC, location or item. An unresolvable mention now fails at authoring time rather than shipping as dead text.
 
+#### Official worlds in the Marketplace
+
+Bundled adventures now go through the same publishing pipeline as official packages: they are built into the first-party catalog, uploaded to the official content bucket, and show up as cards under **Marketplace → Official**. Installing one needs no account. The download falls back to the copy shipped inside the app if the catalog is unreachable, so worlds still install fully offline.
+
+Adventure PDFs are not redistributed — where a world has one, the card links to the publisher's own free download and the dialog says so.
+
+#### Installing the same content twice
+
+Installing a world or package you already have no longer overwrites it. The new copy comes in as `Name (Copy)`, then `Name (Copy 2)`, matching the naming used by **Copy World** on the Worlds tab.
+
 #### Offline SRD 5.2.1 package
 
 The complete SRD 5.2.1 content package ships as a bundled asset. First-run content import no longer depends on a network round-trip.
@@ -86,6 +98,7 @@ Markdown now renders through one shared style across entity cards, notification 
 - **Bundled world player characters not appearing** — Pre-made PCs are written to the Characters tab and the list refreshes after installation instead of needing an app restart.
 - **Class resources invisible on the sheet** — Level-up wrote resource pools to a field nothing read, so they never rendered. Capacity is now derived from the resolver and always shows.
 - **Blank race and class chips on bundled characters** — Chips show the referenced name when the reference has not been resolved to a local entity.
+- **Official worlds missing from the catalog** — The catalog manifest reader dropped every non-package entry, so published worlds never reached the Marketplace.
 - **Dark-mode blockquotes** — Markdown blockquotes no longer render near-invisible on dark backgrounds.
 
 ---
