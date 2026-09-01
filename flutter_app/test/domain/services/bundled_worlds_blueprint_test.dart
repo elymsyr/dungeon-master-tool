@@ -61,26 +61,5 @@ void main() {
         expect(c['fields'], isA<Map<String, dynamic>>());
       }
     });
-
-    test('bundled world "${w['title']}" is declared in pubspec assets', () {
-      // Flutter asset directories are not recursive. A world whose media
-      // subfolders are not listed ships as a manifest and nothing else — the
-      // installer then finds no blueprints and no images in a release build.
-      final pubspec = File('pubspec.yaml').readAsStringSync();
-      final dirs = <String>{
-        for (final d
-            in Directory(dir).listSync(recursive: true).whereType<Directory>())
-          if (!d.path.split(Platform.pathSeparator).any((s) => s.startsWith('.')))
-            '${d.path.replaceAll(r'\', '/')}/',
-        '$dir/',
-      };
-      for (final d in dirs) {
-        expect(
-          pubspec.contains('- $d') || pubspec.contains('- "$d"'),
-          isTrue,
-          reason: 'pubspec.yaml flutter.assets is missing `- $d`',
-        );
-      }
-    });
   }
 }

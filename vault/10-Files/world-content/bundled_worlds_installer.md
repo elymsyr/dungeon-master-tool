@@ -66,5 +66,16 @@ The catalog install stamps `installed_from: 'official'` + `catalog_version` (whi
 `_mediaPaths` skips the `pdf_url` key: it is a publisher download link, and walking it as a
 media path would report "unavailable" on every install.
 
+## Assets are not bundled (2026-09-01)
+`assets/worlds/` (~326 MB) is **commented out of `pubspec.yaml`** — the same treatment
+`assets/open5e_packs/` gets. Worlds now reach users only through the marketplace
+(`installFromCatalog`, bytes from R2); the directory is the authoring source for
+`tool/catalog_publish/` and nothing else. Consequences:
+- `installAll()` and the bundle fallback inside `installFromCatalog` find nothing in a
+  release build — the R2 path is the only live one.
+- `isAvailable()` returns false on Android/iOS unconditionally (and everywhere else once the
+  assets are absent), so the admin dashboard's "Install bundled worlds" toggle is hidden on
+  mobile. A maintainer re-enables the whole thing by uncommenting the pubspec block.
+
 ## Notes
 - The `_bundled/` media root is per-user (`AppPaths.worldsDir` follows the active user); reinstalling after a user switch re-extracts.

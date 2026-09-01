@@ -120,7 +120,12 @@ class WorldCharactersNotifier
       }
       final merged = byId.values.toList();
       merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-      state = AsyncValue.data(rows);
+      // `rows` değil `merged`: bulut tablosu yalnız paylaşılan/claim edilmiş
+      // karakterleri taşıyor. Katalogdan ya da assets'ten kurulan dünyanın
+      // sahipsiz PC'leri sadece Drift'te; `rows` yazılınca giriş yapmış
+      // kullanıcıda Characters sekmesi boş çıkıyordu (çıkış yapmışta doğru,
+      // çünkü `_service == null` erken dönüyor).
+      state = AsyncValue.data(merged);
     } catch (e, st) {
       debugPrint('WorldCharactersNotifier bootstrap error: $e');
       state = AsyncValue.error(e, st);

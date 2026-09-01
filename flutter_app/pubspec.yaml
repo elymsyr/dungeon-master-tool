@@ -123,24 +123,24 @@ flutter:
     # (`{worker}/catalog/banners/<slug>.png`, see cloudflare/upload_banners.sh).
     - assets/first_party/banners/dnd5e-template.jpg
     - assets/first_party/banners/dnd5e-package-builtin.jpg
-    # Bundled worlds (blueprint format).  Each subdir contains a manifest.json,
-    # world-blueprint.json, blueprint.json, and media/ folder.  Loaded by
-    # BundledWorldsInstaller at admin toggle time.
+    # Bundled worlds (blueprint format) are EXCLUDED from builds (~326MB).
+    # They ship through the marketplace instead: the catalog entry's payload
+    # and media come from R2 (`BundledWorldsInstaller.installFromCatalog`), and
+    # `assets/worlds/` is only the authoring source for
+    # `tool/catalog_publish/`. The admin "Install bundled worlds" toggle hides
+    # itself when the assets are absent (bundledWorldsAvailableProvider).
     #
-    # Flutter asset directories are NOT recursive — every media subfolder has to
-    # be listed by hand.  Listing only `assets/worlds/` ships the top-level
-    # manifest and nothing else: in a release build the installer then finds no
-    # blueprints and no images at all (debug on desktop hid this, because
-    # `_tryLoad` falls back to reading the file off the working directory).
-    # `bundled_worlds_blueprint_test.dart` fails when a world directory is
-    # missing from this list.
-    - assets/worlds/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
-    - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
+    # A maintainer who wants the in-app installer uncomments the block below
+    # and rebuilds. Flutter asset directories are NOT recursive — every media
+    # subfolder has to be listed by hand; listing only `assets/worlds/` ships
+    # the top-level manifest and nothing else.
+    # - assets/worlds/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
+    # - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
 
 flutter_launcher_icons:
   android: true
