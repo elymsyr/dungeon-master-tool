@@ -628,12 +628,14 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       data: cardTheme,
       child: Container(
         color: palette.srdParchment,
-        child: SingleChildScrollView(
+        // PERF: lazy viewport — see the note in character_editor_screen.
+        // `SingleChildScrollView + Column` inflated and painted every field
+        // of the card at once; ListView.builder does only the visible ones
+        // and gives each row a RepaintBoundary.
+        child: ListView.builder(
           padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
+          itemCount: children.length,
+          itemBuilder: (_, i) => children[i],
         ),
       ),
     );

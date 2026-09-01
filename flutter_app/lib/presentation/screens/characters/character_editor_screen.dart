@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -630,11 +631,7 @@ class _CharacterEditorScreenState
     // (entities via _readEntitiesFor) so unsaved equip toggles stay fresh —
     // effectiveCharacterProvider only sees the persisted copy and lags behind
     // (see the in-tile notes at ~2037 and the header notes at ~3680).
-    final resolved = CharacterResolver.resolve(
-      character,
-      _readEntitiesFor(character),
-      config: ref.read(ruleConfigProvider),
-    );
+    final resolved = _resolveMemo(character);
     final effectiveAc = resolved.armorClass;
     final armorNotes = resolved.armorNotes;
 
@@ -653,67 +650,71 @@ class _CharacterEditorScreenState
           )
         : baseTheme;
 
+    // PERF: the sheet is a LAZY viewport. It used to be
+    // `SingleChildScrollView + Column`, which inflated an Element +
+    // RenderObject for EVERY field of EVERY group and laid out and painted
+    // the whole sheet on each rebuild — the scroll hitches on mobile. The
+    // children list below is still built eagerly (cheap Widget ctors); the
+    // sliver builds/lays out/paints only what is on screen and wraps each
+    // row in its own RepaintBoundary. Safe to unmount off-screen rows
+    // because every field widget seeds its controller from `value` in
+    // initState and commits per keystroke via onChanged — no state lives
+    // only in the unmounted row.
+    final rows = <Widget>[
+    _entityHeader(palette, character, template, effectiveAc),
+    const SizedBox(height: 12),
+    _renderRestActions(palette, character),
+    const SizedBox(height: 16),
+    ..._renderResolvedGrants(palette, character),
+    ..._renderSchemaFields(
+        palette, playerCat, character, effectiveAc, armorNotes),
+    ..._renderLevelUpTable(palette, character),
+    const SizedBox(height: 8),
+    EntityCardSectionHeading(
+      title: 'DM Notes',
+      palette: palette,
+      leadingIcon: Icons.lock,
+    ),
+    const SizedBox(height: 6),
+    MarkdownTextArea(
+      controller: _dmNotesController,
+      focusNode: _dmNotesFocus,
+      readOnly: _readOnly,
+      minLines: _readOnly ? null : 3,
+      textStyle: TextStyle(
+          fontSize: 13,
+          color: palette.srdInk,
+          height: 1.4),
+      decoration: InputDecoration(
+        hintText: 'Private DM notes... (@ to mention)',
+        border: InputBorder.none,
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+        filled: false,
+        hintStyle:
+            TextStyle(color: palette.sidebarLabelSecondary),
+      ),
+      onChanged: (v) {
+        final c = _working;
+        if (c == null) return;
+        _mutate(c.copyWith(
+            entity: c.entity.copyWith(dmNotes: v)));
+      },
+    ),
+    ];
+
     return Theme(
       data: cardTheme,
       child: Container(
         color: palette.srdParchment,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: LayoutBuilder(builder: (ctx, c) {
-              final isPhone = c.maxWidth < 600;
-              return ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isPhone ? c.maxWidth : 760,
-                ),
-                child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _entityHeader(palette, character, template, effectiveAc),
-                  const SizedBox(height: 12),
-                  _renderRestActions(palette, character),
-                  const SizedBox(height: 16),
-                  ..._renderResolvedGrants(palette, character),
-                  ..._renderSchemaFields(
-                      palette, playerCat, character, effectiveAc, armorNotes),
-                  ..._renderLevelUpTable(palette, character),
-                  const SizedBox(height: 8),
-                  EntityCardSectionHeading(
-                    title: 'DM Notes',
-                    palette: palette,
-                    leadingIcon: Icons.lock,
-                  ),
-                  const SizedBox(height: 6),
-                  MarkdownTextArea(
-                    controller: _dmNotesController,
-                    focusNode: _dmNotesFocus,
-                    readOnly: _readOnly,
-                    minLines: _readOnly ? null : 3,
-                    textStyle: TextStyle(
-                        fontSize: 13,
-                        color: palette.srdInk,
-                        height: 1.4),
-                    decoration: InputDecoration(
-                      hintText: 'Private DM notes... (@ to mention)',
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                      hintStyle:
-                          TextStyle(color: palette.sidebarLabelSecondary),
-                    ),
-                    onChanged: (v) {
-                      final c = _working;
-                      if (c == null) return;
-                      _mutate(c.copyWith(
-                          entity: c.entity.copyWith(dmNotes: v)));
-                    },
-                  ),
-                ],
-              ),
-              );
-            }),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+              itemCount: rows.length,
+              itemBuilder: (_, i) => rows[i],
+            ),
           ),
         ),
       ),
@@ -2720,6 +2721,47 @@ class _CharacterEditorScreenState
   /// E1: returns a lazy `CombinedMapView` instead of spreading both
   /// maps into a fresh `{}` per call. Reads are O(1); 20+ field tiles
   /// hitting this helper no longer allocate one 7 K-entry map each.
+  EffectiveCharacter? _resolveCache;
+  String? _resolveCacheId;
+  Map<String, dynamic>? _resolveCacheFields;
+  Map<String, Entity>? _resolveCacheEntities;
+
+  /// PERF: memoized `CharacterResolver.resolve` for the editor.
+  ///
+  /// Every keystroke does `setState`, which used to re-run the ~1500-line
+  /// resolver over the whole 7K-entity map. `CharacterResolver.resolve`
+  /// reads exactly two things off the character — `pc.id` and
+  /// `pc.entity.fields` — so those plus the entity map are a COMPLETE key
+  /// (guarded by `character_resolver_inputs_test.dart`).
+  ///
+  /// The comparison is a shallow [mapEquals], not `identical`: Freezed's
+  /// `fields` getter hands out a fresh `EqualUnmodifiableMapView` on every
+  /// read, so identity never matches. Shallow is enough because every field
+  /// edit rebuilds the map with a spread (`{...fields, key: v}`), replacing
+  /// the changed value's reference. Typing in name / description / DM notes
+  /// leaves `fields` untouched and now reuses the previous resolve.
+  EffectiveCharacter _resolveMemo(Character character) {
+    final entities = _readEntitiesFor(character);
+    final fields = character.entity.fields;
+    final cached = _resolveCache;
+    if (cached != null &&
+        _resolveCacheId == character.id &&
+        identical(_resolveCacheEntities, entities) &&
+        mapEquals(_resolveCacheFields, fields)) {
+      return cached;
+    }
+    final out = CharacterResolver.resolve(
+      character,
+      entities,
+      config: ref.read(ruleConfigProvider),
+    );
+    _resolveCache = out;
+    _resolveCacheId = character.id;
+    _resolveCacheFields = fields;
+    _resolveCacheEntities = entities;
+    return out;
+  }
+
   void _invalidateEntitiesCache() {
     _entitiesCache = null;
     _entitiesCacheCampaign = null;
