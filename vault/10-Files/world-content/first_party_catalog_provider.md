@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/first_party_catalog_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-09-01
 tags: [file]
 ---
 
@@ -16,7 +16,7 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- `firstPartyCatalogProvider` — `FutureProvider<List<CatalogEntry>>`, the manifest (R2 → bundled fallback; never surfaces an offline error).
+- `firstPartyManifestProvider` — `FutureProvider<List<CatalogEntry>>`, the whole manifest (R2 → bundled fallback; never surfaces an offline error). `firstPartyCatalogProvider` (packages) and `firstPartyWorldCatalogProvider` (worlds) are the item-type slices of it; both feed the same `OfficialPackagesCatalogView`.
 - `assetsPacksAvailableProvider` — `rootBundle` probe (BB-1): false in normal production builds, which is why the admin "Install asset packs" toggle is hidden there.
 - `CatalogEntry` fields used at install: `slug`, `version`, `requires`, `r2Path` / `bundledAsset`.
 
@@ -36,6 +36,7 @@ tags: [file]
 - **Dependency install order**: `install(entry)` runs a cycle-safe post-order DFS over `entry.requires` against the manifest (mirrors `PackageLinkService.closure`), installs dependencies first, and **fails the whole install** if a dependency install fails. A required slug that is absent from the manifest is skipped — the link simply dangles, matching the soft-ref rule that a missing target is a warning, never a failure.
 - **Naming**: the local package row is named after `metadata.title` (see [[package_payload_importer]]), which is why a `metadata.links` entry must carry the **title** in `name` and the **catalog slug** in `slug` — two different strings, one for each side. See [[Package-Links]].
 - **Upgrade check (D2, 2026-08-13)**: `isCatalogUpdateAvailable` parses both sides as strict `major.minor.patch` and compares component-wise (so `1.9.0 → 1.10.0` *is* an update). Fail-soft: a null, empty or non-semver version on either side returns false — no nagging on data we don't understand. An upgrade is just `install(entry)` again; [[package_payload_importer]] saves over the same row name and carries declared links across.
+- **Worlds (2026-09-01)**: `_installOne` branches on `itemType == 'world'` to `_installWorld`, which delegates to [[bundled_worlds_installer]]`.installFromCatalog` — a world is a campaign, not a package, so it never touches [[package_payload_importer]]. The returned `InstallReport` is surfaced, not swallowed: `failures` → `error` phase, `issues` → `done` with a "N content issue(s)" message (a map that failed to download is not a clean install). Invalidates `campaignListProvider`.
 - **Banner**: `fetchBanner(slug)` → base64 → `CoverImageBundler.restore` into `AppPaths.packagesDir`, so the Packages tab shows the same art as the catalog card.
 
 ## Notes

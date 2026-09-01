@@ -5,7 +5,7 @@ path: flutter_app/tool/catalog_publish/bin/publish_catalog.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-09-01
 tags: [file]
 ---
 
@@ -17,10 +17,10 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - CLI args: `--worker <url>` (else `DMT_WORKER_URL` env), `--token <ADMIN_TOKEN>` (else `ADMIN_TOKEN` env), `--dry-run`, `--force`.
-- `assets/first_party/manifest.json` (built by [[build_catalog]]) + each entry's `bundled_asset` payload file.
+- `assets/first_party/manifest.json` (built by [[build_catalog]]) + each entry's `bundled_asset` payload file, or for `world` entries its `bundled_dir` and `media[]`.
 
 **Outputs**
-- HTTP PUTs to `{worker}/catalog/{r2_path}` (`application/gzip`) and finally `{worker}/catalog/manifest.json` (`application/json`).
+- HTTP PUTs to `{worker}/catalog/{r2_path}` (`application/gzip`), plus for worlds one raw PUT per `media[].r2_key` (content type by extension), and finally `{worker}/catalog/manifest.json` (`application/json`).
 - Console summary (`uploaded / skipped / failed / KB transferred`); exit 1 if any failure, exit 2 on missing worker/token/manifest.
 
 ## Dependencies & Links
@@ -36,6 +36,8 @@ tags: [file]
 - **Manifest last**: ensures the live index only ever references objects already uploaded.
 - `--dry-run`: gzips + counts but never PUTs (token not required); logs `~ <path>`.
 - Auth: `Authorization: Bearer <token>` header on every PUT.
+- `_publishWorld` handles `item_type == 'world'`: rebuilds the envelope from `bundled_dir` via the shared `world_payload.dart` (identical bytes to what [[build_catalog]] sized), PUTs it at `r2_path`, then PUTs every `media[]` file raw. `external_files` is **never uploaded** — those are links to content we deliberately do not host (the `all-rights-reserved` adventure PDF). The same `_exists`-skip / `--force` immutability rule applies per object, so re-publishing an unchanged world transfers nothing.
+- Media keys contain spaces (`media/GURPS GCS Characters/…`), so the world branch URL-encodes with `Uri.encodeFull` before the request; the R2 key itself keeps the literal space.
 - `_kb` formats transfer size; `_parseArgs` supports `--flag` (valueless) and `--key value`.
 
 ## Notes

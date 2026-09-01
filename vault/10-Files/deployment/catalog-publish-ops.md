@@ -5,7 +5,7 @@ path: cloudflare/upload_banners.sh, flutter_app/tool/catalog_publish/bin/publish
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-01
 tags: [file]
 ---
 
@@ -17,11 +17,11 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Env (both tools): `DMT_WORKER_URL` (the Worker base, e.g. `https://dmt-assets.<acct>.workers.dev`) and `ADMIN_TOKEN` (the `wrangler secret ADMIN_TOKEN`).
-- `publish_catalog.dart` reads `assets/first_party/manifest.json` (produced by [[build_catalog]]) plus each entry's `bundled_asset` file.
+- `publish_catalog.dart` reads `assets/first_party/manifest.json` (produced by [[build_catalog]]) plus each entry's `bundled_asset` file — or, for a `world` entry, its `bundled_dir` and every file in `media[]`.
 - `upload_banners.sh` reads `flutter_app/assets/first_party/banners/*.jpg`.
 
 **Outputs**
-- R2 objects under `{worker}/catalog/`: versioned payloads `catalog/{type}/{slug}@{ver}.json.gz`, the `catalog/manifest.json` index, and `catalog/banners/<name>.jpg`.
+- R2 objects under `{worker}/catalog/`: versioned payloads `catalog/{type}/{slug}@{ver}.json.gz`, world media at `catalog/world-media/{slug}@{ver}/<rel>`, the `catalog/manifest.json` index, and `catalog/banners/<name>.jpg`.
 
 ## Dependencies & Links
 - Depends on: [[build_catalog]], [[publish_catalog]], [[worker]], [[dart-define-reference]]
@@ -36,6 +36,11 @@ tags: [file]
 2. `dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> [--token <ADMIN_TOKEN>] [--dry-run] [--force]` (see [[publish_catalog]]). Token falls back to `ADMIN_TOKEN` env, worker to `DMT_WORKER_URL` env. Trailing slashes stripped.
 3. `DMT_WORKER_URL=<url> ADMIN_TOKEN=<secret> ./cloudflare/upload_banners.sh` to mirror banners.
 4. After re-uploading any banner, bump `kBannerAssetVersion` in [[first_party_catalog_service]] (the `?v=N` cache-buster — banners are served `immutable, max-age=1y`).
+
+**Worlds (added 2026-09-01):**
+- A world publishes as one gzipped envelope (`catalog/world/<slug>@<ver>.json.gz` — its `manifest.json` + both blueprints) plus one raw object per media file. The 99 Devils world is 1 envelope + 75 media ≈ 43 MB, so budget a real upload; the per-object `_exists` skip makes a re-run free.
+- ⚠️ **The adventure PDF is never uploaded.** It is `all-rights-reserved`; the world manifest's `files.pdf_url` (the publisher's free-download link) becomes the entry's `external_files`, and the client fetches it from there. Do not "fix" a missing PDF by putting it in the bucket.
+- Bumping a world means bumping `version` in `assets/worlds/<dir>/manifest.json` — the object paths are versioned and immutable, so an unchanged version publishes nothing.
 
 **Publish ordering / idempotency invariants (from `publish_catalog.dart`):**
 - Payloads are gzipped and PUT to `catalog/{r2_path}` with `Content-Type: application/gzip`; the **manifest is uploaded LAST** as plain `application/json`, so `catalog/manifest.json` never references an object that isn't already present.

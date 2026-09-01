@@ -5,27 +5,30 @@ path: flutter_app/lib/application/services/bundled_worlds_installer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-31
+updated: 2026-09-01
 tags: [file]
 ---
 
 # `bundled_worlds_installer.dart`
 
 > [!abstract] Primary Purpose
-> What the admin dashboard's "bundled worlds" toggle actually runs. Reads each world
-> under `assets/worlds/`, extracts its media to disk, converts the blueprints through
-> [[world_blueprint_converter]] and saves the result as a **world** (Worlds tab, not
-> Packages). It does I/O only — no conversion logic of its own.
+> Installs a packaged world as a **world** (Worlds tab, not Packages): extracts its media
+> to disk, converts the blueprints through [[world_blueprint_converter]], saves the result.
+> It does I/O only — no conversion logic of its own. Two entry points, one install path:
+> `installAll()` (the admin dashboard's "bundled worlds" toggle, bytes from `assets/worlds/`)
+> and `installFromCatalog()` (the Marketplace's official world card, bytes from R2 with a
+> bundled fallback).
 
 ## Inputs / Outputs
 **Inputs**
 - `rootBundle` assets: `assets/worlds/manifest.json`, then per world `manifest.json`, `world-blueprint.json`, `blueprint.json`, and every path listed in the world manifest's `files` block.
+- Or a `CatalogEntry` + `FirstPartyCatalogService`: the R2 envelope at `r2_path`, one object per `media[]`, and `external_files[]` fetched from the publisher.
 - `CampaignRepository` (`getAvailable`, `load`, `save`, `delete`).
 - `CharacterRepository` (`exists`, `save`, `loadAll`, `dropLocal`) — the blueprint's PCs.
 
 **Outputs**
-- `installAll()` → `InstallReport` (`installed`, `issues`, `failures`).
-- `uninstallAll()` → count of worlds stamped `metadata.installed_from == 'assets'`.
+- `installAll()` / `installFromCatalog()` → `InstallReport` (`installed`, `issues`, `failures`).
+- `uninstallAll()` → count of worlds stamped `metadata.installed_from` `'assets'` **or** `'official'`.
 - Writes media to `AppPaths.worldsDir/_bundled/<dir>/…`.
 - Writes one **ownerless** `world_characters` row per blueprint PC (world's Characters tab).
 
@@ -46,6 +49,22 @@ Existing worlds are merged (`{...previous, ...converted}`) because `_saveToDb` i
 The world id comes from `load()['world_id']` for an existing world and from the map `save()` writes back for a new one — `save` only stamps `world_id` on the create branch. Characters are **insert-only** (`exists(id)` short-circuits): ids are deterministic uuidv5 from the blueprint, so a second install must not overwrite a PC the DM has levelled up.
 
 `uninstallAll()` drops the world's characters itself — `WorldRepositoryImpl._purgeWorld` deliberately leaves `world_characters` alone (a character normally outlives its world), but these are install artifacts and would otherwise linger pointing at a dead world id.
+
+## Source seam (2026-09-01)
+`WorldFileLoader` (`Future<Uint8List?> Function(String rel)`) is the only difference between
+the two entry points — `_installWorld` takes the three decoded JSONs plus a media loader and
+knows nothing about where bytes come from, so all four invariants above hold identically on
+both paths. `installAll` passes a `rootBundle` loader; `installFromCatalog` passes one that
+tries R2 first (fresh), then the bundled asset, then — for a file the catalog does not host —
+the publisher URL from `external_files`. A loader returning null is an **issue**, never a
+silent skip.
+
+`_fetchEnvelope` mirrors that for the payload: R2 `r2_path` gz → the three bundled JSONs.
+The catalog install stamps `installed_from: 'official'` + `catalog_version` (which
+`campaignMetadataProvider` reads back, driving the dialog's Update state).
+
+`_mediaPaths` skips the `pdf_url` key: it is a publisher download link, and walking it as a
+media path would report "unavailable" on every install.
 
 ## Notes
 - The `_bundled/` media root is per-user (`AppPaths.worldsDir` follows the active user); reinstalling after a user switch re-extracts.
