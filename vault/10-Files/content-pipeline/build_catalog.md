@@ -5,7 +5,7 @@ path: flutter_app/tool/catalog_publish/bin/build_catalog.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-01
 tags: [file]
 ---
 
@@ -20,6 +20,7 @@ tags: [file]
 - Each `assets/open5e_packs/*.pkg.json` metadata (title, version, publisher, license, counts).
 - Optional hand-authored sources under `assets/first_party/<world|character|template|sound>/*.json` (+ optional `*.meta.json` sidecars).
 - Optional `assets/first_party/banners/banner-credits.yaml` (slug → creator/link image attribution).
+- `assets/worlds/manifest.json` + each bundled world's own `manifest.json` (and its `<slug>.pkg.json` for entity counts) — the `world` entries.
 
 **Outputs**
 - `assets/first_party/manifest.json` — `{catalog_version: '2026-06-01', entries: [...]}`.
@@ -35,7 +36,14 @@ tags: [file]
 - Constants: `_open5eDir = 'assets/open5e_packs'`, `_firstPartyDir = 'assets/first_party'`, `_catalogVersion = '2026-06-01'`.
 - `_packageEntries`: one `item_type: 'package'` entry per Open5e pack. `bundled_asset` reuses the existing open5e asset (no copy); `r2_path = 'package/<slug>@<version>.json.gz'` (versioned, immutable); also records `size_bytes`.
 - `_handAuthoredEntries`: scans the 4 hand-authored types (`world`, `character`, `template`, `sound`); each `<slug>.json` payload's optional `<slug>.meta.json` supplies catalog fields, else filename + sane defaults; `r2_path = '<type>/<slug>@<version>.json.gz'`.
+- `_worldEntries`: one `item_type: 'world'` entry per bundled world under `assets/worlds/`. A world is a **directory**, not a file, so the entry differs from a package's in four ways:
+  - `bundled_dir` (`assets/worlds/<dir>`) replaces `bundled_asset` — the offline fallback is the whole dir.
+  - `r2_path = 'world/<slug>@<version>.json.gz'` holds an **envelope** (`{manifest, world_blueprint, character_blueprint}`) built by `buildWorldEnvelope` in `tool/catalog_publish/world_payload.dart`, shared with [[publish_catalog]] so the recorded `size_bytes` matches what is uploaded.
+  - `media[]` = `{rel, r2_key, size_bytes}` per file, `r2_key = 'world-media/<slug>@<version>/<rel>'`. A path in the manifest with no file on disk is a **hard exit(2)** — same rule as [[convert_blueprint]].
+  - `external_files[]` = files referenced but deliberately NOT hosted. Today only the adventure PDF: it is `all-rights-reserved`, so `worldMediaPaths` drops every `*.pdf` and the entry carries the publisher's free-download `files.pdf_url` instead. `pdf_url` is also excluded from media collection — it is a link, not a path.
+  - Store-facing fields the package entries lack: `description`, `author`, `source_url`, `cover_image`.
 - `_bannerCredits`: parses `banner-credits.yaml` `credits:` map; attaches `banner_credit` (`{creator, link}`) to entries whose slug matches, so the install dialog can show a clickable image credit.
 
 ## Notes
+- Worlds ship BOTH bundled (the app carries `assets/worlds/`, so an offline install works) and on R2 (the updatable source). Re-publishing a changed world requires bumping its `version` — the versioned R2 objects are immutable.
 - Per the First-Party Catalog memory (P1-P6 shipped): the worker `catalog/*` routes give public read + admin write; the worker is NOT yet deployed. P7 (template + sound persistence) deferred. v1 seeds purely from the 22 Open5e packs.

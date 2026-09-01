@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-08-17
+updated: 2026-09-01
 tags: [moc]
 ---
 
@@ -33,10 +33,10 @@ tags: [moc]
 - [[srd_helpers]] — wire-format + placeholder builders (`packEntity`/`lookup`/`ref`/`withFeatureGrant`/`eqGroup`). Card mechanics are plain named fields, not builders. See [[Grant-Resolution]].
 - [[srd-pack-content]] — grouped: classes/subclasses/species/spells/monsters/feats/items.
 - [[builtin_schema]] — `builtin_dnd5e_v2_schema.dart` + `lookups.dart` (73 categories, Tier-0 seeds).
-- [[build_catalog]] · [[publish_catalog]] — first-party catalog build + R2 publish CLI.
+- [[build_catalog]] · [[publish_catalog]] — first-party catalog build + R2 publish CLI. Both `package` entries (one gzipped JSON) and `world` entries (a gzipped blueprint envelope + one raw R2 object per media file, sharing `tool/catalog_publish/world_payload.dart`). The adventure PDF is referenced by publisher link, never hosted — see [[catalog-publish-ops]].
 
 ## Data Flow
-Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]] two-pass → [[emit]] `.pkg.json`. SRD core authored directly via [[srd_helpers]]. Packages → R2 via [[publish_catalog]] → installed by [[World-and-Content]].
+Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]] two-pass → [[emit]] `.pkg.json`. SRD core authored directly via [[srd_helpers]]. Packages → R2 via [[publish_catalog]] → installed by [[World-and-Content]]. Bundled worlds take the same route: `assets/worlds/<dir>` → [[build_catalog]] `world` entry → [[publish_catalog]] → the Marketplace's official world card → [[bundled_worlds_installer]].
 
 ## Related Domains
 - [[World-and-Content]] (installs packages) · [[Character-System]] (consumes effects) · [[Data-Layer]] (entity shape) · [[Backend-Infra]] (R2 catalog).

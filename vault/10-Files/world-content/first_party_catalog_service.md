@@ -5,7 +5,7 @@ path: flutter_app/lib/data/services/first_party_catalog_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-07-29
+updated: 2026-09-01
 tags: [file]
 ---
 
@@ -21,10 +21,12 @@ tags: [file]
 - Native `HttpClient` (no `http`/`dio` dep), 12s timeout.
 
 **Outputs**
-- `fetchManifest()` -> `List<CatalogEntry>` (only `itemType == 'package'`).
+- `fetchManifest()` -> `List<CatalogEntry>`, **all** item types. It filtered to `'package'` until 2026-09-01, which silently dropped every `world` entry; the filter now lives in the providers ([[first_party_catalog_provider]]).
 - `fetchPayload(entry)` -> `Map<String,dynamic>` (gz-decoded online; bundled fallback; throws `StateError` only when neither yields).
 - `fetchBanner(slug)` -> `Uint8List?` (JPEG, null when no worker / offline / missing).
 - `officialBannerUrl(slug)` static -> `{worker}/catalog/banners/<slug>.jpg?v=N`.
+- `fetchCatalogBytes(r2Key)` -> `Uint8List?`, raw bytes of any catalog object (a world's media). Null on no-worker / offline / missing so the caller falls back to the bundled asset. URL-encodes with `Uri.encodeFull` — media keys carry spaces (`media/GURPS GCS Characters/…`).
+- `fetchExternal(url)` -> `Uint8List?` for a file the catalog references but does not host (the adventure PDF, fetched from the publisher). Follows redirects on a **30 s connect / 10 min body** timeout rather than the 12 s `_timeout`: these are tens of megabytes off a third-party site.
 
 ## Dependencies & Links
 - Depends on: `CatalogEntry` (`catalog_entry`), `OfflineException` (`error_format`)
@@ -40,4 +42,5 @@ tags: [file]
 
 ## Notes
 - **Dependencies (2026-07-29)**: manifest entries carry `requires` (catalog slugs), parsed onto `CatalogEntry.requires` and resolved transitively by `FirstPartyInstallNotifier.install` before the requested entry — a package installs with the packages it links. Emitted by [[build_catalog]] from the pack's `metadata.links`; empty for every pack today. See [[Package-Links]].
+- **Worlds (2026-09-01)**: a `world` entry's payload is an envelope (`{manifest, world_blueprint, character_blueprint}`) consumed by [[bundled_worlds_installer]] rather than `fetchPayload` — the bundled fallback for a world is a *directory*, not a single asset, so the installer owns that chain.
 - Worker not deployed at time of writing (P7 deferred per first-party catalog initiative). Banner upload via `cloudflare/upload_banners.sh`.
