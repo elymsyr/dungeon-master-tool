@@ -18,3 +18,25 @@ extension CharacterDisplay on Character {
     return fallback;
   }
 }
+
+/// Guest release marker. Çıkış yapmış kullanıcının yazacak bir uid'i yok ama
+/// "release" edilen karakter hub'da artık onun sayılmamalı — `null` bunu ifade
+/// edemez, çünkü guest için `ownerId == null` = "benim". Tamamen yerel bir
+/// işaret: [CharacterOwnership.normalizedOwnerId] buluta çıkmadan önce tekrar
+/// `null`'a çevirir.
+const String kGuestReleasedOwnerId = '__released__';
+
+extension CharacterOwnership on Character {
+  /// Hub char sekmesi + sidebar claim/release'in tek sahiplik predicate'i.
+  /// Giriş yapılmamışken sahipsiz (`null`) karakter kullanıcınındır; guest
+  /// release [kGuestReleasedOwnerId] ile bunu bozar.
+  bool isOwnedBy(String? selfUid) {
+    if (ownerId == kGuestReleasedOwnerId) return false;
+    if (ownerId == null) return selfUid == null;
+    return ownerId == selfUid;
+  }
+
+  /// Sunucuya / owner etiketine gidecek değer — guest marker'ı `null`'a maple.
+  String? get normalizedOwnerId =>
+      ownerId == kGuestReleasedOwnerId ? null : ownerId;
+}

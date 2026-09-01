@@ -345,6 +345,7 @@
   "charactersEmpty": "Noch keine Charaktere.",
   "charBtnOpen": "Charakter öffnen",
   "charBtnRelease": "Freigeben",
+  "charBtnClaim": "Übernehmen",
   "charPullingWorld": "Welt wird heruntergeladen...",
   "charWorldNotFound": "Welt des Charakters lokal nicht gefunden.",
   "charWorldMissingOnDisk": "Welt \"{name}\" nicht auf der Festplatte gefunden — Charakter kann nicht geöffnet werden.",

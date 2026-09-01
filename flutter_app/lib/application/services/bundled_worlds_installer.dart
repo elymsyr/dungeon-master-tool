@@ -13,6 +13,7 @@ import '../../data/repositories/character_repository.dart';
 import '../../data/services/first_party_catalog_service.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
@@ -387,8 +388,10 @@ class BundledWorldsInstaller {
           entity: Entity.fromJson(json),
           worldId: worldId,
           // Sahipsiz: dünyayı açan DM dağıtana / bir oyuncu claim edene dek
-          // "Available to Claim" bölümünde durur.
-          ownerId: null,
+          // "Available to Claim" bölümünde durur. Guest için `null` = "benim"
+          // demek olduğundan marker yazılır; yoksa kurulan dünyanın tüm PC'leri
+          // hesapsız kullanıcının hub'ına düşerdi (claim edilmeden).
+          ownerId: kGuestReleasedOwnerId,
           createdAt: now,
           updatedAt: now,
         ));

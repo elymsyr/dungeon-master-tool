@@ -124,9 +124,11 @@ Markdown now renders through one shared style across entity cards, notification 
 
 ### Known issues
 
-- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
-- **Remaining SRD effect gaps** — Drow 120ft superior darkvision still needs resolver wiring; Tier-4 combat-tracker-dependent effects remain unimplemented.
-- **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.
+The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Deleting a world bricks its characters** — A character claimed from an installed world can no longer be opened once that world is deleted. Characters should survive world deletion and only lose their world link.
+- **Signed-out users can get stuck on a claimed character** — Without an account, a character owned from a deleted world can be neither released nor opened.
+- **Portraits are not carried over when you create an account** — Characters created before signing up lose their portrait images after the account is created; re-attach the image manually.
 - **Bundled world references stay soft** — Species and class references on imported player characters are not linked to local entities; sheets display the recorded name rather than a live link.
 
 ---

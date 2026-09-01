@@ -68,10 +68,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   /// `ownerId == auth.uid`. Pre-auth (offline) data has `ownerId == null`
   /// AND `selfUid == null` — treat that as owned so the local-only flow
   /// still shows the user's characters.
-  bool _isOwned(Character c, String? selfUid) {
-    if (c.ownerId == null) return selfUid == null;
-    return c.ownerId == selfUid;
-  }
+  bool _isOwned(Character c, String? selfUid) => c.isOwnedBy(selfUid);
 
   /// Matches a character against the active template/world filter. World is
   /// matched by display label (world names are unique; orphan label distinct).

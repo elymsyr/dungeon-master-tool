@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
@@ -16,6 +17,7 @@ import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
+import '../l10n/app_localizations.dart';
 import '../screens/characters/character_editor_screen.dart';
 import '../theme/dm_tool_colors.dart';
 import 'character_add_menu.dart';
@@ -218,8 +220,11 @@ class _SidebarHeader extends StatelessWidget {
 /// same compact-row + hamburger UI as [WorldCharactersView] so the DM
 /// sidebar looks identical regardless of online state.
 ///
-/// Hamburger menu offline-context items: Remove from world, Delete. (No
-/// claim/unclaim — claim is an online concept.)
+/// Hamburger menu offline-context items: Claim / Release, Remove from world.
+/// Claim/release here is a purely local ownership patch — offline worlds have
+/// no `world_characters` row to run the claim RPCs against, but ownership
+/// still gates editing ([CharacterEditorScreen._canEdit]) and hub char-tab
+/// visibility, so the toggle has to exist without multiplayer.
 class _OfflineCharacterList extends ConsumerWidget {
   final DmToolColors palette;
   final String? activeWorld;
@@ -371,10 +376,18 @@ class _OfflineCharacterRowState
     });
   }
 
+  /// Local-only ownership patch. Offline worlds are not mirrored, so there
+  /// is nothing to reconcile with the server — `update()` persists + pushes
+  /// to the owner's other devices via LAN sync like any other edit.
+  Future<void> _setOwner(String? ownerId) => _runBusy(() => ref
+      .read(characterListProvider.notifier)
+      .update(widget.character.copyWith(ownerId: ownerId)));
+
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
     final c = widget.character;
+    final selfUid = ref.watch(authProvider)?.uid;
     final activeWorldId =
         ref.watch(activeCampaignIdProvider).valueOrNull;
     final builtin = ref.watch(builtinSrdEntitiesProvider);
@@ -444,11 +457,39 @@ class _OfflineCharacterRowState
                     splashRadius: 18,
                     onSelected: (v) async {
                       switch (v) {
+                        case 'claim':
+                          await _setOwner(ref.read(authProvider)?.uid);
+                        case 'release':
+                          // Guest'in yazacak uid'i yok; `null` onun için
+                          // "benim" demek olurdu — marker ile release edilir.
+                          await _setOwner(ref.read(authProvider) == null
+                              ? kGuestReleasedOwnerId
+                              : null);
                         case 'remove':
                           await _removeFromWorld();
                       }
                     },
                     itemBuilder: (_) => [
+                      if (!c.isOwnedBy(selfUid))
+                        PopupMenuItem(
+                          value: 'claim',
+                          child: Row(children: [
+                            Icon(Icons.person_add_alt,
+                                size: 16, color: palette.sidebarLabelSecondary),
+                            const SizedBox(width: 8),
+                            Text(L10n.of(context)!.charBtnClaim),
+                          ]),
+                        ),
+                      if (c.isOwnedBy(selfUid))
+                        PopupMenuItem(
+                          value: 'release',
+                          child: Row(children: [
+                            Icon(Icons.person_remove_alt_1,
+                                size: 16, color: palette.sidebarLabelSecondary),
+                            const SizedBox(width: 8),
+                            Text(L10n.of(context)!.charBtnRelease),
+                          ]),
+                        ),
                       if (c.worldId != null)
                         PopupMenuItem(
                           value: 'remove',

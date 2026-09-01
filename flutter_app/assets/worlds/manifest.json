@@ -11,6 +11,18 @@
       "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
       "version": "1.0.0",
       "description": "An Arabian Nights-inspired dungeon adventure for Shadowdark."
+    },
+    {
+      "dir": "cold-bounty-5e",
+      "slug": "cold-bounty-5e",
+      "title": "The Cold Bounty",
+      "system": "dnd5e",
+      "publisher": "1Shot Adventures",
+      "author": "JC Connors (thalcos)",
+      "license": "all-rights-reserved",
+      "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
+      "version": "1.0.0",
+      "description": "A cold mountain survival adventure for 4-6 2nd level D&D 5E characters."
     }
   ]
 }

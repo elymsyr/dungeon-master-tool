@@ -9,6 +9,7 @@ import '../../data/database/database_provider.dart';
 import '../../data/repositories/character_repository.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character/effective_character.dart';
+import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
@@ -157,7 +158,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   /// Karakter sayfası, oyuncunun DM'e gönderdiği tek canlı veri; doğrudan
   /// yazılır (last-write-wins). Kalıcı kuyruk yok — kaçan bir yazma dünya
   /// açılışındaki [pushOwnedCharacters] geçişinde kapanır.
-  void _mirrorPush(Character c) {
+  void _mirrorPush(Character c0) {
+    // Guest release marker yerel bir işaret — `owner_id` uuid kolonuna asla
+    // yazılmaz.
+    final c = c0.ownerId == kGuestReleasedOwnerId
+        ? c0.copyWith(ownerId: null)
+        : c0;
     final worldId = c.worldId;
     if (worldId == null) return;
     final onlineIds = _ref.read(onlineWorldIdsProvider);

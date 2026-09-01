@@ -134,13 +134,19 @@ flutter:
     # and rebuilds. Flutter asset directories are NOT recursive — every media
     # subfolder has to be listed by hand; listing only `assets/worlds/` ships
     # the top-level manifest and nothing else.
-    # - assets/worlds/
-    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
-    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
-    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
-    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
-    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
-    # - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
+    - assets/worlds/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
+    - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
+    - assets/worlds/cold-bounty-5e/
+    - assets/worlds/cold-bounty-5e/media/
+    - assets/worlds/cold-bounty-5e/media/Maps/
+    - assets/worlds/cold-bounty-5e/media/Tokens/
+    - assets/worlds/cold-bounty-5e/media/Handouts/
+    - "assets/worlds/cold-bounty-5e/media/GURPS GCS Characters/"
 
 flutter_launcher_icons:
   android: true
