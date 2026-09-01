@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show File, gzip;
+import 'dart:io' show File, Platform, gzip;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -66,8 +66,13 @@ class BundledWorldsInstaller {
   static const _manifestAsset = 'assets/worlds/manifest.json';
   static const _assetDir = 'assets/worlds';
 
-  /// Bu build'de paketlenmiş dünya var mı.
-  Future<bool> isAvailable() async => (await _tryLoad(_manifestAsset)) != null;
+  /// Bu build'de paketlenmiş dünya var mı. Mobilde asla: `assets/worlds/`
+  /// build'e girmiyor (bkz. pubspec.yaml) ve telefonda dünyalar yalnız
+  /// marketplace'ten kuruluyor — admin toggle'ı orada hiç görünmesin.
+  Future<bool> isAvailable() async {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) return false;
+    return (await _tryLoad(_manifestAsset)) != null;
+  }
 
   /// Her paketlenmiş dünyayı kurar. Idempotent — isme göre upsert.
   Future<InstallReport> installAll() async {

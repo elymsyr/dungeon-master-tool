@@ -40,7 +40,7 @@ State machine over `world_characters` rows `(owner_id, world_id)`; all mutations
 - **assignToPlayer** (DM): `(NULL|other, W) → (userId, W)`. Target must be a `world_members` member (else `P0006`); non-DM caller → `42501`.
 - **attachToWorld**: `(me, NULL) → (me, W)` direct UPDATE (no RPC needed — single transition, no server-side decision); gated by RLS UPDATE policy `owner_id = auth.uid OR is_world_dm`.
 - **fetchWorldCharacter(id)**: single-row lookup used by the editor-open freshness hook (reflects edits made on another device when there is no active realtime sub on that world). Returns null if no row or null `world_id`.
-- **listWorldCharacters(worldId)**: bootstrap fetch of all rows in a world (RLS lets members see all chars in their worlds); subsequent updates arrive via CDC granular patch.
+- **listWorldCharacters(worldId)**: bootstrap fetch of all rows in a world (RLS lets members see all chars in their worlds); subsequent updates arrive via CDC granular patch. Its result is **merged over** the local Drift rows, never substituted for them (`WorldCharactersNotifier.bootstrap`): a world installed from the marketplace or `assets/` writes ownerless PCs to Drift only, so overwriting with the cloud list emptied the Characters tab for any signed-in user (fixed 2026-09-01).
 
 ## Notes
 - Postgres error-code contract is load-bearing: `P0002`/`PGRST116` = "row absent = desired post-state" (swallow); `P0003` claim conflict; `P0005` wrong-RPC for world-bound; `P0006` target not a member; `42501` not-DM.

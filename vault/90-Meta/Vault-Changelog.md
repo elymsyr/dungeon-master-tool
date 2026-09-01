@@ -1243,3 +1243,9 @@ Kullanıcı gözlemi: "elle oluşturulan karakterde Resolved Grants alanı hiç 
 - **Supabase'e dokunulmadı**: resmî katalog bugün de tamamen R2'de; `marketplace_listings` yalnızca kullanıcı ilanları için. Migration yok.
 - **Yeni koruma**: `test/application/services/world_catalog_publish_test.dart` (10 test) — PDF'in R2 objesi olmadığı, `pdf_url`'in medya yolu sanılmadığı, manifest'teki her medya yolunun diskte var olduğu, `r2_key`'lerin versiyonlu olduğu ve paket girdilerinin yeni alanlardan etkilenmediği.
 - Güncellenen notlar: [[build_catalog]], [[publish_catalog]], [[catalog-publish-ops]], [[bundled_worlds_installer]], [[first_party_catalog_service]], [[first_party_catalog_provider]], [[Content-Pipeline]].
+
+## 2026-09-01 — Worlds leave the binary; installed PCs stop vanishing
+- **`assets/worlds/` (~326 MB) is out of `pubspec.yaml`** (commented, like `assets/open5e_packs/`). Worlds ship through the marketplace only — R2 payload + media via `BundledWorldsInstaller.installFromCatalog`; the directory stays as the authoring source for `tool/catalog_publish/`. Dropped the "declared in pubspec assets" case from `bundled_worlds_blueprint_test.dart` (it guarded a bundling that no longer happens).
+- **Admin "Install bundled worlds" is hidden on mobile**: `BundledWorldsInstaller.isAvailable()` returns false on Android/iOS before probing the bundle.
+- **Bug: marketplace world installed, Characters tab empty.** `WorldCharactersNotifier.bootstrap` computed a merged local+cloud list and then set state to the *cloud* list. The ownerless PCs an install writes live only in Drift, so a signed-in user saw nothing (signed-out worked — `_service == null` returns early). Now sets `merged`. `first_party_catalog_provider._installWorld` also invalidates `characterListProvider`, matching the admin toggle.
+- Updated notes: [[bundled_worlds_installer]], [[character_claim_service]].

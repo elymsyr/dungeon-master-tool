@@ -214,6 +214,9 @@ class FirstPartyInstallNotifier
       // Worlds tab campaignInfoListProvider'ı okuyor — bunu yenilemezsek
       // inen dünya elle refresh edilene kadar listede görünmüyor.
       _ref.invalidate(campaignInfoListProvider);
+      // Dünyanın sahipsiz PC'leri world_characters'a yazılıyor — admin
+      // toggle'ında olduğu gibi liste tazelenmezse kurulumdan sonra boş.
+      _ref.invalidate(characterListProvider);
       if (report.failures.isNotEmpty) {
         _set(
           entry.slug,
