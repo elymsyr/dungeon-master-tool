@@ -13,6 +13,18 @@
       "description": "An Arabian Nights-inspired dungeon adventure for Shadowdark."
     },
     {
+      "dir": "army-of-the-damned-5e",
+      "slug": "army-of-the-damned-5e",
+      "title": "Army of the Damned",
+      "system": "dnd5e",
+      "publisher": "Fan-made (Innistrad)",
+      "author": "Tomer Abramovici (/u/SpiketailDrake)",
+      "license": "fan-content",
+      "attribution": "Army of the Damned is a fan-made adventure module by Tomer Abramovici. All illustrations and names used from Magic: The Gathering, along with all D&D terms and rules, are properties of Wizards of the Coast. This is only a fan creation, not in any way made for sale.",
+      "version": "1.0.0",
+      "description": "A gothic-horror adventure on the plane of Innistrad for four 1st-level characters, taking them to 5th."
+    },
+    {
       "dir": "cold-bounty-5e",
       "slug": "cold-bounty-5e",
       "title": "The Cold Bounty",
