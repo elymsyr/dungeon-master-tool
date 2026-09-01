@@ -1,0 +1,813 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root release="Foundry" version="GCA-9">
+<character>
+<name type="string">El Grande (Big Quartermaster)</name>
+<portrait type="string"></portrait>
+
+<abilities>
+
+<skilllist>
+<id-00001>
+<name type="string">Axe/Mace</name>
+<type type="string">DX/A</type>
+<level type="number">13</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k163</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Boating/TL4 (Unpowered)</name>
+<type type="string">DX/A</type>
+<level type="number">11</level>
+<relativelevel type="string">DX-1</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B180</pageref>
+<parentuuid></parentuuid>
+<uuid>k179</uuid>
+</id-00002>
+<id-00003>
+<name type="string">Brawling</name>
+<type type="string">DX/E</type>
+<level type="number">14</level>
+<relativelevel type="string">DX+2</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B182</pageref>
+<parentuuid></parentuuid>
+<uuid>k164</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Carpentry</name>
+<type type="string">IQ/E</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B183</pageref>
+<parentuuid></parentuuid>
+<uuid>k170</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Climbing</name>
+<type type="string">DX/A</type>
+<level type="number">13</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B183</pageref>
+<parentuuid></parentuuid>
+<uuid>k169</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Forced Entry</name>
+<type type="string">DX/E</type>
+<level type="number">14</level>
+<relativelevel type="string">DX+2</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B196</pageref>
+<parentuuid></parentuuid>
+<uuid>k171</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Gunner/TL4 (Cannon)</name>
+<type type="string">DX/E</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B198</pageref>
+<parentuuid></parentuuid>
+<uuid>k172</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Guns/TL4 (Pistol)</name>
+<type type="string">DX/E</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B198</pageref>
+<parentuuid></parentuuid>
+<uuid>k173</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Holdout</name>
+<type type="string">IQ/A</type>
+<level type="number">10</level>
+<relativelevel type="string">IQ-1</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B200</pageref>
+<parentuuid></parentuuid>
+<uuid>k167</uuid>
+</id-00009>
+<id-00010>
+<name type="string">Knife</name>
+<type type="string">DX/E</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k175</uuid>
+</id-00010>
+<id-00011>
+<name type="string">Knot-Tying</name>
+<type type="string">DX/E</type>
+<level type="number">13</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B203</pageref>
+<parentuuid></parentuuid>
+<uuid>k174</uuid>
+</id-00011>
+<id-00012>
+<name type="string">Lifting</name>
+<type type="string">HT/A</type>
+<level type="number">12</level>
+<relativelevel type="string">HT+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B205</pageref>
+<parentuuid></parentuuid>
+<uuid>k168</uuid>
+</id-00012>
+<id-00013>
+<name type="string">Lockpicking/TL4</name>
+<type type="string">IQ/A</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B206</pageref>
+<parentuuid></parentuuid>
+<uuid>k176</uuid>
+</id-00013>
+<id-00014>
+<name type="string">Merchant</name>
+<type type="string">IQ/A</type>
+<level type="number">6</level>
+<relativelevel type="string">IQ-5</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B209</pageref>
+<parentuuid></parentuuid>
+<uuid>k178</uuid>
+</id-00014>
+<id-00015>
+<name type="string">Neck Snap (ST)</name>
+<type type="string">Tech/H</type>
+<level type="number">14</level>
+<relativelevel type="string">def+2</relativelevel>
+<points type="number">3</points>
+<text type="string"></text>
+<pageref type="string">MA77, B232</pageref>
+<parentuuid></parentuuid>
+<uuid>k177</uuid>
+</id-00015>
+<id-00016>
+<name type="string">Poetry</name>
+<type type="string">IQ/A</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B214</pageref>
+<parentuuid></parentuuid>
+<uuid>k198</uuid>
+</id-00016>
+<id-00017>
+<name type="string">Seamanship/TL4</name>
+<type type="string">IQ/E</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B185</pageref>
+<parentuuid></parentuuid>
+<uuid>k165</uuid>
+</id-00017>
+<id-00018>
+<name type="string">Search</name>
+<type type="string">Per/A</type>
+<level type="number">11</level>
+<relativelevel type="string">Per+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B219</pageref>
+<parentuuid></parentuuid>
+<uuid>k166</uuid>
+</id-00018>
+<id-00019>
+<name type="string">Shortsword</name>
+<type type="string">DX/A</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B209</pageref>
+<parentuuid></parentuuid>
+<uuid>k181</uuid>
+</id-00019>
+<id-00020>
+<name type="string">Swimming</name>
+<type type="string">HT/E</type>
+<level type="number">12</level>
+<relativelevel type="string">HT+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B224</pageref>
+<parentuuid></parentuuid>
+<uuid>k180</uuid>
+</id-00020>
+</skilllist>
+
+</abilities>
+
+
+<attributes>
+<strength type="number">16</strength>
+<strength_points type="number">54</strength_points>
+<dexterity type="number">12</dexterity>
+<dexterity_points type="number">40</dexterity_points>
+<intelligence type="number">11</intelligence>
+<intelligence_points type="number">20</intelligence_points>
+<health type="number">12</health>
+<health_points type="number">20</health_points>
+<hitpoints type="number">16</hitpoints>
+<hitpoints_points type="number">0</hitpoints_points>
+<hps type="number">16</hps>
+<will type="number">11</will>
+<will_points type="number">0</will_points>
+<perception type="number">11</perception>
+<perception_points type="number">0</perception_points>
+<fatiguepoints type="number">12</fatiguepoints>
+<fatiguepoints_points type="number">0</fatiguepoints_points>
+<fps type="number">12</fps>
+<basiclift type="string">58</basiclift>
+<onehandedlift type="string">116</onehandedlift>
+<twohandedlift type="string">464</twohandedlift>
+<shove type="string">696</shove>
+<carryonback type="string">870</carryonback>
+<shiftslightly type="string">2900</shiftslightly>
+<frightcheck type="string">11</frightcheck>
+<tastesmell type="string">11</tastesmell>
+<touch type="string">11</touch>
+<vision type="string">11</vision>
+<hearing type="string">11</hearing>
+<thrust type="string">1d+1</thrust>
+<swing type="string">2d+2</swing>
+<basicspeed type="string">6</basicspeed>
+<basicspeed_points type="number">0</basicspeed_points>
+<basicmove type="string">6</basicmove>
+<basicmove_points type="number">0</basicmove_points>
+<move type="string">6</move>
+</attributes>
+
+
+<combat>
+<enc0_dodge type="number">9</enc0_dodge>
+<enc1_dodge type="number">8</enc1_dodge>
+<enc2_dodge type="number">7</enc2_dodge>
+<enc3_dodge type="number">6</enc3_dodge>
+<enc4_dodge type="number">5</enc4_dodge>
+<dodge type="number">9</dodge>
+<parry type="number">9</parry>
+<block type="number">7</block>
+<dr type="string">0</dr>
+
+<meleecombatlist>
+<id-00001>
+<name type="string">Axe</name>
+<st type="string">11</st>
+<cost type="string">50</cost>
+<weight type="string">4</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">1H</name>
+<level type="number">13</level>
+<damage type="string">2d+4 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">9U</parry>
+</id-00001>
+<id-00002>
+<name type="string">2H</name>
+<level type="number">10</level>
+<damage type="string">2d+5 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">8U</parry>
+</id-00002>
+</meleemodelist>
+</id-00001>
+<id-00002>
+<name type="string">Brawling</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Punch</name>
+<level type="number">14</level>
+<damage type="string">1d+1 cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">10</parry>
+</id-00001>
+<id-00002>
+<name type="string">Bite</name>
+<level type="number">14</level>
+<damage type="string">1d+1 cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">No</parry>
+</id-00002>
+<id-00003>
+<name type="string">Kick</name>
+<level type="number">12</level>
+<damage type="string">1d+2 cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">No</parry>
+</id-00003>
+</meleemodelist>
+</id-00002>
+<id-00003>
+<name type="string">Hatchet</name>
+<st type="string">8</st>
+<cost type="string">40</cost>
+<weight type="string">2</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Swing</name>
+<level type="number">13</level>
+<damage type="string">2d+2 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">9</parry>
+</id-00001>
+</meleemodelist>
+</id-00003>
+<id-00004>
+<name type="string">Neck Snap (ST)</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string"></name>
+<level type="number">14</level>
+<damage type="string">2d+2 cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">No</parry>
+</id-00001>
+</meleemodelist>
+</id-00004>
+<id-00005>
+<name type="string">Small Knife</name>
+<st type="string">5</st>
+<cost type="string">30</cost>
+<weight type="string">0.5</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Swing</name>
+<level type="number">12</level>
+<damage type="string">2d-2 cut</damage>
+<reach type="string">C,1</reach>
+<parry type="string">8</parry>
+</id-00001>
+<id-00002>
+<name type="string">Thrust</name>
+<level type="number">12</level>
+<damage type="string">1d imp</damage>
+<reach type="string">C,1</reach>
+<parry type="string">8</parry>
+</id-00002>
+</meleemodelist>
+</id-00005>
+</meleecombatlist>
+
+
+<rangedcombatlist>
+<id-00001>
+<name type="string">Hatchet</name>
+<st type="string">8</st>
+<bulk type="number">-2</bulk>
+<lc type="string">4|4</lc>
+<text type="string"></text>
+<tl type="string">0</tl>
+<rangedmodelist>
+<id-00001>
+<name type="string">Thrown</name>
+<level type="number">8</level>
+<damage type="string">2d+2 cut</damage>
+<acc type="number">1</acc>
+<range type="string">24/40</range>
+<rof type="string">1</rof>
+<shots type="string">T(1)</shots>
+<rcl type="number">-</rcl>
+</id-00001>
+</rangedmodelist>
+</id-00001>
+<id-00002>
+<name type="string">Small Knife</name>
+<st type="string">5</st>
+<bulk type="number">-1</bulk>
+<lc type="string">4|4|4</lc>
+<text type="string"></text>
+<tl type="string">0</tl>
+<rangedmodelist>
+<id-00001>
+<name type="string">Thrown</name>
+<level type="number">8</level>
+<damage type="string">1d imp</damage>
+<acc type="number">0</acc>
+<range type="string">8/16</range>
+<rof type="string">1</rof>
+<shots type="string">T(1)</shots>
+<rcl type="number">-</rcl>
+</id-00001>
+</rangedmodelist>
+</id-00002>
+</rangedcombatlist>
+
+
+<protectionlist>
+<bodyplan type="string">Humanoid</bodyplan>
+<id-00001>
+<location type="string">Eyes</location>
+<dr type="string">0</dr>
+</id-00001>
+<id-00002>
+<location type="string">Neck</location>
+<dr type="string">0</dr>
+</id-00002>
+<id-00003>
+<location type="string">Skull</location>
+<dr type="string">2</dr>
+</id-00003>
+<id-00004>
+<location type="string">Face</location>
+<dr type="string">0</dr>
+</id-00004>
+<id-00005>
+<location type="string">Torso</location>
+<dr type="string">0</dr>
+</id-00005>
+<id-00006>
+<location type="string">Groin</location>
+<dr type="string">0</dr>
+</id-00006>
+<id-00007>
+<location type="string">Arms</location>
+<dr type="string">0</dr>
+</id-00007>
+<id-00008>
+<location type="string">Hands</location>
+<dr type="string">0</dr>
+</id-00008>
+<id-00009>
+<location type="string">Legs</location>
+<dr type="string">0</dr>
+</id-00009>
+<id-00010>
+<location type="string">Feet</location>
+<dr type="string">1*</dr>
+</id-00010>
+</protectionlist>
+
+</combat>
+
+
+<encumbrance>
+<enc_0 type="number">1</enc_0>
+<enc_1 type="number">0</enc_1>
+<enc_2 type="number">0</enc_2>
+<enc_3 type="number">0</enc_3>
+<enc_4 type="number">0</enc_4>
+<enc0_weight type="string">58</enc0_weight>
+<enc1_weight type="string">116</enc1_weight>
+<enc2_weight type="string">174</enc2_weight>
+<enc3_weight type="string">348</enc3_weight>
+<enc4_weight type="string">580</enc4_weight>
+<enc0_move type="string">6</enc0_move>
+<enc1_move type="string">4</enc1_move>
+<enc2_move type="string">3</enc2_move>
+<enc3_move type="string">2</enc3_move>
+<enc4_move type="string">1</enc4_move>
+<enc0_dodge type="number">9</enc0_dodge>
+<enc1_dodge type="number">8</enc1_dodge>
+<enc2_dodge type="number">7</enc2_dodge>
+<enc3_dodge type="number">6</enc3_dodge>
+<enc4_dodge type="number">5</enc4_dodge>
+</encumbrance>
+
+
+<traits>
+<race type="string">Human</race>
+<height type="string">7'2"</height>
+<weight type="string">330</weight>
+<age type="string">36</age>
+<appearance type="string">A shy, mountain of a man - doesn’t remember much, but loyal to his friends</appearance>
+<sizemodifier type="string">1</sizemodifier>
+<reach type="string">0.5</reach>
+
+<adslist>
+<id-00001>
+<name type="string">English (Spoken) (Broken)</name>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B24</pageref>
+<parentuuid></parentuuid>
+<uuid>k197</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Hard to Subdue (1)</name>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B59</pageref>
+<parentuuid></parentuuid>
+<uuid>k159</uuid>
+</id-00002>
+<id-00003>
+<name type="string">High Pain Threshold</name>
+<points type="number">10</points>
+<text type="string"></text>
+<pageref type="string">B59</pageref>
+<parentuuid></parentuuid>
+<uuid>k158</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Lifting ST (1) (Size)</name>
+<points type="number">3</points>
+<text type="string"></text>
+<pageref type="string">B65</pageref>
+<parentuuid></parentuuid>
+<uuid>k161</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Lightning Calculator</name>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B66</pageref>
+<parentuuid></parentuuid>
+<uuid>k160</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Spanish (Native) (Native Language)</name>
+<points type="number">0</points>
+<text type="string"></text>
+<pageref type="string">B24</pageref>
+<parentuuid></parentuuid>
+<uuid>k195</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Doodad (2)</name>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">PU2:9</pageref>
+<parentuuid></parentuuid>
+<uuid>k187</uuid>
+</id-00007>
+</adslist>
+
+
+<disadslist>
+<id-00001>
+<name type="string">Amnesia (Partial)</name>
+<points type="number">-10</points>
+<text type="string"></text>
+<pageref type="string">B123</pageref>
+<parentuuid></parentuuid>
+<uuid>k151</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Gullibility (12 or less)</name>
+<points type="number">-10</points>
+<text type="string"></text>
+<pageref type="string">B137</pageref>
+<parentuuid></parentuuid>
+<uuid>k156</uuid>
+</id-00002>
+<id-00003>
+<name type="string">No Sense of Humor</name>
+<points type="number">-10</points>
+<text type="string"></text>
+<pageref type="string">B146</pageref>
+<parentuuid></parentuuid>
+<uuid>k155</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Shyness (Mild)</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B154</pageref>
+<parentuuid></parentuuid>
+<uuid>k154</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Status (-1)</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B28</pageref>
+<parentuuid></parentuuid>
+<uuid>k199</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Enjoys reading poetry</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k186</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Loves shopping for his men</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k183</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Loyal to his friends</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k184</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Rarely emotional</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k185</uuid>
+</id-00009>
+<id-00010>
+<name type="string">Takes care of his golden locks</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k182</uuid>
+</id-00010>
+</disadslist>
+
+
+<culturalfamiliaritylist>
+</culturalfamiliaritylist>
+
+
+<languagelist>
+<id-00001>
+<name type = "string">English</name>
+<spoken type = "string">Broken</spoken>
+<points type = "number">1</points>
+</id-00001>
+<id-00002>
+<name type = "string">Spanish (Native)</name>
+<spoken type = "string">Native</spoken>
+<written type = "string">Native</written>
+<points type = "number">0</points>
+</id-00002>
+</languagelist>
+
+<reactionmodifiers>
+,,,-1 from 'Status',,,-2 from 'No Sense of Humor', +1 from 'Merchant' when buying or selling
+</reactionmodifiers>
+
+<tl type = "string">4</tl>
+<tl_points type = "number">0</tl_points>
+</traits>
+
+
+<inventorylist>
+<id-00001>
+<isidentified type="number">1</isidentified>
+<name type="string">Axe</name>
+<count type="number">1</count>
+<cost type="string">50</cost>
+<weight type="number">4</weight>
+<weightsum type="number">4</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4, [1H Dam:sw+2 cut Reach:1 Parry:0U ST:10 Skill:Axe/Mace, DX-5, Flail-4, Two-Handed Axe/Mace-3], [2H Dam:sw+3 cut Reach:1 Parry:0U ST:10 Skill:Two-Handed Axe/Mace, DX-5, Axe/Mace-3, Polearm-4, Two-Handed Flail-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT65</pageref>
+<parentuuid></parentuuid>
+<uuid>k188</uuid>
+</id-00001>
+<id-00002>
+<isidentified type="number">1</isidentified>
+<name type="string">Cloth Bag, 20 gal.</name>
+<count type="number">1</count>
+<cost type="string">13</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL: 0 HP:5 Capacity: 145 lbs. Notes: Fragile (Combustible), neither take damage from nor protect contents from crushing attacks</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT34</pageref>
+<parentuuid></parentuuid>
+<uuid>k190</uuid>
+</id-00002>
+<id-00003>
+<isidentified type="number">1</isidentified>
+<name type="string">Hatchet</name>
+<count type="number">1</count>
+<cost type="string">40</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4 \par [Dam:sw cut Reach:1 Parry:0 ST:8 Skill:Axe/Mace, DX-5, Flail-4, Two-Handed Axe/Mace-3 Notes: [1] Can be thrown. See Muscle-Powered Ranged Weapon Table (Low-Tech, pp. 75-78).],[Dam:sw cut ACC:1 Range:ST*1.5/ST*2.5 ROF:1 Shots:T(1) ST:8 Bulk:-2 Rcl:- Skill:Thrown Weapon (Axe/Mace), DX-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT65</pageref>
+<parentuuid></parentuuid>
+<uuid>k194</uuid>
+</id-00003>
+<id-00004>
+<isidentified type="number">1</isidentified>
+<name type="string">Lockpicks</name>
+<count type="number">1</count>
+<cost type="string">50</cost>
+<weight type="number">0</weight>
+<weightsum type="number">0</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:3 Notes: Basic equipment for Lockpicking skill.</notes>
+<carried type="number">2</carried>
+<pageref type="string">B289</pageref>
+<parentuuid></parentuuid>
+<uuid>k192</uuid>
+</id-00004>
+<id-00005>
+<isidentified type="number">1</isidentified>
+<name type="string">Personal Basics</name>
+<count type="number">1</count>
+<cost type="string">5</cost>
+<weight type="number">1</weight>
+<weightsum type="number">1</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 Notes: Minimum gear for camping: -2 to any Survival roll without it. Includes utensils, tinderbox or flint and steel, towel, etc., as TL permits.</notes>
+<carried type="number">2</carried>
+<pageref type="string">B288</pageref>
+<parentuuid></parentuuid>
+<uuid>k191</uuid>
+</id-00005>
+<id-00006>
+<isidentified type="number">1</isidentified>
+<name type="string">Shoes</name>
+<count type="number">1</count>
+<cost type="string">40</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string">Feet</location>
+<notes type="formattedtext">TL:1 LC: DR:1* Locations: Feet Notes:  [3] -1 DR vs. impaling.</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT:IA16</pageref>
+<parentuuid></parentuuid>
+<uuid>k189</uuid>
+</id-00006>
+<id-00007>
+<isidentified type="number">1</isidentified>
+<name type="string">Small Knife</name>
+<count type="number">1</count>
+<cost type="string">30</cost>
+<weight type="number">0.5</weight>
+<weightsum type="number">0.5</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4 \par [Dam:sw-3 cut Reach:C, 1 Parry:-1 ST:5 Skill:Knife, DX-4, Force Sword-3, Main-Gauche-3, Shortsword-3] \par [Dam:thr-1 imp Reach:C Parry:-1 ST:5 Skill:Knife, DX-4, Force Sword-3, Main-Gauche-3, Shortsword-3 Notes: [1] Can be thrown. See Muscle-Powered Ranged Weapon Table (Low-Tech, pp. 75-78).],[Dam:thr-1 imp ACC:0 Range:ST*0.5/ST*1 ROF:1 Shots:T(1) ST:5 Bulk:-1 Rcl:- Skill:Thrown Weapon (Knife), DX-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT67</pageref>
+<parentuuid></parentuuid>
+<uuid>k193</uuid>
+</id-00007>
+</inventorylist>
+
+<pointtotals>
+<attributes type="number">134</attributes>
+<ads type="number">18</ads>
+<disads type="number">-40</disads>
+<quirks type="number">-5</quirks>
+<skills type="number">41</skills>
+<spells type="number">0</spells>
+<powers type="number">0</powers>
+<others type="number">0</others>
+<totalpoints type="number">150</totalpoints>
+<unspentpoints type="number">0</unspentpoints>
+</pointtotals>
+
+</character>
+</root>

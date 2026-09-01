@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root release="Foundry" version="GCA-10">
+<character>
+<name type="string">Wald Bandit</name>
+
+<abilities>
+
+<skilllist>
+<id-00001>
+<name type="string">Area Knowledge (local)</name>
+<type type="string">IQ/E</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B176</pageref>
+<parentuuid></parentuuid>
+<uuid>k197</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Axe/Mace</name>
+<type type="string">DX/A</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k178</uuid>
+</id-00002>
+<id-00003>
+<name type="string">Bow</name>
+<type type="string">DX/A</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B182</pageref>
+<parentuuid></parentuuid>
+<uuid>k179</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Brawling</name>
+<type type="string">DX/E</type>
+<level type="number">14</level>
+<relativelevel type="string">DX+3</relativelevel>
+<points type="number">8</points>
+<text type="string"></text>
+<pageref type="string">B182</pageref>
+<parentuuid></parentuuid>
+<uuid>k180</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Intimidation</name>
+<type type="string">Will/A</type>
+<level type="number">11</level>
+<relativelevel type="string">Will+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B202</pageref>
+<parentuuid></parentuuid>
+<uuid>k182</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Knife</name>
+<type type="string">DX/E</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k183</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Shield (Shield)</name>
+<type type="string">DX/E</type>
+<level type="number">11</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B220</pageref>
+<parentuuid></parentuuid>
+<uuid>k184</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Spear</name>
+<type type="string">DX/A</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k189</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Stealth</name>
+<type type="string">DX/A</type>
+<level type="number">11</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B222</pageref>
+<parentuuid></parentuuid>
+<uuid>k185</uuid>
+</id-00009>
+<id-00010>
+<name type="string">Survival (Woodlands)</name>
+<type type="string">Per/A</type>
+<level type="number">11</level>
+<relativelevel type="string">Per+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B223</pageref>
+<parentuuid></parentuuid>
+<uuid>k186</uuid>
+</id-00010>
+<id-00011>
+<name type="string">Two-Handed Axe/Mace</name>
+<type type="string">DX/A</type>
+<level type="number">12</level>
+<relativelevel type="string">DX+1</relativelevel>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k198</uuid>
+</id-00011>
+</skilllist>
+
+</abilities>
+
+
+<attributes>
+<strength type="number">12</strength>
+<strength_points type="number">20</strength_points>
+<dexterity type="number">11</dexterity>
+<dexterity_points type="number">20</dexterity_points>
+<intelligence type="number">10</intelligence>
+<intelligence_points type="number">0</intelligence_points>
+<health type="number">11</health>
+<health_points type="number">10</health_points>
+<hitpoints type="number">12</hitpoints>
+<hitpoints_points type="number">0</hitpoints_points>
+<hps type="number">12</hps>
+<will type="number">10</will>
+<will_points type="number">0</will_points>
+<perception type="number">10</perception>
+<perception_points type="number">0</perception_points>
+<fatiguepoints type="number">11</fatiguepoints>
+<fatiguepoints_points type="number">0</fatiguepoints_points>
+<fps type="number">11</fps>
+<basiclift type="string">29</basiclift>
+<onehandedlift type="string">58</onehandedlift>
+<twohandedlift type="string">232</twohandedlift>
+<shove type="string">348</shove>
+<carryonback type="string">435</carryonback>
+<shiftslightly type="string">1450</shiftslightly>
+<frightcheck type="string">10</frightcheck>
+<tastesmell type="string">10</tastesmell>
+<touch type="string">10</touch>
+<vision type="string">10</vision>
+<hearing type="string">10</hearing>
+<thrust type="string">1d-1</thrust>
+<swing type="string">1d+2</swing>
+<basicspeed type="string">5.5</basicspeed>
+<basicspeed_points type="number">0</basicspeed_points>
+<basicmove type="string">5</basicmove>
+<basicmove_points type="number">0</basicmove_points>
+<move type="string">5</move>
+</attributes>
+
+
+<combat>
+<enc0_dodge type="number">8</enc0_dodge>
+<enc1_dodge type="number">7</enc1_dodge>
+<enc2_dodge type="number">6</enc2_dodge>
+<enc3_dodge type="number">5</enc3_dodge>
+<enc4_dodge type="number">4</enc4_dodge>
+<dodge type="number">8</dodge>
+<parry type="number">8</parry>
+<block type="number">6</block>
+<dr type="string">0</dr>
+
+<meleecombatlist>
+<id-00001>
+<name type="string">Axe</name>
+<st type="string">11</st>
+<cost type="string">50</cost>
+<weight type="string">4</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">1H</name>
+<level type="number">12</level>
+<damage type="string">1d+4 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">9U</parry>
+</id-00001>
+<id-00002>
+<name type="string">2H</name>
+<level type="number">12</level>
+<damage type="string">1d+5 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">9U</parry>
+</id-00002>
+</meleemodelist>
+</id-00001>
+<id-00002>
+<name type="string">Brawling</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Punch</name>
+<level type="number">14</level>
+<damage type="string">1d-1 cr</damage>
+<reach type="string">C</reach>
+<parry type="string">10</parry>
+</id-00001>
+<id-00002>
+<name type="string">Bite</name>
+<level type="number">14</level>
+<damage type="string">1d-1 cr</damage>
+<reach type="string">C</reach>
+<parry type="string">No</parry>
+</id-00002>
+<id-00003>
+<name type="string">Kick</name>
+<level type="number">12</level>
+<damage type="string">1d cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">No</parry>
+</id-00003>
+</meleemodelist>
+</id-00002>
+<id-00003>
+<name type="string">Cheap Shortsword</name>
+<st type="string">8</st>
+<cost type="string">160</cost>
+<weight type="string">2</weight>
+<text type="string"></text>
+<tl type="string">1</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Swing</name>
+<level type="number">8</level>
+<damage type="string">1d+2 cut</damage>
+<reach type="string">1</reach>
+<parry type="string">7</parry>
+</id-00001>
+<id-00002>
+<name type="string">Thrust</name>
+<level type="number">8</level>
+<damage type="string">1d imp</damage>
+<reach type="string">1</reach>
+<parry type="string">7</parry>
+</id-00002>
+</meleemodelist>
+</id-00003>
+<id-00004>
+<name type="string">Medium Shield</name>
+<st type="string"></st>
+<cost type="string">60</cost>
+<weight type="string">15</weight>
+<text type="string"></text>
+<tl type="string">1</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Bash</name>
+<level type="number">11</level>
+<damage type="string">1d-1 cr</damage>
+<reach type="string">1</reach>
+<parry type="string">No</parry>
+<block type="string">10</block>
+</id-00001>
+<id-00002>
+<name type="string">Rush</name>
+<level type="number">11</level>
+<damage type="string">slam+2 cr</damage>
+<reach type="string">1</reach>
+<parry type="string">No</parry>
+<block type="string">10</block>
+</id-00002>
+</meleemodelist>
+</id-00004>
+<id-00005>
+<name type="string">Small Knife</name>
+<st type="string">5</st>
+<cost type="string">30</cost>
+<weight type="string">0.5</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Swing</name>
+<level type="number">12</level>
+<damage type="string">1d-1 cut</damage>
+<reach type="string">C, 1</reach>
+<parry type="string">8</parry>
+</id-00001>
+<id-00002>
+<name type="string">Thrust</name>
+<level type="number">12</level>
+<damage type="string">1d-2 imp</damage>
+<reach type="string">C</reach>
+<parry type="string">8</parry>
+</id-00002>
+</meleemodelist>
+</id-00005>
+<id-00006>
+<name type="string">Spear</name>
+<st type="string">9</st>
+<cost type="string">40</cost>
+<weight type="string">4</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">1H Thrust</name>
+<level type="number">12</level>
+<damage type="string">1d+1 imp</damage>
+<reach type="string">1*</reach>
+<parry type="string">9</parry>
+</id-00001>
+<id-00002>
+<name type="string">2H Thrust</name>
+<level type="number">12</level>
+<damage type="string">1d+2 imp</damage>
+<reach type="string">1,2*</reach>
+<parry type="string">9</parry>
+</id-00002>
+</meleemodelist>
+</id-00006>
+</meleecombatlist>
+
+
+<rangedcombatlist>
+<id-00001>
+<name type="string">Regular Bow (ST 12)</name>
+<st type="string">10†</st>
+<bulk type="number">-7</bulk>
+<lc type="string">4</lc>
+<text type="string"></text>
+<tl type="string">0</tl>
+<rangedmodelist>
+<id-00001>
+<name type="string">Barbed-head</name>
+<level type="number">12</level>
+<damage type="string">1d imp</damage>
+<acc type="number">2</acc>
+<range type="string">180/240</range>
+<rof type="string">1</rof>
+<shots type="string">1(2)</shots>
+<rcl type="number">-</rcl>
+</id-00001>
+</rangedmodelist>
+</id-00001>
+<id-00002>
+<name type="string">Small Knife</name>
+<st type="string">5</st>
+<bulk type="number">-1</bulk>
+<lc type="string">4|4|4</lc>
+<text type="string"></text>
+<tl type="string">0</tl>
+<rangedmodelist>
+<id-00001>
+<name type="string">Thrown</name>
+<level type="number">7</level>
+<damage type="string">1d-2 imp</damage>
+<acc type="number">0</acc>
+<range type="string">6/12</range>
+<rof type="string">1</rof>
+<shots type="string">T(1)</shots>
+<rcl type="number">-</rcl>
+</id-00001>
+</rangedmodelist>
+</id-00002>
+<id-00003>
+<name type="string">Spear</name>
+<st type="string">9</st>
+<bulk type="number">-3</bulk>
+<lc type="string">4</lc>
+<text type="string"></text>
+<tl type="string">0</tl>
+<rangedmodelist>
+<id-00001>
+<name type="string">Thrown</name>
+<level type="number">7</level>
+<damage type="string">1d+2 imp</damage>
+<acc type="number">2</acc>
+<range type="string">12/18</range>
+<rof type="string">1</rof>
+<shots type="string">T(1)</shots>
+<rcl type="number"></rcl>
+</id-00001>
+<id-00002>
+<name type="string">Woomera</name>
+<level type="number">7</level>
+<damage type="string">1d+5 imp</damage>
+<acc type="number">2</acc>
+<range type="string">18/24</range>
+<rof type="string">1</rof>
+<shots type="string">1(1)</shots>
+<rcl type="number"></rcl>
+</id-00002>
+</rangedmodelist>
+</id-00003>
+</rangedcombatlist>
+
+
+<protectionlist>
+<bodyplan type="string">Humanoid</bodyplan>
+<id-00001>
+<location type="string">Eyes</location>
+<dr type="string">0</dr>
+</id-00001>
+<id-00002>
+<location type="string">Neck</location>
+<dr type="string">0</dr>
+</id-00002>
+<id-00003>
+<location type="string">Skull</location>
+<dr type="string">2</dr>
+</id-00003>
+<id-00004>
+<location type="string">Face</location>
+<dr type="string">0</dr>
+</id-00004>
+<id-00005>
+<location type="string">Torso</location>
+<dr type="string">0</dr>
+</id-00005>
+<id-00006>
+<location type="string">Groin</location>
+<dr type="string">0</dr>
+</id-00006>
+<id-00007>
+<location type="string">Arms</location>
+<dr type="string">0</dr>
+</id-00007>
+<id-00008>
+<location type="string">Hands</location>
+<dr type="string">0</dr>
+</id-00008>
+<id-00009>
+<location type="string">Legs</location>
+<dr type="string">0</dr>
+</id-00009>
+<id-00010>
+<location type="string">Feet</location>
+<dr type="string">0</dr>
+</id-00010>
+</protectionlist>
+
+</combat>
+
+
+<encumbrance>
+<enc_0 type="number">1</enc_0>
+<enc_1 type="number">0</enc_1>
+<enc_2 type="number">0</enc_2>
+<enc_3 type="number">0</enc_3>
+<enc_4 type="number">0</enc_4>
+<enc0_weight type="string">29</enc0_weight>
+<enc1_weight type="string">58</enc1_weight>
+<enc2_weight type="string">87</enc2_weight>
+<enc3_weight type="string">174</enc3_weight>
+<enc4_weight type="string">290</enc4_weight>
+<enc0_move type="string">5</enc0_move>
+<enc1_move type="string">4</enc1_move>
+<enc2_move type="string">3</enc2_move>
+<enc3_move type="string">2</enc3_move>
+<enc4_move type="string">1</enc4_move>
+<enc0_dodge type="number">8</enc0_dodge>
+<enc1_dodge type="number">7</enc1_dodge>
+<enc2_dodge type="number">6</enc2_dodge>
+<enc3_dodge type="number">5</enc3_dodge>
+<enc4_dodge type="number">4</enc4_dodge>
+</encumbrance>
+
+
+<traits>
+<race type="string">Human</race>
+<height type="string"></height>
+<weight type="string"></weight>
+<age type="string"></age>
+<appearance type="string">Murderous Outlaw</appearance>
+<sizemodifier type="string">0</sizemodifier>
+<reach type="string">0</reach>
+
+<adslist>
+<id-00001>
+<name type="string">Fit</name>
+<points type="number">5</points>
+<text type="string"></text>
+<pageref type="string">B55</pageref>
+<parentuuid></parentuuid>
+<uuid>k176</uuid>
+</id-00001>
+</adslist>
+
+
+<disadslist>
+<id-00001>
+<name type="string">Social Stigma (Criminal Record)</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B155</pageref>
+<parentuuid></parentuuid>
+<uuid>k177</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Status (-1)</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B28</pageref>
+<parentuuid></parentuuid>
+<uuid>k196</uuid>
+</id-00002>
+</disadslist>
+
+
+<culturalfamiliaritylist>
+</culturalfamiliaritylist>
+
+
+<languagelist>
+</languagelist>
+
+<reactionmodifiers>
+|||||-1 from 'Status'|||-1 from 'Social Stigma (Criminal Record)'
+</reactionmodifiers>
+
+<tl type = "string">3</tl>
+<tl_points type = "number">0</tl_points>
+</traits>
+
+
+<inventorylist>
+<id-00001>
+<isidentified type="number">1</isidentified>
+<name type="string">Arrow</name>
+<count type="number">6</count>
+<cost type="string">2</cost>
+<weight type="number">1.66666666666667E-02</weight>
+<weightsum type="number">0.1</weightsum>
+<location type="string"></location>
+<notes type="formattedtext"></notes>
+<carried type="number">2</carried>
+<pageref type="string">LT78,B275</pageref>
+<parentuuid></parentuuid>
+<uuid>k195</uuid>
+</id-00001>
+<id-00002>
+<isidentified type="number">1</isidentified>
+<name type="string">Axe</name>
+<count type="number">1</count>
+<cost type="string">50</cost>
+<weight type="number">4</weight>
+<weightsum type="number">4</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4, [1H Dam:sw+2 cut Reach:1 Parry:0U ST:10 Skill:Axe/Mace, DX-5, Flail-4, Two-Handed Axe/Mace-3], [2H Dam:sw+3 cut Reach:1 Parry:0U ST:10 Skill:Two-Handed Axe/Mace, DX-5, Axe/Mace-3, Polearm-4, Two-Handed Flail-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT65</pageref>
+<parentuuid></parentuuid>
+<uuid>k187</uuid>
+</id-00002>
+<id-00003>
+<isidentified type="number">1</isidentified>
+<name type="string">Cheap Shortsword</name>
+<count type="number">1</count>
+<cost type="string">160</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:1 LC:4 \par [Dam:sw cut Reach:1 Parry:0 ST:8 Skill:Shortsword, DX-5, Broadsword-2, Force Sword-4, Jitte/Sai-3, Knife-4, Saber-4, Smallsword-4, Tonfa-3] \par [Dam:thr+1 imp Reach:1 Parry:0 ST:8 Skill:Shortsword, DX-5, Broadsword-2, Force Sword-4, Jitte/Sai-3, Knife-4, Saber-4, Smallsword-4, Tonfa-3]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT69</pageref>
+<parentuuid></parentuuid>
+<uuid>k190</uuid>
+</id-00003>
+<id-00004>
+<isidentified type="number">1</isidentified>
+<name type="string">Medium Shield</name>
+<count type="number">1</count>
+<cost type="string">60</cost>
+<weight type="number">15</weight>
+<weightsum type="number">15</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:1 LC:4 DB:2 Dam:thr cr Reach:1 Parry:No ST:-- DR:7 HP:40 Skill:Shield (Shield) Notes: [2,3,4] Can be used offensively with a shield bash (see the Melee Weapon Table p. B273) or shield rush (see Slam, p. B371). At TL2+, you can give your small, medium, or large shield a spike to increase damage: add $20 and 5 lbs. Also available as a buckler. You can ready a buckler in one turn and drop it as a free action, just like a weapon - but it always occupies one hand, and it does not allow a shield rush. Use Shield (Buckler) instead of regular shield skill. No effect on statistics. At TL3+, iron shields are available but uncommon: x5 cost, x2 weight, +3 DR, and x2 HP. At TL7+ plastic riot shields (made of Lexan, etc.) have x1/2 weight but otherwise identical statistics. Shield composition never affects DB.</notes>
+<carried type="number">2</carried>
+<pageref type="string">B273, B287</pageref>
+<parentuuid></parentuuid>
+<uuid>k194</uuid>
+</id-00004>
+<id-00005>
+<isidentified type="number">1</isidentified>
+<name type="string">Regular Bow (ST 12)</name>
+<count type="number">1</count>
+<cost type="string">100</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4, Dam:thr+1 imp ACC:2 Range:ST*15/ST*20 ROF:1 Shots:1(2) ST:10† Bulk:-7 Rcl:- Skill:Bow, DX-5 Notes: [3] </notes>
+<carried type="number">2</carried>
+<pageref type="string">LT75</pageref>
+<parentuuid></parentuuid>
+<uuid>k192</uuid>
+</id-00005>
+<id-00006>
+<isidentified type="number">1</isidentified>
+<name type="string">Small Knife</name>
+<count type="number">1</count>
+<cost type="string">30</cost>
+<weight type="number">0.5</weight>
+<weightsum type="number">0.5</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4 \par [Dam:sw-3 cut Reach:C, 1 Parry:-1 ST:5 Skill:Knife, DX-4, Force Sword-3, Main-Gauche-3, Shortsword-3] \par [Dam:thr-1 imp Reach:C Parry:-1 ST:5 Skill:Knife, DX-4, Force Sword-3, Main-Gauche-3, Shortsword-3 Notes: [1] Can be thrown. See Muscle-Powered Ranged Weapon Table (pp. LT75-78).],[Dam:thr-1 imp ACC:0 Range:ST*0.5/ST*1 ROF:1 Shots:T(1) ST:5 Bulk:-1 Rcl:- Skill:Thrown Weapon (Knife), DX-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT67</pageref>
+<parentuuid></parentuuid>
+<uuid>k193</uuid>
+</id-00006>
+<id-00007>
+<isidentified type="number">1</isidentified>
+<name type="string">Spear</name>
+<count type="number">1</count>
+<cost type="string">40</cost>
+<weight type="number">4</weight>
+<weightsum type="number">4</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4 \par [Mode: thrown Dam:thr+3 imp Acc:2 Range:ST*1/ST*1.5 RoF:1 Shots:T(1) ST:9 Bulk:-3] \par [Mode:one-handed thrust Dam:thr+2 imp Reach:1* Parry:0 ST:9 Skill:Spear Notes: [1] Can be thrown. See Muscle Powered Ranged Weapon Table (p. 275)] \par [Mode:two-handed thrust Dam:thr+3 imp Reach:1,2* Parry:0 ST:9† Skill:Spear Notes: Requires two hands.], [Mode Woomera Dam:sw+3 imp Acc:2 Range:ST*1.5/ST*2 RoF:1 Shots:1(1) ST:7 Bulk:-6 Skill: Spear Thrower]</notes>
+<carried type="number">2</carried>
+<pageref type="string">B273, B276, F141</pageref>
+<parentuuid></parentuuid>
+<uuid>k188</uuid>
+</id-00007>
+</inventorylist>
+
+<pointtotals>
+<attributes type="number">50</attributes>
+<ads type="number">5</ads>
+<disads type="number">-10</disads>
+<quirks type="number">0</quirks>
+<skills type="number">39</skills>
+<spells type="number">0</spells>
+<powers type="number">0</powers>
+<others type="number">0</others>
+<totalpoints type="number">84</totalpoints>
+<unspentpoints type="number">66</unspentpoints>
+</pointtotals>
+
+</character>
+</root>
