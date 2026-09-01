@@ -134,29 +134,29 @@ flutter:
     # and rebuilds. Flutter asset directories are NOT recursive — every media
     # subfolder has to be listed by hand; listing only `assets/worlds/` ships
     # the top-level manifest and nothing else.
-    - assets/worlds/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
-    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
-    - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
-    - assets/worlds/cold-bounty-5e/
-    - assets/worlds/cold-bounty-5e/media/
-    - assets/worlds/cold-bounty-5e/media/Maps/
-    - assets/worlds/cold-bounty-5e/media/Tokens/
-    - assets/worlds/cold-bounty-5e/media/Handouts/
-    - "assets/worlds/cold-bounty-5e/media/GURPS GCS Characters/"
-    - assets/worlds/army-of-the-damned-5e/
-    - assets/worlds/army-of-the-damned-5e/media/
-    - assets/worlds/army-of-the-damned-5e/media/Maps/
-    - assets/worlds/army-of-the-damned-5e/media/Artwork/Locations/
-    - assets/worlds/army-of-the-damned-5e/media/Artwork/Monsters/
-    - assets/worlds/army-of-the-damned-5e/media/Artwork/NPCs/
-    - "assets/worlds/army-of-the-damned-5e/media/Magic Items/"
-    - "assets/worlds/army-of-the-damned-5e/media/Music Puzzle/"
-    - "assets/worlds/army-of-the-damned-5e/media/Geralf_s Letter/"
-    - "assets/worlds/army-of-the-damned-5e/media/Innistrad Human Variants/"
+    # - assets/worlds/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
+    # - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
+    # - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
+    # - assets/worlds/cold-bounty-5e/
+    # - assets/worlds/cold-bounty-5e/media/
+    # - assets/worlds/cold-bounty-5e/media/Maps/
+    # - assets/worlds/cold-bounty-5e/media/Tokens/
+    # - assets/worlds/cold-bounty-5e/media/Handouts/
+    # - "assets/worlds/cold-bounty-5e/media/GURPS GCS Characters/"
+    # - assets/worlds/army-of-the-damned-5e/
+    # - assets/worlds/army-of-the-damned-5e/media/
+    # - assets/worlds/army-of-the-damned-5e/media/Maps/
+    # - assets/worlds/army-of-the-damned-5e/media/Artwork/Locations/
+    # - assets/worlds/army-of-the-damned-5e/media/Artwork/Monsters/
+    # - assets/worlds/army-of-the-damned-5e/media/Artwork/NPCs/
+    # - "assets/worlds/army-of-the-damned-5e/media/Magic Items/"
+    # - "assets/worlds/army-of-the-damned-5e/media/Music Puzzle/"
+    # - "assets/worlds/army-of-the-damned-5e/media/Geralf_s Letter/"
+    # - "assets/worlds/army-of-the-damned-5e/media/Innistrad Human Variants/"
 
 flutter_launcher_icons:
   android: true
