@@ -498,7 +498,7 @@
       "cover_image": "media/Title-Image.webp",
       "bundled_dir": "assets/worlds/99_devils_of_uzrahs_palace_shadowdark",
       "r2_path": "world/99-devils-of-uzrahs-palace-shadowdark@1.0.0.json.gz",
-      "size_bytes": 94913,
+      "size_bytes": 94962,
       "media": [
         {
           "rel": "media/Title-Image.webp",
@@ -880,6 +880,500 @@
         {
           "rel": "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf",
           "url": "https://1shotadventures.com/download/3456/?tmstv=1780169323"
+        }
+      ]
+    },
+    {
+      "item_type": "world",
+      "slug": "army-of-the-damned-5e",
+      "title": "Army of the Damned",
+      "version": "1.0.0",
+      "publisher": "Fan-made (Innistrad)",
+      "license": "fan-content",
+      "attribution": "Army of the Damned is a fan-made adventure module by Tomer Abramovici. All illustrations and names used from Magic: The Gathering, along with all D&D terms and rules, are properties of Wizards of the Coast. This is only a fan creation, not in any way made for sale. Maps and the Player’s Guide to Innistrad: Human Variants by /u/Nihilates; Geralf’s coded letter by /u/RanAngel.",
+      "game_system": "dnd5e",
+      "author": "Tomer Abramovici (/u/SpiketailDrake)",
+      "description": "A gothic-horror adventure for four 1st-level characters on the plane of Innistrad, taking them to 5th. The party travels into Stensia to recover an artifact of the Church of Avacyn, clears a haunted manor, defends the village of Shadowgrange against an army of the walking dead, crosses the farbog and storms Mauer Estate to confront the necro-alchemist who built the horde.",
+      "source_url": "",
+      "is_srd_overlap": false,
+      "requires": [],
+      "counts": {
+        "campaign": 1,
+        "lore": 15,
+        "location": 49,
+        "creature-action": 29,
+        "monster": 10,
+        "magic-item": 13,
+        "npc": 32,
+        "environmental-effect": 9,
+        "trap": 3,
+        "scene": 22,
+        "encounter": 25,
+        "quest": 12
+      },
+      "cover_image": "media/Artwork/Monsters/Zombie Apocalypse.jpg",
+      "bundled_dir": "assets/worlds/army-of-the-damned-5e",
+      "r2_path": "world/army-of-the-damned-5e@1.0.0.json.gz",
+      "size_bytes": 169463,
+      "media": [
+        {
+          "rel": "media/Artwork/Monsters/Zombie Apocalypse.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Zombie Apocalypse.jpg",
+          "size_bytes": 82411
+        },
+        {
+          "rel": "media/Maps/Innistrad Map.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Maps/Innistrad Map.png",
+          "size_bytes": 23830069
+        },
+        {
+          "rel": "media/Maps/Iso Shadowgrange.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Maps/Iso Shadowgrange.png",
+          "size_bytes": 11571188
+        },
+        {
+          "rel": "media/Maps/Mauer Estate.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Maps/Mauer Estate.png",
+          "size_bytes": 1951797
+        },
+        {
+          "rel": "media/Maps/Stensia Map.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Maps/Stensia Map.png",
+          "size_bytes": 1127705
+        },
+        {
+          "rel": "media/Artwork/Locations/Mauer Estate.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Mauer Estate.jpg",
+          "size_bytes": 243870
+        },
+        {
+          "rel": "media/Artwork/Locations/Shadowgrange.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Shadowgrange.jpg",
+          "size_bytes": 194644
+        },
+        {
+          "rel": "media/Artwork/Locations/Stensia Silbern.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Stensia Silbern.jpg",
+          "size_bytes": 196278
+        },
+        {
+          "rel": "media/Artwork/Locations/Stensia Valley1.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Stensia Valley1.jpg",
+          "size_bytes": 233691
+        },
+        {
+          "rel": "media/Artwork/Locations/Stensia Valley2.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Stensia Valley2.jpg",
+          "size_bytes": 405912
+        },
+        {
+          "rel": "media/Artwork/Locations/Stensia Valley3.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Stensia Valley3.jpg",
+          "size_bytes": 525914
+        },
+        {
+          "rel": "media/Artwork/Locations/Stensia Valley4.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/Stensia Valley4.jpg",
+          "size_bytes": 184619
+        },
+        {
+          "rel": "media/Artwork/Locations/oaktree.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Locations/oaktree.jpg",
+          "size_bytes": 266928
+        },
+        {
+          "rel": "media/Artwork/Monsters/Anton.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Anton.jpg",
+          "size_bytes": 41874
+        },
+        {
+          "rel": "media/Artwork/Monsters/Ashmouth Hound.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Ashmouth Hound.jpg",
+          "size_bytes": 176809
+        },
+        {
+          "rel": "media/Artwork/Monsters/Charmbreaker_Devils.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Charmbreaker_Devils.jpg",
+          "size_bytes": 167412
+        },
+        {
+          "rel": "media/Artwork/Monsters/Demonlord of Ashmouth.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Demonlord of Ashmouth.jpg",
+          "size_bytes": 34795
+        },
+        {
+          "rel": "media/Artwork/Monsters/Eudora.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Eudora.jpg",
+          "size_bytes": 104744
+        },
+        {
+          "rel": "media/Artwork/Monsters/Falkenrath Marauders.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Falkenrath Marauders.jpg",
+          "size_bytes": 137417
+        },
+        {
+          "rel": "media/Artwork/Monsters/Flowering Lumberknot.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Flowering Lumberknot.jpg",
+          "size_bytes": 163327
+        },
+        {
+          "rel": "media/Artwork/Monsters/Hellrider.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Hellrider.jpg",
+          "size_bytes": 229236
+        },
+        {
+          "rel": "media/Artwork/Monsters/Kessig Recluse.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Kessig Recluse.jpg",
+          "size_bytes": 262735
+        },
+        {
+          "rel": "media/Artwork/Monsters/Lambert.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Lambert.jpg",
+          "size_bytes": 58898
+        },
+        {
+          "rel": "media/Artwork/Monsters/Manor Skeleton.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Manor Skeleton.jpg",
+          "size_bytes": 161744
+        },
+        {
+          "rel": "media/Artwork/Monsters/Ralph Brunn.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Ralph Brunn.png",
+          "size_bytes": 445209
+        },
+        {
+          "rel": "media/Artwork/Monsters/Rinelda Smitt.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Rinelda Smitt.jpg",
+          "size_bytes": 71521
+        },
+        {
+          "rel": "media/Artwork/Monsters/Shriekgeist.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Shriekgeist.jpg",
+          "size_bytes": 51662
+        },
+        {
+          "rel": "media/Artwork/Monsters/Siegfied.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Siegfied.jpg",
+          "size_bytes": 143235
+        },
+        {
+          "rel": "media/Artwork/Monsters/Skaab Goliath.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Skaab Goliath.jpg",
+          "size_bytes": 330528
+        },
+        {
+          "rel": "media/Artwork/Monsters/Stitcher_sApprentice.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Stitcher_sApprentice.jpg",
+          "size_bytes": 236953
+        },
+        {
+          "rel": "media/Artwork/Monsters/TheThing.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/TheThing.jpg",
+          "size_bytes": 135915
+        },
+        {
+          "rel": "media/Artwork/Monsters/Walking Corpse.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/Walking Corpse.jpg",
+          "size_bytes": 322731
+        },
+        {
+          "rel": "media/Artwork/Monsters/animated armor.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/Monsters/animated armor.jpg",
+          "size_bytes": 69747
+        },
+        {
+          "rel": "media/Artwork/NPCs/Captain Levi.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/NPCs/Captain Levi.jpg",
+          "size_bytes": 160291
+        },
+        {
+          "rel": "media/Artwork/NPCs/Priestess Flora.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Artwork/NPCs/Priestess Flora.png",
+          "size_bytes": 515855
+        },
+        {
+          "rel": "media/Magic Items/loot_Alchemists Fire.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Alchemists Fire.jpg",
+          "size_bytes": 41629
+        },
+        {
+          "rel": "media/Magic Items/loot_Avacyns Collar.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Avacyns Collar.jpg",
+          "size_bytes": 36368
+        },
+        {
+          "rel": "media/Magic Items/loot_GhoulcallersBell.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_GhoulcallersBell.jpg",
+          "size_bytes": 43212
+        },
+        {
+          "rel": "media/Magic Items/loot_Mithral Chain Mail.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Mithral Chain Mail.jpg",
+          "size_bytes": 47716
+        },
+        {
+          "rel": "media/Magic Items/loot_Moonsilver Spear.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Moonsilver Spear.jpg",
+          "size_bytes": 41389
+        },
+        {
+          "rel": "media/Magic Items/loot_Shapeshifters Blade.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Shapeshifters Blade.jpg",
+          "size_bytes": 43506
+        },
+        {
+          "rel": "media/Magic Items/loot_Silver-Inlaid Dagger.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Silver-Inlaid Dagger.jpg",
+          "size_bytes": 43586
+        },
+        {
+          "rel": "media/Magic Items/loot_Wolfhunters Quiver.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_Wolfhunters Quiver.jpg",
+          "size_bytes": 41485
+        },
+        {
+          "rel": "media/Magic Items/loot_cleaver.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_cleaver.jpg",
+          "size_bytes": 47605
+        },
+        {
+          "rel": "media/Magic Items/loot_demonmail.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_demonmail.jpg",
+          "size_bytes": 45244
+        },
+        {
+          "rel": "media/Magic Items/loot_elbrus.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_elbrus.jpg",
+          "size_bytes": 46055
+        },
+        {
+          "rel": "media/Magic Items/loot_hauberk.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_hauberk.jpg",
+          "size_bytes": 61164
+        },
+        {
+          "rel": "media/Magic Items/loot_recombob.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_recombob.jpg",
+          "size_bytes": 53221
+        },
+        {
+          "rel": "media/Magic Items/loot_violin.jpg",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Magic Items/loot_violin.jpg",
+          "size_bytes": 40685
+        },
+        {
+          "rel": "media/Music Puzzle/innistradPLAY.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Music Puzzle/innistradPLAY.png",
+          "size_bytes": 866143
+        },
+        {
+          "rel": "media/Music Puzzle/innistradRead.png",
+          "r2_key": "world-media/army-of-the-damned-5e@1.0.0/media/Music Puzzle/innistradRead.png",
+          "size_bytes": 629682
+        }
+      ],
+      "external_files": []
+    },
+    {
+      "item_type": "world",
+      "slug": "cold-bounty-5e",
+      "title": "The Cold Bounty",
+      "version": "2.0.0",
+      "publisher": "1Shot Adventures",
+      "license": "all-rights-reserved",
+      "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
+      "game_system": "dnd5e",
+      "author": "JC Connors (thalcos)",
+      "description": "A cold mountain survival adventure for 4-6 2nd level D&D 5E characters. After a failed bounty hunt in the frozen Zark mountains, the PCs must survive a blizzard, navigate ice crevasses, and confront a sorcerer building a platinum golem. Suitable for 4-6 2nd level characters.",
+      "source_url": "https://1shotadventures.com/the-cold-bounty/",
+      "is_srd_overlap": false,
+      "requires": [],
+      "counts": {
+        "campaign": 1,
+        "species": 1,
+        "language": 1,
+        "magic-item": 4,
+        "creature-action": 11,
+        "monster": 5,
+        "npc": 6,
+        "location": 7,
+        "lore": 5,
+        "environmental-effect": 2,
+        "trap": 2,
+        "scene": 8,
+        "encounter": 4,
+        "quest": 4
+      },
+      "cover_image": "media/Cold-Bounty-Title.jpg",
+      "bundled_dir": "assets/worlds/cold-bounty-5e",
+      "r2_path": "world/cold-bounty-5e@2.0.0.json.gz",
+      "size_bytes": 28544,
+      "media": [
+        {
+          "rel": "media/Cold-Bounty-Title.jpg",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Cold-Bounty-Title.jpg",
+          "size_bytes": 258316
+        },
+        {
+          "rel": "media/Maps/Mountain-Shelter.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Maps/Mountain-Shelter.webp",
+          "size_bytes": 986516
+        },
+        {
+          "rel": "media/Maps/Old-Cave.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Maps/Old-Cave.webp",
+          "size_bytes": 870392
+        },
+        {
+          "rel": "media/Handouts/HandoutA-Poster.jpg",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Handouts/HandoutA-Poster.jpg",
+          "size_bytes": 962577
+        },
+        {
+          "rel": "media/Handouts/HandoutB-ZarakSeal-GURPS.jpg",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Handouts/HandoutB-ZarakSeal-GURPS.jpg",
+          "size_bytes": 465607
+        },
+        {
+          "rel": "media/Handouts/HandoutB-ZarkSeal-5E.jpg",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Handouts/HandoutB-ZarkSeal-5E.jpg",
+          "size_bytes": 487224
+        },
+        {
+          "rel": "media/Tokens/Aldara.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Aldara.webp",
+          "size_bytes": 123018
+        },
+        {
+          "rel": "media/Tokens/Cariyen.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Cariyen.webp",
+          "size_bytes": 113266
+        },
+        {
+          "rel": "media/Tokens/Count-Mannheim.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Count-Mannheim.webp",
+          "size_bytes": 122526
+        },
+        {
+          "rel": "media/Tokens/Fat-Farlsbag.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Fat-Farlsbag.webp",
+          "size_bytes": 123472
+        },
+        {
+          "rel": "media/Tokens/Golem.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Golem.webp",
+          "size_bytes": 119298
+        },
+        {
+          "rel": "media/Tokens/Hobgoblin-Leader.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Hobgoblin-Leader.webp",
+          "size_bytes": 117106
+        },
+        {
+          "rel": "media/Tokens/Hobgoblin.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Hobgoblin.webp",
+          "size_bytes": 122790
+        },
+        {
+          "rel": "media/Tokens/Ironmouth-Spider.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Ironmouth-Spider.webp",
+          "size_bytes": 124188
+        },
+        {
+          "rel": "media/Tokens/Izorzah.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Izorzah.webp",
+          "size_bytes": 128468
+        },
+        {
+          "rel": "media/Tokens/Ott.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Ott.webp",
+          "size_bytes": 131640
+        },
+        {
+          "rel": "media/Tokens/PC-Coppertong.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/PC-Coppertong.webp",
+          "size_bytes": 115906
+        },
+        {
+          "rel": "media/Tokens/PC-Enfys.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/PC-Enfys.webp",
+          "size_bytes": 116220
+        },
+        {
+          "rel": "media/Tokens/PC-Halsey.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/PC-Halsey.webp",
+          "size_bytes": 124904
+        },
+        {
+          "rel": "media/Tokens/PC-Sisley.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/PC-Sisley.webp",
+          "size_bytes": 116774
+        },
+        {
+          "rel": "media/Tokens/PC-William.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/PC-William.webp",
+          "size_bytes": 116174
+        },
+        {
+          "rel": "media/Tokens/Slave-2.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Slave-2.webp",
+          "size_bytes": 113632
+        },
+        {
+          "rel": "media/Tokens/Slave.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Slave.webp",
+          "size_bytes": 123272
+        },
+        {
+          "rel": "media/Tokens/Yeti.webp",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/Tokens/Yeti.webp",
+          "size_bytes": 124148
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Aldara-the-Scout.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Aldara-the-Scout.gcs",
+          "size_bytes": 206244
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Crag-Yeti.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Crag-Yeti.gcs",
+          "size_bytes": 194025
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Fat-Farlsbag.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Fat-Farlsbag.gcs",
+          "size_bytes": 197374
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Hobgoblin-Captain.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Hobgoblin-Captain.gcs",
+          "size_bytes": 186921
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Hobgoblin-Henchman.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Hobgoblin-Henchman.gcs",
+          "size_bytes": 194042
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Ironmouth-Spider.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Ironmouth-Spider.gcs",
+          "size_bytes": 199677
+        },
+        {
+          "rel": "media/GURPS GCS Characters/I’Zor’zah-the-Azure.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/I’Zor’zah-the-Azure.gcs",
+          "size_bytes": 243807
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Slave.gcs",
+          "r2_key": "world-media/cold-bounty-5e@2.0.0/media/GURPS GCS Characters/Slave.gcs",
+          "size_bytes": 180877
+        }
+      ],
+      "external_files": [
+        {
+          "rel": "Cold-Bounty-5E-2.pdf",
+          "url": "https://1shotadventures.com/download/2935/?tmstv=1772964119"
         }
       ]
     }
