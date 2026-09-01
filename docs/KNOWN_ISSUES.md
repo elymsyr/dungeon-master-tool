@@ -5,7 +5,7 @@ Living list of what is deferred, broken-on-purpose, or a real bug still being tr
 in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (copy the
 items that are still open on the release date; do not edit past releases afterwards).
 
-**Last reviewed:** September 2026 (v15.0.0)
+**Last reviewed:** September 2026 (v15.1.0)
 
 ---
 

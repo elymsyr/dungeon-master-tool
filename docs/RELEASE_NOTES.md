@@ -1,5 +1,83 @@
 # Release Notes
 
+## Dungeon Master Tool v15.1.0 — Guest Character Release, Cold Bounty World, Ownership UX (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Guest users can now release characters without an account, a new bundled D&D 5E adventure joins the catalog, and claiming or releasing a character is a single tap from the sidebar. Under the hood, the character editor and entity card load faster thanks to lazy loading and memoized resolution.
+
+---
+
+### Highlights
+
+- **Guest character release** — Release a character without an account; a local marker tracks the release so it sticks across sessions.
+- **The Cold Bounty** — New bundled D&D 5E world: a cold mountain survival adventure for 4-6 2nd-level characters (1Shot Adventures).
+- **Claim / Release in the sidebar** — The hamburger menu on every character row now shows Claim or Release depending on ownership, so you can toggle ownership without opening the editor.
+- **Faster character editor** — Lazy loading and memoized character resolution cut cold-start time on large character sheets.
+- **Faster entity cards** — Entity card rendering is now lazy, avoiding unnecessary rebuilds when scrolling through lists.
+
+---
+
+### Characters
+
+#### Guest character release
+
+Guest users (no account) can now release a character they no longer want. A special `kGuestReleasedOwnerId` marker is written so the release persists across sessions even without a server-side owner record. `normalizedOwnerId` strips the marker before any server call, so cloud operations are unaffected.
+
+#### Claim / Release in the sidebar
+
+The hamburger menu on offline character rows now shows **Claim** (if unowned) or **Release** (if owned) as the first item. The toggle is a purely local ownership patch — offline worlds have no `world_characters` row, but ownership gates editing and hub visibility, so the toggle works without multiplayer.
+
+---
+
+### Worlds & Content
+
+#### The Cold Bounty
+
+A new bundled D&D 5E adventure, **The Cold Bounty** by JC Connors (1Shot Adventures), is now available. It is a cold mountain survival adventure for 4-6 2nd-level characters. Install it from Admin → Bundled Worlds.
+
+---
+
+### Smaller improvements
+
+- **Character resolution memoized** — Character resolution inputs are memoized, so repeated opens of the same character avoid re-parsing the full entities map.
+- **Entity card lazy loading** — Entity cards no longer rebuild their full widget tree until scrolled into view.
+- **Release notes moved** — `RELEASE_NOTES.md` moved to `docs/` alongside the other project documentation.
+- **Known issues centralized** — All known issues now live in `docs/KNOWN_ISSUES.md` and are referenced from release notes instead of being duplicated.
+
+---
+
+### Bug fixes
+
+- **Character editor cold start** — Lazy loading and memoization cut the initial load time on large character sheets.
+- **Entity card rebuilds** — Scrolling through entity lists no longer triggers full rebuilds on off-screen cards.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.0.0` → `15.1.0`.
+- **In-app migrations:** None. No schema changes.
+- **Bundled worlds:** The Cold Bounty is a new bundled asset. No action required — it appears in Admin → Bundled Worlds after upgrade.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Deleting a world bricks its characters** — A character claimed from an installed world can no longer be opened once that world is deleted. Characters should survive world deletion and only lose their world link.
+- **Signed-out users can get stuck on a claimed character** — Without an account, a character owned from a deleted world can be neither released nor opened.
+- **Portraits are not carried over when you create an account** — Characters created before signing up lose their portrait images after the account is created; re-attach the image manually.
+- **Bundled world references stay soft** — Species and class references on imported player characters are not linked to local entities; sheets display the recorded name rather than a live link.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.0.0 — Bundled World Pipeline, Class Resources, Offline SRD (Beta)
 
 **Release date:** August 2026
