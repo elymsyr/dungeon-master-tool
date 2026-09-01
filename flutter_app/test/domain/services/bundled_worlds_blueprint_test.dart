@@ -33,7 +33,8 @@ void main() {
             : null;
       }
 
-      final result = WorldBlueprintConverter(
+      final blueprint = read('world-blueprint.json');
+      final converter = WorldBlueprintConverter(
         packageName: meta['slug'] as String,
         sourceTitle: '${meta['title']}, ${meta['system']}',
         tier0Slugs: blueprintTier0Slugs(),
@@ -41,8 +42,9 @@ void main() {
         knownNames: builtinContentNames(),
         fieldKeys: blueprintFieldKeys(),
         mediaResolver: (rel) => File('$dir/$rel').existsSync() ? rel : null,
-      ).convert(
-        worldBlueprint: read('world-blueprint.json'),
+      );
+      final result = converter.convert(
+        worldBlueprint: blueprint,
         characterBlueprint: read('blueprint.json'),
       );
 
@@ -53,6 +55,17 @@ void main() {
             '--check` for the full report',
       );
       expect(result.entities, isNotEmpty);
+      // `pinned` girdileri `kategori/isim` — yazım hatası sessizce hiçbir
+      // şeyi pinlemez, o yüzden burada id'ye çözülüp entity'de aranıyor.
+      for (final ref in (blueprint?['pinned'] as List? ?? const [])) {
+        final i = (ref as String).indexOf('/');
+        expect(i, greaterThan(0), reason: 'pinned ref must be `slug/name`: $ref');
+        expect(
+          result.entities,
+          contains(converter.entityId(ref.substring(0, i), ref.substring(i + 1))),
+          reason: 'pinned entity not found: $ref',
+        );
+      }
       // PC'ler entity değil; `Entity.fromJson`'ın beklediği biçimde
       // gelmezlerse kurulum karakteri hiç yazamaz.
       for (final c in result.characters) {

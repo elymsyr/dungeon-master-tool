@@ -2,6 +2,12 @@
   "version": "2.0.0",
   "source_system": "dnd5e",
   "app_schema": "builtin-dnd5e-default-v2",
+  "pinned": [
+    "campaign/The Cold Bounty",
+    "quest/The Bounty on Fat Farlsbag",
+    "quest/Survive the Storm",
+    "scene/The Beginning"
+  ],
   "categories": {
     "campaign": [
       {

@@ -2,6 +2,12 @@
   "version": "1.0.0",
   "source_system": "shadowdark",
   "app_schema": "builtin-dnd5e-default-v2",
+  "pinned": [
+    "campaign/99 Devils of Uzrah's Palace",
+    "quest/Claim a Share of the Treasury of the Ninety-Nine Stars",
+    "scene/The Port of Al-Shihr",
+    "quest/Escape the Palace"
+  ],
   "categories": {
     "npc": [
       {

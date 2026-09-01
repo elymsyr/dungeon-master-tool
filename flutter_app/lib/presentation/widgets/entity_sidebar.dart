@@ -10,6 +10,7 @@ import '../../core/utils/screen_type.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/entity_share_provider.dart';
 import '../../application/providers/entity_sidebar_provider.dart';
+import '../../application/providers/pinned_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -27,10 +28,15 @@ class EntitySidebar extends ConsumerStatefulWidget {
   final void Function(String entityId)? onEntitySelected;
   final void Function(String categorySlug)? onCreateEntity;
 
+  /// Pinning writes to the active *world*'s settings — meaningless (and
+  /// wrong-world) when this sidebar lists a package's entities.
+  final bool pinning;
+
   const EntitySidebar({
     this.schema,
     this.onEntitySelected,
     this.onCreateEntity,
+    this.pinning = true,
     super.key,
   });
 
@@ -197,6 +203,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     // visible entity map identity changes. Avoids 7K-entity allocation
     // per keyboard viewInsets relayout.
     final summaries = ref.watch(entitySummaryListProvider);
+    final pinned =
+        widget.pinning ? ref.watch(pinnedEntityIdsProvider) : const <String>{};
 
     // DM-only sharing filter context. Player için chip render edilmez ve
     // filter aktif değilse pass-through.
@@ -266,6 +274,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       // would always mismatch → cache miss → 7K filter+sort re-runs on every
       // keyboard viewInsets relayout → jank.
       Object.hashAllUnordered(sharedEntityIds),
+      Object.hashAllUnordered(pinned),
     );
 
     final List<_EntitySummary> matched;
@@ -277,6 +286,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       others = _othersCache!;
     } else {
       int cmp(_EntitySummary a, _EntitySummary b) {
+        // Pinned rows lead every sort mode.
+        final ap = pinned.contains(a.id);
+        if (ap != pinned.contains(b.id)) return ap ? -1 : 1;
         return switch (_sortMode) {
           _SortMode.name => a.name.compareTo(b.name),
           _SortMode.category =>
@@ -693,6 +705,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           catMap,
                           palette,
                           dimmed: isOther,
+                          pinned: pinned.contains(entity.id),
                         );
                       },
                     );
@@ -1450,6 +1463,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     Map<String, EntityCategorySchema> catMap,
     DmToolColors palette, {
     required bool dimmed,
+    required bool pinned,
   }) {
     final cat = catMap[entity.categorySlug];
     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
@@ -1492,6 +1506,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       color,
       cat?.name ?? entity.categorySlug,
       palette,
+      pinned,
     );
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
@@ -1520,6 +1535,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     Color color,
     String categoryLabel,
     DmToolColors palette,
+    bool pinned,
   ) {
     return InkWell(
       onTap: () => widget.onEntitySelected?.call(entity.id),
@@ -1527,10 +1543,23 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         child: Row(
           children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            // Category dot — swapped for a pin glyph (same colour, same
+            // 8 px footprint) while the entity is pinned.
+            SizedBox(
+              width: 11,
+              height: 11,
+              child: pinned
+                  ? Icon(Icons.push_pin, size: 11, color: color)
+                  : Center(
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 8),
             Expanded(

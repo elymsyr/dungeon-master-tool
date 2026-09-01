@@ -11,6 +11,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/entity_share_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
+import '../../../application/providers/pinned_entity_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../application/services/entity_share_prepare.dart';
 import '../../../application/services/pending_write_buffer.dart';
@@ -420,11 +421,52 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               ),
                             ),
                     ),
-                    // All projection / share controls live in one menu.
-                    _EntityWorldMenu(
-                      entityId: widget.entityId,
-                      entity: entity,
-                      currentImageIndex: _currentImageIndex,
+                    // Pin + world menu share one centre-aligned Row so the
+                    // two buttons line up whatever their intrinsic heights.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Pin to the top of the database list. World-level
+                        // (rides along on share/download) — see
+                        // `pinnedEntityIdsProvider`.
+                        Builder(builder: (_) {
+                          final pinned = ref
+                              .watch(pinnedEntityIdsProvider)
+                              .contains(widget.entityId);
+                          // Standard density: the theme's compact default
+                          // shrinks the hit box below the world menu's 32 px.
+                          return SizedBox.square(
+                            dimension: 32,
+                            child: IconButton(
+                            visualDensity: VisualDensity.standard,
+                            icon: Icon(
+                              pinned
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined,
+                              size: 18,
+                              color: palette.srdHeadingRed,
+                            ),
+                            tooltip: pinned ? 'Unpin' : 'Pin to top',
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            onPressed: () => ref
+                                .read(pinnedEntityIdsProvider.notifier)
+                                .toggle(widget.entityId),
+                            ),
+                          );
+                        }),
+                        // All projection / share controls live in one menu.
+                        _EntityWorldMenu(
+                          entityId: widget.entityId,
+                          entity: entity,
+                          currentImageIndex: _currentImageIndex,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1532,7 +1574,11 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
 
     final hasImage = _images.isNotEmpty;
 
-    return PopupMenuButton<_WorldMenuAction>(
+    // Tight 32x32 — the pin button beside it is boxed the same so the two
+    // hit areas match.
+    return SizedBox.square(
+      dimension: 32,
+      child: PopupMenuButton<_WorldMenuAction>(
       tooltip: 'Player screen',
       enabled: !_busy,
       iconSize: 18,
@@ -1580,6 +1626,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
           ),
       ],
       onSelected: (action) => _onSelected(action, worldId, isShared),
+      ),
     );
   }
 

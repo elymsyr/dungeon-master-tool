@@ -476,6 +476,7 @@ class _PackageScreenContentState
                   children: [
                     Expanded(
                       child: EntitySidebar(
+                        pinning: false,
                         schema: widget.schema,
                         onEntitySelected: (id) {
                           setState(() {
@@ -557,6 +558,7 @@ class _PackageScreenContentState
           minChildSize: 0.3,
           expand: false,
           builder: (_, scrollController) => EntitySidebar(
+            pinning: false,
             schema: widget.schema,
             onEntitySelected: (id) {
               Navigator.pop(ctx);
