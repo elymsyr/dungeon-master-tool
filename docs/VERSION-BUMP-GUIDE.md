@@ -46,15 +46,15 @@ All four locations must match:
 | `flutter_app/pubspec.yaml` | `version: X.Y.Z` (line 4) |
 | `flutter_app/lib/core/constants.dart` | `appVersion = 'X.Y.Z'` (line 8) |
 | `README.md` | Badge: `version-vX.Y.Z` (line 16), status badge if stable |
-| `RELEASE_NOTES.md` | New release note section at the top (see step 5) |
+| `docs/RELEASE_NOTES.md` | New release note section at the top (see step 5) |
 
 ## 5. Write the release note
 
 1. Read `docs/TEMPLATE_RELEASE_NOTE.md` for format and rules.
-2. Read the previous release note in `RELEASE_NOTES.md` to carry over known issues.
+2. Read the previous release note in `docs/RELEASE_NOTES.md` to carry over known issues.
 3. Copy the template between `<!-- BEGIN -->` and `<!-- END -->`.
 4. Fill in every section. Delete sections that don't apply — don't leave empty headings.
-5. Insert the new note at the **top** of `RELEASE_NOTES.md` (below the `# Release Notes` heading).
+5. Insert the new note at the **top** of `docs/RELEASE_NOTES.md` (below the `# Release Notes` heading).
 6. Every **Highlight** bullet must have a matching detailed section, and vice versa.
 7. Carry forward unresolved known issues from the previous release.
 
