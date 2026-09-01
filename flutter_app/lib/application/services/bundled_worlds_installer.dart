@@ -23,6 +23,7 @@ import '../../domain/repositories/campaign_repository.dart';
 import '../../domain/services/builtin_content_names.dart';
 import '../../domain/services/world_blueprint_converter.dart';
 import '../providers/character_provider.dart' show kPlayerCategorySlugs;
+import '../providers/pinned_entity_provider.dart' show kPinnedEntitiesKey;
 import 'pdf_library_service.dart';
 
 /// `assets/worlds/` altındaki paketlenmiş dünyaları kurar / kaldırır.
@@ -283,6 +284,15 @@ class BundledWorldsInstaller {
       },
     );
 
+    final pinRefs = worldBlueprint?['pinned'];
+    final pins = <String>[
+      if (pinRefs is List)
+        for (final r in pinRefs)
+          if (r is String && r.contains('/'))
+            converter.entityId(
+                r.substring(0, r.indexOf('/')), r.substring(r.indexOf('/') + 1)),
+    ];
+
     final result = converter.convert(
       worldBlueprint: worldBlueprint,
       characterBlueprint: characterBlueprint,
@@ -314,6 +324,10 @@ class BundledWorldsInstaller {
         if (_coverPath(mediaRoot, manifest) != null)
           'cover_image_path': _coverPath(mediaRoot, manifest),
       },
+      // Blueprint'in `pinned` listesi (`kategori/isim`) → entity id'leri.
+      // Non-typed top-level key olduğu için `world_settings.settings_json`
+      // blob'una düşüyor; sidebar oradan okuyor (kPinnedEntitiesKey).
+      if (pins.isNotEmpty) kPinnedEntitiesKey: pins,
     };
 
     // Var olan dünyanın kullanıcı tarafından eklenmiş satırlarını koru —
