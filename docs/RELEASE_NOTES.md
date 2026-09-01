@@ -1,11 +1,11 @@
 # Release Notes
 
-## Dungeon Master Tool v15.1.0 — Guest Character Release, Cold Bounty World, Ownership UX (Beta)
+## Dungeon Master Tool v15.1.0 — Pinned Entities, Two New Worlds, Guest Character Release (Beta)
 
 **Release date:** September 2026
 **Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-Guest users can now release characters without an account, a new bundled D&D 5E adventure joins the catalog, and claiming or releasing a character is a single tap from the sidebar. Under the hood, the character editor and entity card load faster thanks to lazy loading and memoized resolution.
+Guest users can now release characters without an account, two new bundled D&D 5E adventures join the catalog, and claiming or releasing a character is a single tap from the sidebar. The database sidebar gains pinning, so the entities you reach for most sit at the top of the list — and stay pinned for anyone who downloads the world. Under the hood, the character editor and entity card load faster thanks to lazy loading and memoized resolution.
 
 ---
 
@@ -13,6 +13,8 @@ Guest users can now release characters without an account, a new bundled D&D 5E 
 
 - **Guest character release** — Release a character without an account; a local marker tracks the release so it sticks across sessions.
 - **The Cold Bounty** — New bundled D&D 5E world: a cold mountain survival adventure for 4-6 2nd-level characters (1Shot Adventures).
+- **Army of the Damned** — New bundled D&D 5E world: a gothic-horror Innistrad module that takes four 1st-level characters to 5th (fan-made, Tomer Abramovici).
+- **Pin entities to the top** — Pin any NPC, location or item and it sorts first in the database sidebar, in every sort mode.
 - **Claim / Release in the sidebar** — The hamburger menu on every character row now shows Claim or Release depending on ownership, so you can toggle ownership without opening the editor.
 - **Faster character editor** — Lazy loading and memoized character resolution cut cold-start time on large character sheets.
 - **Faster entity cards** — Entity card rendering is now lazy, avoiding unnecessary rebuilds when scrolling through lists.
@@ -37,6 +39,23 @@ The hamburger menu on offline character rows now shows **Claim** (if unowned) or
 
 A new bundled D&D 5E adventure, **The Cold Bounty** by JC Connors (1Shot Adventures), is now available. It is a cold mountain survival adventure for 4-6 2nd-level characters. Install it from Admin → Bundled Worlds.
 
+#### Army of the Damned
+
+**Army of the Damned**, a fan-made gothic-horror module set on Innistrad by Tomer Abramovici, ships as a bundled D&D 5E world. It runs four 1st-level characters up to 5th: into Stensia to recover an artifact of the Church of Avacyn, through a haunted manor, a siege of Shadowgrange against the walking dead, and finally Mauer Estate. Maps, artwork and handouts install with it; the adventure PDF is not redistributed.
+
+- The module's stat blocks are printed as images in the original PDF, so they were transcribed by hand into each monster's Traits & Features text.
+- Author typos in the source text are kept verbatim rather than silently corrected.
+
+---
+
+### Database
+
+#### Pinned entities
+
+Every entity card now has a pin button. Pinned entities sort to the top of the database sidebar in every sort mode, with a pin glyph in place of the category dot, so the NPCs and locations you keep reaching for during a session stay one tap away.
+
+Pins belong to the world, not to your device: they are stored with the world's settings, so they survive publishing to the Marketplace, downloading, and cloud or LAN sync. A bundled adventure can therefore ship the author's own pins — both The Cold Bounty and Army of the Damned arrive with their key entities already pinned. The package sidebar (which lists another world's entities) does not pin.
+
 ---
 
 ### Smaller improvements
@@ -52,6 +71,7 @@ A new bundled D&D 5E adventure, **The Cold Bounty** by JC Connors (1Shot Adventu
 
 - **Character editor cold start** — Lazy loading and memoization cut the initial load time on large character sheets.
 - **Entity card rebuilds** — Scrolling through entity lists no longer triggers full rebuilds on off-screen cards.
+- **Half-empty proficiency tables** — Characters imported from a bundled world showed only the skills and saves they were proficient in; the remaining rows were missing entirely. Stored values are now merged over the full standard row list, so every skill and save shows up.
 
 ---
 
@@ -59,13 +79,14 @@ A new bundled D&D 5E adventure, **The Cold Bounty** by JC Connors (1Shot Adventu
 
 - **App version bump:** `15.0.0` → `15.1.0`.
 - **In-app migrations:** None. No schema changes.
-- **Bundled worlds:** The Cold Bounty is a new bundled asset. No action required — it appears in Admin → Bundled Worlds after upgrade.
+- **Bundled worlds:** The Cold Bounty and Army of the Damned are new bundled assets. No action required — they appear in Admin → Bundled Worlds after upgrade.
+- **Pins on existing worlds:** None. Worlds without pins behave exactly as before; pinning is opt-in per entity.
 
 ---
 
 ### Known issues
 
-The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Open at the time of this release:
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
 
 - **Deleting a world bricks its characters** — A character claimed from an installed world can no longer be opened once that world is deleted. Characters should survive world deletion and only lose their world link.
 - **Signed-out users can get stuck on a claimed character** — Without an account, a character owned from a deleted world can be neither released nor opened.
