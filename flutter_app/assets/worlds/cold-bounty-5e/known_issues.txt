@@ -1,0 +1,10 @@
+Fix corrupted text in Fat Farlsbag's secrets (Chinese chars)
+Add missing Hobgoblin Warrior monster entity + creature actions
+Fix Mind-Controlled Slave stats (STR 12, INT 8, WIS 8, CHA 8) + Mining Tool action
+Fix I'Zor'zah CR/XP (CR 2, 450 XP) + saving throws + skills
+Add entity links (@[...](entity:slug/Name)) to all description fields
+Add source fields to all entities
+Complete missing location description_long sections
+Fix schema violations (traits_md, equipment_md on NPCs → proper refs)
+Remove Half-Elf species entity (SRD, should be lookup not world entity)
+Run --check and audit_coverage.py to verify
