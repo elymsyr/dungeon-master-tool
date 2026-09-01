@@ -7,7 +7,7 @@
   "license": "all-rights-reserved",
   "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
   "source_url": "https://1shotadventures.com/the-cold-bounty/",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A cold mountain survival adventure for 4-6 2nd level D&D 5E characters. After a failed bounty hunt in the frozen Zark mountains, the PCs must survive a blizzard, navigate ice crevasses, and confront a sorcerer building a platinum golem. Suitable for 4-6 2nd level characters.",
   "files": {
     "pdf": "Cold-Bounty-5E-2.pdf",
@@ -50,7 +50,7 @@
         "media/GURPS GCS Characters/Hobgoblin-Captain.gcs",
         "media/GURPS GCS Characters/Hobgoblin-Henchman.gcs",
         "media/GURPS GCS Characters/Ironmouth-Spider.gcs",
-        "media/GURPS GCS Characters/I'Zor'zah-the-Azure.gcs",
+        "media/GURPS GCS Characters/I’Zor’zah-the-Azure.gcs",
         "media/GURPS GCS Characters/Slave.gcs"
       ]
     }

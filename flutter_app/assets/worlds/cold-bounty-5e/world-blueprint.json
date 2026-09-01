@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "source_system": "dnd5e",
   "app_schema": "builtin-dnd5e-default-v2",
   "categories": {
@@ -8,13 +8,17 @@
         "source_name": "The Cold Bounty",
         "mapping": {
           "name": "The Cold Bounty",
-          "pages": [
-            "# The Cold Bounty\n\nby J.C. Connors\n\n## About the Adventure\n\nThe Cold Bounty is a Dungeon & Dragons 5E adventure, although it can be easily translated to other systems (a GURPS Fantasy version is also available on 1shotadventures.com). The adventure is set far to the north of the land, deep in the cold peaks of the Zark mountain range, although it can easily be translated to any icy kingdom of the DM's preference. The PCs were part of a large manhunt for a nefarious kidnapper and villain, but the expedition met its doom after getting ambushed by a war party of orcs that were just forced from their homes by an immortal sorcerer... who seeks revenge on his old wizard cult.\n\nThe adventure is suitable for 4-6 2nd level characters, although it can be easily adjusted up or down a level. Players can use their own adventurers, or for additional inspiration, the end of the adventure includes names and backgrounds for six pregenerated heroes. Characters introduced for the first time in the adventure are noted in ALL-CAPS. Sections marked with a map are sidequests and adventure hooks, and not important to the overall plot of the adventure.\n\n## Adventure Summary\n\nThe unexpected battle was over. Corpses of men and orcs sprawl motionless on the frozen ground. Over one hundred men and bestial foes now lay mutually annihilated in the freezing northern mountains of Zark.\n\nThe battle had started when the the towns south of the border had finally tired of the villain FAT FARLSBAG, who was notorious for the murder and kidnapping of dozens of good folk over the years. But when he kidnapped PRINCE ADELHEID'S wife-to-be, just days before the wedding, that was enough. The Prince put out a massive bounty, which only caused Fat Farlsbag to murder the poor girl, and proclaim that he would never be caught in the cruel mountains of the north. That proclamation did not stop a hundred men and dwarves from heading into the mountains to track him.\n\nUnknown to the posses (and the PCs), the cragmen and hobgoblins of these mountains had recently been forced out of their underworld home – the ancient dwarven platinum mine known as Davihn-Karr. They were chased out by an unaging sorcerer, I'ZOR'ZAH THE AZURE, who was enslaving them with his experimental magic and forcing them to mine precious platinum. Fearing the harsh winter, and thinking themselves under attack by the southern towns, a large warband of orcs set upon the bounty hunters. The two sides annihilated each other in the battle that occurred.\n\nFat Farlsbag is delighted by the cruel violence that has just occurred, and sees the battle as an opportunity for new hostages and found wealth. He's also gotten wind that the orcs fled from a legendary platinum mine of Davihn-Karr, and seeks to discover the location of it for himself.\n\nMeanwhile, the sorcerer I'Zor'zah is readying his own plan of vengeance. Having long feuded with the fascist wizard cult he founded, the Sorcerers of the White Crystal Peaks, he has decided to create an artifact that will finally topple their hidden headquarters, the White Crystal Spire. His goal is to create a massive statue, laced with rare essential platinum, and then animate it into a tremendous golem. According to his decades-long research, this platinum golem, being composed of the most precious of essential metals, would be able to walk through the earth itself. It would be easy for the construct to annihilate the tower of his enemies. Then, he could use the golem to cause havoc among the settlements above and below ground, inevitably taking control of the north, and starting his own order of sorcerers."
-          ],
+          "description": "A cold mountain survival adventure for 4-6 2nd level D&D 5E characters, by J.C. Connors (1Shot Adventures).",
+          "imagePath": "media/Cold-Bounty-Title.jpg",
           "pdfs": [
             "Cold-Bounty-5E-2.pdf"
           ],
-          "imagePath": "media/Cold-Bounty-Title.jpg"
+          "pages": [
+            "# The Cold Bounty\n\nby J.C. Connors\n\n## About the Adventure\n\nThe Cold Bounty is a Dungeon & Dragons 5E adventure, although it can be easily translated to other systems (a GURPS Fantasy version is also available on 1shotadventures.com). The adventure is set far to the north of the land, deep in the cold peaks of the Zark mountain range, although it can easily be translated to any icy kingdom of the DM's preference. The PCs were part of a large manhunt for a nefarious kidnapper and villain, but the expedition met its doom after getting ambushed by a war party of orcs that were just forced from their homes by an immortal sorcerer... who seeks revenge on his old wizard cult.\n\nThe adventure is suitable for 4-6 2nd level characters, although it can be easily adjusted up or down a level. Players can use their own adventurers, or for additional inspiration, the end of the adventure includes names and backgrounds for six pregenerated heroes. Characters introduced for the first time in the adventure are noted in ALL-CAPS. Sections marked with a map are sidequests and adventure hooks, and not important to the overall plot of the adventure.",
+            "## Adventure Summary\n\nThe unexpected battle was over. Corpses of men and orcs sprawl motionless on the frozen ground. Over one hundred men and bestial foes now lay mutually annihilated in the freezing northern mountains of Zark.\n\nThe battle had started when the the towns south of the border had finally tired of the villain FAT FARLSBAG, who was notorious for the murder and kidnapping of dozens of good folk over the years. But when he kidnapped PRINCE ADELHEID'S wife-to-be, just days before the wedding, that was enough. The Prince put out a massive bounty, which only caused Fat Farlsbag to murder the poor girl, and proclaim that he would never be caught in the cruel mountains of the north. That proclamation did not stop a hundred men and dwarves from heading into the mountains to track him.\n\nUnknown to the posses (and the PCs), the cragmen and hobgoblins of these mountains had recently been forced out of their underworld home – the ancient dwarven platinum mine known as @[Davihn-Karr](entity:location/Davihn-Karr). They were chased out by an unaging sorcerer, @[I'ZOR'ZAH THE AZURE](entity:npc/I'Zor'zah the Azure), who was enslaving them with his experimental magic and forcing them to mine precious platinum. Fearing the harsh winter, and thinking themselves under attack by the southern towns, a large warband of orcs set upon the bounty hunters. The two sides annihilated each other in the battle that occurred.\n\n@[Fat Farlsbag](entity:npc/Fat Farlsbag) is delighted by the cruel violence that has just occcurred, and sees the battle as an opportunity for new hostages and found wealth. He's also gotten wind that the orcs fled from a legendary platinum mine of Davihn-Karr, and seeks to discover the location of it for himself.\n\nMeanwhile, the sorcerer I'Zor'zah is readying is own plan of vengeance. Having long feuded with the fascist wizard cult he founded, @[the Sorcerers of the White Crystal Peaks](entity:lore/The Sorcerers of the White Crystal Peaks), he has decided to create an artifact that will finally topple their hidden headquarters, the White Crystal Spire. His goal is to create a massive statue, laced with rare essential platinum, and then animate it into a tremendous golem. According to his decades-long research, this platinum golem, being composed of the most precious of essential metals, would be able to walk through the earth itself. It would be easy for the construct to annihilate the tower of his enemies. Then, he could use the golem to cause havoc among the settlements above and below ground, inevitably taking control of the north, and starting his own order of sorcerers.",
+            "## Running Order\n\n1. @[The Beginning](entity:scene/The Beginning) — the aftermath of the ambush at @[The Battlefield](entity:location/The Battlefield).\n2. @[Search for Survivors](entity:scene/Search for Survivors) — @[Ott Z'Orto](entity:npc/Ott Z'Orto) may join the party.\n3. @[The Storm Arrives](entity:scene/The Storm Arrives) — shelter must be found before the snowstorm hits.\n4. @[The Old Cave](entity:location/The Old Cave) — @[Crag Yetis](entity:monster/Crag Yetis), the dwarven runes, @[Kahd](entity:magic-item/Kahd) and the Snowstorm Beacon.\n5. @[Journey to the Great Mine](entity:scene/Journey to the Great Mine) — eight hours north, past @[The Manakill Crevasses](entity:location/The Manakill Crevasses) and @[St. Bernard's Peak](entity:location/St. Bernard's Peak).\n6. @[Fat Farlsbag's Hideout](entity:scene/Fat Farlsbag's Hideout) — the outlaw camp, @[Aldara Ellaris](entity:npc/Aldara Ellaris) and @[Count Conrad Mannheim](entity:npc/Count Conrad Mannheim).\n7. @[Davihn-Karr and the The Golem Veined with Platinum](entity:scene/Davihn-Karr and the The Golem Veined with Platinum) — the statue, the slaves and the sorcerer.\n8. @[The Finale](entity:scene/The Finale) and @[After the Adventure](entity:scene/After the Adventure).\n\nSections marked with a map in the PDF are sidequests and adventure hooks, and not important to the overall plot of the adventure.",
+            "## From the Author\n\nIf you enjoyed this adventure, or ran it for a group, all the author asks is that you give a shout out and let me know how it went. Send a note to @SageThalcos on Twitter or send an owl or email to thalcos@hotmail.com\n\n---\n\nCopyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com."
+          ]
         }
       }
     ],
@@ -23,24 +27,38 @@
         "source_name": "Half-Elf",
         "mapping": {
           "name": "Half-Elf",
-          "size_ref": {"lookup": "size", "match": "name", "value": "Medium"},
-          "creature_type_ref": {"lookup": "creature-type", "match": "name", "value": "Humanoid"},
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Humanoid"
+          },
           "speed_ft": 30,
-          "granted_skill_proficiencies": [
-            {"lookup": "skill", "match": "name", "value": "Perception"}
-          ],
           "granted_languages": [
-            {"lookup": "language", "match": "name", "value": "Elvish"}
-          ],
-          "ability_bonuses": {"CHA": 2},
-          "granted_senses": [
-            {"sense_ref": {"lookup": "sense", "match": "name", "value": "Darkvision"}, "range_ft": 60}
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Elvish"
+            }
           ],
           "trait_refs": [
-            {"lookup": "trait", "match": "name", "value": "Fey Ancestry"},
-            {"lookup": "trait", "match": "name", "value": "Keen Senses (Elf)"}
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Fey Ancestry"
+            }
           ],
-          "mechanical_notes": "Half-elves combine the best qualities of their elf and human parentage. Darkvision 60 ft., Fey Ancestry (advantage on charm saves, immune to magic sleep), Keen Senses (Perception proficiency). +2 CHA, +1 to two other ability scores."
+          "description": "Half-elven ancestry, as used by the adventure for @[Aldara Ellaris](entity:npc/Aldara Ellaris): \"She is a capable half-elven tracker and survivalist.\"",
+          "mechanical_notes": "The adventure never prints half-elf rules and the 2024 SRD does not carry a Half-Elf species, so this entry only records the ancestry the source names. Use whichever half-elf (or elf/human) build your table prefers; nothing here is taken from the PDF beyond the word \"half-elven\"."
         }
       }
     ],
@@ -50,71 +68,739 @@
         "mapping": {
           "name": "Yeti",
           "tier": "Rare",
-          "typical_speakers": "Yetis"
+          "typical_speakers": "Crag yetis",
+          "description": "The language listed on the @[Crag Yetis](entity:monster/Crag Yetis) stat block."
         }
       }
     ],
-    "location": [
+    "magic-item": [
       {
-        "source_name": "The Old Cave",
+        "source_name": "Kahd",
         "mapping": {
-          "name": "The Old Cave",
-          "danger_level": "Medium",
-          "environment": "Mountain cave, partially carved by ancient dwarves",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Darkness"},
-          "description_long": "The cave is dark, strewn with rubble, but warm. It stretches back sixty feet into the rock. Examining the cave will discover two things – there are ancient dwarven runes set into the rock, and that the cave is partially carved! A DC 12 Intelligence (History) check (DC 5 for dwarves) reveals that these carvings are typically found in thousand-year-old dwarven mineshafts, built before the last magical cataclysm, and common to the \"Jighamner\" lineage of miner-kings.\n\nAnyone who understands dwarven can read chunks of the inscription, which describe the duties of the dwarven workers that used this entrance:\n\n> Three carts of three dwarves' worth of platinum. Every third week, leave here for third crew to haul to the Halls of Davihn-Karr.\n\nAnother DC 15 Intelligence (History) check will reveal that Davihn-Karr was a legendary platinum mine of the Zarkian dwarves. According to the old stories, dwarves would haul out platinum without end from these mines. Wizards from all across the land would pay greatly for the Davihn-Karr chains and brooches that would hold their magic-storing ioun stones.\n\nAfter the PCs have made some noise in the cave, a guttural growling sound will be heard from the back of the cave. This cave is home to two territorial and vicious Crag Yetis!\n\nNear the yeti lair, amidst the rubble of what looks like an ancient cave-in, the PCs will find the remains of several crag men, whose meat has been picked clean from their bones. A search through the rubble will reveal several interesting discoveries:\n\n- A DC 5 Wisdom (Perception) check will discover a solid gold bracelet, goblin-design, on the floor. An Intelligence check concludes it is worth at least 600 silvers.\n- A DC 15 Wisdom (Perception) uncovers an ancient dwarven axe tossed amidst the rubble, inlaid with jewels and decor coated in brilliant platinum. A DC 12 Intelligence (History) check reveals that the axe is at least 1,000 years old. Any wizard who studies the item will see that the platinum is essential platinum, an utterly rare element. The is named by ancient dwarven runes on its handle, \"Kahd,\" which roughly translates to \"Harbinger.\" Appraising the axe, and making a successful DC 12 Intelligence (History) reveals that the gems in the axe are worth at least 200 gp! As a very fine battleaxe, Kahd does 1d10 damage. Furthermore, the axe is enchanted with a seek minerals enchantment, which enables the user to concentrate for 10 seconds and locate the direction of a nearby large source of metals, with a particular affinity for dwarf-dug deposits (6 charges, regains 1 charge at dawn each day).\n- A DC 10 Wisdom (Perception) check uncovers an iron door, frozen over with ice. If the ice is melted or chipped away (which takes hours), the fine lock can be opened via lockpicking - a DC 14 check. Inside is a small dwarven storage closet, with three picks, 50' of fine rope, and a beautiful, dwarven-style pot-helm (worth 150 gp), decorated with a goat-head sigil also made from essential platinum.\n- A brazier, made of polished metal, attached to a stone pedestal in the floor. Around the pedestal are more dwarven runes: \"Snowstorm Beacon.\" Lighting this beacon with fire will cause a great mechanical, hammering sound to emanate from the cave. PCs who look from the entrance to the cave will see a second fire lit in the distance. This fire marks the entrance to the legendary mine of Davihn-Karr.\n- Finally, any successful search roll also reveals that there is an ancient chest in the corner of the cave, well-hidden in a hole in the ground and buried under a large rock. The chest looks like it was half-buried in a hurried attempt to hide it. The boulder is 500 lbs., requiring a DC 20 Strength check (or two people can try, both succeeding on a DC 12 Strength check). Once uncovered, PCs can see that the chest is unusually shaped, like a pentagram, with large metal bulges on the outside. It is carved with dwarven runes that read (also see Handout B):\n\n> Possession of Dunther of Zark\n> Mage of Fine Magicks (and Royal Tax Collector)\n\nThe chest is locked but can be opened with a DC 12 lockpicking check. It is trapped with an old dwarven explosive booby trap, which requires a DC 10 find traps check to detect. If opened, the chest's bulges explode in freezing mist (DC 10 Constitution save or suffer 2d4 damage). Inside the chest lies a small cask of dwarven Beetle Oil (note this will be frozen and shattered if the trap goes off), yeti-skin leather gloves (worth 150 gp) and a +1 dwarven throwing axe.\n\nIf Ott is with the PCs, he will stammer excitedly about how the party has discovered one of the old entrances to the lost, legendary mine of Davihn-Karr, and, if they can find another entrance, how a vast pile of platinum awaits them — not to mention a mighty reputation for locating the site!",
-          "map": "media/Maps/Old-Cave.webp"
+          "name": "Kahd",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Weapons"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "base_item_ref": {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Battleaxe"
+          },
+          "charges_max": 6,
+          "charge_regain": "Regains 1 charge at dawn each day.",
+          "activation": "Utilize",
+          "cost_gp": 200,
+          "effects": "As a very fine battleaxe, Kahd does 1d10 damage. Furthermore, the axe is enchanted with a seek minerals enchantment, which enables the user to concentrate for 10 seconds and locate the direction of a nearby large source of metals, with a particular affinity for dwarf-dug deposits (6 charges, regains 1 charge at dawn each day).\n\nSince the axe is enchanted with a mineral seeking spell, it can also easily be used to locate a working entrance to the legendary dwarven platinum mines (and gives advantage to any checks to find the path, if used).",
+          "description": "An ancient dwarven axe tossed amidst the rubble of @[The Old Cave](entity:location/The Old Cave), inlaid with jewels and decor coated in brilliant platinum. A DC 12 Intelligence (History) check reveals that the axe is at least 1,000 years old. Any wizard who studies the item will see that the platinum is essential platinum, an utterly rare element. The is named by ancient dwarven runes on its handle, \"Kahd,\" which roughly translates to \"Harbinger.\" Appraising the axe, and making a successful DC 12 Intelligence (History) reveals that the gems in the axe are worth at least 200 gp!",
+          "dmNotes": "Found with a DC 15 Wisdom (Perception) check in the rubble near the yeti lair. On the journey north the axe \"will soon be yanking its owner along briskly!\" towards Davihn-Karr."
         }
       },
       {
-        "source_name": "The Manakill Crevasses",
+        "source_name": "Dwarven Beetle Oil",
         "mapping": {
-          "name": "The Manakill Crevasses",
-          "danger_level": "Medium",
-          "environment": "Mountain pass with ice statues",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright"},
-          "description_long": "After several hours of journeying, the PCs will find themselves in a strange mountain pass. Six unusual, humanoid statues of ice dot the snowy landscape. A DC 10 Intelligence (History) check recalls a local legend. According to the story, wizards who fail the final test of the White Crystal Peak sorcerous cult are banished and turned into ice statues — cursed to protect the White Crystal Spire for eternity.\n\nAs the PCs cross this area, the statues begin to move and creak, like the sound of glass slowly breaking. Slowly, the statues point at any PCs without spellcasting ability within view, and the ground underneath those PC begins to crack and turn fragile. The PC must make a DC 10 Dexterity (Acrobatics) save to leap to safety as a crevasse forms underneath them. Fortunately, the crevasses are not that deep. They average about 5-10 yards deep (up to 2d4 damage). Climbing out requires a DC 12 Strength (Athletics) roll, difficult due to the slick, snow-covered rock.\n\nAfter six crevasses have been created, the statues grow still again. The statues have 60 hp (resistant to piercing and slashing), if the PCs wish to destroy them. However, destroying these statues alerts their presence to the evil White Crystal Peak sorcerers. Within a few hours, they will find themselves being followed by a strange, red-eyed snowy owl."
+          "name": "Dwarven Beetle Oil",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Potions"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "activation": "Utilize",
+          "effects": "Despite its name, this greasy black liquid is created from the concentrated blood of cave-dwelling ironmouth spiders. (Dwarves, careful with their secrets, would never call this oil by a more obvious name!) When applied to a metal blade, the oil imbues the weapon with magical sharpness that lasts one hour, increasing the blade's damage by +1d4. It has no effect on bludgeoning weapons.",
+          "description": "A small cask of dwarven Beetle Oil lies inside the chest of Dunther of Zark in @[The Old Cave](entity:location/The Old Cave) — note this will be frozen and shattered if the trap goes off. The oil is rendered from @[Ironmouth Spiders](entity:monster/Ironmouth Spiders)."
         }
       },
       {
-        "source_name": "Fat Farlsbag's Hideout",
+        "source_name": "I'zorzah's Diamond Powerstone",
         "mapping": {
-          "name": "Fat Farlsbag's Hideout",
-          "danger_level": "Medium",
-          "environment": "Cliffside mountain encampment",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim"},
-          "description_long": "As the PCs follow the tracks, they will hear several distant screams of anguish and pain. The path winds and tightens, and then opens into a cliffside encampment, one of Fat Farlsbag's mountain shelters.\n\nSix hobgoblins who have survived the battle have taken shelter in a makeshift hide tent, along with their human boss, Fat Farlsbag. Delighted at having escaped the manhunt, Farlsbag is now looting corpses and searching for victims to sell back to their loved ones. The band has captured two survivors from the human hunters and are gleefully torturing them for information, until they get bored and will ransom them off.\n\nIf a hobgoblin guard sees the PCs coming, he'll shout to his comrades. Two of the hobgoblins have crossbows, and will train them on the most dangerous-looking PCs.\n\nIf he sees he's outnumbered or outmatched, Farlsbag and his toughest hobgoblin captain will drag out an elven scout and threaten to toss her off the sheer, 100-foot cliff, unless the PCs give them all their rations and back off. If Farlsbag thinks he has the advantage in any way, he'll order his henchmen to capture the PCs.\n\nThe hostage, ALDARA ELLARIS, was a volunteer scout who helped lead the human posses into the mountains. A second hostage, a human, Megalossian noble named COUNT CONRAD MANNHEIM, lies in pain in the back of the shelter. He was critically wounded during the battle, and probably will not survive the night... especially since the orcs amputated one of his arms to eat for dinner. He's at 0 hp and is mortally wounded; he will die within 30 minutes unless someone succeeds a DC 25 Wisdom (Medicine) check.\n\nIf rescued, and on a good reaction or better, Aldara will accompany the PCs. She has grown weary of the mountains, and wants nothing to do with the orcs anymore. She's heard of the old mines, however, and will agree to visiting the mines before guiding the PCs back to civilization. Aldara is a 1st level character. The DM should feel free to develop her role as an NPC, especially if the PCs need additional survival or area knowledge skills. She is a capable half-elven tracker and survivalist, and relies mostly on her self-taught archery skills to hunt for food and defend herself. More importantly, she knows the way out of the mountains, and can show the PCs the three-day journey that will take them to a nearby town.\n\nIf the PCs save Count Conrad with magical healing, he will be grateful, and offer them a reward of 1,000 gp if they escort him to a nearby town. If the PCs impress the count, they may earn his long-term patronage (DM's discretion). Traveling with him will likely slow the PCs down, unless they do an utterly amazing job healing him.",
-          "map": "media/Maps/Mountain-Shelter.webp"
+          "name": "I'zorzah's Diamond Powerstone",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Very Rare"
+          },
+          "requires_attunement": false,
+          "is_cursed": true,
+          "is_sentient": false,
+          "activation": "None",
+          "effects": "I'zor'zah has an immensely rare, diamond, manastone that gives +2 to all spell checks. The stone, however, has two crippling quirks. First, it only works for spells not cast on living subjects. Second, it immediately broadcasts its location to ten random undead sorcerers, who can temporarily channel their magical energy through it.",
+          "description": "The manastone carried by @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure)."
         }
       },
       {
-        "source_name": "St. Bernard's Peak",
+        "source_name": "+1 dwarven throwing axe",
         "mapping": {
-          "name": "St. Bernard's Peak",
-          "danger_level": "Low",
-          "environment": "Mountain landmark, pilgrimage site",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright"},
-          "description_long": "As the PCs head towards the beacon, they will turn a bend and see a huge peak in the distance. The peak looks vaguely like a man with outstretched arms. A DC 5 Intelligence check will identify the mountain as St. Bernard's Peak after its shape. The peak is a well-traveled pilgrimage location for the faithful dwarves and men of Zark. More importantly, this peak will help orient the PCs towards civilization. A DC 5 Wisdom (Nature) check will enable them to trace a route towards the mountain and its main road that will take them south into Megalos."
+          "name": "+1 Dwarven Throwing Axe",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Weapons"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "base_item_ref": {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Handaxe"
+          },
+          "activation": "None",
+          "effects": "A +1 dwarven throwing axe. The source gives no further rules for it; treat it as a magic handaxe with a +1 bonus to attack and damage rolls.",
+          "description": "One of the three items inside the chest of Dunther of Zark in @[The Old Cave](entity:location/The Old Cave), alongside a small cask of @[Dwarven Beetle Oil](entity:magic-item/Dwarven Beetle Oil) and yeti-skin leather gloves (woth 150 gp)."
+        }
+      }
+    ],
+    "creature-action": [
+      {
+        "source_name": "Claw Slash",
+        "mapping": {
+          "name": "Claw Slash (Crag Yetis)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 5,
+          "reach_ft": 5,
+          "damage_dice": "2d8+3",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "description": "Claw Slash. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 3) slashing damage."
         }
       },
       {
-        "source_name": "Davihn-Karr",
+        "source_name": "Multiattack (Fat Farlsbag)",
         "mapping": {
-          "name": "Davihn-Karr",
-          "danger_level": "Deadly",
-          "environment": "Ancient dwarven platinum mine, now a sorcerer's laboratory",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim"},
-          "description_long": "As the PCs summit the lip of a valley, an awesome sight will render itself – a three-story statue of a great, bearded sorcerer, made of marble, and veined all over with grooves. A few hundred yards behind the statue is the entrance to the Davihn-Karr itself. The mine's great doors are detached, and lay buried in rubble and snow, cracked and fallen. Dozens of ancient dwarven mine carts lay turned over and broken near the entrance to the mine, as if vomited up by the mine itself.\n\nA scaffold surrounds the great construct, and half a dozen slaves climb the scaffold carrying chunks of rock, depositing them in a large cauldron at the top, which burns with blue fire. Elsewhere, more slaves push mine carts of the rock to the base of the statue.\n\nAt the top of the scaffold, a robed man, blue-faced, wearing an iron crown, and white fur robes silently watches the procession. He occasionally gestures at his cauldron, heating it to just the right temperature. This is I'Zor'zah the Azure.\n\nAll around the statue are dozens of slaves, mostly orc and half-orc, a few human, goblins, or dwarves. Some are even dressed in the uniforms of the peasant militia that set out to capture Fat Farlsbag! Their eyes are pure white, their minds gone (a wizard making a DC 10 Intelligence (Arcana) check will identify this as some kind of variation of an enslavement spell). Some haul rocks away from the base of the statue, others use picks and hammers to mold the marble statue into greater detail.\n\nPCs who study the area may notice a few additional details:\n- A DC 15 Intelligence (Arcana) check successfully identifies the statue as a pre-enchantment golem. A roll of 18+ lets the PC recognize that I'Zor'zah plans to use the essential platinum as a part of the golem to give it some kind of special ability. A roll of 20+ deducts that the essential platinum will allow the golem to move through any stone or metal less-precious than platinum.\n- A DC 12 Wisdom (Nature) roll identifies the chunks of rock as those that carry metal, likely platinum. A DC 12 Intelligence (Arcana) roll notices that the strange blue fire seems to be smelting the platinum into a rare, new essential metal.\n- PCs who study the scaffold and make a DC 15 Wisdom (Perception) check will observe two man-sized, white spiders nesting in the structure. A DC 12 Wisdom check reveals that the scaffold is not especially well-made (130 hp, resistant to slashing, bludgeoning, and piercing) and could perhaps be collapsed with enough damage to a single main support (30 hp).\n\nIf the PCs try to interact with the slaves, the slaves do their best to ignore them and carry on their work. If, however, a PC is violent or intimidating towards a slave, the slave will run up the scaffold to inform I'Zor'zah of the PCs' presence.\n\nA Dispel Magic spell will break a slave from their daze. An orc slave will take advantage of his freedom to flee into the mountains. A human slave will beg the PCs to run and help them escape. They all fear I'Zor'zah, and know little of his operation other he hates the \"crystal wizards,\" as he calls them, and that he is preparing platinum for a powerful spell when the statue is complete.\n\nI'Zor'zah is too focused on his essential platinum to pay much attention to the PCs, unless they do something to obviously catch his eye, like harming a slave or materially interfering with his operation. If he does see them as a threat, he will confront them and try to use his mind control magic to capture or enslave them. I'Zor'zah will avoid using his slaves as combatants (preferring to lure PCs near the ironmouth spiders, who he allows to eat weak slaves), but will order his laborers into combat if he becomes desperate.\n\nIf the PCs tarry too long, within an hour, I'Zor'zah will begin pouring the essential platinum into the golem. The thing slowly comes to life, veined with the shining substance. Fighting this creature will likely be a lost cause for all but the most powerful or clever adventurers.\n\n## The Finale\n\nThere are several possible endings to this adventure. The PCs can confront I'Zor'zah and attempt to slay him – his death will release the minds of his slaves. They can also attempt to destroy his statue, either before or after it is animated, but this will take some a clever plan or powerful magic (such as a Mold Earth or Earth Tremor spell). Lastly, the PCs can retreat (likely with Aldara's guidance, or using St. Bernard's Peak as a landmark), alerting the nearby towns to the danger of the azure wizard. However, within a day or so, I'Zor'zah will test his golem on a nearby human settlement... before tasking it with destroying the wizard cult he despises.\n\n## After the Adventure\n\nDMs can give out bonus XP based on good roleplaying and success, especially if the players managed to capture or kill Fat Farlsbag (100 XP), or if they destroyed the statue or otherwise stopped I'Zor'zah (100 XP).\n\n## Extending the Adventure\n\nThere are few open areas of the adventure, ripe for the DM to add detail:\n\n### The Sorcerers of the White Crystal Peaks\n\nI'Zor'zah's motivation is to destroy the wizard cult he hates, the Sorcerers of the White Crystal Peaks. They don't make an appearance in this adventure. If their name comes up, a DC 15 Intelligence (Arcana) check reveals that they are a small group of hermit wizards who mostly keep to themselves, studying powerful ice and weather magic, and occasionally dabbling into necromantic arts. They would be entirely unknown except for some occasional raids they make into dwarven or human settlements to capture slaves for their invisible tower in the mountains, the White Crystal Spire.\n\nRegardless of whether I'Zor'zah survives the adventure, the PCs can track the Sorcerers down to inform them of the threat. This may earn them their thanks, if the PCs actually save their tower from danger. On the other hand, if the PCs are seen to be threats to them (for example, revealing the location of their hidden tower), the Sorcerers will make good Enemies for future campaigns.\n\n### The Mine of Davihn-Karr\n\nIf the PCs rid the land of I'Zor'zah, they will have discovered a legendary dwarven mine all to themselves. This could have several repercussions:\n- The PCs can take ownership of the mine. While the rare platinum has mostly been mined ages ago, there is enough of it left to make rich men of the PCs. However, running a mine is a complex operation. The PCs will need to attract laborers to this far-off location, and repair the broken mining machinery, which could cost tens of thousands of silvers. Furthermore, they'll face claims by dwarven royalty, who claim the mine as their own, and will be willing to take it back by force.\n- The PCs can bring the location of the mine to the nearby Dwarven lords. This will earn them a good reputation among dwarves, and likely a patronage. The dwarves will pay handsomely for the location (thousands of gp, or perhaps a rare item from their vaults).\n- It's also likely I'Zor'zah has turned the mines into a labyrinthine, monster-filled, dungeon. Great rewards await the adventurers who can clear it out of the remaining orcs, trolls, hobgoblins... and the sleeping dragon that lies dormant in the bottom chamber."
+          "name": "Multiattack (Fat Farlsbag)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": false,
+          "description": "Multiattack. Farlsbag makes two melee attacks."
         }
       },
       {
-        "source_name": "The Battlefield",
+        "source_name": "Axe \"Lovebiter\"",
         "mapping": {
-          "name": "The Battlefield",
-          "danger_level": "Low",
-          "environment": "Frozen mountain battlefield, aftermath of battle",
-          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright"},
-          "description_long": "The adventure begins immediately after the bloody battle. The PCs are lost without their guides; they know they are days from the nearest town. They are cold, wounded, but alive. Their comrades and fellow bounty hunters lie dead or mortally wounded around them. Each PC must make a DC 10 Wisdom check roll to have successfully endured the ambush. A failure indicates 1d4 of general battlefield damage.\n\nA DC 5 Wisdom (Nature) roll will reveal that a dark storm is brewing to the north. A DC 10 Wisdom (Nature) check will indicate that storm will hit in two to three hours. It's going to be a freezing snowstorm, no doubt, and one that will be difficult to survive without shelter.\n\nIf the PCs search for survivors, they will find few who are hardy enough to walk on their own off the battlefield. There is also the danger of half-dead orcs still stabbing out at them in hatred and spite.\n\nA Perception roll will find one old dwarf that may live, however. His name is OTT Z'ORTO, and except for a stubborn, bleeding head wound (which a healing spell or DC 10 Wisdom (Medicine) check will stop), he will survive his injuries. If the PCs are helpful, he'll agree to stay with them, otherwise he'll stubbornly set out into the wilderness on his own.\n\nDM's Note: If some or all of the PCs are lower than 2nd level, Ott will make a helpful companion in the adventure ahead.\n\n## The Storm Arrives\n\nThe storm brews quickly, and shelter becomes a necessity. A Survival roll will assemble one from the snow and rocks gathered at the base of the mountains. A DC 10 Wisdom (Survival) check or suitable spell will locate a cave a dozen yards up, high on a rocky cliffside. A closer look will reveal that an old wooden ladder drops from the cave, though it ends at least five yards before the ground.\n\nGetting to the ladder requires some rock climbing, or a magical solution. A single DC 15 Strength (Athletics) roll will suffice. The ladder, however, is old and fragile. If a large creature (200 lbs. or more) grabs on to it, it will begin to tear free from the wall. If a PC falls, he will slide several yards to the hard snow below, for 1d6 damage.\n\n## Journey to the Great Mine\n\nIf the PCs are following the lit beacon, a DC 10 Wisdom (Perception) roll finds a path that leads to it. Or, since the axe is enchanted with a mineral seeking spell, it can also easily be used to locate a working entrance to the legendary dwarven platinum mines (and gives advantage to any checks to find the path, if used). Either way, the entrance to the mine is an eight hour walk to the north. Navigating this journey requires a Wisdom (Survival) check to survive the harsh conditions; failure indicates 1d4 damage from various mountain and wilderness injuries.\n\nA second successful DC 10 Wisdom (Nature) check enables the PCs to find a well-worn path. As they walk the path, a vision roll will discover fresh, hours-old tracks in the snow. A DC 10 Wisdom (Nature) check will identify the markings as crag man or hobgoblin-prints, and also allow the PCs to follow them."
+          "name": "Axe \"Lovebiter\" (Fat Farlsbag)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 5,
+          "reach_ft": 5,
+          "damage_dice": "1d8+2",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "description": "Axe \"Lovebiter\". Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 2) slashing damage."
+        }
+      },
+      {
+        "source_name": "Longsword (Hobgoblin Henchmen)",
+        "mapping": {
+          "name": "Longsword (Hobgoblin Henchmen)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 3,
+          "reach_ft": 5,
+          "damage_dice": "2d8+3",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "description": "Longsword. Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) slashing damage."
+        }
+      },
+      {
+        "source_name": "Multiattack (I'Zor'zah the Azure)",
+        "mapping": {
+          "name": "Multiattack (I'Zor'zah the Azure)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": false,
+          "description": "Multiattack. The wizard makes one attack with his dagger and casts a cantrip."
+        }
+      },
+      {
+        "source_name": "+2 Dagger \"Bitterwhite\"",
+        "mapping": {
+          "name": "+2 Dagger \"Bitterwhite\" (I'Zor'zah the Azure)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 7,
+          "reach_ft": 5,
+          "damage_dice": "1d4+6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          },
+          "description": "+2 Dagger \"Bitterwhite\". Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 20 (1d4 + 6) piercing damage."
+        }
+      },
+      {
+        "source_name": "Mandibles",
+        "mapping": {
+          "name": "Mandibles (Ironmouth Spiders)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 6,
+          "reach_ft": 5,
+          "damage_dice": "1d8+4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          },
+          "save_dc": 11,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Constitution"
+          },
+          "applied_condition_refs": [
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Poisoned"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Paralyzed"
+            }
+          ],
+          "description": "Mandibles. Melee Attack: +6 to hit, reach 5 ft., one creature. Hit: 6 (1d8 + 4) piercing damage, and the target must make a DC 11 Constitution save, taking 5 (2d4) poison damage on a failed save, or half on a successful one. If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way."
+        }
+      },
+      {
+        "source_name": "Mining Tool",
+        "mapping": {
+          "name": "Mining Tool (Mind-controlled Slaves)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 3,
+          "reach_ft": 5,
+          "damage_dice": "1d4+1",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "description": "Mining Tool. Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) bludgeoning damage."
+        }
+      },
+      {
+        "source_name": "Multiattack (The Golem Veined with Platinum)",
+        "mapping": {
+          "name": "Multiattack (The Golem Veined with Platinum)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": false,
+          "description": "Multiattack. The golem makes two melee attacks."
+        }
+      },
+      {
+        "source_name": "Slam",
+        "mapping": {
+          "name": "Slam (The Golem Veined with Platinum)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 13,
+          "reach_ft": 5,
+          "damage_dice": "3d8+7",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "description": "Slam. Melee Weapon Attack: +13 to hit, reach 5 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage."
+        }
+      },
+      {
+        "source_name": "Poison Breath",
+        "mapping": {
+          "name": "Poison Breath (The Golem Veined with Platinum)",
+          "source": "The Cold Bounty, dnd5e",
+          "action_type": "Action",
+          "recharge_kind": "Roll",
+          "recharge_min_roll": 6,
+          "recharge": "Recharge 6",
+          "is_attack": false,
+          "damage_dice": "10d8",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Poison"
+          },
+          "save_dc": 19,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Constitution"
+          },
+          "description": "Poison Breath (Recharge 6). The golem exhales particle gas in a 15-foot cone. Each creature in that area must make a DC 19 Constitution saving throw, taking 45 (10d8) poison damage on a failed save, or half as much damage on a successful one."
+        }
+      }
+    ],
+    "monster": [
+      {
+        "source_name": "Crag Yetis",
+        "mapping": {
+          "name": "Crag Yetis",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Undead"
+          },
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Neutral Evil"
+          },
+          "ac": 14,
+          "initiative_modifier": 2,
+          "initiative_score": 12,
+          "hp_average": 40,
+          "hp_dice": "5d8+10",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 16,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 8,
+            "WIS": 10,
+            "CHA": 5
+          },
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": true,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "passive_perception": 10,
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Yeti"
+            }
+          ],
+          "cr": "1",
+          "xp": 200,
+          "proficiency_bonus": 2,
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Claw Slash (Crag Yetis)"
+            }
+          ],
+          "imagePath": "media/Tokens/Yeti.webp",
+          "description": "Two territorial and vicious Crag Yetis lair at the back of @[The Old Cave](entity:location/The Old Cave). Near the yeti lair, amidst the rubble of what looks like an ancient cave-in, the PCs will find the remains of several crag men, whose meat has been picked clean from their bones.",
+          "traits_md": "## Crag Yetis\n\n*Medium undead, neutral evil*\n\n**Armor Class** 14 **Speed** 30 ft. **Hit Points** 40 (5d8+10)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 16 (+3) | 14 (+2) | 14 (+2) | 8 (-1) | 10 (+0) | 5 (-3) |\n\n**Skills** Stealth +6, Survival +2 **Senses** Darkvision 60 ft., passive Perception 10 **Languages** Yeti **Challenge** 1 (200 XP)\n\n**Claw Slash.** Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 3) slashing damage."
+        }
+      },
+      {
+        "source_name": "Hobgoblin Henchmen",
+        "mapping": {
+          "name": "Hobgoblin Henchmen",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Humanoid"
+          },
+          "tags_line": "goblinoid",
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Neutral Evil"
+          },
+          "ac": 18,
+          "initiative_modifier": 1,
+          "initiative_score": 11,
+          "hp_average": 11,
+          "hp_dice": "2d8+2",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 13,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 10,
+            "WIS": 10,
+            "CHA": 9
+          },
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "passive_perception": 10,
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Goblin"
+            }
+          ],
+          "cr": "1/2",
+          "xp": 200,
+          "proficiency_bonus": 2,
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Martial Advantage"
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Longsword (Hobgoblin Henchmen)"
+            }
+          ],
+          "imagePath": "media/Tokens/Hobgoblin.webp",
+          "description": "Six hobgoblins who have survived the battle have taken shelter in a makeshift hide tent at @[Fat Farlsbag's Hideout](entity:location/Fat Farlsbag's Hideout), along with their human boss, @[Fat Farlsbag](entity:npc/Fat Farlsbag). Two of the hobgoblins have crossbows, and will train them on the most dangerous-looking PCs.",
+          "traits_md": "## Hobgoblin Henchmen\n\n*Medium humanoid (goblinoid), neutral evil*\n\n**Armor Class** 18 **Speed** 30 ft. **Hit Points** 11 (2d8+2)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 13 (+1) | 12 (+1) | 12 (+1) | 10 (+0) | 10 (+0) | 9 (-1) |\n\n**Senses** Darkvision 60 ft., passive Perception 10 **Languages** Common, Goblin **Challenge** 1/2 (200 XP)\n\n**Martial Advantage.** Once per turn, the hobgoblin can deal an extra 7 (2d6) damage to a creature it hits with a weapon attack if that creature is within 5 ft. of an ally of the hobgoblin that isn't incapacitated.\n\n**Longsword.** Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) slashing damage.",
+          "dmNotes": "The camp also holds Farlsbag's \"toughest hobgoblin captain\" — the source prints no stat block for him; use the SRD Hobgoblin Captain."
+        }
+      },
+      {
+        "source_name": "Ironmouth Spiders",
+        "mapping": {
+          "name": "Ironmouth Spiders",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Beast"
+          },
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Unaligned"
+          },
+          "ac": 12,
+          "initiative_modifier": 2,
+          "initiative_score": 12,
+          "hp_average": 13,
+          "hp_dice": "3d8",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 14,
+            "DEX": 14,
+            "CON": 10,
+            "INT": 1,
+            "WIS": 10,
+            "CHA": 3
+          },
+          "passive_perception": 10,
+          "cr": "1/2",
+          "xp": 100,
+          "proficiency_bonus": 2,
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Mandibles (Ironmouth Spiders)"
+            }
+          ],
+          "imagePath": "media/Tokens/Ironmouth-Spider.webp",
+          "description": "Two man-sized, white spiders nesting in the scaffold that surrounds the great construct at @[Davihn-Karr](entity:location/Davihn-Karr); a DC 15 Wisdom (Perception) check spots them. @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure) prefers to lure PCs near the ironouth spiders, who he allows to eat weak slaves. Their concentrated blood is what dwarves render into @[Dwarven Beetle Oil](entity:magic-item/Dwarven Beetle Oil).",
+          "traits_md": "## Ironmouth Spiders\n\n*Medium beast, unaligned*\n\n**Armor Class** 12 **Speed** 30 ft. **Hit Points** 13 (3d8)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 14 (+2) | 14 (+2) | 10 (+0) | 1 (-5) | 10 (+0) | 3 (-4) |\n\n**Senses** passive Perception 10 **Challenge** 1/2 (100 XP)\n\n**Mandibles.** Melee Attack: +6 to hit, reach 5 ft., one creature. Hit: 6 (1d8 + 4) piercing damage, and the target must make a DC 11 Constitution save, taking 5 (2d4) poison damage on a failed save, or half on a successful one. If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way."
+        }
+      },
+      {
+        "source_name": "Mind-controlled Slaves",
+        "mapping": {
+          "name": "Mind-controlled Slaves",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Humanoid"
+          },
+          "tags_line": "mostly human",
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Neutral"
+          },
+          "ac": 10,
+          "initiative_modifier": 0,
+          "initiative_score": 10,
+          "hp_average": 2,
+          "hp_dice": "1d8",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 12,
+            "DEX": 10,
+            "CON": 10,
+            "INT": 8,
+            "WIS": 8,
+            "CHA": 8
+          },
+          "passive_perception": 10,
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            }
+          ],
+          "cr": "0",
+          "xp": 10,
+          "proficiency_bonus": 2,
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Mining Tool (Mind-controlled Slaves)"
+            }
+          ],
+          "imagePath": "media/Tokens/Slave.webp",
+          "images": [
+            "media/Tokens/Slave-2.webp"
+          ],
+          "description": "All around the statue at @[Davihn-Karr](entity:location/Davihn-Karr) are dozens of slaves, mostly orc and half-orc, a few human, goblins, or dwarves. Some are even dressed in the uniforms of the peasant militia that set out to capture @[Fat Farlsbag](entity:npc/Fat Farlsbag)! Their eyes are pure white, their minds gone (a wizard making a DC 10 Intelligence (Arcana) check will identify this as some kind of variation of an enslavement spell).",
+          "traits_md": "## Mind-controlled Slaves\n\n*Medium humanoid (mostly human), neutral*\n\n**Armor Class** 10 **Speed** 30 ft. **Hit Points** 2 (1d8)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 12 (+1) | 10 (+0) | 10 (+0) | 8 (-1) | 8 (-1) | 8 (-1) |\n\n**Senses** passive Perception 10 **Languages** Common **Challenge** 0 (10 XP)\n\n**Mining Tool.** Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) bludgeoning damage.",
+          "dmNotes": "A Dispel Magic spell will break a slave from their daze. An orc slave will take advantage of his freedom to flee into the mountains. A human slave will beg the PCs to run and help them escape. They all fear I'Zor'zah, and know little of his operation other he hates the \"crystal wizards,\" as he calls them, and that he is preparing platinum for a powerful spell when the statue is complete.\n\nI'Zor'zah will order his laborers into combat if he becomes desperate (the DM should treat them as unarmed, average people but with only 2 hp as they are weak from the cold and hard labor)."
+        }
+      },
+      {
+        "source_name": "The Golem Veined with Platinum",
+        "mapping": {
+          "name": "The Golem Veined with Platinum",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Large"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Construct"
+          },
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Unaligned"
+          },
+          "ac": 20,
+          "initiative_modifier": -1,
+          "initiative_score": 9,
+          "hp_average": 210,
+          "hp_dice": "20d10+100",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 24,
+            "DEX": 9,
+            "CON": 20,
+            "INT": 3,
+            "WIS": 11,
+            "CHA": 1
+          },
+          "damage_immunity_refs": [
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Fire"
+            },
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Poison"
+            },
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Psychic"
+            }
+          ],
+          "immunity_note": "bludgeoning, piercing, and slashing from nonmagical attacks that aren't adamantine",
+          "condition_immunity_refs": [
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Charmed"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Exhaustion"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Frightened"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Paralyzed"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Petrified"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Poisoned"
+            }
+          ],
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 120
+            }
+          ],
+          "passive_perception": 10,
+          "language_note": "understands Common, but can't speak",
+          "cr": "16",
+          "xp": 15000,
+          "proficiency_bonus": 5,
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Fire Absorption"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Immutable Form"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Weapons"
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Multiattack (The Golem Veined with Platinum)"
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Slam (The Golem Veined with Platinum)"
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Poison Breath (The Golem Veined with Platinum)"
+            }
+          ],
+          "imagePath": "media/Tokens/Golem.webp",
+          "description": "A three-story statue of a great, bearded sorcerer, made of marble, and veined all over with grooves. If the PCs tarry too long, within an hour, @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure) will begin pouring the essential platinum into the golem. The thing slowly comes to life, veined with the shining substance. Fighting this creature will likely be a lost cause for all but the most powerful or clever adventurers.",
+          "traits_md": "## The Golem Veined with Platinum\n\n*Large construct, unaligned*\n\n**Armor Class** 20 **Speed** 30 ft. **Hit Points** 210 (20d10+100)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 24 (+7) | 9 (-1) | 20 (+5) | 3 (-4) | 11 (+0) | 1 (-5) |\n\n**Damage Immunities** fire, poison, psychic; bludgeoning, piercing, and slashing from nonmagical attacks that aren't adamantine **Condition Immunities** charmed, exhaustion, frightened, paralyzed, petrified, poisoned **Senses** darkvision 120 ft., passive Perception 10 **Languages** understands Common, but can't speak **Challenge** 16 (15,000 XP)\n\n**Fire Absorption.** Whenever the golem is subjected to fire damage, it takes no damage and instead regains a number of hit points equal to the fire damage dealt.\n\n**Immutable Form.** The golem is immune to any spell or effect that would alter its form.\n\n**Magic Resistance.** The golem has advantage on saving throws against spells and other magical effects.\n\n**Magic Weapons.** The golem's weapon attacks are magical.\n\n**Multiattack.** The golem makes two melee attacks.\n\n**Slam.** Melee Weapon Attack: +13 to hit, reach 5 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage.\n\n**Poison Breath (Recharge 6).** The golem exhales particle gas in a 15-foot cone. Each creature in that area must make a DC 19 Constitution saving throw, taking 45 (10d8) poison damage on a failed save, or half as much damage on a successful one.",
+          "dmNotes": "A roll of 20+ on the DC 15 Intelligence (Arcana) check deducts that the essential platinum will allow the golem to move through any stone or metal less-precious than platinum. Per the adventure summary, this platinum golem, being composed of the most precious of essential metals, would be able to walk through the earth itself."
         }
       }
     ],
@@ -123,614 +809,988 @@
         "source_name": "Fat Farlsbag",
         "mapping": {
           "name": "Fat Farlsbag",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "Fat Farlsbag's Hideout"},
-          "faction": "Fat Farlsbag's bandits",
-          "stat_block": {"STR": 15, "DEX": 14, "CON": 14, "INT": 14, "WIS": 11, "CHA": 13},
-          "combat_stats": {"hp": 55, "max_hp": 55, "ac": 15, "speed": "25 ft", "level": 2},
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Chaotic Evil"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Fat Farlsbag's Hideout"
+          },
+          "faction": "Fat Farlsbag's band of hobgoblin henchmen",
+          "stat_block": {
+            "STR": 15,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 14,
+            "WIS": 11,
+            "CHA": 14
+          },
+          "combat_stats": {
+            "hp": 55,
+            "max_hp": 55,
+            "ac": 15,
+            "speed": "25 ft",
+            "initiative": "+2",
+            "cr": "2",
+            "xp": 450
+          },
           "proficiency_bonus": 2,
           "initiative_modifier": 2,
-          "senses": [],
+          "saving_throws": {
+            "rows": [
+              {
+                "name": "Strength",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Dexterity",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Constitution",
+                "ability": "CON",
+                "proficient": true,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
           "passive_perception": 10,
           "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"},
-            {"lookup": "language", "match": "name", "value": "Goblin"}
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Goblin"
+            }
           ],
-          "description": "A notorious kidnapper and murderer, wanted by Prince Adelheid for killing his wife-to-be. Fat Farlsbag is delighted by the cruel violence of the battlefield and sees it as an opportunity for new hostages and found wealth. He has gotten wind that the orcs fled from a legendary platinum mine of Davihn-Karr, and seeks to discover the location of it for himself.",
-          "secrets": "Fat Farlsbag doesn't know the exact location of Davihn-Karr, but he knows the orcs fled from something in the mountains. He will trade information about the mine's general direction if the PCs offer enough gold or威胁.",
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Multiattack (Fat Farlsbag)"
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Axe \"Lovebiter\" (Fat Farlsbag)"
+            }
+          ],
           "imagePath": "media/Tokens/Fat-Farlsbag.webp",
-          "traits_md": "## Stat Block (5E)\n\n**Fat Farlsbag — Human Bandit Leader**\n\n| | |\n|---|---|\n| AC 15 | HP 55 |\n| Speed 25 ft | CR 2 |\n| STR 15 (+2) | DEX 14 (+2) |\n| CON 14 (+2) | INT 14 (+2) |\n| WIS 11 (+0) | CHA 13 (+1) |\n\n**Multiattack.** Farlsbag makes two melee attacks.\n\n**Axe \"Lovebiter\".** Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 2) slashing damage.",
-          "equipment_md": "- Axe \"Lovebiter\" (equipped)\n- Studded leather armor (equipped)"
-        }
-      },
-      {
-        "source_name": "Ott Z'Orto",
-        "mapping": {
-          "name": "Ott Z'Orto",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Dwarf"},
-          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "The Battlefield"},
-          "faction": "Dwarven miners",
-          "stat_block": {"STR": 14, "DEX": 10, "CON": 15, "INT": 10, "WIS": 12, "CHA": 8},
-          "combat_stats": {"hp": 20, "max_hp": 20, "ac": 14, "speed": "25 ft"},
-          "proficiency_bonus": 2,
-          "senses": [],
-          "passive_perception": 10,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"},
-            {"lookup": "language", "match": "name", "value": "Dwarvish"}
-          ],
-          "description": "An old dwarf who survived the ambush with a stubborn, bleeding head wound. If the PCs are helpful, he'll agree to stay with them. Ott is a survivor from Davihn-Karr and knows about the legendary platinum mine.",
-          "secrets": "Ott was one of the dwarves enslaved by I'Zor'zah. He escaped during the chaos and joined the bounty hunters. He knows the way to Davihn-Karr but is terrified of returning.",
-          "imagePath": "media/Tokens/Ott.webp",
-          "traits_md": "## Dwarven Resistance\n\nOtt has advantage on saving throws against poison, and resistance to poison damage. He has darkvision 60 ft.\n\n## Stonecunning\n\nOtt has proficiency with History checks related to stonework."
-        }
-      },
-      {
-        "source_name": "Aldara Ellaris",
-        "mapping": {
-          "name": "Aldara Ellaris",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Half-Elf"},
-          "class_refs": [{"lookup": "class", "match": "name", "value": "Ranger"}],
-          "level": 1,
-          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "Fat Farlsbag's Hideout"},
-          "stat_block": {"STR": 12, "DEX": 15, "CON": 13, "INT": 10, "WIS": 14, "CHA": 11},
-          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 13, "speed": "30 ft", "level": 1},
-          "proficiency_bonus": 2,
-          "senses": [],
-          "passive_perception": 12,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"},
-            {"lookup": "language", "match": "name", "value": "Elvish"}
-          ],
-          "description": "A volunteer scout who helped lead the human posses into the mountains. She is a capable half-elven tracker and survivalist, and relies mostly on her self-taught archery skills to hunt for food and defend herself. She has grown weary of the mountains and wants nothing to do with the orcs anymore.",
-          "secrets": "Aldara knows the way out of the mountains and can show the PCs the three-day journey that will take them to a nearby town.",
-          "imagePath": "media/Tokens/Aldara.webp",
-          "traits_md": "## Keen Senses\n\nAldara has proficiency in the Perception skill.\n\n## Fey Ancestry\n\nAldara has advantage on saving throws against being charmed, and magic can't put her to sleep.\n\n## Self-Taught Archery\n\nAldara is proficient with longbow and shortbow."
-        }
-      },
-      {
-        "source_name": "Count Conrad Mannheim",
-        "mapping": {
-          "name": "Count Conrad Mannheim",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "Fat Farlsbag's Hideout"},
-          "faction": "Megalosian nobility",
-          "stat_block": {"STR": 11, "DEX": 10, "CON": 12, "INT": 13, "WIS": 14, "CHA": 15},
-          "combat_stats": {"hp": 0, "max_hp": 9, "ac": 10, "speed": "0 ft"},
-          "proficiency_bonus": 2,
-          "senses": [],
-          "passive_perception": 12,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"}
-          ],
-          "description": "A Megalossian noble who was critically wounded during the battle. The orcs amputated one of his arms. He is at 0 hp and is mortally wounded; he will die within 30 minutes unless someone succeeds a DC 25 Wisdom (Medicine) check.",
-          "secrets": "If rescued with magical healing, Count Conrad will offer the PCs a reward of 1,000 gp if they escort him to a nearby town. If the PCs impress the count, they may earn his long-term patronage.",
-          "imagePath": "media/Tokens/Count-Mannheim.webp",
-          "traits_md": "## Mortally Wounded\n\nCount Conrad has 0 hp and is dying. He will die within 30 minutes unless stabilized with a DC 25 Wisdom (Medicine) check or magical healing.\n\n## Noble Bearing\n\nDespite his wounds, Count Conrad carries himself with the dignity of his station."
+          "description": "The villain FAT FARLSBAG, who was notorious for the murder and kidnapping of dozens of good folk over the years. But when he kidnapped @[Prince Adelheid](entity:npc/Prince Adelheid)'S wife-to-be, just days before the wedding, that was enough. The Prince put out a massive bounty, which only caused Fat Farlsbag to murder the poor girl, and proclaim that he would never be caught in the cruel mountains of the north.\n\nFat Farlsbag is delighted by the cruel violence that has just occcurred, and sees the battle as an opportunity for new hostages and found wealth.",
+          "goals": "He's also gotten wind that the orcs fled from a legendary platinum mine of @[Davihn-Karr](entity:location/Davihn-Karr), and seeks to discover the location of it for himself.\n\nDelighted at having escaped the manhunt, Farlsbag is now looting corpses and searching for victims to sell back to their loved ones. The band has captured two survivors from the human hunters and are gleefully torturing them for information, until they get bored and will ransom them off.",
+          "secrets": "If he sees he's outnumbered or outmatched, Farlsbag and his toughest hobgoblin captain will drag out an elven scout and threaten to toss her off the sheer, 100-foot cliff, unless the PCs give them all their rations and back off. If Farlsbag thinks he has the advantage in any way, he'll order his henchmen to capture the PCs.\n\nNote that if the PCs miss this encounter, they'll miss their chance at finding Fat Farlsberg. This may be perfectly acceptable to the DM, as Fat Farlsberg doesn't play a big part in the finale of the adventure, especially now that the PCs have discovered Davihn-Karr.",
+          "traits_md": "## Fat Farlsbag\n\n*Medium humanoid (human), chaotic evil*\n\n**Armor Class** 15 **Speed** 25 ft. **Hit Points** 55 (10d8+10)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 15 (+2) | 14 (+2) | 14 (+2) | 14 (+2) | 11 (+0) | 14 (+2) |\n\n**Saving Throws** Str +4, Dex +4, Con +4 **Senses** passive Perception 10 **Languages** Common, Goblin **Challenge** 2 (450 XP)\n\n**Multiattack.** Farlsbag makes two melee attacks.\n\n**Axe \"Lovebiter\".** Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 2) slashing damage.",
+          "equipment_md": "- Axe \"Lovebiter\"\n\nThe wanted poster for him is @[Handout A - Wanted poster for Fat Farlsbag](entity:lore/Handout A - Wanted poster for Fat Farlsbag)."
         }
       },
       {
         "source_name": "I'Zor'zah the Azure",
         "mapping": {
           "name": "I'Zor'zah the Azure",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
-          "location_ref": {"lookup": "location", "match": "name", "value": "Davihn-Karr"},
-          "faction": "Sorcerers of the White Crystal Peaks (rogue)",
-          "stat_block": {"STR": 14, "DEX": 14, "CON": 14, "INT": 17, "WIS": 11, "CHA": 10},
-          "combat_stats": {"hp": 39, "max_hp": 39, "ac": 16, "speed": "30 ft", "level": 3},
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 3,
+          "alignment_ref": {
+            "lookup": "alignment",
+            "match": "name",
+            "value": "Chaotic Neutral"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Indifferent"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Davihn-Karr"
+          },
+          "faction": "Founder and enemy of the Sorcerers of the White Crystal Peaks",
+          "stat_block": {
+            "STR": 14,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 17,
+            "WIS": 11,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 39,
+            "max_hp": 39,
+            "ac": 16,
+            "speed": "30 ft",
+            "initiative": "+2",
+            "cr": "2",
+            "xp": 450
+          },
           "proficiency_bonus": 2,
           "initiative_modifier": 2,
-          "senses": [],
-          "passive_perception": 10,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"},
-            {"lookup": "language", "match": "name", "value": "Dwarvish"}
-          ],
-          "description": "Born two-hundred years ago, I'Zor'zah has been obsessed with his theories on platinum golems and platinum earth elementals. Until this day, he has lacked the materials and means to test them. Having long feuded with the fascist wizard cult he founded, the Sorcerers of the White Crystal Peaks, he has decided to create an artifact that will finally topple their hidden headquarters, the White Crystal Spire.",
-          "secrets": "I'Zor'zah plans to use the essential platinum to give the golem the ability to move through any stone or metal less-precious than platinum. Once complete, the golem will destroy the White Crystal Spire, and then I'Zor'zah will use it to cause havoc among the settlements above and below ground, inevitably taking control of the north, and starting his own order of sorcerers.",
-          "imagePath": "media/Tokens/Izorzah.webp",
-          "traits_md": "## Spellcasting\n\nI'Zor'zah is a 3rd-level spellcaster. He casts with Intelligence (spell save DC 13, +5 to hit with spell attacks). He has the following spells:\n\n**Cantrips (at will):** fire bolt*, message, prestidigitation, shocking grasp\n**1st level (4 slots):** magic missile*, protection from evil and good, thunderwave\n**2nd level (2 slots):** hold person, scorching ray*\n\n*I'Zor'zah has studied rare variations of these spells so that they appear as crystalline and stone projectiles, versus fire and light.\n\n## Multiattack\n\nThe wizard makes one attack with his dagger and casts a cantrip.\n\n## Dagger \"Bitterwhite\"\n\n+2 Dagger \"Bitterwhite\". Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 20 (1d4 + 6) piercing damage."
-        }
-      },
-      {
-        "source_name": "Hobgoblin Henchman",
-        "mapping": {
-          "name": "Hobgoblin Henchman",
-          "stat_block": {"STR": 14, "DEX": 12, "CON": 12, "INT": 10, "WIS": 10, "CHA": 9},
-          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 18, "speed": "30 ft"},
-          "proficiency_bonus": 2,
-          "initiative_modifier": 1,
-          "senses": [],
-          "passive_perception": 10,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"},
-            {"lookup": "language", "match": "name", "value": "Goblin"}
-          ],
-          "description": "A hobgoblin soldier serving under Fat Farlsbag. These survivors of the battle have taken shelter in a makeshift hide tent, along with their human boss.",
-          "traits_md": "## Hobgoblin (SRD)\n\n**Longsword.** Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) slashing damage.\n\n## Crossbow\n\n**Light crossbow.** Ranged Weapon Attack: +3 to hit, range 80/320 ft., one target. Hit: 5 (1d8 + 1) piercing damage."
-        }
-      },
-      {
-        "source_name": "Mind-Controlled Slave",
-        "mapping": {
-          "name": "Mind-Controlled Slave",
-          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-          "stat_block": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
-          "combat_stats": {"hp": 2, "max_hp": 2, "ac": 10, "speed": "30 ft"},
-          "proficiency_bonus": 2,
-          "senses": [],
-          "passive_perception": 10,
-          "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Common"}
-          ],
-          "description": "Mostly human slaves, their eyes are pure white, their minds gone (enslaved by I'Zor'zah's magic). They haul rocks away from the base of the statue, others use picks and hammers to mold the marble statue into greater detail.",
-          "secrets": "A Dispel Magic spell will break a slave from their daze. An orc slave will take advantage of his freedom to flee into the mountains. A human slave will beg the PCs to run and help them escape.",
-          "traits_md": "## Mind-Controlled\n\nThese slaves have been enslaved by I'Zor'zah's magic. Their eyes are pure white, their minds gone. They do their best to ignore intruders and carry on their work.\n\n## Unarmed Strike\n\nMelee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 1 bludgeoning damage."
-        }
-      }
-    ],
-    "monster": [
-      {
-        "source_name": "Crag Yeti",
-        "mapping": {
-          "name": "Crag Yeti",
-          "size_ref": {"lookup": "size", "match": "name", "value": "Medium"},
-          "creature_type_ref": {"lookup": "creature-type", "match": "name", "value": "Undead"},
-          "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Neutral Evil"},
-          "ac": 14,
-          "ac_note": "",
-          "initiative_modifier": 2,
-          "initiative_score": 12,
-          "hp_average": 40,
-          "hp_dice": "5d8+10",
-          "speed_walk_ft": 30,
-          "stat_block": {"STR": 16, "DEX": 14, "CON": 14, "INT": 8, "WIS": 10, "CHA": 5},
-          "skill_bonuses": {
+          "saving_throws": {
             "rows": [
-              {"name": "Stealth", "ability": "DEX", "proficient": true, "expertise": false, "misc": 0},
-              {"name": "Survival", "ability": "WIS", "proficient": true, "expertise": false, "misc": 0}
+              {
+                "name": "Intelligence",
+                "ability": "INT",
+                "proficient": true,
+                "expertise": false,
+                "misc": -1
+              },
+              {
+                "name": "Wisdom",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 0
+              }
             ]
           },
-          "senses": [
-            {"sense_ref": {"lookup": "sense", "match": "name", "value": "Darkvision"}, "range_ft": 60}
-          ],
+          "skills": {
+            "rows": [
+              {
+                "name": "Arcana",
+                "ability": "INT",
+                "proficient": true,
+                "expertise": false,
+                "misc": -1
+              }
+            ]
+          },
           "passive_perception": 10,
           "language_refs": [
-            {"lookup": "language", "match": "name", "value": "Yeti"}
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Dwarvish"
+            }
           ],
-          "cr": "1",
-          "xp": 200,
-          "proficiency_bonus": 2,
           "action_refs": [
-            {"lookup": "creature-action", "match": "name", "value": "Claw Slash (Crag Yeti)"}
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Multiattack (I'Zor'zah the Azure)"
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "+2 Dagger \"Bitterwhite\" (I'Zor'zah the Azure)"
+            }
           ],
-          "description": "A territorial undead creature resembling a yeti, with white fur and glowing eyes. Two of these creatures inhabit the Old Cave near the entrance to Davihn-Karr.",
-          "traits_md": "## Crag Yeti\n\nMedium undead, neutral evil\n\n**Armor Class** 14\n**Hit Points** 40 (5d8+10)\n**Speed** 30 ft.\n\n| STR | DEX | CON | INT | WIS | CHA |\n|-----|-----|-----|-----|-----|-----|\n| 16 (+3) | 14 (+2) | 14 (+2) | 8 (-1) | 10 (+0) | 5 (-3) |\n\n**Skills** Stealth +6, Survival +2\n**Senses** Darkvision 60 ft., passive Perception 10\n**Languages** Yeti\n**Challenge** 1 (200 XP)\n\n**Claw Slash.** Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 3) slashing damage."
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Fire Bolt"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Message"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Prestidigitation"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Shocking Grasp"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Magic Missile"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Protection from Evil and Good"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Thunderwave"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Hold Person"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Scorching Ray"
+            }
+          ],
+          "equipment_refs": [
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "I'zorzah's Diamond Powerstone"
+            }
+          ],
+          "imagePath": "media/Tokens/Izorzah.webp",
+          "description": "An unaging sorcerer who was enslaving the cragmen and hobgoblins of these mountains with his experimental magic and forcing them to mine precious platinum. At the top of the scaffold, a robed man, blue-faced, wearing an iron crown, and white fur robes silently watches the procession. He occasionally gestures at his cauldron, heating it to just the right temperature. This is I'Zor'zah the Azure.\n\nBorn two-hundred years ago, I'Zor'zah has been obsessed with his theories on platinum golems and platinum earth elementals. Until this day, he has lacked the materials and",
+          "goals": "Having long feuded with the fascist wizard cult he founded, @[The Sorcerers of the White Crystal Peaks](entity:lore/The Sorcerers of the White Crystal Peaks), he has decided to create an artifact that will finally topple their hidden headquarters, the White Crystal Spire. His goal is to create a massive statue, laced with rare essential platinum, and then animate it into a tremendous golem. According to his decades-long research, this platinum golem, being composed of the most precious of essential metals, would be able to walk through the earth itself. It would be easy for the construct to annihilate the tower of his enemies. Then, he could use the golem to cause havoc among the settlements above and below ground, inevitably taking control of the north, and starting his own order of sorcerers.",
+          "secrets": "I'Zor'zah is too focused on his essential platinum to pay much attention to the PCs, unless they do something to obviously catch his eye, like harming a slave or materially interfering with his operation. If he does see them as a threat, he will confront them and try to use his mind control magic to capture or enslave them. I'Zor'zah will avoid using his slaves as combatants (preferring to lure PCs near the ironouth spiders, who he allows to eat weak slaves), but will order his laborers into combat if he becomes desperate.\n\nHis death will release the minds of his slaves.",
+          "traits_md": "## I'Zor'zah the Azure\n\n*Medium humanoid, chaotic neutral*\n\n**Armor Class** 16 **Speed** 30 ft. **Hit Points** 39 (6d8+12)\n\n| STR | DEX | CON | INT | WIS | CHA |\n|---|---|---|---|---|---|\n| 14 (+2) | 14 (+2) | 14 (+2) | 17 (+3) | 11 (+0) | 10 (+0) |\n\n**Saving Throws** Int +4, Wis +2 **Skills** Arcana +4 **Senses** passive Perception 10 **Languages** Common, Dwarvish **Challenge** 2 (450 XP)\n\n**Multiattack.** The wizard makes one attack with his dagger and casts a cantrip.\n\n**+2 Dagger \"Bitterwhite\".** Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 20 (1d4 + 6) piercing damage.",
+          "spells_md": "**Spellcasting.** I'Zor'zah is a 3rd-level spellcaster. He casts with Intelligence (spell save DC 13, +5 to hit with spell attacks). He has the following spells:\n\n- Cantrips (at will): fire bolt*, message, prestidigitation, shocking grasp\n- 1st level (4 slots): magic missile*, protection from evil and good, thunderwave\n- 2nd level (2 slots): hold person, scorching ray*\n\n\\* I'zor'zah has studied rare variations of these spells so that they appear as crystalline and stone projectiles, versus fire and light.",
+          "equipment_md": "- +2 Dagger \"Bitterwhite\"\n- @[I'zorzah's Diamond Powerstone](entity:magic-item/I'zorzah's Diamond Powerstone)\n- An iron crown and white fur robes",
+          "dmNotes": "The stat-block sidebar in the PDF is cut off mid-sentence: \"Until this day, he has lacked the materials and\" — nothing follows it in the source."
         }
       },
       {
-        "source_name": "Ironmouth Spider",
+        "source_name": "Ott Z'Orto",
         "mapping": {
-          "name": "Ironmouth Spider",
-          "size_ref": {"lookup": "size", "match": "name", "value": "Medium"},
-          "creature_type_ref": {"lookup": "creature-type", "match": "name", "value": "Beast"},
-          "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Unaligned"},
-          "ac": 12,
-          "ac_note": "",
-          "initiative_modifier": 2,
-          "initiative_score": 12,
-          "hp_average": 13,
-          "hp_dice": "3d8",
-          "speed_walk_ft": 30,
-          "stat_block": {"STR": 14, "DEX": 14, "CON": 10, "INT": 1, "WIS": 10, "CHA": 3},
-          "senses": [],
-          "passive_perception": 10,
-          "cr": "1/2",
-          "xp": 100,
-          "proficiency_bonus": 2,
-          "action_refs": [
-            {"lookup": "creature-action", "match": "name", "value": "Mandibles (Ironmouth Spider)"}
+          "name": "Ott Z'Orto",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Dwarf"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Battlefield"
+          },
+          "faction": "Survivor of the bounty hunters' posse",
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Dwarvish"
+            }
           ],
-          "description": "Two man-sized, white spiders that nest in the scaffold around the golem statue at Davihn-Karr. I'Zor'zah allows them to eat weak slaves.",
-          "traits_md": "## Ironmouth Spider\n\nMedium beast, unaligned\n\n**Armor Class** 12\n**Hit Points** 13 (3d8)\n**Speed** 30 ft.\n\n| STR | DEX | CON | INT | WIS | CHA |\n|-----|-----|-----|-----|-----|-----|\n| 14 (+2) | 14 (+2) | 10 (+0) | 1 (-5) | 10 (+0) | 3 (-4) |\n\n**Senses** passive Perception 10\n**Challenge** 1/2 (100 XP)\n\n**Mandibles.** Melee Attack: +6 to hit, reach 5 ft., one creature. Hit: 6 (1d8 + 4) piercing damage, and the target must make a DC 11 Constitution save, taking 5 (2d4) poison damage on a failed save, or half on a successful one. If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way."
+          "imagePath": "media/Tokens/Ott.webp",
+          "description": "A Perception roll will find one old dwarf that may live, however. His name is OTT Z'ORTO, and except for a stubborn, bleeding head wound (which a healing spell or DC 10 Wisdom (Medicine) check will stop), he will survive his injuries. If the PCs are helpful, he'll agree to stay with them, otherwise he'll stubbornly set out into the wilderness on his own.",
+          "goals": "If Ott is with the PCs, he will stammer excitedly about how the party has discovered one of the old entrances to the lost, legendary mine of Davinn-Kahr, and, if they can find another entrance, how a vast pile of platinum awaits them — not to mention a mighty reputation for locating the site!",
+          "dmNotes": "DM's Note: If some or all of the PCs are lower than 2nd level, Ott will make a helpful companion in the adventure head.\n\nThe source prints no stat block for Ott — use any dwarf commoner/veteran that fits your table.\n\nAt @[Davihn-Karr](entity:location/Davihn-Karr): \"This is a great spot to introduce one of the PCs' old friends or allies — perhaps even Ott the dwarf from earlier int he adventure — as one of the I'Zor'zah's slaves!\""
         }
       },
       {
-        "source_name": "Golem Veined with Platinum",
+        "source_name": "Aldara Ellaris",
         "mapping": {
-          "name": "Golem Veined with Platinum",
-          "size_ref": {"lookup": "size", "match": "name", "value": "Large"},
-          "creature_type_ref": {"lookup": "creature-type", "match": "name", "value": "Construct"},
-          "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Unaligned"},
-          "ac": 20,
-          "ac_note": "",
-          "initiative_modifier": -1,
-          "initiative_score": 9,
-          "hp_average": 210,
-          "hp_dice": "20d10+100",
-          "speed_walk_ft": 30,
-          "stat_block": {"STR": 24, "DEX": 9, "CON": 20, "INT": 3, "WIS": 11, "CHA": 1},
-          "damage_immunity_refs": [
-            {"lookup": "damage-type", "match": "name", "value": "Fire"},
-            {"lookup": "damage-type", "match": "name", "value": "Poison"},
-            {"lookup": "damage-type", "match": "name", "value": "Psychic"}
+          "name": "Aldara Ellaris",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Half-Elf"
+          },
+          "level": 1,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Fat Farlsbag's Hideout"
+          },
+          "faction": "Volunteer scout of the human posses",
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            },
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Elvish"
+            }
           ],
-          "condition_immunity_refs": [
-            {"lookup": "condition", "match": "name", "value": "Charmed"},
-            {"lookup": "condition", "match": "name", "value": "Exhaustion"},
-            {"lookup": "condition", "match": "name", "value": "Frightened"},
-            {"lookup": "condition", "match": "name", "value": "Paralyzed"},
-            {"lookup": "condition", "match": "name", "value": "Petrified"},
-            {"lookup": "condition", "match": "name", "value": "Poisoned"}
+          "imagePath": "media/Tokens/Aldara.webp",
+          "description": "The hostage, ALDARA ELLARIS, was a volunteer scout who helped lead the human posses into the mountains. She is a capable half-elven tracker and survivalist, and relies mostly on her self-taught archery skills to hunt for food and defend herself.\n\nIf rescued, and on a good reaction or better, Aldara will accompany the PCs. She has grown weary of the mountains, and wants nothing to do with the orcs anymore. She's heard of the old mines, however, and will agree to visiting the mines before guiding the PCs back to civilization.",
+          "secrets": "More importantly, she knows the way out of the mountains, and can show the PCs the three-day journey that will take them to a nearby town.",
+          "dmNotes": "Aldara is a 1st level character. The DM should feel free to develop her role as an NPC, especially if the PCs need additional survival or area knowledge skills.\n\nThe source prints no ability scores, class or hit points for her; the only mechanical statement is \"1st level character\". A GURPS build ships with the module as media/GURPS GCS Characters/Aldara-the-Scout.gcs."
+        }
+      },
+      {
+        "source_name": "Count Conrad Mannheim",
+        "mapping": {
+          "name": "Count Conrad Mannheim",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Fat Farlsbag's Hideout"
+          },
+          "faction": "Megalossian nobility",
+          "combat_stats": {
+            "hp": 0
+          },
+          "language_refs": [
+            {
+              "lookup": "language",
+              "match": "name",
+              "value": "Common"
+            }
           ],
-          "senses": [
-            {"sense_ref": {"lookup": "sense", "match": "name", "value": "Darkvision"}, "range_ft": 120}
-          ],
-          "passive_perception": 10,
-          "language_refs": [],
-          "language_note": "Understands Common but can't speak",
-          "cr": "16",
-          "xp": 15000,
-          "proficiency_bonus": 5,
-          "action_refs": [
-            {"lookup": "creature-action", "match": "name", "value": "Slam (Platinum Golem)"},
-            {"lookup": "creature-action", "match": "name", "value": "Poison Breath (Platinum Golem)"}
-          ],
-          "description": "A three-story statue of a great, bearded sorcerer, made of marble, and veined all over with grooves of essential platinum. When animated, this tremendous golem can walk through the earth itself, its platinum veins allowing it to move through any stone or metal less-precious than platinum.",
-          "traits_md": "## Golem Veined with Platinum\n\nLarge construct, unaligned\n\n**Armor Class** 20\n**Hit Points** 210 (20d10+100)\n**Speed** 30 ft.\n\n| STR | DEX | CON | INT | WIS | CHA |\n|-----|-----|-----|-----|-----|-----|\n| 24 (+7) | 9 (-1) | 20 (+5) | 3 (-4) | 11 (+0) | 1 (-5) |\n\n**Damage Immunities** fire, poison, psychic; bludgeoning, piercing, and slashing from nonmagical attacks that aren't adamantine\n**Condition Immunities** charmed, exhaustion, frightened, paralyzed, petrified, poisoned\n**Senses** darkvision 120 ft., passive Perception 10\n**Languages** understands Common, but can't speak\n**Challenge** 16 (15,000 XP)\n\n**Fire Absorption.** Whenever the golem is subjected to fire damage, it takes no damage and instead regains a number of hit points equal to the fire damage dealt.\n\n**Immutable Form.** The golem is immune to any spell or effect that would alter its form.\n\n**Magic Resistance.** The golem has advantage on saving throws against spells and other magical effects.\n\n**Magic Weapons.** The golem's weapon attacks are magical.\n\n**Multiattack.** The golem makes two melee attacks.\n\n**Slam.** Melee Weapon Attack: +13 to hit, reach 5 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage.\n\n**Poison Breath (Recharge 6).** The golem exhales particle gas in a 15-foot cone. Each creature in that area must make a DC 19 Constitution saving throw, taking 45 (10d8) poison damage on a failed save, or half as much damage on a successful one."
+          "imagePath": "media/Tokens/Count-Mannheim.webp",
+          "description": "A second hostage, a human, Megalossian noble named COUNT CONRAD MANNHEIM, lies in pain in the back of the shelter. He was critically wounded during the battle, and probably will not survive the night... especially since the orcs amputated one of his arms to eat for dinner. He's at 0 hp and is mortally wounded; he will die within 30 minutes unless someone succeeds a DC 25 Wisdom (Medicine) check.",
+          "secrets": "If the PCs save Count Conrad with magical healing, he will be grateful, and offer them a reward of 1,000 gp if they escort him to a nearby town. If the PCs impress the count, they may earn his long-term patronage (DM's discretion). Traveling with him will likely slow the PCs down, unless they do an utterly amazing job healing him.\n\nOne of the pregenerated heroes, Wiliam Exel, is his cousin Joclyn Corolinus in disguise, keeping a low profile since spotting him in the war party.",
+          "dmNotes": "The source prints no stat block for the Count; only that he is at 0 hp and dying."
+        }
+      },
+      {
+        "source_name": "Prince Adelheid",
+        "mapping": {
+          "name": "Prince Adelheid",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Indifferent"
+          },
+          "faction": "The towns south of the border",
+          "description": "The battle had started when the the towns south of the border had finally tired of the villain @[Fat Farlsbag](entity:npc/Fat Farlsbag), who was notorious for the murder and kidnapping of dozens of good folk over the years. But when he kidnapped PRINCE ADELHEID'S wife-to-be, just days before the wedding, that was enough. The Prince put out a massive bounty, which only caused Fat Farlsbag to murder the poor girl, and proclaim that he would never be caught in the cruel mountains of the north. That proclamation did not stop a hundred men and dwarves from heading into the mountains to track him.",
+          "dmNotes": "The Prince never appears on stage in this adventure; he is the source of the bounty the PCs are hunting. The source prints no stat block for him."
         }
       }
     ],
-    "trap": [
+    "location": [
       {
-        "source_name": "Dunther's Chest Trap",
+        "source_name": "The Zark Mountains",
         "mapping": {
-          "name": "Dunther's Chest Trap",
-          "trigger_kind": "Touch",
-          "trigger": "The chest is locked but can be opened with a DC 12 lockpicking check. It is trapped with an old dwarven explosive booby trap, which requires a DC 10 find traps check to detect.",
-          "save_dc": 10,
-          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Constitution"},
-          "damage_dice": "2d4",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Cold"},
-          "detection_dc": 10,
-          "disable_dc": 12,
-          "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Dexterity"},
-          "countermeasures": "The trap can be detected with a DC 10 find traps check. The chest can be opened carefully with a DC 12 lockpicking check after disabling the trap.",
-          "description": "An old dwarven explosive booby trap on Dunther's chest. If triggered, the chest's bulges explode in freezing mist (DC 10 Constitution save or suffer 2d4 cold damage)."
+          "name": "The Zark Mountains",
+          "danger_level": "High",
+          "environment": "Frozen northern mountain range",
+          "description": "Far to the north of the land, deep in the cold peaks of the Zark mountain range.",
+          "description_long": "The adventure is set far to the north of the land, deep in the cold peaks of the Zark mountain range, although it can easily be translated to any icy kingdom of the DM's preference.\n\nThe mountains hold the ancient dwarven platinum mine known as @[Davihn-Karr](entity:location/Davihn-Karr), the pilgrimage landmark of @[St. Bernard's Peak](entity:location/St. Bernard's Peak), and — a three-day journey away with a guide — the nearest town, south into Megalos. The cragmen and hobgoblins of these mountains were recently forced out of their underworld home by @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure)."
         }
       },
       {
-        "source_name": "Manakill Crevasses",
+        "source_name": "The Battlefield",
         "mapping": {
-          "name": "Manakill Crevasses",
-          "trigger_kind": "Proximity",
-          "trigger": "As the PCs cross the area with the ice statues, the statues begin to move and point at any PCs without spellcasting ability, and the ground underneath those PCs begins to crack.",
-          "save_dc": 10,
-          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Dexterity"},
-          "damage_dice": "2d4",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Bludgeoning"},
-          "detection_dc": 15,
-          "disable_dc": 12,
-          "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Strength"},
-          "countermeasures": "The crevasses can be avoided with a DC 10 Dexterity (Acrobatics) save. Climbing out requires a DC 12 Strength (Athletics) roll.",
-          "description": "Ice statues curse the ground beneath non-spellcasters, creating crevasses. Average 5-10 yards deep (up to 2d4 bludgeoning damage). Climbing out requires a DC 12 Strength (Athletics) roll."
-        }
-      }
-    ],
-    "environmental-effect": [
-      {
-        "source_name": "Blizzard",
-        "mapping": {
-          "name": "Blizzard",
-          "effect": "A freezing snowstorm that makes travel difficult and can cause damage from exposure.",
-          "mechanical_notes": "Characters without shelter take 1d4 cold damage per hour. Survival DC 10 to find shelter. The storm hits in 2-3 hours after the adventure begins."
+          "name": "The Battlefield",
+          "danger_level": "Low",
+          "environment": "Frozen ground at the base of the mountains",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "description": "Where the manhunt died: over one hundred men and bestial foes, mutually annihilated.",
+          "description_long": "The unexpected battle was over. Corpses of men and orcs sprawl motionless on the frozen ground. Over one hundred men and bestial foes now lay mutually annihilated in the freezing northern mountains of Zark.\n\nThe PCs are lost without their guides; they know they are days from the nearest town. They are cold, wounded, but alive. Their comrades and fellow bounty hunters lie dead or mortally wounded around them.\n\nA dark storm is brewing to the north; see @[The Snowstorm](entity:environmental-effect/The Snowstorm). Shelter is a dozen yards up a rocky cliffside — @[The Old Cave](entity:location/The Old Cave).",
+          "secrets": "One old dwarf, @[Ott Z'Orto](entity:npc/Ott Z'Orto), may still live here. There is also the danger of half-dead orcs still stabbing out at them in hatred and spite."
         }
       },
       {
-        "source_name": "Essential Platinum Smelting",
+        "source_name": "The Old Cave",
         "mapping": {
-          "name": "Essential Platinum Smelting",
-          "effect": "The strange blue fire in I'Zor'zah's cauldron smelts platinum into essential platinum, a rare and powerful metal.",
-          "mechanical_notes": "The cauldron burns with blue fire. A DC 12 Intelligence (Arcana) roll notices that the fire seems to be smelting the platinum into a rare, new essential metal. The golem, when animated, will be able to walk through any stone or metal less-precious than platinum."
+          "name": "The Old Cave",
+          "danger_level": "Medium",
+          "environment": "Mountain cave, partially carved by ancient dwarves",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Darkness"
+          },
+          "map": "media/Maps/Old-Cave.webp",
+          "description": "A dark, rubble-strewn but warm cave a dozen yards up a rocky cliffside — and one of the old entrances to Davihn-Karr.",
+          "description_long": "The cave is dark, strewn with rubble, but warm. It stretches back sixty feet into the rock. Examining the cave will discover two things – there are ancient dwarven runes set into the rock, and that the cave is partially carved! A DC 12 Intelligence (History) check (DC 5 for dwarves) reveals that these carvings are typically found in thousand-year-old dwarven mineshafts, built before the the last magical catacylsm, and common to the \"Jighamner\" lineage of miner-kings.\n\nAnyone who understands dwarven can read chunks of the inscription, which describe the duties of the dwarven workers that used this entrance:\n\n> Three carts of three dwarves' worth of platinum. Every third week, leave here for third crew to haul to the Halls of Davihn-Karr.\n\nAnother DC 15 Intelligence (History) check will reveal that Davihn-Karr was a legendary platinum mine of the Zarkian dwarves. According to the old stories, dwarves would haul out platinum without end from these mines. Wizards from all across the land would pay greatly for the Davihn-Karr chains and brooches that would hold their magic-storing ioun stones.\n\nAfter the PCs have made some noise in the cave, a guttural growling sound will be heard from the back of the cave. This cave is home to two territorial and vicious @[Crag Yetis](entity:monster/Crag Yetis)!\n\nNear the yeti lair, amidst the rubble of what looks like an ancient cave-in, the PCs will find the remains of several crag men, whose meat has been picked clean from their bones. A search through the rubble will reveal several interesting discoveries:\n\n- A DC 5 Wisdom (Perception) check will discover a solid gold bracelet, goblin-design, on the floor. An Intelligence check concludes it is worth at least 600 silvers.\n- A DC 15 Wisdom (Perception) uncovers an ancient dwarven axe tossed amidst the rubble, inlaid with jewels and decor coated in brilliant platinum. A DC 12 Intelligence (History) check reveals that the axe is at least 1,000 years old. Any wizard who studies the item will see that the platinum is essential platinum, an utterly rare element. The is named by ancient dwarven runes on its handle, \"@[Kahd](entity:magic-item/Kahd),\" which roughly translates to \"Harbinger.\" Appraising the axe, and making a successful DC 12 Intelligence (History) reveals that the gems in the axe are worth at least 200 gp! As a very fine battleaxe, Kahd does 1d10 damage. Furthermore, the axe is enchanted with a seek minerals enchantment, which enables the user to concentrate for 10 seconds and locate the direction of a nearby large source of metals, with a particular affinity for dwarf-dug deposits (6 charges, regains 1 charge at dawn each day).\n- A DC 10 Wisdom (Perception) check uncovers an iron door, frozen over with ice. If the ice is melted or chipped away (which takes hours), the fine lock can be opened via lockpicking - a DC 14 check. Inside is a small dwarven storage closet, with three picks, 50' of fine rope, and an beautiful, dwarven-style pot-helm (worth 150 gp), decorated with a goat-head sigil also made from essential platinum.\n- A brazier, made of polished metal, attached to a stone pedestal in the floor. Around the pedestal are more dwarven runes: \"Snowstorm Beacon.\" Lighting this beacon with fire will cause a great mechanical, hammering sound to be emanate from the cave. PCs who look from the entrance to the cave will see a second fire lit in the distance. This fire marks the entrance to the legendary mine of Davihn-Karr.\n- Finally, any successful search roll also reveals that there is an ancient chest in the corner of the cave, well-hidden in a hole in the ground and buried under a large rock. The chest looks like it was half-buried in a hurried attempt to hide it. The boulder is 500 lbs., requiring a DC 20 Strength check (or two people can try, both succeeding on a DC 12 Strength check).\n\nOnce uncovered, PCs can see that the chest is unusally chaped, like a pentagram, with large metal bulges on the outside. It is carved with dwarven runes that read (also see @[Handout B - Bronze plate on the chest hidden in the yeti cave](entity:lore/Handout B - Bronze plate on the chest hidden in the yeti cave)):\n\n> Possession of Dunther of Zark\n> Mage of Fine Magicks (and Royal Tax Collector)\n\nThe chest is locked but can be opened with a DC 12 lockpicking check. It is trapped with an old @[dwarven explosive booby trap](entity:trap/Dwarven Explosive Booby Trap), which requires a DC 10 find traps check to detect. If opened, the chest's bulges explode in freezing mist (DC 10 Constitution save or suffer 2d4 damage). Inside the chest lies a small cask of @[dwarven Beetle Oil](entity:magic-item/Dwarven Beetle Oil) (note this will be frozen and shattered if the trap goes off), yeti-skin leather gloves (woth 150 gp) and a @[+1 dwarven throwing axe](entity:magic-item/+1 Dwarven Throwing Axe).\n\nIf @[Ott](entity:npc/Ott Z'Orto) is with the PCs, he will stammer excitedly about how the party has discovered one of the old entrances to the lost, legendary mine of Davinn-Kahr, and, if they can find another entrance, how a vast pile of platinum awaits them — not to mention a mighty reputation for locating the site!"
+        }
+      },
+      {
+        "source_name": "The Manakill Crevasses",
+        "mapping": {
+          "name": "The Manakill Crevasses",
+          "danger_level": "Medium",
+          "environment": "Strange mountain pass dotted with six humanoid statues of ice",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "hazard_refs": [
+            {
+              "lookup": "hazard",
+              "match": "name",
+              "value": "Falling"
+            }
+          ],
+          "description": "A mountain pass where six ice statues crack the ground open beneath anyone without spellcasting ability.",
+          "description_long": "After several hours of journeying, the PCs will find themselves in a strange mountain pass. Six unusual, humanoid statues of ice dot the snowy landscape. A DC 10 Intelligence (History) check recalls a local legend. According to the story, wizards who fail the final test of the White Crystal Peak sorcerous cult are banished and turned into ice statues — cursed to protect the White Crystal Spire for eternity.\n\nAs the PCs cross this area, the statues begin to move and creak, like the sound of glass slowly breaking. Slowly, the statues point at any PCs without spellcasting ability within view, and the ground underneath those PC begins to crack and turn fragile. The PC must make a DC 10 Dexterity (Acrobatics) save to leap to safety as a crevasse forms underneath them. Fortunately, the crevasses are not that deep. They average about 5-10 yards deep (up to 2d4 damage). Climbing out requires a DC 12 Strength (Athletics) roll, difficult due to the slick, snow-covered rock.\n\nAfter six crevasses have been created, the statues grow still again. The statues have 60 hp (resistant to piercing and slashing), if the PCs wish to destroy them.",
+          "secrets": "However, destroying these statues alerts their presence to the evil White Crystal Peak sorcerers. Within a few hours, they will find themselves being followed by a strange, red-eyed snowy owl. While this event has no effect on this adventure, the PCs may encounter the sorcerers at a later time (or gain a new enemy, if the PCs are particularly destructive to the statues). See @[The Sorcerers of the White Crystal Peaks](entity:lore/The Sorcerers of the White Crystal Peaks)."
+        }
+      },
+      {
+        "source_name": "Fat Farlsbag's Hideout",
+        "mapping": {
+          "name": "Fat Farlsbag's Hideout",
+          "danger_level": "High",
+          "environment": "Cliffside encampment with a makeshift hide tent, above a sheer 100-foot drop",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "map": "media/Maps/Mountain-Shelter.webp",
+          "description": "One of Fat Farlsbag's mountain shelters, at the end of a well-worn path off the route north.",
+          "description_long": "As the PCs follow the tracks, they will hear several distant screams of anguish and pain. The path winds and tightens, and then opens into a cliffside encampment, one of Fat Farlsberg's mountain shelters.\n\nSix @[hobgoblins](entity:monster/Hobgoblin Henchmen) who have survived the battle have taken shelter in a makeshift hide tent, along with their human boss, @[Fat Farlsbag](entity:npc/Fat Farlsbag). The camp sits above a sheer, 100-foot cliff.",
+          "secrets": "Two hostages are held here: @[Aldara Ellaris](entity:npc/Aldara Ellaris) and @[Count Conrad Mannheim](entity:npc/Count Conrad Mannheim). The band has captured two survivors from the human hunters and are gleefully torturing them for information, until they get bored and will ransom them off."
+        }
+      },
+      {
+        "source_name": "St. Bernard's Peak",
+        "mapping": {
+          "name": "St. Bernard's Peak",
+          "danger_level": "Safe",
+          "environment": "Mountain landmark and pilgrimage location",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "description": "A huge peak shaped vaguely like a man with outstretched arms — the party's compass towards civilization.",
+          "description_long": "As the PCs head towards the beacon, they will turn a bend and see a huge peak in the distance. The peak looks vaguely like a man with outstretched arms. A DC 5 Intelligence check will identify the mountain as St. Bernard's Peak after its shape. The peak is a well-traveled pilgrimage location for the faithful dwarves and men of Zark. More importantly, this peak will help orient the PCs towards civilization. A DC 5 Wisdom (Nature) check will enable them to trace a route towards the mountain and its main road that will take them south into Megalos."
+        }
+      },
+      {
+        "source_name": "Davihn-Karr",
+        "mapping": {
+          "name": "Davihn-Karr",
+          "danger_level": "Deadly",
+          "environment": "Valley before an ancient dwarven platinum mine; scaffolded marble statue, slaves and a blue-fire cauldron",
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "description": "The legendary platinum mine of the Zarkian dwarves, now the worksite of I'Zor'zah the Azure.",
+          "description_long": "As the PCs summit the lip of a valley, an awesome sight will render itself – a three-story statue of a great, bearded sorcerer, made of marble, and veined all over with grooves. A few hundred yards behind the statue is the entrance to the Davihn-Karr itself. The mine's great doors are detached, and lay buried in rubble and snow, cracked and fallen. Dozens of ancient dwarven mine carts lay turned over and broken near the entrance to the mine, as if vomited up by the mine itself.\n\nA scaffold surrounds the great construct, and half a dozen slaves climb the scaffold carrying chunks of rock, depositing them in a large cauldron at the top, which burns with blue fire. Elsewhere, more slaves push mine cards of the rock to the base of the statue.\n\nAt the top of the scaffold, a robed man, blue-faced, wearing an iron crown, and white fur robes silently watches the procession. He occasionally gestures at his cauldron, heating it to just the right temperature. This is @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure).\n\nAll around the statue are dozens of @[slaves](entity:monster/Mind-controlled Slaves), mostly orc and half-orc, a few human, goblins, or dwarves. Some are even dressed in the uniforms of the peasant militia that set out to capture @[Fat Farlsbag](entity:npc/Fat Farlsbag)! Their eyes are pure white, their minds gone (a wizard making a DC 10 Intelligence (Arcana) check will identify this as some kind of variation of an enslavement spell). Some haul rocks away from the base of the statue, others use picks and hammers to mold the marble statue into greater detail. (This is a great spot to introduce one of the PCs' old friends or allies — perhaps even @[Ott](entity:npc/Ott Z'Orto) the dwarf from earlier int he adventure — as one of the I'Zor'zah's slaves!)\n\nPCs who study the area may notice a few additional details:\n\n- A DC 15 Intelligence (Arcana) check successfully identifies the statue as a pre-enchantment golem. A roll of 18+ lets the PC recognize that I'Zor'zah plans to use the essential platinum as a part of @[the golem](entity:monster/The Golem Veined with Platinum) to give it some kind of special ability. A roll of 20+ deducts that the essential platinum will allow the golem to move through any stone or metal less-precious than platinum.\n- A DC 12 Wisdom (Nature) roll identifies the chunks of rock as those that carry metal, likely platinum. A DC 12 Intelligence (Arcana) roll notices that the strange blue fire seems to be smelting the platinum into a rare, new essential metal.\n- PCs who study the scaffold and make an DC 15 Wisdom (Perception) check will observe two man-sized, white @[spiders](entity:monster/Ironmouth Spiders) nesting in the structure. A DC 12 Wisdom check reveals that the scaffold is not especially well-made (130 hp, resistant to slashing, bludgeoning, and piercing) and could perhaps be collapsed with enough damage to a single main support (30 hp).",
+          "secrets": "If the PCs rid the land of I'Zor'zah, they will have discovered a legendary dwarven mine all to themselves — see @[The Mine of Davinn-Kahr](entity:lore/The Mine of Davinn-Kahr).\n\nIt's also likely I'Zor'zah has turned the mines into a labryinthine, monster-filled, dungeon. Great rewards await the adventurers who can clear it out of the remaining orcs, trolls, hobgoblins... and the sleeping dragon that lies dormant in the bottom chamber."
         }
       }
     ],
     "lore": [
       {
-        "source_name": "Wanted Poster - Fat Farlsbag",
+        "source_name": "Handout A - Wanted poster for Fat Farlsbag",
         "mapping": {
-          "name": "Wanted Poster - Fat Farlsbag",
+          "name": "Handout A - Wanted poster for Fat Farlsbag",
+          "description": "Handouts Handout A - Wanted poster for Fat Farlsbag (give a couple to the PCs at the start of the adventure!)",
+          "imagePath": "media/Handouts/HandoutA-Poster.jpg",
           "pages": [
-            "## WANTED\n\n**FAT FARLSBAG**\n\nNotorious kidnapper and murderer. Wanted by Prince Adelheid for the murder of his wife-to-be.\n\n**REWARD:** 1,000 gp\n\nLast seen heading into the northern mountains of Zark."
-          ],
-          "pdfs": ["media/Handouts/HandoutA-Poster.jpg"]
+            "# REWARD\n\n## 5000 coins\n\n# FAT FARLSBAG\n\nWanted dead or alive for kidnapping, bloody murder, treason, torture, arson, and general hooligan-ry\n\n---\n\n*Transcribed from the poster art on page 8 of the PDF; the words are drawn, so they do not appear in the PDF's text layer. See @[Fat Farlsbag](entity:npc/Fat Farlsbag).*"
+          ]
         }
       },
       {
-        "source_name": "Chest Inscription - Dunther of Zark",
+        "source_name": "Handout B - Bronze plate on the chest hidden in the yeti cave",
         "mapping": {
-          "name": "Chest Inscription - Dunther of Zark",
-          "pages": [
-            "## Handout B\n\nThe chest is carved with dwarven runes that read:\n\n> Possession of Dunther of Zark\n> Mage of Fine Magicks (and Royal Tax Collector)"
+          "name": "Handout B - Bronze plate on the chest hidden in the yeti cave",
+          "description": "Handouts Handout B - Bronze plate on the chest hidden in the yeti cave",
+          "imagePath": "media/Handouts/HandoutB-ZarkSeal-5E.jpg",
+          "images": [
+            "media/Handouts/HandoutB-ZarakSeal-GURPS.jpg"
           ],
-          "pdfs": ["media/Handouts/HandoutB-ZarkSeal-5E.jpg"]
+          "pages": [
+            "> Possession of Dunther of Zark\n>\n> Mage of Fine Magicks\n>\n> -and Royal Tax Collector-\n\n---\n\n*The bronze plate bolted to the pentagram-shaped chest buried in @[The Old Cave](entity:location/The Old Cave). The module ships two versions of this handout; the GURPS variant is attached as a second image.*"
+          ]
+        }
+      },
+      {
+        "source_name": "The Sorcerers of the White Crystal Peaks",
+        "mapping": {
+          "name": "The Sorcerers of the White Crystal Peaks",
+          "description": "The hermit wizard cult I'Zor'zah founded and now means to destroy. They don't make an appearance in this adventure.",
+          "pages": [
+            "## The Sorcerers of the White Crystal Peaks\n\n@[I'Zor'zah](entity:npc/I'Zor'zah the Azure)'s motivation is to destroy the wizard cult he hates, the Sorcerers of the White Crystal Peaks. They don't make an appearance in this adventure. If their name comes up, a DC 15 Intelligence (Arcana) check reveals that they are a small group of hermit wizards who mostly keep to themselves, studying powerful ice and weather magic, and occasionally dabbling into necromantic arts. They would be entirely unknown except for some occasional raids they make into dwarven or human settlements to capture slaves for their invisible tower in the mountains, the White Crystal Spire.\n\nRegardless of whether I'Zor'zah survives the adventure, the PCs can track the Sorcerers down to inform them of the threat. This may earn them their thanks, if the PCs actually save their tower from danger. On the other hand, if the PCs are seen to be threats to them (for example, revealing the location of their hidden tower), the Sorcerers will make good Enemies for future campaigns.\n\nAccording to local legend, wizards who fail the final test of the White Crystal Peak sorcerous cult are banished and turned into ice statues — cursed to protect the White Crystal Spire for eternity. Six of them stand at @[The Manakill Crevasses](entity:location/The Manakill Crevasses)."
+          ]
+        }
+      },
+      {
+        "source_name": "The Mine of Davinn-Kahr",
+        "mapping": {
+          "name": "The Mine of Davinn-Kahr",
+          "description": "Extending the Adventure: what the PCs can do with a legendary dwarven mine once they own it.",
+          "pages": [
+            "## The Mine of Davinn-Kahr\n\nIf the PCs rid the land of @[I'Zor'zah](entity:npc/I'Zor'zah the Azure), they will have discovered a legendary dwarven mine all to themselves. This could have several repurcussions:\n\n- The PCs can take ownership of the mine. While the rare platinum has mostly been mined ages ago, there is enough of it left to make rich men of the PCs. However, running a mine is a complex operation. The PCs will need to attract laborers to this far-off location, and repair the broken mining machinery, which could cost tens of thousands of silvers. Furthermore, they'll face claims by dwarven royalty, who claim the mine as their own, and will be willing to take it back by force.\n- The PCs can bring the location of the mine to the nearby Dwarven lords. This will earn them a good reputation among dwarves, and likely a patronage. The dwarves will pay handsomely for the location (thousands of gp, or perhaps a rare item from their vaults).\n- It's also likely I'Zor'zah has turned the mines into a labryinthine, monster-filled, dungeon. Great rewards await the adventurers who can clear it out of the remaining orcs, trolls, hobgoblins... and the sleeping dragon that lies dormant in the bottom chamber.\n\n### The old halls\n\nAnother DC 15 Intelligence (History) check will reveal that @[Davihn-Karr](entity:location/Davihn-Karr) was a legendary platinum mine of the Zarkian dwarves. According to the old stories, dwarves would haul out platinum without end from these mines. Wizards from all across the land would pay greatly for the Davihn-Karr chains and brooches that would hold their magic-storing ioun stones."
+          ]
+        }
+      },
+      {
+        "source_name": "Pregenerated Heroes",
+        "mapping": {
+          "name": "Pregenerated Heroes",
+          "description": "Names and one-line hooks for the six pregenerated heroes printed at the end of the adventure.",
+          "pages": [
+            "## Pregenerated Heroes\n\nPlayers can use their own adventurers, or for additional inspiration, the end of the adventure includes names and backgrounds for six pregenerated heroes.\n\nEnfys Loom\nGood-natured pyromancer, seeking her brother\n\nCariyen Kraye\nTracker, survivalist, and magical security expert\n\nKing Coppertong\nHonest jewel merchant and skilled engineer\n\nSir Halsey\nFamous war hero of Orcslayer Pass\n\nSisley Bauquemare\nWealthy, well-educated rascal - with an honest face\n\nWiliam Exel\nImpatient, loud-mouthed teen... who shouldn't be here\n\n---\n\n*Their full backgrounds are printed on the last three pages of the PDF and carried on the six unclaimed characters in this world's Characters tab. The PDF prints no ability scores, classes or hit points for them; the class and stat suggestions on those characters are the porter's, not the author's.*"
+          ]
         }
       }
     ],
-    "quest": [
+    "environmental-effect": [
       {
-        "source_name": "Survive the Blizzard",
+        "source_name": "The Snowstorm",
         "mapping": {
-          "name": "Survive the Blizzard",
-          "status": "Active",
-          "objective": "Find shelter before the blizzard hits. The storm will arrive in 2-3 hours. A DC 10 Wisdom (Survival) check or suitable spell will locate a cave a dozen yards up, high on a rocky cliffside.",
-          "reward_xp": 100,
-          "secrets": "The cave leads to the legendary mine of Davihn-Karr."
+          "name": "The Snowstorm",
+          "damage_dice": "1d4",
+          "description": "The freezing snowstorm that drives the party off the battlefield and into the mountains.",
+          "effect": "A DC 5 Wisdom (Nature) roll will reveal that a dark storm is brewing to the north. An DC 10 Wisdom (Nature) check will indicate that storm will hit in two to three hours. It's going to be a freezing snowstorm, no doubt, and one that will be difficult to survive without shelter.\n\nThe storm brews quickly, and shelter becomes a necessity.",
+          "mechanical_notes": "A Survival roll will assemble a shelter from the snow and rocks gathered at the base of the mountains.\nAn DC 10 Wisdom (Survival) check or suitable spell will locate a cave a dozen yards up, high on a rocky cliffside.\nNavigating the eight hour walk north requires an Wisdom (Survival) check to survive the harsh conditions; failure indicates 1d4 damage from various mountain and wilderness injuries."
         }
       },
       {
-        "source_name": "Find Fat Farlsbag",
+        "source_name": "The Cauldron of Blue Fire",
         "mapping": {
-          "name": "Find Fat Farlsbag",
-          "status": "Not Started",
-          "objective": "Track down the notorious villain Fat Farlsbag. A DC 10 Wisdom (Nature) check identifies fresh, hours-old tracks in the snow as crag man or hobgoblin-prints.",
-          "reward_xp": 450,
-          "reward_gp": 0,
-          "secrets": "If the PCs miss this encounter, they'll miss their chance at finding Fat Farlsbag. This may be perfectly acceptable to the DM, as Fat Farlsbag doesn't play a big part in the finale of the adventure."
+          "name": "The Cauldron of Blue Fire",
+          "description": "The smelter at the top of the scaffold at Davihn-Karr, where platinum becomes essential platinum.",
+          "effect": "A scaffold surrounds the great construct, and half a dozen slaves climb the scaffold carrying chunks of rock, depositing them in a large cauldron at the top, which burns with blue fire. @[I'Zor'zah the Azure](entity:npc/I'Zor'zah the Azure) occasionally gestures at his cauldron, heating it to just the right temperature.",
+          "mechanical_notes": "A DC 12 Wisdom (Nature) roll identifies the chunks of rock as those that carry metal, likely platinum.\nA DC 12 Intelligence (Arcana) roll notices that the strange blue fire seems to be smelting the platinum into a rare, new essential metal.\nWithin an hour of the PCs' arrival, if they tarry, I'Zor'zah begins pouring the essential platinum into the golem."
+        }
+      }
+    ],
+    "trap": [
+      {
+        "source_name": "Dwarven Explosive Booby Trap",
+        "mapping": {
+          "name": "Dwarven Explosive Booby Trap",
+          "trigger_kind": "Touch",
+          "trigger": "Opening the pentagram-shaped chest of Dunther of Zark, buried under a boulder in @[The Old Cave](entity:location/The Old Cave).",
+          "save_dc": 10,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Constitution"
+          },
+          "damage_dice": "2d4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Cold"
+          },
+          "detection_dc": 10,
+          "description": "The chest is locked but can be opened with a DC 12 lockpicking check. It is trapped with an old dwarven explosive booby trap, which requires a DC 10 find traps check to detect. If opened, the chest's bulges explode in freezing mist (DC 10 Constitution save or suffer 2d4 damage).",
+          "countermeasures": "A DC 10 find traps check detects it; the lock itself opens on a DC 12 lockpicking check. If the trap goes off, the small cask of @[Dwarven Beetle Oil](entity:magic-item/Dwarven Beetle Oil) inside will be frozen and shattered.\n\nThe source gives no disarm DC.",
+          "dmNotes": "The damage type is not named in the source; \"freezing mist\" is read here as cold damage."
         }
       },
       {
-        "source_name": "Stop I'Zor'zah's Golem",
+        "source_name": "The Manakill Crevasses",
         "mapping": {
-          "name": "Stop I'Zor'zah's Golem",
-          "status": "Not Started",
-          "objective": "Confront I'Zor'zah and stop him from completing his platinum golem. The PCs can slay him, destroy the statue, or retreat and alert the nearby towns.",
-          "reward_xp": 1000,
-          "secrets": "If the PCs tarry too long, within an hour, I'Zor'zah will begin pouring the essential platinum into the golem. Fighting this creature will likely be a lost cause for all but the most powerful or clever adventurers."
+          "name": "The Manakill Crevasses",
+          "trigger_kind": "Magical",
+          "trigger": "As the PCs cross this area, the statues begin to move and creak, like the sound of glass slowly breaking. Slowly, the statues point at any PCs without spellcasting ability within view, and the ground underneath those PC begins to crack and turn fragile.",
+          "save_dc": 10,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Dexterity"
+          },
+          "damage_dice": "2d4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "description": "The PC must make a DC 10 Dexterity (Acrobatics) save to leap to safety as a crevasse forms underneath them. Fortunately, the crevasses are not that deep. They average about 5-10 yards deep (up to 2d4 damage). Climbing out requires a DC 12 Strength (Athletics) roll, difficult due to the slick, snow-covered rock. After six crevasses have been created, the statues grow still again.",
+          "countermeasures": "Climbing out requires a DC 12 Strength (Athletics) roll. The statues have 60 hp (resistant to piercing and slashing), if the PCs wish to destroy them — but destroying these statues alerts their presence to the evil White Crystal Peak sorcerers.\n\nOnly PCs without spellcasting ability are targeted; the statues ignore spellcasters.",
+          "dmNotes": "The source gives no detection or disarm DC, and never names the damage type; a 5-10 yard fall is read here as bludgeoning."
+        }
+      }
+    ],
+    "scene": [
+      {
+        "source_name": "The Beginning",
+        "mapping": {
+          "name": "The Beginning",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Battlefield"
+          },
+          "description": "The adventure begins immediately after the bloody battle.",
+          "beats": "## The Beginning\n\nThe adventure begins immediately after the bloody battle. The PCs are lost without their guides; they know they are days from the nearest town. They are cold, wounded, but alive. Their comrades and fellow bounty hunters lie dead or mortally wounded around them. Each PC must make a DC 10 Wisdom check roll to have successfully endured the ambush. A failure indicates 1d4 of general battlefield damage.\n\nA DC 5 Wisdom (Nature) roll will reveal that a dark storm is brewing to the north. An DC 10 Wisdom (Nature) check will indicate that storm will hit in two to three hours. It's going to be a freezing snowstorm, no doubt, and one that will be difficult to survive without shelter. See @[The Snowstorm](entity:environmental-effect/The Snowstorm)."
+        }
+      },
+      {
+        "source_name": "Search for Survivors",
+        "mapping": {
+          "name": "Search for Survivors",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Battlefield"
+          },
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Ott Z'Orto"
+            }
+          ],
+          "description": "Search for Survivors — the party can pull one old dwarf out of the carnage.",
+          "beats": "## Search for Survivors\n\nIf the PCs search for survivors, they will find few who are hardy enough to walk on their own off the battlefield. There is also the danger of half-dead orcs still stabbing out at them in hatred and spite.\n\nA Perception roll will find one old dwarf that may live, however. His name is @[OTT Z'ORTO](entity:npc/Ott Z'Orto), and except for a stubborn, bleeding head wound (which a healing spell or DC 10 Wisdom (Medicine) check will stop), he will survive his injuries. If the PCs are helpful, he'll agree to stay with them, otherwise he'll stubbornly set out into the wilderness on his own.\n\nDM's Note: If some or all of the PCs are lower than 2nd level, Ott will make a helpful companion in the adventure head."
+        }
+      },
+      {
+        "source_name": "The Storm Arrives",
+        "mapping": {
+          "name": "The Storm Arrives",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Battlefield"
+          },
+          "description": "The Storm Arrives — shelter becomes a necessity, and the only shelter is a cave up a cliffside.",
+          "beats": "## The Storm Arrives\n\nThe storm brews quickly, and shelter becomes a necessity. A Survival roll will assemble one from the snow and rocks gathered at the base of the mountains. An DC 10 Wisdom (Survival) check or suitable spell will locate a cave a dozen yards up, high on a rocky cliffside. A closer look will reveal that an old wooden ladder drops from the cave, though it ends at least five yards before the ground.\n\nGetting to the ladder requires some rock climbing, or a magical solution. A single DC 15 Strength (Athletics) roll will suffice. The ladder, however, is old and fragile. If a large creature (200 lbs. or more) grabs on to it, it will begin to tear free from the wall. If a PC falls, he will side several yards to the hard snow below, for 1d6 damage.\n\nThe cave above is @[The Old Cave](entity:location/The Old Cave) — and two @[Crag Yetis](entity:monster/Crag Yetis) are already home."
+        }
+      },
+      {
+        "source_name": "Journey to the Great Mine",
+        "mapping": {
+          "name": "Journey to the Great Mine",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Zark Mountains"
+          },
+          "travel_pace_ref": {
+            "lookup": "travel-pace",
+            "match": "name",
+            "value": "Normal"
+          },
+          "description": "Journey to the Great Mine — an eight hour walk north, following the beacon or the pull of Kahd.",
+          "beats": "## Journey to the Great Mine\n\nIf the PCs are following the lit beacon, a DC 10 Wisdom (Perception) roll finds a path that lead to it. Or, since the axe is enchanted with a mineral seeking spell, it can also easily be used to locate a working entrance to the legendary dwarven platinum mines (and gives advantage to any checks to find the path, if used). Either way, the entrance to the mine is an eight hour walk to the north. Navigating this journey requires an Wisdom (Survival) check to survive the harsh conditions; failure indicates 1d4 damage from various mountain and wilderness injuries.\n\nOn the way:\n\n- @[The Manakill Crevasses](entity:location/The Manakill Crevasses) — six statues of ice, and the ground opening under every PC who cannot cast.\n- @[St. Bernard's Peak](entity:location/St. Bernard's Peak) — the landmark that orients the party towards civilization.\n- @[Fat Farlsbag's Hideout](entity:scene/Fat Farlsbag's Hideout) — a well-worn path off the route, found with a second successful DC 10 Wisdom (Nature) check."
+        }
+      },
+      {
+        "source_name": "Fat Farlsbag's Hideout",
+        "mapping": {
+          "name": "Fat Farlsbag's Hideout",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Fat Farlsbag's Hideout"
+          },
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Fat Farlsbag"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Aldara Ellaris"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Count Conrad Mannheim"
+            }
+          ],
+          "description": "Fat Farlsbag's Hideout — the tracks in the snow, the outlaw camp, and two hostages.",
+          "beats": "## Fat Farlsbag's Hideout\n\nA second successful DC 10 Wisdom (Nature) check enables the PCs to find a well-worn path. As they walk the path, a vision roll will discover fresh, hours-old tracks in the snow. A DC 10 Wisdom (Nature) check will identify the markings as crag man or hobgoblin-prints, and also allow the PCs to follow them.\n\n(Note that if the PCs miss this encounter, they'll miss their chance at finding Fat Farlsberg. This may be perfectly acceptable to the DM, as Fat Farlsberg doesn't play a big part in the finale of the adventure, especially now that the PCs have discovered Davihn-Karr. If the DM prefers to have the PCs confront the outlaw, he can either make the tracks more obvious, or plant one of his hobgoblin henchmen on the path, who immediately runs back to Farlsberg's camp to alert him to the presence of the adventurers.)\n\nAs the PCs follow the tracks, they will hear several distant screams of anguish and pain. The path winds and tightens, and then opens into a cliffside encampment, one of Fat Farlsberg's mountain shelters.\n\nSix @[hobgoblins](entity:monster/Hobgoblin Henchmen) who have survived the battle have taken shelter in a makeshift hide tent, along with their human boss, @[Fat Farlsbag](entity:npc/Fat Farlsbag). Delighted at having escaped the manhunt, Farlsbag is now looting corpses and searching for victims to sell back to their loved ones. The band has captured two survivors from the human hunters and are gleefully torturing them for information, until they get bored and will ransom them off.\n\nIf an hobgoblin guard sees the PCs coming, he'll shout to his comrades. Two of the hobgoblins have crossbows, and will train them on the most dangerous-looking PCs.\n\nIf he sees he's outnumbered or outmatched, Farlsbag and his toughest hobgoblin captain will drag out an elven scout and threaten to toss her off the sheer, 100-foot cliff, unless the PCs give them all their rations and back off. If Farlsbag thinks he has the advantage in any way, he'll order his henchmen to capture the PCs.\n\n### The hostages\n\nThe hostage, @[ALDARA ELLARIS](entity:npc/Aldara Ellaris), was a volunteer scout who helped lead the human posses into the mountains. A second hostage, a human, Megalossian noble named @[COUNT CONRAD MANNHEIM](entity:npc/Count Conrad Mannheim), lies in pain in the back of the shelter. He was critically wounded during the battle, and probably will not survive the night... especially since the orcs amputated one of his arms to eat for dinner. He's at 0 hp and is mortally wounded; he will die within 30 minutes unless someone succeeds a DC 25 Wisdom (Medicine) check.\n\nIf rescued, and on a good reaction or better, Aldara will accompany the PCs. She has grown weary of the mountains, and wants nothing to do with the orcs anymore. She's heard of the old mines, however, and will agree to visiting the mines before guiding the PCs back to civilization. Aldara is a 1st level character. The DM should feel free to develop her role as an NPC, especially if the PCs need additional survival or area knowledge skills. She is a capable half-elven tracker and survivalist, and relies mostly on her self-taught archery skills to hunt for food and defend herself. More importantly, she knows the way out of the mountains, and can show the PCs the three-day journey that will take them to a nearby town.\n\nIf the PCs save Count Conrad with magical healing, he will be grateful, and offer them a reward of 1,000 gp if they escort him to a nearby town. If the PCs impress the count, they may earn his long-term patronage (DM's discretion). Traveling with him will likely slow the PCs down, unless they do an utterly amazing job healing him."
+        }
+      },
+      {
+        "source_name": "Davihn-Karr and the The Golem Veined with Platinum",
+        "mapping": {
+          "name": "Davihn-Karr and the The Golem Veined with Platinum",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Davihn-Karr"
+          },
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "I'Zor'zah the Azure"
+            }
+          ],
+          "description": "Davihn-Karr and the The Golem Veined with Platinum — the valley, the statue, the slaves and the sorcerer.",
+          "beats": "## Davihn-Karr and the The Golem Veined with Platinum\n\nAfter a few hours journey towards the beacon (or via the tug of the axe @[Kahd](entity:magic-item/Kahd), which will soon be yanking its owner along briskly!) the party reaches the valley — read @[Davihn-Karr](entity:location/Davihn-Karr) for the vista, the scaffold and everything a careful PC can spot from the lip.\n\n### Talking to the slaves\n\nIf the PCs try to interact with the @[slaves](entity:monster/Mind-controlled Slaves), the slaves do their best to ignore them and carry on their work. If, however, a PC is violent or intimidating towards a slave, the slave will run up the scaffold to inform I'Zor'zah of the PCs' presence.\n\nA Dispel Magic spell will break a slave from their daze. An orc slave will take advantage of his freedom to flee into the mountains. A human slave will beg the PCs to run and help them escape. They all fear I'Zor'zah, and know little of his operation other he hates the \"crystal wizards,\" as he calls them, and that he is preparing platinum for a powerful spell when the statue is complete.\n\n### The sorcerer notices\n\n@[I'Zor'zah](entity:npc/I'Zor'zah the Azure) is too focused on his essential platinum to pay much attention to the PCs, unless they do something to obviously catch his eye, like harming a slave or materially interfering with his operation. If he does see them as a threat, he will confront them and try to use his mind control magic to capture or enslave them. I'Zor'zah will avoid using his slaves as combatants (preferring to lure PCs near the ironouth spiders, who he allows to eat weak slaves), but will order his laborers into combat if he becomes desperate (the DM should treat them as unarmed, average people but with only 2 hp as they are weak from the cold and hard labor).\n\nIf the PCs tarry too long, within an hour, I'Zor'zah will begin pouring the essential platinum into @[the golem](entity:monster/The Golem Veined with Platinum). The thing slowly comes to life, veined with the shining substance. Fighting this creature will likely be a lost cause for all but the most powerful or clever adventurers."
+        }
+      },
+      {
+        "source_name": "The Finale",
+        "mapping": {
+          "name": "The Finale",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Davihn-Karr"
+          },
+          "description": "The Finale — several possible endings.",
+          "beats": "## The Finale\n\nThere are several possible endings to this adventure. The PCs can confront @[I'Zor'zah](entity:npc/I'Zor'zah the Azure) and attempt to slay him – his death will release the minds of his slaves. They can also attempt to destroy his statue, either before or after it is animated, but this will take some a clever plan or powerful magic (such as a Mold Earth or Earth Tremor spell).\n\nLastly, the PCs can retreat (likely with @[Aldara](entity:npc/Aldara Ellaris)'s guidance, or using @[St. Bernard's Peak](entity:location/St. Bernard's Peak) as a landmark), alerting the nearby towns to the danger of the azure wizard. However, within a day or so, I'Zor'zah will test his golem on a nearby human settlement... before tasking it with destroying the wizard cult he despises.",
+          "dmNotes": "Mold Earth and Earth Tremor are not part of the 2024 SRD content bundled with this app; they are named by the source as examples of magic strong enough to bring the statue down."
+        }
+      },
+      {
+        "source_name": "After the Adventure",
+        "mapping": {
+          "name": "After the Adventure",
+          "status": "Planned",
+          "description": "After the Adventure — bonus XP, and the threads left open for the DM.",
+          "beats": "## After the Adventure\n\nDMs can give out bonus XP based on good roleplaying and success, especially if the players managed to capture or kill @[Fat Farlsbag](entity:npc/Fat Farlsbag) (100 XP), or if they destroyed the statue or otherwise stopped @[I'Zor'zah](entity:npc/I'Zor'zah the Azure) (100 XP).\n\n## Extending the Adventure\n\nThere are few open areas of the adventure, ripe for the DM to add detail:\n\n- @[The Sorcerers of the White Crystal Peaks](entity:lore/The Sorcerers of the White Crystal Peaks)\n- @[The Mine of Davinn-Kahr](entity:lore/The Mine of Davinn-Kahr)"
         }
       }
     ],
     "encounter": [
       {
-        "source_name": "Crag Yeti Cave",
+        "source_name": "Crag Yetis",
         "mapping": {
-          "name": "Crag Yeti Cave",
-          "location_ref": {"lookup": "location", "match": "name", "value": "The Old Cave"},
+          "name": "Crag Yetis",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Old Cave"
+          },
           "difficulty": "Moderate",
           "monsters_refs": [
-            {"lookup": "monster", "match": "name", "value": "Crag Yeti", "count": 2}
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Crag Yetis",
+              "count": 2
+            }
           ],
+          "xp_budget": 400,
+          "description": "Two territorial and vicious Crag Yetis defend the back of the old dwarven cave.",
           "setup": "After the PCs have made some noise in the cave, a guttural growling sound will be heard from the back of the cave. This cave is home to two territorial and vicious Crag Yetis!",
-          "tactics": "The yetis attack from the darkness, using their darkvision advantage. They target the most vulnerable-looking PC first.",
-          "xp_budget": 400
+          "tactics": "The source gives no tactics for the yetis beyond their stat block: Stealth +6 and darkvision 60 ft. in a dark cave, one Claw Slash each (+5 to hit, 11 damage on a hit)."
+        }
+      },
+      {
+        "source_name": "The Manakill Crevasses",
+        "mapping": {
+          "name": "The Manakill Crevasses",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Manakill Crevasses"
+          },
+          "difficulty": "Low",
+          "trap_refs": [
+            {
+              "lookup": "trap",
+              "match": "name",
+              "value": "The Manakill Crevasses"
+            }
+          ],
+          "description": "Six ice statues open the ground under every PC who cannot cast a spell.",
+          "setup": "As the PCs cross this area, the statues begin to move and creak, like the sound of glass slowly breaking. Slowly, the statues point at any PCs without spellcasting ability within view, and the ground underneath those PC begins to crack and turn fragile.",
+          "tactics": "Six crevasses open, one per targeted PC; after six crevasses have been created, the statues grow still again. The statues have 60 hp (resistant to piercing and slashing) if the party attacks them — with consequences."
         }
       },
       {
         "source_name": "Fat Farlsbag's Camp",
         "mapping": {
           "name": "Fat Farlsbag's Camp",
-          "location_ref": {"lookup": "location", "match": "name", "value": "Fat Farlsbag's Hideout"},
-          "difficulty": "Moderate",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Fat Farlsbag's Hideout"
+          },
+          "difficulty": "High",
           "npcs_refs": [
-            {"lookup": "npc", "match": "name", "value": "Fat Farlsbag"}
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Fat Farlsbag"
+            }
           ],
           "monsters_refs": [
-            {"lookup": "monster", "match": "name", "value": "Hobgoblin Warrior", "count": 6}
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Hobgoblin Henchmen",
+              "count": 6
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Hobgoblin Captain",
+              "count": 1
+            }
           ],
+          "xp_budget": 1650,
+          "description": "Fat Farlsbag, his hobgoblin captain and six henchmen, holding two hostages on a cliff edge.",
           "setup": "Six hobgoblins who have survived the battle have taken shelter in a makeshift hide tent, along with their human boss, Fat Farlsbag. Delighted at having escaped the manhunt, Farlsbag is now looting corpses and searching for victims to sell back to their loved ones.",
-          "tactics": "If a hobgoblin guard sees the PCs coming, he'll shout to his comrades. Two of the hobgoblins have crossbows, and will train them on the most dangerous-looking PCs. If he sees he's outnumbered or outmatched, Farlsbag will drag out a hostage and threaten to toss her off the cliff.",
-          "xp_budget": 600
+          "tactics": "If an hobgoblin guard sees the PCs coming, he'll shout to his comrades. Two of the hobgoblins have crossbows, and will train them on the most dangerous-looking PCs.\n\nIf he sees he's outnumbered or outmatched, Farlsbag and his toughest hobgoblin captain will drag out an elven scout and threaten to toss her off the sheer, 100-foot cliff, unless the PCs give them all their rations and back off. If Farlsbag thinks he has the advantage in any way, he'll order his henchmen to capture the PCs.\n\nThe captain has no printed stat block in the source — the SRD Hobgoblin Captain stands in.",
+          "dmNotes": "XP budget: 6 henchmen at the printed 200 XP each, plus Farlsbag at 450 XP. The SRD Hobgoblin Captain is not counted."
         }
       },
       {
-        "source_name": "Davihn-Karr Finale",
+        "source_name": "Davihn-Karr",
         "mapping": {
-          "name": "Davihn-Karr Finale",
-          "location_ref": {"lookup": "location", "match": "name", "value": "Davihn-Karr"},
+          "name": "Davihn-Karr",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Davihn-Karr"
+          },
           "difficulty": "Deadly",
           "npcs_refs": [
-            {"lookup": "npc", "match": "name", "value": "I'Zor'zah the Azure"}
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "I'Zor'zah the Azure"
+            }
           ],
           "monsters_refs": [
-            {"lookup": "monster", "match": "name", "value": "Ironmouth Spider", "count": 2}
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Ironmouth Spiders",
+              "count": 2
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Mind-controlled Slaves",
+              "count": 12
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "The Golem Veined with Platinum",
+              "count": 1
+            }
           ],
           "environmental_effect_refs": [
-            {"lookup": "environmental-effect", "match": "name", "value": "Essential Platinum Smelting"}
+            {
+              "lookup": "environmental-effect",
+              "match": "name",
+              "value": "The Cauldron of Blue Fire"
+            }
           ],
-          "setup": "As the PCs summit the lip of a valley, an awesome sight will render itself – a three-story statue of a great, bearded sorcerer, made of marble, and veined all over with grooves. A scaffold surrounds the great construct, and half a dozen slaves climb the scaffold carrying chunks of rock. At the top of the scaffold, I'Zor'zah the Azure watches the procession.",
-          "tactics": "I'Zor'zah is too focused on his essential platinum to pay much attention to the PCs, unless they do something to obviously catch his eye. If he does see them as a threat, he will confront them and try to use his mind control magic. He will avoid using his slaves as combatants (preferring to lure PCs near the ironmouth spiders), but will order his laborers into combat if desperate.",
-          "xp_budget": 15000
+          "xp_budget": 770,
+          "description": "The confrontation at the statue: the sorcerer, two ironmouth spiders in the scaffold, dozens of dazed slaves — and, if the party is slow, the golem.",
+          "setup": "I'Zor'zah is too focused on his essential platinum to pay much attention to the PCs, unless they do something to obviously catch his eye, like harming a slave or materially interfering with his operation. If he does see them as a threat, he will confront them and try to use his mind control magic to capture or enslave them.",
+          "tactics": "I'Zor'zah will avoid using his slaves as combatants (preferring to lure PCs near the ironouth spiders, who he allows to eat weak slaves), but will order his laborers into combat if he becomes desperate (the DM should treat them as unarmed, average people but with only 2 hp as they are weak from the cold and hard labor).\n\nThe scaffold is not especially well-made (130 hp, resistant to slashing, bludgeoning, and piercing) and could perhaps be collapsed with enough damage to a single main support (30 hp).\n\nIf the PCs tarry too long, within an hour, I'Zor'zah will begin pouring the essential platinum into the golem — add 15,000 XP of construct to the fight. Fighting this creature will likely be a lost cause for all but the most powerful or clever adventurers.",
+          "dmNotes": "XP budget covers I'Zor'zah (450), two ironmouth spiders (200) and the dozen slaves nearest the statue (120). The Golem Veined with Platinum is listed as a participant but is CR 16 / 15,000 XP: it only animates if the party lingers an hour."
         }
       }
     ],
-    "magic-item": [
+    "quest": [
       {
-        "source_name": "Kahd (Harbinger)",
+        "source_name": "The Bounty on Fat Farlsbag",
         "mapping": {
-          "name": "Kahd (Harbinger)",
-          "magic_category_ref": {"lookup": "magic-item-category", "match": "name", "value": "Weapons"},
-          "rarity_ref": {"lookup": "rarity", "match": "name", "value": "Rare"},
-          "requires_attunement": true,
-          "is_cursed": false,
-          "base_item_ref": {"lookup": "weapon", "match": "name", "value": "Battleaxe"},
-          "charges_max": 6,
-          "charge_regain": "Regains 1 charge at dawn each day.",
-          "activation": "Command Word",
-          "effects": "Kahd is an ancient dwarven battleaxe inlaid with jewels and decor coated in brilliant platinum. The axe is enchanted with a seek minerals enchantment, which enables the user to concentrate for 10 seconds and locate the direction of a nearby large source of metals, with a particular affinity for dwarf-dug deposits.",
-          "cost_gp": 200,
-          "weight_lb": 4,
-          "is_sentient": false,
-          "description": "An ancient dwarven axe, inlaid with jewels and decor coated in brilliant platinum. Named by ancient dwarven runes on its handle, \"Kahd,\" which roughly translates to \"Harbinger.\" The gems in the axe are worth at least 200 gp."
+          "name": "The Bounty on Fat Farlsbag",
+          "status": "Active",
+          "giver_ref": {
+            "lookup": "npc",
+            "match": "name",
+            "value": "Prince Adelheid"
+          },
+          "reward_xp": 100,
+          "description": "The manhunt that brought a hundred men and dwarves into the Zark mountains — and got them killed.",
+          "objective": "The PCs were part of a large manhunt for a nefarious kidnapper and villain. Track down @[Fat Farlsbag](entity:npc/Fat Farlsbag), wanted dead or alive for kidnapping, bloody murder, treason, torture, arson, and general hooligan-ry — see @[Handout A - Wanted poster for Fat Farlsbag](entity:lore/Handout A - Wanted poster for Fat Farlsbag).\n\nA second successful DC 10 Wisdom (Nature) check enables the PCs to find a well-worn path off the route north; fresh, hours-old tracks lead to @[Fat Farlsbag's Hideout](entity:location/Fat Farlsbag's Hideout).",
+          "reward": "REWARD 5000 coins (wanted poster). DMs can give out bonus XP based on good roleplaying and success, especially if the players managed to capture or kill Fat Farlsbag (100 XP).",
+          "secrets": "Note that if the PCs miss this encounter, they'll miss their chance at finding Fat Farlsberg. This may be perfectly acceptable to the DM, as Fat Farlsberg doesn't play a big part in the finale of the adventure, especially now that the PCs have discovered Davihn-Karr."
         }
       },
       {
-        "source_name": "Dwarven Beetle Oil",
+        "source_name": "Survive the Storm",
         "mapping": {
-          "name": "Dwarven Beetle Oil",
-          "magic_category_ref": {"lookup": "magic-item-category", "match": "name", "value": "Potions"},
-          "rarity_ref": {"lookup": "rarity", "match": "name", "value": "Uncommon"},
-          "requires_attunement": false,
-          "is_cursed": false,
-          "activation": "Consumable",
-          "effects": "Despite its name, this greasy black liquid is created from the concentrated blood of cave-dwelling ironmouth spiders. When applied to a metal blade, the oil imbues the weapon with magical sharpness that lasts one hour, increasing the blade's damage by +1d4. It has no effect on bludgeoning weapons.",
-          "cost_gp": 0,
-          "is_sentient": false,
-          "description": "A greasy black liquid created from the concentrated blood of cave-dwelling ironmouth spiders. Despite its name, dwarves would never call this oil by a more obvious name!"
+          "name": "Survive the Storm",
+          "status": "Active",
+          "description": "Cold, wounded and guideless, days from the nearest town, with a freezing snowstorm two to three hours out.",
+          "objective": "Find shelter before @[The Snowstorm](entity:environmental-effect/The Snowstorm) hits. A Survival roll will assemble one from the snow and rocks gathered at the base of the mountains. An DC 10 Wisdom (Survival) check or suitable spell will locate a cave a dozen yards up, high on a rocky cliffside.",
+          "secrets": "The cave is one of the old entrances to the lost, legendary mine of Davinn-Kahr — and home to two @[Crag Yetis](entity:monster/Crag Yetis)."
         }
       },
       {
-        "source_name": "I'Zor'zah's Diamond Powerstone",
+        "source_name": "Escort Count Conrad Mannheim",
         "mapping": {
-          "name": "I'Zor'zah's Diamond Powerstone",
-          "magic_category_ref": {"lookup": "magic-item-category", "match": "name", "value": "Wondrous Items"},
-          "rarity_ref": {"lookup": "rarity", "match": "name", "value": "Very Rare"},
-          "requires_attunement": true,
-          "is_cursed": true,
-          "effects": "An immensely rare, diamond, manastone that gives +2 to all spell checks. The stone, however, has two crippling quirks. First, it only works for spells not cast on living subjects. Second, it immediately broadcasts its location to ten random undead sorcerers, who can temporarily channel their magical energy through it.",
-          "is_sentient": false,
-          "description": "An immensely rare, diamond, manastone that gives +2 to all spell checks. The stone has two crippling quirks that make it dangerous to use."
+          "name": "Escort Count Conrad Mannheim",
+          "status": "Not Started",
+          "giver_ref": {
+            "lookup": "npc",
+            "match": "name",
+            "value": "Count Conrad Mannheim"
+          },
+          "reward_gp": 1000,
+          "description": "A dying Megalossian noble, one arm short, with a purse and a patronage to offer.",
+          "objective": "Stabilize @[Count Conrad Mannheim](entity:npc/Count Conrad Mannheim) — he's at 0 hp and is mortally wounded; he will die within 30 minutes unless someone succeeds a DC 25 Wisdom (Medicine) check — then escort him to a nearby town.",
+          "reward": "If the PCs save Count Conrad with magical healing, he will be grateful, and offer them a reward of 1,000 gp if they escort him to a nearby town. If the PCs impress the count, they may earn his long-term patronage (DM's discretion).",
+          "secrets": "Traveling with him will likely slow the PCs down, unless they do an utterly amazing job healing him."
         }
       },
       {
-        "source_name": "+1 Dwarven Throwing Axe",
+        "source_name": "Stop I'Zor'zah the Azure",
         "mapping": {
-          "name": "+1 Dwarven Throwing Axe",
-          "magic_category_ref": {"lookup": "magic-item-category", "match": "name", "value": "Weapons"},
-          "rarity_ref": {"lookup": "rarity", "match": "name", "value": "Uncommon"},
-          "requires_attunement": false,
-          "is_cursed": false,
-          "base_item_ref": {"lookup": "weapon", "match": "name", "value": "Handaxe"},
-          "activation": "None",
-          "effects": "+1 to attack and damage rolls. This is a fine dwarven throwing axe found inside Dunther's chest in the Old Cave.",
-          "cost_gp": 0,
-          "weight_lb": 2,
-          "is_sentient": false,
-          "description": "A +1 dwarven throwing axe found inside Dunther's chest in the Old Cave."
-        }
-      }
-    ],
-    "creature-action": [
-      {
-        "source_name": "Claw Slash (Crag Yeti)",
-        "mapping": {
-          "name": "Claw Slash (Crag Yeti)",
-          "action_type": "Action",
-          "is_attack": true,
-          "attack_kind": "Melee Weapon",
-          "attack_bonus": 5,
-          "reach_ft": 5,
-          "damage_dice": "2d8+3",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Slashing"},
-          "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 3) slashing damage."
-        }
-      },
-      {
-        "source_name": "Mandibles (Ironmouth Spider)",
-        "mapping": {
-          "name": "Mandibles (Ironmouth Spider)",
-          "action_type": "Action",
-          "is_attack": true,
-          "attack_kind": "Melee Weapon",
-          "attack_bonus": 6,
-          "reach_ft": 5,
-          "damage_dice": "1d8+4",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Piercing"},
-          "save_dc": 11,
-          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Constitution"},
-          "description": "Melee Attack: +6 to hit, reach 5 ft., one creature. Hit: 6 (1d8 + 4) piercing damage, and the target must make a DC 11 Constitution save, taking 5 (2d4) poison damage on a failed save, or half on a successful one. If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way."
-        }
-      },
-      {
-        "source_name": "Slam (Platinum Golem)",
-        "mapping": {
-          "name": "Slam (Platinum Golem)",
-          "action_type": "Action",
-          "is_attack": true,
-          "attack_kind": "Melee Weapon",
-          "attack_bonus": 13,
-          "reach_ft": 5,
-          "damage_dice": "3d8+7",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Bludgeoning"},
-          "description": "Melee Weapon Attack: +13 to hit, reach 5 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage."
-        }
-      },
-      {
-        "source_name": "Poison Breath (Platinum Golem)",
-        "mapping": {
-          "name": "Poison Breath (Platinum Golem)",
-          "action_type": "Action",
-          "recharge_kind": "Roll",
-          "recharge_min_roll": 6,
-          "save_dc": 19,
-          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Constitution"},
-          "damage_dice": "10d8",
-          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Poison"},
-          "description": "Recharge 6. The golem exhales particle gas in a 15-foot cone. Each creature in that area must make a DC 19 Constitution saving throw, taking 45 (10d8) poison damage on a failed save, or half as much damage on a successful one."
+          "name": "Stop I'Zor'zah the Azure",
+          "status": "Not Started",
+          "reward_xp": 100,
+          "description": "The sorcerer means to animate a platinum golem, topple the White Crystal Spire, and take the north.",
+          "objective": "The PCs can confront @[I'Zor'zah](entity:npc/I'Zor'zah the Azure) and attempt to slay him – his death will release the minds of his slaves. They can also attempt to destroy his statue, either before or after it is animated, but this will take some a clever plan or powerful magic (such as a Mold Earth or Earth Tremor spell).\n\nLastly, the PCs can retreat (likely with Aldara's guidance, or using St. Bernard's Peak as a landmark), alerting the nearby towns to the danger of the azure wizard.",
+          "reward": "DMs can give out bonus XP based on good roleplaying and success, especially if they destroyed the statue or otherwise stopped I'Zor'zah (100 XP). If the PCs rid the land of I'Zor'zah, they will have discovered a legendary dwarven mine all to themselves — see @[The Mine of Davinn-Kahr](entity:lore/The Mine of Davinn-Kahr).",
+          "secrets": "However, within a day or so, I'Zor'zah will test his golem on a nearby human settlement... before tasking it with destroying the wizard cult he despises."
         }
       }
     ]
   },
-  "cross_references": [
-    {
-      "from_category": "npc",
-      "from_name": "Fat Farlsbag",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Fat Farlsbag's Hideout"
-    },
-    {
-      "from_category": "npc",
-      "from_name": "Ott Z'Orto",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "The Battlefield"
-    },
-    {
-      "from_category": "npc",
-      "from_name": "Aldara Ellaris",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Fat Farlsbag's Hideout"
-    },
-    {
-      "from_category": "npc",
-      "from_name": "Count Conrad Mannheim",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Fat Farlsbag's Hideout"
-    },
-    {
-      "from_category": "npc",
-      "from_name": "I'Zor'zah the Azure",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Davihn-Karr"
-    },
-    {
-      "from_category": "encounter",
-      "from_name": "Crag Yeti Cave",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "The Old Cave"
-    },
-    {
-      "from_category": "encounter",
-      "from_name": "Fat Farlsbag's Camp",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Fat Farlsbag's Hideout"
-    },
-    {
-      "from_category": "encounter",
-      "from_name": "Davihn-Karr Finale",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Davihn-Karr"
-    }
-  ]
+  "cross_references": []
 }
