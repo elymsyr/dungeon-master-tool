@@ -1,0 +1,78 @@
+Army of the Damned — port status (world-blueprint 1.0.0)
+
+Ported from armyofthedamned.pdf (74 pages). `--check` is clean
+(220 entities) and `audit_coverage.py` reports 99.7% — 6 sentences below the
+threshold, all extraction artifacts, listed below.
+
+Extraction notes (read before "fixing" anything)
+- APPENDIX B's stat blocks are raster images: `pdftotext` recovers only the
+  flavour paragraphs, no numbers. All 13 blocks (Ashmouth Hound, Charmbreaker
+  Devil, Demonlord of Ashmouth, Fire Geist, Hellrider, Oglor, Rinelda Smitt,
+  Schmelzman, Skaab Goliath, Swarm of Skeletal Bats, Siegfried, The Thing,
+  Vampire Spawn Warrior) were transcribed from the rendered pages 67-73 and are
+  repeated verbatim in each entity's `traits_md`.
+- The plain `pdftotext` reading order interleaves the two columns on pages 15,
+  16, 34 and 52. The blueprint text was authored from a column-aware extraction
+  instead, so those passages read correctly here even though the audit's source
+  file has them scrambled.
+- Handouts that never reach the text layer were transcribed separately:
+  Geralf's decoded letter (from media/Geralf_s Letter/Decoded.pdf), the READ /
+  PLAY sheet music, and the two loot cards below.
+
+The 6 remaining audit lines — all expected, do not chase
+- "wellrespected", "demonworshipping", "everincreasing": `pdftotext` drops the
+  line-break hyphen; the blueprint has "well-respected", "demon-worshipping",
+  "ever-increasing" as printed.
+- "Eckhardt Sheck Magda Botler Flora Mayweather Marcus Ritter Silvia Wintsch
+  Captain Levi": page 16's Important NPCs table, read as two separate column
+  runs. Rebuilt as a real table in the `Important NPCs of Shadowgrange` lore
+  entry, with the pairings taken from the printed page.
+- The two Influence Dice lines: page 34's Help/Hindrance table, same problem.
+  Rebuilt as a markdown table in the `Defending the Breach` encounter.
+
+Judgment calls (not defects)
+- Author typos are carried verbatim per tool/content/README.md rule 0:
+  "Maurer Estate" / "Mauer Estate", "Acacynian", "thw town hall", "Visgaurd",
+  "impracticle", "apparrently", "indistinguishible", "Euroda", "presense",
+  "poltgergeist", "dessicated", "earings", "jewelery", "braclets",
+  "Skaabs Goliaths", "same plan", "hiearchy", "suicidie", "Camoflage",
+  "nectoric", "Siegfried descent", "he barking" — plus "checkes" and "an the
+  two" from the stat-block images. The only edits are extraction artifacts
+  (line-break hyphenation).
+- Only three SRD-name mismatches were re-pointed: the "flying sword" is
+  referenced as the SRD's `Animated Flying Sword`, the shriekgeist as `Specter`
+  (the module says "statted as a specter"), and the lumberknot as
+  `Shambling Mound` (likewise printed).
+- Monster Manual stat blocks the bundled SRD does not carry are NOT
+  reproduced and NOT referenced — smoke mephit, twig/vine blight, poltergeist,
+  grell, crawling claw, flameskull, thug. They stay as printed prose with the
+  MM page cite, and the encounters that use them say so in `dmNotes`.
+- Siegfried, Rinelda Smitt, Oglor and Shilgengar are `npc` entities (named
+  individuals) rather than `monster`; the ten reusable APPENDIX B creatures are
+  `monster`. Shilgengar carries the Demonlord of Ashmouth block by reference.
+- 29 `creature-action` entities, one per printed attack, named
+  "<Action> (<Creature>)" so they stay unique inside the pack.
+- Source inconsistencies flagged in `dmNotes`, carried as printed:
+  * Fire Geist "Hit Points 45 (6d6 + 6)" — 6d6+6 averages 27.
+  * Skaab Goliath swings "its morningstar" in the siege text; its stat block
+    has only a Slam.
+  * Siegfried's 2nd round animates "the narstad scrapper (APPENDIX B)"; there
+    is no narstad scrapper in APPENDIX B and the room description calls the
+    same creature a flesh golem (MM p169).
+  * The dining-hall XP line awards for "the barlgura and the five crawling
+    claws"; the barlgura is Shilgengar.
+  * Rinelda's purse is "90 ep and 70 gp" in Chapter 3's Attacking the Horde and
+    "5 ep and 92 gp" in the Necromancer Confrontation. Both are kept.
+- `Silver-Inlaid Dagger` is cited as "(APPENDIX A)" but has no APPENDIX A
+  entry. Its rules text is transcribed from its loot card in
+  media/Magic Items/. `Wolfhunter's Quiver` has a loot card and no placement in
+  the text at all; it is carried as an item with that noted.
+- `Strionic Resonator` exists as a magic-item because the whole adventure turns
+  on it, but the module prints no mechanics, rarity or attunement for it. The
+  schema-required rarity is a placeholder and its `dmNotes` says so.
+- No `blueprint.json`: the module ships no pregenerated characters, only the
+  d8 bond table (in the campaign pages) and the third-party Human Variants
+  supplement (bundled as a lore PDF). Nothing was invented to fill the gap.
+- `Oglor`'s `species_ref` is Human as a placeholder — his printed block is
+  *Small construct* and the bundled SRD has no construct species row; his
+  `dmNotes` says so.

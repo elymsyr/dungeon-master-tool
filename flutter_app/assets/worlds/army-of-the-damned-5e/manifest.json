@@ -1,0 +1,83 @@
+{
+  "slug": "army-of-the-damned-5e",
+  "title": "Army of the Damned",
+  "system": "dnd5e",
+  "publisher": "Fan-made (Innistrad)",
+  "author": "Tomer Abramovici (/u/SpiketailDrake)",
+  "license": "fan-content",
+  "attribution": "Army of the Damned is a fan-made adventure module by Tomer Abramovici. All illustrations and names used from Magic: The Gathering, along with all D&D terms and rules, are properties of Wizards of the Coast. This is only a fan creation, not in any way made for sale. Maps and the Player’s Guide to Innistrad: Human Variants by /u/Nihilates; Geralf’s coded letter by /u/RanAngel.",
+  "version": "1.0.0",
+  "description": "A gothic-horror adventure for four 1st-level characters on the plane of Innistrad, taking them to 5th. The party travels into Stensia to recover an artifact of the Church of Avacyn, clears a haunted manor, defends the village of Shadowgrange against an army of the walking dead, crosses the farbog and storms Mauer Estate to confront the necro-alchemist who built the horde.",
+  "files": {
+    "pdf": "armyofthedamned.pdf",
+    "cover_image": "media/Artwork/Monsters/Zombie Apocalypse.jpg",
+    "media": {
+      "maps": [
+        "media/Maps/Innistrad Map.png",
+        "media/Maps/Iso Shadowgrange.png",
+        "media/Maps/Mauer Estate.png",
+        "media/Maps/Stensia Map.png"
+      ],
+      "artwork": [
+        "media/Artwork/Locations/Mauer Estate.jpg",
+        "media/Artwork/Locations/Shadowgrange.jpg",
+        "media/Artwork/Locations/Stensia Silbern.jpg",
+        "media/Artwork/Locations/Stensia Valley1.jpg",
+        "media/Artwork/Locations/Stensia Valley2.jpg",
+        "media/Artwork/Locations/Stensia Valley3.jpg",
+        "media/Artwork/Locations/Stensia Valley4.jpg",
+        "media/Artwork/Locations/oaktree.jpg",
+        "media/Artwork/Monsters/Anton.jpg",
+        "media/Artwork/Monsters/Ashmouth Hound.jpg",
+        "media/Artwork/Monsters/Charmbreaker_Devils.jpg",
+        "media/Artwork/Monsters/Demonlord of Ashmouth.jpg",
+        "media/Artwork/Monsters/Eudora.jpg",
+        "media/Artwork/Monsters/Falkenrath Marauders.jpg",
+        "media/Artwork/Monsters/Flowering Lumberknot.jpg",
+        "media/Artwork/Monsters/Hellrider.jpg",
+        "media/Artwork/Monsters/Kessig Recluse.jpg",
+        "media/Artwork/Monsters/Lambert.jpg",
+        "media/Artwork/Monsters/Manor Skeleton.jpg",
+        "media/Artwork/Monsters/Ralph Brunn.png",
+        "media/Artwork/Monsters/Rinelda Smitt.jpg",
+        "media/Artwork/Monsters/Shriekgeist.jpg",
+        "media/Artwork/Monsters/Siegfied.jpg",
+        "media/Artwork/Monsters/Skaab Goliath.jpg",
+        "media/Artwork/Monsters/Stitcher_sApprentice.jpg",
+        "media/Artwork/Monsters/TheThing.jpg",
+        "media/Artwork/Monsters/Walking Corpse.jpg",
+        "media/Artwork/Monsters/Zombie Apocalypse.jpg",
+        "media/Artwork/Monsters/animated armor.jpg",
+        "media/Artwork/NPCs/Captain Levi.jpg",
+        "media/Artwork/NPCs/Priestess Flora.png"
+      ],
+      "magic_items": [
+        "media/Magic Items/loot_Alchemists Fire.jpg",
+        "media/Magic Items/loot_Avacyns Collar.jpg",
+        "media/Magic Items/loot_GhoulcallersBell.jpg",
+        "media/Magic Items/loot_Mithral Chain Mail.jpg",
+        "media/Magic Items/loot_Moonsilver Spear.jpg",
+        "media/Magic Items/loot_Shapeshifters Blade.jpg",
+        "media/Magic Items/loot_Silver-Inlaid Dagger.jpg",
+        "media/Magic Items/loot_Wolfhunters Quiver.jpg",
+        "media/Magic Items/loot_cleaver.jpg",
+        "media/Magic Items/loot_demonmail.jpg",
+        "media/Magic Items/loot_elbrus.jpg",
+        "media/Magic Items/loot_hauberk.jpg",
+        "media/Magic Items/loot_recombob.jpg",
+        "media/Magic Items/loot_violin.jpg"
+      ],
+      "handouts": [
+        "media/Geralf_s Letter/Decoded.pdf",
+        "media/Geralf_s Letter/Substitution Text.pdf",
+        "media/Geralf_s Letter/Substitution Working Text.pdf",
+        "media/Music Puzzle/innistradPLAY.png",
+        "media/Music Puzzle/innistradRead.png"
+      ],
+      "supplements": [
+        "media/Innistrad Human Variants/Innistrad Races.pdf",
+        "media/Innistrad Human Variants/Plane_Shift_Innistrad.pdf"
+      ]
+    }
+  }
+}
