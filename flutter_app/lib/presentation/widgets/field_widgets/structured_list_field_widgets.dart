@@ -1990,6 +1990,9 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: ExpansionTile(
+        // Lazy viewport: the row unmounts when scrolled off. A PageStorageKey
+        // makes ExpansionTile restore its expanded state instead of collapsing.
+        key: PageStorageKey('lineage_$ri'),
         tilePadding: const EdgeInsets.symmetric(horizontal: 8),
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         title: Text(
