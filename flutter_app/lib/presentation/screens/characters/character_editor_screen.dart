@@ -451,10 +451,10 @@ class _CharacterEditorScreenState
               const SizedBox.shrink(),
             ],
             IconButton(
-              icon: Icon(_readOnly ? Icons.visibility : Icons.edit,
+              icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
                   size: 20),
               tooltip: _canEdit
-                  ? (_readOnly ? 'View' : 'Edit')
+                  ? (_readOnly ? 'Edit' : 'View')
                   : 'Read-only (not owner)',
               onPressed: !_canEdit
                   ? null
