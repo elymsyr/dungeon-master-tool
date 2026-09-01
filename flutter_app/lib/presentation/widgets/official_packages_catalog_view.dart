@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/first_party_catalog_provider.dart';
 import '../../data/services/first_party_catalog_service.dart'
-    show officialBannerUrl;
+    show officialCoverUrl;
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../dialogs/official_package_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -12,17 +12,24 @@ import 'listing_banner_card.dart'
     show iconForListingType, labelForListingType;
 import 'metadata_list_tile.dart';
 
-/// Renders the first-party "Official" package catalog as a column of cards, each
+/// Renders a first-party "Official" catalog section as a column of cards, each
 /// with an Install / Installing… / Installed action. Embeddable inside an
 /// existing scroll view (returns a [Column], not its own scrollable) — folded
 /// into the Marketplace feed alongside the Supabase listings + soundpacks.
+///
+/// [provider] picks which slice of the manifest to render:
+/// `firstPartyCatalogProvider` (packages, the default) or
+/// `firstPartyWorldCatalogProvider` (ready-to-play worlds). The card is
+/// item-type driven, so nothing else differs.
 class OfficialPackagesCatalogView extends ConsumerWidget {
-  const OfficialPackagesCatalogView({super.key});
+  const OfficialPackagesCatalogView({super.key, this.provider});
+
+  final FutureProvider<List<CatalogEntry>>? provider;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final catalog = ref.watch(firstPartyCatalogProvider);
+    final catalog = ref.watch(provider ?? firstPartyCatalogProvider);
 
     return catalog.when(
       loading: () => const Padding(
@@ -86,7 +93,7 @@ class _OfficialPackageCard extends StatelessWidget {
           description: '',
           tags: const [],
           coverImagePath: '',
-          coverNetworkUrl: officialBannerUrl(entry.slug),
+          coverNetworkUrl: officialCoverUrl(entry),
           isSelected: false,
           palette: palette,
           layout: MetadataTileLayout.topBanner,

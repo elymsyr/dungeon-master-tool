@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/network/character_claim_service.dart';
+import '../../data/repositories/character_repository.dart';
 import 'character_claim_provider.dart';
+import 'character_provider.dart';
 
 /// public.world_characters projeksiyonu — UI'ya yetecek minimum bilgi.
 /// `payloadJson` lazy decode için ham bırakılır; UI bunu ihtiyaç anında
@@ -81,9 +84,10 @@ class WorldCharacterRow {
 class WorldCharactersNotifier
     extends StateNotifier<AsyncValue<List<WorldCharacterRow>>> {
   final CharacterClaimService? _service;
+  final CharacterRepository _repo;
   final String worldId;
 
-  WorldCharactersNotifier(this._service, this.worldId)
+  WorldCharactersNotifier(this._service, this._repo, this.worldId)
       : super(const AsyncValue.loading());
 
   bool _bootstrapped = false;
@@ -97,25 +101,52 @@ class WorldCharactersNotifier
   Future<void> bootstrap() async {
     if (_bootstrapped) return;
     _bootstrapped = true;
-    if (_service == null) {
-      state = const AsyncValue.data([]);
-      return;
-    }
+    // Yerel satırlar her zaman taban: paketlenmiş/katalogdan kurulan dünyanın
+    // sahipsiz PC'leri sadece Drift'te duruyor, buluta hiç gitmiyor. Sadece
+    // Supabase'i okursak offline'da (ve kurulumdan hemen sonra) liste boş
+    // çıkıyordu.
+    final local = await _localRows();
+    state = AsyncValue.data(local);
+    if (_service == null) return;
     try {
       _localDuringFetch = {};
       final rows = await _service.listWorldCharacters(worldId);
-      final byId = {for (final r in rows) r.id: r};
+      final byId = {for (final r in local) r.id: r};
+      for (final r in rows) {
+        byId[r.id] = r;
+      }
       for (final r in state.valueOrNull ?? const <WorldCharacterRow>[]) {
         if (_localDuringFetch.contains(r.id)) byId[r.id] = r;
       }
-      rows
-        ..clear()
-        ..addAll(byId.values);
-      rows.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      final merged = byId.values.toList();
+      merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       state = AsyncValue.data(rows);
     } catch (e, st) {
       debugPrint('WorldCharactersNotifier bootstrap error: $e');
       state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// Drift'teki `world_characters` satırları → UI satırı.
+  Future<List<WorldCharacterRow>> _localRows() async {
+    try {
+      final chars = await _repo.loadAll();
+      return [
+        for (final c in chars)
+          if (c.worldId == worldId)
+            WorldCharacterRow(
+              id: c.id,
+              worldId: worldId,
+              ownerId: c.ownerId,
+              templateId: c.templateId,
+              templateName: c.templateName,
+              payloadJson: jsonEncode(c.toJson()),
+              updatedAt: DateTime.tryParse(c.updatedAt) ??
+                  DateTime.fromMillisecondsSinceEpoch(0),
+            ),
+      ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    } catch (_) {
+      return const [];
     }
   }
 
@@ -169,7 +200,8 @@ final worldCharactersProvider = StateNotifierProvider.family<
     AsyncValue<List<WorldCharacterRow>>,
     String>((ref, worldId) {
   final svc = ref.watch(characterClaimServiceProvider);
-  final notifier = WorldCharactersNotifier(svc, worldId);
+  final notifier = WorldCharactersNotifier(
+      svc, ref.watch(characterRepositoryProvider), worldId);
   // Subscribe sonrası bootstrap fire-and-forget.
   // ignore: discarded_futures
   notifier.bootstrap();

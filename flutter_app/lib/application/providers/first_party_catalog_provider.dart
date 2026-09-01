@@ -40,11 +40,27 @@ final bundledWorldsInstallerProvider = Provider<BundledWorldsInstaller>(
 final bundledWorldsAvailableProvider = FutureProvider<bool>(
     (ref) => ref.read(bundledWorldsInstallerProvider).isAvailable());
 
-/// Official package catalog: R2 manifest → bundled fallback. The service
-/// degrades to the bundled catalog when offline, so this never surfaces an
-/// offline error — the cards render (and install from bundled assets) offline.
-final firstPartyCatalogProvider = FutureProvider<List<CatalogEntry>>((ref) {
+/// Full official catalog: R2 manifest → bundled fallback. The service degrades
+/// to the bundled catalog when offline, so this never surfaces an offline
+/// error — the cards render (and install from bundled assets) offline.
+final firstPartyManifestProvider = FutureProvider<List<CatalogEntry>>((ref) {
   return ref.read(firstPartyCatalogServiceProvider).fetchManifest();
+});
+
+/// Official *package* entries — what the Marketplace "Packages" section shows.
+final firstPartyCatalogProvider =
+    FutureProvider<List<CatalogEntry>>((ref) async {
+  final all = await ref.watch(firstPartyManifestProvider.future);
+  return all.where((e) => e.itemType == 'package').toList(growable: false);
+});
+
+/// Official *world* entries — ready-to-play adventures. Same manifest, same
+/// install pipeline; the payload is a blueprint envelope plus R2 media rather
+/// than a single package JSON.
+final firstPartyWorldCatalogProvider =
+    FutureProvider<List<CatalogEntry>>((ref) async {
+  final all = await ref.watch(firstPartyManifestProvider.future);
+  return all.where((e) => e.itemType == 'world').toList(growable: false);
 });
 
 /// True when [catalogVersion] is a strictly newer `major.minor.patch` than the
@@ -137,6 +153,7 @@ class FirstPartyInstallNotifier
   Future<bool> _installOne(CatalogEntry entry) async {
     _set(entry.slug,
         const CatalogInstallStatus(phase: CatalogInstallPhase.installing));
+    if (entry.itemType == 'world') return _installWorld(entry);
     try {
       final service = _ref.read(firstPartyCatalogServiceProvider);
       final payload = await service.fetchPayload(entry);
@@ -163,6 +180,7 @@ class FirstPartyInstallNotifier
         payload,
         installedFrom: 'official',
         extraMetadata: extra,
+        asCopy: true,
       );
       _ref.invalidate(packageListProvider);
       // Re-read metadata so a reinstall flips the stored `catalog_version` the
@@ -171,6 +189,49 @@ class FirstPartyInstallNotifier
       _ref.invalidate(packageMetadataProvider);
       _set(entry.slug,
           const CatalogInstallStatus(phase: CatalogInstallPhase.done));
+      return true;
+    } catch (e) {
+      _set(
+        entry.slug,
+        CatalogInstallStatus(
+            phase: CatalogInstallPhase.error, message: e.toString()),
+      );
+      return false;
+    }
+  }
+
+  /// A world installs through [BundledWorldsInstaller] — the same converter,
+  /// built-in schema and unclaimed-PC path the bundled install uses, only with
+  /// R2 as the byte source. Its [InstallReport] is surfaced rather than
+  /// swallowed: `failures` fail the install, `issues` succeed but say what is
+  /// missing (a map that didn't download is not a clean install).
+  Future<bool> _installWorld(CatalogEntry entry) async {
+    try {
+      final report = await _ref
+          .read(bundledWorldsInstallerProvider)
+          .installFromCatalog(entry, _ref.read(firstPartyCatalogServiceProvider));
+      _ref.invalidate(campaignListProvider);
+      // Worlds tab campaignInfoListProvider'ı okuyor — bunu yenilemezsek
+      // inen dünya elle refresh edilene kadar listede görünmüyor.
+      _ref.invalidate(campaignInfoListProvider);
+      if (report.failures.isNotEmpty) {
+        _set(
+          entry.slug,
+          CatalogInstallStatus(
+              phase: CatalogInstallPhase.error,
+              message: report.failures.first),
+        );
+        return false;
+      }
+      _set(
+        entry.slug,
+        CatalogInstallStatus(
+          phase: CatalogInstallPhase.done,
+          message: report.issues.isEmpty
+              ? null
+              : '${report.issues.length} content issue(s)',
+        ),
+      );
       return true;
     } catch (e) {
       _set(

@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/first_party_catalog_provider.dart';
-import '../../application/providers/package_provider.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/listing_banner_card.dart'
+    show iconForListingType, labelForListingType;
 
-/// Details + install dialog for an official (first-party catalog) package.
+/// Details + install dialog for an official (first-party catalog) entry —
+/// a package or a ready-to-play world.
 /// Mirrors [MarketplacePreviewDialog] for user listings: opened from the
 /// official card's "Get" button (or by tapping the card), it shows the package
 /// details and installs from the [firstPartyInstallProvider] state machine.
@@ -28,28 +30,11 @@ class OfficialPackageDialog extends ConsumerWidget {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
-    final installedNames =
-        ref.watch(packageListProvider).valueOrNull?.map((p) => p.name).toSet() ??
-            const <String>{};
+    // Kurulu olsa da her zaman indirilebilir: kurulum var olanı ezmez,
+    // ismi çakışırsa "(Copy)" olarak kurulur (bkz. uniqueCopyName).
     final status =
         ref.watch(firstPartyInstallProvider.select((m) => m[entry.slug])) ??
             const CatalogInstallStatus();
-    // Installed packages are named by their human title (see
-    // PackagePayloadImporter), so match on title with a slug fallback.
-    final installedName = entry.title.isEmpty ? entry.slug : entry.title;
-    final installed = installedNames.contains(installedName) ||
-        status.phase == CatalogInstallPhase.done;
-    // D2: an install stamps `metadata.catalog_version`; a newer catalog turns
-    // the flat "Installed" state back into an actionable Update. Re-running
-    // `install` is the upgrade — the importer saves over the same row name and
-    // carries the declared links across.
-    final installedVersion = ref.watch(
-      packageMetadataProvider(installedName)
-          .select((a) => a.valueOrNull?['catalog_version'] as String?),
-    );
-    final updatable = installed &&
-        status.phase != CatalogInstallPhase.done &&
-        isCatalogUpdateAvailable(installedVersion, entry.version);
 
     final pills = <Widget>[
       if (entry.gameSystem.isNotEmpty)
@@ -71,7 +56,7 @@ class OfficialPackageDialog extends ConsumerWidget {
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.inventory_2_outlined,
+          Icon(iconForListingType(entry.itemType),
               color: palette.featureCardAccent, size: 24),
           const SizedBox(width: 10),
           Expanded(
@@ -86,7 +71,7 @@ class OfficialPackageDialog extends ConsumerWidget {
                 Row(
                   children: [
                     Text(
-                      l10n.itemTypePackage,
+                      labelForListingType(l10n, entry.itemType),
                       style: TextStyle(
                           fontSize: 11, color: palette.sidebarLabelSecondary),
                     ),
@@ -115,6 +100,22 @@ class OfficialPackageDialog extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (entry.description.isNotEmpty) ...[
+                Text(
+                  entry.description,
+                  style: TextStyle(
+                      fontSize: 13, height: 1.45, color: palette.tabActiveText),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (entry.author.isNotEmpty) ...[
+                _Row(
+                  icon: Icons.person_outline,
+                  label: entry.author,
+                  palette: palette,
+                ),
+                const SizedBox(height: 8),
+              ],
               if (entry.attribution.isNotEmpty) ...[
                 Text(
                   entry.attribution,
@@ -164,9 +165,23 @@ class OfficialPackageDialog extends ConsumerWidget {
               ],
               _Row(
                 icon: Icons.sd_storage_outlined,
-                label: '${(entry.sizeBytes / 1024).toStringAsFixed(1)} KB',
+                label: _formatBytes(entry.downloadBytes),
                 palette: palette,
               ),
+              // The adventure PDF is not hosted in our catalog — it downloads
+              // free from the publisher. Say so, so a slow install is legible.
+              if (entry.externalFiles.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _Row(
+                  icon: Icons.picture_as_pdf_outlined,
+                  label: l10n.catalogExternalPdfNote,
+                  palette: palette,
+                ),
+              ],
+              if (entry.sourceUrl.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _SourceLink(url: entry.sourceUrl, palette: palette),
+              ],
               if (entry.bannerCreditLink != null &&
                   entry.bannerCreditLink!.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -185,25 +200,7 @@ class OfficialPackageDialog extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.btnCancel),
         ),
-        _action(context, ref, l10n, palette, installed && !updatable, status,
-            updatable: updatable),
-      ],
-    );
-  }
-
-  Widget _action(
-    BuildContext context,
-    WidgetRef ref,
-    L10n l10n,
-    DmToolColors palette,
-    bool installed,
-    CatalogInstallStatus status, {
-    bool updatable = false,
-  }) {
-    if (installed) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        if (status.phase == CatalogInstallPhase.done) ...[
           Icon(Icons.check_circle, size: 16, color: palette.featureCardAccent),
           const SizedBox(width: 4),
           Text(
@@ -213,10 +210,19 @@ class OfficialPackageDialog extends ConsumerWidget {
                 fontWeight: FontWeight.w500,
                 color: palette.featureCardAccent),
           ),
+          const SizedBox(width: 8),
         ],
-      );
-    }
+        _action(context, ref, l10n, status),
+      ],
+    );
+  }
 
+  Widget _action(
+    BuildContext context,
+    WidgetRef ref,
+    L10n l10n,
+    CatalogInstallStatus status,
+  ) {
     final installing = status.phase == CatalogInstallPhase.installing;
     final isError = status.phase == CatalogInstallPhase.error;
     return FilledButton.icon(
@@ -230,12 +236,8 @@ class OfficialPackageDialog extends ConsumerWidget {
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white),
             )
-          : Icon(updatable ? Icons.upgrade : Icons.download, size: 18),
-      label: Text(isError
-          ? l10n.soundpackRetry
-          : updatable
-              ? l10n.packageUpdateTo(entry.version)
-              : l10n.marketplaceGet),
+          : const Icon(Icons.download, size: 18),
+      label: Text(isError ? l10n.soundpackRetry : l10n.marketplaceGet),
     );
   }
 }
@@ -330,6 +332,47 @@ class _Row extends StatelessWidget {
         const SizedBox(width: 6),
         Text(label, style: TextStyle(fontSize: 12, color: palette.tabText)),
       ],
+    );
+  }
+}
+
+/// Total download size, KB under a megabyte and MB above — a world pulls tens
+/// of megabytes of maps and tokens, which "43008.0 KB" does not communicate.
+String _formatBytes(int bytes) => bytes >= 1024 * 1024
+    ? '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB'
+    : '${(bytes / 1024).toStringAsFixed(1)} KB';
+
+/// Link to the publisher's page for the work (`source_url`), so the credited
+/// author is one tap away. Mirrors [_BannerCredit].
+class _SourceLink extends StatelessWidget {
+  final String url;
+  final DmToolColors palette;
+  const _SourceLink({required this.url, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () =>
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: Row(
+        children: [
+          Icon(Icons.link, size: 14, color: palette.sidebarLabelSecondary),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              url,
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.featureCardAccent,
+                decoration: TextDecoration.underline,
+                decorationColor: palette.featureCardAccent,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

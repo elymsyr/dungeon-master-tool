@@ -910,6 +910,7 @@
   "filterPackages": "Paketler",
   "filterCharacters": "Karakterler",
   "filterSoundpacks": "Ses Paketleri",
+  "catalogExternalPdfNote": "PDF yayıncıdan indirilir",
   "itemTypeWorld": "Dünya",
   "itemTypeTemplate": "Şablon",
   "itemTypePackage": "Paket",

@@ -910,6 +910,7 @@
   "filterPackages": "Pakete",
   "filterCharacters": "Charaktere",
   "filterSoundpacks": "Soundpacks",
+  "catalogExternalPdfNote": "PDF wird vom Herausgeber geladen",
   "itemTypeWorld": "Welt",
   "itemTypeTemplate": "Vorlage",
   "itemTypePackage": "Paket",

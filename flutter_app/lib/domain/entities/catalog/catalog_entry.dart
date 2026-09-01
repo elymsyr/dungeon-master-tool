@@ -1,6 +1,38 @@
+/// One media object a world entry ships on R2 (`catalog/world-media/...`),
+/// alongside the relative path it must land on under the world's media root.
+class CatalogMedia {
+  final String rel;
+  final String r2Key;
+  final int sizeBytes;
+  const CatalogMedia(
+      {required this.rel, required this.r2Key, required this.sizeBytes});
+
+  factory CatalogMedia.fromJson(Map<String, dynamic> j) => CatalogMedia(
+        rel: j['rel'] as String? ?? '',
+        r2Key: j['r2_key'] as String? ?? '',
+        sizeBytes: (j['size_bytes'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// A file an entry references but the catalog deliberately does NOT host —
+/// today only the adventure PDF, which is `all-rights-reserved` and downloads
+/// free from the publisher. Fetched from [url] straight into [rel]'s place.
+class CatalogExternalFile {
+  final String rel;
+  final String url;
+  const CatalogExternalFile({required this.rel, required this.url});
+
+  factory CatalogExternalFile.fromJson(Map<String, dynamic> j) =>
+      CatalogExternalFile(
+        rel: j['rel'] as String? ?? '',
+        url: j['url'] as String? ?? '',
+      );
+}
+
 /// One entry from the first-party catalog manifest (`catalog/manifest.json` on
 /// R2, or the bundled `assets/first_party/manifest.json` fallback). Describes an
-/// installable official item; v1 ships only `package` entries.
+/// installable official item — a `package` (one JSON file) or a `world`
+/// (a directory: payload envelope + media objects).
 ///
 /// Mirrors the shape emitted by `tool/catalog_publish/bin/build_catalog.dart`:
 /// each entry carries both an [r2Path] (the gzipped object the publish CLI
@@ -37,6 +69,24 @@ class CatalogEntry {
   /// self-contained pack.
   final List<String> requires;
 
+  /// Long-form store description. Worlds carry the blurb from their bundled
+  /// `manifest.json`; packages have none.
+  final String description;
+
+  /// Credited author and the publisher's page for the work (world entries).
+  final String author;
+  final String sourceUrl;
+
+  /// A world is a directory, not a single file: [bundledDir] is the asset dir
+  /// (`assets/worlds/<dir>`) that backs the offline fallback, [media] names
+  /// every R2 object to download, [externalFiles] the ones we don't host, and
+  /// [coverImage] is the media-relative path of the card art. All empty for
+  /// packages, which use [bundledAsset] + the `banners/<slug>.jpg` convention.
+  final String bundledDir;
+  final String coverImage;
+  final List<CatalogMedia> media;
+  final List<CatalogExternalFile> externalFiles;
+
   const CatalogEntry({
     required this.itemType,
     required this.slug,
@@ -53,9 +103,21 @@ class CatalogEntry {
     this.bannerCreditCreator,
     this.bannerCreditLink,
     this.requires = const [],
+    this.description = '',
+    this.author = '',
+    this.sourceUrl = '',
+    this.bundledDir = '',
+    this.coverImage = '',
+    this.media = const [],
+    this.externalFiles = const [],
   });
 
   int get totalEntities => counts.values.fold(0, (a, b) => a + b);
+
+  /// Everything the install actually downloads from R2: the payload plus every
+  /// media object. Excludes [externalFiles], which come from the publisher.
+  int get downloadBytes =>
+      sizeBytes + media.fold(0, (a, m) => a + m.sizeBytes);
 
   factory CatalogEntry.fromJson(Map<String, dynamic> j) => CatalogEntry(
         itemType: j['item_type'] as String? ?? 'package',
@@ -77,6 +139,20 @@ class CatalogEntry {
         requires: ((j['requires'] as List?) ?? const [])
             .map((e) => e.toString())
             .where((s) => s.isNotEmpty)
+            .toList(growable: false),
+        description: j['description'] as String? ?? '',
+        author: j['author'] as String? ?? '',
+        sourceUrl: j['source_url'] as String? ?? '',
+        bundledDir: j['bundled_dir'] as String? ?? '',
+        coverImage: j['cover_image'] as String? ?? '',
+        media: ((j['media'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => CatalogMedia.fromJson(m.cast<String, dynamic>()))
+            .toList(growable: false),
+        externalFiles: ((j['external_files'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) =>
+                CatalogExternalFile.fromJson(m.cast<String, dynamic>()))
             .toList(growable: false),
       );
 }
