@@ -2326,13 +2326,21 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   ),
                 ),
                 // Category hint + add button cling to the right edge.
-                Text(
-                  '→ $targetTypes',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.outline,
+                // Çok tür varsa kesilmek yerine yatay kaydırılır.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Text(
+                      '→ $targetTypes',
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
                 if (!readOnly)
                   IconButton(
