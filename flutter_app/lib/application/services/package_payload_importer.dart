@@ -1,3 +1,4 @@
+import '../../core/utils/unique_name.dart';
 import '../../data/schema/auto_grant_inversion.dart';
 import '../../data/schema/rule_effects_migration.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -21,11 +22,13 @@ class PackagePayloadImporter {
   /// Saves [payload] as a local package and returns its name. [installedFrom]
   /// is recorded under `metadata.installed_from` ('assets' for bundled,
   /// 'official' for the R2 catalog); [extraMetadata] (e.g. `catalog_version`)
-  /// is merged into the package metadata.
+  /// is merged into the package metadata. [asCopy] installs under a free
+  /// `... (Copy)` name instead of overwriting a package with the same name.
   Future<String> install(
     Map<String, dynamic> payload, {
     required String installedFrom,
     Map<String, dynamic>? extraMetadata,
+    bool asCopy = false,
   }) async {
     final rawEntities =
         (payload['entities'] as Map?)?.cast<String, dynamic>() ??
@@ -52,9 +55,14 @@ class PackagePayloadImporter {
     // the local package name; the payload's `package_name` is the machine slug
     // (`open5e-a5e-ag`). Fall back to the slug when no title is present.
     final title = (metadata['title'] as String?)?.trim();
-    final packageName = (title != null && title.isNotEmpty)
+    var packageName = (title != null && title.isNotEmpty)
         ? title
         : payload['package_name'] as String;
+    // Katalogdan elle indirme: var olanın üstüne yazma, kopya olarak kur.
+    if (asCopy) {
+      packageName =
+          uniqueCopyName(packageName, (await _repo.getAvailable()).toSet());
+    }
 
     // `save` REPLACES state_json, so a re-install would otherwise drop the
     // package's declared links. Carry them across: from the payload when it

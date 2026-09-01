@@ -1,12 +1,17 @@
 import 'dart:convert';
-import 'dart:io' show File;
+import 'dart:io' show File, gzip;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_paths.dart';
+import '../../core/utils/unique_name.dart';
 import '../../data/repositories/character_repository.dart';
+import '../../data/services/first_party_catalog_service.dart';
+import '../../domain/entities/catalog/catalog_entry.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -43,6 +48,16 @@ import 'pdf_library_service.dart';
 ///     yani dünyanın Characters sekmesinde çıkar. World entity'si olarak
 ///     yazıldıklarında hiçbir yerde görünmüyorlardı: Database sekmesi
 ///     `player-character` kategorisini listeden çıkarıyor.
+/// Where one world file's bytes come from, keyed by its path relative to the
+/// world directory (`media/Tokens/x.webp`, `Adventure.pdf`). Null means "not
+/// available from this source" — the caller reports it as an issue rather than
+/// installing silently incomplete media.
+///
+/// Two implementations: the asset bundle ([BundledWorldsInstaller.installAll])
+/// and the R2 catalog with a bundled fallback
+/// ([BundledWorldsInstaller.installFromCatalog]).
+typedef WorldFileLoader = Future<Uint8List?> Function(String rel);
+
 class BundledWorldsInstaller {
   BundledWorldsInstaller(this._repo, this._chars);
   final CampaignRepository _repo;
@@ -65,13 +80,124 @@ class BundledWorldsInstaller {
     for (final w in worlds.whereType<Map>()) {
       final dir = w['dir'] as String?;
       if (dir == null) continue;
+      final base = '$_assetDir/$dir';
       try {
-        await _installWorld(dir, report);
+        final manifestRaw = await _tryLoad('$base/manifest.json');
+        if (manifestRaw == null) {
+          report.failures.add('$dir: manifest.json not found');
+          continue;
+        }
+        await _installWorld(
+          dir: dir,
+          manifest: jsonDecode(manifestRaw) as Map<String, dynamic>,
+          worldBlueprint: await _tryLoadJson('$base/world-blueprint.json'),
+          characterBlueprint: await _tryLoadJson('$base/blueprint.json'),
+          loadMedia: (rel) => _loadAssetBytes('$base/$rel'),
+          report: report,
+          installedFrom: 'assets',
+        );
       } catch (e, st) {
         report.failures.add('$dir: $e\n$st');
       }
     }
     return report;
+  }
+
+  /// Kataloğun `world` girdisini kurar: payload zarfı R2'den (başarısızsa
+  /// bundle'dan), medya R2'den (başarısızsa bundle'dan), barındırmadığımız
+  /// dosyalar (PDF) bundle'dan ya da yayıncının linkinden.
+  ///
+  /// Bundle her zaman fallback — dünya uygulamayla birlikte geliyor, R2
+  /// güncellenebilir kaynak.
+  Future<InstallReport> installFromCatalog(
+    CatalogEntry entry,
+    FirstPartyCatalogService svc,
+  ) async {
+    final report = InstallReport();
+    final base = entry.bundledDir; // '' olabilir: sadece-R2 bir dünya
+    final dir = base.isEmpty ? entry.slug : p.posix.split(base).last;
+
+    final envelope = await _fetchEnvelope(entry, svc, base);
+    if (envelope == null) {
+      report.failures.add('${entry.slug}: payload unavailable');
+      return report;
+    }
+    final manifest = envelope['manifest'];
+    if (manifest is! Map) {
+      report.failures.add('${entry.slug}: envelope has no manifest');
+      return report;
+    }
+
+    final byRel = {for (final m in entry.media) m.rel: m};
+    final externalByRel = {for (final f in entry.externalFiles) f.rel: f};
+
+    Future<Uint8List?> loadMedia(String rel) async {
+      // R2 taze kaynak, bundle fallback.
+      final m = byRel[rel];
+      if (m != null) {
+        final bytes = await svc.fetchCatalogBytes(m.r2Key);
+        if (bytes != null) return bytes;
+      }
+      if (base.isNotEmpty) {
+        final bundled = await _loadAssetBytes('$base/$rel');
+        if (bundled != null) return bundled;
+      }
+      // Barındırmadığımız dosya (PDF): bundle'da yoksa yayıncıdan indir.
+      final ext = externalByRel[rel];
+      if (ext != null && ext.url.isNotEmpty) {
+        return svc.fetchExternal(Uri.parse(ext.url));
+      }
+      return null;
+    }
+
+    try {
+      await _installWorld(
+        dir: dir,
+        manifest: manifest.cast<String, dynamic>(),
+        worldBlueprint:
+            (envelope['world_blueprint'] as Map?)?.cast<String, dynamic>(),
+        characterBlueprint:
+            (envelope['character_blueprint'] as Map?)?.cast<String, dynamic>(),
+        loadMedia: loadMedia,
+        report: report,
+        installedFrom: 'official',
+        catalogVersion: entry.version,
+        asCopy: true,
+      );
+    } catch (e, st) {
+      report.failures.add('${entry.slug}: $e\n$st');
+    }
+    return report;
+  }
+
+  /// Dünya zarfı: R2 `r2_path` (gzip JSON) → bundle'daki üç dosya.
+  Future<Map<String, dynamic>?> _fetchEnvelope(
+    CatalogEntry entry,
+    FirstPartyCatalogService svc,
+    String base,
+  ) async {
+    if (entry.r2Path.isNotEmpty) {
+      final gz = await svc.fetchCatalogBytes(entry.r2Path);
+      if (gz != null) {
+        try {
+          return jsonDecode(utf8.decode(gzip.decode(gz)))
+              as Map<String, dynamic>;
+        } catch (_) {
+          // bozuk obje → bundle'a düş
+        }
+      }
+    }
+    if (base.isEmpty) return null;
+    final manifest = await _tryLoadJson('$base/manifest.json');
+    if (manifest == null) return null;
+    final world = await _tryLoadJson('$base/world-blueprint.json');
+    final character = await _tryLoadJson('$base/blueprint.json');
+    if (world == null && character == null) return null;
+    return <String, dynamic>{
+      'manifest': manifest,
+      if (world != null) 'world_blueprint': world,
+      if (character != null) 'character_blueprint': character,
+    };
   }
 
   /// `metadata.installed_from == 'assets'` damgalı her dünyayı kaldırır.
@@ -82,7 +208,10 @@ class BundledWorldsInstaller {
       try {
         final data = await _repo.load(name);
         final meta = data['metadata'];
-        if (meta is! Map || meta['installed_from'] != 'assets') continue;
+        // Katalogdan kurulan dünya da bu toggle'la kalkabilmeli — aynı içerik,
+        // sadece farklı kaynak.
+        final from = meta is Map ? meta['installed_from'] : null;
+        if (from != 'assets' && from != 'official') continue;
         // `_purgeWorld` world_characters'a dokunmuyor (karakterler normalde
         // dünyayı sağ kurtarır). Buradakiler kurulum artığı — dünya gidince
         // ölü bir world id'ye bakan karakter kalmasın.
@@ -103,27 +232,33 @@ class BundledWorldsInstaller {
 
   // ── Tek dünya kurulumu ───────────────────────────────────────────────
 
-  Future<void> _installWorld(String dir, InstallReport report) async {
-    final base = '$_assetDir/$dir';
-
-    final manifestRaw = await _tryLoad('$base/manifest.json');
-    if (manifestRaw == null) {
-      report.failures.add('$dir: manifest.json not found');
-      return;
+  Future<void> _installWorld({
+    required String dir,
+    required Map<String, dynamic> manifest,
+    required Map<String, dynamic>? worldBlueprint,
+    required Map<String, dynamic>? characterBlueprint,
+    required WorldFileLoader loadMedia,
+    required InstallReport report,
+    required String installedFrom,
+    String? catalogVersion,
+    bool asCopy = false,
+  }) async {
+    var worldName = manifest['title'] as String;
+    // Katalogdan elle indirme her seferinde yeni bir dünya açsın; silinip
+    // tekrar indirilen ya da ikinci kez indirilen dünya üstüne yazmasın.
+    if (asCopy) {
+      worldName =
+          uniqueCopyName(worldName, (await _repo.getAvailable()).toSet());
     }
-    final manifest = jsonDecode(manifestRaw) as Map<String, dynamic>;
-    final worldName = manifest['title'] as String;
 
-    final worldRaw = await _tryLoad('$base/world-blueprint.json');
-    final charRaw = await _tryLoad('$base/blueprint.json');
-    if (worldRaw == null && charRaw == null) {
+    if (worldBlueprint == null && characterBlueprint == null) {
       report.failures.add('$dir: no blueprint files');
       return;
     }
 
     // Medyayı önce diske çıkar — converter mutlak yolları yazabilsin.
-    final mediaRoot = await _extractMedia(dir, base, manifest, report,
-        worldName: worldName);
+    final mediaRoot = await _extractMedia(dir, manifest, report,
+        worldName: worldName, loadMedia: loadMedia);
 
     final converter = WorldBlueprintConverter(
       packageName: manifest['slug'] as String? ?? dir,
@@ -140,10 +275,8 @@ class BundledWorldsInstaller {
     );
 
     final result = converter.convert(
-      worldBlueprint:
-          worldRaw == null ? null : jsonDecode(worldRaw) as Map<String, dynamic>,
-      characterBlueprint:
-          charRaw == null ? null : jsonDecode(charRaw) as Map<String, dynamic>,
+      worldBlueprint: worldBlueprint,
+      characterBlueprint: characterBlueprint,
     );
     report.issues.addAll(result.issues.map((i) => '$worldName · $i'));
 
@@ -165,7 +298,8 @@ class BundledWorldsInstaller {
         'game_system': manifest['system'],
         'source': manifest['title'],
         'pack_version': manifest['version'],
-        'installed_from': 'assets',
+        'installed_from': installedFrom,
+        if (catalogVersion != null) 'catalog_version': catalogVersion,
         if (manifest['description'] != null)
           'description': manifest['description'],
         if (_coverPath(mediaRoot, manifest) != null)
@@ -204,7 +338,7 @@ class BundledWorldsInstaller {
     // dünyada yazmıyor, o yüzden yukarıdaki `load`'dan alındı.
     worldId ??= worldData['world_id'] as String?;
     await _installCharacters(worldId, result.characters, build, report,
-        worldName: worldName);
+        worldName: worldName, freshIds: asCopy);
     report.installed.add(worldName);
   }
 
@@ -219,6 +353,7 @@ class BundledWorldsInstaller {
     BuiltinDnd5eV2Build build,
     InstallReport report, {
     required String worldName,
+    bool freshIds = false,
   }) async {
     if (characters.isEmpty) return;
     if (worldId == null) {
@@ -227,10 +362,19 @@ class BundledWorldsInstaller {
       return;
     }
     final now = DateTime.now().toUtc().toIso8601String();
-    for (final json in characters) {
-      final id = json['id'] as String;
+    for (var json in characters) {
+      var id = json['id'] as String;
       try {
-        if (await _chars.exists(id)) continue;
+        if (await _chars.exists(id)) {
+          // Blueprint id'leri deterministik: aynı dünyayı ikinci kez kurmak
+          // DM'in level-up'ını ezmesin diye var olan satıra dokunulmuyor.
+          // Ama katalogdan indirme yeni bir dünya kopyası açıyor; oradaki
+          // karakterler o kopyaya ait yeni id'lerle gitmeli, yoksa kopya
+          // karaktersiz kalır.
+          if (!freshIds) continue;
+          id = const Uuid().v4();
+          json = {...json, 'id': id};
+        }
         await _chars.save(Character(
           id: id,
           templateId: build.schema.schemaId,
@@ -256,10 +400,10 @@ class BundledWorldsInstaller {
   /// Zaten yazılmış dosyalar atlanır (idempotent, ikinci kurulum ucuz).
   Future<String> _extractMedia(
     String dir,
-    String base,
     Map<String, dynamic> manifest,
     InstallReport report, {
     required String worldName,
+    required WorldFileLoader loadMedia,
   }) async {
     final root = p.join(AppPaths.worldsDir, '_bundled', dir);
     final files = _mediaPaths(manifest['files']);
@@ -269,10 +413,13 @@ class BundledWorldsInstaller {
       final target = _mediaTarget(root, worldName, rel);
       if (await target.exists()) continue;
       try {
-        final bytes = await rootBundle.load('$base/$rel');
+        final bytes = await loadMedia(rel);
+        if (bytes == null) {
+          report.issues.add('$dir · media: unavailable $rel');
+          continue;
+        }
         await target.parent.create(recursive: true);
-        await target.writeAsBytes(bytes.buffer
-            .asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+        await target.writeAsBytes(bytes);
       } catch (e) {
         report.issues.add('$dir · media: cannot extract $rel ($e)');
       }
@@ -301,27 +448,56 @@ class BundledWorldsInstaller {
 
   /// Manifest `files` bloğundan her string yaprağı toplar (`pdf`,
   /// `cover_image`, `media.maps[]`, `media.tokens[]`, …).
+  ///
+  /// `pdf_url` hariç: o bir yayıncı indirme linki, dosya yolu değil — medya
+  /// yolu sanılırsa her kurulumda "dosya bulunamadı" issue'su üretir.
   static List<String> _mediaPaths(Object? node) {
     final out = <String>[];
-    void walk(Object? n) {
+    void walk(Object? n, String? key) {
+      if (key == 'pdf_url') return;
       if (n is String) {
-        if (n.isNotEmpty) out.add(n);
+        if (n.isNotEmpty && !out.contains(n)) out.add(n);
       } else if (n is List) {
         for (final e in n) {
-          walk(e);
+          walk(e, key);
         }
       } else if (n is Map) {
-        for (final e in n.values) {
-          walk(e);
-        }
+        n.forEach((k, v) => walk(v, k.toString()));
       }
     }
 
-    walk(node);
+    walk(node, null);
     return out;
   }
 
   // ── Asset yükleme ────────────────────────────────────────────────────
+
+  /// Asset bundle'dan JSON oku (debug'da dosya sisteminden de dener).
+  Future<Map<String, dynamic>?> _tryLoadJson(String asset) async {
+    final raw = await _tryLoad(asset);
+    if (raw == null) return null;
+    final decoded = jsonDecode(raw);
+    return decoded is Map ? decoded.cast<String, dynamic>() : null;
+  }
+
+  /// Asset bundle'dan ham bayt; yoksa null.
+  Future<Uint8List?> _loadAssetBytes(String asset) async {
+    try {
+      final data = await rootBundle.load(asset);
+      return data.buffer
+          .asUint8List(data.offsetInBytes, data.lengthInBytes);
+    } catch (_) {
+      if (kDebugMode && !kIsWeb) {
+        try {
+          final f = File(asset);
+          if (await f.exists()) return await f.readAsBytes();
+        } catch (_) {
+          // fall through
+        }
+      }
+      return null;
+    }
+  }
 
   Future<String?> _tryLoad(String asset) async {
     try {

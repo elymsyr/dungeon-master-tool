@@ -80,6 +80,9 @@ class _MarketplaceFeed extends ConsumerWidget {
     final isPackage = filters.type == 'package';
     final showOfficialPackages =
         (isAll || isPackage) && filters.contentType != 'community';
+    // Same for the official world catalog under "All"/"Worlds".
+    final showOfficialWorlds =
+        (isAll || filters.type == 'world') && filters.contentType != 'community';
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
@@ -89,7 +92,9 @@ class _MarketplaceFeed extends ConsumerWidget {
           return;
         }
         if (isAll) ref.invalidate(soundpackCatalogProvider);
-        if (showOfficialPackages) ref.invalidate(firstPartyCatalogProvider);
+        if (showOfficialPackages || showOfficialWorlds) {
+          ref.invalidate(firstPartyManifestProvider);
+        }
         invalidateCachePrefix('marketplace:');
         ref.invalidate(marketplaceProvider);
       },
@@ -127,7 +132,7 @@ class _MarketplaceFeed extends ConsumerWidget {
               if (items.isEmpty) {
                 // In "All"/"Packages" the catalog below carries content — skip
                 // the empty state.
-                if (isAll || showOfficialPackages) {
+                if (isAll || showOfficialPackages || showOfficialWorlds) {
                   return const SizedBox.shrink();
                 }
                 return SocialEmptyState(
@@ -156,6 +161,9 @@ class _MarketplaceFeed extends ConsumerWidget {
           // Official (first-party) packages flow inline right after the
           // user-shared listings — same card look, no separate section.
           if (showOfficialPackages) const OfficialPackagesCatalogView(),
+          if (showOfficialWorlds)
+            OfficialPackagesCatalogView(
+                provider: firstPartyWorldCatalogProvider),
           if (isAll) ...[
             const SizedBox(height: 8),
             const SoundpackCatalogView(),

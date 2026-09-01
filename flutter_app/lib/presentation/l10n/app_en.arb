@@ -955,6 +955,10 @@
   "filterPackages": "Packages",
   "filterCharacters": "Characters",
   "filterSoundpacks": "Soundpacks",
+  "catalogExternalPdfNote": "PDF downloads from the publisher",
+  "@catalogExternalPdfNote": {
+    "description": "Shown on an official world's install dialog: the adventure PDF is not hosted in our catalog and is fetched from the publisher instead."
+  },
   "itemTypeWorld": "World",
   "itemTypeTemplate": "Template",
   "itemTypePackage": "Package",

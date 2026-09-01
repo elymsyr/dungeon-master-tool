@@ -910,6 +910,7 @@
   "filterPackages": "Paquets",
   "filterCharacters": "Personnages",
   "filterSoundpacks": "Packs audio",
+  "catalogExternalPdfNote": "Le PDF est téléchargé chez l'éditeur",
   "itemTypeWorld": "Monde",
   "itemTypeTemplate": "Modèle",
   "itemTypePackage": "Paquet",
