@@ -9,6 +9,7 @@ import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 
@@ -228,7 +229,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
 /// [resolveOwnerLabelById] — `payload_json`'a gömülü owner claim/release/
 /// assign RPC'lerinden sonra stale kalır.
 String resolveCharacterOwnerLabel(WidgetRef ref, Character character) =>
-    resolveOwnerLabelById(ref, character.ownerId, character.worldId);
+    resolveOwnerLabelById(ref, character.normalizedOwnerId, character.worldId);
 
 /// Resolves the owner label from a canonical `owner_id` column.
 /// Returns `'You'` when the signed-in user owns it, otherwise looks up the

@@ -12,7 +12,7 @@ This file is the **template and style guide** for every Dungeon Master Tool rele
 4. **Be specific about breakage.** If the user must do something (uninstall, apply migration, re-publish), say it at the top in a `> Heads-up` callout and again in **Upgrade notes**.
 5. **Absolute dates only.** "April 2026", not "last month".
 6. **No emojis** unless the product UI itself uses one (e.g. the `📥` download glyph in listing cards — fine to mirror here).
-7. **Keep Known Issues honest.** If something is deferred or intentional-for-now, say so. Silence reads as a bug waiting to bite.
+7. **Keep Known Issues honest.** If something is deferred or intentional-for-now, say so. Silence reads as a bug waiting to bite. The list is maintained in [KNOWN_ISSUES.md](KNOWN_ISSUES.md) — update that file first, then copy its still-open items into the release note. Past releases are never edited afterwards.
 
 ---
 
@@ -120,8 +120,9 @@ Copy everything between the `<!-- BEGIN -->` and `<!-- END -->` markers into `RE
 
 ### Known issues
 
-- **{{Issue title}}** — {{what the user will observe, and whether it's deferred-by-design or a real bug tracked for a later release}}.
-- **{{Issue title}}** — {{same treatment}}.
+The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Open at the time of this release:
+
+- **{{Issue title}}** — {{copied from the Open section of KNOWN_ISSUES.md}}.
 - **{{Issue title}}** — {{same treatment}}.
 
 ---
@@ -144,7 +145,7 @@ Before publishing, walk this list top to bottom:
 - [ ] No Supabase / backend migration file names appear anywhere in the note — they belong in the deployment doc, not here.
 - [ ] **Bug fixes** only lists things a user could have observed — no "fixed flaky test", no "renamed internal widget".
 - [ ] **Deprecations & removals** covers every removed UI surface, setting, exception type, or public flag.
-- [ ] **Known issues** is not empty if there are known deferred items — honesty over polish.
+- [ ] **Known issues** matches the Open section of [KNOWN_ISSUES.md](KNOWN_ISSUES.md), and that file's *Last reviewed* line names this release.
 - [ ] No placeholder `{{…}}` strings remain.
 - [ ] Preview renders cleanly on GitHub (tables align, callouts render, no stray HTML).
 

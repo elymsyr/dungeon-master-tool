@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: chargen
-updated: 2026-08-13
+updated: 2026-09-01
 tags: [moc]
 ---
 
@@ -27,6 +27,12 @@ tags: [moc]
 
 > [!warning] Bir mekaniğin "alanda değeri var" olması sayfaya ulaştığı anlamına gelmiyor — audit **M1** (2026-08-13)
 > `test/domain/services/bundled_pack_resolve_test.dart` artık 19 paketin oyuncuya dönük kartlarının yazdığı **her** alanı gezip [[character_resolver]] üzerinden bir `EffectiveCharacter` etkisi istiyor: **68 (paket, mekanik alan) çifti, 227 iddia**. Bir alan ya bir sayfa probuna, ya `notResolverRead`'e (okuyucusu adlandırılmış 24 alan), ya da `unreadByAnyone`'a düşmek zorunda; başka her şey testi kırar. İlk koşuda **hiçbir paket feat'inin ASI'sini uygulamadığı** ortaya çıktı — `asi_ability_options` kurulumdan sonra id tutuyor, sezgisel ise yalnız `{_lookup, name}` okuyordu; tek okuyucu [[entity_ref]]`.abilityAbbrevFromRef` oldu.
+
+> [!info] Sahiplik multiplayer'a bağlı değil — 2026-09-01
+> `ownerId` düzenleme iznini ([[character_editor_screen]] `_canEdit`) ve hub Characters sekmesi görünürlüğünü kapatır, ama claim/release yalnız online dünyalarda ([[character_claim_service]] RPC'leri) vardı. Marketplace'ten kurulan bir dünyanın PC'leri sahipsiz (veya yazarın uid'i ile) geldiği için kalıcı read-only kalıyordu. Şimdi:
+> - **Offline dünya = yerel sahiplik.** `characters_sidebar._OfflineCharacterRow` menüsünde Claim/Release var; `characterListProvider.update()` ile sadece `ownerId` patch'lenir (mirror push zaten online olmayan dünyada erken döner).
+> - **Mirror'lanmamış dünyada düzenleme her zaman açık** — sahipliği doğrulayacak server satırı yok (`_canEdit`: `!onlineWorldIds.contains(worldId)` → true).
+> - **Guest release marker.** Çıkış yapmış kullanıcı için `ownerId == null` = "benim", dolayısıyla release'i ifade edemez; `kGuestReleasedOwnerId` (`character_ext.dart`) yerel işareti kullanılır. Tek sahiplik predicate'i `Character.isOwnedBy(selfUid)`; `normalizedOwnerId` marker'ı buluta çıkmadan `null`'a çevirir (`_mirrorPush`). Guard: `test/domain/entities/character_ownership_test.dart`.
 
 ## Data Flow
 Wizard draft ([[character_draft_notifier]]) → [[level_up_planner]] emits deltas + [[pending_choices]] → picks persisted → at read time [[character_resolver]] folds class/subclass/feat/species entities + effects into [[effective_character]].

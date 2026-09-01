@@ -1,0 +1,58 @@
+{
+  "slug": "cold-bounty-5e",
+  "title": "The Cold Bounty",
+  "system": "dnd5e",
+  "publisher": "1Shot Adventures",
+  "author": "JC Connors (thalcos)",
+  "license": "all-rights-reserved",
+  "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
+  "source_url": "https://1shotadventures.com/the-cold-bounty/",
+  "version": "1.0.0",
+  "description": "A cold mountain survival adventure for 4-6 2nd level D&D 5E characters. After a failed bounty hunt in the frozen Zark mountains, the PCs must survive a blizzard, navigate ice crevasses, and confront a sorcerer building a platinum golem. Suitable for 4-6 2nd level characters.",
+  "files": {
+    "pdf": "Cold-Bounty-5E-2.pdf",
+    "pdf_url": "https://1shotadventures.com/download/2935/?tmstv=1772964119",
+    "cover_image": "media/Cold-Bounty-Title.jpg",
+    "media": {
+      "maps": [
+        "media/Maps/Mountain-Shelter.webp",
+        "media/Maps/Old-Cave.webp"
+      ],
+      "handouts": [
+        "media/Handouts/HandoutA-Poster.jpg",
+        "media/Handouts/HandoutB-ZarakSeal-GURPS.jpg",
+        "media/Handouts/HandoutB-ZarkSeal-5E.jpg"
+      ],
+      "tokens": [
+        "media/Tokens/Aldara.webp",
+        "media/Tokens/Cariyen.webp",
+        "media/Tokens/Count-Mannheim.webp",
+        "media/Tokens/Fat-Farlsbag.webp",
+        "media/Tokens/Golem.webp",
+        "media/Tokens/Hobgoblin-Leader.webp",
+        "media/Tokens/Hobgoblin.webp",
+        "media/Tokens/Ironmouth-Spider.webp",
+        "media/Tokens/Izorzah.webp",
+        "media/Tokens/Ott.webp",
+        "media/Tokens/PC-Coppertong.webp",
+        "media/Tokens/PC-Enfys.webp",
+        "media/Tokens/PC-Halsey.webp",
+        "media/Tokens/PC-Sisley.webp",
+        "media/Tokens/PC-William.webp",
+        "media/Tokens/Slave-2.webp",
+        "media/Tokens/Slave.webp",
+        "media/Tokens/Yeti.webp"
+      ],
+      "gcs_characters": [
+        "media/GURPS GCS Characters/Aldara-the-Scout.gcs",
+        "media/GURPS GCS Characters/Crag-Yeti.gcs",
+        "media/GURPS GCS Characters/Fat-Farlsbag.gcs",
+        "media/GURPS GCS Characters/Hobgoblin-Captain.gcs",
+        "media/GURPS GCS Characters/Hobgoblin-Henchman.gcs",
+        "media/GURPS GCS Characters/Ironmouth-Spider.gcs",
+        "media/GURPS GCS Characters/I'Zor'zah-the-Azure.gcs",
+        "media/GURPS GCS Characters/Slave.gcs"
+      ]
+    }
+  }
+}

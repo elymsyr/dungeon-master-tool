@@ -1249,3 +1249,7 @@ Kullanıcı gözlemi: "elle oluşturulan karakterde Resolved Grants alanı hiç 
 - **Admin "Install bundled worlds" is hidden on mobile**: `BundledWorldsInstaller.isAvailable()` returns false on Android/iOS before probing the bundle.
 - **Bug: marketplace world installed, Characters tab empty.** `WorldCharactersNotifier.bootstrap` computed a merged local+cloud list and then set state to the *cloud* list. The ownerless PCs an install writes live only in Drift, so a signed-in user saw nothing (signed-out worked — `_service == null` returns early). Now sets `merged`. `first_party_catalog_provider._installWorld` also invalidates `characterListProvider`, matching the admin toggle.
 - Updated notes: [[bundled_worlds_installer]], [[character_claim_service]].
+
+## 2026-09-01 — Character ownership works without multiplayer
+- Claim/Release moved off the online-only path: offline worlds get a local `ownerId` patch from the sidebar row menu, and `_canEdit` no longer gates on a `world_members` row for worlds that were never mirrored. Guests get `kGuestReleasedOwnerId` because `null` already means "mine" for them; `Character.isOwnedBy` / `normalizedOwnerId` (`character_ext.dart`) are the single predicate + cloud-safe accessor.
+- Updated notes: [[Character-System]].

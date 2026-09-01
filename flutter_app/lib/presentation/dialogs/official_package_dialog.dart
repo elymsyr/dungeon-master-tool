@@ -191,6 +191,17 @@ class OfficialPackageDialog extends ConsumerWidget {
                   palette: palette,
                 ),
               ],
+              if (status.phase == CatalogInstallPhase.error &&
+                  (status.message ?? '').isNotEmpty) ...[
+                const SizedBox(height: 12),
+                // Retry butonu tek başına sebebi söylemiyordu; kurulum neden
+                // düştü (payload yok, medya inmedi, ...) burada görünsün.
+                SelectableText(
+                  status.message!,
+                  style: TextStyle(
+                      fontSize: 12, height: 1.4, color: palette.dangerBtnBg),
+                ),
+              ],
             ],
           ),
         ),

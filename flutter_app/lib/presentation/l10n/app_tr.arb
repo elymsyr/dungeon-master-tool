@@ -345,6 +345,7 @@
   "charactersEmpty": "Henüz karakter yok.",
   "charBtnOpen": "Karakteri Aç",
   "charBtnRelease": "Bırak",
+  "charBtnClaim": "Sahiplen",
   "charPullingWorld": "Dünya indiriliyor...",
   "charWorldNotFound": "Karakterin dünyası yerelde bulunamadı.",
   "charWorldMissingOnDisk": "\"{name}\" dünyası diskte bulunamadı — karakter açılamaz.",

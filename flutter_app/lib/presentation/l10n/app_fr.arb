@@ -345,6 +345,7 @@
   "charactersEmpty": "Aucun personnage pour le moment.",
   "charBtnOpen": "Ouvrir le personnage",
   "charBtnRelease": "Libérer",
+  "charBtnClaim": "Revendiquer",
   "charPullingWorld": "Téléchargement du monde...",
   "charWorldNotFound": "Le monde du personnage est introuvable localement.",
   "charWorldMissingOnDisk": "Monde \"{name}\" introuvable sur le disque — impossible d'ouvrir le personnage.",

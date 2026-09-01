@@ -362,6 +362,7 @@
   "charactersEmpty": "No characters yet.",
   "charBtnOpen": "Open Character",
   "charBtnRelease": "Release",
+  "charBtnClaim": "Claim",
   "charPullingWorld": "Downloading world...",
   "charWorldNotFound": "Character world not found locally.",
   "charWorldMissingOnDisk": "World \"{name}\" not found on disk — character cannot open.",

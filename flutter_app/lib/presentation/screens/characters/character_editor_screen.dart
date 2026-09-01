@@ -19,6 +19,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
@@ -219,6 +220,11 @@ class _CharacterEditorScreenState
   /// offline). World-bound karakterde DM role lookup `worldId` (canonical) ile
   /// yapılır; eski `worldName` set ama `worldId` null durumunda DM gate
   /// kapalıdır — kullanıcı bir kez save edip worldId hidratasyonu olunca açılır.
+  ///
+  /// Multiplayer olmayan (mirror'lanmamış) bir dünyanın karakterleri her zaman
+  /// düzenlenebilir: ownership'i doğrulayacak bir server satırı yoktur ve
+  /// indirilen/paketlenmiş dünyalar `ownerId` null (veya yazarın uid'i) ile
+  /// gelir — bunlar aksi halde kalıcı read-only kalırdı.
   bool get _canEdit {
     final c = _working;
     if (c == null) return false;
@@ -227,6 +233,7 @@ class _CharacterEditorScreenState
     if (c.ownerId == selfUid) return true;
     final wid = c.worldId;
     if (wid == null) return false;
+    if (!ref.read(onlineWorldIdsProvider).contains(wid)) return true;
     final role = ref.read(worldRoleProvider(wid)).valueOrNull;
     return role == WorldRole.dm;
   }
