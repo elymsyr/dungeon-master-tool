@@ -1,147 +1,860 @@
 {
+  "version": "2.0.0",
+  "source_system": "dnd5e",
+  "app_schema": "builtin-dnd5e-default-v2",
   "characters": [
     {
       "source_name": "Cariyen Kraye",
+      "character_type": "pc",
       "mapping": {
         "name": "Cariyen Kraye",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Ranger"}],
-        "class_levels": {"Ranger": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Soldier"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Neutral Good"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Ranger"
+          }
         ],
-        "stat_block": {"STR": 14, "DEX": 15, "CON": 12, "INT": 13, "WIS": 14, "CHA": 10},
-        "combat_stats": {"hp": 16, "max_hp": 16, "ac": 15, "speed": "30 ft", "level": 2},
+        "class_levels": {
+          "Ranger": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Guide"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Neutral Good"
+        },
+        "xp": 300,
         "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 15,
+          "CON": 12,
+          "INT": 13,
+          "WIS": 14,
+          "CHA": 10
+        },
+        "combat_stats": {
+          "hp": 16,
+          "max_hp": 16,
+          "ac": 15,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+2"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Dexterity",
+              "ability": "DEX",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Survival",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Nature",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Arcana",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Stealth",
+              "ability": "DEX",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Chain Shirt",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Longbow",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword",
+            "equipped": true
+          }
+        ],
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Hunter's Mark",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Cure Wounds",
+            "equipped": true
+          }
+        ],
+        "spell_slots": {
+          "max": {
+            "1": 2
+          },
+          "remaining": {
+            "1": 2
+          }
+        },
+        "spell_save_dc": 12,
+        "spell_attack_bonus": 4,
+        "gp": 10,
         "imagePath": "media/Tokens/Cariyen.webp",
-        "backstory": "Your fathers couldn't decide how to raise you, so you spent summers in the woods of Caithness tracking orcs, and the winters studying magic in Craine. Now you have no idea how to answer the question \"so what do you do, sir?\" when asked. Except feeling deep guilt over what just happened. That old wizard paid you to insure that his alchemy cabin was secure. You should have gotten it perfect. It was in the middle of the woods, and all he needed protection from was bears and the occasional, overconfident bandit. But all your careful protection spells failed when Fat Farlsbag broke in, cut the old man's throat, and stole his life's work. When you went crying to your father, he had the right advice - \"I didn't teach you to track orcs, son, I taught you to hunt down God-damned butchers.\"",
-        "personality_traits": "I am haunted by the memory of failing to protect the old wizard. I will not let it happen again.",
-        "ideals": "Justice. The guilty must pay for their crimes.",
-        "bonds": "I owe a debt to the old wizard's memory. Fat Farlsbag must be found.",
-        "flaws": "I am consumed by guilt and sometimes act rashly because of it.",
-        "appearance": "Tracker, survivalist, and magical security expert."
+        "description": "Tracker, survivalist, and magical security expert",
+        "backstory": "Your fathers couldn't decide how to raise you, so you spent summers in the woods of Caithness tracking orcs, and the winters studying magic in Craine. Now you have no idea how to answer the question \"so what do you do, sir?\" when asked. Except feeling deep guilt over what just happened. That old wizard paid you to insure that his alchemy cabin was secure. You should have gotten it perfect. It was in the middle of the woods, and all he needed protection from was bears and the occasional, overconfident bandit. But all your careful your protection spells failed when Fat Farlsbag broke in, cut the old man's throat, and stole his life's work. When you went crying to your father, he had the right advice - \"I didn't teach you to track orcs, son, I taught you to hunt down God-damned butchers.\"",
+        "dmNotes": "The PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. The 2nd-level ranger build here is a suggestion for \"4-6 2nd level characters\"; swap it freely."
       }
     },
     {
       "source_name": "Enfys Loom",
+      "character_type": "pc",
       "mapping": {
         "name": "Enfys Loom",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Sorcerer"}],
-        "class_levels": {"Sorcerer": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Sage"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Chaotic Good"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Sorcerer"
+          }
         ],
-        "stat_block": {"STR": 10, "DEX": 14, "CON": 13, "INT": 12, "WIS": 11, "CHA": 16},
-        "combat_stats": {"hp": 14, "max_hp": 14, "ac": 13, "speed": "30 ft", "level": 2},
+        "class_levels": {
+          "Sorcerer": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Sage"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Good"
+        },
+        "xp": 300,
         "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 10,
+          "DEX": 14,
+          "CON": 13,
+          "INT": 12,
+          "WIS": 11,
+          "CHA": 16
+        },
+        "combat_stats": {
+          "hp": 14,
+          "max_hp": 14,
+          "ac": 12,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+2"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            },
+            {
+              "name": "Charisma",
+              "ability": "CHA",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Arcana",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "History",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Persuasion",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Insight",
+              "ability": "WIS",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Quarterstaff",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Component Pouch"
+          }
+        ],
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Fire Bolt",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Light",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Prestidigitation",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Burning Hands",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Magic Missile",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Mage Armor",
+            "equipped": true
+          }
+        ],
+        "spell_slots": {
+          "max": {
+            "1": 3
+          },
+          "remaining": {
+            "1": 3
+          }
+        },
+        "spell_save_dc": 13,
+        "spell_attack_bonus": 5,
+        "gp": 10,
         "imagePath": "media/Tokens/PC-Enfys.webp",
-        "backstory": "You last saw your brother, Brynmor, two years ago. You don't know what happened to him. He was studying with that arrogant archmage Jacob Hermanity, and then one day, he just vanished from his house. No sign of him, except for a crumpled up wanted poster of Fat Farlsbag. You questioned Hermanity, but the wizard refused to answer your questions. Was it a magical accident? Or did that jealous wizard Koi Konraght finally seek revenge on your family? Or maybe Brynmor went after Farlsbag after those three teenagers turned up dead near the well a few weeks before? If you had some more silver, you'd pay a diviner to figure this all out. But in the meantime, you're going to have to get the answers yourself, and it starts with Fat Farlsbag.",
-        "personality_traits": "I am good-natured but determined. I will find my brother no matter what.",
-        "ideals": "Family. My brother is out there, and I will find him.",
-        "bonds": "My brother Brynmor vanished while studying with Archmage Hermanity. Fat Farlsbag's wanted poster was found in his room.",
-        "flaws": "I am impulsive and sometimes rush into danger without thinking.",
-        "appearance": "Good-natured pyromancer, seeking her brother."
-      }
-    },
-    {
-      "source_name": "Sir Halsey",
-      "mapping": {
-        "name": "Sir Halsey",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Fighter"}],
-        "class_levels": {"Fighter": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Soldier"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Lawful Good"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
-        ],
-        "stat_block": {"STR": 16, "DEX": 12, "CON": 14, "INT": 10, "WIS": 13, "CHA": 11},
-        "combat_stats": {"hp": 22, "max_hp": 22, "ac": 18, "speed": "30 ft", "level": 2},
-        "proficiency_bonus": 2,
-        "imagePath": "media/Tokens/PC-Halsey.webp",
-        "backstory": "You lost your knife in the skull of that earless orc, and you lost your shield when that idiot, one-handed dwarf thought you were an enemy and split it right in half with his axe. At least you didn't lose your finger when that stunted thing with two tails - God only knows what it was - tried to bite it right off. What a disaster. At least when you saved the general at Orcslayer Pass, you saw the battle coming hours away (though those pointy-ears never arrived on time to prevent the massacre that time). But now you're worried that there's another enemy force heading south to the towns. The surviving men here won't survive long without your help, too. Fat Farlsbag can wait. Time to round up whoever's left and haul south.",
-        "personality_traits": "I am a seasoned war hero who puts duty above personal vendettas.",
-        "ideals": "Duty. The surviving men must be protected. Fat Farlsbag can wait.",
-        "bonds": "I saved the general at Orcslayer Pass. I will not fail these men.",
-        "flaws": "I am too focused on the big picture and sometimes neglect personal relationships.",
-        "appearance": "Famous war hero of Orcslayer Pass."
+        "description": "Good-natured pyromancer, seeking her brother",
+        "backstory": "You last saw your brother, Brynmor, two years ago. You don't know what happened to him. He was studying with that arrogant archmage Jacob Hermanity, and then one day, he just vanished from his house. No sign of him, except for a crumpled up wanted poster of Fat Farlsbag. You questionsed Hermanity, but the wizard refused to answer your questions. Was it a magical accident? Or did that jealous wizard Koi Konraght finally seek revenge on your family? Or maybe Brynmore went after Farlsbag after those three teenagers turned up dead near the well a few weeks before? If you had some more silver, you'd pay a diviner to figure this all out. But in the meantime, you're going to have to get the answers yourself, and it starts with Fat Farlsbag..",
+        "dmNotes": "The PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. The 2nd-level sorcerer build here is a suggestion for \"4-6 2nd level characters\"; swap it freely."
       }
     },
     {
       "source_name": "King Coppertong",
+      "character_type": "pc",
       "mapping": {
         "name": "King Coppertong",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Fighter"}],
-        "class_levels": {"Fighter": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Artisan"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Lawful Neutral"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Fighter"
+          }
         ],
-        "stat_block": {"STR": 15, "DEX": 12, "CON": 14, "INT": 13, "WIS": 10, "CHA": 14},
-        "combat_stats": {"hp": 20, "max_hp": 20, "ac": 16, "speed": "30 ft", "level": 2},
+        "class_levels": {
+          "Fighter": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Artisan"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Lawful Neutral"
+        },
+        "xp": 300,
         "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 15,
+          "DEX": 12,
+          "CON": 14,
+          "INT": 13,
+          "WIS": 10,
+          "CHA": 14
+        },
+        "combat_stats": {
+          "hp": 20,
+          "max_hp": 20,
+          "ac": 16,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+1"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Persuasion",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Insight",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Athletics",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Investigation",
+              "ability": "INT",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          }
+        ],
+        "tool_proficiencies": [
+          {
+            "lookup": "tool",
+            "match": "name",
+            "value": "Jeweler's Tools"
+          },
+          {
+            "lookup": "tool",
+            "match": "name",
+            "value": "Mason's Tools"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Chain Mail",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Warhammer",
+            "equipped": true
+          }
+        ],
+        "gp": 15,
         "imagePath": "media/Tokens/PC-Coppertong.webp",
-        "backstory": "Fat Farlsberg's men set fire to your shop in Solginul! The dunderheaded idiots didn't even bother to steal your merchandise before they burned the place, so you had to spend week pickin' off the molten tin and silver and gold from what was left of the place. And then three lads show up beaten murdered right in the middle of the town, with \"F\"s carved into their flesh. Time for this murderin' spitface to hang! You haven't picked up trusty Foeflayer since your bridge-building days over a decade now - but she's screaming for blood, and you don't care if you have to stomp across a hundred miles of mountains to give her what she needs!",
-        "personality_traits": "I am a straightforward craftsman who values honest work and hates thieves.",
-        "ideals": "Revenge. Fat Farlsbag burned my shop and killed innocent people. He must pay.",
-        "bonds": "My shop in Solginul was burned by Farlsbag's men. Three lads were murdered with \"F\"s carved into their flesh.",
-        "flaws": "I am vengeful and sometimes let my anger cloud my judgment.",
-        "appearance": "Honest jewel merchant and skilled engineer."
+        "description": "Honest jewel merchant and skilled engineer",
+        "backstory": "Fat Farlsberg's men set fire to your shop in Solginul! The dunderheaded idiots didn't even bother to steal your merchandise before they burned the place, so you had to spend week pickin' off the molten tin and silver and gold from what was left of the place. And then three lads show up beaten murdered right in the middle of the town, with \"F\"s carved into their flesh. TIme for this murderin' spitface to hang! You haven't picked up trusty Foeflayer since your bridge-building days - over a decade now - but she's screaming for blood, and you don't care if you have to stomp across a hundred miles of mountains to give her what she needs!",
+        "dmNotes": "The PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. \"Foeflayer\" is his named weapon in the backstory; it is statted here as a plain warhammer because the source gives it no rules. The 2nd-level fighter build is a suggestion; swap it freely."
       }
     },
     {
-      "source_name": "William Exel",
+      "source_name": "Sir Halsey",
+      "character_type": "pc",
       "mapping": {
-        "name": "William Exel",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Ranger"}],
-        "class_levels": {"Ranger": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Noble"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Chaotic Good"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
+        "name": "Sir Halsey",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Fighter"
+          }
         ],
-        "stat_block": {"STR": 12, "DEX": 16, "CON": 12, "INT": 11, "WIS": 13, "CHA": 14},
-        "combat_stats": {"hp": 14, "max_hp": 14, "ac": 14, "speed": "30 ft", "level": 2},
+        "class_levels": {
+          "Fighter": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Soldier"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Lawful Good"
+        },
+        "xp": 300,
         "proficiency_bonus": 2,
-        "imagePath": "media/Tokens/PC-William.webp",
-        "backstory": "You are not who people think you are. Your real name is Joclyn Corolinus, Princess of Arvey and heir to the House of Four Chambers. But you are sick of the gossip, the dancing, and the diplomatic dinners. Your elven grandmother was a warrior, and you loved her stories of skirmishes against the orcs and hobgoblins of Zarak. Surely her blood runs strong in your veins! You've won the archery contest three years in a row! So when you heard that Arvey was forming a war party to hunt down that brigand and murderer Fat Farlsbag, you decided to join. Scissors to your hair, scale armor from the guardroom, you fit right in. Although you've had to keep a low profile since you saw that your cousin, Count Conrad, was in the war party and looking for you.",
-        "personality_traits": "I am impatient and loud-mouthed, but brave and skilled with a bow.",
-        "ideals": "Freedom. I will not be bound by royal expectations.",
-        "bonds": "My cousin Count Conrad is in the war party. I must avoid being recognized.",
-        "flaws": "I am impulsive and sometimes act without thinking of the consequences.",
-        "appearance": "Impatient, loud-mouthed teen... who shouldn't be here."
+        "stat_block": {
+          "STR": 16,
+          "DEX": 12,
+          "CON": 14,
+          "INT": 10,
+          "WIS": 13,
+          "CHA": 11
+        },
+        "combat_stats": {
+          "hp": 22,
+          "max_hp": 22,
+          "ac": 16,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+1"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Athletics",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Intimidation",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Survival",
+              "ability": "WIS",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Chain Mail",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Longsword",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Javelin"
+          }
+        ],
+        "gp": 10,
+        "imagePath": "media/Tokens/PC-Halsey.webp",
+        "description": "Famous war hero of Orcslayer Pass",
+        "backstory": "You lost your knife in the skull of that earless orc, and you lost your shield when that idiot, one-handed dwarf thought you were an enemy and split it right in half with his axe. At least you didn't lose your finger when that stunted thing with two tails - God only knows what it was - tried to bite it right off. What a disaster. At least when you saved the general at Orcslayer Pass, you saw the battle coming hours away (though those pointy-ears never arrived on time to prevent the massacre that time). But now you're worried that there's another enemy force heading south to the towns. The surviving men here won't survive long without your help, too. Fat Farlsbag can wait. Time to round up whoever's left and haul south.",
+        "dmNotes": "The PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. Note the backstory: his knife and his shield are both gone as of the ambush, so no shield is carried and his AC is chain mail alone. The 2nd-level fighter build is a suggestion; swap it freely."
       }
     },
     {
       "source_name": "Sisley Bauquemare",
+      "character_type": "pc",
       "mapping": {
         "name": "Sisley Bauquemare",
-        "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
-        "class_refs": [{"lookup": "class", "match": "name", "value": "Rogue"}],
-        "class_levels": {"Rogue": 2},
-        "background_ref": {"lookup": "background", "match": "name", "value": "Criminal"},
-        "alignment_ref": {"lookup": "alignment", "match": "name", "value": "Chaotic Neutral"},
-        "languages": [
-          {"lookup": "language", "match": "name", "value": "Common"}
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Rogue"
+          }
         ],
-        "stat_block": {"STR": 10, "DEX": 16, "CON": 12, "INT": 14, "WIS": 11, "CHA": 15},
-        "combat_stats": {"hp": 15, "max_hp": 15, "ac": 15, "speed": "30 ft", "level": 2},
+        "class_levels": {
+          "Rogue": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Criminal"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Neutral"
+        },
+        "xp": 300,
         "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 10,
+          "DEX": 16,
+          "CON": 12,
+          "INT": 14,
+          "WIS": 11,
+          "CHA": 15
+        },
+        "combat_stats": {
+          "hp": 15,
+          "max_hp": 15,
+          "ac": 15,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+3"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Dexterity",
+              "ability": "DEX",
+              "proficient": true
+            },
+            {
+              "name": "Intelligence",
+              "ability": "INT",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Sleight of Hand",
+              "ability": "DEX",
+              "proficient": true,
+              "expertise": true
+            },
+            {
+              "name": "Stealth",
+              "ability": "DEX",
+              "proficient": true,
+              "expertise": true
+            },
+            {
+              "name": "Deception",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Arcana",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Investigation",
+              "ability": "INT",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Thieves' Cant"
+          }
+        ],
+        "tool_proficiencies": [
+          {
+            "lookup": "tool",
+            "match": "name",
+            "value": "Thieves' Tools"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Studded Leather Armor",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Rapier",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortbow"
+          }
+        ],
+        "gp": 20,
         "imagePath": "media/Tokens/PC-Sisley.webp",
+        "description": "Wealthy, well-educated rascal - with an honest face",
         "backstory": "You loved it when they gave you the name \"The Spell Burglar!\" All the wizards of Arvey and Solginel must shudder when they hear that name whispered aloud! You've made thousands of silvers robbing incompetent wizards - which seems to be most of them these days. You've only been caught once, and that's because Archmage Hermanity is paranoid and layers illusion on illusion. And even then it was fine because he paid you to rob his nemesis of his rare water-filled crystal ball. Which also would have been fine if you hadn't broken it, and now owe Hermanity all that money back. Oh well, fastest way to make some coin around here is bounty hunting, so when you heard a hundred men were going to go get Fat Farlsbag, you figured you might as well join up and help.",
-        "personality_traits": "I am a charming and skilled thief who enjoys the thrill of the heist.",
-        "ideals": "Profit. There's always coin to be made, and I intend to make it.",
-        "bonds": "I owe Archmage Hermanity money for a broken crystal ball. I need to make coin fast.",
-        "flaws": "I am overconfident and sometimes take unnecessary risks.",
-        "appearance": "Wealthy, well-educated rascal - with an honest face."
+        "dmNotes": "The PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. The 2nd-level rogue build is a suggestion; swap it freely. Note the shared thread with Enfys Loom: both owe something to Archmage Hermanity."
+      }
+    },
+    {
+      "source_name": "Wiliam Exel",
+      "character_type": "pc",
+      "mapping": {
+        "name": "William Exel",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Ranger"
+          }
+        ],
+        "class_levels": {
+          "Ranger": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Noble"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Good"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 12,
+          "DEX": 16,
+          "CON": 12,
+          "INT": 11,
+          "WIS": 13,
+          "CHA": 14
+        },
+        "combat_stats": {
+          "hp": 14,
+          "max_hp": 14,
+          "ac": 16,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+3"
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Dexterity",
+              "ability": "DEX",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Survival",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "History",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Persuasion",
+              "ability": "CHA",
+              "proficient": true
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Elvish"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Scale Mail",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Longbow",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword",
+            "equipped": true
+          }
+        ],
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Hunter's Mark",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Longstrider",
+            "equipped": true
+          }
+        ],
+        "spell_slots": {
+          "max": {
+            "1": 2
+          },
+          "remaining": {
+            "1": 2
+          }
+        },
+        "spell_save_dc": 11,
+        "spell_attack_bonus": 3,
+        "gp": 25,
+        "imagePath": "media/Tokens/PC-William.webp",
+        "description": "Impatient, loud-mouthed teen... who shouldn't be here",
+        "backstory": "You are not who people think you are. Your real name is Joclyn Corolinus, Princess of Arvey and heir to the House of Four Chambers. But you are sick of the gossip, the dancing, and the diplomatic dinners. Your elven grandmother was a warrior, and you loved her stories of skirmishes against the orcs and hobgoblins of Zarak. Surely her blood runs strong in your veins! You've won the archery contest three years in a row! So when you heard that Arvey was forming a war party to hunt down that brigand and murderer Fat Farlsbag, you decided to join. Scissors to your hair, scale armor from the guardroom, you fit right in. Although you've had to keep a low profile since you saw that your cousin, Count Conrad, was in the war party and looking for you..",
+        "dmNotes": "The PDF prints the name as \"Wiliam Exel\" — the pregen pages' font drops one letter of every doubled \"ll\", so the printed name is William Exel (the same artifact turns \"all\" into \"al\" and \"well\" into \"wel\" throughout those pages).\n\nThe PDF prints only this name, the one-line hook and the backstory above — no ability scores, class, level, hit points or gear. The scale armor is from the backstory (\"scale armor from the guardroom\"), as is the archery. The 2nd-level ranger build is a suggestion; swap it freely.\n\nJoclyn's cousin is @[Count Conrad Mannheim](entity:npc/Count Conrad Mannheim), the dying hostage in Fat Farlsbag's camp — a ready-made hook if the party rescues him."
       }
     }
   ]

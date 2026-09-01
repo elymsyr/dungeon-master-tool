@@ -1,10 +1,54 @@
-Fix corrupted text in Fat Farlsbag's secrets (Chinese chars)
-Add missing Hobgoblin Warrior monster entity + creature actions
-Fix Mind-Controlled Slave stats (STR 12, INT 8, WIS 8, CHA 8) + Mining Tool action
-Fix I'Zor'zah CR/XP (CR 2, 450 XP) + saving throws + skills
-Add entity links (@[...](entity:slug/Name)) to all description fields
-Add source fields to all entities
-Complete missing location description_long sections
-Fix schema violations (traits_md, equipment_md on NPCs → proper refs)
-Remove Half-Elf species entity (SRD, should be lookup not world entity)
-Run --check and audit_coverage.py to verify
+Cold Bounty — port status (world-blueprint 2.0.0)
+
+Re-ported from the PDF from scratch. `--check` is clean and
+`audit_coverage.py` reports 99.7% (1 sentence below threshold, see below).
+
+Fixed in 2.0.0
+- Corrupted text in Fat Farlsbag's secrets (stray CJK characters) — gone.
+- Hobgoblin Henchmen, Mind-controlled Slaves, Ironmouth Spiders, Crag Yetis and
+  The Golem Veined with Platinum are now `monster` entities with the printed
+  stat block, not NPC prose. The encounter that referenced a nonexistent
+  "Hobgoblin Warrior" now points at the real entities.
+- Every stat block value re-read from the PDF: Fat Farlsbag CHA 14 (was 13),
+  Hobgoblin STR 13 (was 14), slaves STR 12 / INT 8 / WIS 8 / CHA 8 (were all
+  10), I'Zor'zah CR 2 / 450 XP with his Int +4, Wis +2 saves and Arcana +4.
+- 11 `creature-action` entities (one per printed attack) + SRD trait refs
+  (Martial Advantage, Fire Absorption, Immutable Form, Magic Resistance,
+  Magic Weapons) instead of prose-only stat blocks.
+- Handout A transcribed from the poster art ("REWARD 5000 coins…"); the old
+  entry invented a 1,000 gp reward that appears nowhere in the module.
+- Invented content removed: Ott's "escaped slave of I'Zor'zah" backstory, the
+  hobgoblins' crossbow stat line, Aldara's and Ott's made-up ability scores,
+  the blizzard's "1d4 cold per hour" rule, Kahd's attunement requirement.
+- Missing text restored: the DM sidebar about missing Farlsbag, the axe pulling
+  its owner north, the slaves-as-combatants rule, "Extending the Adventure",
+  the author's note, the pregen roster.
+- 8 `scene` entities for the adventure's narrative flow (there were none),
+  4 quests, 4 encounters, 7 locations with a parent region.
+- Entity links (`@[…](entity:slug/Name)`) across descriptions, beats and notes.
+- manifest.json listed media/GURPS GCS Characters/I'Zor'zah-the-Azure.gcs with
+  a straight apostrophe; the file on disk uses U+2019, so the installer would
+  have skipped it. Path fixed.
+
+Judgment calls (not defects — read before "fixing")
+- Author typos are carried verbatim per tool/content/README.md rule 0:
+  "is own plan", "occcurred", "mine cards", "int he adventure", "catacylsm",
+  "ironouth", "Farlsberg", "woth", "labryinthine", "Davinn-Kahr". The only
+  edits are extraction artifacts (line-break hyphenation).
+- The pregen pages' font drops one letter from every doubled "ll", so the text
+  layer reads "al", "wel", "spels", "Wiliam". Those are restored ("all",
+  "well", "spells", "William"). That is why audit_coverage still flags one
+  sentence ("…Koi Konraght finaly seek revenge…"): the blueprint says
+  "finally". Expected, do not chase it.
+- The PDF gives the six pregens only a name, a one-line hook and a backstory —
+  no class, level, ability scores or gear. The 2nd-level builds in
+  blueprint.json are suggestions and each character's dmNotes says so. The
+  PHB personality/ideal/bond/flaw fields were left empty rather than invented.
+- Half-Elf is kept as a world species entity because Aldara is "half-elven" and
+  the 2024 SRD has no Half-Elf; the entry carries no invented mechanics.
+- Aldara, Ott, Count Conrad and Prince Adelheid have no stat blocks, because
+  the module prints none.
+- I'Zor'zah's sidebar text is cut off mid-sentence in the PDF ("…he has lacked
+  the materials and"). Carried as printed, flagged in his dmNotes.
+- Mold Earth / Earth Tremor (named in The Finale) are not in the bundled SRD,
+  so they are mentioned in text only, not linked as spells.
