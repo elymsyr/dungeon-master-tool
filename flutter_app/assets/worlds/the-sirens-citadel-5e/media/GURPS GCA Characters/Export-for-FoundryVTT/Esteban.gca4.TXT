@@ -1,0 +1,106 @@
+Name: Esteban de Alcalá de los Gallardos
+Race: Human
+
+Attributes [115]
+ST 11 [10]
+DX 14 [80]
+IQ 11 [20]
+HT 11 [10]
+
+HP 11
+Will 10 [-5]
+Per 11
+FP 11
+
+Basic Lift 24
+Damage 1d-1/1d+1
+
+Basic Speed 6.25
+Basic Move 6
+
+Ground Move 6
+Water Move 1
+
+Social Background
+TL: 4 [0]
+Cultural Familiarities: 
+Languages: English (Accented/None) [2]; Spanish (Native) [0].
+
+Advantages [38]
+Acute Vision (1) [2]
+Appearance (Attractive) [4]
+Combat Reflexes [15]
+Craftiness (2) [10]
+Fit [5]
+
+Disadvantages [-35]
+Compulsive Vowing (12 or less) [-5]
+Gregarious [-10]
+Obsession (Find father and restore his family's status) (Long-Term Goal) (12 or less) [-10]
+Overconfidence (12 or less) [-5]
+Sense of Duty (Companions) (Small Group) [-5]
+
+Quirks [-5]
+Hyper-competitive - especially with Charlotte Abney [-1]
+Loves dancing [-1]
+Obsessed with stories of his grandfather [-1]
+One eye is green, the other blue [-1]
+Takes his heritage seriously [-1]
+
+Skills [37]
+Acrobatics DX/H - DX+0 14 [4]
+Acting IQ/A - IQ+2 13 [2]
+	includes: +2 from 'Craftiness'
+Climbing DX/A - DX+0 14 [2]
+Dancing DX/A - DX+0 14 [2]
+Disarming (Rapier) Tech/H -  16 [2]
+Escape DX/H - DX-2 12 [1]
+Fast-Draw (Sword) DX/E - DX+1 15 [1]
+	includes: +1 from 'Combat Reflexes'
+Fast-Talk IQ/A - IQ+0 11 [2]
+Gesture IQ/E - IQ+0 11 [1]
+Guns/TL4 (Pistol) DX/E - DX-4 10 [0]
+Holdout IQ/A - IQ+2 13 [2]
+	includes: +2 from 'Craftiness'
+Jumping DX/E - DX+0 14 [1]
+Leadership IQ/A - IQ-1 10 [1]
+Main-Gauche DX/A - DX+0 14 [2]
+Navigation/TL4 (Land) IQ/A - IQ-1 10 [1]
+Observation Per/A - Per+1 12 [2]
+	includes: +1 from 'Acute Vision'
+Rapier DX/A - DX+1 15 [4]
+Seamanship/TL4 IQ/E - IQ+0 11 [1]
+Sex Appeal (Human) HT/A - HT+0 11 [1]
+	includes: +1 from 'Appearance'
+Shortsword DX/A - DX-1 13 [1]
+Smuggling IQ/A - IQ+0 11 [2]
+Stealth DX/A - DX+1 15 [1]
+	includes: +2 from 'Craftiness'
+Swimming HT/E - HT+0 11 [1]
+
+Stats [115] Ads [38] Disads [-35] Quirks [-5] Skills [37] = Total [150]
+
+Hand Weapons
+1  Abuelo's Edged Rapier  LC:4|4|4|4  $4000  Wgt:3  
+    Broadsword Swing  Dam:1d+2 cut  Reach:1,2  Parry:9  ST:10  Skill:SK:Sword!, SK:Broadsword, ST:DX-5, SK:Force Sword-4, SK:Rapier-4, SK:Saber-4, SK:Shortsword-2, SK:Two-Handed Sword-4  
+    Broadsword Thrust  Dam:1d+1 imp  Reach:1,2  Parry:9  ST:10  Skill:SK:Sword!, SK:Broadsword, ST:DX-5, SK:Force Sword-4, SK:Rapier-4, SK:Saber-4, SK:Shortsword-2, SK:Two-Handed Sword-4  
+    Rapier Swing  Dam:1d+2 cut  Reach:1,2  Parry:11F  ST:10  Skill:SK:Sword!, SK:Rapier, ST:DX-5, SK:Broadsword-4, SK:Main-Gauche-3, SK:Saber-3, SK:Smallsword-3  
+    Rapier Thrust  Dam:1d+1 imp  Reach:1,2  Parry:11F  ST:10  Skill:SK:Sword!, SK:Rapier, ST:DX-5, SK:Broadsword-4, SK:Main-Gauche-3, SK:Saber-3, SK:Smallsword-3  
+1  Dagger LC:4|4  $20  Wgt:.25  
+    Dam:1d-2 imp  Reach:C  Parry:8  ST:5  Skill:SK:Sword!, SK:Knife, ST:DX-4, SK:Force Sword-3, SK:Main-Gauche-3, SK:Shortsword-3  Notes:[1]  
+1  Main-Gauche  LC:4|4|4|4  $50  Wgt:1.25  
+    Knife Swing  Dam:1d-2 cut  Reach:C,1  Parry:9  ST:6  Skill:SK:Sword!, SK:Knife, ST:DX-4, SK:Force Sword-3, SK:Main-Gauche-3, SK:Shortsword-3  Notes:[6]  
+    Knife Thrust  Dam:1d-1 imp  Reach:C  Parry:9  ST:6  Skill:SK:Sword!, SK:Knife, ST:DX-4, SK:Force Sword-3, SK:Main-Gauche-3, SK:Shortsword-3  
+    Main-Gauche Swing  Dam:1d-2 cut  Reach:C,1  Parry:11F  ST:6  Skill:SK:Sword!, SK:Main-Gauche, ST:DX-5, SK:Jitte/Sai-4, SK:Knife-4, SK:Rapier-3, SK:Saber-3, SK:Smallsword-3  Notes:[6]  
+    Main-Gauche Thrust  Dam:1d-1 imp  Reach:C,1  Parry:11F  ST:6  Skill:SK:Sword!, SK:Main-Gauche, ST:DX-5, SK:Jitte/Sai-4, SK:Knife-4, SK:Rapier-3, SK:Saber-3, SK:Smallsword-3  
+
+Ranged Weapons
+1  Dagger  LC:4|4  Dam:1d-2 imp  Acc:0  Range:6 / 11  
+    RoF:1  Shots:T(1)  ST:5  Bulk:-1  Rcl:-  $20  Wgt:.25  
+
+Armor & Possessions
+1  Boots  $80  Wgt:3  Location:feet  
+1  Cloth Bag, 2 gal.  $2.75  Wgt:.5  Location:  
+1  Family's wax seal stamp  $25  Wgt:.25  Location:  
+1  Personal Basics  $5  Wgt:1  Location:  
+1  Spyglass (X8 magnification)  $100  Wgt:5  Location:  

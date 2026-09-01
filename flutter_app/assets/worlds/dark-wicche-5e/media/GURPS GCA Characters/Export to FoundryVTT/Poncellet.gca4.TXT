@@ -1,0 +1,782 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root release="Foundry" version="GCA-10">
+<character>
+<name type="string">Poncellet</name>
+
+<abilities>
+
+<skilllist>
+<id-00001>
+<name type="string">Current Affairs/TL3 (People)</name>
+<type type="string">IQ/E</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B186</pageref>
+<parentuuid></parentuuid>
+<uuid>k201</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Current Affairs/TL3 (Politics)</name>
+<type type="string">IQ/E</type>
+<level type="number">13</level>
+<relativelevel type="string">IQ+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B186</pageref>
+<parentuuid></parentuuid>
+<uuid>k195</uuid>
+</id-00002>
+<id-00003>
+<name type="string">Detect Lies</name>
+<type type="string">Per/H</type>
+<level type="number">14</level>
+<relativelevel type="string">Per+1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B187</pageref>
+<parentuuid></parentuuid>
+<uuid>k192</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Diplomacy</name>
+<type type="string">IQ/H</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ-1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B187</pageref>
+<parentuuid></parentuuid>
+<uuid>k168</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Hidden Lore (Conspiracies)</name>
+<type type="string">IQ/A</type>
+<level type="number">14</level>
+<relativelevel type="string">IQ+2</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B199</pageref>
+<parentuuid></parentuuid>
+<uuid>k193</uuid>
+</id-00005>
+<id-00006>
+<name type="string">History (Europe)</name>
+<type type="string">IQ/H</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ-1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B200</pageref>
+<parentuuid></parentuuid>
+<uuid>k171</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Interrogation</name>
+<type type="string">IQ/A</type>
+<level type="number">13</level>
+<relativelevel type="string">IQ+1</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B202</pageref>
+<parentuuid></parentuuid>
+<uuid>k175</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Intimidation</name>
+<type type="string">Will/A</type>
+<level type="number">12</level>
+<relativelevel type="string">Will+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B202</pageref>
+<parentuuid></parentuuid>
+<uuid>k174</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Law (local)</name>
+<type type="string">IQ/H</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ-1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B204</pageref>
+<parentuuid></parentuuid>
+<uuid>k202</uuid>
+</id-00009>
+<id-00010>
+<name type="string">Navigation/TL3 (Land)</name>
+<type type="string">IQ/A</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B211</pageref>
+<parentuuid></parentuuid>
+<uuid>k190</uuid>
+</id-00010>
+<id-00011>
+<name type="string">Occultism</name>
+<type type="string">IQ/A</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B212</pageref>
+<parentuuid></parentuuid>
+<uuid>k164</uuid>
+</id-00011>
+<id-00012>
+<name type="string">Public Speaking (Oratory)</name>
+<type type="string">IQ/E</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B216</pageref>
+<parentuuid></parentuuid>
+<uuid>k167</uuid>
+</id-00012>
+<id-00013>
+<name type="string">Religious Ritual (Catholic)</name>
+<type type="string">IQ/H</type>
+<level type="number">11</level>
+<relativelevel type="string">IQ-1</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B217</pageref>
+<parentuuid></parentuuid>
+<uuid>k162</uuid>
+</id-00013>
+<id-00014>
+<name type="string">Research/TL3</name>
+<type type="string">IQ/A</type>
+<level type="number">14</level>
+<relativelevel type="string">IQ+2</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B217</pageref>
+<parentuuid></parentuuid>
+<uuid>k166</uuid>
+</id-00014>
+<id-00015>
+<name type="string">Riding (Equines)</name>
+<type type="string">DX/A</type>
+<level type="number">9</level>
+<relativelevel type="string">DX-1</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B217</pageref>
+<parentuuid></parentuuid>
+<uuid>k194</uuid>
+</id-00015>
+<id-00016>
+<name type="string">Savoir-Faire (High Society)</name>
+<type type="string">IQ/E</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B218</pageref>
+<parentuuid></parentuuid>
+<uuid>k169</uuid>
+</id-00016>
+<id-00017>
+<name type="string">Search</name>
+<type type="string">Per/A</type>
+<level type="number">12</level>
+<relativelevel type="string">Per-1</relativelevel>
+<points type="number">1</points>
+<text type="string"></text>
+<pageref type="string">B219</pageref>
+<parentuuid></parentuuid>
+<uuid>k165</uuid>
+</id-00017>
+<id-00018>
+<name type="string">Staff</name>
+<type type="string">DX/A</type>
+<level type="number">10</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B208</pageref>
+<parentuuid></parentuuid>
+<uuid>k199</uuid>
+</id-00018>
+<id-00019>
+<name type="string">Stealth</name>
+<type type="string">DX/A</type>
+<level type="number">10</level>
+<relativelevel type="string">DX+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B222</pageref>
+<parentuuid></parentuuid>
+<uuid>k170</uuid>
+</id-00019>
+<id-00020>
+<name type="string">Theology (Christianity)</name>
+<type type="string">IQ/H</type>
+<level type="number">13</level>
+<relativelevel type="string">IQ+1</relativelevel>
+<points type="number">8</points>
+<text type="string"></text>
+<pageref type="string">B226</pageref>
+<parentuuid></parentuuid>
+<uuid>k163</uuid>
+</id-00020>
+<id-00021>
+<name type="string">Writing</name>
+<type type="string">IQ/A</type>
+<level type="number">12</level>
+<relativelevel type="string">IQ+0</relativelevel>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B228</pageref>
+<parentuuid></parentuuid>
+<uuid>k173</uuid>
+</id-00021>
+</skilllist>
+
+</abilities>
+
+
+<attributes>
+<strength type="number">11</strength>
+<strength_points type="number">10</strength_points>
+<dexterity type="number">10</dexterity>
+<dexterity_points type="number">0</dexterity_points>
+<intelligence type="number">12</intelligence>
+<intelligence_points type="number">40</intelligence_points>
+<health type="number">11</health>
+<health_points type="number">10</health_points>
+<hitpoints type="number">11</hitpoints>
+<hitpoints_points type="number">0</hitpoints_points>
+<hps type="number">11</hps>
+<will type="number">12</will>
+<will_points type="number">0</will_points>
+<perception type="number">13</perception>
+<perception_points type="number">5</perception_points>
+<fatiguepoints type="number">10</fatiguepoints>
+<fatiguepoints_points type="number">-3</fatiguepoints_points>
+<fps type="number">10</fps>
+<basiclift type="string">24</basiclift>
+<onehandedlift type="string">48</onehandedlift>
+<twohandedlift type="string">192</twohandedlift>
+<shove type="string">288</shove>
+<carryonback type="string">360</carryonback>
+<shiftslightly type="string">1200</shiftslightly>
+<frightcheck type="string">12</frightcheck>
+<tastesmell type="string">13</tastesmell>
+<touch type="string">13</touch>
+<vision type="string">13</vision>
+<hearing type="string">13</hearing>
+<thrust type="string">1d-1</thrust>
+<swing type="string">1d+1</swing>
+<basicspeed type="string">5.25</basicspeed>
+<basicspeed_points type="number">0</basicspeed_points>
+<basicmove type="string">5</basicmove>
+<basicmove_points type="number">0</basicmove_points>
+<move type="string">5</move>
+</attributes>
+
+
+<combat>
+<enc0_dodge type="number">8</enc0_dodge>
+<enc1_dodge type="number">7</enc1_dodge>
+<enc2_dodge type="number">6</enc2_dodge>
+<enc3_dodge type="number">5</enc3_dodge>
+<enc4_dodge type="number">4</enc4_dodge>
+<dodge type="number">8</dodge>
+<parry type="number">8</parry>
+<block type="number">6</block>
+<dr type="string">0</dr>
+
+<meleecombatlist>
+<id-00001>
+<name type="string">Bite</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Bite</name>
+<level type="number">10</level>
+<damage type="string">1d-2 cr</damage>
+<reach type="string">C</reach>
+<parry type="string">No</parry>
+</id-00001>
+</meleemodelist>
+</id-00001>
+<id-00002>
+<name type="string">Kick</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Kick</name>
+<level type="number">8</level>
+<damage type="string">1d-1 cr</damage>
+<reach type="string">C,1</reach>
+<parry type="string">No</parry>
+</id-00001>
+</meleemodelist>
+</id-00002>
+<id-00003>
+<name type="string">Punch</name>
+<st type="string"></st>
+<cost type="string">0</cost>
+<weight type="string">0</weight>
+<text type="string"></text>
+<tl type="string"></tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Punch</name>
+<level type="number">10</level>
+<damage type="string">1d-2 cr</damage>
+<reach type="string">C</reach>
+<parry type="string">8</parry>
+</id-00001>
+</meleemodelist>
+</id-00003>
+<id-00004>
+<name type="string">Quarterstaff</name>
+<st type="string">7†</st>
+<cost type="string">10</cost>
+<weight type="string">4</weight>
+<text type="string"></text>
+<tl type="string">0</tl>
+<meleemodelist>
+<id-00001>
+<name type="string">Staff Swing</name>
+<level type="number">10</level>
+<damage type="string">1d+3 cr</damage>
+<reach type="string">1, 2</reach>
+<parry type="string">10</parry>
+</id-00001>
+<id-00002>
+<name type="string">Staff Thrust</name>
+<level type="number">10</level>
+<damage type="string">1d+1 cr</damage>
+<reach type="string">1, 2</reach>
+<parry type="string">10</parry>
+</id-00002>
+<id-00003>
+<name type="string">2H Sword Swing</name>
+<level type="number">5</level>
+<damage type="string">1d+3 cr</damage>
+<reach type="string">1, 2</reach>
+<parry type="string">5</parry>
+</id-00003>
+<id-00004>
+<name type="string">2H Sword Thrust</name>
+<level type="number">5</level>
+<damage type="string">1d cr</damage>
+<reach type="string">2</reach>
+<parry type="string">5</parry>
+</id-00004>
+</meleemodelist>
+</id-00004>
+</meleecombatlist>
+
+
+<rangedcombatlist>
+</rangedcombatlist>
+
+
+<protectionlist>
+<bodyplan type="string">Humanoid</bodyplan>
+<id-00001>
+<location type="string">Eyes</location>
+<dr type="string">0</dr>
+</id-00001>
+<id-00002>
+<location type="string">Neck</location>
+<dr type="string">0</dr>
+</id-00002>
+<id-00003>
+<location type="string">Skull</location>
+<dr type="string">2</dr>
+</id-00003>
+<id-00004>
+<location type="string">Face</location>
+<dr type="string">0</dr>
+</id-00004>
+<id-00005>
+<location type="string">Torso</location>
+<dr type="string">0</dr>
+</id-00005>
+<id-00006>
+<location type="string">Groin</location>
+<dr type="string">0</dr>
+</id-00006>
+<id-00007>
+<location type="string">Arms</location>
+<dr type="string">0</dr>
+</id-00007>
+<id-00008>
+<location type="string">Hands</location>
+<dr type="string">0</dr>
+</id-00008>
+<id-00009>
+<location type="string">Legs</location>
+<dr type="string">0</dr>
+</id-00009>
+<id-00010>
+<location type="string">Feet</location>
+<dr type="string">1*</dr>
+</id-00010>
+</protectionlist>
+
+</combat>
+
+
+<encumbrance>
+<enc_0 type="number">1</enc_0>
+<enc_1 type="number">0</enc_1>
+<enc_2 type="number">0</enc_2>
+<enc_3 type="number">0</enc_3>
+<enc_4 type="number">0</enc_4>
+<enc0_weight type="string">24</enc0_weight>
+<enc1_weight type="string">48</enc1_weight>
+<enc2_weight type="string">72</enc2_weight>
+<enc3_weight type="string">144</enc3_weight>
+<enc4_weight type="string">240</enc4_weight>
+<enc0_move type="string">5</enc0_move>
+<enc1_move type="string">4</enc1_move>
+<enc2_move type="string">3</enc2_move>
+<enc3_move type="string">2</enc3_move>
+<enc4_move type="string">1</enc4_move>
+<enc0_dodge type="number">8</enc0_dodge>
+<enc1_dodge type="number">7</enc1_dodge>
+<enc2_dodge type="number">6</enc2_dodge>
+<enc3_dodge type="number">5</enc3_dodge>
+<enc4_dodge type="number">4</enc4_dodge>
+</encumbrance>
+
+
+<traits>
+<race type="string">Human</race>
+<height type="string">6'0"</height>
+<weight type="string">180</weight>
+<age type="string">71</age>
+<appearance type="string">Strict Dominican investigator, returning from France after tracking the Cathar conspiracy</appearance>
+<sizemodifier type="string">0</sizemodifier>
+<reach type="string">0</reach>
+
+<adslist>
+<id-00001>
+<name type="string">Clerical Investment</name>
+<points type="number">5</points>
+<text type="string"></text>
+<pageref type="string">B43</pageref>
+<parentuuid></parentuuid>
+<uuid>k154</uuid>
+</id-00001>
+<id-00002>
+<name type="string">French (Native)</name>
+<points type="number">0</points>
+<text type="string"> (Native Language)<br></text>
+<pageref type="string">B24</pageref>
+<parentuuid></parentuuid>
+<uuid>k157</uuid>
+</id-00002>
+<id-00003>
+<name type="string">German (Accented)</name>
+<points type="number">4</points>
+<text type="string"></text>
+<pageref type="string">B24</pageref>
+<parentuuid></parentuuid>
+<uuid>k159</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Latin (Written) (Literate)</name>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B24</pageref>
+<parentuuid></parentuuid>
+<uuid>k200</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Night Vision (2)</name>
+<points type="number">2</points>
+<text type="string"></text>
+<pageref type="string">B71</pageref>
+<parentuuid></parentuuid>
+<uuid>k156</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Religious Rank (3)</name>
+<points type="number">15</points>
+<text type="string"></text>
+<pageref type="string">B29</pageref>
+<parentuuid></parentuuid>
+<uuid>k155</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Reputation (Church investigator) (2)</name>
+<points type="number">3</points>
+<text type="string"> (All the time; Almost everyone; Small class)<br></text>
+<pageref type="string">B27</pageref>
+<parentuuid></parentuuid>
+<uuid>k186</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Status (+3)</name>
+<points type="number">10</points>
+<text type="string"></text>
+<pageref type="string">B28</pageref>
+<parentuuid></parentuuid>
+<uuid>k196</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Truth-Seeker (2)</name>
+<points type="number">10</points>
+<text type="string"></text>
+<pageref type="string">PU3:17</pageref>
+<parentuuid></parentuuid>
+<uuid>k191</uuid>
+</id-00009>
+</adslist>
+
+
+<disadslist>
+<id-00001>
+<name type="string">Curious</name>
+<points type="number">-5</points>
+<text type="string"> ([CR: 12 or less] )<br></text>
+<pageref type="string">B129</pageref>
+<parentuuid></parentuuid>
+<uuid>k177</uuid>
+</id-00001>
+<id-00002>
+<name type="string">Light Sleeper</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B142</pageref>
+<parentuuid></parentuuid>
+<uuid>k179</uuid>
+</id-00002>
+<id-00003>
+<name type="string">Pacifism (Cannot Kill)</name>
+<points type="number">-15</points>
+<text type="string"></text>
+<pageref type="string">B148</pageref>
+<parentuuid></parentuuid>
+<uuid>k180</uuid>
+</id-00003>
+<id-00004>
+<name type="string">Stubbornness</name>
+<points type="number">-5</points>
+<text type="string"></text>
+<pageref type="string">B157</pageref>
+<parentuuid></parentuuid>
+<uuid>k198</uuid>
+</id-00004>
+<id-00005>
+<name type="string">Vow (Priestly vows) (Major)</name>
+<points type="number">-10</points>
+<text type="string"></text>
+<pageref type="string">B160</pageref>
+<parentuuid></parentuuid>
+<uuid>k197</uuid>
+</id-00005>
+<id-00006>
+<name type="string">Doesn't drink</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k183</uuid>
+</id-00006>
+<id-00007>
+<name type="string">Nitpicks details</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k181</uuid>
+</id-00007>
+<id-00008>
+<name type="string">Skeptical, especially of the supernatural</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k184</uuid>
+</id-00008>
+<id-00009>
+<name type="string">Strict and no nonsense</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k182</uuid>
+</id-00009>
+<id-00010>
+<name type="string">Thinks he’s far stronger than he actually is</name>
+<points type="number">-1</points>
+<text type="string"></text>
+<pageref type="string">B163</pageref>
+<parentuuid></parentuuid>
+<uuid>k185</uuid>
+</id-00010>
+</disadslist>
+
+
+<culturalfamiliaritylist>
+</culturalfamiliaritylist>
+
+
+<languagelist>
+<id-00001>
+<name type = "string">French (Native)</name>
+<spoken type = "string">Native</spoken>
+<written type = "string">Native</written>
+<points type = "number">0</points>
+</id-00001>
+<id-00002>
+<name type = "string">German</name>
+<spoken type = "string">Accented</spoken>
+<written type = "string">Accented</written>
+<points type = "number">4</points>
+</id-00002>
+<id-00003>
+<name type = "string">Latin</name>
+<written type = "string">Literate</written>
+<points type = "number">2</points>
+</id-00003>
+</languagelist>
+
+<reactionmodifiers>
+|||||+3 from 'Status'|||+1 from 'Clerical Investment'|+2 from 'Reputation (Church investigator)'|+2 from 'Truth-Seeker' when Anyone who is Curious or harbors Delusions about conspiracies|-1 from 'Stubbornness'
+</reactionmodifiers>
+
+<tl type = "string">3</tl>
+<tl_points type = "number">0</tl_points>
+</traits>
+
+
+<inventorylist>
+<id-00001>
+<isidentified type="number">1</isidentified>
+<name type="string">Backpack, Small</name>
+<count type="number">1</count>
+<cost type="string">60</cost>
+<weight type="number">3</weight>
+<weightsum type="number">3</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:1 Notes: Holds 40 lbs. of gear.</notes>
+<carried type="number">2</carried>
+<pageref type="string">B288</pageref>
+<parentuuid></parentuuid>
+<uuid>k204</uuid>
+</id-00001>
+<id-00002>
+<isidentified type="number">1</isidentified>
+<name type="string">Gold Crucifix</name>
+<count type="number">1</count>
+<cost type="string">50</cost>
+<weight type="number">0</weight>
+<weightsum type="number">0</weightsum>
+<location type="string"></location>
+<notes type="formattedtext"></notes>
+<carried type="number">2</carried>
+<pageref type="string"></pageref>
+<parentuuid></parentuuid>
+<uuid>k208</uuid>
+</id-00002>
+<id-00003>
+<isidentified type="number">1</isidentified>
+<name type="string">Jean Froissart's Chronicles book</name>
+<count type="number">1</count>
+<cost type="string">200</cost>
+<weight type="number">1</weight>
+<weightsum type="number">1</weightsum>
+<location type="string"></location>
+<notes type="formattedtext"></notes>
+<carried type="number">2</carried>
+<pageref type="string"></pageref>
+<parentuuid></parentuuid>
+<uuid>k205</uuid>
+</id-00003>
+<id-00004>
+<isidentified type="number">1</isidentified>
+<name type="string">Quarterstaff</name>
+<count type="number">1</count>
+<cost type="string">10</cost>
+<weight type="number">4</weight>
+<weightsum type="number">4</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">TL:0 LC:4 \par [Dam:sw+2 cr Reach:1, 2 Parry:2 ST:7 Skill:Staff, DX-5, Polearm-4, Spear-2] \par [Dam:thr+2 cr Reach:1, 2 Parry:2 ST:7 Skill:Staff, DX-5, Polearm-4, Spear-2] \par [Dam:sw+2 cr Reach:1, 2 Parry:0 ST:9 Skill:Two-Handed Sword, DX-5, Broadsword-4, Force Sword-4] \par [Dam:thr+1 cr Reach:2 Parry:0 ST:9 Skill:Two-Handed Sword, DX-5, Broadsword-4, Force Sword-4]</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT69</pageref>
+<parentuuid></parentuuid>
+<uuid>k203</uuid>
+</id-00004>
+<id-00005>
+<isidentified type="number">1</isidentified>
+<name type="string">Shoes</name>
+<count type="number">1</count>
+<cost type="string">40</cost>
+<weight type="number">2</weight>
+<weightsum type="number">2</weightsum>
+<location type="string">Feet</location>
+<notes type="formattedtext">TL:1 LC: DR:1* Locations: Feet Notes:  [3] -1 DR vs. impaling.</notes>
+<carried type="number">2</carried>
+<pageref type="string">LT:IA16</pageref>
+<parentuuid></parentuuid>
+<uuid>k206</uuid>
+</id-00005>
+<id-00006>
+<isidentified type="number">1</isidentified>
+<name type="string">Silver thalers</name>
+<count type="number">50</count>
+<cost type="string">1</cost>
+<weight type="number">0</weight>
+<weightsum type="number">0</weightsum>
+<location type="string"></location>
+<notes type="formattedtext"></notes>
+<carried type="number">2</carried>
+<pageref type="string"></pageref>
+<parentuuid></parentuuid>
+<uuid>k209</uuid>
+</id-00006>
+<id-00007>
+<isidentified type="number">1</isidentified>
+<name type="string">Winter Clothes (Status +1)</name>
+<count type="number">1</count>
+<cost type="string">360</cost>
+<weight type="number">4</weight>
+<weightsum type="number">4</weightsum>
+<location type="string"></location>
+<notes type="formattedtext">As Ordinary Clothes, but heavier. Includes a hat or hood, boots, and (at TL6 or less) furs. 30% of cost of living; 4lbs.</notes>
+<carried type="number">2</carried>
+<pageref type="string">B266</pageref>
+<parentuuid></parentuuid>
+<uuid>k207</uuid>
+</id-00007>
+</inventorylist>
+
+<description type="string">Bishop Gerhard asked you to come to Würzburg because he believes he has an infestation of witches! You think not!  In all your years as an investigator, you have never once encountered a real witch. Nor have you met a kobold, danced with a woodwife under the full moon, or traded rings with a dwarf in a cave. The likely truth is that the old bishop is paranoid and senile, and some poor girl is being accused of witchcraft by a jealous neighbor who envies her flaxen hair. But Gerhard carries much influence with Pope Bonifice, so you agreed to make the journey from Paris to Würzburg to question a few folk.\r</description>
+<pointtotals>
+<attributes type="number">62</attributes>
+<ads type="number">51</ads>
+<disads type="number">-40</disads>
+<quirks type="number">-5</quirks>
+<skills type="number">42</skills>
+<spells type="number">0</spells>
+<powers type="number">0</powers>
+<others type="number">0</others>
+<totalpoints type="number">110</totalpoints>
+<unspentpoints type="number">40</unspentpoints>
+</pointtotals>
+
+</character>
+</root>
