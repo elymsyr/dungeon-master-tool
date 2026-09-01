@@ -69,3 +69,31 @@ Map<String, dynamic> proficiencyTableDefault(List<ProficiencyRowPreset> preset) 
         .toList(),
   };
 }
+
+/// Kayıtlı proficiency-table değerini şablon default'ıyla birleştirir.
+///
+/// Blueprint / paket verisi tabloyu kısa yazıyor: yalnızca proficient olan
+/// satırlar (`{name, ability, proficient: true}`). Bu değer olduğu gibi
+/// gösterilirse tablonun kalan 13 skill'i / 4 save'i hiç görünmez. Preset
+/// satır listesi taban alınır, kayıtlı satır aynı `name` üstüne yazılır;
+/// preset'te olmayan custom satırlar sona eklenir.
+Map<String, dynamic> mergeProficiencyRows(Object? defaultValue, Object? stored) {
+  List<Map<String, dynamic>> rowsOf(Object? v) => (v is Map && v['rows'] is List)
+      ? [
+          for (final r in v['rows'] as List)
+            if (r is Map) Map<String, dynamic>.from(r)
+        ]
+      : const [];
+
+  final base = rowsOf(defaultValue);
+  final storedRows = rowsOf(stored);
+  if (base.isEmpty) return {'rows': storedRows};
+  final byName = {for (final r in storedRows) '${r['name']}': r};
+  final out = <Map<String, dynamic>>[];
+  for (final r in base) {
+    final s = byName.remove('${r['name']}');
+    out.add(s == null ? r : {...r, ...s});
+  }
+  out.addAll(byName.values);
+  return {'rows': out};
+}
