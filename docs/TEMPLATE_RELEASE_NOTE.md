@@ -12,7 +12,10 @@ This file is the **template and style guide** for every Dungeon Master Tool rele
 4. **Be specific about breakage.** If the user must do something (uninstall, apply migration, re-publish), say it at the top in a `> Heads-up` callout and again in **Upgrade notes**.
 5. **Absolute dates only.** "April 2026", not "last month".
 6. **No emojis** unless the product UI itself uses one (e.g. the `📥` download glyph in listing cards — fine to mirror here).
-7. **Keep Known Issues honest.** If something is deferred or intentional-for-now, say so. Silence reads as a bug waiting to bite. The list is maintained in [KNOWN_ISSUES.md](KNOWN_ISSUES.md) — update that file first, then copy its still-open items into the release note. Past releases are never edited afterwards.
+7. **Short and concrete.** Two to four sentences per feature, one line per bullet. If a paragraph is explaining *how* it works rather than *what the user gets*, it belongs in **For developers**.
+8. **No internals in the user-facing sections.** Class names, field names, constants, file paths, asset pipelines and build details go in **For developers** — a short optional section at the end, a few bullets at most. If a release has none worth mentioning, drop the section.
+9. **Name the real path to the thing.** New bundled worlds and packages are downloaded from **Marketplace → Official** — there is no "admin install" step. Always describe the surface the user actually taps.
+10. **Keep Known Issues honest.** If something is deferred or intentional-for-now, say so. Silence reads as a bug waiting to bite. The list is maintained in [KNOWN_ISSUES.md](KNOWN_ISSUES.md) — update that file first, then copy its still-open items into the release note. Past releases are never edited afterwards.
 
 ---
 
@@ -30,7 +33,8 @@ This file is the **template and style guide** for every Dungeon Master Tool rele
 10. **Deprecations & removals** — what disappeared and what replaces it
 11. **Upgrade notes** — version bump, required actions, data-migration caveats
 12. **Known issues** — honest list of what's deferred, broken-on-purpose, or watch-outs
-13. Sign-off
+13. **For developers** — optional, short: internals worth knowing for anyone reading the code
+14. Sign-off
 
 > Backend/schema migrations (Supabase SQL, server-side DDL) are **not** part of the user-facing release note. They belong in a separate deployment doc for self-hosters, not here. Do not list migration file names or schema changes in this document.
 
@@ -127,6 +131,15 @@ The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_I
 
 ---
 
+### For developers
+
+{{Optional. Only the internals a contributor would want: new constants, changed data shapes, authoring/build rules. 2-5 bullets, delete the section if there are none.}}
+
+- **{{Area}}** — {{internal detail, one line}}.
+- **{{Area}}** — {{internal detail, one line}}.
+
+---
+
 *Thanks for playing. Roll well.*
 
 <!-- END RELEASE TEMPLATE -->
@@ -146,6 +159,8 @@ Before publishing, walk this list top to bottom:
 - [ ] **Bug fixes** only lists things a user could have observed — no "fixed flaky test", no "renamed internal widget".
 - [ ] **Deprecations & removals** covers every removed UI surface, setting, exception type, or public flag.
 - [ ] **Known issues** matches the Open section of [KNOWN_ISSUES.md](KNOWN_ISSUES.md), and that file's *Last reviewed* line names this release.
+- [ ] No class names, field names, constants or file paths appear outside **For developers**.
+- [ ] New worlds/packages are described as downloaded from **Marketplace → Official**, not "installed from Admin".
 - [ ] No placeholder `{{…}}` strings remain.
 - [ ] Preview renders cleanly on GitHub (tables align, callouts render, no stray HTML).
 
