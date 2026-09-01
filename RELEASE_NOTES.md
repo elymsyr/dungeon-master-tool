@@ -13,6 +13,7 @@ This release rebuilds how ready-made worlds get into the app. Bundled adventures
 
 ### Highlights
 
+- **New Worlds in Marketplace** - The first world shared is **99 Devils of Uzrah's Palace** (Shadowdark, 1Shot Adventures), live under **Marketplace → Official**. Six more adventures are staged in the repo and will ship as their blueprints are converted: *Army of the Damned*, *Cold Bounty*, *Dark Wicche*, *Final Voyage of Draengr Thar*, *Moon of Thorns* (OSR) and *The Siren's Citadel*.
 - **Class Resources tracker** — Rage uses, Bardic Inspiration, Channel Divinity, Sorcery Points and friends now show on the character sheet with spendable counters.
 - **Font of Magic conversion** — Convert sorcery points to spell slots directly from the Class Resources card.
 - **Bundled worlds ship their player characters** — Pre-made PCs from a bundled adventure land in the Characters tab, ready to claim.
@@ -65,6 +66,8 @@ Bundled world descriptions can reference other entities inline. Mentions are res
 Bundled adventures now go through the same publishing pipeline as official packages: they are built into the first-party catalog, uploaded to the official content bucket, and show up as cards under **Marketplace → Official**. Installing one needs no account. The download falls back to the copy shipped inside the app if the catalog is unreachable, so worlds still install fully offline.
 
 Adventure PDFs are not redistributed — where a world has one, the card links to the publisher's own free download and the dialog says so.
+
+The first world through this pipeline is **99 Devils of Uzrah's Palace** (Shadowdark, 1Shot Adventures), live under **Marketplace → Official**. Six more adventures are staged in the repo and will ship as their blueprints are converted: *Army of the Damned*, *Cold Bounty*, *Dark Wicche*, *Final Voyage of Draengr Thar*, *Moon of Thorns* (OSR) and *The Siren's Citadel*.
 
 #### Installing the same content twice
 
