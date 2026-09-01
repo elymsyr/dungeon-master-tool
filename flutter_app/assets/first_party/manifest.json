@@ -461,6 +461,427 @@
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/terrible-fantasy-scenes-digital-illustrations_14541107.htm"
       }
+    },
+    {
+      "item_type": "world",
+      "slug": "99-devils-of-uzrahs-palace-shadowdark",
+      "title": "99 Devils of Uzrah's Palace",
+      "version": "1.0.0",
+      "publisher": "1Shot Adventures",
+      "license": "all-rights-reserved",
+      "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
+      "game_system": "shadowdark",
+      "author": "JC Connors (thalcos)",
+      "description": "An Arabian Nights-inspired dungeon adventure for Shadowdark. The PCs come into the possession of an invitation to a grand event – the distribution of a vast treasure by an old pirate lord, the White Shark of Basra. Chartering a boat, they visit the island ruins where the White Shark plans to distribute his treasure and fool him into thinking they deserve a share. Little do they know, however, the ruins were once the palace of a legendary vizier, and it's now haunted by a capricious and very dangerous efreet who does not plan to let visitors escape his abode. Suitable for four-to-six 2nd or 3rd level characters.",
+      "source_url": "https://1shotadventures.com/99-devils-of-uzrahs-palace/",
+      "is_srd_overlap": false,
+      "requires": [],
+      "counts": {
+        "npc": 21,
+        "location": 44,
+        "encounter": 11,
+        "trap": 5,
+        "scene": 8,
+        "quest": 5,
+        "lore": 11,
+        "campaign": 1,
+        "environmental-effect": 6,
+        "monster": 10,
+        "trait": 39,
+        "creature-action": 11,
+        "language": 2,
+        "weapon": 7,
+        "magic-item": 13,
+        "background": 1,
+        "spell": 1
+      },
+      "cover_image": "media/Title-Image.webp",
+      "bundled_dir": "assets/worlds/99_devils_of_uzrahs_palace_shadowdark",
+      "r2_path": "world/99-devils-of-uzrahs-palace-shadowdark@1.0.0.json.gz",
+      "size_bytes": 94913,
+      "media": [
+        {
+          "rel": "media/Title-Image.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Title-Image.webp",
+          "size_bytes": 333044
+        },
+        {
+          "rel": "media/Maps/Builder-Tunnels.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Maps/Builder-Tunnels.webp",
+          "size_bytes": 843084
+        },
+        {
+          "rel": "media/Maps/Lower-Level.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Maps/Lower-Level.webp",
+          "size_bytes": 3626384
+        },
+        {
+          "rel": "media/Maps/Upper-Level.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Maps/Upper-Level.webp",
+          "size_bytes": 3205788
+        },
+        {
+          "rel": "media/Handouts/Bonus - The Dodecaphage.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Bonus - The Dodecaphage.png",
+          "size_bytes": 4123947
+        },
+        {
+          "rel": "media/Handouts/Handout-A-Invitation.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Handout-A-Invitation.png",
+          "size_bytes": 5109511
+        },
+        {
+          "rel": "media/Handouts/Handout-B-Pirate-Journal.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Handout-B-Pirate-Journal.png",
+          "size_bytes": 4496668
+        },
+        {
+          "rel": "media/Handouts/Handout-C-Book-Page.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Handout-C-Book-Page.png",
+          "size_bytes": 3832919
+        },
+        {
+          "rel": "media/Handouts/Handout-D-Plaque.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Handout-D-Plaque.png",
+          "size_bytes": 3350312
+        },
+        {
+          "rel": "media/Handouts/Handout-E-Despair-Plaques.png",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Handouts/Handout-E-Despair-Plaques.png",
+          "size_bytes": 4275014
+        },
+        {
+          "rel": "media/Tokens/Cobra.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Cobra.webp",
+          "size_bytes": 75916
+        },
+        {
+          "rel": "media/Tokens/Death-Chanter-Giant.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Death-Chanter-Giant.webp",
+          "size_bytes": 110558
+        },
+        {
+          "rel": "media/Tokens/Debbi.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Debbi.webp",
+          "size_bytes": 102040
+        },
+        {
+          "rel": "media/Tokens/Dodecaphage.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Dodecaphage.webp",
+          "size_bytes": 116558
+        },
+        {
+          "rel": "media/Tokens/Faruq-Night-Eater.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Faruq-Night-Eater.webp",
+          "size_bytes": 98598
+        },
+        {
+          "rel": "media/Tokens/Filcher.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Filcher.webp",
+          "size_bytes": 83364
+        },
+        {
+          "rel": "media/Tokens/Ghul-Bird.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Ghul-Bird.webp",
+          "size_bytes": 96518
+        },
+        {
+          "rel": "media/Tokens/Hound-Ash-Silk.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Hound-Ash-Silk.webp",
+          "size_bytes": 113956
+        },
+        {
+          "rel": "media/Tokens/Hyena-of-Shiraz.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Hyena-of-Shiraz.webp",
+          "size_bytes": 83660
+        },
+        {
+          "rel": "media/Tokens/Ibrahim-the-Drifted-Lord.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Ibrahim-the-Drifted-Lord.webp",
+          "size_bytes": 77520
+        },
+        {
+          "rel": "media/Tokens/Keeper-of-Cups.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Keeper-of-Cups.webp",
+          "size_bytes": 93526
+        },
+        {
+          "rel": "media/Tokens/Mercenary.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Mercenary.webp",
+          "size_bytes": 92122
+        },
+        {
+          "rel": "media/Tokens/Nefru-Sekhem.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Nefru-Sekhem.webp",
+          "size_bytes": 93716
+        },
+        {
+          "rel": "media/Tokens/Palmtree-the-Pirate.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Palmtree-the-Pirate.webp",
+          "size_bytes": 104036
+        },
+        {
+          "rel": "media/Tokens/PC-Farah-Fireborn.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Farah-Fireborn.webp",
+          "size_bytes": 76958
+        },
+        {
+          "rel": "media/Tokens/PC-Ibn-Al-Aswad.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Ibn-Al-Aswad.webp",
+          "size_bytes": 85778
+        },
+        {
+          "rel": "media/Tokens/PC-Jamal.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Jamal.webp",
+          "size_bytes": 88764
+        },
+        {
+          "rel": "media/Tokens/PC-Naja.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Naja.webp",
+          "size_bytes": 105922
+        },
+        {
+          "rel": "media/Tokens/PC-Qasim-the-Digitologist.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Qasim-the-Digitologist.webp",
+          "size_bytes": 91136
+        },
+        {
+          "rel": "media/Tokens/PC-Singer.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/PC-Singer.webp",
+          "size_bytes": 89354
+        },
+        {
+          "rel": "media/Tokens/Pirate-Archer.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Pirate-Archer.webp",
+          "size_bytes": 92772
+        },
+        {
+          "rel": "media/Tokens/Pirate-Hauler.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Pirate-Hauler.webp",
+          "size_bytes": 88302
+        },
+        {
+          "rel": "media/Tokens/Rafiq-the-Pirate.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Rafiq-the-Pirate.webp",
+          "size_bytes": 97138
+        },
+        {
+          "rel": "media/Tokens/Rashid-the-Jackal.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Rashid-the-Jackal.webp",
+          "size_bytes": 92256
+        },
+        {
+          "rel": "media/Tokens/Ropeburn-the-Pirate.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Ropeburn-the-Pirate.webp",
+          "size_bytes": 98846
+        },
+        {
+          "rel": "media/Tokens/Sangtarash.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Sangtarash.webp",
+          "size_bytes": 99564
+        },
+        {
+          "rel": "media/Tokens/Smothering-Carpet.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Smothering-Carpet.webp",
+          "size_bytes": 96494
+        },
+        {
+          "rel": "media/Tokens/Tariq-the-Monkey.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Tariq-the-Monkey.webp",
+          "size_bytes": 120304
+        },
+        {
+          "rel": "media/Tokens/Timzahi.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Timzahi.webp",
+          "size_bytes": 61096
+        },
+        {
+          "rel": "media/Tokens/Twin-Maw-Ghariq.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Twin-Maw-Ghariq.webp",
+          "size_bytes": 83872
+        },
+        {
+          "rel": "media/Tokens/Ufrayta.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Ufrayta.webp",
+          "size_bytes": 84648
+        },
+        {
+          "rel": "media/Tokens/Varazdat.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Varazdat.webp",
+          "size_bytes": 99556
+        },
+        {
+          "rel": "media/Tokens/White-Shark.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/White-Shark.webp",
+          "size_bytes": 99086
+        },
+        {
+          "rel": "media/Tokens/Zagrossian-Lion.webp",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/Tokens/Zagrossian-Lion.webp",
+          "size_bytes": 100264
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Cobra.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Cobra.gcs",
+          "size_bytes": 125306
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Death-Chanter.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Death-Chanter.gcs",
+          "size_bytes": 189084
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Debbi.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Debbi.gcs",
+          "size_bytes": 165658
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Dodecaphage.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Dodecaphage.gcs",
+          "size_bytes": 198210
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Faruq Night-Eater.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Faruq Night-Eater.gcs",
+          "size_bytes": 185511
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Filcher.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Filcher.gcs",
+          "size_bytes": 132601
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Ghul-Bird.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Ghul-Bird.gcs",
+          "size_bytes": 154177
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Hyena-of-Shiraz.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Hyena-of-Shiraz.gcs",
+          "size_bytes": 140300
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Ibrahim-the-Drifted-Lord.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Ibrahim-the-Drifted-Lord.gcs",
+          "size_bytes": 149171
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Keeper-of-Cups-and-Cushions.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Keeper-of-Cups-and-Cushions.gcs",
+          "size_bytes": 179234
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Nefru-Sekhem.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Nefru-Sekhem.gcs",
+          "size_bytes": 165072
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Farah-Fireborn.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Farah-Fireborn.gcs",
+          "size_bytes": 176231
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Ibn-al-Aswad.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Ibn-al-Aswad.gcs",
+          "size_bytes": 184255
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Jamal-the-Black-Spear.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Jamal-the-Black-Spear.gcs",
+          "size_bytes": 173793
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Naja.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Naja.gcs",
+          "size_bytes": 195479
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Palmtree.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Palmtree.gcs",
+          "size_bytes": 196938
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-Qasim.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-Qasim.gcs",
+          "size_bytes": 208367
+        },
+        {
+          "rel": "media/GURPS GCS Characters/PC-The-Owl.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/PC-The-Owl.gcs",
+          "size_bytes": 172943
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Pirate-Archer.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Pirate-Archer.gcs",
+          "size_bytes": 149755
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Pirate-Treasure-Hauler.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Pirate-Treasure-Hauler.gcs",
+          "size_bytes": 144355
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Rafiq-the-Pirate.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Rafiq-the-Pirate.gcs",
+          "size_bytes": 156148
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Ropeburn-the-Pirate.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Ropeburn-the-Pirate.gcs",
+          "size_bytes": 158417
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Sangtarash-Mercenary.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Sangtarash-Mercenary.gcs",
+          "size_bytes": 150510
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Smothering-Carpet.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Smothering-Carpet.gcs",
+          "size_bytes": 162000
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Tariq-the-Monkey.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Tariq-the-Monkey.gcs",
+          "size_bytes": 187387
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Timzahi.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Timzahi.gcs",
+          "size_bytes": 121008
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Twin-Maw-Ghariq.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Twin-Maw-Ghariq.gcs",
+          "size_bytes": 153429
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Ufrayta.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Ufrayta.gcs",
+          "size_bytes": 143019
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Varazdat.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Varazdat.gcs",
+          "size_bytes": 225379
+        },
+        {
+          "rel": "media/GURPS GCS Characters/White-Shark-of-Basra.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/White-Shark-of-Basra.gcs",
+          "size_bytes": 174461
+        },
+        {
+          "rel": "media/GURPS GCS Characters/Zagrossian-Lion.gcs",
+          "r2_key": "world-media/99-devils-of-uzrahs-palace-shadowdark@1.0.0/media/GURPS GCS Characters/Zagrossian-Lion.gcs",
+          "size_bytes": 178515
+        }
+      ],
+      "external_files": [
+        {
+          "rel": "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf",
+          "url": "https://1shotadventures.com/download/3456/?tmstv=1780169323"
+        }
+      ]
     }
   ]
 }

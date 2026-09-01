@@ -19,6 +19,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../world_payload.dart';
+
 Future<void> main(List<String> args) async {
   final opts = _parseArgs(args);
   final worker = (opts['worker'] ?? Platform.environment['DMT_WORKER_URL'] ?? '')
@@ -55,6 +57,19 @@ Future<void> main(List<String> args) async {
   try {
     for (final e in entries) {
       final r2Path = e['r2_path'] as String;
+
+      // Worlds are a directory, not a file: one gzipped envelope object plus a
+      // raw object per media file. Handled by its own uploader.
+      if (e['item_type'] == 'world') {
+        final r = await _publishWorld(client, worker, token, e,
+            dryRun: dryRun, force: force);
+        uploaded += r.uploaded;
+        skipped += r.skipped;
+        failed += r.failed;
+        bytes += r.bytes;
+        continue;
+      }
+
       final assetPath = e['bundled_asset'] as String?;
       if (assetPath == null) {
         stderr.writeln('  ! ${e['slug']}: no bundled_asset, skipping');
@@ -153,4 +168,99 @@ Map<String, String> _parseArgs(List<String> args) {
     }
   }
   return out;
+}
+
+/// Tally returned by [_publishWorld] so the caller's counters stay one place.
+class _Tally {
+  int uploaded = 0, skipped = 0, failed = 0, bytes = 0;
+}
+
+/// Upload one `world` entry: the gzipped envelope at `r2_path`, then every
+/// object named in `media[]` raw. `external_files` is never uploaded — those
+/// are links to content we deliberately do not host.
+///
+/// Same immutability rule as packages: a versioned object already present is
+/// skipped unless `--force`, so re-publishing unchanged media costs nothing.
+Future<_Tally> _publishWorld(
+  HttpClient client,
+  String worker,
+  String token,
+  Map<String, dynamic> e, {
+  required bool dryRun,
+  required bool force,
+}) async {
+  final t = _Tally();
+  final slug = e['slug'];
+  final dir = e['bundled_dir'] as String?;
+  if (dir == null) {
+    stderr.writeln('  ! $slug: no bundled_dir, skipping');
+    t.skipped++;
+    return t;
+  }
+  final dirPath = '${Directory.current.path}/$dir';
+  if (!Directory(dirPath).existsSync()) {
+    stderr.writeln('  ! $slug: world dir missing ($dir)');
+    t.failed++;
+    return t;
+  }
+
+  // 1. The envelope.
+  final r2Path = e['r2_path'] as String;
+  if (force || !await _exists(client, '$worker/catalog/$r2Path')) {
+    final List<int> gz;
+    try {
+      gz = encodeWorldEnvelope(buildWorldEnvelope(dirPath));
+    } catch (err) {
+      stderr.writeln('  ! $slug: $err');
+      t.failed++;
+      return t;
+    }
+    t.bytes += gz.length;
+    if (dryRun) {
+      print('  ~ $r2Path (${_kb(gz.length)}, dry)');
+      t.uploaded++;
+    } else if (await _put(
+        client, '$worker/catalog/$r2Path', token, gz, 'application/gzip')) {
+      print('  ✓ $r2Path (${_kb(gz.length)})');
+      t.uploaded++;
+    } else {
+      t.failed++;
+    }
+  } else {
+    print('  = $r2Path (already present)');
+    t.skipped++;
+  }
+
+  // 2. Media, raw.
+  final media = (e['media'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+  for (final m in media) {
+    final key = m['r2_key'] as String;
+    final src = File('$dirPath/${m['rel']}');
+    if (!src.existsSync()) {
+      stderr.writeln('  ! $slug: media missing (${m['rel']})');
+      t.failed++;
+      continue;
+    }
+    final url = '$worker/catalog/${Uri.encodeFull(key)}';
+    if (!force && await _exists(client, url)) {
+      t.skipped++;
+      continue;
+    }
+    final body = src.readAsBytesSync();
+    t.bytes += body.length;
+    if (dryRun) {
+      t.uploaded++;
+      continue;
+    }
+    if (await _put(client, url, token, body, contentTypeForMedia(key))) {
+      t.uploaded++;
+    } else {
+      t.failed++;
+    }
+  }
+  final externals =
+      (e['external_files'] as List?)?.length ?? 0;
+  print('  · $slug: ${media.length} media object(s)'
+      '${externals > 0 ? ", $externals external link(s) not uploaded" : ""}');
+  return t;
 }

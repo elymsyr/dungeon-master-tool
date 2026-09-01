@@ -21,8 +21,11 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
+import '../world_payload.dart';
+
 const _open5eDir = 'assets/open5e_packs';
 const _firstPartyDir = 'assets/first_party';
+const _worldsDir = 'assets/worlds';
 const _bannerCreditsFile =
     'assets/first_party/banners/banner-credits.yaml';
 const _catalogVersion = '2026-06-01';
@@ -40,6 +43,7 @@ void main(List<String> args) {
   final entries = <Map<String, dynamic>>[];
   entries.addAll(_packageEntries(root, open5eManifest));
   entries.addAll(_handAuthoredEntries(root));
+  entries.addAll(_worldEntries(root));
   // Attach banner artwork attribution (creator + source link) to every entry
   // whose slug has a credit in banner-credits.yaml, so the install dialog can
   // surface a clickable image credit.
@@ -195,4 +199,109 @@ List<Map<String, dynamic>> _handAuthoredEntries(String root) {
     }
   }
   return out;
+}
+
+/// One `world` catalog entry per bundled world under `assets/worlds/`.
+///
+/// Unlike a package (a single JSON file), a world is a directory: three JSON
+/// files that publish as one gzipped envelope plus a media tree that publishes
+/// as raw objects. So the entry carries `bundled_dir` instead of
+/// `bundled_asset`, a `media` list naming every R2 object, and `external_files`
+/// for anything we deliberately do NOT host (the adventure PDF — see
+/// [worldMediaPaths]).
+///
+/// The bundled world also ships inside the app, so the client can install it
+/// offline; R2 is the updatable source. Returns empty when no worlds ship.
+List<Map<String, dynamic>> _worldEntries(String root) {
+  final index = File('$root/$_worldsDir/manifest.json');
+  if (!index.existsSync()) return const [];
+  final decoded = jsonDecode(index.readAsStringSync());
+  final worlds = (decoded is Map ? decoded['worlds'] : null);
+  if (worlds is! List) return const [];
+
+  final out = <Map<String, dynamic>>[];
+  for (final w in worlds.whereType<Map>()) {
+    final dir = w['dir'] as String?;
+    if (dir == null) continue;
+    final dirPath = '$root/$_worldsDir/$dir';
+    final meta = File('$dirPath/manifest.json');
+    if (!meta.existsSync()) {
+      stderr.writeln('  ! $dir: manifest.json missing, skipped');
+      continue;
+    }
+    final m = (jsonDecode(meta.readAsStringSync()) as Map)
+        .cast<String, dynamic>();
+    final slug = (m['slug'] as String?) ?? w['slug'] as String? ?? dir;
+    final version = (m['version'] as String?) ?? '1.0.0';
+    final files = (m['files'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final mediaPrefix = 'world-media/$slug@$version';
+
+    // Media: one R2 object per file, sized from disk so the client can show a
+    // real download total before installing. A path in the manifest with no
+    // file on disk is fatal — the same rule convert_blueprint enforces.
+    final media = <Map<String, dynamic>>[];
+    for (final rel in worldMediaPaths(files)) {
+      final f = File('$dirPath/$rel');
+      if (!f.existsSync()) {
+        stderr.writeln('ERROR: $dir: media file missing: $rel');
+        exit(2);
+      }
+      media.add({
+        'rel': rel,
+        'r2_key': '$mediaPrefix/$rel',
+        'size_bytes': f.lengthSync(),
+      });
+    }
+
+    // Files we reference but never host, keyed by the relative path the
+    // installer expects on disk so it can be fetched into the same place.
+    final externals = <Map<String, dynamic>>[];
+    final pdfUrl = (files['pdf_url'] as String?)?.trim() ?? '';
+    final pdfRel = (files['pdf'] as String?)?.trim() ?? '';
+    if (pdfUrl.isNotEmpty && pdfRel.isNotEmpty) {
+      externals.add({'rel': pdfRel, 'url': pdfUrl});
+    }
+
+    out.add({
+      'item_type': 'world',
+      'slug': slug,
+      'title': (m['title'] as String?) ?? slug,
+      'version': version,
+      'publisher': (m['publisher'] as String?) ?? '',
+      'license': (m['license'] as String?) ?? '',
+      'attribution': (m['attribution'] as String?) ?? '',
+      'game_system': (m['system'] as String?) ?? '',
+      'author': (m['author'] as String?) ?? '',
+      'description': (m['description'] as String?) ?? '',
+      'source_url': (m['source_url'] as String?) ?? '',
+      'is_srd_overlap': false,
+      'requires': _requiredSlugs(m),
+      'counts': _worldCounts(dirPath, slug),
+      'cover_image': (files['cover_image'] as String?) ?? '',
+      'bundled_dir': '$_worldsDir/$dir',
+      'r2_path': 'world/$slug@$version.json.gz',
+      'size_bytes':
+          encodeWorldEnvelope(buildWorldEnvelope(dirPath)).length,
+      'media': media,
+      'external_files': externals,
+    });
+  }
+  return out;
+}
+
+/// Per-category entity counts for a world card, read from the `.pkg.json` that
+/// `convert_blueprint.dart` emits next to the blueprints. Empty when it has not
+/// been generated — the card just omits the count line.
+Map<String, int> _worldCounts(String dirPath, String slug) {
+  final pkg = File('$dirPath/$slug.pkg.json');
+  if (!pkg.existsSync()) return const {};
+  final entities = (jsonDecode(pkg.readAsStringSync()) as Map)['entities'];
+  if (entities is! Map) return const {};
+  final counts = <String, int>{};
+  for (final e in entities.values.whereType<Map>()) {
+    final type = e['type']?.toString() ?? '';
+    if (type.isEmpty) continue;
+    counts.update(type, (n) => n + 1, ifAbsent: () => 1);
+  }
+  return counts;
 }
