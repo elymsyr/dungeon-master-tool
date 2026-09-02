@@ -5,7 +5,7 @@ path: cloudflare/upload_banners.sh, flutter_app/tool/catalog_publish/bin/publish
 layer: tool
 language: dart
 status: stable
-updated: 2026-09-01
+updated: 2026-09-02
 tags: [file]
 ---
 
@@ -39,7 +39,7 @@ tags: [file]
 
 **Worlds (added 2026-09-01):**
 - A world publishes as one gzipped envelope (`catalog/world/<slug>@<ver>.json.gz` — its `manifest.json` + both blueprints) plus one raw object per media file. The 99 Devils world is 1 envelope + 75 media ≈ 43 MB, so budget a real upload; the per-object `_exists` skip makes a re-run free.
-- ⚠️ **The adventure PDF is never uploaded.** It is `all-rights-reserved`; the world manifest's `files.pdf_url` (the publisher's free-download link) becomes the entry's `external_files`, and the client fetches it from there. Do not "fix" a missing PDF by putting it in the bucket.
+- ⚠️ **The adventure PDF is never uploaded.** It is `all-rights-reserved`; the world manifest's `files.pdf_url` (the publisher's free-download link) becomes the entry's `external_files`, and the client fetches it from there. Do not "fix" a missing PDF by putting it in the bucket. **As of 2026-09-02 the client does not download it either**: `external_files` is a display-only link, rendered at the bottom of the Marketplace dialog and inside the world's pinned campaign card. A world with no `pdf_url` therefore reaches its reader through nothing at all — `world_catalog_publish_test.dart` fails if any published world lacks the link or if the campaign card disagrees with it.
 - Bumping a world means bumping `version` in `assets/worlds/<dir>/manifest.json` — the object paths are versioned and immutable, so an unchanged version publishes nothing.
 
 **Publish ordering / idempotency invariants (from `publish_catalog.dart`):**

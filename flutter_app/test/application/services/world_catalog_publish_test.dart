@@ -124,6 +124,37 @@ void main() {
       expect(world.downloadBytes, lessThan(46 * 1024 * 1024));
     });
 
+    test('every published world links its PDF, and the campaign card '
+        'repeats that exact link', () {
+      // The app no longer downloads the adventure PDF at all — the ONLY way a
+      // user reaches it is these two links. If either side drifts (a world
+      // with no `pdf_url`, or a campaign page pointing somewhere else) the
+      // world installs "successfully" with its adventure text unreachable,
+      // and nothing fails loudly. Army of the Damned shipped exactly that way.
+      final entries =
+          (_json('assets/first_party/manifest.json')['entries'] as List)
+              .cast<Map>()
+              .map((m) => CatalogEntry.fromJson(m.cast<String, dynamic>()))
+              .where((e) => e.itemType == 'world');
+      expect(entries, isNotEmpty);
+
+      for (final w in entries) {
+        expect(w.externalFiles, hasLength(1), reason: '${w.slug}: no PDF link');
+        final url = w.externalFiles.single.url;
+        expect(url, startsWith('https://'), reason: w.slug);
+
+        final campaign = ((_json('${w.bundledDir}/world-blueprint.json')
+            ['categories'] as Map)['campaign'] as List).single as Map;
+        final pages =
+            ((campaign['mapping'] as Map)['pages'] as List).cast<String>();
+        expect(
+          pages.any((p) => p.contains(url)),
+          isTrue,
+          reason: '${w.slug}: campaign card does not carry $url',
+        );
+      }
+    });
+
     test('package entries are unaffected by the new fields', () {
       final entries =
           _json('assets/first_party/manifest.json')['entries'] as List;

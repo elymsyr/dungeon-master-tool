@@ -960,6 +960,10 @@
   "@catalogExternalPdfNote": {
     "description": "Shown on an official world's install dialog: the adventure PDF is not hosted in our catalog and is fetched from the publisher instead."
   },
+  "catalogExternalPdfLink": "Download the adventure PDF from the publisher",
+  "@catalogExternalPdfLink": {
+    "description": "Shown at the bottom of an official world's install dialog: an outbound link to the publisher's own download page for the adventure PDF, which the catalog deliberately does not host or download."
+  },
   "itemTypeWorld": "World",
   "itemTypeTemplate": "Template",
   "itemTypePackage": "Package",

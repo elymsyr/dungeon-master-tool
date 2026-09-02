@@ -3,15 +3,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../core/config/worker_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
 
-/// Cloudflare Worker base URL — `--dart-define=DMT_WORKER_URL=...` (same const
-/// used by `network_providers.dart`). Empty → catalog resolves from the bundled
-/// assets only.
-const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
+/// Cloudflare Worker base URL — [WorkerConfig.baseUrl]. Empty → catalog
+/// resolves from the bundled assets only.
+const String _workerBaseUrl = WorkerConfig.baseUrl;
 const String _bundledManifest = 'assets/first_party/manifest.json';
 
 /// Cache-bust version for banner art. The worker serves banners with
@@ -70,6 +71,13 @@ class FirstPartyCatalogService {
 
   bool get _hasWorker => _workerBaseUrl.isNotEmpty;
 
+  /// Whether `--dart-define=DMT_WORKER_URL` was compiled in. Without it every
+  /// catalog object (payloads, world envelopes + media, banners) is
+  /// unreachable and only the bundled manifest survives — which makes the
+  /// Marketplace *look* populated while nothing installs. Callers surface this
+  /// in their error text so the build-config cause is visible, not silent.
+  bool get hasWorker => _hasWorker;
+
   /// All catalog entries (packages AND worlds): online R2 manifest → bundled
   /// manifest fallback. Callers filter by `itemType` — see
   /// `firstPartyCatalogProvider` / `firstPartyWorldCatalogProvider`.
@@ -98,19 +106,21 @@ class FirstPartyCatalogService {
   /// Resolve an entry's payload: online R2 gz → bundled asset fallback.
   /// Throws [StateError] only when neither source yields a payload.
   Future<Map<String, dynamic>> fetchPayload(CatalogEntry entry) async {
+    Object? cause;
     if (_hasWorker && entry.r2Path.isNotEmpty) {
       try {
         final bytes =
             await _getBytes(Uri.parse('$_workerBaseUrl/catalog/${entry.r2Path}'));
         final jsonStr = utf8.decode(gzip.decode(bytes));
         return jsonDecode(jsonStr) as Map<String, dynamic>;
-      } catch (_) {
-        // fall through to bundled
+      } catch (e) {
+        cause = e; // fall through to bundled, but keep WHY for the error text
       }
     }
     final raw = await _tryBundled(entry.bundledAsset);
     if (raw == null) {
-      throw StateError('Catalog payload unavailable: ${entry.slug}');
+      throw StateError('Catalog payload unavailable: ${entry.slug} '
+          '(${_workerDiagnostic(entry.r2Path, cause)})');
     }
     return jsonDecode(raw) as Map<String, dynamic>;
   }
@@ -120,10 +130,14 @@ class FirstPartyCatalogService {
   /// banner as the local package cover.
   Future<Uint8List?> fetchBanner(String slug) async {
     final url = officialBannerUrl(slug);
-    if (url == null) return null;
+    if (url == null) {
+      debugPrint('[catalog] no banner for $slug: DMT_WORKER_URL not compiled in');
+      return null;
+    }
     try {
       return Uint8List.fromList(await _getBytes(Uri.parse(url)));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[catalog] banner fetch failed $url: $e');
       return null;
     }
   }
@@ -132,42 +146,28 @@ class FirstPartyCatalogService {
   /// media file. Null when no worker is configured, offline, or missing, so the
   /// caller can fall back to the bundled asset.
   Future<Uint8List?> fetchCatalogBytes(String r2Key) async {
-    if (!_hasWorker || r2Key.isEmpty) return null;
+    if (!_hasWorker || r2Key.isEmpty) {
+      debugPrint('[catalog] skip $r2Key: '
+          '${_hasWorker ? "empty key" : "DMT_WORKER_URL not compiled in"}');
+      return null;
+    }
     try {
       // encodeFull keeps `/` but escapes spaces — media keys carry them
       // (e.g. `media/GURPS GCS Characters/...`).
       return Uint8List.fromList(await _getBytes(
           Uri.parse('$_workerBaseUrl/catalog/${Uri.encodeFull(r2Key)}')));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[catalog] object fetch failed $r2Key: $e');
       return null;
     }
   }
 
-  /// Bytes of a file the catalog references but does not host (the adventure
-  /// PDF, fetched from the publisher). Null on any failure — a world installs
-  /// without it, the PDF just doesn't land in the library.
-  ///
-  /// Uses a much longer timeout than [_timeout]: these are tens of megabytes
-  /// off a third-party site, not a small object off our edge.
-  Future<Uint8List?> fetchExternal(Uri url) async {
-    try {
-      final req = await _httpClient
-          .getUrl(url)
-          .timeout(const Duration(seconds: 30));
-      req.followRedirects = true;
-      final res = await req.close().timeout(const Duration(minutes: 10));
-      if (res.statusCode != 200) {
-        await res.drain<void>();
-        return null;
-      }
-      final builder = BytesBuilder(copy: false);
-      await for (final chunk in res) {
-        builder.add(chunk);
-      }
-      return Uint8List.fromList(builder.takeBytes());
-    } catch (_) {
-      return null;
-    }
+  /// Human-readable reason a catalog object could not be fetched — the one
+  /// string that tells a missing build define apart from a 404 / offline edge.
+  String _workerDiagnostic(String r2Path, Object? cause) {
+    if (!_hasWorker) return 'DMT_WORKER_URL not compiled in; no bundled copy';
+    if (r2Path.isEmpty) return 'entry declares no r2_path; no bundled copy';
+    return 'worker fetch failed: ${cause ?? "unknown"}; no bundled copy';
   }
 
   Future<String?> _tryBundled(String asset) async {

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/bundled_worlds_installer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-01
+updated: 2026-09-02
 tags: [file]
 ---
 
@@ -62,6 +62,11 @@ silent skip.
 `_fetchEnvelope` mirrors that for the payload: R2 `r2_path` gz → the three bundled JSONs.
 The catalog install stamps `installed_from: 'official'` + `catalog_version` (which
 `campaignMetadataProvider` reads back, driving the dialog's Update state).
+
+`installFromCatalog`'s `loadMedia` resolves R2 -> bundle and then **stops**: as of 2026-09-02 it no
+longer falls back to `fetchExternal`, so no adventure PDF is downloaded on install. The
+`external_files` entry survives purely as a link the Marketplace dialog and the world's pinned
+campaign card render.
 
 `_mediaPaths` skips the `pdf_url` key: it is a publisher download link, and walking it as a
 media path would report "unavailable" on every install.

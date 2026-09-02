@@ -1253,3 +1253,7 @@ Kullanıcı gözlemi: "elle oluşturulan karakterde Resolved Grants alanı hiç 
 ## 2026-09-01 — Character ownership works without multiplayer
 - Claim/Release moved off the online-only path: offline worlds get a local `ownerId` patch from the sidebar row menu, and `_canEdit` no longer gates on a `world_members` row for worlds that were never mirrored. Guests get `kGuestReleasedOwnerId` because `null` already means "mine" for them; `Character.isOwnedBy` / `normalizedOwnerId` (`character_ext.dart`) are the single predicate + cloud-safe accessor.
 - Updated notes: [[Character-System]].
+
+## 2026-09-02
+- `DMT_WORKER_URL` artık `core/config/worker_config.dart` üzerinden derlemeye gömülü bir varsayılana sahip: CI secret'ı build'e girmediğinde Marketplace "listeler ama indiremez" hâline düşüyordu (banner yok + `Catalog payload unavailable`). [[dart-define-reference]], [[first_party_catalog_service]] güncellendi.
+- Macera PDF'i artık indirilmiyor da: `fetchExternal` kaldırıldı, `external_files` yalnız gösterilen bir link (Marketplace kartının altı + dünyanın başa tutturulmuş campaign kartı). Üç dünyanın sürümü bump'landı. [[bundled_worlds_installer]], [[catalog-publish-ops]] güncellendi.
