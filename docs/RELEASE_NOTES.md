@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v15.1.1 — Marketplace Downloads Fixed (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A repair release. Downloading anything from the Marketplace was broken on the published builds — worlds silently refused to install, packages failed with an error, and no cover images ever appeared. All three had the same cause and are fixed. Adventure PDFs are also no longer downloaded by the app; the install dialog now links out to the publisher instead.
+
+---
+
+### Highlights
+
+- **Marketplace downloads work again** — Worlds and packages install correctly on the released builds.
+- **Cover images show up** — Marketplace listings display their banners.
+- **Adventure PDFs link out** — The install dialog gives you the publisher's own download link instead of trying to fetch the file.
+
+---
+
+### Marketplace
+
+#### Downloads and banners
+
+On the builds published to GitHub, the app could browse the Marketplace but not actually download from it: worlds ended on "retry" with no error, packages failed outright, and no listing ever rendered its banner. The address of the content server is now built into the app rather than supplied at build time, so a released build always knows where to fetch from.
+
+#### Adventure PDFs
+
+Official adventures whose PDF belongs to the publisher no longer try to pull that file down during install. The install dialog now shows **Download the adventure PDF from the publisher** as a link — tap it and it opens in your browser. Nothing else about the install changes; maps, tokens and handouts still come with the world.
+
+---
+
+### Smaller improvements
+
+- **l10n** — New `catalogExternalPdfLink` string, translated in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Marketplace world download silently fails** — Fixed. Worlds now install on release builds.
+- **"Bad state: Catalog payload unavailable"** — Fixed. Package downloads no longer throw.
+- **Missing banner images** — Fixed. Listings render their covers.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.1.0` → `15.1.1`.
+- **In-app migrations:** None. No schema changes.
+- **Previously failed downloads:** Just retry them — nothing to clean up first.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Deleting a world bricks its characters** — A character claimed from an installed world can no longer be opened once that world is deleted.
+- **Signed-out users can get stuck on a claimed character** — Without an account, a character owned from a deleted world can be neither released nor opened.
+- **Portraits are not carried over when you create an account** — Characters created before signing up lose their portraits; re-attach the image manually.
+- **Bundled world references stay soft** — Species and class references on imported player characters show the recorded name rather than a live link.
+
+---
+
+### For developers
+
+- **`WorkerConfig.baseUrl`** — Single source for the Cloudflare Worker base, with a default so a missing `--dart-define=DMT_WORKER_URL` can no longer produce a browse-only Marketplace; the define still overrides for staging/self-host.
+- **`FirstPartyCatalogService.fetchExternal` removed** — The client never downloads externally-hosted adventure PDFs; entries in `externalFiles` render as outbound links.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.1.0 — Pinned Entities, Two New Worlds, Guest Character Release (Beta)
 
 **Release date:** September 2026
