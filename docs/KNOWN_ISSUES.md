@@ -11,13 +11,6 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **Deleting a world bricks its characters** — A character claimed from an installed world
-  can no longer be opened once that world is deleted; the sheet fails to load instead of
-  simply losing its world link. Characters should survive world deletion and stay
-  openable — only their tie to the world should break.
-- **Signed-out users can get stuck on a claimed character** — Without an account, a
-  character owned from a deleted world can be neither released nor opened, leaving no way
-  back. Related to the item above.
 - **Portraits are not carried over when you create an account** — Characters created
   before signing up keep their data but lose their portrait images after the account is
   created; re-attach the image manually.
@@ -27,6 +20,13 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Resolved
 
+- **Deleting a world bricked its characters** — Fixed: world deletion now actually clears
+  the characters' world link, so they survive as ordinary characters and open normally.
+  A character still pointing at a world that is gone repairs itself the next time it is
+  opened.
+- **Signed-out users could get stuck on a claimed character** — Fixed with the item above:
+  once the dead world link is cleared, the character opens and can be released or deleted
+  again.
 - **Marketplace downloads failed on release builds** — Fixed in v15.1.1: the asset server
   address now has a built-in default instead of depending on a build-time setting, so
   release builds no longer list content they cannot download.

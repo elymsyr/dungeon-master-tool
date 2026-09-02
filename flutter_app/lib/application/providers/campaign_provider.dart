@@ -358,16 +358,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   Future<bool> create(String worldName, {WorldSchema? template}) async {
     try {
-      // Defense-in-depth: an earlier `delete()` may have failed to orphan
-      // chars (entity load error swallowed). Without scrubbing here, those
-      // stale rows with `worldName == X` get adopted by the new world.
-      try {
-        await _ref
-            .read(characterListProvider.notifier)
-            .orphanForWorld(worldName);
-      } catch (e, st) {
-        debugPrint('orphan-before-create error: $e\n$st');
-      }
       await _repo.create(worldName, template: template);
       return load(worldName);
     } catch (e, st) {
@@ -563,7 +553,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       await _ref
           .read(characterListProvider.notifier)
-          .orphanForWorld(campaignName, entitiesMap);
+          .orphanForWorld(data?['world_id'] as String? ?? '', entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-delete error: $e\n$st');
     }
@@ -617,7 +607,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       await _ref
           .read(characterListProvider.notifier)
-          .orphanForWorld(campaignName, entitiesMap);
+          .orphanForWorld(data?['world_id'] as String? ?? '', entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-purge error: $e\n$st');
     }

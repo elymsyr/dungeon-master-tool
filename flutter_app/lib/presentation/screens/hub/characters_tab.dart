@@ -420,13 +420,16 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (worldId != null) {
       final infos =
           ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-      var worldName = c.resolvedWorldName(infos);
+      final worldName = c.resolvedWorldName(infos);
       if (worldName.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.charWorldNotFound),
-          ),
-        );
+        // Dünya silinmiş (ya da bu cihazda hiç yok): karakteri kilitleme,
+        // yalnız bağını kopar ve orphan olarak aç. `orphanForWorld` bunu
+        // silme anında yapıyor; burası eski/kaçmış satırların telafisi.
+        await ref
+            .read(characterListProvider.notifier)
+            .update(c.copyWith(worldId: null));
+        if (!mounted) return;
+        context.push('/character/${c.id}');
         return;
       }
       final active = ref.read(activeCampaignProvider);
