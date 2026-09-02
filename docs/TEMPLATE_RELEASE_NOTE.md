@@ -26,7 +26,7 @@ This file is the **template and style guide** for every Dungeon Master Tool rele
 3. Links (GitHub release, website)
 4. One-paragraph intro — what this release is *about*
 5. Heads-up callouts (only when action is required)
-6. **Highlights** — ~6–10 bullets, one line each, user-outcome framing
+6. **Highlights** — only the big user-facing things: new content, new features, major capability changes. No fixes, no polish, no internals. Skip a bullet if the user wouldn't notice it. ~4–8 bullets, one line each.
 7. **What's new** — grouped feature sections with real explanations
 8. **Smaller improvements** — single-line bullets for polish items
 9. **Bug fixes** — user-visible fixes only
@@ -59,12 +59,13 @@ Copy everything between the `<!-- BEGIN -->` and `<!-- END -->` markers into `RE
 
 ### Highlights
 
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
-- **{{Feature name}}** — {{one-line user-facing outcome}}.
+Only new content, new features and major capability changes — the things a user would
+notice and care about. Bug fixes, polish and internals go in their own sections below.
+
+- **{{New content or feature}}** — {{one-line user-facing outcome}}.
+- **{{New content or feature}}** — {{one-line user-facing outcome}}.
+- **{{New content or feature}}** — {{one-line user-facing outcome}}.
+- **{{New content or feature}}** — {{one-line user-facing outcome}}.
 
 ---
 
@@ -153,7 +154,7 @@ Before publishing, walk this list top to bottom:
 - [ ] Version number matches `pubspec.yaml` and the git tag.
 - [ ] Release date is the day the GitHub release is published, not the day the notes were drafted.
 - [ ] GitHub release link and website link both resolve (no 404s).
-- [ ] Every **Highlight** bullet has a corresponding detailed section below, and vice versa — no orphans in either direction.
+- [ ] Every **Highlight** bullet is new content, a new feature, or a major capability change — no bug fixes or polish — and has a corresponding detailed section below.
 - [ ] Every **Heads-up** callout is repeated in **Upgrade notes** with the exact action.
 - [ ] No Supabase / backend migration file names appear anywhere in the note — they belong in the deployment doc, not here.
 - [ ] **Bug fixes** only lists things a user could have observed — no "fixed flaky test", no "renamed internal widget".

@@ -9,14 +9,6 @@ A repair release. Downloading anything from the Marketplace was broken on the pu
 
 ---
 
-### Highlights
-
-- **Marketplace downloads work again** — Worlds and packages install correctly on the released builds.
-- **Cover images show up** — Marketplace listings display their banners.
-- **Adventure PDFs link out** — The install dialog gives you the publisher's own download link instead of trying to fetch the file.
-
----
-
 ### Marketplace
 
 #### Downloads and banners
