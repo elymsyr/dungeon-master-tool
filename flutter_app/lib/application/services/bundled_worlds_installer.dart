@@ -114,8 +114,8 @@ class BundledWorldsInstaller {
   }
 
   /// Kataloğun `world` girdisini kurar: payload zarfı R2'den (başarısızsa
-  /// bundle'dan), medya R2'den (başarısızsa bundle'dan), barındırmadığımız
-  /// dosyalar (PDF) bundle'dan ya da yayıncının linkinden.
+  /// bundle'dan), medya R2'den (başarısızsa bundle'dan). Barındırmadığımız
+  /// dosyalar (PDF) hiç indirilmez — bkz. [loadMedia].
   ///
   /// Bundle her zaman fallback — dünya uygulamayla birlikte geliyor, R2
   /// güncellenebilir kaynak.
@@ -129,7 +129,11 @@ class BundledWorldsInstaller {
 
     final envelope = await _fetchEnvelope(entry, svc, base);
     if (envelope == null) {
-      report.failures.add('${entry.slug}: payload unavailable');
+      // Sebebi yazmazsak kullanıcı yalnız "Retry" görüyor: R2'de obje yok mu,
+      // yoksa build'e DMT_WORKER_URL hiç girmemiş mi ayırt edilemiyor.
+      report.failures.add('${entry.slug}: payload unavailable '
+          '(${svc.hasWorker ? "worker fetch failed" : "DMT_WORKER_URL not compiled in"}'
+          '${base.isEmpty ? "" : ", no bundled copy in this build"})');
       return report;
     }
     final manifest = envelope['manifest'];
@@ -139,7 +143,6 @@ class BundledWorldsInstaller {
     }
 
     final byRel = {for (final m in entry.media) m.rel: m};
-    final externalByRel = {for (final f in entry.externalFiles) f.rel: f};
 
     Future<Uint8List?> loadMedia(String rel) async {
       // R2 taze kaynak, bundle fallback.
@@ -152,11 +155,10 @@ class BundledWorldsInstaller {
         final bundled = await _loadAssetBytes('$base/$rel');
         if (bundled != null) return bundled;
       }
-      // Barındırmadığımız dosya (PDF): bundle'da yoksa yayıncıdan indir.
-      final ext = externalByRel[rel];
-      if (ext != null && ext.url.isNotEmpty) {
-        return svc.fetchExternal(Uri.parse(ext.url));
-      }
+      // Barındırmadığımız dosya (PDF) indirilmiyor: telif gereği bucket'a da
+      // koymuyoruz, yayıncıdan da çekmiyoruz. `external_files` artık yalnız
+      // gösterilecek bir link — kullanıcı Marketplace kartındaki bağlantıdan
+      // ya da kampanya sayfasından kendisi indiriyor.
       return null;
     }
 

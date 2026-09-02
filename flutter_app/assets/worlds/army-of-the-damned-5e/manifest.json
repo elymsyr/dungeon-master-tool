@@ -6,10 +6,11 @@
   "author": "Tomer Abramovici (/u/SpiketailDrake)",
   "license": "fan-content",
   "attribution": "Army of the Damned is a fan-made adventure module by Tomer Abramovici. All illustrations and names used from Magic: The Gathering, along with all D&D terms and rules, are properties of Wizards of the Coast. This is only a fan creation, not in any way made for sale. Maps and the Player’s Guide to Innistrad: Human Variants by /u/Nihilates; Geralf’s coded letter by /u/RanAngel.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A gothic-horror adventure for four 1st-level characters on the plane of Innistrad, taking them to 5th. The party travels into Stensia to recover an artifact of the Church of Avacyn, clears a haunted manor, defends the village of Shadowgrange against an army of the walking dead, crosses the farbog and storms Mauer Estate to confront the necro-alchemist who built the horde.",
   "files": {
     "pdf": "armyofthedamned.pdf",
+    "pdf_url": "https://drive.google.com/drive/folders/1MyAVOpmtQsTEZbhckQKcOIjuOMUg2SzV",
     "cover_image": "media/Artwork/Monsters/Zombie Apocalypse.jpg",
     "media": {
       "maps": [

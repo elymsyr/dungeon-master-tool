@@ -168,13 +168,14 @@ class OfficialPackageDialog extends ConsumerWidget {
                 label: _formatBytes(entry.downloadBytes),
                 palette: palette,
               ),
-              // The adventure PDF is not hosted in our catalog — it downloads
-              // free from the publisher. Say so, so a slow install is legible.
-              if (entry.externalFiles.isNotEmpty) ...[
+              // The adventure PDF is neither hosted in our catalog nor
+              // downloaded on install — it is the publisher's to distribute.
+              // The link goes out to them so the user fetches it themselves.
+              for (final f in entry.externalFiles) ...[
                 const SizedBox(height: 8),
-                _Row(
-                  icon: Icons.picture_as_pdf_outlined,
-                  label: l10n.catalogExternalPdfNote,
+                _ExternalFileLink(
+                  label: l10n.catalogExternalPdfLink,
+                  url: f.url,
                   palette: palette,
                 ),
               ],
@@ -355,6 +356,50 @@ String _formatBytes(int bytes) => bytes >= 1024 * 1024
 
 /// Link to the publisher's page for the work (`source_url`), so the credited
 /// author is one tap away. Mirrors [_BannerCredit].
+/// A file the catalog references but deliberately does not host (the adventure
+/// PDF). Rendered as an outbound link — tapping opens the publisher's own
+/// download page; the app never fetches these bytes itself.
+class _ExternalFileLink extends StatelessWidget {
+  final String label;
+  final String url;
+  final DmToolColors palette;
+  const _ExternalFileLink({
+    required this.label,
+    required this.url,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () =>
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: Row(
+        children: [
+          Icon(Icons.picture_as_pdf_outlined,
+              size: 14, color: palette.sidebarLabelSecondary),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.featureCardAccent,
+                decoration: TextDecoration.underline,
+                decorationColor: palette.featureCardAccent,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.open_in_new, size: 12, color: palette.featureCardAccent),
+        ],
+      ),
+    );
+  }
+}
+
 class _SourceLink extends StatelessWidget {
   final String url;
   final DmToolColors palette;

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/worker_config.dart';
 import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
 import '../../data/database/database_provider.dart';
@@ -13,7 +14,7 @@ import '../providers/user_session_provider.dart';
 import 'guest_promotion_service.dart';
 
 /// Cloudflare Worker base URL — network_providers.dart ile aynı define.
-const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
+const String _workerBaseUrl = WorkerConfig.baseUrl;
 
 /// Kullanıcının sahibi olduğu objelerin yattığı Supabase Storage bucket'ları.
 /// Hepsinde path şeması `{uid}/{dosya}` ve owner-delete RLS policy'si var

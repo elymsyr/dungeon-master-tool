@@ -5,7 +5,7 @@ path: flutter_app/lib/core/config/supabase_config.dart, flutter_app/lib/data/net
 layer: core
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-02
 tags: [file]
 ---
 
@@ -19,7 +19,7 @@ tags: [file]
 |---|---|---|---|
 | `SUPABASE_URL` | `core/config/supabase_config.dart` → `SupabaseConfig.url` | `String.fromEnvironment('SUPABASE_URL')` | offline |
 | `SUPABASE_ANON_KEY` | same → `SupabaseConfig.anonKey` | `String.fromEnvironment('SUPABASE_ANON_KEY')` | offline |
-| `DMT_WORKER_URL` | `data/network/network_providers.dart` and `data/services/first_party_catalog_service.dart` → `_workerBaseUrl` | `String.fromEnvironment('DMT_WORKER_URL')` | no R2 asset/catalog network |
+| `DMT_WORKER_URL` | `data/network/network_providers.dart` and `data/services/first_party_catalog_service.dart` → `_workerBaseUrl` | `WorkerConfig.baseUrl` — `String.fromEnvironment('DMT_WORKER_URL', defaultValue: <public worker>)` | falls back to the default worker |
 
 ## Inputs / Outputs
 **Inputs**
@@ -44,4 +44,5 @@ tags: [file]
 - **Gotcha**: `--dart-define` is compile-time; you cannot change backend wiring without a rebuild. Banners are NOT bundled (download from R2); the two built-in cover banners are the only bundled ones.
 
 ## Notes
+- `DMT_WORKER_URL` has a **compiled-in default** (`core/config/worker_config.dart`, added 2026-09-02): the URL is not a secret (`/catalog/*` is public GET) and leaving it define-only meant an unset CI secret produced a Marketplace that listed everything and installed nothing, with no banners and no error. The define still overrides for staging/self-host.
 - `DMT_WORKER_URL` is the same Cloudflare Worker base used by [[catalog-publish-ops]] and `cloudflare/upload_banners.sh` (admin write side uses `ADMIN_TOKEN`, not these client flags).

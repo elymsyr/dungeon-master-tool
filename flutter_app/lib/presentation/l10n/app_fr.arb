@@ -912,6 +912,7 @@
   "filterCharacters": "Personnages",
   "filterSoundpacks": "Packs audio",
   "catalogExternalPdfNote": "Le PDF est téléchargé chez l'éditeur",
+  "catalogExternalPdfLink": "Télécharger le PDF de l'aventure chez l'éditeur",
   "itemTypeWorld": "Monde",
   "itemTypeTemplate": "Modèle",
   "itemTypePackage": "Paquet",

@@ -912,6 +912,7 @@
   "filterCharacters": "Charaktere",
   "filterSoundpacks": "Soundpacks",
   "catalogExternalPdfNote": "PDF wird vom Herausgeber geladen",
+  "catalogExternalPdfLink": "Abenteuer-PDF beim Verlag herunterladen",
   "itemTypeWorld": "Welt",
   "itemTypeTemplate": "Vorlage",
   "itemTypePackage": "Paket",

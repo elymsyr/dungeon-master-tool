@@ -5,7 +5,7 @@ path: flutter_app/lib/data/services/first_party_catalog_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-01
+updated: 2026-09-02
 tags: [file]
 ---
 
@@ -16,7 +16,7 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- `--dart-define=DMT_WORKER_URL` (`_workerBaseUrl`); empty -> bundled-only.
+- `WorkerConfig.baseUrl` (`_workerBaseUrl`) — `--dart-define=DMT_WORKER_URL` with a compiled-in **default**, so a missing CI secret can no longer silently strand the catalog. Empty -> bundled-only.
 - Bundled asset `assets/first_party/manifest.json`; per-entry `r2Path` / `bundledAsset`.
 - Native `HttpClient` (no `http`/`dio` dep), 12s timeout.
 
@@ -26,7 +26,7 @@ tags: [file]
 - `fetchBanner(slug)` -> `Uint8List?` (JPEG, null when no worker / offline / missing).
 - `officialBannerUrl(slug)` static -> `{worker}/catalog/banners/<slug>.jpg?v=N`.
 - `fetchCatalogBytes(r2Key)` -> `Uint8List?`, raw bytes of any catalog object (a world's media). Null on no-worker / offline / missing so the caller falls back to the bundled asset. URL-encodes with `Uri.encodeFull` — media keys carry spaces (`media/GURPS GCS Characters/…`).
-- `fetchExternal(url)` -> `Uint8List?` for a file the catalog references but does not host (the adventure PDF, fetched from the publisher). Follows redirects on a **30 s connect / 10 min body** timeout rather than the 12 s `_timeout`: these are tens of megabytes off a third-party site.
+- `fetchExternal` was **removed 2026-09-02**. The adventure PDF is neither hosted nor downloaded: `external_files` is now a display-only link (see [[bundled_worlds_installer]] and [[catalog-publish-ops]]).
 
 ## Dependencies & Links
 - Depends on: `CatalogEntry` (`catalog_entry`), `OfflineException` (`error_format`)

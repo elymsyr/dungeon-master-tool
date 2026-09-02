@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/worker_config.dart';
 import '../../application/services/content_store.dart';
 import '../../core/config/supabase_config.dart';
 import 'asset_service.dart';
@@ -27,7 +28,7 @@ final sessionManagerProvider = Provider<SessionManager>((ref) {
 
 /// Cloudflare Worker base URL — `--dart-define=DMT_WORKER_URL=...`.
 /// Boş ise AssetService null döner (offline fallback).
-const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
+const String _workerBaseUrl = WorkerConfig.baseUrl;
 
 /// AssetService — Cloudflare R2 asset pipeline (docs/ONLINE_REPORT.md §4.3).
 ///

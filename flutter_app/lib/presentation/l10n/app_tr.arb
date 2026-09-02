@@ -912,6 +912,7 @@
   "filterCharacters": "Karakterler",
   "filterSoundpacks": "Ses Paketleri",
   "catalogExternalPdfNote": "PDF yayıncıdan indirilir",
+  "catalogExternalPdfLink": "Macera PDF'ini yayıncıdan indir",
   "itemTypeWorld": "Dünya",
   "itemTypeTemplate": "Şablon",
   "itemTypePackage": "Paket",
