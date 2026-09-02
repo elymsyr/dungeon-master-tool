@@ -11,13 +11,14 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-
-- **Bundled world references stay soft** — Species and class references on imported player
-  characters are not linked to local entities; sheets display the recorded name rather than
-  a live link. Deferred by design for now.
+_None tracked right now._
 
 ## Resolved
 
+- **Bundled world references stayed soft** — Fixed: species and class on an imported player
+  character now resolve to the installed entity, so the sheet shows the live card's name
+  and the lineage (subspecies) picker appears for these characters too. A reference to
+  content that is not installed still falls back to the recorded name, by design.
 - **Portraits are not carried over when you create an account** — Characters created
   before signing up keep their data but lose their portrait images after the account is
   created; re-attach the image manually.

@@ -50,4 +50,23 @@ void main() {
     expect(_value(lines, 'Species'), 'Human');
     expect(_value(lines, 'Class'), 'Fighter');
   });
+
+  test('soft-ref envelopes resolve to the live entity when it is installed', () {
+    final entities = {
+      'sp1': const Entity(id: 'sp1', name: 'Human', categorySlug: 'species'),
+      'cl1': const Entity(id: 'cl1', name: 'Fighter', categorySlug: 'class'),
+    };
+    final character = _char({
+      'species_ref': {'slug': 'species', 'name': 'Human'},
+      'class_refs': [
+        {'slug': 'class', 'name': 'Fighter'},
+      ],
+    });
+    final ids = characterRaceClassIds(character, entities);
+    expect(ids.raceId, 'sp1');
+    expect(ids.classId, 'cl1');
+    final lines = characterStatLines(character, entities);
+    expect(_value(lines, 'Species'), 'Human');
+    expect(_value(lines, 'Class'), 'Fighter');
+  });
 }
