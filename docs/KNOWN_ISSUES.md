@@ -11,15 +11,16 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **Portraits are not carried over when you create an account** — Characters created
-  before signing up keep their data but lose their portrait images after the account is
-  created; re-attach the image manually.
+
 - **Bundled world references stay soft** — Species and class references on imported player
   characters are not linked to local entities; sheets display the recorded name rather than
   a live link. Deferred by design for now.
 
 ## Resolved
 
+- **Portraits are not carried over when you create an account** — Characters created
+  before signing up keep their data but lose their portrait images after the account is
+  created; re-attach the image manually.
 - **Deleting a world bricked its characters** — Fixed: world deletion now actually clears
   the characters' world link, so they survive as ordinary characters and open normally.
   A character still pointing at a world that is gone repairs itself the next time it is
