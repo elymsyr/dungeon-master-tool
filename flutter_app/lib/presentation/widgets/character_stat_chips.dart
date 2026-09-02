@@ -11,6 +11,7 @@ import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/services/entity_ref.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Six summary stats shown on character header / sidebar / tab cards in
@@ -53,7 +54,14 @@ class CharacterRaceClassIds {
   });
 }
 
-CharacterRaceClassIds characterRaceClassIds(Character character) {
+/// [entities] verilirse yumuşak ref zarfları da gerçek id'ye çözülür.
+/// Paketlenmiş dünyadan gelen PC `species_ref`/`class_refs` alanlarını zarf
+/// olarak taşıyor; id'siz kalınca yalnız ad gösterilmekle kalmıyor, id'ye
+/// bağlı yüzeyler (alt-tür seçici) hiç açılmıyordu.
+CharacterRaceClassIds characterRaceClassIds(
+  Character character, [
+  Map<String, Entity>? entities,
+]) {
   final fields = character.entity.fields;
   // (id, zarftaki ad) — ikisi de bulunamazsa (null, null).
   (String?, String?) first(Iterable<String> keys) {
@@ -64,8 +72,14 @@ CharacterRaceClassIds characterRaceClassIds(Character character) {
         if (fields[k] is List) ...(fields[k] as List),
       ]) {
         if (v is String && v.isNotEmpty) return (v, null);
-        if (v is Map && v['name'] is String && (v['name'] as String).isNotEmpty) {
-          name ??= v['name'] as String;
+        if (v is Map) {
+          if (entities != null) {
+            final id = resolveEntityRef(v, entities);
+            if (id != null) return (id, null);
+          }
+          if (v['name'] is String && (v['name'] as String).isNotEmpty) {
+            name ??= v['name'] as String;
+          }
         }
       }
     }
@@ -95,7 +109,7 @@ List<CharacterStatLine> characterStatLines(
   int? effectiveAc,
   String? ownerLabel,
 }) {
-  final ids = characterRaceClassIds(character);
+  final ids = characterRaceClassIds(character, entities);
   final rid = ids.raceId;
   final cid = ids.classId;
   final raceName =

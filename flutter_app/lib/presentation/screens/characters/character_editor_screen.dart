@@ -2025,7 +2025,7 @@ class _CharacterEditorScreenState
   /// subspecies rows.
   Widget _subspeciesPickerTile(Character character) {
     final entities = _readEntitiesFor(character);
-    final ids = characterRaceClassIds(character);
+    final ids = characterRaceClassIds(character, entities);
     final raceId = ids.raceId;
     if (raceId == null) return const SizedBox.shrink();
     final species = entities[raceId];

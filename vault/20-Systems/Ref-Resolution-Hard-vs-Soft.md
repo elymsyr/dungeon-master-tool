@@ -1,7 +1,7 @@
 ---
 type: system
 domain: content-pipeline
-updated: 2026-08-13
+updated: 2026-09-02
 tags: [system]
 ---
 
@@ -24,7 +24,7 @@ tags: [system]
 ## Key Constants / Invariants
 - Hard refs cannot dangle (build gate). Soft refs may legitimately be absent (content from an uninstalled pack).
 - Subclass parent coverage: 125/125 (28 hard + 97 soft) per chargen audit.
-- **A resolvable soft ref is not a visible one.** Resolution is only as good as the reader: a filter that does `(fields[x] as List).contains(id)` or `whereType<String>()` drops every Map envelope, so a correctly written ref renders nothing and no test fails. Every chargen reader was put on `resolveEntityRefList` on 2026-08-13 (audit U1); the rule for any *new* reader is to call it rather than index the list directly.
+- **A resolvable soft ref is not a visible one.** Resolution is only as good as the reader: a filter that does `(fields[x] as List).contains(id)` or `whereType<String>()` drops every Map envelope, so a correctly written ref renders nothing and no test fails. Every chargen reader was put on `resolveEntityRefList` on 2026-08-13 (audit U1); the rule for any *new* reader is to call it rather than index the list directly. Same trap outside chargen: `characterRaceClassIds` (`character_stat_chips.dart`) only accepted a bare `String`, so a bundled world's PC had no species/class **id** — chip names came from the envelope and the subspecies picker never rendered. It now takes an optional entity map and goes through `resolveEntityRef` (2026-09-02); the map-less call (`_StatChipsHeader`, scoped-select perf path) still falls back to the envelope name.
 
 ## Related
 - MoCs: [[Content-Pipeline]], [[Character-System]], [[World-and-Content]]
