@@ -868,8 +868,14 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       // Offline + world-bound: server'a ulaşamıyoruz, ownerId'yi local
       // olarak temizle ve queue'ya at. Karakter dosyası kalır; world görür
       // edebilen başka bir cihaz CDC ile (NULL, W)'i öğrenecek.
+      //
+      // Guest (giriş yapılmamış) için `null` = "benim" olduğundan release
+      // hiçbir şey yapmış gibi görünmüyordu — karakter own-only char
+      // tab'ında kalıyor, tekrar basmak da işe yaramıyordu. Sidebar'daki
+      // release ile aynı işaret kullanılır; `normalizedOwnerId` buluta
+      // çıkarken tekrar `null`'a çevirir.
       final patched = existing.copyWith(
-        ownerId: null,
+        ownerId: _ref.read(authProvider) == null ? kGuestReleasedOwnerId : null,
         updatedAt: DateTime.now().toUtc().toIso8601String(),
       );
       await _repo.save(patched);

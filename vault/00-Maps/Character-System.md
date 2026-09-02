@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: chargen
-updated: 2026-09-01
+updated: 2026-09-02
 tags: [moc]
 ---
 
@@ -32,7 +32,8 @@ tags: [moc]
 > `ownerId` düzenleme iznini ([[character_editor_screen]] `_canEdit`) ve hub Characters sekmesi görünürlüğünü kapatır, ama claim/release yalnız online dünyalarda ([[character_claim_service]] RPC'leri) vardı. Marketplace'ten kurulan bir dünyanın PC'leri sahipsiz (veya yazarın uid'i ile) geldiği için kalıcı read-only kalıyordu. Şimdi:
 > - **Offline dünya = yerel sahiplik.** `characters_sidebar._OfflineCharacterRow` menüsünde Claim/Release var; `characterListProvider.update()` ile sadece `ownerId` patch'lenir (mirror push zaten online olmayan dünyada erken döner).
 > - **Mirror'lanmamış dünyada düzenleme her zaman açık** — sahipliği doğrulayacak server satırı yok (`_canEdit`: `!onlineWorldIds.contains(worldId)` → true).
-> - **Guest release marker.** Çıkış yapmış kullanıcı için `ownerId == null` = "benim", dolayısıyla release'i ifade edemez; `kGuestReleasedOwnerId` (`character_ext.dart`) yerel işareti kullanılır. Tek sahiplik predicate'i `Character.isOwnedBy(selfUid)`; `normalizedOwnerId` marker'ı buluta çıkmadan `null`'a çevirir (`_mirrorPush`). Guard: `test/domain/entities/character_ownership_test.dart`.
+> - **Guest release marker.** Char tab'ın Release'i de bu işareti yazar (2026-09-02): `ownerId = null` guest için release değil, sahiplenmedir.
+> - Çıkış yapmış kullanıcı için `ownerId == null` = "benim", dolayısıyla release'i ifade edemez; `kGuestReleasedOwnerId` (`character_ext.dart`) yerel işareti kullanılır. Tek sahiplik predicate'i `Character.isOwnedBy(selfUid)`; `normalizedOwnerId` marker'ı buluta çıkmadan `null`'a çevirir (`_mirrorPush`). Guard: `test/domain/entities/character_ownership_test.dart` + `test/application/providers/guest_release_test.dart`.
 
 ## Data Flow
 Wizard draft ([[character_draft_notifier]]) → [[level_up_planner]] emits deltas + [[pending_choices]] → picks persisted → at read time [[character_resolver]] folds class/subclass/feat/species entities + effects into [[effective_character]].
