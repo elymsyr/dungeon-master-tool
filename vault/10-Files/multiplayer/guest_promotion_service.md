@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/guest_promotion_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-27
+updated: 2026-09-02
 tags: [file]
 ---
 
@@ -138,6 +138,7 @@ Bir dördüncü adım taşımanın **öncesinde**, DB hâlâ açıkken koşar: `
 Aynı yerde, yine DB açıkken, `restoreGuestPaths(db, uid)` koşar — `rewriteGuestPaths`'in tersi. Terfi mutlak medya yollarını `{kök}/worlds` → `{kök}/users/{id}/worlds` diye çevirdiği için, demote dosyaları geri taşısa da gövdelerdeki yollar silinen hesap ağacını göstermeye devam ediyordu (portreler, battle map arka planları, mindmap resimleri kırık). İki yön aynı sweep'i (`_replaceInEveryTextColumn`) alt-ağaç bazında kullanıyor, o yüzden ikisi de idempotent.
 
 ## Notes
+- **Portre kapsamı (2026-09-02).** Karakter portresi devrin diğer medyasından iki noktada ayrılıyor: dosya `characters/` altında **düz** duruyor (`{id}_{ad}.webp`, item klasörü yok) ve yol bir kolonda değil `world_characters.payload_json` gövdesinde. Suite bunu hiç kurmuyordu — mevcut vakalar portreyi `characters/Barrowmoor/media/ilse.png` diye dünya şeklinde tutuyor. Eklenen vaka (`a character portrait — flat under characters/, inside the payload blob`) tam bu şekli kuruyor ve geçiyor; raporcunun veri kökünde de promote edilmiş hesabın 14 portre yolunun hepsi diskte mevcut. Yani `KNOWN_ISSUES`'daki "hesap açınca portreler kayboluyor" bu katmanda tekrar üretilemiyor.
 - Yerini aldığı `_migrateGlobalDataIfNeeded` yalnız `worlds/` ve `packages/` kopyalıyordu; **`characters/` listede hiç yoktu** — dokümanın adlandırmadığı üçüncü boşluk. Üçü de artık gidiyor.
 - Eski `migrated_{uid}` SharedPreferences sentinel'ı kaldırıldı; sentinel artık hesap kökünün altında bir dosya. İşaretçisi olmayan mevcut kullanıcı bir sonraki girişinde tam da o **ezmeme** dalına (`accountAlreadyHasData`) düşer.
 - Buluta itiş burada **yok**: satırlar `users/{id}/` altına indikten sonra sıradan yerel satırlardır ve `BetaEnterMergeService` (`beta_enter_merge_service.dart:141` — `ownerId == null` ise sahipliği yerelde üstlenir, sonra `syncEngine.enqueue*`) onları outbox'a yazar. Sıra ölçüldü: `landing_screen` `activate(uid)`'i `/hub`'a gitmeden **önce** await ediyor, merge ise sonra `startup_sync_gate`'ten koşuyor.

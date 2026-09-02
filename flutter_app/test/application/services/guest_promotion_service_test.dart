@@ -211,6 +211,49 @@ void main() {
             isNot(contains(p.join('users', _userId, 'users'))));
       });
     });
+
+    // A character portrait is the one media shape the cases above do not have:
+    // it sits *flat* under `characters/` as `{id}_{name}.ext`, not nested in an
+    // item folder, and it lives inside `world_characters.payload_json` rather
+    // than in a column. Reported as "characters keep their data but lose their
+    // portraits after signing up", so it gets its own case.
+    test('a character portrait — flat under characters/, inside the payload '
+        'blob — comes across and still resolves', () async {
+      final portrait = p.join(root.path, 'characters', 'c1_Vex.webp');
+      await Directory(p.dirname(portrait)).create(recursive: true);
+      await File(portrait).writeAsString('portrait-bytes');
+
+      await Directory(p.dirname(guestDb().path)).create(recursive: true);
+      final guest = openTestDatabaseAt(guestDb());
+      await guest.into(guest.worlds).insert(
+            WorldsCompanion.insert(id: 'w1', worldName: 'Barrowmoor'),
+          );
+      await guest.into(guest.worldCharacters).insert(
+            WorldCharactersCompanion.insert(
+              id: 'c1',
+              worldId: 'w1',
+              templateId: 'dnd5e',
+              templateName: 'D&D 5e',
+              payloadJson: Value(jsonEncode({
+                'entity': {'id': 'e1', 'name': 'Vex', 'imagePath': portrait},
+              })),
+            ),
+          );
+      await guest.close();
+
+      await promote();
+
+      final expected =
+          p.join(root.path, 'users', _userId, 'characters', 'c1_Vex.webp');
+      await withAccountDatabase((db) async {
+        final row = (await db.select(db.worldCharacters).get()).single;
+        final entity =
+            (jsonDecode(row.payloadJson) as Map)['entity'] as Map;
+        expect(entity['imagePath'], expected);
+      });
+      expect(File(expected).existsSync(), isTrue);
+      expect(await File(expected).readAsString(), 'portrait-bytes');
+    });
   });
 
   group('nothing is lost', () {
