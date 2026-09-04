@@ -1,0 +1,23 @@
+kanka o zaman şunu yapacağız dökümanla
+
+dünyalar artık clouda yüklenmiyor multiplayer yapılsa bile
+sync seçeneği sadece lan sync ve bunda tüm içerik medya dahil landan sync var
+
+Free ve Counted R2 gereksiz zaten. free alan kalsın bunu ileride profil fotoğrafı için kullanırız
+
+Transient R2 ise kalsın multplayer oyuncular için bunu kullanmaya devam edelim. olay şu, genel alan dolarsa en eski veri silinir. bunu sürekli tekrarlarız alan hep 10gb altı tutulur
+
+online sırasında sadece dm tarafından paylaşılan şeyler paylaşılır
+bu kısımda da Transient  bölümüne tüm merdya yüklenmez sadece dm'in paylaştıkları yüklenir
+
+şu ayrımı yapabiliriz, karakterler her zaman online oyunda sync tutulur
+karakter oluşturmak için gerekli kategorideki kartlar (hazır paket dışındakiler, tabi eğer paket marketplace'de varsa) medya ile beraber paylaşılır. medya bu durumda r2ye yüklenebilir.
+
+böylece oyuncular her zaman karakter yaratabilir düzenleyebilir. mesela bir item kazanırlarsa dm o itemi paylaşabilir oyuncularla. ana paketler zaten herkese iner. oyuncular dünyaya katıldığında marketplaceden eklenmiş ana pakertlerdeki içeriklere sahip olur.
+
+kullanıcılar marketplace'e paket/world yüklediğinde r2'ye yüklenir tüm medya burada istisna yok. önemli olan yine marketplace'de olan hazır bir paket varsa o içerik tekrar yüklenmez. indiren kişilerde o paket de otomatik yüklenir.
+
+marketplace yüklemesi için de yine medya için 10glık alanı kullanalım ama onlar dokunulmaz olsun
+oyuncu karakterleri de sadece multiplayer dünya içindekiler için medya yüklenecek zaten onlar da yine aynı yere dokunulmaz yüklenebilir
+
+bu nasıl? yeterli mi? okeyse dökümanlaştır
