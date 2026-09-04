@@ -103,8 +103,12 @@ class WorldBlueprintConverter {
 
     // ── Pass 1: id'leri bas, blueprint-içi isim indeksini kur ────────────
     final localIndex = <String, Set<String>>{};
-    final pending =
-        <({String slug, Map<String, dynamic> mapping, bool character})>[];
+    final pending = <({
+      String slug,
+      Map<String, dynamic> mapping,
+      String? source,
+      bool character
+    })>[];
 
     void register(String slug, Object? rawItem, String origin,
         {bool character = false}) {
@@ -134,6 +138,10 @@ class WorldBlueprintConverter {
       pending.add((
         slug: slug,
         mapping: Map<String, dynamic>.from(mapping),
+        // Satır seviyesinde (mapping'in *kardeşi*), kategori alanı olarak
+        // değil: `creature-action`/`trait` şemaları gerçek bir `source`
+        // alanı tanımlıyor, ikisi çakışmasın.
+        source: rawItem['source'] is String ? rawItem['source'] as String : null,
         character: character,
       ));
     }
@@ -177,6 +185,7 @@ class WorldBlueprintConverter {
       final built = _buildEntity(
         slug: row.slug,
         mapping: row.mapping,
+        source: row.source,
         localIndex: localIndex,
         issues: issues,
       );
@@ -224,6 +233,7 @@ class WorldBlueprintConverter {
   Map<String, dynamic> _buildEntity({
     required String slug,
     required Map<String, dynamic> mapping,
+    String? source,
     required Map<String, Set<String>> localIndex,
     required List<BlueprintIssue> issues,
   }) {
@@ -260,7 +270,9 @@ class WorldBlueprintConverter {
     return {
       'name': name,
       'type': slug,
-      'source': sourceTitle,
+      // Girdi başına atıf (topluluk paketleri) satırın kendi `source`'undan;
+      // söylenmediyse paketin başlığı.
+      'source': source ?? sourceTitle,
       'description': str(attrs.remove('description')),
       'image_path': str(attrs.remove('imagePath')),
       'images': strList(attrs.remove('images')),

@@ -1,0 +1,12 @@
+{
+  "slug": "cairn-2e-core",
+  "title": "Cairn Second Edition",
+  "system": "cairn",
+  "publisher": "Yochai Gal",
+  "author": "Yochai Gal",
+  "license": "cc-by-sa-40",
+  "attribution": "Cairn Second Edition by Yochai Gal, licensed under CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Source: https://github.com/yochaigal/cairn. This derivative content pack is likewise licensed CC BY-SA 4.0.",
+  "source_url": "https://cairnrpg.com/second-edition/",
+  "version": "1.0.0",
+  "description": "The complete Cairn 2e rules, the Warden's Guide procedures and tables, 145 monsters, 20 backgrounds, the marketplace, the Reliquary and the d100 spellbooks — converted from the official CC BY-SA 4.0 source."
+}

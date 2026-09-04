@@ -321,6 +321,34 @@ void main() {
       // ability, so there is nothing for the resolver to apply.
       'grants_save_prof_from_asi':
           'pending_choice_resolver_dialog — applied with the chosen ability',
+      // dnd5e-srd's display / wizard-step fields. Each value names the reader,
+      // same contract as the block above.
+      'benefits': 'feat prose — entity_card / feats_step',
+      'repeatable': 'feats_step + pending_choice_resolver_dialog',
+      'bonus_skill_pick_count': 'pending_choices — queued skill pick',
+      'bonus_expertise_pick_count': 'pending_choices — queued expertise pick',
+      'casting_ability_ref': 'spells_step',
+      'complexity': 'entity_card',
+      'flavor_description': 'prose — entity_card',
+      'l1_order_feat_category': 'proficiencies_step',
+      'multiclass_prereq_ability_refs': 'multiclass_helper',
+      'multiclass_prereq_min_score': 'multiclass_helper',
+      'primary_ability_ref': 'wizard ability priority + entity_card',
+      'secondary_ability_ref': 'wizard ability priority + entity_card',
+      'starting_gold_dice': 'starting wealth in the wizard',
+      'starting_gold_gp': 'starting wealth in the wizard',
+      'gold_alternative_gp': 'starting wealth in the wizard',
+      'tool_proficiency_count': 'proficiencies_step choice UI',
+      'tool_proficiency_options': 'proficiencies_step choice UI',
+      'weapon_mastery_filter': 'proficiencies_step mastery picker',
+      'asi_distribution_options': 'background ASI picker',
+      'origin_feat_ref': 'feats_step + auto_grant_inversion',
+      'legacy_subspecies_key': 'wizard / character_editor migration key',
+      'attunement_prereq': 'entity_card',
+      'charges_max': 'entity_card + inventory display',
+      'charge_regain': 'entity_card + inventory display',
+      'cost_gp': 'database filter + entity_card',
+      'is_cursed': 'entity_card',
     };
 
     /// Fields the assets write that **nothing** reads. Asserted as a closed set
@@ -373,6 +401,38 @@ void main() {
           p.eff.proficiencies.savingThrowAbilityIds.isNotEmpty,
       'granted_languages': (p) => p.eff.proficiencies.languageIds.isNotEmpty,
       'granted_damage_resistances': (p) => p.eff.damageResistanceIds.isNotEmpty,
+      'granted_damage_immunities': (p) => p.eff.damageImmunityIds.isNotEmpty,
+      'granted_condition_immunities': (p) => p.eff.conditionImmunityIds.isNotEmpty,
+      'granted_save_proficiencies': (p) =>
+          p.eff.proficiencies.savingThrowAbilityIds.isNotEmpty,
+      'granted_weapon_proficiencies': (p) =>
+          p.eff.proficiencies.weaponCategoryIds.isNotEmpty,
+      'always_prepared_spell_refs': (p) => p.eff.alwaysPreparedSpellIds.isNotEmpty,
+      'granted_spells_at_level': (p) =>
+          p.eff.grantedSpellIds.isNotEmpty || p.eff.grantedCantripIds.isNotEmpty,
+      'granted_action_refs': (p) => p.eff.grantedActionIds.isNotEmpty,
+      'granted_bonus_action_refs': (p) => p.eff.grantedBonusActionIds.isNotEmpty,
+      'granted_reaction_refs': (p) => p.eff.grantedReactionIds.isNotEmpty,
+      'trait_refs': (p) => p.eff.autoGrantedTraitIds.isNotEmpty,
+      'ac_bonus': (p) => p.eff.acBonus != 0,
+      'hp_bonus_flat': (p) => p.eff.hpBonusFlat != 0,
+      'hp_bonus_per_level': (p) => p.eff.hpBonusPerLevel != 0,
+      'crit_threshold': (p) => p.eff.critRangeMin < 20,
+      'extra_attack_count': (p) => p.eff.extraAttackCount > 0,
+      'weapon_mastery_count': (p) => p.eff.weaponMasteryCount > 0,
+      'resource_pool_grants': (p) => p.eff.resourcePools.isNotEmpty,
+      'unarmored_ac_base': (p) => p.eff.unarmoredFormulas.isNotEmpty,
+      'unarmored_ac_abilities': (p) => p.eff.unarmoredFormulas.isNotEmpty,
+      'unarmored_ac_shield_allowed': (p) => p.eff.unarmoredFormulas.isNotEmpty,
+      // A raised cap is only observable as its own ceiling holding.
+      'ability_bonus_cap': (p) {
+        final cap = p.card.fields['ability_bonus_cap'];
+        return cap is! int || p.eff.effectiveAbilities.values.every((v) => v <= cap);
+      },
+      // A state-gated card folds nothing into the resting totals: its four
+      // defense keys land as conditional chips, the rest as notes.
+      'active_while_state_ref': (p) =>
+          p.eff.conditionalGrants.isNotEmpty || p.eff.mechanicalNotes.isNotEmpty,
       'granted_senses': (p) => p.eff.senseEntityIds.isNotEmpty,
       'granted_spell_refs': (p) => p.eff.grantedSpellIds.isNotEmpty,
       'granted_cantrip_refs': (p) => p.eff.grantedCantripIds.isNotEmpty,
@@ -447,7 +507,12 @@ void main() {
         case 'feat':
           return pc({'feat_ids': [card.id]});
         case 'class':
-          return pc({'class_levels': {card.id: level}});
+          // Class cards carry `equipment_choice_groups` too; the helper only
+          // adds an ASI when the card offers ability options, so it is safe here.
+          return pc({
+            'class_levels': {card.id: level},
+            ...backgroundPicks(card, world),
+          });
         case 'subclass':
           final parent = resolveEntityRef(card.fields['parent_class_ref'], world);
           if (parent == null) return null;
@@ -475,7 +540,7 @@ void main() {
           .where((n) => n.endsWith('.pkg.json'))
           .toList()
         ..sort();
-      expect(assets, hasLength(19));
+      expect(assets, hasLength(22));
 
       final undeclared = <String>{};
       final unreadSeen = <String>{};

@@ -36,7 +36,7 @@ void main() {
   }
 
   /// Paketi kurulmuş gibi yükle (bkz. `bundled_pack_resolve_test`).
-  Map<String, Entity> installPack(File file) {
+  ({Map<String, Entity> entities, String system}) installPack(File file) {
     final root = jsonDecode(file.readAsStringSync()) as Map;
     final entities = root['entities'] as Map;
     final out = <String, Entity>{};
@@ -58,7 +58,10 @@ void main() {
         },
       );
     });
-    return out;
+    return (
+      entities: out,
+      system: ((root['metadata'] as Map?)?['game_system'] ?? '').toString(),
+    );
   }
 
   const chargenSlugs = {
@@ -83,7 +86,12 @@ void main() {
   for (final file in packs) {
     final packName =
         file.uri.pathSegments.last.replaceAll('.pkg.json', '');
-    final pack = installPack(file);
+    final loaded = installPack(file);
+    final pack = loaded.entities;
+    // Wizard'ın chargen adımları 5e ailesi için yazıldı; başka bir sistemin
+    // paketinde (ör. Cairn — sınıf kavramı yok) 5e kuralları aranmaz.
+    final isDnd5eFamily =
+        loaded.system.startsWith('5e') || loaded.system == 'a5e';
     final byCat = <String, List<Entity>>{};
     for (final e in pack.values) {
       if (chargenSlugs.contains(e.categorySlug)) {
@@ -183,7 +191,7 @@ void main() {
         });
       }
 
-      if (byCat.containsKey('spell')) {
+      if (byCat.containsKey('spell') && isDnd5eFamily) {
         test('spell adımı paket büyülerini bir sınıfın altında gösterir', () {
           final classes = world.values.where((e) => e.categorySlug == 'class');
           final visible = <String, int>{};

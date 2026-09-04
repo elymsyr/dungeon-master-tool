@@ -753,10 +753,21 @@ Monster ile aynı alanlara sahiptir (§3.14 Monster'a bakın). Farkı: `animal` 
 4. Dice alanları string: `"2d6"`
 5. Medya yolları modül dizinine göre relative
 
-**Kaynak kontrolü:** Her entity'ye `source` alanını ekleyin:
+**Kaynak kontrolü:** Entity'nin `source` alanı normalde manifest'in `title`'ı
+olur — ayrıca yazmanız gerekmez. Tek istisna **girdi başına atıf** taşıyan
+paketler (topluluk derlemeleri): satıra `mapping`'in **kardeşi** olarak bir
+`source` koyun, o satır için manifest başlığını ezer.
+
 ```json
-"source": "Örnek Macera, Shadowdark"
+{
+  "source_name": "Gaea's Grasp, 5 charges",
+  "source": "Glass Bird Games",
+  "mapping": { "name": "Gaea's Grasp, 5 charges", "...": "..." }
+}
 ```
+
+`mapping`'in **içine** yazmayın: `creature-action` ve `trait` şemaları gerçek
+bir `source` alanı tanımlıyor, orada kategori alanı kazanır.
 
 ### Örnek world blueprint
 
