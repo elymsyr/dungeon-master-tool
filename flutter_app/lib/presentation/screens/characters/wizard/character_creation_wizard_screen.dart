@@ -29,6 +29,7 @@ import '../../../../domain/entities/schema/dnd5e_constants.dart'
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/rule_config.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
+import '../../../../domain/entities/schema/template_mechanics.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/expandable_markdown.dart';
 import '../../../widgets/source_badge.dart';
@@ -172,8 +173,13 @@ class _CharacterCreationWizardScreenState
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Template load error: $e')),
         data: (templates) {
+          // Mekanik kapısı: sihirbaz baştan sona built-in slug'ları ve
+          // `grantFieldKeys` sözleşmesi üzerine kurulu. Kullanıcı
+          // template'leri (built-in'in kopyası dahil) burada listelenmez —
+          // bkz. [templateIdHasMechanics]. O template'lerde karakterler
+          // Database ekranından düz kart olarak yaratılır.
           final playerTemplates = templates
-              .where((t) => findPlayerCategory(t) != null)
+              .where((t) => schemaHasMechanics(t) && findPlayerCategory(t) != null)
               .toList();
           if (playerTemplates.isEmpty) {
             return Center(

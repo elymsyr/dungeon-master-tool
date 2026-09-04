@@ -17,11 +17,13 @@ import '../../../application/services/entity_share_prepare.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/entities/custom_fields.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../dialogs/field_schema_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/quota_snackbar.dart';
@@ -576,6 +578,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       // === SCHEMA-DRIVEN FIELDS ===
       if (cat != null) ..._buildSchemaFields(entity, cat, palette),
 
+      // === FREE FIELDS — bu karta özel, şemada olmayan alanlar ===
+      ..._buildCustomFields(entity, cat, palette),
+
       const SizedBox(height: 8),
 
       // === DM NOTES — heading + rule, no boxed border ===
@@ -845,6 +850,160 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         );
       }).toList(),
     );
+  }
+
+  /// Şemayı DEĞİL, yalnız bu kartı değiştiren anında yazma. Serbest alan
+  /// tanımları için: 300 ms debounce'lu `_updateField` burada gecikmeli
+  /// görünürlüğe ve iptal edilen timer'lara yol açardı.
+  void _writeFieldsNow(Map<String, dynamic> Function(Map<String, dynamic>) f) {
+    final entity = ref.read(entityProvider)[widget.entityId];
+    if (entity == null) return;
+    ref.read(entityProvider.notifier).update(
+          entity.copyWith(fields: f(Map<String, dynamic>.from(entity.fields))),
+        );
+  }
+
+  Set<String> _takenKeys(Entity entity, EntityCategorySchema? cat) => {
+        ...?cat?.fields.map((f) => f.fieldKey),
+        ...customFieldsOf(entity.fields).map((f) => f.fieldKey),
+      };
+
+  Future<void> _addCustomField(
+      Entity entity, EntityCategorySchema? cat) async {
+    final field = await showFieldSchemaDialog(
+      context: context,
+      categoryId: cat?.categoryId ?? entity.categorySlug,
+      existingKeys: _takenKeys(entity, cat),
+      title: 'Add field to this card',
+    );
+    if (field == null) return;
+    _writeFieldsNow((fields) {
+      final list = [...customFieldsOf(fields), field];
+      fields[kCustomFieldsKey] = encodeCustomFields(list);
+      return fields;
+    });
+  }
+
+  Future<void> _editCustomField(
+      Entity entity, EntityCategorySchema? cat, FieldSchema field) async {
+    final edited = await showFieldSchemaDialog(
+      context: context,
+      categoryId: field.categoryId,
+      initial: field,
+      existingKeys: _takenKeys(entity, cat)..remove(field.fieldKey),
+      title: 'Edit field',
+    );
+    if (edited == null) return;
+    _writeFieldsNow((fields) {
+      final list = [
+        for (final f in customFieldsOf(fields))
+          f.fieldId == field.fieldId ? edited : f,
+      ];
+      // Key değiştiyse değeri taşı — yoksa girilen veri görünmez olur.
+      if (edited.fieldKey != field.fieldKey) {
+        fields[edited.fieldKey] = fields.remove(field.fieldKey);
+      }
+      fields[kCustomFieldsKey] = encodeCustomFields(list);
+      return fields;
+    });
+  }
+
+  Future<void> _deleteCustomField(FieldSchema field) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Remove "${field.label}" from this card?'),
+        content: const Text('The value stored under this field is removed too.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    _writeFieldsNow((fields) {
+      final list = customFieldsOf(fields)
+          .where((f) => f.fieldId != field.fieldId)
+          .toList();
+      fields.remove(field.fieldKey);
+      if (list.isEmpty) {
+        fields.remove(kCustomFieldsKey);
+      } else {
+        fields[kCustomFieldsKey] = encodeCustomFields(list);
+      }
+      return fields;
+    });
+  }
+
+  /// Bu karta özel serbest alanlar. Template'ten bağımsız — built-in
+  /// şemalı bir dünyada da çalışır ve şemayı bozmaz (bkz. [kCustomFieldsKey]).
+  List<Widget> _buildCustomFields(
+    Entity entity,
+    EntityCategorySchema? cat,
+    DmToolColors palette,
+  ) {
+    final custom = customFieldsOf(entity.fields);
+    final readOnly = widget.readOnly;
+    if (custom.isEmpty && readOnly) return const [];
+
+    final rows = readOnly
+        ? custom
+            .where((f) =>
+                _isFieldVisibleInReadOnly(f, entity.fields[f.fieldKey]))
+            .toList()
+        : custom;
+    if (rows.isEmpty && readOnly) return const [];
+
+    return [
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: EntityCardSectionHeading(
+              title: 'Card Fields',
+              palette: palette,
+            ),
+          ),
+          if (!readOnly)
+            IconButton(
+              tooltip: 'Add a field to this card',
+              iconSize: 18,
+              icon: const Icon(Icons.add),
+              onPressed: () => _addCustomField(entity, cat),
+            ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      for (final f in rows)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildFieldWidget(f, entity, palette)),
+            if (!readOnly) ...[
+              IconButton(
+                tooltip: 'Edit field',
+                iconSize: 16,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.tune),
+                onPressed: () => _editCustomField(entity, cat, f),
+              ),
+              IconButton(
+                tooltip: 'Remove field',
+                iconSize: 16,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => _deleteCustomField(f),
+              ),
+            ],
+          ],
+        ),
+    ];
   }
 
   List<Widget> _buildSchemaFields(

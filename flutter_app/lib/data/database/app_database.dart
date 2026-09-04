@@ -381,6 +381,18 @@ const List<String> _sideTablesDDL = <String>[
       'paired_at INTEGER NOT NULL, '
       'last_seen_at INTEGER NOT NULL DEFAULT 0'
       ')',
+
+  // custom_templates — kullanıcı template kütüphanesi (bkz. [[Template-System]]).
+  // World'den bağımsız hub kaydı: `schema_json` tam bir `WorldSchema` JSON'u.
+  // Built-in template burada DURMAZ — koddan üretilir; bu tablo yalnız
+  // kullanıcının yarattığı/kopyaladığı, mekaniksiz template'leri tutar.
+  'CREATE TABLE IF NOT EXISTS custom_templates ('
+      'schema_id TEXT NOT NULL PRIMARY KEY, '
+      'name TEXT NOT NULL, '
+      'schema_json TEXT NOT NULL, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL'
+      ')',
 ];
 
 /// LAN sync: yeniden adlandırma zamanı damgası. Schema bump yok — her

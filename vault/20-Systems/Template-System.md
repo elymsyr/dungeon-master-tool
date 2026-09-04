@@ -1,7 +1,7 @@
 ---
 type: system
 domain: world-content
-updated: 2026-07-28
+updated: 2026-09-04
 tags: [system]
 ---
 
@@ -10,13 +10,21 @@ tags: [system]
 > [!summary] What this is
 > The approved migration (2026-06-10) from hardcoded schema + per-card DSL rules to a user-editable JSON Template that owns both field definitions and rule semantics. An entity card becomes pure data; rules fire from field semantics declared once in the template. Owned by [[World-and-Content]] / [[Character-System]].
 
+> [!success] Status as of 2026-09-04 — pain point #3 is closed
+> Templates are user-editable again, but on a **different footing** than the plan below: the template does not own rule semantics and never will. Instead there is one hard line — [[template_mechanics]] — and automation lives only on the shipped built-in.
+>
+> - **Template library** — `custom_templates` side table ([[custom_template_store]]) holds whole `WorldSchema` documents; `allTemplatesProvider` = built-in + those. Create blank / copy (built-in included) / edit / rename / delete from the Templates tab; `TemplateEditor` takes an `onChanged` callback and is read-only when it is null.
+> - **Mechanics gate** — `templateIdHasMechanics(id) => id == builtinDnd5eV2SchemaId`. A copy of the built-in is mechanics-free too (decision 2026-09-04); enforced by omission — the chargen wizard never offers a non-built-in template, so no character is ever created against one.
+> - **Free fields** — a field can be added to a **single card** without touching any template ([[custom_fields]]); works in built-in worlds as well, and stays with the card whether it lives in a world or a package.
+> - Phases 2-4 below (SRD description pass, JIT rule wiring, converter re-emit) remain unstarted and are not required by the above.
+
 > [!warning] Status as of 2026-07-28
 > This note describes a migration **approved 2026-06-10 but not implemented** — all four phases are still `Planned`, and the source docs it cites (`docs/new_system/…`) are no longer in the repo. Meanwhile pain point #2 was solved independently and differently: the per-card rule DSL was deleted outright on 2026-07-28 in favour of named grant fields (see [[Grant-Resolution]]), without moving rule semantics into the template. Treat the phase plan below as historical intent, not a current roadmap.
 
 ## Why it exists — Current pain points
 1. **Schema is code.** 74 categories in `builtin_dnd5e_v2_schema.dart`; changing a field requires an app build.
 2. ~~**Rules live on cards.** Every card is a tiny program (effects DSL, `rule_effects`, `granted_modifiers`…); creators must understand DSL to author content.~~ — **Resolved 2026-07-28 outside this initiative.** The DSLs were removed; a card now declares mechanics in plainly named fields (`granted_skill_proficiencies`, `ac_bonus`, `resource_pool_grants`, `mechanical_notes`, …) with no kind registry, no predicates and no scaling language. See [[Grant-Resolution]].
-3. **Template editor is read-only.** Users cannot create, copy, or edit templates.
+3. ~~**Template editor is read-only.** Users cannot create, copy, or edit templates.~~ — **Resolved 2026-09-04.** See the status callout above.
 
 ## Target architecture
 - A **Template** is a `WorldSchema` JSON document (format version 3) defining categories, fields, and **rule semantics** attached to fields. Dual-hash drift detection + `applyTemplateUpdate` reused verbatim.

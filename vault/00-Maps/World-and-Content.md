@@ -20,6 +20,7 @@ tags: [moc]
 - [[package_link_service]] — package→package link graph (closure, cycles, dangling). See [[Package-Links]].
 - [[packages_dao]] · [[personal_packages_dao]] — package storage.
 - [[world_schema]] · [[entity_category_schema]] · [[field_schema]] — schema model (73 categories, Tier-0/Tier-1).
+- [[template_mechanics]] · [[custom_template_store]] · [[custom_fields]] — user template library, the automation gate, and per-card free fields (see [[Template-System]]).
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
 - [[first_party_catalog_provider]] — official catalog **install** side: `requires` closure, banner, `installedFrom: 'official'`. Install-only — no upgrade path for an already-installed pack.
 - [[bundled_packs_bootstrap]] — first-boot SRD install.
