@@ -1,0 +1,12 @@
+{
+  "slug": "cairn-community",
+  "title": "Cairn Community Content",
+  "system": "cairn",
+  "publisher": "Yochai Gal",
+  "author": "Community contributors (per-entry attribution)",
+  "license": "cc-by-sa-40",
+  "attribution": "Community-contributed Cairn content collected in https://github.com/yochaigal/cairn and copied there with permission. Each entity carries its own contributor attribution in its description. Licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).",
+  "source_url": "https://cairnrpg.com/resources/",
+  "version": "1.0.0",
+  "description": "Community relics, the d666 spellbook table and the extended equipment list from the Cairn resources section, each with its contributor credited."
+}

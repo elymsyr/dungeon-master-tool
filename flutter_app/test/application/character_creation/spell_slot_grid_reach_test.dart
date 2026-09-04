@@ -22,9 +22,8 @@ import 'package:flutter_test/flutter_test.dart';
 ///   1. every caster class the app actually ships produces a non-empty grid;
 ///   2. an authored `spell_slots_by_level` **beats** the `caster_kind` preset —
 ///      today nothing else fails if the override is silently ignored;
-///   3. the bundled packs ship **no** caster class (measured, not assumed), so
-///      the day one arrives this file fails and the probe gets rewritten
-///      against real data instead of a synthesised card.
+///   3. a *packaged* class card behaves the same as a built-in one, both for
+///      the preset and for an authored table override.
 void main() {
   final pack = buildSrdCorePack();
 
@@ -96,58 +95,8 @@ void main() {
           defaultSpellSlotsByLevel(CasterKind.full, 5));
     });
 
-    test('bundled packs ship no caster class — measured', () {
-      final assets = Directory('assets/open5e_packs')
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.pkg.json'))
-          .toList()
-        ..sort((a, b) => a.path.compareTo(b.path));
-      expect(assets, hasLength(19));
-
-      const slotFields = [
-        'spell_slots_by_level',
-        'cantrips_known_by_level',
-        'prepared_spells_by_level',
-      ];
-      final classCards = <String>[];
-      final casters = <String>[];
-      final tableWriters = <String>[];
-
-      for (final file in assets) {
-        final root = jsonDecode(file.readAsStringSync()) as Map;
-        (root['entities'] as Map).forEach((_, raw) {
-          final row = raw as Map;
-          if (row['type'] != 'class') return;
-          final attrs = (row['attributes'] as Map?) ?? const {};
-          final label = '${file.uri.pathSegments.last}/${row['name']}';
-          classCards.add(label);
-          if (parseCasterKind(attrs['caster_kind']) != CasterKind.none) {
-            casters.add(label);
-          }
-          for (final f in slotFields) {
-            final v = attrs[f];
-            if (v is Map && v.isNotEmpty) tableWriters.add('$label.$f');
-          }
-        });
-      }
-
-      // ignore: avoid_print
-      print('M4: ${classCards.length} packaged class cards '
-          '(${classCards.join(', ')}), ${casters.length} casters, '
-          '${tableWriters.length} authored level tables');
-      expect(classCards, hasLength(2),
-          reason: 'a5e-ag Marshal + bfrd Mechanist are the whole corpus');
-      expect(casters, isEmpty,
-          reason: 'a pack now ships a caster class — replace the synthesised '
-              'card in the next test with that real one');
-      expect(tableWriters, isEmpty,
-          reason: 'a pack now authors a level table — assert it lands on the '
-              'grid with real data instead of a synthesised override');
-    });
-
     test('a packaged class card declaring a caster kind gets a grid', () {
-      // Because the corpus has no caster (test above), the caster fields are
+      // The Marshal card ships as a non-caster, so the caster fields are
       // synthesised **onto a real pack card** rather than a fixture: same
       // installed shape, same single entry point the wizard commit uses.
       final root = jsonDecode(
@@ -191,10 +140,10 @@ void main() {
     });
 
     test('R5 / F-pass0-10 — a shipped third-caster subclass gets a grid', () {
-      // The corpus has no caster *class*, but it does ship four archetypes
-      // that cast on a class that does not (Eldritch Knight shape). Before R5
-      // `CasterKind.third` was unreachable: the only reader was the class
-      // card, so these four characters had no slots at any level.
+      // Packs ship four archetypes that cast on a class that does not
+      // (Eldritch Knight shape). Before R5 `CasterKind.third` was
+      // unreachable: the only reader was the class card, so these four
+      // characters had no slots at any level.
       final thirds = <String, Entity>{};
       for (final file in Directory('assets/open5e_packs')
           .listSync()

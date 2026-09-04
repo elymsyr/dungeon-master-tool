@@ -9,6 +9,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../application/providers/pinned_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
@@ -141,6 +142,9 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
         undoRedoDispatcherProvider.overrideWith(
           (ref) => UndoRedoDispatcher(ref),
         ),
+        // Zincirin son halkası: entity_card'ın pin butonu bunu watch eder ve
+        // build()'i activeCampaignProvider'ı okur.
+        pinnedEntityIdsProvider.overrideWith(PinnedEntityNotifier.new),
       ],
       child: _PackageScreenContent(
         packageName: packageName,

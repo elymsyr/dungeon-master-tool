@@ -1,6 +1,46 @@
 {
   "packs": [
     {
+      "asset": "cairn-2e-core.pkg.json",
+      "package_name": "cairn-2e-core",
+      "title": "Cairn Second Edition",
+      "publisher": "Yochai Gal",
+      "license": "cc-by-sa-40",
+      "game_system": "cairn",
+      "is_srd_overlap": false,
+      "counts": {
+        "armor": 6,
+        "weapon": 6,
+        "vehicle": 2,
+        "mount": 2,
+        "service": 6,
+        "adventuring-gear": 49,
+        "hireling": 12,
+        "lore": 27,
+        "monster": 145,
+        "creature-action": 163,
+        "background": 20,
+        "magic-item": 46,
+        "spell": 100
+      }
+    },
+    {
+      "asset": "cairn-community.pkg.json",
+      "package_name": "cairn-community",
+      "title": "Cairn Community Content",
+      "publisher": "Yochai Gal",
+      "license": "cc-by-sa-40",
+      "game_system": "cairn",
+      "is_srd_overlap": false,
+      "counts": {
+        "magic-item": 126,
+        "lore": 3,
+        "spell": 216,
+        "adventuring-gear": 244,
+        "service": 38
+      }
+    },
+    {
       "asset": "open5e-a5e-ag.pkg.json",
       "package_name": "open5e-a5e-ag",
       "title": "Adventurer's Guide",

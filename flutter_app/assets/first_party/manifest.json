@@ -3,6 +3,58 @@
   "entries": [
     {
       "item_type": "package",
+      "slug": "cairn-2e-core",
+      "title": "Cairn Second Edition",
+      "version": "1.0.0",
+      "publisher": "Yochai Gal",
+      "license": "cc-by-sa-40",
+      "attribution": "Cairn Second Edition by Yochai Gal, licensed under CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Source: https://github.com/yochaigal/cairn. This derivative content pack is likewise licensed CC BY-SA 4.0.",
+      "game_system": "cairn",
+      "is_srd_overlap": false,
+      "requires": [],
+      "counts": {
+        "armor": 6,
+        "weapon": 6,
+        "vehicle": 2,
+        "mount": 2,
+        "service": 6,
+        "adventuring-gear": 49,
+        "hireling": 12,
+        "lore": 27,
+        "monster": 145,
+        "creature-action": 163,
+        "background": 20,
+        "magic-item": 46,
+        "spell": 100
+      },
+      "bundled_asset": "assets/open5e_packs/cairn-2e-core.pkg.json",
+      "r2_path": "package/cairn-2e-core@1.0.0.json.gz",
+      "size_bytes": 790880
+    },
+    {
+      "item_type": "package",
+      "slug": "cairn-community",
+      "title": "Cairn Community Content",
+      "version": "1.0.0",
+      "publisher": "Yochai Gal",
+      "license": "cc-by-sa-40",
+      "attribution": "Community-contributed Cairn content collected in https://github.com/yochaigal/cairn and copied there with permission. Each entity carries its own contributor attribution in its description. Licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).",
+      "game_system": "cairn",
+      "is_srd_overlap": false,
+      "requires": [],
+      "counts": {
+        "magic-item": 126,
+        "lore": 3,
+        "spell": 216,
+        "adventuring-gear": 244,
+        "service": 38
+      },
+      "bundled_asset": "assets/open5e_packs/cairn-community.pkg.json",
+      "r2_path": "package/cairn-community@1.0.0.json.gz",
+      "size_bytes": 406489
+    },
+    {
+      "item_type": "package",
       "slug": "open5e-a5e-ag",
       "title": "Adventurer's Guide",
       "version": "1.1.0",

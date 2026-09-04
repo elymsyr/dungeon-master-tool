@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/world_blueprint_converter.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-08-31
+updated: 2026-09-03
 tags: [file]
 ---
 
@@ -55,6 +55,7 @@ tags: [file]
 - Any string matching `\.(webp|png|jpe?g|gif|svg|pdf|mp3|ogg|wav|gcs)$` goes through `mediaResolver`, wherever it sits in the tree — no per-key allowlist to drift.
 - A `mapping` key absent from `fieldKeys[slug]` is an error: it would land in `attributes` where no widget reads it (this is how two PCs' spell lists vanished into `spell_refs` instead of `spells_known`).
 - A ref whose target category is not in `relationTargets[slug][fieldKey]` is an error — the field widget drops a row of the wrong type at read time.
+- **Per-entry attribution.** A row may carry `source` as a **sibling** of `mapping`; it overrides `sourceTitle` for that one entity. It deliberately does *not* live inside `mapping` — the `creature-action` and `trait` schemas declare a real `source` *field*, and the two meanings would collide. Absent → the manifest title, as before. Built for the Cairn community pack, where 126 relics credit three different contributors.
 - **PCs leave through a different door.** `characters` entries are built by the same `_buildEntity` pass (same ref tiers, same field checking) and then renamed to `Entity.toJson()` keys by `_characterEntity`; they never enter `entities`. As world entities they were unreachable — `entity_sidebar.dart` filters `kPlayerCategorySlugs` out of the Database tab, and the Characters tab reads `world_characters`.
 
 ## Notes
