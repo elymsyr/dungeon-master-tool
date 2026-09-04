@@ -1,5 +1,68 @@
 # Release Notes
 
+## Dungeon Master Tool v15.2.0 — Cairn Second Edition (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A content release. Cairn — a lightweight, classless fantasy adventure game — is now available as two official packages you can download from **Marketplace → Official**: the second-edition rulebook content and a separate collection of community-contributed relics, spellbooks and equipment. Both are free, CC BY-SA 4.0, and install alongside your 5e content without touching it. Alongside that, imported player characters now show their species and class as real links, and pinning works inside package editors again.
+
+---
+
+### Highlights
+
+- **Cairn Second Edition package** — 584 cards: 145 monsters, 100 spells, 46 relics, 20 backgrounds, hirelings, gear and lore.
+- **Cairn Community Content package** — 627 more cards, mostly relics, spellbooks and equipment, each carrying its own contributor credit.
+- **Species and class on imported characters resolve properly** — the sheet now shows the live card, and the lineage picker appears where it should.
+
+---
+
+### Content
+
+#### Cairn Second Edition
+
+Download it from **Marketplace → Official**. It brings the whole second-edition reference library across: 145 monsters with their actions, 100 spells, 46 relics, 20 backgrounds, 12 hirelings, plus weapons, armour, vehicles, mounts, services, adventuring gear and 27 lore entries covering the rules text and the setting.
+
+Cairn is its own game, not a 5e supplement — the cards use the same editors and the same card types you already know, but the numbers are Cairn's. Installing it does not change or overwrite anything in your 5e content, and character creation keeps offering only 5e-compatible packages, so a Cairn install cannot wander into a 5e character sheet.
+
+#### Cairn Community Content
+
+A second, separate package for the community-contributed material: 244 pieces of equipment, 216 spells, 126 relics, 38 services and 3 lore entries. It is split out because the attribution is different — the core package is one author, while every card here credits the individual contributor it came from, shown in the card's source line.
+
+---
+
+### Bug fixes
+
+- **Species and class stayed unlinked on imported characters** — Fixed. A player character that comes with a downloaded world now resolves its species and class to the installed cards, so the sheet shows the live name and the subspecies picker appears. A reference to content you have not installed still falls back to the recorded name, by design.
+- **Pinning did not work inside a package** — Fixed. The pin button on cards opened from a package editor now behaves the same as everywhere else.
+- **Deleting a world bricked its characters** — Fixed. World deletion clears the characters' world link, so they survive as ordinary characters and open normally; a character still pointing at a world that is gone repairs itself the next time it is opened.
+- **Signed-out users could get stuck on a claimed character** — Fixed with the item above: the character opens and can be released or deleted again.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.1.1` → `15.2.0`.
+- **In-app migrations:** None. No schema changes.
+- **Cairn packages:** Not installed automatically — download them from **Marketplace → Official** when you want them. They can be removed again like any other package.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Nothing is open at the time of this release.
+
+---
+
+### For developers
+
+- **Per-entry `source` in world blueprints** — A blueprint row may now carry a `source` as a *sibling* of `mapping`, overriding the manifest title for that row; it is deliberately not inside `mapping`, because the `creature-action` and `trait` schemas declare a real `source` field. Authoring rules in `tool/content/world-blueprint.md`.
+- **`metadata.game_system`** — Character creation filters package families by this key, which is what keeps non-5e packs (like the two Cairn ones) out of the 5e wizard.
+
+---
+
+*Thanks for playing. Roll well.*
+
 ## Dungeon Master Tool v15.1.1 — Marketplace Downloads Fixed (Beta)
 
 **Release date:** September 2026
