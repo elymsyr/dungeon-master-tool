@@ -231,6 +231,8 @@ def main() -> None:
     p.add_argument("--retries", type=int, default=2)
     p.add_argument("--workers", type=int, default=4,
                    help="paralel SSH+LLM isteği sayısı")
+    p.add_argument("--max-streak", type=int, default=40,
+                   help="üstüste bu kadar hata olursa dur (0=sınırsız)")
     args = p.parse_args()
 
     cache: dict[str, str] = {}
@@ -289,6 +291,8 @@ def main() -> None:
     lock = threading.Lock()
     done = 0
     errors = 0
+    streak = 0
+    aborted = False
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = [pool.submit(generate, u) for u in todo]
         for fut in as_completed(futures):
@@ -296,8 +300,10 @@ def main() -> None:
             with lock:
                 if subject:
                     cache[uuid] = subject
+                    streak = 0
                 else:
                     errors += 1
+                    streak += 1
                     print(f"!!! HATA {name}: {err[:200]}", file=sys.stderr)
                 done += 1
                 if done % 10 == 0 or done == len(todo):
@@ -305,10 +311,18 @@ def main() -> None:
                         json.dumps(cache, ensure_ascii=False, indent=1))
             print(f"[{done}/{len(todo)}] {t} {name} -> {subject[:80]}",
                   file=sys.stderr)
+            if args.max_streak and streak >= args.max_streak:
+                aborted = True
+                print(f"!!! {streak} ardışık hata — duruluyor.", file=sys.stderr)
+                for f in futures:
+                    f.cancel()
+                break
 
     args.cache.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
-    print(f"bitti: {len(cache)} subject -> {args.cache} "
-          f"({time.time() - t0:.0f}s, hata={errors})", file=sys.stderr)
+    print(f"{'DURDURULDU' if aborted else 'bitti'}: {len(cache)} subject -> "
+          f"{args.cache} ({time.time() - t0:.0f}s, hata={errors})", file=sys.stderr)
+    if aborted:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
