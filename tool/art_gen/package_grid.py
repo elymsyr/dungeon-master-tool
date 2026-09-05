@@ -114,6 +114,7 @@ def main():
     p.add_argument("--grids", type=Path, default=base / "grids")
     p.add_argument("--variant", default="pkg")
     p.add_argument("--packages", help="virgullu paket filtresi (bos=tumu)")
+    p.add_argument("--types", help="virgullu kategori filtresi (bos=tumu)")
     p.add_argument("--per-type", type=int, default=2)
     p.add_argument("--seed", type=int, default=1234)
     p.add_argument("--size", type=int, default=512)
@@ -138,6 +139,10 @@ def main():
 
     pkgs = args.packages.split(",") if args.packages else None
     sample = sample_packages(jobs, args.per_type, args.seed, pkgs)
+    if args.types:
+        keep = set(args.types.split(","))
+        sample = {p_: {t: v for t, v in c.items() if t in keep}
+                  for p_, c in sample.items()}
 
     grid_dir = args.grids / ("%s_s%d" % (args.variant, args.seed))
     variant_dir = args.out / args.variant
