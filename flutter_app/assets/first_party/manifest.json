@@ -29,7 +29,11 @@
       },
       "bundled_asset": "assets/open5e_packs/cairn-2e-core.pkg.json",
       "r2_path": "package/cairn-2e-core@1.0.0.json.gz",
-      "size_bytes": 790880
+      "size_bytes": 790880,
+      "banner_credit": {
+        "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
+        "link": "https://cairnrpg.com/second-edition/"
+      }
     },
     {
       "item_type": "package",
@@ -51,7 +55,11 @@
       },
       "bundled_asset": "assets/open5e_packs/cairn-community.pkg.json",
       "r2_path": "package/cairn-community@1.0.0.json.gz",
-      "size_bytes": 406489
+      "size_bytes": 406489,
+      "banner_credit": {
+        "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
+        "link": "https://cairnrpg.com/resources/"
+      }
     },
     {
       "item_type": "package",
