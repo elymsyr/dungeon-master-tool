@@ -214,11 +214,21 @@ def gemini_subject(prompt_text: str, model: str, timeout: int = 120) -> str:
     req = urllib.request.Request(
         GEMINI_URL.format(model=model), data=body,
         headers={"content-type": "application/json", "x-goog-api-key": key})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read())
-    except urllib.error.HTTPError as e:  # 429/5xx mesajını görünür kıl
-        raise RuntimeError(f"HTTP {e.code}: {e.read()[:300].decode(errors='replace')}")
+    # 429 = dakikalık kota (free tier 15 RPM). API kaç saniye bekleneceğini
+    # söylüyor; onu uyuyup tekrar deniyoruz — retry bütçesini yakmadan.
+    for _ in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read())
+            break
+        except urllib.error.HTTPError as e:
+            msg = e.read()[:400].decode(errors="replace")
+            if e.code not in (429, 503):
+                raise RuntimeError(f"HTTP {e.code}: {msg}")
+            m = re.search(r'"?retryDelay"?:?\s*"?(\d+(?:\.\d+)?)s', msg)
+            time.sleep(min(float(m.group(1)) if m else 20, 60) + 1)
+    else:
+        raise RuntimeError("429: kota beklemesi 6 kez aşıldı")
     text = " ".join(
         part.get("text", "")
         for c in data.get("candidates", [])
