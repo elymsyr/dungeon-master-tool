@@ -20,6 +20,7 @@ import argparse, base64, json, re, subprocess, sys, threading, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lore import lore_for
 from prompts import (NAME_ONLY_TYPES, clean_prose, lookup, monster_prompt,
                      tidy_name)
 
@@ -29,6 +30,7 @@ SSH_HOST = "sadektech@192.168.1.12"
 SSH_PORT = "8772"
 OPCODE = "/home/sadektech/.opencode/bin/opencode"
 MODEL = "opencode-go/mimo-v2.5"
+LORE_DIR = Path.home() / "GitHub/5e-Tools/data"
 
 # Kategoriye göre görsel odak — LLM'e hangi yönleri betimleyeceğini söyler.
 CATEGORY_GUIDE = {
@@ -50,7 +52,11 @@ SYS = (
     "Dungeons & Dragons 5th edition illustration. The painter draws ONLY what you "
     "describe — anything you omit is invented wrongly. Output ONLY the physical "
     "appearance of the subject.\n"
-    "Research rule (MOST IMPORTANT): first recall the canonical appearance of "
+    "Canon source rule (HIGHEST PRIORITY): if a 'Canon lore' block is given "
+    "below, it is the official source text — every physical detail you write "
+    "must be consistent with it, and you must NOT add features it contradicts "
+    "or that you merely guessed (no invented horns, wings, or eye colors).\n"
+    "Research rule: if there is no Canon lore block, recall the canonical appearance of "
     "this entity from D&D, Pathfinder, mythology, or its source book. If the "
     "entity is well-known (e.g. Blemmyes, Aboleth, Gnoll, Displacer Beast), "
     "you MUST use its established canonical look — never invent a generic "
@@ -90,6 +96,7 @@ SYS = (
     "Package: {package}\n"
     "Game: Dungeons and Dragons 5th Edition (Dnd 5e)\n"
     "Description: {desc}\n"
+    "{lore}"
 )
 
 _WS = re.compile(r"\s+")
@@ -154,9 +161,12 @@ def load_packs(packs_dirs: list[Path]) -> dict[str, dict]:
     return out
 
 
-def build_message(t: str, name: str, desc: str, pkg: str) -> str:
+def build_message(t: str, name: str, desc: str, pkg: str,
+                  lore_dir: Path | None = None) -> str:
+    lore = lore_for(name, lore_dir) if lore_dir else ""
     return SYS.format(guide=CATEGORY_GUIDE[t], name=name, category=t,
-                      package=pkg, desc=desc or name)
+                      package=pkg, desc=desc or name,
+                      lore=f"Canon lore: {lore}\n" if lore else "")
 
 
 def remote_subject(prompt_text: str, timeout: int = 180) -> str:
@@ -216,6 +226,8 @@ def main() -> None:
     p.add_argument("--uuids", type=Path, help="satır başına bir uuid içeren dosya")
     p.add_argument("--limit", type=int, help="en fazla N entity üret")
     p.add_argument("--force", action="store_true", help="önbelleği görmezden gel")
+    p.add_argument("--lore", type=Path, default=LORE_DIR,
+                   help="5eTools data/ dizini (canon fluff); boş dizin = kapalı")
     p.add_argument("--retries", type=int, default=2)
     p.add_argument("--workers", type=int, default=4,
                    help="paralel SSH+LLM isteği sayısı")
@@ -260,7 +272,7 @@ def main() -> None:
         if not row:
             return uuid, "", "", "", "satır bulunamadı"
         t, name, desc, pkg = entity_input(row)
-        msg = build_message(t, name, desc, pkg)
+        msg = build_message(t, name, desc, pkg, args.lore)
         subject = ""
         last_err: Exception | None = None
         for _ in range(args.retries + 1):

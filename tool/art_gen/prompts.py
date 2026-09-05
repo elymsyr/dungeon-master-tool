@@ -292,7 +292,27 @@ NAME_ONLY_TYPES = {
     "feat": "a martial or arcane talent",
     "subclass": "a fantasy adventurer archetype",
     "background": "a life before adventuring",
+    # species/subspecies description'ı da mekanik ("Giant-blooded Medium folk with
+    # a chosen ... Giant ancestry boon") — modele canon görünüş yerine kural
+    # kelimelerini çizdiriyordu (Goliath -> dev). Canon görünüş subject_cache'ten gelir.
+    "species": "a fantasy people",
+    "subspecies": "a fantasy people",
 }
+
+# species/subspecies çapası — bunlar oynanabilir HALKLAR, canavar değil.
+SPECIES_ANCHOR = ("a playable player-character ancestry of the world, "
+                  "one ordinary humanoid person, everyday adventurer "
+                  "proportions, seen at eye level")
+
+# Subject'teki boy/ölçek ifadeleri model'e kıyas yaptırıyor: yanına minik bir
+# kalabalık koyup figürü dev çiziyor (Goliath -> ogre). Boy bilgisi resimde
+# zaten görünmez; species/subspecies'te temizlenir.
+SCALE_RE = re.compile(
+    r"\b(towering|colossal|gigantic|giant-?like|hulking|massive|immense|"
+    r"imposing|looming|monstrous|standing (over |nearly |roughly |about )?"
+    r"[\w-]+ (to [\w-]+ )?(feet|foot|ft) tall|"
+    r"[\w-]+([- ]to[- ][\w-]+)?[- ](feet|foot|ft)([- ](tall|high|in height))?|"
+    r"(head and shoulders|far) above [\w ]+)\b[,\s]*", re.I)
 
 # Entity -> salt-görsel subject önbelleği (subject_gen.py doldurur). Kural/lore
 # metni yerine modele "ne çizileceğini" net söyleyen görsel betim. Boşsa fallback'e
@@ -433,15 +453,29 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         framing = FRAMING[t]
 
     pkg_title = PACKAGE_TITLE.get(pkg, pkg)
-    header = (f"An image of {name}, from category {t} "
+    subject_label = name
+    if t in ("species", "subspecies"):
+        # "Goliath" tek başına modele incil devini çizdiriyor. İsmi halk adı
+        # olarak niteleyip pozitif bir insan-ölçeği çapası ekliyoruz (Flux'ta
+        # negasyon ters teptiği için "dev değil" DEMİYORUZ, ne olduğunu diyoruz).
+        subject_label = f"a person of the {tidy_name(name)} folk"
+    header = (f"An image of {subject_label}, from category {t} "
               f"in package {pkg_title} from Dungeons and Dragons (DnD).")
 
     # Subject'ten name prefix'ini kaldır — header zaten name'i içeriyor.
-    name_prefix = f"{tidy_name(name)}, "
+    # LLM bazen subject'i de isimle başlatıyor ("Goliath A towering..."), o yüzden
+    # tekrar eden her baş-isim soyulur; aksi halde isim tokenı iki kez ağırlık alır.
     subject_body = subject
-    if subject.startswith(name_prefix):
-        subject_body = subject[len(name_prefix):]
+    while True:
+        stripped = re.sub(rf"^{re.escape(tidy_name(name))}[,:\s-]+", "",
+                          subject_body, flags=re.I)
+        if stripped == subject_body:
+            break
+        subject_body = stripped
     subject_body = subject_body.rstrip(". ")  # çift noktayı önle
+    if t in ("species", "subspecies"):
+        subject_body = SCALE_RE.sub("", subject_body).lstrip(", ")
+        subject_body = f"{SPECIES_ANCHOR}, {subject_body}"
 
     style = f"{style_for(pkg)}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[_hash(uuid, 5) % len(STYLE_FLAVOR)]
