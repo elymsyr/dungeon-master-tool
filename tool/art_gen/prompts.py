@@ -307,6 +307,31 @@ SPECIES_ANCHOR = ("a playable player-character ancestry of the world, "
 # Subject'teki boy/ölçek ifadeleri model'e kıyas yaptırıyor: yanına minik bir
 # kalabalık koyup figürü dev çiziyor (Goliath -> ogre). Boy bilgisi resimde
 # zaten görünmez; species/subspecies'te temizlenir.
+# Cinsiyet: subject_cache metinleri neredeyse hep erkek betimliyor. Insan
+# figuru ceken kategorilerde uuid'den deterministik bir maskulen/feminen
+# oran uretip modele araligi biz veriyoruz; oranlar uniform secildigi icin
+# tum set genelinde yaklasik 50/50 dagiliyor.
+GENDERED_TYPES = ("background", "species", "subspecies", "subclass", "feat")
+GENDER_MIX = (10, 20, 30, 40, 50, 60, 70, 80, 90)
+GENDER_WORDS = re.compile(
+    r"\b(?:a |an |the )?(?:young |old |elderly |grizzled )?"
+    r"(?:man|woman|male|female|he|she|his|her|hers|him|guy|lady|gentleman)\b", re.I)
+
+
+def gender_hint(uuid: str) -> str:
+    """Oran uuid'den, sonuc oranin uzerinden atilan zardan.
+
+    Modele yuzde vermek ise yaramiyor (test: 19 gorselin 18'i erkek), o yuzden
+    kararı burada verip prompt'a kesin kelimeyi yaziyoruz; dagilim yine oranin
+    kendisi, yani set genelinde ~50/50.
+    """
+    fem_pct = GENDER_MIX[_hash(uuid, 11) % len(GENDER_MIX)]
+    fem = (_hash(uuid, 17) % 100) < fem_pct
+    who, look = ("a woman", "feminine") if fem else ("a man", "masculine")
+    strength = "androgynous, subtly" if 40 <= fem_pct <= 60 else "clearly"
+    return ("depicted as %s, %s %s face, build and clothing" % (who, strength, look))
+
+
 SCALE_RE = re.compile(
     r"\b(towering|colossal|gigantic|giant-?like|hulking|massive|immense|"
     r"imposing|looming|monstrous|standing (over |nearly |roughly |about )?"
@@ -477,6 +502,11 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     if t in ("species", "subspecies"):
         subject_body = SCALE_RE.sub("", subject_body).lstrip(", ")
         subject_body = f"{SPECIES_ANCHOR}, {subject_body}"
+
+    if t in GENDERED_TYPES:
+        # cache metnindeki hazir erkek zamirlerini sok, yoksa oran ezilir
+        subject_body = GENDER_WORDS.sub("a person", subject_body)
+        subject_body = f"{subject_body}, {gender_hint(uuid)}"
 
     style = f"{style_for(pkg)}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[_hash(uuid, 5) % len(STYLE_FLAVOR)]
