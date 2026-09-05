@@ -323,13 +323,15 @@ def gender_hint(uuid: str) -> str:
 
     Modele yuzde vermek ise yaramiyor (test: 19 gorselin 18'i erkek), o yuzden
     kararı burada verip prompt'a kesin kelimeyi yaziyoruz; dagilim yine oranin
-    kendisi, yani set genelinde ~50/50.
+    kendisi, yani set genelinde ~50/50. Ifade subject'in BASINA konur — sona
+    eklendiginde uzun betimlemenin icinde kayboluyordu (test: 4/4 kadin erkek
+    ciktı).
     """
     fem_pct = GENDER_MIX[_hash(uuid, 11) % len(GENDER_MIX)]
     fem = (_hash(uuid, 17) % 100) < fem_pct
     who, look = ("a woman", "feminine") if fem else ("a man", "masculine")
     strength = "androgynous, subtly" if 40 <= fem_pct <= 60 else "clearly"
-    return ("depicted as %s, %s %s face, build and clothing" % (who, strength, look))
+    return ("%s, %s %s face, build and clothing" % (who, strength, look))
 
 
 SCALE_RE = re.compile(
@@ -506,7 +508,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     if t in GENDERED_TYPES:
         # cache metnindeki hazir erkek zamirlerini sok, yoksa oran ezilir
         subject_body = GENDER_WORDS.sub("a person", subject_body)
-        subject_body = f"{subject_body}, {gender_hint(uuid)}"
+        subject_body = f"{gender_hint(uuid)}, {subject_body}"
 
     style = f"{style_for(pkg)}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[_hash(uuid, 5) % len(STYLE_FLAVOR)]
