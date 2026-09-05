@@ -357,6 +357,8 @@ def lookup(attrs: dict, key: str) -> str:
 
 def tidy_name(name: str) -> str:
     """'Aboleth, Nihilith' -> 'Nihilith Aboleth' (open5e varyant konvansiyonu)."""
+    # Bazı pack isimleri markdown italik/kod artığı taşıyor (_petty_, **x**).
+    name = re.sub(r"\s+", " ", re.sub(r"[*_`#|]", "", name)).strip()
     if name.count(",") == 1:
         base, variant = (p.strip() for p in name.split(","))
         if base and variant and len(variant.split()) <= 3:
@@ -452,7 +454,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         framing = FRAMING[t]
 
     pkg_title = PACKAGE_TITLE.get(pkg, pkg)
-    subject_label = name
+    subject_label = tidy_name(name)
     if t in ("species", "subspecies"):
         # "Goliath" tek başına modele incil devini çizdiriyor. İsmi halk adı
         # olarak niteleyip pozitif bir insan-ölçeği çapası ekliyoruz (Flux'ta
