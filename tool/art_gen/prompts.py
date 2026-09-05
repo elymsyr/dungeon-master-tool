@@ -424,16 +424,19 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     if not name:
         return None
     attrs = row.get("attributes") or {}
-    raw_desc = row.get("description") or ""
 
-    if t == "monster":
+    # entity description'ı ASLA prompt'a girmez: kural metni, resmedilemez ve
+    # difüzyon modelini yanlış yönlendiriyor. Görsel betim yalnızca
+    # subject_cache'ten (subject_gen.py) gelir; yoksa isim + zayıf ipucu.
+    cached = _SUBJECT_CACHE.get(uuid)
+    if cached:
+        subject = f"{tidy_name(name)}, {cached}"
+    elif t == "monster":
         subject = monster_prompt(name, attrs)
     elif t in NAME_ONLY_TYPES:
-        # Bu tiplerin description'ı saf kural metni ("+1 to Wisdom") — resmedilemez.
         subject = f"{tidy_name(name)}, {NAME_ONLY_TYPES[t]}"
     else:
-        desc = clean_prose(raw_desc)
-        subject = f"{tidy_name(name)}, {desc}" if desc else tidy_name(name)
+        subject = tidy_name(name)
         if t == "spell":
             school = lookup(attrs, "school_ref")
             if school:
@@ -442,10 +445,6 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
             rarity = lookup(attrs, "rarity_ref")
             if rarity:
                 subject += f", {rarity.lower()} artifact"
-
-    cached = _SUBJECT_CACHE.get(uuid)
-    if cached:
-        subject = f"{tidy_name(name)}, {cached}"
 
     if t in ("species", "subspecies"):
         framing = SPECIES_FRAMING[_hash(uuid, 3) % len(SPECIES_FRAMING)]

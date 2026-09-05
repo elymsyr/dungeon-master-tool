@@ -16,7 +16,8 @@ için package_grid'ın yazdığı manifest.json'a (seçilen entity'ler) sınırl
     python3 subject_gen.py --limit 5 --force     # önbelleği görmezden gel, 5 üret
 """
 from __future__ import annotations
-import argparse, base64, json, re, subprocess, sys, threading, time
+import argparse, base64, json, os, re, subprocess, sys, threading, time
+import urllib.error, urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -31,6 +32,11 @@ SSH_PORT = "8772"
 OPCODE = "/home/sadektech/.opencode/bin/opencode"
 MODEL = "opencode-go/mimo-v2.5"
 LORE_DIR = Path.home() / "GitHub/5e-Tools/data"
+
+# Gemini: SSH+opencode'dan çok daha hızlı/ucuz. GEMINI_API_KEY ortam değişkeni.
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
+              "{model}:generateContent")
 
 # Kategoriye göre görsel odak — LLM'e hangi yönleri betimleyeceğini söyler.
 CATEGORY_GUIDE = {
@@ -196,6 +202,31 @@ def remote_subject(prompt_text: str, timeout: int = 180) -> str:
     return extract_text(r.stdout)
 
 
+def gemini_subject(prompt_text: str, model: str, timeout: int = 120) -> str:
+    """Gemini API'ye tek atış. Anahtar: GEMINI_API_KEY."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY tanımlı değil")
+    body = json.dumps({
+        "contents": [{"parts": [{"text": prompt_text}]}],
+        "generationConfig": {"temperature": 0.9, "maxOutputTokens": 2048},
+    }).encode()
+    req = urllib.request.Request(
+        GEMINI_URL.format(model=model), data=body,
+        headers={"content-type": "application/json", "x-goog-api-key": key})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read())
+    except urllib.error.HTTPError as e:  # 429/5xx mesajını görünür kıl
+        raise RuntimeError(f"HTTP {e.code}: {e.read()[:300].decode(errors='replace')}")
+    text = " ".join(
+        part.get("text", "")
+        for c in data.get("candidates", [])
+        for part in (c.get("content") or {}).get("parts", []))
+    text = re.sub(r"[*_`#>|]|\[\[|\]\]", " ", text)
+    return re.sub(r"\s+", " ", text).strip(" ,.")
+
+
 def extract_text(stdout: str) -> str:
     parts = []
     for line in stdout.splitlines():
@@ -228,9 +259,13 @@ def main() -> None:
     p.add_argument("--force", action="store_true", help="önbelleği görmezden gel")
     p.add_argument("--lore", type=Path, default=LORE_DIR,
                    help="5eTools data/ dizini (canon fluff); boş dizin = kapalı")
+    p.add_argument("--provider", choices=("gemini", "opencode"), default="gemini",
+                   help="gemini = Gemini API (hızlı, GEMINI_API_KEY gerekir); "
+                        "opencode = sunucudaki opencode (SSH)")
+    p.add_argument("--model", default=GEMINI_MODEL, help="Gemini model adı")
     p.add_argument("--retries", type=int, default=2)
-    p.add_argument("--workers", type=int, default=4,
-                   help="paralel SSH+LLM isteği sayısı")
+    p.add_argument("--workers", type=int, default=8,
+                   help="paralel LLM isteği sayısı")
     p.add_argument("--max-streak", type=int, default=40,
                    help="üstüste bu kadar hata olursa dur (0=sınırsız)")
     args = p.parse_args()
@@ -279,7 +314,8 @@ def main() -> None:
         last_err: Exception | None = None
         for _ in range(args.retries + 1):
             try:
-                subject = remote_subject(msg)
+                subject = (gemini_subject(msg, args.model)
+                           if args.provider == "gemini" else remote_subject(msg))
                 if valid_subject(subject):
                     break
                 subject = ""
