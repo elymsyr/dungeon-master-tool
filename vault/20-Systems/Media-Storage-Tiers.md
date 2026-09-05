@@ -9,6 +9,10 @@ tags: [system]
 
 > [!summary] What this is
 > Three storage tiers with different quota/lifecycle rules. Choosing the right tier per asset is the core media policy. Owned by [[Media-and-Assets]]; backends in [[Backend-Infra]].
+>
+> **Planlanan değişiklik:** Counted tier kaldırılıyor, havuz `pinned`/`transient`
+> olarak ikiye bölünüyor — bkz. [`docs/media-storage-redesign.md`](../../docs/media-storage-redesign.md)
+> (tasarım kararı, henüz uygulanmadı; aşağısı hâlâ kodun bugünkü hâli).
 
 ## Participants
 - [[free_media_service]] — free tier reads.
