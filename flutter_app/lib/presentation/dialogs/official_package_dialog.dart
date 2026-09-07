@@ -208,15 +208,6 @@ class OfficialPackageDialog extends ConsumerWidget {
                   palette: palette,
                 ),
               ],
-              if (status.phase == CatalogInstallPhase.installing &&
-                  (status.message ?? '').isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${l10n.catalogArtDownloading}  ${status.message}',
-                  style: TextStyle(
-                      fontSize: 12, height: 1.4, color: palette.tabText),
-                ),
-              ],
               if (status.phase == CatalogInstallPhase.error &&
                   (status.message ?? '').isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -274,7 +265,9 @@ class OfficialPackageDialog extends ConsumerWidget {
                   strokeWidth: 2, color: Colors.white),
             )
           : const Icon(Icons.download, size: 18),
-      label: Text(isError ? l10n.soundpackRetry : l10n.marketplaceGet),
+      label: Text(installing
+          ? l10n.marketplaceDownloading
+          : (isError ? l10n.soundpackRetry : l10n.marketplaceGet)),
     );
   }
 }
