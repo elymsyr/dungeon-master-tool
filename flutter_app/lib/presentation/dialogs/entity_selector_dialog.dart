@@ -7,6 +7,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
+import 'entity_preview_dialog.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
 /// [allowedTypes]: sadece bu kategorideki entity'ler gösterilir (null=tümü).
@@ -103,6 +104,17 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
     return List<Entity>.unmodifiable(out);
   }
 
+  /// Ref'leri çözebilmek için önizlemeye verilen harita. Uzun basmadan önce
+  /// kurulmaz: bundled SRD ~7K satır, her dialog açılışında birleştirmeye değmez.
+  Map<String, Entity>? _previewEntitiesCache;
+  Map<String, Entity> get _previewEntities =>
+      _previewEntitiesCache ??= {
+        ...widget.ref.read(entityProvider),
+        if (widget.includeBuiltinSrd)
+          ...widget.ref.read(builtinSrdEntitiesProvider),
+        for (final e in widget.extraEntities) e.id: e,
+      };
+
   @override
   void dispose() {
     _searchDebounce?.cancel();
@@ -189,6 +201,11 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: isSelected ? Icon(Icons.check, size: 16, color: palette.tabIndicator) : null,
+                          onLongPress: () => showEntityPreview(
+                            context,
+                            entity,
+                            entities: _previewEntities,
+                          ),
                           onTap: () {
                             if (widget.multiSelect) {
                               setState(() {

@@ -7,6 +7,7 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/character_creation/wizard_options.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../dialogs/entity_preview_dialog.dart';
 import '../../../../widgets/class_level_up_table.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/expandable_section.dart';
@@ -20,11 +21,7 @@ class SubclassStep extends ConsumerWidget {
   final CharacterDraft draft;
   final CharacterDraftNotifier notifier;
 
-  const SubclassStep({
-    super.key,
-    required this.draft,
-    required this.notifier,
-  });
+  const SubclassStep({super.key, required this.draft, required this.notifier});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,8 +34,11 @@ class SubclassStep extends ConsumerWidget {
     final entities = ref.watch(wizardEntitiesProvider);
     // W4: filter the cached subclass list down to entries for this class.
     final allSubclasses = ref.watch(entitiesByCategoryProvider('subclass'));
-    final subclasses = subclassesForClass(draft.classId, entities,
-        candidates: allSubclasses);
+    final subclasses = subclassesForClass(
+      draft.classId,
+      entities,
+      candidates: allSubclasses,
+    );
     if (subclasses.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
@@ -59,8 +59,9 @@ class SubclassStep extends ConsumerWidget {
     }
 
     final classEntity = entities[draft.classId];
-    final subclassEntity =
-        draft.subclassId == null ? null : entities[draft.subclassId];
+    final subclassEntity = draft.subclassId == null
+        ? null
+        : entities[draft.subclassId];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -76,6 +77,7 @@ class SubclassStep extends ConsumerWidget {
         for (final s in subclasses)
           _SubclassRow(
             entity: s,
+            entities: entities,
             grantedAtLevel: subclassGrantedAtLevel(s),
             draftLevel: draft.level,
             selected: draft.subclassId == s.id,
@@ -110,11 +112,11 @@ class SubclassStep extends ConsumerWidget {
       ],
     );
   }
-
 }
 
 class _SubclassRow extends StatelessWidget {
   final Entity entity;
+  final Map<String, Entity> entities;
   final int grantedAtLevel;
   final int draftLevel;
   final bool selected;
@@ -122,6 +124,7 @@ class _SubclassRow extends StatelessWidget {
 
   const _SubclassRow({
     required this.entity,
+    required this.entities,
     required this.grantedAtLevel,
     required this.draftLevel,
     required this.selected,
@@ -132,51 +135,54 @@ class _SubclassRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final locked = grantedAtLevel > draftLevel;
     final lockedHint = 'Unlocks at level $grantedAtLevel';
-    return RadioListTile<bool>(
-      value: true,
-      // ignore: deprecated_member_use
-      groupValue: selected ? true : null,
-      // ignore: deprecated_member_use
-      onChanged: locked ? null : (_) => onTap(),
-      dense: true,
-      title: Row(
-        children: [
-          Flexible(
-            child: Text(
-              entity.name,
-              style: locked
-                  ? TextStyle(color: Theme.of(context).disabledColor)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Flexible(child: SourceBadge(entity.source)),
-          const Spacer(),
-          if (locked)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
+    return EntityPreviewLongPress(
+      entity: entity,
+      entities: entities,
+      child: RadioListTile<bool>(
+        value: true,
+        // ignore: deprecated_member_use
+        groupValue: selected ? true : null,
+        // ignore: deprecated_member_use
+        onChanged: locked ? null : (_) => onTap(),
+        dense: true,
+        title: Row(
+          children: [
+            Flexible(
               child: Text(
-                lockedHint,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                  color: Theme.of(context).disabledColor,
-                ),
-              ),
-            ),
-        ],
-      ),
-      subtitle: entity.description.isEmpty
-          ? null
-          : ExpandableMarkdown(
-              data: entity.description,
-              styleSheet:
-                  dmMarkdownStyle(context).copyWith(
-                p: locked
+                entity.name,
+                style: locked
                     ? TextStyle(color: Theme.of(context).disabledColor)
                     : null,
               ),
             ),
+            const SizedBox(width: 6),
+            Flexible(child: SourceBadge(entity.source)),
+            const Spacer(),
+            if (locked)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  lockedHint,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context).disabledColor,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        subtitle: entity.description.isEmpty
+            ? null
+            : ExpandableMarkdown(
+                data: entity.description,
+                styleSheet: dmMarkdownStyle(context).copyWith(
+                  p: locked
+                      ? TextStyle(color: Theme.of(context).disabledColor)
+                      : null,
+                ),
+              ),
+      ),
     );
   }
 }

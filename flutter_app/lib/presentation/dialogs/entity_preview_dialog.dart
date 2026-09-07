@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/asset_ref_image.dart';
 import '../widgets/expandable_markdown.dart';
 import '../widgets/field_widgets/field_widget_factory.dart';
 
@@ -69,6 +71,29 @@ class _PreviewBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (entity.images.isNotEmpty) ...[
+            SizedBox(
+              height: 260,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: entity.images.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => ClipRRect(
+                  borderRadius: palette.chr,
+                  child: SizedBox(
+                    width: 200,
+                    // contain, not cover: a quick look should show the whole
+                    // art (maps and landscape pieces included), not a crop.
+                    child: AssetRefImage(
+                      ref: AssetRef(entity.images[i]),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Text(
             entity.name.isEmpty ? '(Unnamed)' : entity.name,
             style: TextStyle(
@@ -119,3 +144,29 @@ bool _isEmpty(Object? v) =>
     (v is String && v.trim().isEmpty) ||
     (v is Iterable && v.isEmpty) ||
     (v is Map && v.isEmpty);
+
+/// Wraps [child] so a long-press opens [entity] in [showEntityPreview].
+///
+/// The creation wizard's pickers are `RadioListTile`s and `InkWell` rows —
+/// neither exposes a long-press hook — so the gesture is added from outside.
+/// A tap-only descendant loses the arena to this recognizer once the
+/// long-press timer fires, so selection still works normally.
+class EntityPreviewLongPress extends StatelessWidget {
+  const EntityPreviewLongPress({
+    super.key,
+    required this.entity,
+    required this.entities,
+    required this.child,
+  });
+
+  final Entity entity;
+  final Map<String, Entity> entities;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onLongPress: () =>
+            showEntityPreview(context, entity, entities: entities),
+        child: child,
+      );
+}

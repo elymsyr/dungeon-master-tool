@@ -8,6 +8,7 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/character_creation/wizard_options.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../dialogs/entity_preview_dialog.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
@@ -116,6 +117,7 @@ class SpellsStep extends ConsumerWidget {
             cap: cantripCap,
             picked: draft.cantripIds,
             spells: cantrips,
+            entities: entities,
             onToggle: (id) =>
                 notifier.toggleCantrip(id, cap: cantripCap),
             palette: palette,
@@ -127,6 +129,7 @@ class SpellsStep extends ConsumerWidget {
             cap: preparedCap,
             picked: draft.preparedSpellIds,
             spells: leveled,
+            entities: entities,
             showLevelChip: true,
             onToggle: (id) =>
                 notifier.togglePreparedSpell(id, cap: preparedCap),
@@ -177,6 +180,7 @@ class _SpellSection extends StatelessWidget {
   final int cap;
   final List<String> picked;
   final List<Entity> spells;
+  final Map<String, Entity> entities;
   final bool showLevelChip;
   final ValueChanged<String> onToggle;
   final DmToolColors palette;
@@ -186,6 +190,7 @@ class _SpellSection extends StatelessWidget {
     required this.cap,
     required this.picked,
     required this.spells,
+    required this.entities,
     this.showLevelChip = false,
     required this.onToggle,
     required this.palette,
@@ -244,6 +249,7 @@ class _SpellSection extends StatelessWidget {
                 for (final s in spells)
                   _SpellRow(
                     entity: s,
+                    entities: entities,
                     selected: pickedSet.contains(s.id),
                     disabled: atCap && !pickedSet.contains(s.id),
                     showLevelChip: showLevelChip,
@@ -260,6 +266,7 @@ class _SpellSection extends StatelessWidget {
 
 class _SpellRow extends StatelessWidget {
   final Entity entity;
+  final Map<String, Entity> entities;
   final bool selected;
   final bool disabled;
   final bool showLevelChip;
@@ -268,6 +275,7 @@ class _SpellRow extends StatelessWidget {
 
   const _SpellRow({
     required this.entity,
+    required this.entities,
     required this.selected,
     required this.disabled,
     required this.showLevelChip,
@@ -289,6 +297,8 @@ class _SpellRow extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: disabled ? null : onTap,
+          onLongPress: () =>
+              showEntityPreview(context, entity, entities: entities),
           borderRadius: palette.cbr,
           child: Container(
             padding:

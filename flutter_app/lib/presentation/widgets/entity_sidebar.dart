@@ -32,11 +32,18 @@ class EntitySidebar extends ConsumerStatefulWidget {
   /// wrong-world) when this sidebar lists a package's entities.
   final bool pinning;
 
+  /// Key the persisted category/source/share/sort filters are stored under.
+  /// Defaults to the active world id. A package screen must pass its own key:
+  /// `activeCampaignIdProvider` is not overridden there, so every package
+  /// would otherwise share one bucket and inherit the last package's filters.
+  final String? filterScope;
+
   const EntitySidebar({
     this.schema,
     this.onEntitySelected,
     this.onCreateEntity,
     this.pinning = true,
+    this.filterScope,
     super.key,
   });
 
@@ -214,7 +221,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final isPlayer = role == WorldRole.player;
     final worldIdForShares = ref.watch(activeCampaignIdProvider).valueOrNull;
     // Restore persisted per-world filters on first build / world switch.
-    _loadFiltersForWorld(worldIdForShares ?? '');
+    _loadFiltersForWorld(widget.filterScope ?? worldIdForShares ?? '');
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
     final Set<String> sharedEntityIds;
     if (isDm && worldIdForShares != null) {
