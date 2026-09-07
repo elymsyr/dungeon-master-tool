@@ -62,6 +62,12 @@ class _PreviewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    // imagePath is the legacy single-portrait slot and still holds the art for
+    // most cards; entity_card renders both, so must this.
+    final images = [
+      if (entity.imagePath.isNotEmpty) entity.imagePath,
+      ...entity.images,
+    ];
     final fields = [
       for (final f in category?.fields ?? const [])
         if (!_isEmpty(entity.fields[f.fieldKey])) f,
@@ -71,12 +77,12 @@ class _PreviewBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (entity.images.isNotEmpty) ...[
+          if (images.isNotEmpty) ...[
             SizedBox(
               height: 260,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: entity.images.length,
+                itemCount: images.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) => ClipRRect(
                   borderRadius: palette.chr,
@@ -85,7 +91,7 @@ class _PreviewBody extends StatelessWidget {
                     // contain, not cover: a quick look should show the whole
                     // art (maps and landscape pieces included), not a crop.
                     child: AssetRefImage(
-                      ref: AssetRef(entity.images[i]),
+                      ref: AssetRef(images[i]),
                       fit: BoxFit.contain,
                     ),
                   ),
