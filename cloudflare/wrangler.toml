@@ -18,6 +18,13 @@ compatibility_flags = ["nodejs_compat"]
 binding = "R2_BUCKET"
 bucket_name = "dmt-assets"
 
+# ── Cron ─────────────────────────────────────────────────────────────────────
+# transient_evict_queue'yu boşaltır. Kuyruğa hem transient LRU kurbanları hem
+# refcount'u sıfırlanan pinned objeler düşer; kimse boşaltmazsa R2'da yetim
+# obje birikir. Saatte bir yeterli — silme gecikmesi kotayı etkilemez.
+[triggers]
+crons = ["0 * * * *"]
+
 # ── KV namespace (rate limit counter) ────────────────────────────────────────
 # Önce oluştur: wrangler kv:namespace create RATE_KV
 # Çıkan id'yi aşağıya yapıştır.
