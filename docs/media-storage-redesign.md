@@ -3,16 +3,38 @@
 Durum: **kısmen uygulandı.**
 - ✅ Postgres paylaşım sınırları — `088_share_payload_limits.sql`
 - ✅ Havuz bütçeleri + `pinned` sınıfı (`pub_assets`, worker `pub/` rotası) — `089_media_pool_budgets.sql`
-- ⬜ Oturum kapısı + talep-üzerine akış (`session_started_at`, `media_shas`, `missing_shas`)
-- ⬜ Counted tier sökümü (client upload yolları, worker PUT 410, kota UI)
+- ✅ Bayat evict satırı canlı objeyi silmiyor — `090_evict_skip_relive.sql`
+- ✅ Evict kuyruğu cron ile süpürülüyor (`transient_evict_pop`, zamanlanmış job)
+- ✅ Admin rate limit fail-open — limit tablosu okunamazsa moderasyon aksiyonu bloklanmaz
+- ✅ Marketplace yayın yolu `pub_asset_reserve`'e bağlandı — `publish_media_pinner.dart`,
+  `AssetService.uploadPub`, listing silmede `pub_asset_release`
+- ✅ Pinlenemeyen medya yayını **iptal ediyor** (aşağıdaki nota bak) + lokalize hata
+  mesajı (`publishDialogMediaPinFailed`, 4 dil)
+- ✅ Moderatör silmesi de medyayı bırakıyor — `091_admin_delete_releases_media.sql`
 - ✅ Admin Storage sekmesi havuz görünümü — `admin_screen.dart` `_R2PoolSection`,
   `R2PoolStats` / `adminR2PoolStatsProvider` (kullanıcı başına `pinned_bytes` /
   `transient_bytes` kolonları hâlâ ⬜, `search_users` migration'ı gerekiyor)
 - ✅ Free tier eager upload'ları kaldırıldı — portre/kapak seçimi artık yüklemiyor
-- ✅ Marketplace yayın yolu `pub_asset_reserve`'e bağlandı — `publish_media_pinner.dart`,
-  `AssetService.uploadPub`, listing silmede `pub_asset_release`
+- ⬜ **Phase C — oturum kapısı** + talep-üzerine akış (`session_started_at`, `media_shas`,
+  `missing_shas`). Sıradaki iş.
+- ⬜ **Phase D — counted tier sökümü** (client upload yolları, worker PUT 410, kota UI).
+  C'den SONRA; sıra önemli, çünkü counted yolu sökülünce paylaşılan medyanın tek
+  gideceği yer transient olur ve oturum kapısı o zamana kadar durmalı.
 
-Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07)
+> [!warning] Deploy bekleyenler
+> - `091_admin_delete_releases_media.sql` henüz deploy edilmedi.
+> - Launch öncesi **Cloudflare Workers Paid** planına geçilmeli (cron + istek hacmi).
+
+> [!note] Karar değişikliği — pinner artık yayını bloklar
+> Bu belgenin ilk hâlinde pin "best-effort"tü: pinlenemeyen ref eski hâliyle
+> payload'da kalır, yayın yine de yapılırdı. Tersine çevrildi. Sebep: yayıncının
+> local dosya yolunu taşıyan bir listing indirende **sessizce** kırık açılıyor,
+> üstelik yayın başarılı görünüyor. Artık tek bir ref bile pinlenemezse yayın
+> iptal edilir ve o ana kadar pinlenmiş ref'ler bırakılır. Karar geri alınabilir;
+> geri alınırsa `marketplace_listing_provider.publishSnapshot`'taki
+> `PublishMediaPinFailure` throw'u kaldırılır.
+
+Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07, son güncelleme 2026-09-07)
 Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Systems/Media-Storage-Tiers.md) (üç tier: Free / Counted / Transient)
 
 ## Bir cümlede
@@ -180,7 +202,11 @@ hâli, genişletilmiş hâli değil.
   oluşur. Marketplace medyası içerik-adresli ortak prefix'e taşınır:
   `pub/{sha}.{ext}`, yanında `pub_assets(sha, bytes, refcount)` tablosu.
   - Yayın: `sha` varsa yükleme atlanır, `refcount += 1`.
-  - Listing silinince `refcount -= 1`; 0 olunca obje silinir.
+  - Listing silinince `refcount -= 1`; 0 olunca obje silinir. Hem sahibin silmesi
+    (client `pub_asset_release`) hem moderatör silmesi
+    (`admin_delete_marketplace_listing`, migration 091) bu yolu izler — moderatör
+    yolu ref'leri doğrudan düşürür, çünkü `pub_asset_release` sahiplik filtreliyor
+    ve admin sahibi değil.
   - "Marketplace'de zaten olan bir paketin içeriği tekrar yüklenmez" kuralı budur;
     indiren kişide o paket zaten otomatik kurulur.
 - `pinned` LRU'ya tabi değildir — indirilebilirliği garanti altındadır.
@@ -257,8 +283,8 @@ bakılacak liste odur.
 ### Admin aksiyonları
 
 - Bir kullanıcının transient'ini boşalt (zararsız — DM tekrar paylaşınca yüklenir).
-- Bir listing'in `pinned` medyasını düşür (moderasyon zaten listing siliyor;
-  refcount 0'a inince obje gider, ayrı bir düğmeye gerek yok).
+- Bir listing'in `pinned` medyasını düşür — ayrı düğme yok: moderasyon listing'i
+  silerken ref'leri de düşürüyor (migration 091), refcount 0'a inince obje gider.
 - Sınırları koddan değil **config'den** okumak: 5 GB / 5 GB / 500 MB / 100 MB dosya
   ayarlanabilir olmalı, yoksa her kalibrasyon deploy gerektirir.
 
