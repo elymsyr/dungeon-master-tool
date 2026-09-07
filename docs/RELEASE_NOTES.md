@@ -1,5 +1,71 @@
 # Release Notes
 
+## Dungeon Master Tool v15.4.0 — Peek at Any Card (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Long-press almost anything that names a card — a class, a spell in the wizard, a feat, an entry in the `+` picker — and you get the full card without leaving what you were doing. Previews now show the card's picture too. Package screens also stopped sharing each other's filters.
+
+---
+
+### Highlights
+
+- **Long-press preview everywhere** — wizard pickers, feat/tool/skill/spell options and the `+` selector list all open a read-only card on long press.
+- **Previews show the art** — the card's picture appears above the title.
+- **Per-package filters** — each package screen keeps its own category/source filter instead of inheriting the last one.
+
+---
+
+### Features
+
+#### Long-press to preview a card
+
+In the character creation wizard (class, background, species, lineage, subclass, spells, feats and the tool/skill/spell choice rows) and in the `+` entity selector list, a long press opens the card read-only. A single tap still selects, so nothing about picking changed.
+
+#### Previews show the card's picture
+
+The preview shows the card's art as a horizontal strip above the title, scaled to fit rather than cropped. This covers both the newer multi-image slot and the original single-portrait slot, which is where most cards' art actually lives.
+
+#### Each package screen remembers its own filters
+
+Category, source, sharing and sort filters are now keyed per package. Previously every package screen shared one key and picked up whatever filter you had left on another.
+
+---
+
+### Bug fixes
+
+- **Download progress message in the official package dialog** — simplified to say what is actually happening during an install.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.3.2` → `15.4.0`.
+- **In-app migrations:** None. No schema changes.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+
+---
+
+### For developers
+
+- **`EntityPreviewLongPress`** — the shared wrapper for long-press previews; takes an `Entity` plus an entity map, so it works with `wizardEntitiesProvider` rows that are not in `entityProvider`.
+- **`_PreviewBody`** now renders `imagePath` + `images` combined, matching what `entity_card` draws.
+- **`EntitySidebar.filterScope`** — filter persistence key; `PackageScreen` passes `pkg:<name>`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.3.2 — Class Cards Get Their Picture (Beta)
 
 **Release date:** September 2026
