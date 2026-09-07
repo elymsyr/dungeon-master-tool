@@ -1,7 +1,7 @@
 name: dungeon_master_tool
 description: "D&D Dungeon Master Tool — Schema-driven campaign management for tabletop RPGs."
 publish_to: 'none'
-version: 15.2.0
+version: 15.3.0
 
 environment:
   sdk: ^3.11.4
@@ -123,6 +123,12 @@ flutter:
     # (`{worker}/catalog/banners/<slug>.png`, see cloudflare/upload_banners.sh).
     - assets/first_party/banners/dnd5e-template.jpg
     - assets/first_party/banners/dnd5e-package-builtin.jpg
+    # Built-in SRD 5.2.1 paketinin kart görselleri (1247 adet, webp q50,
+    # ~55MB) — `tool/art_gen/bundle_srd_art.py` üretir. Bundle'da oldukları
+    # için çevrimdışı ve hesapsız açılırlar. Diğer resmî paketlerin ~6.2k
+    # görseli bundle'a GİRMEZ; R2 catalog'undan iner
+    # (`{worker}/catalog/art/<uuid>.webp`, `cloudflare/upload_art.sh`).
+    - assets/art/srd/
     # Bundled worlds (blueprint format) are EXCLUDED from builds (~326MB).
     # They ship through the marketplace instead: the catalog entry's payload
     # and media come from R2 (`BundledWorldsInstaller.installFromCatalog`), and

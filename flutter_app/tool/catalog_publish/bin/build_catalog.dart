@@ -30,6 +30,12 @@ const _bannerCreditsFile =
     'assets/first_party/banners/banner-credits.yaml';
 const _catalogVersion = '2026-06-01';
 
+/// `dmt-art://` görsellerinin kaynağı (R2'ye yüklenen orijinaller) ve app
+/// bundle'ına gömülü alt kümesi — kart boyutunu gerçekten inecek baytlardan
+/// hesaplamak için ikisi de gerekiyor.
+const _artSourceDir = '../tool/art_gen/out';
+const _artBundleDir = 'assets/art/srd';
+
 void main(List<String> args) {
   final root = Directory.current.path;
   final open5eManifest = File('$root/$_open5eDir/manifest.json');
@@ -155,9 +161,31 @@ List<Map<String, dynamic>> _packageEntries(String root, File manifest) {
       'bundled_asset': '$_open5eDir/$asset',
       'r2_path': 'package/$slug@$version.json.gz',
       'size_bytes': packFile.lengthSync(),
+      ..._artStats(root, payload),
     });
   }
   return out;
+}
+
+/// Bir paketin `dmt-art://` kart görselleri: kaç tane ve kurulumda kaç bayt
+/// inecek. Bundle'a gömülü olanlar (SRD) sayıya girer ama baytlara girmez —
+/// [FirstPartyArtService] onları R2'den istemeden asset'ten okur.
+Map<String, dynamic> _artStats(String root, Map payload) {
+  final entities = payload['entities'];
+  if (entities is! Map) return const {};
+  var count = 0;
+  var bytes = 0;
+  for (final e in entities.values.whereType<Map>()) {
+    final ref = e['image_path']?.toString() ?? '';
+    if (!ref.startsWith('dmt-art://')) continue;
+    count++;
+    final name = ref.substring('dmt-art://'.length);
+    if (File('$root/$_artBundleDir/$name').existsSync()) continue;
+    final src = File('$root/$_artSourceDir/$name');
+    if (src.existsSync()) bytes += src.lengthSync();
+  }
+  if (count == 0) return const {};
+  return {'art_count': count, 'art_bytes': bytes};
 }
 
 /// Hand-authored world / character / template / sound entries, read from

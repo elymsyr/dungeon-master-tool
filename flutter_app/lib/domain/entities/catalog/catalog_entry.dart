@@ -57,6 +57,12 @@ class CatalogEntry {
   final String bundledAsset;
   final int sizeBytes;
 
+  /// Paketin `dmt-art://` kart görselleri: toplam adet ve kurulumda R2'den
+  /// inecek bayt. Bundle'a gömülü görseller [artCount]'a dahildir ama
+  /// [artBytes]'a değildir — onlar zaten uygulamanın içinde.
+  final int artCount;
+  final int artBytes;
+
   /// Banner artwork attribution from `banner-credits.yaml`, baked into the
   /// manifest by the catalog builder. Both null when the slug has no credit.
   final String? bannerCreditCreator;
@@ -100,6 +106,8 @@ class CatalogEntry {
     required this.r2Path,
     required this.bundledAsset,
     required this.sizeBytes,
+    this.artCount = 0,
+    this.artBytes = 0,
     this.bannerCreditCreator,
     this.bannerCreditLink,
     this.requires = const [],
@@ -117,7 +125,7 @@ class CatalogEntry {
   /// Everything the install actually downloads from R2: the payload plus every
   /// media object. Excludes [externalFiles], which come from the publisher.
   int get downloadBytes =>
-      sizeBytes + media.fold(0, (a, m) => a + m.sizeBytes);
+      sizeBytes + artBytes + media.fold(0, (a, m) => a + m.sizeBytes);
 
   factory CatalogEntry.fromJson(Map<String, dynamic> j) => CatalogEntry(
         itemType: j['item_type'] as String? ?? 'package',
@@ -133,6 +141,8 @@ class CatalogEntry {
         r2Path: j['r2_path'] as String? ?? '',
         bundledAsset: j['bundled_asset'] as String? ?? '',
         sizeBytes: (j['size_bytes'] as num?)?.toInt() ?? 0,
+        artCount: (j['art_count'] as num?)?.toInt() ?? 0,
+        artBytes: (j['art_bytes'] as num?)?.toInt() ?? 0,
         bannerCreditCreator:
             (j['banner_credit'] as Map?)?['creator'] as String?,
         bannerCreditLink: (j['banner_credit'] as Map?)?['link'] as String?,

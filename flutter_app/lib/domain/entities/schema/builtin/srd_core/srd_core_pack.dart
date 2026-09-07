@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import '../../../../value_objects/asset_ref.dart';
 import '_helpers.dart';
 import 'ammunition.dart';
 import 'animals.dart';
@@ -39,7 +40,23 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.1.1';
+const srdCorePackVersion = '1.2.0';
+
+/// `tool/art_gen` görseli olan slug'lar. Bu sekiz kategorinin HER satırının
+/// görseli var (1247/1247), diğerlerinin (creature-action, trait, gear, weapon,
+/// …) hiç yok — o yüzden uuid listesi tutmak yerine slug kontrolü yetiyor.
+/// Görseller `assets/art/srd/{uuid}.webp` olarak bundle'da; ref'i
+/// [FirstPartyArtService] çözüyor.
+const _artedSlugs = <String>{
+  'background',
+  'feat',
+  'magic-item',
+  'monster',
+  'species',
+  'spell',
+  'subclass',
+  'subspecies',
+};
 
 /// Output of [buildSrdCorePack]. `entities` is keyed by the freshly minted
 /// UUID, value is the wire-format package entity (see `_helpers.packEntity`).
@@ -155,6 +172,9 @@ SrdCorePack buildSrdCorePack() {
       if (entities.containsKey(id)) {
         throw StateError('duplicate SRD entity "$slug:$key" — pack ids are '
             'derived from the name, so one row would overwrite the other');
+      }
+      if (_artedSlugs.contains(slug)) {
+        row['image_path'] = AssetRef.formatArtUri(id);
       }
       entities[id] = row;
       if (name != null) slugIndex[name] = id;

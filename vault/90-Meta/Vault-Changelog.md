@@ -1269,3 +1269,14 @@ Kullanıcı gözlemi: "elle oluşturulan karakterde Resolved Grants alanı hiç 
 - Cairn Faz 6: iki paket `assets/open5e_packs/`e (`convert_blueprint --out`, ara kopya yok) + elle tutulan `manifest.json`'a girdi + `build_catalog` → katalogda 21 `package` / 3 `world`. `publish_catalog` **koşulmadı** (worker + `ADMIN_TOKEN` isteyen dışa açık yükleme, ayrı karar). `wizard_pack_families_test` 5e-dışı paketleri `metadata.game_system` ile kapılıyor. İki nüfus sayacı (`spell_slot_grid_reach`, `bundled_pack_resolve`) `hasLength(19)` ile bayattı — `dnd5e-srd.pkg.json` terfisinden kalma, temiz ağaçta zaten kırmızıydı; 22'ye çekildi ve ikisinin de asıl kırılması o pakete ait (Cairn yeni alan adı eklemiyor). Ayrıntı: `flutter_app/assets/worlds/cairn/README.md` §6.1.
 
 - 2026-09-05 — Media-Storage-Tiers: planlanan iki-tier yeniden tasarımına (docs/media-storage-redesign.md) işaret eklendi.
+
+## 2026-09-07 — First-party kart görselleri (`dmt-art://`)
+- `tool/art_gen` üretimi 7413 görsel paketlendi. Yeni AssetRef şeması `dmt-art://{uuid}.webp`; çözümü bundle → R2 catalog sırasıyla [[first_party_art_service]] yapıyor (yeni not).
+- Built-in SRD'nin 1247 görseli app bundle'ına girdi (`assets/art/srd/`, webp q50, ~52 MB); ref'i `srd_core_pack.dart` pass 1 basıyor, `srdCorePackVersion` 1.1.1 → 1.2.0.
+- Kalan görseller ve SRD'nin q82 kopyası R2'de (`catalog/art/`, public GET) — `cloudflare/upload_art.sh`.
+- `assets/open5e_packs/*.pkg.json` entity'lerine ref basıldı (`tool/art_gen/stamp_art_refs.py`).
+- Güncellendi: [[Media-and-Assets]], [[Media-Storage-Tiers]] (dördüncü, salt-okunur tier).
+
+- 2026-09-07 — Kart görselleri kurulumda toptan iniyor: `FirstPartyArtService.prefetch`, `CatalogEntry.art_count/art_bytes` (build_catalog üretiyor, `downloadBytes`'a giriyor), resmî paket dialog'unda görsel sayısı + AI üretimi notu. [[first_party_art_service]], [[Media-Storage-Tiers]].
+
+- 2026-09-07 — Public catalog GET rate limit'i KV'den platform `CATALOG_RL` binding'ine taşındı (free tier 1000 write/gün, tek paket kurulumu ~1000 görsel çekiyor). [[worker]], [[worker_rate_limit]], [[wrangler_config]].

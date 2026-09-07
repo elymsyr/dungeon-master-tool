@@ -13,6 +13,12 @@
 ///   iken oyunculara content-addressed paylaşım. Uploader id KASITLI olarak
 ///   ref'te yok; oyuncu SHA ile local cache'i kontrol eder, uploader id
 ///   `transient_shares` realtime event'inden gelir.
+/// - **First-party art**: `dmt-art://{uuid}.webp` — `tool/art_gen` üretimi,
+///   built-in/resmî paketlerin kart görselleri. Önce app bundle'ında
+///   (`assets/art/srd/`), yoksa R2 catalog'unda (`{worker}/catalog/art/…`,
+///   public, hesap gerekmez) aranır. Hangi görselin bundle'da olduğu ref'e
+///   KASITLI olarak gömülmez — bundle kapsamı değişince veri migrasyonu
+///   gerekmesin diye.
 /// - **Local**: mutlak filesystem path. Henüz migrate edilmemiş legacy
 ///   entity'ler + quota-exceeded fallback upload'ları için.
 ///
@@ -24,15 +30,18 @@ class AssetRef {
   static const String scheme = 'dmt-asset://';
   static const String publicScheme = 'dmt-public://';
   static const String transientScheme = 'dmt-transient://';
+  static const String artScheme = 'dmt-art://';
 
   final String raw;
 
   bool get isCloud => raw.startsWith(scheme);
   bool get isPublic => raw.startsWith(publicScheme);
   bool get isTransient => raw.startsWith(transientScheme);
+  bool get isArt => raw.startsWith(artScheme);
 
   /// Bilinen hiçbir şemaya uymayan, boş olmayan ref → local filesystem path.
-  bool get isLocal => raw.isNotEmpty && !isCloud && !isPublic && !isTransient;
+  bool get isLocal =>
+      raw.isNotEmpty && !isCloud && !isPublic && !isTransient && !isArt;
 
   /// R2 object key — `{uploader_id}/{campaign_id}/{sha256}.{ext}`.
   /// Yalnızca `dmt-asset://` ref'ler için; aksi halde null.
@@ -78,6 +87,10 @@ class AssetRef {
         : null;
   }
 
+  /// First-party art ref'in dosya adı (`{uuid}.webp`); aksi halde null.
+  /// Bundle'da `assets/art/srd/{ad}`, R2'de `catalog/art/{ad}` olarak aranır.
+  String? get artName => isArt ? raw.substring(artScheme.length) : null;
+
   /// Filesystem path for local refs; null for the scheme'd forms.
   String? get localPath => isLocal ? raw : null;
 
@@ -87,6 +100,9 @@ class AssetRef {
   /// Wrap a Supabase Storage path into a `dmt-public://…` string.
   static String formatPublicUri(String storagePath) =>
       '$publicScheme$storagePath';
+
+  /// `dmt-art://{uuid}.webp` string'i üretir.
+  static String formatArtUri(String uuid) => '$artScheme$uuid.webp';
 
   /// `dmt-transient://{sha}{ext}` string'i üretir. [ext] nokta dahil (`.png`).
   static String formatTransientUri(String sha256, String ext) =>

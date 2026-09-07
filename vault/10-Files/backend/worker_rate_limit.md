@@ -37,4 +37,5 @@ tags: [file]
 ## Notes
 - Not atomic (read-then-write); under heavy concurrency the limit can be slightly overshot — acceptable for this abuse-prevention use case.
 - KV free plan allows ~1k writes/day; the hourly bucket keeps writes low, but >1k active users requires the Workers Paid plan (per ONLINE_REPORT §10.2 cited in source).
-- Limits configured in [[wrangler_config]]: `DOWNLOAD_LIMIT_PER_HOUR`, `UPLOAD_LIMIT_PER_HOUR`, `CATALOG_GET_LIMIT_PER_HOUR`.
+- Limits configured in [[wrangler_config]]: `DOWNLOAD_LIMIT_PER_HOUR`, `UPLOAD_LIMIT_PER_HOUR`.
+- **Public catalog GET bu modülü kullanmaz** — `[[ratelimits]] CATALOG_RL` binding'ine taşındı (2026-09-07). Sebep: her çağrı bir KV write ve free tier günde 1000 write veriyor; kart görselleri geldikten sonra tek paket kurulumu bunu tek başına aşıyordu.

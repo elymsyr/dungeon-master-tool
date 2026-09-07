@@ -168,6 +168,22 @@ class OfficialPackageDialog extends ConsumerWidget {
                 label: _formatBytes(entry.downloadBytes),
                 palette: palette,
               ),
+              if (entry.artCount > 0) ...[
+                const SizedBox(height: 8),
+                _Row(
+                  icon: Icons.image_outlined,
+                  label: l10n.catalogArtImages(entry.artCount),
+                  palette: palette,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.catalogArtAiNotice,
+                  style: TextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      color: palette.sidebarLabelSecondary),
+                ),
+              ],
               // The adventure PDF is neither hosted in our catalog nor
               // downloaded on install — it is the publisher's to distribute.
               // The link goes out to them so the user fetches it themselves.
@@ -190,6 +206,15 @@ class OfficialPackageDialog extends ConsumerWidget {
                   creator: entry.bannerCreditCreator,
                   link: entry.bannerCreditLink!,
                   palette: palette,
+                ),
+              ],
+              if (status.phase == CatalogInstallPhase.installing &&
+                  (status.message ?? '').isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${l10n.catalogArtDownloading}  ${status.message}',
+                  style: TextStyle(
+                      fontSize: 12, height: 1.4, color: palette.tabText),
                 ),
               ],
               if (status.phase == CatalogInstallPhase.error &&

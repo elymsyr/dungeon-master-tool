@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-08-20
+updated: 2026-09-07
 tags: [system]
 ---
 
@@ -27,6 +27,7 @@ tags: [system]
 | **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; portraits + world/package covers; ≤2 MB/file |
 | **Counted** | Cloudflare R2 `{userId}/{sha}.{ext}` | **Yes** (100 MB/user) | Permanent; user-uploaded maps/SFX/art |
 | **Transient** | Cloudflare R2 `transient/{userId}/{sha}.{ext}` | **No** (LRU, 10 GB global) | Auto-evicted by `last_used_at`; multiplayer shared assets |
+| **First-party art** | App bundle `assets/art/srd/` + R2 `catalog/art/{uuid}.webp` | **No** (kullanıcı yüklemesi değil) | Salt-okunur, sürümsüz; `cacheDir/art/` altında cache'lenir |
 
 ## Flow
 1. Upload → pick tier by kind (per-kind size caps: portrait/cover 4 MB, battle map 10 MB, **world_pdf 50 MB**, bilinmeyen kind için 20 MB ceiling).

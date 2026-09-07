@@ -25,6 +25,15 @@ bucket_name = "dmt-assets"
 binding = "RATE_KV"
 id = "c7108c256a5342389b036d5bfa80cc7a"
 
+# ── Rate limiting binding (public catalog GET) ───────────────────────────────
+# Katalog GET'i KV sayacı kullanamaz: tek paket kurulumu ~1000 görsel çekiyor,
+# her istek bir KV write demek ve free tier günde 1000 write veriyor. Platformun
+# yerleşik limiter'ı sayacı edge'de tutuyor — kota yok, maliyet yok.
+[[ratelimits]]
+name = "CATALOG_RL"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
 # ── Public env vars ──────────────────────────────────────────────────────────
 # Not: supabase_url client tarafında da görünür, secret değildir.
 [vars]

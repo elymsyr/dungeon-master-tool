@@ -7,7 +7,9 @@ import '../../core/config/supabase_config.dart';
 import '../../data/network/asset_service.dart';
 import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
+import '../../data/services/first_party_art_service.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import '../providers/first_party_catalog_provider.dart';
 import 'content_store.dart';
 
 /// Resolves an [AssetRef] (cloud / public / transient URI veya local path) to
@@ -18,6 +20,8 @@ import 'content_store.dart';
 ///   `cacheDir/r2/assets/` altında cache'li).
 /// - `dmt-public://` → [FreeMediaService.resolveFreeMedia] (Supabase Storage
 ///   `free-media`, SHA-verified, `cacheDir/free_media/` altında cache'li).
+/// - `dmt-art://` → [FirstPartyArtService] (önce app bundle, sonra R2
+///   catalog'un public route'u; `cacheDir/art/` altında cache'li).
 /// - `dmt-transient://` → `transient_shares` tablosundan SHA ile `uploader_id`
 ///   bulunur (RLS çağıranı kendi dünyalarına kısıtlar), sonra
 ///   [AssetService.downloadTransient] SHA-cache-first indirir.
@@ -29,12 +33,14 @@ class AssetRefResolver {
     this._freeMediaService,
     this._supabase,
     this._store,
+    this._artService,
   );
 
   final AssetService? _assetService;
   final FreeMediaService? _freeMediaService;
   final SupabaseClient? _supabase;
   final ContentStore _store;
+  final FirstPartyArtService _artService;
 
   Future<File?> resolve(AssetRef ref) async {
     if (ref.raw.isEmpty) return null;
@@ -43,6 +49,10 @@ class AssetRefResolver {
       final file = File(ref.localPath!);
       if (await file.exists()) return file;
       return null;
+    }
+
+    if (ref.isArt) {
+      return _artService.resolve(ref.artName!);
     }
 
     // Baytlar zaten içerik-adresli store'da olabilir — LAN eşlemesi bunları
@@ -109,5 +119,6 @@ final assetRefResolverProvider = Provider<AssetRefResolver>((ref) {
     ref.watch(freeMediaServiceProvider),
     client,
     ref.watch(contentStoreProvider),
+    ref.watch(firstPartyArtServiceProvider),
   );
 });

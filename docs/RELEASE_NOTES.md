@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v15.3.0 — Card Art (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.3.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Cards have pictures now. Every monster, spell, magic item, feat, species, subspecies, subclass and background in the built-in D&D SRD ships with its own illustration, and the 21 official packages in **Marketplace → Official** bring another 6,166 between them. All of the art is AI-generated, and the app says so wherever it is offered. Nothing else about your content changes — the images sit on the cards you already have.
+
+---
+
+### Highlights
+
+- **1,247 illustrated cards in the built-in SRD** — included in the app, so they work offline and cost you no download.
+- **6,166 more across the official packages** — downloaded with the package, not one-by-one as you browse.
+- **Honest package sizes** — an official package now advertises the size of its art along with its content, so 100 MB never arrives as a surprise.
+- **AI generation is labelled** — every package that carries card art says so on its download page.
+
+---
+
+### Content
+
+#### Illustrated cards
+
+The built-in SRD 5.2.1 package now has an image on all 1,247 of its monsters, spells, magic items, feats, species, subspecies, subclasses and backgrounds. These are bundled inside the app: they show up with no download, no account and no network.
+
+The official packages carry their own art, downloaded when you install the package. The larger ones are substantial — Vault of Magic alone is 1,063 images and about 104 MB — so check the size on the download page before installing over mobile data.
+
+The images are generated with AI. The download page for any package that has them shows how many there are and states that they are AI-generated.
+
+#### Package downloads include the art
+
+Before, a package installed in a couple of seconds and then fetched each image the first time you scrolled to the card — quick to install, but every card you opened for the first time made you wait, and the advertised size was only the text.
+
+**Before (v15.2.0):** the package downloads; images arrive later, one at a time, as you browse.
+**After (v15.3.0):** the package downloads its images too, with a progress count, and the size shown on the download page includes them.
+
+---
+
+### Smaller improvements
+
+- **Download dialog** — an official package now lists its card-image count and the AI-generation notice under the download size.
+- **Install progress** — the dialog shows how many images have arrived while a package is installing.
+- **l10n** — three new strings (image count, AI notice, download progress) in English, Turkish, German and French.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.2.0` → `15.3.0`.
+- **In-app migrations:** None. No schema changes.
+- **Already-installed official packages:** Reinstall from **Marketplace → Official** to pick up the card art — an existing install is not backfilled.
+- **App size:** The installed app is about 52 MB larger, because the built-in SRD's images ship inside it.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+
+---
+
+### For developers
+
+- **`dmt-art://{uuid}.webp`** — a fifth asset-ref scheme, resolved app bundle first (`assets/art/srd/`) then the worker's public `catalog/art/` route. Where an image lives is deliberately not encoded in the ref, so the bundled subset can change with no data migration.
+- **`art_count` / `art_bytes`** — emitted per package entry by `build_catalog.dart` and folded into `CatalogEntry.downloadBytes`. Bundled images count toward `art_count` but not `art_bytes`.
+- **Art pipeline** — `tool/art_gen/bundle_srd_art.py` builds the bundled subset, `stamp_art_refs.py` writes the refs into the packs, `cloudflare/upload_art.sh` publishes the originals to R2. Steps and ordering in `tool/art_gen/OPERATIONS.md`.
+- **`srdCorePackVersion`** — bumped to `1.2.0`; the built-in pack's entities now carry `image_path`.
+
+---
+
+*Thanks for playing. Roll well.*
+
 ## Dungeon Master Tool v15.2.0 — Cairn Second Edition (Beta)
 
 **Release date:** September 2026

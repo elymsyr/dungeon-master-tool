@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_paths.dart';
+import '../../data/services/first_party_art_service.dart';
 import '../../data/services/first_party_catalog_service.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import '../services/assets_pack_installer.dart';
 import '../services/bundled_worlds_installer.dart';
 import '../services/cover_image_bundler.dart';
@@ -16,6 +18,10 @@ import 'package_provider.dart';
 /// Long-lived catalog service (native HttpClient inside).
 final firstPartyCatalogServiceProvider =
     Provider<FirstPartyCatalogService>((ref) => FirstPartyCatalogService());
+
+/// Built-in / resmî paket kart görsellerini çözer (`dmt-art://` ref'leri).
+final firstPartyArtServiceProvider = Provider<FirstPartyArtService>(
+    (ref) => FirstPartyArtService(ref.watch(firstPartyCatalogServiceProvider)));
 
 /// Admin-only bundled-assets installer (Part 1 — dashboard toggle).
 final assetsPackInstallerProvider = Provider<AssetsPackInstaller>(
@@ -182,6 +188,26 @@ class FirstPartyInstallNotifier
         extraMetadata: extra,
         asCopy: true,
       );
+
+      // Kart görselleri: kurulumda toptan insin. Lazy indirme paketi hafif
+      // gösterip kullanıcıyı her kartta beklettiği için tercih edilmedi —
+      // boyut da bu yüzden `entry.downloadBytes` içinde art baytlarını sayıyor.
+      final artNames = _artNames(payload);
+      if (artNames.isNotEmpty) {
+        await _ref.read(firstPartyArtServiceProvider).prefetch(
+          artNames,
+          onProgress: (done, total) {
+            // Her dosyada setState = 6k rebuild; 25'te bir yeter.
+            if (done % 25 != 0 && done != total) return;
+            _set(
+              entry.slug,
+              CatalogInstallStatus(
+                  phase: CatalogInstallPhase.installing,
+                  message: '$done / $total'),
+            );
+          },
+        );
+      }
       _ref.invalidate(packageListProvider);
       // Re-read metadata so a reinstall flips the stored `catalog_version` the
       // update check reads (D2) — the family is invalidated whole because the
@@ -244,6 +270,19 @@ class FirstPartyInstallNotifier
       );
       return false;
     }
+  }
+
+  /// Payload'daki `dmt-art://{uuid}.webp` ref'lerinin dosya adları.
+  static List<String> _artNames(Map<String, dynamic> payload) {
+    final entities = payload['entities'];
+    if (entities is! Map) return const [];
+    final out = <String>[];
+    for (final e in entities.values.whereType<Map>()) {
+      final raw = e['image_path']?.toString() ?? '';
+      final ref = AssetRef(raw);
+      if (ref.isArt) out.add(ref.artName!);
+    }
+    return out;
   }
 
   void _set(String slug, CatalogInstallStatus status) {
