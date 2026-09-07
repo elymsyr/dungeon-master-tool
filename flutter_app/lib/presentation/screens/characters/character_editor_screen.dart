@@ -28,9 +28,7 @@ import '../../../application/services/builtin_srd_entities.dart';
 import '../../../application/services/package_source_entities.dart';
 import '../../../application/services/entity_media_cleanup_service.dart';
 import '../../../application/services/marketplace_cover_sync_service.dart';
-import '../../../application/services/image_upload_helper.dart';
 import '../../../application/services/pending_write_buffer.dart';
-import '../../../data/network/network_providers.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
@@ -47,7 +45,6 @@ import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/character_resolver.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../../domain/value_objects/asset_ref.dart';
-import '../../../domain/value_objects/media_kind.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -62,7 +59,6 @@ import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
 import '../../widgets/perf/image_cache_size.dart';
-import '../../widgets/quota_snackbar.dart';
 import '../../widgets/class_resources_card.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
@@ -936,28 +932,11 @@ class _CharacterEditorScreenState
     if (c == null) return;
     final oldRef = c.entity.imagePath;
 
-    // Eager upload the portrait to the free-media bucket (quota-exempt) so the
-    // `dmt-public://` ref is portable immediately — mirrors `_pickCover`.
-    // Offline / failure → keep the local path; the portrait bundles later on
-    // the next `world_characters` push.
-    final svc = ref.read(freeMediaServiceProvider);
-    final (ref: newRef, :tooLarge, :actualBytes) =
-        await uploadCharacterPortraitRef(
-      svc,
-      localPath: path,
-      scopeId: c.worldId ?? c.id,
-    );
-    if (!mounted) return;
-    if (tooLarge) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: MediaKind.characterPortrait.maxBytes,
-        actualBytes: actualBytes,
-      );
-    }
+    // Bulut yüklemesi yok — portre yerel kalır. Dünya karakteriyse
+    // `_pushCharacterToMirror` push sırasında bundle eder; paylaşılmayan
+    // karakter hiç yüklenmez (media-storage-redesign).
+    final newRef = path;
     _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: newRef)));
-    // Persist + push now so the portrait reaches the cloud without waiting
-    // for the autosave debounce.
     await _flushAndPush();
 
     // Portre değiştiyse eski cloud resmini best-effort sil.
