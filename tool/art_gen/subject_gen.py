@@ -51,6 +51,8 @@ CATEGORY_GUIDE = {
                   "features, distinguishing traits, typical dress",
     "species": "this people's stature, build, skin, hair and eye color, facial "
                "features, distinguishing traits, typical dress",
+    "class": "iconic equipment, weapon, armor, posture and silhouette defining "
+             "this adventurer archetype, stance and build typical of this class",
 }
 
 SYS = (
@@ -160,7 +162,7 @@ def load_packs(packs_dirs: list[Path]) -> dict[str, dict]:
             for uuid, row in (data.get("entities") or {}).items():
                 if row.get("type") not in NAME_ONLY_TYPES and row.get("type") not in (
                         "monster", "spell", "magic-item", "background",
-                        "subspecies", "species"):
+                        "subspecies", "species", "class"):
                     continue
                 row["_package"] = pkg_title
                 out.setdefault(uuid, row)

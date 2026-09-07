@@ -16,9 +16,12 @@ class _FakeCatalog extends FirstPartyCatalogService {
   var calls = 0;
 
   @override
-  Future<Uint8List?> fetchCatalogBytes(String r2Key) async {
+  Future<bool> downloadCatalogTo(String r2Key, File dest) async {
     calls++;
-    return r2Key.endsWith('.zip') ? bytes : null;
+    if (bytes == null) return false;
+    await dest.parent.create(recursive: true);
+    await dest.writeAsBytes(bytes!, flush: true);
+    return true;
   }
 }
 
@@ -59,13 +62,13 @@ void main() {
         reason: 'geçici arşiv silinmeli');
   });
 
-  test('zip yoksa tek tek indirmeye düşer', () async {
+  test('zip inmezse görsel yazılmaz ve kurulum düşmez', () async {
     final catalog = _FakeCatalog(null);
     final svc = FirstPartyArtService(catalog);
 
     final ok = await svc.prefetchBundle('art-bundle/x@1.0.0.zip', ['a.webp']);
 
     expect(ok, 0);
-    expect(catalog.calls, 2, reason: 'zip + tek dosya denemesi');
+    expect(catalog.calls, 1, reason: 'görsel başına yedek istek atılmamalı');
   });
 }

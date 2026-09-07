@@ -162,6 +162,29 @@ class FirstPartyCatalogService {
     }
   }
 
+  /// Bir catalog objesini belleğe almadan doğrudan [dest] dosyasına indirir.
+  /// Art bundle'ları 100 MB'a çıkıyor; tamamını RAM'de tutmak mobilde OOM.
+  Future<bool> downloadCatalogTo(String r2Key, File dest) async {
+    if (!_hasWorker || r2Key.isEmpty) {
+      debugPrint('[catalog] skip $r2Key: '
+          '${_hasWorker ? "empty key" : "DMT_WORKER_URL not compiled in"}');
+      return false;
+    }
+    final tmp = File('${dest.path}.part');
+    try {
+      final res = await _get(
+          Uri.parse('$_workerBaseUrl/catalog/${Uri.encodeFull(r2Key)}'));
+      await dest.parent.create(recursive: true);
+      await res.pipe(tmp.openWrite());
+      await tmp.rename(dest.path);
+      return true;
+    } catch (e) {
+      debugPrint('[catalog] download failed $r2Key: $e');
+      if (await tmp.exists()) await tmp.delete();
+      return false;
+    }
+  }
+
   /// Human-readable reason a catalog object could not be fetched — the one
   /// string that tells a missing build define apart from a 404 / offline edge.
   String _workerDiagnostic(String r2Path, Object? cause) {
