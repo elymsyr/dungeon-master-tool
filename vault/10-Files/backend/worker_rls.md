@@ -5,7 +5,7 @@ path: cloudflare/src/rls.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-06-09
+updated: 2026-09-07
 tags: [file]
 ---
 
@@ -40,3 +40,6 @@ tags: [file]
 
 ## Notes
 - `get_asset_access` was uploader-only until migration 060 widened it to shared-world members (mirrors `get_transient_access`); see [[migrations-media-storage]].
+
+## `checkPubUploadAllowed` (089)
+`pub/{sha}.{ext}` key'inde kullanıcı prefix'i yoktur, dolayısıyla Worker prefix eşleşmesiyle PUT yetkisi veremez. Kapı **rezervasyondur**: client önce `pub_asset_reserve` RPC'sini çağırır (dedup + 5 GB havuz + 500 MB yayıncı cap'leri orada), sonra PUT eder; bu fonksiyon `get_pub_upload_allowed(p_user_id, p_sha)` ile o rezervasyonun (`pub_asset_refs` satırı) gerçekten var olduğunu doğrular. `checkTransientAccess` ile birebir aynı kalıp. Ayrıca `TransientEvictRow` artık `r2_key: string | null` taşır — kuyruk hem transient LRU kurbanlarını hem pinned düşüşlerini tutuyor. Bkz. [[Media-Storage-Tiers]], [[worker]].

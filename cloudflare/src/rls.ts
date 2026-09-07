@@ -110,6 +110,9 @@ export interface TransientEvictRow {
   sha256: string;
   ext: string;
   uploader_id: string;
+  /// Tam R2 key — pinned düşüşleri bunu yazar. NULL ise transient kalıbı
+  /// (`transient/{uploader_id}/{sha}{ext}`) kurulur.
+  r2_key: string | null;
 }
 
 export async function popTransientEvictQueue(
@@ -132,4 +135,40 @@ export async function popTransientEvictQueue(
   }
   const body = (await res.json()) as TransientEvictRow[] | null;
   return Array.isArray(body) ? body : [];
+}
+
+// ============================================================================
+// Pinned (marketplace) upload kapısı — `pub/{sha}.{ext}` key'inde kullanıcı
+// prefix'i YOK, dolayısıyla worker prefix eşleşmesiyle yetki veremez. Kapı
+// rezervasyondur: client önce `pub_asset_reserve` RPC'sini çağırır (dedup +
+// 5 GB pool + 500 MB yayıncı capleri orada), sonra PUT eder. Bu fonksiyon o
+// rezervasyonun gerçekten var olduğunu doğrular. checkTransientAccess kalıbı.
+// ============================================================================
+
+export async function checkPubUploadAllowed(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+  sha: string,
+): Promise<boolean> {
+  const url = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/get_pub_upload_allowed`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ p_user_id: userId, p_sha: sha }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`pub_upload_rpc_failed_${res.status}`);
+  }
+
+  const body = (await res.json()) as
+    | boolean
+    | { get_pub_upload_allowed?: boolean };
+  if (typeof body === 'boolean') return body;
+  return body?.get_pub_upload_allowed === true;
 }

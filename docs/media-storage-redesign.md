@@ -1,7 +1,14 @@
 # Medya Depolama Yeniden Tasarımı — "bulutta sadece paylaşılan şey durur"
 
-Durum: **tasarım kararı, henüz uygulanmadı.**
-Tarih: 2026-09-05
+Durum: **kısmen uygulandı.**
+- ✅ Postgres paylaşım sınırları — `088_share_payload_limits.sql`
+- ✅ Havuz bütçeleri + `pinned` sınıfı (`pub_assets`, worker `pub/` rotası) — `089_media_pool_budgets.sql`
+- ⬜ Oturum kapısı + talep-üzerine akış (`session_started_at`, `media_shas`, `missing_shas`)
+- ⬜ Counted tier sökümü (client upload yolları, worker PUT 410, kota UI)
+- ⬜ Admin Storage sekmesi (RPC hazır: `get_r2_pool_stats()`)
+- ⬜ Marketplace yayın yolunun `pub_asset_reserve`'e bağlanması
+
+Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07)
 Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Systems/Media-Storage-Tiers.md) (üç tier: Free / Counted / Transient)
 
 ## Bir cümlede
@@ -290,8 +297,10 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
   Postgres'in R2'den farkı: dolduğunda LRU atmaz, **yazma tamamen patlar** ve
   bu yalnızca paylaşımı değil bütün uygulamayı etkiler. O yüzden bu iki sayı
   havuz sayılarından daha erken ölçülmeli.
-- Dünya silinince `entity_shares` satırlarının da gitmesi gerekir; cascade
-  yoksa gerçek sızıntı burasıdır — kuralları koymadan önce doğrulanmalı.
+- ~~Dünya silinince `entity_shares` satırlarının da gitmesi gerekir; cascade
+  yoksa gerçek sızıntı burasıdır — kuralları koymadan önce doğrulanmalı.~~
+  **Doğrulandı:** `entity_shares.world_id REFERENCES worlds(id) ON DELETE
+  CASCADE` (026_online_worlds.sql:144) — sızıntı yok.
 
 ## Etkilenen yerler
 

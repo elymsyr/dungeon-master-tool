@@ -6,8 +6,16 @@
 //   PUT  /assets/{key}  → JWT + prefix check + MIME allowlist → R2 put
 //   OPTIONS             → CORS preflight
 //
+// R2 prefix sınıfları:
+//   {userId}/...            → counted (kalıcı, kullanıcı kotasına sayılır)
+//   transient/{userId}/...  → transient havuz (5 GB, LRU-atılır)
+//   pub/{sha}.{ext}         → pinned marketplace havuzu (5 GB, içerik-adresli,
+//                             dedup'lu, refcount 0 olunca silinir)
+//   catalog/...             → first-party içerik, public GET
+//
 // Metadata (community_assets tablosu) insert'i Flutter istemcisi yapar;
-// Worker DB'ye yazmaz.
+// Worker DB'ye yazmaz. `pub/` istisnadır: rezervasyonu (pub_asset_reserve)
+// client yapar, Worker yalnızca o rezervasyonun varlığını doğrular.
 // ============================================================================
 
 import { JwtError, verifyJwt } from './jwt';
@@ -15,6 +23,7 @@ import { checkRateLimit } from './rate_limit';
 import {
   checkAssetAccess,
   checkAssetQuota,
+  checkPubUploadAllowed,
   checkTransientAccess,
   popTransientEvictQueue,
 } from './rls';
@@ -162,7 +171,11 @@ async function handleDownload(
 
   let allowed: boolean;
   try {
-    if (r2Key.startsWith('transient/')) {
+    if (r2Key.startsWith('pub/')) {
+      // Marketplace medyası herkese açık içeriktir — listing'ler zaten anon
+      // taranabiliyor (079). Kapı JWT'nin kendisi; per-obje RLS'i yok.
+      allowed = true;
+    } else if (r2Key.startsWith('transient/')) {
       // transient/{uploaderId}/{sha}.{ext} — community_assets satırı yok;
       // erişim ortak dünya üyeliğiyle belirlenir.
       const uploaderId = r2Key.split('/')[1] ?? '';
@@ -211,10 +224,16 @@ async function handleUpload(
 ): Promise<Response> {
   // Transient objeler `transient/{userId}/...` altında; kalıcı objeler
   // `{userId}/...` altında. Her iki halde de prefix JWT sub ile eşleşmeli.
+  // `pub/{sha}.{ext}` içerik-adresli olduğu için prefix'te userId taşımaz —
+  // yetkisi rezervasyon kontrolüyle verilir (aşağıda, sha doğrulandıktan
+  // sonra).
+  const isPinned = r2Key.startsWith('pub/');
   const isTransient = r2Key.startsWith('transient/');
-  const requiredPrefix = isTransient ? `transient/${userId}/` : `${userId}/`;
-  if (!r2Key.startsWith(requiredPrefix)) {
-    return jsonResponse(403, { error: 'prefix_mismatch' });
+  if (!isPinned) {
+    const requiredPrefix = isTransient ? `transient/${userId}/` : `${userId}/`;
+    if (!r2Key.startsWith(requiredPrefix)) {
+      return jsonResponse(403, { error: 'prefix_mismatch' });
+    }
   }
 
   const rl = await checkRateLimit(
@@ -248,7 +267,7 @@ async function handleUpload(
 
   // Quota kontrolü YALNIZCA kalıcı (sayılan) upload'lar için. Transient
   // objeler quota'ya sayılmaz — R2 lifecycle rule ile auto-purge edilir.
-  if (!isTransient) {
+  if (!isTransient && !isPinned) {
     const quotaLimit = parseInt(env.USER_QUOTA_BYTES, 10);
     // Asset upload'lar son ASSET_QUOTA_RESERVE_BYTES'i kullanamaz; o alan
     // template/world/package backup'lara ayrılır.
@@ -291,6 +310,34 @@ async function handleUpload(
     return jsonResponse(400, { error: 'missing_or_invalid_sha256' });
   }
 
+  if (isPinned) {
+    // Key içerik-adresli olmalı: `pub/{sha}.{ext}`. Aksi halde bir kullanıcı
+    // rezerve ettiği sha ile başka bir key'e yazabilirdi.
+    const pubName = r2Key.slice('pub/'.length);
+    const dot = pubName.indexOf('.');
+    const pubSha = (dot < 0 ? pubName : pubName.slice(0, dot)).toLowerCase();
+    if (pubSha !== sha256.toLowerCase() || pubName.includes('/')) {
+      return jsonResponse(400, { error: 'pub_key_sha_mismatch' });
+    }
+    let reserved: boolean;
+    try {
+      reserved = await checkPubUploadAllowed(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        pubSha,
+      );
+    } catch (err) {
+      console.error('pub_reserve_check_failed', err);
+      return jsonResponse(502, { error: 'pub_reserve_check_failed' });
+    }
+    if (!reserved) {
+      // Cap'ler ve dedup rezervasyon RPC'sinde; buraya rezervasyonsuz gelmek
+      // ya eski client ya da kötü niyet demek.
+      return jsonResponse(403, { error: 'pub_not_reserved' });
+    }
+  }
+
   if (!request.body) {
     return jsonResponse(400, { error: 'empty_body' });
   }
@@ -301,6 +348,7 @@ async function handleUpload(
       uploader: userId,
       sha256: sha256.toLowerCase(),
       ...(isTransient ? { transient: 'true' } : {}),
+      ...(isPinned ? { pinned: 'true' } : {}),
     },
   });
 
@@ -317,6 +365,12 @@ async function handleDelete(
   userId: string,
   r2Key: string,
 ): Promise<Response> {
+  // `pub/` objeleri paylaşımlıdır — silinmesini refcount belirler
+  // (pub_asset_release → evict kuyruğu → sweep). Doğrudan DELETE, başkasının
+  // listing'indeki medyayı yok ederdi.
+  if (r2Key.startsWith('pub/')) {
+    return jsonResponse(403, { error: 'pinned_delete_forbidden' });
+  }
   const requiredPrefix = r2Key.startsWith('transient/')
     ? `transient/${userId}/`
     : `${userId}/`;
@@ -425,6 +479,8 @@ function checkAdminAuth(request: Request, env: Env): boolean {
 }
 
 // /transient/evict-sweep — transient_evict_queue'dan N satır al, R2'da sil.
+// Adı tarihsel: kuyruk artık hem transient LRU kurbanlarını hem refcount'u
+// sıfırlanan pinned objeleri (pub_asset_release) taşır.
 // Supabase transient_reserve LRU eviction sırasında satırları kuyruğa atar;
 // bu endpoint kuyruğu boşaltır (cron veya manuel tetik).
 async function handleTransientEvictSweep(
@@ -442,7 +498,12 @@ async function handleTransientEvictSweep(
     Math.max(parseInt(limitParam ?? '50', 10) || 50, 1),
     500,
   );
-  let popped: Array<{ sha256: string; ext: string; uploader_id: string }>;
+  let popped: Array<{
+    sha256: string;
+    ext: string;
+    uploader_id: string;
+    r2_key: string | null;
+  }>;
   try {
     popped = await popTransientEvictQueue(
       env.SUPABASE_URL,
@@ -455,7 +516,9 @@ async function handleTransientEvictSweep(
   }
   let deleted = 0;
   for (const row of popped) {
-    const key = `transient/${row.uploader_id}/${row.sha256}${row.ext}`;
+    // Kuyruk artık transient'e özel değil: pinned düşüşleri tam key yazar.
+    const key =
+      row.r2_key ?? `transient/${row.uploader_id}/${row.sha256}${row.ext}`;
     try {
       await env.R2_BUCKET.delete(key);
       deleted++;
