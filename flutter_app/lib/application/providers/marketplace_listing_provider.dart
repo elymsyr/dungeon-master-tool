@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
@@ -7,14 +8,17 @@ import '../../core/utils/cached_provider.dart';
 import '../../core/utils/id_gen.dart';
 import '../../data/datasources/local/marketplace_links_local_ds.dart';
 import '../../data/datasources/remote/marketplace_listings_remote_ds.dart';
+import '../../data/network/network_providers.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
+import '../../domain/value_objects/media_kind.dart';
 import '../services/asset_ref_resolver.dart';
 import '../services/cover_image_bundler.dart';
 import '../services/listing_content_summary.dart';
 import '../services/marketplace_cover_encoder.dart';
+import '../services/publish_media_pinner.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
@@ -123,8 +127,35 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     // to show a nicer message. No gate is duplicated in this method: let the
     // RPC decide and surface its error through the dialog's catch.
     state = const AsyncValue.loading();
+    // Listing id'yi burada üretiyoruz: pinned medyanın refcount sahibi
+    // (`pub_asset_refs.ref_key`) listing id'dir, yani yayından ÖNCE gerekli.
+    final listingId = newId();
     try {
-      final payload = await _loadPayload(itemType, localId);
+      var payload = await _loadPayload(itemType, localId);
+
+      // Tüm medyayı `pub/{sha}` pinned sınıfına taşı (media-storage-redesign
+      // → "Marketplace"). Hash bundan SONRA hesaplanır — yayınlanan ref'ler
+      // pinned olanlardır, aynı içerik iki kez yayınlanırsa hash de eşleşir
+      // (`pub/` key'i içerik-adresli, kullanıcıdan bağımsız).
+      final assets = _ref.read(assetServiceProvider);
+      if (assets != null) {
+        final res = await PublishMediaPinner(
+          assets,
+          _ref.read(assetRefResolverProvider),
+        ).pin(
+          payload: payload,
+          refKey: listingId,
+          kind: itemType == 'package'
+              ? MediaKind.packageEntityImage
+              : MediaKind.worldEntityImage,
+        );
+        payload = res.payload;
+        if (res.failures.isNotEmpty) {
+          debugPrint('publish: ${res.failures.length} medya pinlenemedi '
+              '(eski ref korundu) — ${res.failures.take(3)}');
+        }
+      }
+
       final hash = computePayloadContentHash(payload);
       final coverB64 = await _readLocalCoverBase64(itemType, localId);
       final summary = buildListingContentSummary(payload);
@@ -141,6 +172,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
 
       final remote = _ref.read(marketplaceListingsRemoteDsProvider);
       final listing = await remote.publishSnapshot(
+        listingId: listingId,
         itemType: itemType,
         title: title,
         description: description,
@@ -168,6 +200,12 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       return listing;
     } catch (e, st) {
       debugPrint('publishSnapshot error: $e\n$st');
+      // Yayın yarıda kaldı: pinlenmiş medyanın refcount'unu bırak, yoksa
+      // hiç var olmamış bir listing pinned havuzda kalıcı yer tutar.
+      try {
+        await Supabase.instance.client
+            .rpc('pub_asset_release', params: {'_ref_key': listingId});
+      } catch (_) {}
       state = AsyncValue.error(e, st);
       rethrow;
     }

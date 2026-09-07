@@ -44,9 +44,12 @@ class MarketplaceListingsRemoteDataSource {
     String? templateName,
     Map<String, dynamic>? contentSummary,
     String contentRating = 'all',
+    String? listingId,
   }) async {
     final uid = _userId;
-    final listingId = _uuid.v4();
+    // Yayın öncesi medya pinleme id'yi önceden bilmek zorunda (refcount sahibi
+    // listing id'dir), o yüzden çağıran üretebilir.
+    listingId ??= _uuid.v4();
     final path = '$uid/listings/$listingId.json.gz';
 
     final jsonStr = jsonEncode(payload);
@@ -131,6 +134,13 @@ class MarketplaceListingsRemoteDataSource {
   }) async {
     try {
       await _client.rpc('delete_listing', params: {'p_id': listingId});
+      // Pinned medyayı bırak — son ref gidince obje R2'den düşer (089 trigger).
+      // Best-effort: başarısız olursa obje havuzda kalır, listing yine de silinir.
+      try {
+        await _client.rpc('pub_asset_release', params: {'_ref_key': listingId});
+      } catch (e) {
+        debugPrint('pub_asset_release failed for $listingId: $e');
+      }
     } finally {
       try {
         await _client.storage.from(_bucket).remove([payloadPath]);
