@@ -132,3 +132,14 @@ class PublishPinResult {
   /// Kaç ayrı ref pinlendi (dedup sonrası).
   final int pinnedCount;
 }
+
+/// Yayın, pinlenemeyen medya yüzünden iptal edildi. Mesaj presentation
+/// katmanında lokalize edilir ([count] tek parametre).
+class PublishMediaPinFailure implements Exception {
+  PublishMediaPinFailure(this.count);
+
+  final int count;
+
+  @override
+  String toString() => 'PublishMediaPinFailure($count)';
+}

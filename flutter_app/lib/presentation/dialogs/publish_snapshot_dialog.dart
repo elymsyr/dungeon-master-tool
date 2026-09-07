@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/marketplace_listing_provider.dart';
+import '../../application/services/publish_media_pinner.dart';
 import '../../core/utils/error_format.dart';
 import '../../core/utils/world_languages.dart';
 import '../../domain/entities/marketplace_listing.dart';
@@ -115,7 +116,13 @@ class _PublishSnapshotDialogState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.publishDialogFailed(formatError(e)))),
+        SnackBar(
+          content: Text(
+            e is PublishMediaPinFailure
+                ? l10n.publishDialogMediaPinFailed(e.count)
+                : l10n.publishDialogFailed(formatError(e)),
+          ),
+        ),
       );
       setState(() => _busy = false);
     }

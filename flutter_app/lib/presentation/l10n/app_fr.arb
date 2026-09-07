@@ -1093,6 +1093,14 @@
     }
   },
   "publishDialogNoChanges": "Aucun changement depuis le dernier instantané.",
+  "publishDialogMediaPinFailed": "{count} fichier(s) multimédia n'ont pas pu être téléversés, l'annonce n'a donc pas été publiée. Veuillez réessayer.",
+  "@publishDialogMediaPinFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "publishDialogFailed": "Échec de la publication : {error}",
   "@publishDialogFailed": {
     "placeholders": {

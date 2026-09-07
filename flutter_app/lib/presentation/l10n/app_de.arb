@@ -1093,6 +1093,14 @@
     }
   },
   "publishDialogNoChanges": "Keine Änderungen seit dem letzten Snapshot.",
+  "publishDialogMediaPinFailed": "{count} Mediendatei(en) konnten nicht hochgeladen werden, daher wurde der Eintrag nicht veröffentlicht. Bitte versuche es erneut.",
+  "@publishDialogMediaPinFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "publishDialogFailed": "Veröffentlichung fehlgeschlagen: {error}",
   "@publishDialogFailed": {
     "placeholders": {
