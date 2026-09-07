@@ -1,5 +1,59 @@
 # Release Notes
 
+## Dungeon Master Tool v15.3.2 — Class Cards Get Their Picture (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.3.2) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+The twelve built-in D&D classes now have illustrations like every other card, and installing a large official package no longer risks the app running out of memory partway through. Nothing you have to do — the class art is in the app, and the download fix applies to the next package you install.
+
+---
+
+### Highlights
+
+- **Illustrated class cards** — all twelve SRD classes ship with their own picture, bundled in the app.
+
+---
+
+### Content
+
+#### Class cards are illustrated
+
+Barbarian through Wizard now look like the rest of your collection instead of being the only cards without a picture. The images are included in the app, so they work offline with no download and no account, and they are AI-generated like the rest of the built-in art.
+
+---
+
+### Bug fixes
+
+- **Installing a big official package could crash or stall on phones** — Fixed. The package's art is now written straight to storage as it arrives instead of being held in memory first; the largest package is about 100 MB, which was enough to run a phone out of memory mid-install.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.3.1` → `15.3.2`.
+- **In-app migrations:** The built-in SRD package re-seeds itself on first launch to pick up the class art. Idempotent, and your own edits to those cards are untouched.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+
+---
+
+### For developers
+
+- **`FirstPartyCatalogService.downloadCatalogTo`** — streams a catalog object to a file; `prefetchBundle` uses it for the art zip instead of buffering the whole archive.
+- **Per-image art download is gone** — `FirstPartyArtService.prefetch` was removed and `resolve` no longer hits the network. R2 keeps only `catalog/art-bundle/{slug}@{ver}.zip`, so a package with no published bundle simply has no art.
+- **`srdCorePackVersion` → `1.3.0`** — forces the SRD re-seed that adds `class` to the arted slugs.
+
+---
+
+*Thanks for playing. Roll well.*
+
 ## Dungeon Master Tool v15.3.1 — Card Art Actually Arrives (Beta)
 
 **Release date:** September 2026

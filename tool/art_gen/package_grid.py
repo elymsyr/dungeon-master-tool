@@ -13,7 +13,7 @@ BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 TYPE_ORDER = ["monster", "spell", "magic-item", "subclass",
-              "feat", "background", "subspecies", "species"]
+              "feat", "background", "subspecies", "species", "class"]
 
 PACKAGE_ORDER = [
     "dnd5e-srd",

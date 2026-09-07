@@ -12,17 +12,17 @@ tags: [file]
 # `first_party_art_service.dart`
 
 > [!abstract] Primary Purpose
-> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e/Cairn paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1247 görseli), sonra R2 catalog'unun **public** GET route'u (`{worker}/catalog/art/…`, JWT yok, hesap yok). Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
+> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e/Cairn paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1247 görseli), sonra paket kurulurken tek zip hâlinde inip açılan kurulum cache'i (`cacheDir/art/`). Okuma anında ağa çıkılmaz — R2'de görsel başına obje tutulmuyor, sadece paket başına zip var. Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
 
 ## Inputs / Outputs
 **Inputs**
-- Constructor deps: [[first_party_catalog_service]] (`fetchCatalogBytes`).
+- Constructor deps: [[first_party_catalog_service]] (`downloadCatalogTo` — zip'i belleğe almadan doğrudan diske stream'ler).
 - Reads: `rootBundle` (`assets/art/srd/{uuid}.webp`); `AppPaths.cacheDir/art/` disk cache.
 - Supabase / CDC: yok. Auth: yok — catalog GET public.
 - Triggers: [[asset_ref_resolver]] `resolve()` bir `dmt-art://` ref gördüğünde.
 
 **Outputs**
-- Public API: `resolve(String name) → Future<File?>`; `bundleDir` sabiti.
+- Public API: `resolve(String name) → Future<File?>`; `prefetchBundle(...)`; `bundleDir` sabiti.
 - Writes: `cacheDir/art/{uuid}.webp` (tmp + rename).
 - Events / Drift / Supabase yazımı: yok.
 
@@ -34,10 +34,10 @@ tags: [file]
 - Spec / reference: `tool/art_gen/OPERATIONS.md`
 
 ## Key Logic / Variables
-- **Kaynak sırası** bundle → catalog. `rootBundle.load` miss'te fırlatır, yakalanır; bu yüzden bundle'da olmayan ~6.2k görsel için ilk çözümde bir yakalanmış exception vardır (dosya başına bir kez, sonrası disk cache).
+- **Kaynak sırası** disk cache → app bundle. Catalog'a tek tek istek YOK. `rootBundle.load` miss'te fırlatır, yakalanır; bu yüzden bundle'da olmayan ~6.2k görsel için ilk çözümde bir yakalanmış exception vardır (dosya başına bir kez, sonrası disk cache).
 - **Cache** `AppPaths.cacheDir/art/{uuid}.webp`. Yazma `tmp + rename` — yarıda kalan indirme sonsuza dek servis edilen bozuk dosya bırakmasın.
-- **`prefetchBundle(bundleKey, names)`** — kurulumun kullandığı yol. Paket başına R2'de hazır duran tek zip'i (`catalog/art-bundle/{slug}@{ver}.zip`, üreteci `tool/art_gen/pack_art_bundles.py`) indirir, cache dizinine `InputFileStream` ile stream'leyerek açar (100 MB'lık arşiv bellekte açılmaz), sonra eksik kalanlar için `prefetch`'e düşer. **Neden zip:** tek tek indirmede 1000+ istek worker'ın public catalog rate limit'ini (300/dk/IP) aşıyor, kalanlar sessizce 429 yiyip düşüyordu — "indirilen pakette art gelmiyor" şikâyetinin kök nedeni buydu. Zip 404 ise davranış eski hâline döner. Bundle'daki (SRD) görseller zip'e girmez.
-- **`prefetch(names)`** — zip'siz yol / fallback: 6'lı havuzla tek tek indirir. Lazy indirme paketi hafif gösterip her kartta bekletiyordu; artık boyut `CatalogEntry.downloadBytes` içinde `art_bytes` olarak duyuruluyor ve kurulum onu gerçekten indiriyor. Düşen görsel kurulumu düşürmez (ref pack'te kalır, render'da tekrar denenir).
+- **`prefetchBundle(bundleKey, names)`** — kurulumun tek art yolu. Paket başına R2'de hazır duran zip'i (`catalog/art-bundle/{slug}@{ver}.zip`, üreteci `tool/art_gen/pack_art_bundles.py`) `downloadCatalogTo` ile **doğrudan diske** indirir (en büyük arşiv ~100 MB; tamamını `BytesBuilder` ile RAM'e almak mobilde OOM'du — 2026-09-07'de düzeltildi), sonra `InputFileStream` ile stream'leyerek cache dizinine açar. **Neden zip:** tek tek indirmede 1000+ istek worker'ın public catalog rate limit'ini (300/dk/IP) aşıyordu. Bundle'daki (SRD) görseller zip'e girmez.
+- **Görsel başına indirme yolu yoktur.** `catalog/art/*.webp` objeleri R2'den kaldırıldı; zip inmezse görsel gelmez, kurulum yine de başarılı sayılır (ref pack'te kalır).
 - **Path guard:** `name` içinde `/`, `\`, `..` varsa null. Ref pack verisinden geliyor, cache dizininin dışına yazamamalı.
 - **Bundle görselleri diskte iki kez yer kaplar** (APK içinde + cache'te), çünkü Flutter asset'i `File` olarak açılamaz. Sadece görüntülenenler için, cache silinebilir.
 - Bundle q50 (~52 MB), R2 kopyası orijinal q82 (~762 MB). Aynı uuid, farklı kalite — bundle bir optimizasyon.

@@ -19,7 +19,7 @@ from pathlib import Path
 # Görsele değen tipler. creature-action / trait bir nesne değil, kural cümlesi.
 ART_TYPES = {
     "monster", "spell", "magic-item", "subclass",
-    "feat", "background", "subspecies", "species",
+    "feat", "background", "subspecies", "species", "class",
 }
 
 # ---------------------------------------------------------------------------
@@ -195,6 +195,7 @@ CATEGORY_PALETTE = {
     "background": "warm scene accents, amber, russet, deep brown",
     "subspecies": "ivory, amber, bronze tones",
     "species":    "ivory, amber, bronze tones",
+    "class":      "heraldic accents, deep gold, polished steel, scarlet",
 }
 
 # Kategori zemini (sahne tipi — parlaklık paketten gelir, burası sadece neyin
@@ -210,6 +211,7 @@ CATEGORY_BG = {
     "background": "lived-in scene, natural setting",
     "subspecies": "in a natural landscape",
     "species":    "in a natural landscape",
+    "class":      "adventurer's workshop, training ground",
 }
 
 # Pakete özel zemin sözcükleri — CATEGORY_BG yerine geçer. Arka planda "o işi
@@ -254,6 +256,8 @@ BG_FLAVOR = {
              "on a tattered guild standard", "on a stone relief plaque"],
     "background": ["during a quiet morning", "during a rain-drenched day",
                    "at dusk, embers glowing", "in early spring light"],
+    "class": ["amid scattered weapons and gear", "beside a well-worn training post",
+              "in a stone hall with heraldic tapestries", "at a campfire with adventuring gear"],
 }
 
 # Her entity'ye deterministik atanan küçük stil farkları — medya-agnostik.
@@ -275,6 +279,7 @@ FRAMING = {
     "background": "atmospheric character scene",
     "subspecies": "character portrait, bust framing",
     "species":    "character portrait, bust framing",
+    "class":      "character portrait, full body stance, iconic pose",
 }
 
 # species/subspecies çerçevelemesi — kullanıcı: "tek bir birey (portre ya da
@@ -292,6 +297,7 @@ NAME_ONLY_TYPES = {
     "feat": "a martial or arcane talent",
     "subclass": "a fantasy adventurer archetype",
     "background": "a life before adventuring",
+    "class": "an adventurer archetype with distinct combat style and equipment",
     # species/subspecies description'ı da mekanik ("Giant-blooded Medium folk with
     # a chosen ... Giant ancestry boon") — modele canon görünüş yerine kural
     # kelimelerini çizdiriyordu (Goliath -> dev). Canon görünüş subject_cache'ten gelir.
@@ -311,7 +317,7 @@ SPECIES_ANCHOR = ("a playable player-character ancestry of the world, "
 # figuru ceken kategorilerde uuid'den deterministik bir maskulen/feminen
 # oran uretip modele araligi biz veriyoruz; oranlar uniform secildigi icin
 # tum set genelinde yaklasik 50/50 dagiliyor.
-GENDERED_TYPES = ("background", "species", "subspecies", "subclass", "feat")
+GENDERED_TYPES = ("background", "species", "subspecies", "subclass", "feat", "class")
 GENDER_MIX = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 GENDER_WORDS = re.compile(
     r"\b(?:a |an |the )?(?:young |old |elderly |grizzled )?"
