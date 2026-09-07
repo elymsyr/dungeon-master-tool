@@ -11,6 +11,7 @@ gcs
 grids
 out
 tool/art_gen/packs/
+tool/art_gen/bundles/
 open5e-api-staging
 supabase/.temp
 supabase/.branches

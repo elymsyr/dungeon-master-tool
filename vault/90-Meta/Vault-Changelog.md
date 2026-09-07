@@ -1280,3 +1280,4 @@ Kullanıcı gözlemi: "elle oluşturulan karakterde Resolved Grants alanı hiç 
 - 2026-09-07 — Kart görselleri kurulumda toptan iniyor: `FirstPartyArtService.prefetch`, `CatalogEntry.art_count/art_bytes` (build_catalog üretiyor, `downloadBytes`'a giriyor), resmî paket dialog'unda görsel sayısı + AI üretimi notu. [[first_party_art_service]], [[Media-Storage-Tiers]].
 
 - 2026-09-07 — Public catalog GET rate limit'i KV'den platform `CATALOG_RL` binding'ine taşındı (free tier 1000 write/gün, tek paket kurulumu ~1000 görsel çekiyor). [[worker]], [[worker_rate_limit]], [[wrangler_config]].
+- 2026-09-07 — Kurulumda kart görselleri artık paket başına tek zip ile iniyor (`catalog/art-bundle/{slug}@{ver}.zip`); [[first_party_art_service]] `prefetchBundle` eklendi, üreteci `tool/art_gen/pack_art_bundles.py`. Kök neden: 1000+ tekil GET public catalog rate limit'ini aşıyordu.

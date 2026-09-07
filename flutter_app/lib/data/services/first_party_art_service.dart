@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive_io.dart'
+    show InputFileStream, OutputFileStream, ZipDecoder;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
@@ -88,6 +90,83 @@ class FirstPartyArtService {
 
     await Future.wait([for (var i = 0; i < 6; i++) worker()]);
     return ok;
+  }
+
+  /// Bir paketin bütün kart görsellerini **tek** istekte indirir: R2'de her
+  /// paket için hazır duran zip (`catalog/art-bundle/{slug}@{ver}.zip`).
+  ///
+  /// Neden zip: tek tek indirmede 1000+ görsel, worker'ın public catalog
+  /// rate limit'ini (300 istek/dk/IP) aşıyor ve kalanlar sessizce 429 yiyip
+  /// düşüyordu — kullanıcıya "art'lar gelmiyor" diye görünen buydu.
+  ///
+  /// Zip yoksa (404) ya da bozuksa tek tek indirmeye düşer; eksik kalan
+  /// görseller için de öyle. Dönen değer diskte hazır olan görsel sayısı.
+  Future<int> prefetchBundle(
+    String bundleKey,
+    List<String> names, {
+    void Function(int done, int total)? onProgress,
+  }) async {
+    final missing = <String>[];
+    for (final n in names) {
+      // Zip'ten yazarken de geçerli olan path guard — bkz. [resolve].
+      if (n.isEmpty || n.contains('/') || n.contains(r'\') ||
+          n.contains('..')) {
+        continue;
+      }
+      if (!await File(p.join(AppPaths.cacheDir, 'art', n)).exists()) {
+        missing.add(n);
+      }
+    }
+    if (missing.isEmpty) return names.length;
+
+    onProgress?.call(0, names.length);
+    final zip = await _catalog.fetchCatalogBytes(bundleKey);
+    if (zip != null) {
+      final tmpZip = File(p.join(AppPaths.cacheDir, 'art',
+          '.${bundleKey.replaceAll(RegExp(r'[^A-Za-z0-9]'), '_')}.zip'));
+      try {
+        await tmpZip.parent.create(recursive: true);
+        await tmpZip.writeAsBytes(zip, flush: true);
+        final wanted = missing.toSet();
+        // Diskten stream'leyerek açılır: en büyük arşiv ~100 MB, hepsini
+        // bellekte açmak mobilde OOM demek.
+        final input = InputFileStream(tmpZip.path);
+        try {
+          for (final f in ZipDecoder().decodeStream(input)) {
+            // Ad pack verisinden geliyor — cache dizininin dışına yazmasın.
+            if (!f.isFile || !wanted.contains(f.name)) continue;
+            final dest = p.join(tmpZip.parent.path, f.name);
+            final out = OutputFileStream('$dest.tmp');
+            f.writeContent(out);
+            await out.close();
+            await File('$dest.tmp').rename(dest);
+          }
+        } finally {
+          await input.close();
+        }
+      } catch (e) {
+        debugPrint('[art] bundle extract failed $bundleKey: $e');
+      } finally {
+        if (await tmpZip.exists()) await tmpZip.delete();
+      }
+    } else {
+      debugPrint('[art] no bundle at $bundleKey, falling back to per-file');
+    }
+
+    final left = <String>[];
+    for (final n in missing) {
+      if (!await File(p.join(AppPaths.cacheDir, 'art', n)).exists()) left.add(n);
+    }
+    if (left.isEmpty) {
+      onProgress?.call(names.length, names.length);
+      return names.length;
+    }
+    final base = names.length - left.length;
+    final ok = await prefetch(
+      left,
+      onProgress: (d, t) => onProgress?.call(base + d, names.length),
+    );
+    return base + ok;
   }
 
   Future<Uint8List?> _loadBundled(String name) async {

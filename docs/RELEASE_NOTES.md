@@ -1,5 +1,45 @@
 # Release Notes
 
+## Dungeon Master Tool v15.3.1 — Card Art Actually Arrives (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.3.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+v15.3.0 shipped card art for the official packages, but most of it never made it onto your device: installing a package asked for a thousand-plus images one at a time, the server started refusing partway through, and the ones it refused were silently skipped. A package now downloads its art as a single file, so it either arrives or fails loudly. Reinstall any official package you downloaded on v15.3.0 to get its missing pictures.
+
+---
+
+### Bug fixes
+
+- **Card art was missing after downloading an official package** — Fixed. Large packages lost most of their images during install; the cards fell back to no picture with no error shown. The art now downloads as one bundle instead of one request per image, which also makes the install noticeably faster.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.3.0` → `15.3.1`.
+- **In-app migrations:** None. No schema changes.
+- **Packages installed on v15.3.0:** Reinstall them from **Marketplace → Official** to pull down the art that was dropped. Images that did arrive are kept and not re-downloaded.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+
+---
+
+### For developers
+
+- **`catalog/art-bundle/{slug}@{ver}.zip`** — one archive per package, produced and uploaded by `tool/art_gen/pack_art_bundles.py`. `FirstPartyArtService.prefetchBundle` fetches it, unpacks it streaming from disk, and falls back to per-image downloads for anything missing — so a package with no bundle published still installs the old way.
+- **Root cause** — per-image installs blew past the worker's public catalog rate limit (300 requests/minute per IP) and the 429s were swallowed as "image unavailable".
+
+---
+
+*Thanks for playing. Roll well.*
+
 ## Dungeon Master Tool v15.3.0 — Card Art (Beta)
 
 **Release date:** September 2026

@@ -194,7 +194,8 @@ class FirstPartyInstallNotifier
       // boyut da bu yüzden `entry.downloadBytes` içinde art baytlarını sayıyor.
       final artNames = _artNames(payload);
       if (artNames.isNotEmpty) {
-        await _ref.read(firstPartyArtServiceProvider).prefetch(
+        await _ref.read(firstPartyArtServiceProvider).prefetchBundle(
+          'art-bundle/${entry.slug}@${entry.version}.zip',
           artNames,
           onProgress: (done, total) {
             // Her dosyada setState = 6k rebuild; 25'te bir yeter.

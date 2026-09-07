@@ -129,6 +129,11 @@ python3 tool/art_gen/stamp_art_refs.py            # --check ile sadece doğrula
 #    bir optimizasyon, ref hangi görselin nerede olduğunu taşımıyor).
 DMT_WORKER_URL=https://<worker> ADMIN_TOKEN=<secret> \
   ./cloudflare/upload_art.sh                      # resume edilebilir, -P8
+
+# d) Paket başına art zip'i üret + yükle — kurulum bunu TEK istekte indirir.
+#    Tek tek indirme worker'ın public catalog rate limit'ini (300/dk/IP)
+#    aşıyordu; zip yoksa istemci yine tek tek indirir, sadece yavaş.
+python3 tool/art_gen/pack_art_bundles.py          # --dry-run ile boyutları gör
 ```
 
 Built-in SRD'nin ref'i pack asset'inden değil `srd_core_pack.dart` pass 1'den
@@ -137,7 +142,9 @@ yoksa mevcut kurulumlar yeniden seed olmaz.
 
 Uygulama tarafında çözüm [[first_party_art_service]]: önce bundle, sonra
 worker'ın public `GET /catalog/art/<uuid>.webp` route'u (hesap/JWT yok),
-sonuç `cacheDir/art/` altında cache'lenir.
+sonuç `cacheDir/art/` altında cache'lenir. Kurulumda ise önce
+`GET /catalog/art-bundle/{slug}@{ver}.zip` denenir (tek istek), kalanlar
+tek tek.
 
 ## Stil Tutarlılığı
 

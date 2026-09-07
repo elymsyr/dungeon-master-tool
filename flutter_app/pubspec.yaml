@@ -1,7 +1,7 @@
 name: dungeon_master_tool
 description: "D&D Dungeon Master Tool — Schema-driven campaign management for tabletop RPGs."
 publish_to: 'none'
-version: 15.3.0
+version: 15.3.1
 
 environment:
   sdk: ^3.11.4
@@ -49,6 +49,7 @@ dependencies:
   logger: ^2.5.0
   url_launcher: ^6.3.1
   collection: ^1.19.1
+  archive: ^4.0.9
   file_picker: ^10.3.10
   flutter_markdown: ^0.7.7+1
   pdfrx: ^2.2.24
