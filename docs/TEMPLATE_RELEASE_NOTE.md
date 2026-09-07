@@ -143,6 +143,8 @@ The full, continuously updated list lives in [docs/KNOWN_ISSUES.md](docs/KNOWN_I
 
 *Thanks for playing. Roll well.*
 
+---
+
 <!-- END RELEASE TEMPLATE -->
 
 ---
