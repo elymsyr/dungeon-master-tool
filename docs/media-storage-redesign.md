@@ -168,6 +168,41 @@ hâli, genişletilmiş hâli değil.
     indiren kişide o paket zaten otomatik kurulur.
 - `pinned` LRU'ya tabi değildir — indirilebilirliği garanti altındadır.
 
+### Postgres tarafı — paylaşım gövdelerinin sınırı
+
+Yukarıdaki bütün tavanlar R2'yi koruyor; **kart gövdeleri ise R2'de değil,
+Postgres'te** (`entity_shares.payload_json`, migration 078). Bugün orada hiçbir
+sınır yok: satır sayısı da, gövde boyutu da serbest. Diğer her eksende limit var
+(`055_online_count_limits.sql`: karakter 10, dünya 10, paket 10) — paylaşımda
+yok. Madde 2'nin otomatik paylaşımı bunu tek başına şişirebilir: dünyaya özgü
+binlerce spell/item kartı olan bir DM, tek dünya açtığında binlerce satır yazar.
+
+| Sınır | Değer | Nerede |
+|---|---|---|
+| Kart başına gövde | **512 KB** | `CHECK (octet_length(payload_json) <= 524288)` |
+| Dünya başına paylaşım satırı | **4000** | `max_shares_per_world()` + BEFORE INSERT trigger |
+
+En kötü hâlde dünya başına ~2 GB, gerçekte ~40 MB. Trigger
+`enforce_world_character_limits`'in birebir kalıbı — yeni desen icat edilmiyor,
+limit sabiti yine `IMMUTABLE` fonksiyon olarak tek noktadan ayarlanır.
+
+> [!warning] Gövdeler R2'ye taşınamaz
+> "Metinleri de LRU havuzuna atalım" cazip görünüyor ama dört sebeple çalışmaz:
+>
+> 1. **R2'de realtime yok.** `entity_shares` beş abone tablodan biri; gövde
+>    oyuncuya push ile düşüyor. Objeye abone olunamaz — satır yine Postgres'te
+>    kalır (sha'yı taşımak için) ve oyuncuya ikinci bir tur binerdi.
+> 2. **LRU gövdeyi atarsa kart yok olur.** Resim düşünce kart okunur kalıyor,
+>    eksik sha bildirilip onarılıyor. Gövde düşerse oyuncunun elinde ölü sha'ya
+>    bakan boş satır kalır — "metin hiç kaybolmaz, en fazla resim geç gelir"
+>    invariantı ölür.
+> 3. **Ekonomi ters.** R2 bayt için ucuz, işlem için pahalı. Gövdeler en küçük
+>    ve en sık okunan veri; obje deposunun yanlış ucu.
+> 4. **Riski çözmezdi.** 5 GB'lık resim dilimi yanında 10 KB'lık metinler asla
+>    "en eski"ye düşmez — dert taşınır, çözülmez.
+>
+> Doğru yer Postgres; eksik olan tek şey yukarıdaki iki kuraldı.
+
 ## Admin paneli — doluluk görünürlüğü
 
 Bu sınırların hepsi sunucu tarafında sessizce uygulanıyor; **görünmezlerse
@@ -248,8 +283,15 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
 - **5 GB / 5 GB bölünmesi ve yayıncı başı 500 MB elle seçilmiş sayılardır.** Ölçüm çıkınca ayarlanır;
   `pinned` doluluğu admin panelinde görünmeli, yoksa yayın reddi sürpriz olur.
 - Karakter yaratım kategorilerinin otomatik paylaşımı, dünyaya özgü çok sayıda
-  kart varsa büyük bir ilk yükleme olabilir. Paylaşım başına kart/bayt tavanı
-  konmalı.
+  kart varsa büyük bir ilk yükleme olabilir. Tavanı 512 KB / 4000 satır kuralı
+  çiziyor, ama limit dolduğunda DM'e ne söyleneceği (hangi kartlar elendi?)
+  tasarlanmadı.
+- **512 KB / 4000 de elle seçilmiş sayılardır**, R2'nin 5 GB / 5 GB'ı gibi.
+  Postgres'in R2'den farkı: dolduğunda LRU atmaz, **yazma tamamen patlar** ve
+  bu yalnızca paylaşımı değil bütün uygulamayı etkiler. O yüzden bu iki sayı
+  havuz sayılarından daha erken ölçülmeli.
+- Dünya silinince `entity_shares` satırlarının da gitmesi gerekir; cascade
+  yoksa gerçek sızıntı burasıdır — kuralları koymadan önce doğrulanmalı.
 
 ## Etkilenen yerler
 
@@ -262,6 +304,9 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
   yerine `transient_max_file_bytes()` (dosya başı), `transient_pool_cap_bytes()`
   → 5 GB, `transient_per_user_full` kontrolünün kaldırılması
   (`065_transient_shared_pool.sql` üzerine yeni bir migration).
+- `supabase/migrations/` — paylaşım gövdesi sınırları: `payload_json` üzerinde
+  512 KB `CHECK`, `max_shares_per_world()` (4000) + `entity_shares` BEFORE
+  INSERT trigger (`078_share_payloads.sql` üzerine yeni bir migration).
 - `supabase/migrations/` — oturum kapısı: `worlds.session_started_at`,
   `session_start()` / `session_end()` RPC'leri, `entity_shares.media_shas`,
   `world_members.missing_shas` (+ oyuncunun kendi satırını güncellemesi için RLS).
