@@ -870,6 +870,16 @@
   "marketplaceDownload": "İndir",
   "marketplaceGet": "Al",
   "marketplaceTemplateLabel": "Şablon",
+  "catalogArtImages": "{count} kart görseli",
+  "@catalogArtImages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogArtAiNotice": "Kart görselleri yapay zekâ ile üretilmiştir.",
+  "catalogArtDownloading": "Kart görselleri iniyor",
   "marketplaceContentsLabel": "İçerik",
   "marketplaceMoreEntities": "+{count} daha",
   "@marketplaceMoreEntities": {

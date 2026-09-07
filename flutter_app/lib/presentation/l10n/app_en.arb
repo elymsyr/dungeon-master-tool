@@ -915,6 +915,16 @@
   "marketplaceDownload": "Download",
   "marketplaceGet": "Get",
   "marketplaceTemplateLabel": "Template",
+  "catalogArtImages": "{count} card images",
+  "@catalogArtImages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogArtAiNotice": "Card art is AI-generated.",
+  "catalogArtDownloading": "Downloading card images",
   "marketplaceContentsLabel": "Contents",
   "marketplaceMoreEntities": "+{count} more",
   "@marketplaceMoreEntities": {

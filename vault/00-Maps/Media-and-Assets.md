@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: media
-updated: 2026-08-20
+updated: 2026-09-07
 tags: [moc]
 ---
 
@@ -15,6 +15,7 @@ tags: [moc]
 - [[soundpack_catalog_service]] — list installed soundpacks.
 - [[media_bundler]] · [[media_manifest_restorer]] — bundle/restore media on export/import.
 - [[free_media_service]] — fetch free-tier media (quota-exempt).
+- [[first_party_art_service]] — `dmt-art://` kart görselleri (app bundle → R2 catalog).
 - [[entity_image_upload]] — upload entity portrait to media storage.
 - [[local_media_localizer]] — seçilen her dosyayı içeriğin kendi klasörüne kopyalar; ham seçici yolu hiçbir zaman saklanmaz.
 - [[unused_media_sweeper]] — dünya açılış/kapanışında referanssız yerel medyayı siler.

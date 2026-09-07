@@ -38,7 +38,8 @@ tags: [file]
   - `USER_QUOTA_BYTES = 104857600` (100 MB combined cloud_backups + community_assets)
   - `DOWNLOAD_LIMIT_PER_HOUR = 20`
   - `UPLOAD_LIMIT_PER_HOUR = 60`
-- Not in this file but read by the Worker: `CATALOG_GET_LIMIT_PER_HOUR` (default 600), `ADMIN_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY` — provided as wrangler secrets.
+- `[[ratelimits]] CATALOG_RL` (namespace 1001, 300/60s) — public catalog GET; KV sayacı kullanmaz.
+- Not in this file but read by the Worker: `ADMIN_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY` — provided as wrangler secrets.
 
 ## Notes
 - The 100 MB user quota here is the combined cloud-backup + counted-asset ceiling enforced at upload; per-kind limits live in `worker.ts` `KIND_MAX_BYTES`. Beta-tier quota (100 MB) is enforced separately in SQL (`beta_user_quota_bytes`).

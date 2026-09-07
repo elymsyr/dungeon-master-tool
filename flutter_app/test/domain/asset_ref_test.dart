@@ -36,6 +36,21 @@ void main() {
       expect(AssetRef('/a/b'), isNot(equals(AssetRef('/a/c'))));
     });
 
+    test('first-party art ref parses and is NOT treated as a local path', () {
+      const uuid = '1fbea976-fb6a-524f-b0f7-d7202406dc52';
+      final ref = AssetRef(AssetRef.formatArtUri(uuid));
+      expect(ref.raw, 'dmt-art://$uuid.webp');
+      expect(ref.isArt, isTrue);
+      expect(ref.artName, '$uuid.webp');
+      // Bir art ref'i local sayılırsa resolver onu File(path) diye açmaya
+      // çalışır ve kart sessizce görselsiz kalır — bundle da R2 da denenmez.
+      expect(ref.isLocal, isFalse);
+      expect(ref.isCloud, isFalse);
+      expect(ref.localPath, isNull);
+      // Dosya adı sha değil uuid — content store'a sorulmamalı.
+      expect(ref.contentSha, isNull);
+    });
+
     test('formatCloudUri prepends the canonical scheme', () {
       expect(
         AssetRef.formatCloudUri('u/c/$validSha.jpg'),

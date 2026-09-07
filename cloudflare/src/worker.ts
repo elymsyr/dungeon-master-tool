@@ -22,6 +22,8 @@ import {
 export interface Env {
   R2_BUCKET: R2Bucket;
   RATE_KV: KVNamespace;
+  /// Platform rate limiter — public catalog GET'i için. Bkz. wrangler.toml.
+  CATALOG_RL: { limit(o: { key: string }): Promise<{ success: boolean }> };
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   MAX_UPLOAD_BYTES: string;
@@ -31,8 +33,6 @@ export interface Env {
   // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep +
   // /catalog/* write gate.
   ADMIN_TOKEN?: string;
-  // First-party catalog public-GET per-IP hourly limit (default 600).
-  CATALOG_GET_LIMIT_PER_HOUR?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -375,10 +375,8 @@ async function handleCatalogGet(
   // Per-IP rate limit — a public endpoint must not be hammerable. Generous:
   // browsing + installing a catalog issues many GETs.
   const ip = request.headers.get('CF-Connecting-IP') ?? 'anon';
-  const limit = parseInt(env.CATALOG_GET_LIMIT_PER_HOUR ?? '600', 10) || 600;
-  const rl = await checkRateLimit(env.RATE_KV, `ip:${ip}`, 'cat', limit);
-  if (!rl.allowed) {
-    return rateLimitedResponse(rl.limit, rl.resetInSeconds);
+  if (!(await env.CATALOG_RL.limit({ key: ip })).success) {
+    return rateLimitedResponse(300, 60);
   }
 
   const object = await env.R2_BUCKET.get(r2Key);

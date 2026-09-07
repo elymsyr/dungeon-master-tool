@@ -5,13 +5,16 @@ Living list of what is deferred, broken-on-purpose, or a real bug still being tr
 in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (copy the
 items that are still open on the release date; do not edit past releases afterwards).
 
-**Last reviewed:** September 2026 (v15.2.0)
+**Last reviewed:** September 2026 (v15.3.0)
 
 ---
 
 ## Open
 
-_None tracked right now._
+- **Downloaded card art is never cleaned up** — Card images downloaded with an official
+  package stay in the app's cache after the package is removed, and there is no size cap on
+  that cache. Deliberate for now: the images are small individually and re-downloading them
+  costs a full install. Clearing the app's cache removes them.
 
 ## Resolved
 

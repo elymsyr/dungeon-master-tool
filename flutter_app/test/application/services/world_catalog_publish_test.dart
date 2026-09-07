@@ -165,7 +165,9 @@ void main() {
       expect(pkg.media, isEmpty);
       expect(pkg.externalFiles, isEmpty);
       expect(pkg.bundledDir, isEmpty);
-      expect(pkg.downloadBytes, pkg.sizeBytes);
+      // Dünya alanları paketlere sızmamalı; kart görselleri ise bilerek
+      // boyuta dahil (v15.3.0).
+      expect(pkg.downloadBytes, pkg.sizeBytes + pkg.artBytes);
     });
   });
 }

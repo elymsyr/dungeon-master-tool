@@ -870,6 +870,16 @@
   "marketplaceDownload": "Télécharger",
   "marketplaceGet": "Obtenir",
   "marketplaceTemplateLabel": "Modèle",
+  "catalogArtImages": "{count} images de cartes",
+  "@catalogArtImages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogArtAiNotice": "Les illustrations des cartes sont générées par IA.",
+  "catalogArtDownloading": "Téléchargement des images",
   "marketplaceContentsLabel": "Contenu",
   "marketplaceMoreEntities": "+{count} de plus",
   "@marketplaceMoreEntities": {

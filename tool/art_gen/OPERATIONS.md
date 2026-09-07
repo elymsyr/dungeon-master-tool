@@ -111,6 +111,34 @@ python3 tool/art_gen/generate.py \
 Script resume edilebilir: `out/` içinde `.webp` dosyası olan job'lar atlanır.
 Yarıda kalırsanız same komutu tekrar çalıştırmanız yeterli.
 
+### 3. Paketleme (üretim bitince)
+
+Görseller `out/` içinde birikince üç adım, bu sırayla:
+
+```bash
+# a) Built-in SRD'nin 1247 görselini app bundle'ına sıkıştır (q82 → q50,
+#    116 MB → 52 MB; 1:1'de fırça dokusu korunuyor, q40'ta yumuşama başlıyor).
+python3 tool/art_gen/bundle_srd_art.py            # → flutter_app/assets/art/srd/
+
+# b) Pack asset'lerine `dmt-art://{uuid}.webp` ref'ini bas.
+python3 tool/art_gen/stamp_art_refs.py            # --check ile sadece doğrula
+(cd flutter_app && dart run tool/srd_art_dump/bin/dump_srd.dart \
+    assets/open5e_packs/dnd5e-srd.pkg.json)       # built-in dump'ı tazele
+
+# c) 7413 görselin TAMAMINI R2 catalog'una yükle (SRD dahil — bundle sadece
+#    bir optimizasyon, ref hangi görselin nerede olduğunu taşımıyor).
+DMT_WORKER_URL=https://<worker> ADMIN_TOKEN=<secret> \
+  ./cloudflare/upload_art.sh                      # resume edilebilir, -P8
+```
+
+Built-in SRD'nin ref'i pack asset'inden değil `srd_core_pack.dart` pass 1'den
+gelir (`_artedSlugs`) — **içerik değişince `srdCorePackVersion`'ı bump et**,
+yoksa mevcut kurulumlar yeniden seed olmaz.
+
+Uygulama tarafında çözüm [[first_party_art_service]]: önce bundle, sonra
+worker'ın public `GET /catalog/art/<uuid>.webp` route'u (hesap/JWT yok),
+sonuç `cacheDir/art/` altında cache'lenir.
+
 ## Stil Tutarlılığı
 
 Stil üç katmanda değişir (2026-08 yeniden düzenleme — "paketler arasında tarz
