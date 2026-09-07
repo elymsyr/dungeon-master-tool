@@ -20,6 +20,7 @@ Durum: **kısmen uygulandı.**
 - ⬜ **Phase D — counted tier sökümü** (client upload yolları, worker PUT 410, kota UI).
   C'den SONRA; sıra önemli, çünkü counted yolu sökülünce paylaşılan medyanın tek
   gideceği yer transient olur ve oturum kapısı o zamana kadar durmalı.
+- ⬜ **Phase E — marketplace medya zip'i** (indirmede toptan, official `art-bundle` deseni). Bkz. son bölüm.
 
 > [!warning] Deploy bekleyenler
 > - `091_admin_delete_releases_media.sql` henüz deploy edilmedi.
@@ -364,3 +365,88 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
 - `flutter_app/lib/data/network/asset_service.dart`, `entity_image_upload.dart`,
   `map_image_upload.dart`, `pdf_library_service.dart` — counted yolunun sökülmesi.
 - `marketplace_cover_sync_service.dart` + paket yayın yolu — `pub/{sha}` dedup.
+
+## Phase E — marketplace medyası zip olarak iner (karar: 2026-09-07)
+
+**Karar:** marketplace indirmesi medyayı talep üzerine tek tek çekmeyi bırakır.
+Yayın zaten bir **snapshot** — medyası da o an paketlenir, indiren kişi tek zip
+ile **tüm içeriğe yerelde** sahip olur. Offline-first invariantı budur: indirme
+bittiğinde dünya ağa bir daha ihtiyaç duymaz.
+
+Yeni desen değil — **official paketlerde zaten bu yapılıyor.**
+`first_party_catalog_provider._installOne` kurulumda
+`art-bundle/{slug}@{version}.zip`'i `FirstPartyArtService.prefetchBundle` ile
+toptan indiriyor, ilerlemeyi `done / total` olarak gösteriyor ve boyutu
+`entry.downloadBytes` içinde sayıyor. Oradaki yorum bu kararın gerekçesini
+birebir yazıyor: *"Lazy indirme paketi hafif gösterip kullanıcıyı her kartta
+beklettiği için tercih edilmedi."* Community içeriği için aynı yol açılır.
+
+### Yayın tarafı
+
+`PublishMediaPinner` bugün her ref'i ayrı `pub/{sha}{ext}` objesi olarak
+yüklüyor. Yerine (ya da yanına) tek bir **medya zip'i** üretilir:
+
+1. Payload gezilir, medya ref'leri toplanır (gezgin aynı — `isMediaRef`).
+2. Baytlar tek arşive yazılır, **girdi adı `{sha}{ext}`** — arşiv içi düzen
+   content-addressed, çünkü çıkarma hedefi `ContentStore`.
+3. Arşiv `pinned` sınıfına yüklenir: `pub/{zipSha}.zip`, `ref_key` = listing id.
+   `pub_asset_reserve` / `pub_asset_release` yolu aynen geçerli.
+4. Payload ref'leri yine `dmt-asset://pub/{sha}{ext}` olarak yazılır. Ref şeması
+   **değişmez** — zip yalnızca baytların taşınma biçimidir.
+
+### İndirme tarafı
+
+`downloadAsNewCopy` payload'dan sonra zip'i indirir, girdileri SHA doğrulayarak
+`ContentStore`'a yazar, sonra local item'ı kaydeder. Ref'lere dokunulmaz:
+`AssetRefResolver` servis katmanına uğramadan önce zaten `_store.read(sha)`'ya
+bakıyor, yani çıkarılmış baytlar çevrimdışı da çözülür. İlerleme ve iptal UI'ı
+official kurulumdaki `done / total` kalıbını kullanır.
+
+### Ne paketlenir, ne paketlenmez — **yalnızca homebrew**
+
+Bu kural yayının en önemli kısmı; zip'i şişiren şey buradaki gevşekliktir.
+
+| Medya kaynağı | Zip'e girer mi | Neden |
+|---|---|---|
+| Dünyaya/pakete özgü (homebrew) medya | **evet** | başka hiçbir yerden gelmiyor |
+| Marketplace'den kurulmuş bir paketten gelen kart medyası | **hayır** | indiren o paketi zaten kurar; paketin kendi zip'i taşır |
+| Official katalog paketinden gelen medya (`dmt-art://`) | **hayır** | R2 `catalog/` prefix'inde public, `art-bundle` ile iniyor |
+| Zaten `pub/` olan ref | **hayır** | havuzda duruyor, tekrar paketlemek çift depolama |
+
+Bu, belgede zaten iki kez geçen kuralın üçüncü uygulaması: "Marketplace'de zaten
+olan bir paketin içeriği tekrar yüklenmez" (Marketplace bölümü) ve "kart bir
+marketplace paketinden geliyorsa gövde de medya da yüklenmez" (madde 2). Yayın
+öncesi bağımlılık listesi (`world_packages` / `links`) zaten hesaplanıyor —
+paketten gelen entity'lerin ref'leri o listeden çıkarılır.
+
+### Bilinen tavanlar
+
+- **Dosya başı dedup ölür.** Zip tek sha'dır; iki yayıncının aynı görseli iki
+  ayrı zip'te taşıması iki kopya demektir, ve bir görsel değişince yeni
+  snapshot'ın **tüm zip'i** yeniden yüklenir. Yayıncı başı 500 MB payı artık
+  snapshot başına tam zip boyutu sayar. Ölçüm gerektiren gerçek bir maliyet.
+  - Yükseltme yolu: bireysel `pub/{sha}` objelerini korumak ve zip'i worker'da
+    manifest'ten **anlık üretmek** — dedup korunur, indiren yine tek istek atar.
+    Worker işi gerektirdiği için ilk sürümde yapılmaz.
+- **İndirme anı ağırlaşır.** Bugün tek JSON, sonra yüzlerce MB. İlerleme,
+  iptal ve kısmi başarı politikası şart. Yayın tarafındaki "tek ref pinlenemezse
+  iptal" katılığının indirme tarafında karşılığı **yoktur**: zip inemezse dünya
+  yine kurulur, medya lazy yola düşer (ref'ler zaten `pub/`).
+- **`ContentStore` bir cache dizini** (`{base}/cache/content/`).
+  `EvictionSweeper.sweepIfOverBudget` 1 GB üstünde LRU siliyor ve yorumu açık:
+  *"Referenced dosyaları da siler — sonraki resolve re-fetch eder."* Çevrimdışı
+  kullanıcıda re-fetch yok. Sweeper'ın bugün `lib/` içinde çağıranı yok, yani
+  şimdilik zararsız; açılmadan önce ya indirilen listing medyası muaf tutulmalı
+  ya da baytlar `LocalMediaLocalizer.worldDir` altına yazılmalı (PDF yolu
+  `field_widget_factory._open` bunu zaten yapıyor).
+
+### Etkilenen yerler
+
+- `publish_media_pinner.dart` — ref gezgini korunur, çıktı tek arşiv;
+  homebrew filtresi burada uygulanır.
+- `asset_service.dart` — `uploadPub`'ın zip varyantı (`.zip` kind + boyut tavanı).
+- `marketplace_listing_provider.dart` — `publishSnapshot` zip üretimi,
+  `downloadAsNewCopy` zip indirme + `ContentStore`'a çıkarma.
+- `first_party_art_service.dart` — `prefetchBundle` zaten zip→store yazıyor;
+  community yolu bunu genelleştirir, ikinci bir çıkarıcı yazılmaz.
+- `archive: ^4.0.9` zaten bağımlılıkta.
