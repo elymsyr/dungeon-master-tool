@@ -92,6 +92,17 @@ export default {
       return jsonResponse(500, { error: 'internal_error' });
     }
   },
+
+  // Cron (wrangler.toml [triggers]) — kuyruğu kimse boşaltmazsa R2'da yetim
+  // obje birikir ve havuz sayacı gerçeği göstermez. Manuel tetik hâlâ duruyor.
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    try {
+      const res = await sweepEvictQueue(env, 500);
+      console.log('evict_sweep_cron', res.popped, res.deleted);
+    } catch (err) {
+      console.error('evict_sweep_cron_failed', err);
+    }
+  },
 };
 
 async function handleRequest(request: Request, env: Env): Promise<Response> {
@@ -498,22 +509,25 @@ async function handleTransientEvictSweep(
     Math.max(parseInt(limitParam ?? '50', 10) || 50, 1),
     500,
   );
-  let popped: Array<{
-    sha256: string;
-    ext: string;
-    uploader_id: string;
-    r2_key: string | null;
-  }>;
   try {
-    popped = await popTransientEvictQueue(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-      limit,
-    );
+    const res = await sweepEvictQueue(env, limit);
+    return jsonResponse(200, { ok: true, ...res });
   } catch (err) {
     console.error('evict_pop_failed', err);
     return jsonResponse(502, { error: 'evict_pop_failed' });
   }
+}
+
+// Kuyruktan `limit` satır al, R2'da sil. HTTP tetik ve cron ortak kullanır.
+async function sweepEvictQueue(
+  env: Env,
+  limit: number,
+): Promise<{ popped: number; deleted: number }> {
+  const popped = await popTransientEvictQueue(
+    env.SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
+    limit,
+  );
   let deleted = 0;
   for (const row of popped) {
     // Kuyruk artık transient'e özel değil: pinned düşüşleri tam key yazar.
@@ -526,7 +540,7 @@ async function handleTransientEvictSweep(
       console.error('evict_r2_delete_failed', key, err);
     }
   }
-  return jsonResponse(200, { ok: true, popped: popped.length, deleted });
+  return { popped: popped.length, deleted };
 }
 
 // /admin/purge-all — TÜM R2 objelerini siler (fresh reset için).
