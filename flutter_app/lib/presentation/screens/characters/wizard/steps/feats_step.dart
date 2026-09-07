@@ -9,6 +9,7 @@ import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import '../../../../dialogs/entity_preview_dialog.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
 import 'skill_mod_helper.dart';
@@ -348,12 +349,16 @@ class _FeatCard extends StatelessWidget {
           Row(
             children: [
               Flexible(
-                child: Text(
-                  feat.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
+                child: EntityPreviewLongPress(
+                  entity: feat,
+                  entities: entities,
+                  child: Text(
+                    feat.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText,
+                    ),
                   ),
                 ),
               ),
@@ -484,6 +489,7 @@ class _ChoiceGroupSection extends StatelessWidget {
           options: options,
           picked: current,
           pick: pick,
+          entities: entities,
           palette: palette,
           onToggle: (id) =>
               _toggle(storageKey, current, pick, id),
@@ -496,6 +502,7 @@ class _ChoiceGroupSection extends StatelessWidget {
           ],
           picked: current,
           pick: pick,
+          entities: entities,
           palette: palette,
           onToggle: (id) =>
               _toggle(storageKey, current, pick, id),
@@ -506,10 +513,15 @@ class _ChoiceGroupSection extends StatelessWidget {
         return _RowPicker(
           options: [
             for (final t in tools)
-              _Option(id: t.id, label: t.name, description: t.description),
+              _Option(
+                  id: t.id,
+                  label: t.name,
+                  description: t.description,
+                  entity: t),
           ],
           picked: current,
           pick: pick,
+          entities: entities,
           palette: palette,
           onToggle: (id) =>
               _toggle(storageKey, current, pick, id),
@@ -531,6 +543,7 @@ class _ChoiceGroupSection extends StatelessWidget {
                       id: s.id,
                       label: s.name,
                       description: s.description,
+                      entity: s,
                       suffix: () {
                         final m = skillAbilityModFor(s, entities, draft);
                         return m == null ? '' : formatModifier(m);
@@ -539,6 +552,7 @@ class _ChoiceGroupSection extends StatelessWidget {
                 ],
                 picked: current,
                 pick: pick,
+                entities: entities,
                 palette: palette,
                 disabledIds: grantedSkills,
                 disabledHint: 'proficient',
@@ -553,10 +567,15 @@ class _ChoiceGroupSection extends StatelessWidget {
                 options: [
                   for (final t in tools)
                     _Option(
-                        id: t.id, label: t.name, description: t.description),
+                      id: t.id,
+                      label: t.name,
+                      description: t.description,
+                      entity: t,
+                    ),
                 ],
                 picked: current,
                 pick: pick,
+                entities: entities,
                 palette: palette,
                 onToggle: (id) =>
                     _toggle(storageKey, current, pick, id),
@@ -586,10 +605,15 @@ class _ChoiceGroupSection extends StatelessWidget {
         return _RowPicker(
           options: [
             for (final s in spells)
-              _Option(id: s.id, label: s.name, description: s.description),
+              _Option(
+                  id: s.id,
+                  label: s.name,
+                  description: s.description,
+                  entity: s),
           ],
           picked: current,
           pick: pick,
+          entities: entities,
           palette: palette,
           onToggle: (id) =>
               _toggle(storageKey, current, pick, id),
@@ -674,11 +698,15 @@ class _Option {
   final String label;
   final String description;
   final String suffix;
+  /// Set when the option *is* a card (tool, skill, spell) — enables the
+  /// long-press preview. Plain enum/ability options leave it null.
+  final Entity? entity;
   const _Option({
     required this.id,
     required this.label,
     this.description = '',
     this.suffix = '',
+    this.entity,
   });
 }
 
@@ -705,6 +733,7 @@ class _GroupLabel extends StatelessWidget {
 
 class _ChipPicker extends StatelessWidget {
   final List<_Option> options;
+  final Map<String, Entity> entities;
   final List<String> picked;
   final int pick;
   final ValueChanged<String> onToggle;
@@ -714,6 +743,7 @@ class _ChipPicker extends StatelessWidget {
 
   const _ChipPicker({
     required this.options,
+    required this.entities,
     required this.picked,
     required this.pick,
     required this.onToggle,
@@ -743,7 +773,10 @@ class _ChipPicker extends StatelessWidget {
       runSpacing: 4,
       children: [
         for (final o in options)
-          _OptionChip(
+          _withPreview(
+            o,
+            entities,
+            _OptionChip(
             label: o.label,
             suffix: o.suffix,
             description: o.description,
@@ -754,6 +787,7 @@ class _ChipPicker extends StatelessWidget {
                 disabledIds.contains(o.id) ? disabledHint : '',
             onTap: () => onToggle(o.id),
             palette: palette,
+            ),
           ),
       ],
     );
@@ -855,6 +889,7 @@ class _OptionChip extends StatelessWidget {
 
 class _RowPicker extends StatelessWidget {
   final List<_Option> options;
+  final Map<String, Entity> entities;
   final List<String> picked;
   final int pick;
   final ValueChanged<String> onToggle;
@@ -863,6 +898,7 @@ class _RowPicker extends StatelessWidget {
 
   const _RowPicker({
     required this.options,
+    required this.entities,
     required this.picked,
     required this.pick,
     required this.onToggle,
@@ -887,18 +923,32 @@ class _RowPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final o in options)
-          _OptionRow(
+          _withPreview(
+            o,
+            entities,
+            _OptionRow(
             label: o.label,
             description: o.description,
             selected: picked.contains(o.id),
             disabled: atCap && !picked.contains(o.id),
             onTap: () => onToggle(o.id),
             palette: palette,
+            ),
           ),
       ],
     );
   }
 }
+
+/// Long-press preview, but only for options backed by a real card.
+Widget _withPreview(_Option o, Map<String, Entity> entities, Widget child) =>
+    o.entity == null
+        ? child
+        : EntityPreviewLongPress(
+            entity: o.entity!,
+            entities: entities,
+            child: child,
+          );
 
 class _OptionRow extends StatelessWidget {
   final String label;
