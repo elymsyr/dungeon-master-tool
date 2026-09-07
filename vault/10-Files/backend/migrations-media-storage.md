@@ -5,7 +5,7 @@ path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 05
 layer: backend
 language: sql
 status: stable
-updated: 2026-06-09
+updated: 2026-09-07
 tags: [file]
 ---
 
@@ -39,3 +39,12 @@ tags: [file]
 ## Notes
 - The Worker (`worker.ts`) is the binary gatekeeper for counted + transient; the free tier bypasses the Worker entirely and uploads straight to Supabase Storage.
 - LRU eviction emits a CDC DELETE that drops the projected image on player screens (intentional).
+
+## 089 — havuzun iki sınıfa bölünmesi
+- **transient**: per-user cap **kaldırıldı** (`transient_per_user_cap_bytes()` düşürüldü); yerine dosya başına 100 MB emniyet kapağı `transient_max_file_bytes()`. Havuz 10 GB → **5 GB** (`transient_pool_cap_bytes()`), LRU aynen sürüyor.
+- **pinned**: `pub_assets(sha256 PK, ext, bytes, mime_type)` + `pub_asset_refs(sha256, owner_id, ref_key)`. Key şeması `pub/{sha}.{ext}` — içerik-adresli, iki kişi aynı görseli yayınlasa tek kopya. Cap'ler `pinned_pool_cap_bytes()` (5 GB) ve `pinned_per_user_cap_bytes()` (500 MB/yayıncı).
+- **Refcount sayaç değil SAYIMdır**: `pub_asset_refs` satırları. Düşüş `pub_asset_release(ref_key, sha?)` ile ama silme kararı `trg_drop_orphan_pub_asset` (AFTER DELETE) trigger'ında — çünkü `owner_id` `auth.users`'a CASCADE'li ve hesap silme RPC'ye hiç uğramaz. Son ref gidince obje `transient_evict_queue`'ya tam `r2_key` ile yazılır, Worker sweep'i siler.
+- `get_pub_upload_allowed` (service_role) Worker PUT kapısı; `get_r2_pool_stats()` (admin) havuz doluluğu.
+
+## 088 — paylaşım gövdesi sınırları
+`entity_shares.payload_json` ≤ **512 KB** (`chk_entity_shares_payload_size`, NOT VALID — yeni yazmalarda tam zorlanır, mevcut tabloyu taramaz) ve dünya başına ≤ **4000** satır (`max_shares_per_world()` + `trg_enforce_world_share_limits` BEFORE INSERT; UPDATE saymaz ki rutin payload güncellemesi tam 4000'de patlamasın). `max_share_payload_bytes()` client pre-check'i için var — CHECK ifadesi fonksiyon çağıramaz, iki sabit birlikte değiştirilir. Doğrulama: `supabase/scripts/verify_088_089.sql`.
