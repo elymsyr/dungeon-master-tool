@@ -16,6 +16,11 @@ items that are still open on the release date; do not edit past releases afterwa
   that cache. Deliberate for now: the images are small individually and re-downloading them
   costs a full install. Clearing the app's cache removes them.
 
+- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a
+  world they shared on the marketplace, the listing goes away but the uploaded media under
+  `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible
+  effect; needs a cleanup pass (or delete-time media removal).
+
 ## Resolved
 
 - **Bundled world references stayed soft** — Fixed: species and class on an imported player
