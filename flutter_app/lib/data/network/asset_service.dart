@@ -205,6 +205,88 @@ class AssetService {
     return Uri.parse(AssetRef.formatTransientUri(sha, ext));
   }
 
+  /// Marketplace yayını için **pinned** upload: `pub/{sha}{ext}`.
+  ///
+  /// Kullanıcı-prefix'li sayan katmanın aksine key içerik-adreslidir, yani iki
+  /// yayıncı aynı görseli yayınlarsa R2'de tek kopya durur. Kapasiteyi ve
+  /// refcount'u `pub_asset_reserve` yönetir; `exists=true` dönerse obje zaten
+  /// havuzdadır ve **PUT atlanır** (asıl dedup kazancı burada).
+  ///
+  /// [refKey] refcount sahibi — marketplace için listing id. Listing silinince
+  /// `pub_asset_release(refKey)` ile bırakılır; son ref gidince obje düşer.
+  ///
+  /// Dönen ref `dmt-asset://pub/{sha}{ext}` — kasıtlı olarak mevcut cloud
+  /// şeması: resolver/downloader yolu değişmeden çalışır, Worker `pub/` GET'ini
+  /// zaten herkese açık servis eder.
+  Future<Uri> uploadPub(
+    File file, {
+    required MediaKind kind,
+    required String refKey,
+  }) async {
+    final token = _requireToken();
+    _requireUser();
+
+    if (!await file.exists()) {
+      throw AssetServiceException('file_not_found', file.path);
+    }
+    final bytes = await file.readAsBytes();
+    if (bytes.length > kind.maxBytes) {
+      throw AssetServiceException(
+        'too_large',
+        '${bytes.length} > ${kind.maxBytes}',
+      );
+    }
+    final sha = sha256.convert(bytes).toString();
+    final ext = _extensionOf(file.path);
+    final mime = _guessMime(ext);
+
+    final Map<String, dynamic> reserved;
+    try {
+      reserved = Map<String, dynamic>.from(
+        await _supabase.rpc('pub_asset_reserve', params: {
+          '_sha': sha,
+          '_ext': ext,
+          '_bytes': bytes.length,
+          '_mime': mime,
+          '_ref_key': refKey,
+        }) as Map,
+      );
+    } on PostgrestException catch (e) {
+      final msg = '${e.message} ${e.hint ?? ''}';
+      if (msg.contains('pool_full') || msg.contains('pinned_user_full')) {
+        throw PinnedQuotaExceededException(msg);
+      }
+      rethrow;
+    }
+
+    final r2Key = reserved['key'] as String? ?? 'pub/$sha$ext';
+    if (reserved['exists'] == true) {
+      return Uri.parse('${AssetRef.scheme}$r2Key');
+    }
+
+    final req = await _httpClient.putUrl(Uri.parse('$_workerBaseUrl/assets/$r2Key'));
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+    req.headers.set(HttpHeaders.contentTypeHeader, mime);
+    req.headers.contentLength = bytes.length;
+    req.headers.set('X-Content-SHA256', sha);
+    req.headers.set('X-Asset-Kind', kind.wireName);
+    req.add(bytes);
+
+    final res = await req.close();
+    if (res.statusCode != 200) {
+      final body = await _readBody(res);
+      // Rezervasyon durdu ama obje yok — bırak, yoksa refcount sızıntısı olur.
+      try {
+        await _supabase.rpc('pub_asset_release',
+            params: {'_ref_key': refKey, '_sha': sha});
+      } catch (_) {}
+      throw AssetServiceException('pub_upload_failed_${res.statusCode}', body);
+    }
+    await res.drain<void>();
+
+    return Uri.parse('${AssetRef.scheme}$r2Key');
+  }
+
   /// Transient upload + `transient_shares` kaydı. Oyuncu, ref'teki SHA ile bu
   /// tabloyu sorgulayıp `uploader_id`'yi bulur ([downloadTransient]). Dünya
   /// başına aynı SHA için idempotent (re-share). [uploadTransient] gibi
@@ -544,6 +626,15 @@ class AssetQuotaExceededException implements Exception {
 /// `transient_file_too_large` fırlattığında. Per-user 100 MB transient
 /// cap dolu ya da tek dosya cap üstü — caller "ekstra paylaşım alanın doldu"
 /// banner'ı gösterir.
+/// `pinned` havuzu (5 GB) ya da yayıncı payı (500 MB) dolu — yeni marketplace
+/// yayını reddedildi. Mevcut listing'ler etkilenmez.
+class PinnedQuotaExceededException implements Exception {
+  PinnedQuotaExceededException(this.detail);
+  final String detail;
+  @override
+  String toString() => 'PinnedQuotaExceededException: $detail';
+}
+
 class TransientQuotaExceededException implements Exception {
   TransientQuotaExceededException(this.detail);
   final String detail;

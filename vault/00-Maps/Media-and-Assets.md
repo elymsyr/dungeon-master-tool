@@ -21,6 +21,7 @@ tags: [moc]
 - [[unused_media_sweeper]] — dünya açılış/kapanışında referanssız yerel medyayı siler.
 - [[entity_media_cleanup_service]] — GC media on entity/world/package delete.
 - [[cover_image_bundler]] · [[marketplace_cover_sync_service]] — marketplace listing covers.
+- [[publish_media_pinner]] — marketplace yayını öncesi payload'daki tüm medyayı `pinned` (`pub/{sha}`) sınıfına taşır; refcount sahibi listing id'dir.
 - [[pdf_library_service]] — dünyanın PDF kütüphanesi: klasöre kopyalama + online dünyada R2 paylaşımı.
 
 ## Data Flow

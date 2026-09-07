@@ -12,7 +12,8 @@ tags: [system]
 >
 > **Geçiş sürüyor:** Counted tier kaldırılıyor, havuz `pinned`/`transient`
 > olarak ikiye bölünüyor — bkz. [`docs/media-storage-redesign.md`](../../docs/media-storage-redesign.md).
-> **Uygulanan:** havuz bütçeleri + `pub/` pinned sınıfı (088/089, aşağıda).
+> **Uygulanan:** havuz bütçeleri + `pub/` pinned sınıfı (088/089) ve marketplace
+> yayın yolunun buna bağlanması (aşağıda).
 > **Uygulanmayan:** oturum kapısı (`session_started_at`, talep-üzerine akış),
 > counted tier sökümü, admin Storage sekmesi — bu notun geri kalanı hâlâ
 > kodun bugünkü hâli.
@@ -37,7 +38,7 @@ tags: [system]
 1. Upload → pick tier by kind (per-kind size caps: portrait/cover 4 MB, battle map 10 MB, **world_pdf 50 MB**, bilinmeyen kind için 20 MB ceiling).
 2. Counted: `checkAssetQuota` RPC before PUT; `get_user_total_storage_used` sums counted + backups (excludes free).
 3. Transient: `transient_reserve` (capacity + LRU evict), `transient_touch` on download (LRU refresh), worker `/transient/evict-sweep` pops queue.
-4. Pinned: `pub_asset_reserve` RPC (dedup + cap; `exists=true` → PUT atlanır) → Worker `pub/` PUT'unda `get_pub_upload_allowed` rezervasyonu doğrular. `pub_asset_release` / hesap silme ref'i düşürür; son ref gidince `trg_drop_orphan_pub_asset` objeyi evict kuyruğuna atar (aynı `/transient/evict-sweep` endpoint'i, `r2_key` kolonu üzerinden).
+4. Pinned: **client girişi** [[publish_media_pinner]] — marketplace yayını öncesi payload'daki tüm medya ref'leri gezilir, her biri `AssetService.uploadPub` ile `pub/{sha}{ext}`'e taşınır ve ref `dmt-asset://pub/…` olarak yeniden yazılır (refcount sahibi = listing id, bu yüzden id yayından önce client'ta üretilir). `pub_asset_reserve` RPC (dedup + cap; `exists=true` → PUT atlanır) → Worker `pub/` PUT'unda `get_pub_upload_allowed` rezervasyonu doğrular. `pub_asset_release` / hesap silme ref'i düşürür; son ref gidince `trg_drop_orphan_pub_asset` objeyi evict kuyruğuna atar (aynı `/transient/evict-sweep` endpoint'i, `r2_key` kolonu üzerinden).
 5. Delete entity/world/package → [[entity_media_cleanup_service]] removes cloud copy (local cache kept).
 
 ## Key Constants / Invariants

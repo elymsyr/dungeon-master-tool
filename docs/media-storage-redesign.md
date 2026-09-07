@@ -6,7 +6,8 @@ Durum: **kısmen uygulandı.**
 - ⬜ Oturum kapısı + talep-üzerine akış (`session_started_at`, `media_shas`, `missing_shas`)
 - ⬜ Counted tier sökümü (client upload yolları, worker PUT 410, kota UI)
 - ⬜ Admin Storage sekmesi (RPC hazır: `get_r2_pool_stats()`)
-- ⬜ Marketplace yayın yolunun `pub_asset_reserve`'e bağlanması
+- ✅ Marketplace yayın yolu `pub_asset_reserve`'e bağlandı — `publish_media_pinner.dart`,
+  `AssetService.uploadPub`, listing silmede `pub_asset_release`
 
 Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07)
 Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Systems/Media-Storage-Tiers.md) (üç tier: Free / Counted / Transient)

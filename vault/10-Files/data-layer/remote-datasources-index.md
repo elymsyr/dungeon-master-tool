@@ -5,7 +5,7 @@ path: flutter_app/lib/data/datasources/remote/
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-07
 tags: [file]
 ---
 
@@ -37,7 +37,7 @@ tags: [file]
 - **`posts_remote_ds.dart`** → `PostsRemoteDataSource` — social feed; table `posts` (+ `post_likes`), bucket `post-images` (counts to `posts.size_bytes` quota). `FeedScope {all, following, discover}`; cursor pagination (`before` = `created_at <` page); first page gets HN-style "hot" rerank, later pages pure chronological.
 - **`messages_remote_ds.dart`** → `MessagesRemoteDataSource` — DMs/group chat over `conversations` + `messages`, RPC-heavy: `get_my_conversations`, `leave_conversation`, `delete_conversation`, `add_conversation_member`, `kick_conversation_member`, `rename_conversation`, `mark_conversation_read`, `get_total_unread_count`.
 - **`game_listings_remote_ds.dart`** → `GameListingsRemoteDataSource` — "looking for group" board; tables `game_listings` + `game_listing_applications`. `fetchOpen({gameLanguage, system, tag})` newest-first.
-- **`marketplace_listings_remote_ds.dart`** → `MarketplaceListingsRemoteDataSource` — published content packages; table `marketplace_listings`, bucket `shared-payloads` (path `{owner_id}/listings/{listing_id}.json.gz`). Each publish is an immutable independent row (no lineage). `publishSnapshot`, `downloadPayload`, `deleteListing`, `updateListingCover`, `listAllCurrent`, `fetchListingsByIds`, `listCurrentByOwner`, `fetchListing`.
+- **`marketplace_listings_remote_ds.dart`** → `MarketplaceListingsRemoteDataSource` — published content packages; table `marketplace_listings`, bucket `shared-payloads` (path `{owner_id}/listings/{listing_id}.json.gz`). Each publish is an immutable independent row (no lineage). `publishSnapshot` (accepts a caller-supplied `listingId` — pinned media is reserved under it before publishing, see [[publish_media_pinner]]), `downloadPayload`, `deleteListing` (also calls `pub_asset_release(listingId)` so the listing's `pinned` media refcount drops), `updateListingCover`, `listAllCurrent`, `fetchListingsByIds`, `listCurrentByOwner`, `fetchListing`.
 - **`bug_reports_remote_ds.dart`** → `BugReportsRemoteDataSource` — user bug reports (status open/read/resolved, captures appVersion/platform/logs); `BugReportRateLimitException` on throttle.
 - **`notifications_remote_ds.dart`** → `NotificationsRemoteDataSource` — end-user notifications inbox (online-only, mig 069 RPCs): `list_notifications`, `submit_notification_response`, `mark_notification_read`, dismiss-all-read.
 - **`admin_notifications_remote_ds.dart`** → `AdminNotificationsRemoteDataSource` — admin broadcast authoring + response viewing (`AdminNotificationSummary`, `NotificationResponseRow`; blocks = markdown/poll/input).
