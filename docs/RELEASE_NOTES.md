@@ -54,6 +54,8 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 *Thanks for playing. Roll well.*
 
+---
+
 ## Dungeon Master Tool v15.3.1 — Card Art Actually Arrives (Beta)
 
 **Release date:** September 2026
@@ -93,6 +95,8 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 ---
 
 *Thanks for playing. Roll well.*
+
+---
 
 ## Dungeon Master Tool v15.3.0 — Card Art (Beta)
 
@@ -167,6 +171,8 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 *Thanks for playing. Roll well.*
 
+---
+
 ## Dungeon Master Tool v15.2.0 — Cairn Second Edition (Beta)
 
 **Release date:** September 2026
@@ -229,6 +235,8 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 ---
 
 *Thanks for playing. Roll well.*
+
+---
 
 ## Dungeon Master Tool v15.1.1 — Marketplace Downloads Fixed (Beta)
 
