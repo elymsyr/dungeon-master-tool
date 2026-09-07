@@ -30,6 +30,7 @@ import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/rule_config.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../dialogs/entity_preview_dialog.dart';
 import '../../../widgets/expandable_markdown.dart';
 import '../../../widgets/source_badge.dart';
 import '../../../widgets/perf/image_cache_size.dart';
@@ -2166,22 +2167,35 @@ class _RaceStep extends ConsumerWidget {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           for (final c in choices)
-            RadioListTile<String?>(
-              value: c.id,
-              // ignore: deprecated_member_use
-              groupValue: draft.subspeciesId,
-              // ignore: deprecated_member_use
-              onChanged: notifier.setSubspecies,
-              dense: true,
-              title: Text(c.title),
-              subtitle: c.description.isEmpty
-                  ? null
-                  : ExpandableMarkdown(data: c.description),
+            _maybePreviewable(
+              // Legacy `subspecies_options` rows key on the option name, not an
+              // entity id — those stay preview-less, there is no card to open.
+              entities[c.id],
+              entities,
+              RadioListTile<String?>(
+                value: c.id,
+                // ignore: deprecated_member_use
+                groupValue: draft.subspeciesId,
+                // ignore: deprecated_member_use
+                onChanged: notifier.setSubspecies,
+                dense: true,
+                title: Text(c.title),
+                subtitle: c.description.isEmpty
+                    ? null
+                    : ExpandableMarkdown(data: c.description),
+              ),
             ),
         ],
       ],
     );
   }
+
+  static Widget _maybePreviewable(
+          Entity? e, Map<String, Entity> entities, Widget child) =>
+      e == null
+          ? child
+          : EntityPreviewLongPress(
+              entity: e, entities: entities, child: child);
 
   /// Subspecies choices for [species]: first-class `subspecies` entities linked
   /// via `parent_species_ref` (the new model — value is the entity id), plus any
@@ -2278,23 +2292,27 @@ class _EntityPickStep extends ConsumerWidget {
             dense: true,
             title: const Text('None'),
           ),
-        ...candidates.map((e) => RadioListTile<String?>(
-              value: e.id,
-              // ignore: deprecated_member_use
-              groupValue: selectedId,
-              // ignore: deprecated_member_use
-              onChanged: onChanged,
-              dense: true,
-              title: Row(
-                children: [
-                  Flexible(child: Text(e.name)),
-                  const SizedBox(width: 6),
-                  Flexible(child: SourceBadge(e.source)),
-                ],
+        ...candidates.map((e) => EntityPreviewLongPress(
+              entity: e,
+              entities: entities,
+              child: RadioListTile<String?>(
+                value: e.id,
+                // ignore: deprecated_member_use
+                groupValue: selectedId,
+                // ignore: deprecated_member_use
+                onChanged: onChanged,
+                dense: true,
+                title: Row(
+                  children: [
+                    Flexible(child: Text(e.name)),
+                    const SizedBox(width: 6),
+                    Flexible(child: SourceBadge(e.source)),
+                  ],
+                ),
+                subtitle: e.description.isEmpty
+                    ? null
+                    : ExpandableMarkdown(data: e.description),
               ),
-              subtitle: e.description.isEmpty
-                  ? null
-                  : ExpandableMarkdown(data: e.description),
             )),
       ],
     );
