@@ -983,6 +983,118 @@ class _BannedTab extends ConsumerWidget {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
+/// R2 havuzu (10 GB, iki sınıf) — Supabase bucket'larından ayrı sayılır.
+/// `pinned` dolarsa yeni marketplace yayını reddedilir, `transient` dolarsa
+/// LRU en eskiyi atar; bu yüzden ikisi ayrı bar.
+class _R2PoolSection extends ConsumerWidget {
+  const _R2PoolSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final poolAsync = ref.watch(adminR2PoolStatsProvider);
+    return poolAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (e, _) => Text('R2 pool: $e',
+          style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+      data: (pool) {
+        if (pool == null) return const SizedBox.shrink();
+        final oldest = pool.oldestLastUsed;
+        return _AdminCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('CLOUDFLARE R2 POOL',
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: palette.sidebarLabelSecondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8)),
+              const SizedBox(height: 12),
+              _PoolBar(
+                label: 'pinned (marketplace)',
+                used: pool.pinnedUsed,
+                cap: pool.pinnedCap,
+                subtitle: '${pool.pinnedObjects} objects · '
+                    '${formatBytes(pool.dedupSavedBytes)} saved by dedup',
+              ),
+              const SizedBox(height: 12),
+              _PoolBar(
+                label: 'transient (shares, LRU)',
+                used: pool.transientUsed,
+                cap: pool.transientCap,
+                subtitle: '${pool.transientObjects} objects'
+                    '${oldest == null ? '' : ' · oldest ${oldest.toLocal().toString().split('.').first}'}'
+                    '${pool.evictQueueDepth == 0 ? '' : ' · ${pool.evictQueueDepth} queued for eviction'}',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PoolBar extends StatelessWidget {
+  const _PoolBar({
+    required this.label,
+    required this.used,
+    required this.cap,
+    required this.subtitle,
+  });
+
+  final String label;
+  final int used;
+  final int cap;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final ratio = cap <= 0 ? 0.0 : (used / cap).clamp(0.0, 1.0);
+    final color = ratio >= 0.9
+        ? Colors.redAccent
+        : ratio >= 0.7
+            ? Colors.orangeAccent
+            : palette.featureCardAccent;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+            ),
+            Text('${formatBytes(used)} / ${formatBytes(cap)}',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: palette.tabActiveText)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 6,
+            backgroundColor: palette.sidebarLabelSecondary.withValues(alpha: 0.2),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(subtitle,
+            style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+      ],
+    );
+  }
+}
+
 // ─── Storage ─────────────────────────────────────────────────────────────────
 
 class _StorageTab extends ConsumerWidget {
@@ -1002,9 +1114,14 @@ class _StorageTab extends ConsumerWidget {
           final total = stats.fold<int>(0, (acc, s) => acc + s.usedBytes);
           final totalObjects = stats.fold<int>(0, (acc, s) => acc + s.objectCount);
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(adminStorageStatsProvider),
+            onRefresh: () async {
+              ref.invalidate(adminStorageStatsProvider);
+              ref.invalidate(adminR2PoolStatsProvider);
+            },
             child: ListView(
               children: [
+                const _R2PoolSection(),
+                const SizedBox(height: 16),
                 _AdminCard(
                   padding: const EdgeInsets.all(16),
                   child: Row(

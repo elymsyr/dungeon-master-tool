@@ -13,10 +13,11 @@ tags: [system]
 > **Geçiş sürüyor:** Counted tier kaldırılıyor, havuz `pinned`/`transient`
 > olarak ikiye bölünüyor — bkz. [`docs/media-storage-redesign.md`](../../docs/media-storage-redesign.md).
 > **Uygulanan:** havuz bütçeleri + `pub/` pinned sınıfı (088/089) ve marketplace
-> yayın yolunun buna bağlanması (aşağıda).
+> yayın yolunun buna bağlanması (aşağıda), free tier'ın eager upload'larının
+> kaldırılması ve admin Storage sekmesinin R2 havuzunu göstermesi.
 > **Uygulanmayan:** oturum kapısı (`session_started_at`, talep-üzerine akış),
-> counted tier sökümü, admin Storage sekmesi — bu notun geri kalanı hâlâ
-> kodun bugünkü hâli.
+> counted tier sökümü, admin panelinde kullanıcı başına `pinned_bytes` /
+> `transient_bytes` — bu notun geri kalanı hâlâ kodun bugünkü hâli.
 
 ## Participants
 - [[free_media_service]] — free tier reads.
@@ -28,7 +29,7 @@ tags: [system]
 ## Tiers
 | Tier | Backend | Quota-counted | Lifecycle |
 |---|---|---|---|
-| **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; portraits + world/package covers; ≤2 MB/file |
+| **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; ≤2 MB/file. **Yalnızca paylaşım yolu yazar** (`world_characters` mirror push → [[media_bundler]]); görsel seçmek artık yükleme tetiklemez |
 | **Counted** | Cloudflare R2 `{userId}/{sha}.{ext}` | **Yes** (100 MB/user) | Permanent; user-uploaded maps/SFX/art — *kaldırılacak* |
 | **Transient** | Cloudflare R2 `transient/{userId}/{sha}.{ext}` | **No** (LRU, **5 GB** global, per-user cap YOK) | Auto-evicted by `last_used_at`; multiplayer shared assets |
 | **Pinned** | Cloudflare R2 `pub/{sha}.{ext}` | **No** (5 GB havuz, 500 MB/yayıncı) | Eviction yok; `pub_asset_refs` refcount 0 olunca kuyruğa atılır (089) |
@@ -43,6 +44,10 @@ tags: [system]
 
 ## Key Constants / Invariants
 - Free media **intentionally excluded** from quota (migration 053 invariant).
+- Free tier'a **eager upload yok**: portre/kapak seçimi yalnızca yerel kopya
+  bırakır. Buluta çıkış tek sebeple olur — dünya mirror push'u (portre) ya da
+  marketplace yayını ([[publish_media_pinner]] → `pub/`). Paylaşılmayan içerik
+  hiç yüklenmez.
 - Per-kind limit **yetkilidir**: Worker `KIND_MAX_BYTES[kind] ?? MAX_UPLOAD_BYTES`. `world_pdf` (50 MB) ceiling'in üstünde olduğu için `Math.min` kaldırıldı; bilinmeyen kind hâlâ 20 MB ceiling'e düşer.
 - `application/pdf` Worker MIME allowlist'inde (`ALLOWED_MIME_EXACT`).
 - Transient: per-user cap **yok** (089); dosya başına 100 MB emniyet kapağı (`transient_max_file_bytes()`), global pool 5 GB LRU. Rate: 20 DL/h, 60 UL/h per user.

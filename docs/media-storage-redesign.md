@@ -5,7 +5,10 @@ Durum: **kısmen uygulandı.**
 - ✅ Havuz bütçeleri + `pinned` sınıfı (`pub_assets`, worker `pub/` rotası) — `089_media_pool_budgets.sql`
 - ⬜ Oturum kapısı + talep-üzerine akış (`session_started_at`, `media_shas`, `missing_shas`)
 - ⬜ Counted tier sökümü (client upload yolları, worker PUT 410, kota UI)
-- ⬜ Admin Storage sekmesi (RPC hazır: `get_r2_pool_stats()`)
+- ✅ Admin Storage sekmesi havuz görünümü — `admin_screen.dart` `_R2PoolSection`,
+  `R2PoolStats` / `adminR2PoolStatsProvider` (kullanıcı başına `pinned_bytes` /
+  `transient_bytes` kolonları hâlâ ⬜, `search_users` migration'ı gerekiyor)
+- ✅ Free tier eager upload'ları kaldırıldı — portre/kapak seçimi artık yüklemiyor
 - ✅ Marketplace yayın yolu `pub_asset_reserve`'e bağlandı — `publish_media_pinner.dart`,
   `AssetService.uploadPub`, listing silmede `pub_asset_release`
 
@@ -36,8 +39,14 @@ tek sınır 10 GB'lık global R2 havuzudur.
 | **Pool (R2, 10 GB global)** | Cloudflare R2 | aşağıdaki iki sınıf | Sınıfa göre: `transient` LRU-atılır, `pinned` atılmaz |
 
 Free tier duruyor ama rolü daralıyor: **profil fotoğrafı** için ayrılıyor.
-Cover'lar küçük ve marketplace vitrininde gerektiği için orada kalır; kotadan
-muaf olma invariantı (migration 053) korunur.
+Kotadan muaf olma invariantı (migration 053) korunur.
+
+> [!note] Uygulandı — free tier'a eager upload yok
+> Portre ve kapak seçimi artık hiçbir şey yüklemez, yalnızca yerel kopya
+> bırakır. Bulut kopyası iki paylaşım yolundan doğar: dünya mirror push'u
+> (`media_bundler`, portre) ve marketplace yayını (`publish_media_pinner`,
+> `pub/`). Marketplace vitrini kapağı zaten payload'dan değil, listing satırına
+> yazılan inline base64 küçük resimden geliyor — o yol yerel yolu da çözer.
 
 Counted tier **kaldırılır**. Bkz. "Göç" bölümü.
 

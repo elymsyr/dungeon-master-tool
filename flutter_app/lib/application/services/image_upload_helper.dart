@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import '../../data/network/asset_service.dart';
-import '../../data/network/free_media_service.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 
@@ -131,72 +130,5 @@ Future<({String ref, bool quotaExceeded, bool tooLarge, int? actualBytes})>
       tooLarge: false,
       actualBytes: null,
     );
-  }
-}
-
-/// Uploads a local character portrait to the free-media bucket (quota-exempt)
-/// and returns its `dmt-public://` ref. Same fallback contract as
-/// [uploadEntityImageRef]; [tooLarge] is `true` when the upload was rejected
-/// for exceeding [MediaKind.characterPortrait]'s size limit. When [tooLarge]
-/// is `true`, [actualBytes] carries the rejected file's size for the snackbar.
-Future<({String ref, bool tooLarge, int? actualBytes})>
-    uploadCharacterPortraitRef(
-  FreeMediaService? service, {
-  required String localPath,
-  required String scopeId,
-}) async {
-  if (service == null || !AssetRef(localPath).isLocal) {
-    return (ref: localPath, tooLarge: false, actualBytes: null);
-  }
-  final file = File(localPath);
-  if (!await file.exists()) {
-    return (ref: localPath, tooLarge: false, actualBytes: null);
-  }
-  try {
-    final uri = await service.uploadFreeMedia(
-      file,
-      kind: MediaKind.characterPortrait,
-      scopeId: scopeId,
-    );
-    return (ref: uri.toString(), tooLarge: false, actualBytes: null);
-  } on FreeMediaException catch (e) {
-    final isTooLarge = e.code == 'too_large';
-    int? size;
-    if (isTooLarge) {
-      try {
-        size = await file.length();
-      } catch (_) {}
-    }
-    return (ref: localPath, tooLarge: isTooLarge, actualBytes: size);
-  } catch (_) {
-    return (ref: localPath, tooLarge: false, actualBytes: null);
-  }
-}
-
-/// If `metadata['cover_image_path']` is a local path, uploads it to the
-/// free-media bucket and returns a shallow copy of [metadata] with the value
-/// replaced by the `dmt-public://` ref. Returns [metadata] unchanged when
-/// there is nothing to upload or the upload fails.
-Future<Map<String, dynamic>> uploadCoverImageInMetadata(
-  FreeMediaService? service, {
-  required Map<String, dynamic> metadata,
-  required MediaKind coverKind,
-  required String scopeId,
-}) async {
-  final path = metadata['cover_image_path'];
-  if (service == null || path is! String || !AssetRef(path).isLocal) {
-    return metadata;
-  }
-  final file = File(path);
-  if (!await file.exists()) return metadata;
-  try {
-    final uri = await service.uploadFreeMedia(
-      file,
-      kind: coverKind,
-      scopeId: scopeId,
-    );
-    return {...metadata, 'cover_image_path': uri.toString()};
-  } catch (_) {
-    return metadata;
   }
 }
