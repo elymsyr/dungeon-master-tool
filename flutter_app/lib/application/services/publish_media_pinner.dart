@@ -19,10 +19,12 @@ import 'asset_ref_resolver.dart';
 /// arasında değişiyor, ama medya her zaman bir String yaprağı. Anahtar adına
 /// göre değil **değerin kendisine** göre karar verir (bkz. [isMediaRef]).
 ///
-/// Best-effort: tek tek başarısızlıklar [PublishPinResult.failures]'a düşer ve
-/// o ref eski hâliyle kalır — yayını bloklamaz. Kota hataları
-/// ([PinnedQuotaExceededException]) ise fırlatılır; sessizce yarım yayın
-/// yapmaktansa kullanıcıya "havuz dolu" demek doğrusu.
+/// Tek tek başarısızlıklar [PublishPinResult.failures]'a düşer ve o ref eski
+/// hâliyle (yayıncının local path'i) kalır. Pinner bunu fırlatmaz — hangi
+/// ref'lerin düştüğünü toplamak için gezinti sürer — ama **çağıran yayını
+/// iptal etmeli**: kırık ref'li bir listing indirende sessizce boş açılır.
+/// Bkz. `marketplace_listing_provider.publishSnapshot`. Kota hataları
+/// ([PinnedQuotaExceededException]) gezintiyi anında keser.
 class PublishMediaPinner {
   PublishMediaPinner(this._assets, this._resolver);
 
@@ -38,7 +40,13 @@ class PublishMediaPinner {
     required MediaKind kind,
   }) async {
     final cloned = deepCopyJson(payload) as Map<String, dynamic>;
-    final failures = <String>[];
+    // Set: aynı ref payload'da N kez geçebilir, hata da N kez raporlanmasın.
+    // Daha önemlisi negatif cache — `pub/{sha}` içerik adresli, başarısız bir
+    // upload rollback'te `pub_asset_release` çağırıyor. Aynı ref'i tekrar
+    // denemek aynı sha'yı ikinci kez rezerve edip ikinci kez bıraktırır, yani
+    // evict kuyruğuna aynı sha için ikinci bayat satır atar (bkz. migration
+    // 090). Bir kez patladıysa o ref bu yayında bir daha denenmez.
+    final failures = <String>{};
     final pinned = <String, String>{}; // eski ref → yeni ref (aynı payload'da tekrar)
 
     Future<String?> convert(String raw) async {
@@ -71,6 +79,7 @@ class PublishMediaPinner {
         return null;
       }
       if (node is String && isMediaRef(node)) {
+        if (failures.contains(node)) return null;
         try {
           return await convert(node);
         } on PinnedQuotaExceededException {
@@ -85,7 +94,7 @@ class PublishMediaPinner {
     }
 
     await walk(cloned);
-    return PublishPinResult(cloned, failures, pinned.length);
+    return PublishPinResult(cloned, failures.toList(), pinned.length);
   }
 
   /// Pin edilmesi gereken bir medya ref'i mi? Public: gezgindeki tek dallanma
