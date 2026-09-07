@@ -1144,6 +1144,14 @@
     }
   },
   "publishDialogNoChanges": "No changes since last snapshot.",
+  "publishDialogMediaPinFailed": "{count} media file(s) could not be uploaded, so the listing was not published. Please try again.",
+  "@publishDialogMediaPinFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "publishDialogFailed": "Publish failed: {error}",
   "@publishDialogFailed": {
     "placeholders": {

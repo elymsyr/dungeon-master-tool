@@ -1093,6 +1093,14 @@
     }
   },
   "publishDialogNoChanges": "Son snapshot'tan beri değişiklik yok.",
+  "publishDialogMediaPinFailed": "{count} medya dosyası yüklenemedi, bu yüzden yayın yapılmadı. Lütfen tekrar deneyin.",
+  "@publishDialogMediaPinFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "publishDialogFailed": "Yayınlama başarısız: {error}",
   "@publishDialogFailed": {
     "placeholders": {

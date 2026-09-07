@@ -157,10 +157,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         if (res.failures.isNotEmpty) {
           debugPrint('publish: ${res.failures.length} medya pinlenemedi '
               '— ${res.failures.take(3)}');
-          throw Exception(
-            '${res.failures.length} media file(s) could not be uploaded; '
-            'the listing was not published. Try again.',
-          );
+          throw PublishMediaPinFailure(res.failures.length);
         }
       }
 
