@@ -150,9 +150,17 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
               : MediaKind.worldEntityImage,
         );
         payload = res.payload;
+        // Pinlenemeyen ref payload'da ESKİ hâliyle kalıyor — yani yayıncının
+        // local dosya yolu. Öyle bir listing indirende kırık açılır, üstelik
+        // sessizce: yayın "başarılı" görünür. Yarım yayın yapmaktansa
+        // patlat; catch bloğu pinlenmiş ref'leri zaten geri bırakıyor.
         if (res.failures.isNotEmpty) {
           debugPrint('publish: ${res.failures.length} medya pinlenemedi '
-              '(eski ref korundu) — ${res.failures.take(3)}');
+              '— ${res.failures.take(3)}');
+          throw Exception(
+            '${res.failures.length} media file(s) could not be uploaded; '
+            'the listing was not published. Try again.',
+          );
         }
       }
 

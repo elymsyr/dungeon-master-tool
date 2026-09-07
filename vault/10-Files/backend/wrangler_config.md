@@ -5,7 +5,7 @@ path: cloudflare/wrangler.toml
 layer: backend
 language: toml
 status: stable
-updated: 2026-06-09
+updated: 2026-09-07
 tags: [file]
 ---
 
@@ -38,6 +38,7 @@ tags: [file]
   - `USER_QUOTA_BYTES = 104857600` (100 MB combined cloud_backups + community_assets)
   - `DOWNLOAD_LIMIT_PER_HOUR = 20`
   - `UPLOAD_LIMIT_PER_HOUR = 60`
+- `[triggers] crons = ["0 * * * *"]` — saatlik `scheduled()` tetikleyicisi; `transient_evict_queue`'yu boşaltır. Kuyruğu başka hiçbir şey otomatik boşaltmıyordu, `/transient/evict-sweep` yalnızca elle POST ediliyordu ve R2'da yetim obje birikiyordu. Bkz. [[worker]].
 - `[[ratelimits]] CATALOG_RL` (namespace 1001, 300/60s) — public catalog GET; KV sayacı kullanmaz.
 - Not in this file but read by the Worker: `ADMIN_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY` — provided as wrangler secrets.
 

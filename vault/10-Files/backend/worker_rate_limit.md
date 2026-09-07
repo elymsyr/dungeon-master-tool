@@ -5,7 +5,7 @@ path: cloudflare/src/rate_limit.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-06-09
+updated: 2026-09-07
 tags: [file]
 ---
 
@@ -36,6 +36,8 @@ tags: [file]
 
 ## Notes
 - Not atomic (read-then-write); under heavy concurrency the limit can be slightly overshot — acceptable for this abuse-prevention use case.
-- KV free plan allows ~1k writes/day; the hourly bucket keeps writes low, but >1k active users requires the Workers Paid plan (per ONLINE_REPORT §10.2 cited in source).
+- KV free plan allows ~1k writes/day. **Her `allowed` çağrı bir write yapar** — saatlik bucket write sayısını düşürmez, sadece key sayısını düşürür. Kota dolunca `kv.put()` fırlatır.
+- **Fail-open (2026-09-07):** `put()` hatası yutulur ve istek geçirilir (`console.warn('rate_limit_kv_write_failed', ...)`). Sebep: kota dolduğunda fırlatılan hata `worker.ts`'in dış catch'ine düşüp **her upload/download'ı 500 `internal_error`** yapıyordu — yayın sırasında medya pinlenemiyordu. Limiter bir abuse freni, güvenlik sınırı değil; kapalı kalması kabul edilemez.
+- Kalıcı çözüm `dl`/`ul` için de platform rate limiter binding'ine geçmek (catalog'un yaptığı gibi) ya da Workers Paid.
 - Limits configured in [[wrangler_config]]: `DOWNLOAD_LIMIT_PER_HOUR`, `UPLOAD_LIMIT_PER_HOUR`.
 - **Public catalog GET bu modülü kullanmaz** — `[[ratelimits]] CATALOG_RL` binding'ine taşındı (2026-09-07). Sebep: her çağrı bir KV write ve free tier günde 1000 write veriyor; kart görselleri geldikten sonra tek paket kurulumu bunu tek başına aşıyordu.
