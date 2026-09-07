@@ -7,7 +7,7 @@ Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Sy
 ## Bir cümlede
 
 Dünya buluta hiç çıkmaz; cihazdan cihaza taşıma yalnızca LAN sync'tir. Buluttaki
-medya iki sebebe indirgenir: **online oturumda DM'in paylaştığı şey** ve
+medya iki sebebe indirgenir: **açık bir oturumda DM'in paylaştığı şey** ve
 **marketplace'e yayınlanan içerik**. Kullanıcı başına kota diye bir şey kalmaz;
 tek sınır 10 GB'lık global R2 havuzudur.
 
@@ -44,10 +44,10 @@ Counted tier **kaldırılır**. Bkz. "Göç" bölümü.
 > İkisi tek 10 GB'ı paylaşırsa, `pinned` büyüdükçe LRU'nun yiyebileceği alan
 > sıfıra iner ve paylaşımlar sessizce patlamaya başlar. Bütçe **ayrı** tutulur:
 >
-> - `pinned` tavanı: **7 GB**. Dolduğunda yeni marketplace yayını *reddedilir*
+> - `pinned` tavanı: **5 GB**. Dolduğunda yeni marketplace yayını *reddedilir*
 >   (`pool_full` hatası, admin müdahalesi gerekir). Transient hiç etkilenmez.
-> - `transient` rezervi: **≥ 3 GB**, kendi içinde LRU. Kapasite dolduğunda
->   `transient_reserve` en eskiyi atar — bugünkü davranış aynen sürer.
+> - `transient` rezervi: **5 GB**, kendi içinde LRU. Kapasite dolduğunda
+>   `transient_pool_cap_bytes()` en eskiyi atar — bugünkü davranış aynen sürer.
 >
 > Yani "alan dolarsa en eski silinir" kuralı **yalnızca transient dilime** uygulanır.
 
@@ -59,20 +59,77 @@ tamamen gider. Kullanıcı dünyasını istediği kadar büyütür — hepsi yer
 cihazlar arası LAN sync ile taşınır. Bulutta yer tutmadığı için sayılacak bir şey
 de yoktur.
 
-Havuz tarafındaki iki sınır **kota değil, paylaşılan kaynakta adalet koruması**:
+**Transient'te kullanıcı başı sınır da yoktur.** Bir DM bir şey paylaştığında
+oyuncular onu indirir ve yerelde tutar; obje sonradan LRU'dan düşse bile kimse
+bir şey kaybetmez. Havuz genelinde LRU zaten *en eski* dokunulanı atar, yeni
+yükleneni değil — tek bir masanın anlık yükü, başka masaların taze içeriğini
+öldürmez. Kalan tek sınırlar sunucu tarafı korumadır:
 
 | Sınır | Ne için | Dolunca ne olur |
 |---|---|---|
-| transient, kullanıcı başı **100 MB** | tek bir DM'in 3 GB'lık transient dilimi tek başına yiyip başka masaların paylaşımlarını LRU'ya attırmasını engeller | o DM'in **kendi** en eski paylaşılmış asset'i atılır; kullanıcıya hata gösterilmez, kalıcı bir şey kaybolmaz (DM tekrar paylaşınca geri yüklenir) |
-| pinned, kullanıcı başı **500 MB** | tek bir yayıncının 7 GB'lık marketplace dilimini tüketmesini engeller | yeni yayın reddedilir, açık hata mesajı verilir (mevcut listing'ler etkilenmez) |
+| pinned, kullanıcı başı **500 MB** | tek bir yayıncının 5 GB'lık marketplace dilimini tüketmesini engeller | yeni yayın reddedilir, açık hata mesajı verilir (mevcut listing'ler etkilenmez) |
 
-İkisi de yerel içeriğe dokunmaz. Kullanıcının "şu kadar alanım var" diye
+Buna ek olarak transient'te **dosya başına 100 MB** tavanı durur
+(`transient_max_file_bytes()`); bu bir kota değil, tek bir upload'ın havuzu
+sarsmasını engelleyen bir emniyet kapağıdır.
+
+Hiçbiri yerel içeriğe dokunmaz. Kullanıcının "şu kadar alanım var" diye
 yöneteceği bir bütçesi yoktur; bu sayılar yalnızca sunucu tarafı korumadır ve
 UI'da kota göstergesi olarak sunulmaz.
 
 ## Ne bulut'a çıkar, ne çıkmaz
 
 ### Online oturum (multiplayer)
+
+#### Oturum kapısı — transient yalnızca oturum açıkken yazılır
+
+Bir dünyanın "online" olması ile **oyunun oynanıyor olması** aynı şey değil. DM
+kampanyayı haftalarca tek başına hazırlar; bu hazırlığın buluta çıkması için
+sebep yok. Bu yüzden transient havuzu bir **oturum** kapısının arkasındadır.
+
+**Oturum = `worlds.session_started_at TIMESTAMPTZ NULL`.** Tek bir kolon; ayrı
+tablo yok. `NULL` → oturum kapalı, `NOT NULL` → oturum açık. DM
+`session_start(world_id)` / `session_end(world_id)` RPC'leri ile çevirir
+(yalnızca `role = 'dm'`).
+
+| | Oturum kapalı | Oturum açık |
+|---|---|---|
+| Kart paylaşma (`entity_shares` satırı + `payload_json`) | **evet** — yazılır, oyunculara gider | evet |
+| Kart medyasının transient'e yüklenmesi | **hayır** | evet, talep üzerine |
+| DM'in yerel değişiklikleri | yerelde, her zaman | yerelde, her zaman |
+| Karakter medyası (`pinned`) | evet | evet |
+
+Yani "paylaş" dediği şey kaybolmaz: satır durur, oyuncu kartın **gövdesini**
+görür; eksik olan sadece görseldir ve oturum açılınca gelir. Oturum kapanınca
+hiçbir şey silinmez — objeler LRU sırasına düşer ve zamanı gelince atılır.
+
+#### Medya talebe göre yüklenir (DM push değil, oyuncu pull)
+
+Oturum açıldığında DM'in bütün paylaşılmış medyasını topluca yüklemesi havuzun
+en büyük israfı olurdu: oyuncuların çoğunda o dosyalar geçen oturumdan zaten
+yerelde. Onun yerine eksik listesi **oyuncudan** gelir:
+
+1. Paylaşım satırı medyayı **sha listesi** olarak taşır
+   (`entity_shares.media_shas TEXT[]`) — bayt değil, sadece kimlik.
+2. Oyuncu satırı uygular; yerelinde olmayan sha'ları kendi üyelik satırına yazar:
+   `world_members.missing_shas TEXT[]`. **Yeni abone tablo gerekmez** —
+   `world_members` zaten beş abone tablodan biri.
+3. DM bu güncellemeyi görür, yalnızca listedeki sha'ları transient'e yükler,
+   sonra sha'yı listeden düşürür.
+4. Oyuncu indirir, yerele yazar. Aynı dosyayı bir daha hiç istemez.
+
+Sonuç: havuza yalnızca **o an gerçekten birine eksik olan** bayt girer, ve
+oturumun ikinci haftasında transient yükü neredeyse sıfırdır.
+
+#### İstisna — karakter yaratımı ve seviye atlama oturum kapısına tabi değil
+
+Oyuncu davetiyeyi aldığı an karakterini yaratabilmeli; DM'in oturum başlatmasını
+beklememeli. Bu yüzden **karakter yaratım/ilerleme kategorilerindeki kartlar
+(aşağıdaki madde 2) oturumdan bağımsız olarak, medyasıyla birlikte paylaşılır.**
+Bunlar dünyanın en küçük medya kümesi (sınıf/ırk/feat ikonları) ve karakter
+akışının çalışması için gerekli; kapının tuttuğu şey haritalar, handout'lar ve
+NPC portreleridir. Aynı talep-üzerine akış burada da geçerlidir, sadece
+`session_started_at` kontrolü atlanır.
 
 1. **Karakterler her zaman sync'tir.** `world_characters` zaten abone tablolar
    arasında; karakter medyası (portre, ekstra görsel) `pinned` olarak yüklenir —
@@ -87,8 +144,10 @@ UI'da kota göstergesi olarak sunulmaz.
      `payload_json = NULL → linked kart` kuralının medyaya uzantısıdır.
    - Kart **dünyaya özgü** (pakette yok) ise gövdesi `entity_shares.payload_json`
      ile, medyası `transient` olarak gider.
-3. **Diğer her şey yalnızca DM paylaşınca.** Oyuncu bir item kazandıysa DM o kartı
-   paylaşır; kartın medyası o an transient'e yüklenir. Dünyanın kalan medyası
+3. **Diğer her şey yalnızca DM paylaşınca — ve yalnızca oturum açıkken.** Oyuncu
+   bir item kazandıysa DM o kartı paylaşır; kartın medyası, biri onu eksik
+   bildirdiğinde transient'e yüklenir. Oturum kapalıysa satır yazılır, medya
+   beklemede kalır. Dünyanın kalan medyası
    (haritalar, NPC portreleri, handout'lar) buluta **hiç çıkmaz**.
 
 Yani transient dilime "dünyanın tüm medyası" değil, **yalnızca paylaşılmış kartların
@@ -123,8 +182,8 @@ yanına), veri `admin_users_remote_ds.dart` üzerinden gelir.
 
 | Gösterilen | Kaynak |
 |---|---|
-| `pinned` kullanılan / 7 GB, obje sayısı, dedup tasarrufu (`SUM(bytes)` vs `SUM(bytes*refcount)`) | `pub_assets` |
-| `transient` kullanılan / 3 GB, obje sayısı, en eski `last_used_at` | transient tabloları |
+| `pinned` kullanılan / 5 GB, obje sayısı, dedup tasarrufu (`SUM(bytes)` vs `SUM(bytes*refcount)`) | `pub_assets` |
+| `transient` kullanılan / 5 GB, obje sayısı, en eski `last_used_at` | transient tabloları |
 | Son 24 s / 7 g eviction sayısı ve atılan bayt | `transient_evict_queue` geçmişi |
 | Free bucket kullanımı (kotasız, bilgi amaçlı) | mevcut `get_system_storage_stats()` |
 
@@ -138,7 +197,7 @@ eklenir (ikisi de `is_admin()` guard'lı, aynı desen).
 detayında gösterilir:
 
 - `pinned_bytes` / 500 MB — yayınladığı marketplace medyası (dedup sonrası payı).
-- `transient_bytes` / 100 MB — o an paylaşımda tuttuğu medya.
+- `transient_bytes` — o an paylaşımda tuttuğu medya (tavanı yok; sıralama için).
 
 Sıralanabilir olmalı: "en çok yer kaplayan 20 kullanıcı" havuz dolduğunda ilk
 bakılacak liste odur.
@@ -148,7 +207,7 @@ bakılacak liste odur.
 - Bir kullanıcının transient'ini boşalt (zararsız — DM tekrar paylaşınca yüklenir).
 - Bir listing'in `pinned` medyasını düşür (moderasyon zaten listing siliyor;
   refcount 0'a inince obje gider, ayrı bir düğmeye gerek yok).
-- Sınırları koddan değil **config'den** okumak: 7 GB / 3 GB / 500 MB / 100 MB
+- Sınırları koddan değil **config'den** okumak: 5 GB / 5 GB / 500 MB / 100 MB dosya
   ayarlanabilir olmalı, yoksa her kalibrasyon deploy gerektirir.
 
 > [!note] Kullanıcıya gösterilmez
@@ -172,13 +231,21 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
 
 ## Bilinen tavanlar
 
+- **Talep-üzerine yükleme ilk görüntülemede gecikme demek.** Oyuncu kartı
+  görür ama görsel bir tur sonra gelir (oyuncu bildirir → DM yükler → oyuncu
+  indirir). Kabul edilen tavan; alternatifi DM'in her şeyi baştan yüklemesi.
+- **DM oturum boyunca online olmalı** — upload'ı DM'in cihazı yapıyor. Zaten
+  oyunu o yürütüyor, ama DM uygulamayı kapatırsa bekleyen `missing_shas`
+  karşılanmaz. Liste kalıcı olduğu için DM döndüğünde tamamlanır.
 - **Transient eviction canlı oturumu bozabilir.** `transient_touch` yalnızca
   indirmede tetiklenir; bir görseli herkes önbelleğe almışsa `last_used_at`
   tazelenmez ve obje atılabilir — sonra katılan oyuncu göremez. Kabul edilen
-  tavan: DM yeniden paylaşınca tekrar yüklenir. Gerçek çözüm, aktif üyeliği olan
-  dünyaların paylaşılmış asset'lerini eviction'dan muaf tutmaktır (o zaman
-  `pinned`/`transient` ayrımı üçe çıkar).
-- **7 GB / 3 GB bölünmesi ve kullanıcı başı 100 MB / 500 MB elle seçilmiş sayılardır.** Ölçüm çıkınca ayarlanır;
+  tavan: oyuncu eksiği bildirir, DM tekrar yükler — talep-üzerine akış bu durumu
+  zaten kendiliğinden onarır. Havuz sıkışırsa bir adım daha var: **oturumu açık
+  olan dünyaların** asset'lerini kurban seçiminden muaf tutmak
+  (`session_started_at IS NULL` filtresi), ki oturum kapısı bunu ücretsiz
+  mümkün kılıyor.
+- **5 GB / 5 GB bölünmesi ve yayıncı başı 500 MB elle seçilmiş sayılardır.** Ölçüm çıkınca ayarlanır;
   `pinned` doluluğu admin panelinde görünmeli, yoksa yayın reddi sürpriz olur.
 - Karakter yaratım kategorilerinin otomatik paylaşımı, dünyaya özgü çok sayıda
   kart varsa büyük bir ilk yükleme olabilir. Paylaşım başına kart/bayt tavanı
@@ -190,10 +257,20 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
   `admin_users_remote_ds.dart` + `get_r2_pool_stats()` / kullanıcı satırlarına
   `pinned_bytes` & `transient_bytes`.
 - `cloudflare/src/worker.ts` — prefix sınıfları, `pub/` rotası, counted PUT 410.
-- `supabase/migrations/` — `pub_assets` + refcount RPC'leri, `transient_reserve`
-  bütçe parametresi, kota RPC'lerinin düşürülmesi.
+- `supabase/migrations/` — `pub_assets` + refcount RPC'leri, havuz bütçe
+  parametreleri, kota RPC'lerinin düşürülmesi; `transient_per_user_cap_bytes()`
+  yerine `transient_max_file_bytes()` (dosya başı), `transient_pool_cap_bytes()`
+  → 5 GB, `transient_per_user_full` kontrolünün kaldırılması
+  (`065_transient_shared_pool.sql` üzerine yeni bir migration).
+- `supabase/migrations/` — oturum kapısı: `worlds.session_started_at`,
+  `session_start()` / `session_end()` RPC'leri, `entity_shares.media_shas`,
+  `world_members.missing_shas` (+ oyuncunun kendi satırını güncellemesi için RLS).
 - `flutter_app/lib/application/services/entity_share_prepare.dart` — yaratım
-  kategorilerinin otomatik kapanışı, medya sınıfı seçimi.
+  kategorilerinin otomatik kapanışı, medya sınıfı seçimi, oturum kapalıyken
+  upload'ın atlanması (sha listesi yine de yazılır).
+- `flutter_app/lib/application/services/world_mirror_applier.dart` — oyuncu
+  tarafında eksik sha tespiti → `missing_shas` yazımı; DM tarafında bu listeyi
+  görüp upload etme.
 - `flutter_app/lib/data/network/asset_service.dart`, `entity_image_upload.dart`,
   `map_image_upload.dart`, `pdf_library_service.dart` — counted yolunun sökülmesi.
 - `marketplace_cover_sync_service.dart` + paket yayın yolu — `pub/{sha}` dedup.
