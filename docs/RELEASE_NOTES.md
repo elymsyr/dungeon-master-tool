@@ -1,5 +1,63 @@
 # Release Notes
 
+## Dungeon Master Tool v15.5.0 — Publishing Tells You the Truth (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.5.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Publishing to the Marketplace used to be able to succeed with pictures missing — the listing looked fine to you and opened blank for whoever downloaded it. It no longer does that: if any image cannot be uploaded, publishing stops and tells you how many failed, in your own language. Nothing you have to do; the change applies to your next publish.
+
+---
+
+### Highlights
+
+- **Publishing no longer half-succeeds** — a listing is published only when every one of its images made it to the cloud.
+
+---
+
+### Marketplace
+
+#### A publish either takes all your art or none of it
+
+When you publish a world or a package, its images are uploaded first. If even one of them fails — a dropped connection, a file that has since been moved or deleted on your device — the publish is cancelled and you get a message naming how many files failed. Previously the listing went out with the failed images still pointing at files on your own machine, which meant it opened without art for everyone who downloaded it, with no sign anything had gone wrong.
+
+Anything that did upload before the failure is released again, so a cancelled publish leaves nothing behind. Just fix the missing file (or retry on a better connection) and publish again.
+
+---
+
+### Smaller improvements
+
+- **l10n** — new message for a cancelled publish, translated in English, Turkish, German and French.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.4.0` → `15.5.0`.
+- **In-app migrations:** None. No local schema changes.
+- **Backwards-compat caveat:** listings published before this release may still contain images that never reached the cloud; re-publish them if they open without art.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+
+---
+
+### For developers
+
+- **`PublishMediaPinFailure`** — thrown by `publishSnapshot` when `PublishMediaPinner` reports any failed ref; carries the count only, so the message is localized at the dialog.
+- **Retry safety** — a failed ref is not retried within the same publish; retrying would reserve and release the same content-addressed object twice and enqueue a second stale eviction row.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.4.0 — Peek at Any Card (Beta)
 
 **Release date:** September 2026
