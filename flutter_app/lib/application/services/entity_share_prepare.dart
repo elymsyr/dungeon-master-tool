@@ -8,7 +8,7 @@ import '../../domain/value_objects/relation_value.dart';
 import '../providers/entity_provider.dart';
 import '../providers/entity_share_provider.dart';
 import 'entity_image_upload.dart';
-import 'pending_write_buffer.dart';
+import 'shared_media_courier.dart';
 
 /// Shares an entity with all players, making it actually usable on the
 /// remote side:
@@ -16,10 +16,12 @@ import 'pending_write_buffer.dart';
 ///  1. Walks the relation graph from [entityId] (transitive closure) so
 ///     linked entities the card points at get shared too — otherwise the
 ///     player sees a card with dangling relation rows.
-///  2. Eager-uploads every still-local image (portrait, gallery, and
-///     `image`-type custom fields) of each non-linked entity in the closure
-///     to cloud storage, rewrites the entity to cloud refs, and drains the
-///     outbox — so the player can actually resolve the images.
+///  2. Rewrites every still-local image (portrait, gallery, and `image`-type
+///     custom fields) **in the payload only** to a content-addressed
+///     `dmt-transient://{sha}{ext}` ref. Nothing is uploaded here and the
+///     DM's own entity is left untouched — the bytes travel later, and only
+///     for the SHAs a player actually reports missing
+///     ([SharedMediaCourier] / [MissingMediaReporter]).
 ///  3. Inserts the world-wide `entity_shares` rows.
 ///
 /// Linked (package / built-in) entities are traversed THROUGH (to discover
@@ -66,36 +68,16 @@ Future<void> shareEntityWithPlayers(
     }
   }
 
-  // Eager-upload images for every non-linked entity in the closure.
-  var anyPushed = false;
-  for (final id in closure) {
-    final e = entities[id];
-    if (e == null || e.linked) continue;
-    final pushed = await _uploadEntityImages(
-      ref,
-      e,
-      imageKeys[e.categorySlug] ?? const [],
-    );
-    anyPushed = anyPushed || pushed;
-  }
-  if (anyPushed) {
-    // Yerel debounce'u boşalt: paylaşım payload'ı Drift'teki güncel satırdan
-    // kurulacak, bekleyen yazma varsa bayat kopya paylaşılırdı.
-    await ref
-        .read(pendingWriteBufferProvider)
-        .flushPrefix('entity:$worldId:');
-  }
-
   // Insert the share rows. Cascade is limited to non-linked entities; the
   // entry entity is shared regardless.
   //
   // Her satır kartın kendi JSON'unu taşır: `world_entities` aynası artık yok,
-  // oyuncunun tek içerik kaynağı bu payload. Entity'ler yeniden okunur çünkü
-  // yukarıdaki görsel yükleme adımı onları cloud ref'lerine göre yeniden
-  // yazmış olabilir — bayat kopya paylaşmak, oyuncuda çözülemeyen resim demek.
-  final fresh = ref.read(entityProvider);
+  // oyuncunun tek içerik kaynağı bu payload. Yerel görseller payload'da
+  // içerik-adresli transient ref'e çevrilir; baytlar DM'in diskinde kalır ve
+  // ancak bir oyuncu eksik bildirince yüklenir.
+  final courier = ref.read(sharedMediaCourierProvider);
   for (final id in closure) {
-    final e = fresh[id] ?? entities[id];
+    final e = entities[id];
     if (e == null) continue;
     if (e.linked && id != entityId) continue;
     try {
@@ -104,12 +86,36 @@ Future<void> shareEntityWithPlayers(
         worldId: worldId,
         // Linked (paket/built-in) kartın gövdesi zaten oyuncunun kurulu
         // paketinden geliyor; payload göndermek kopya olurdu.
-        payload: e.linked ? null : entityToRaw(e),
+        payload: e.linked
+            ? null
+            : await _payloadWithTransientRefs(
+                courier,
+                e,
+                imageKeys[e.categorySlug] ?? const [],
+              ),
       );
     } catch (err) {
       debugPrint('shareEntityWithPlayers: share $id failed: $err');
     }
   }
+}
+
+/// [e]'nin paylaşım gövdesi — yerel medya yolları `dmt-transient://{sha}{ext}`
+/// ile değiştirilmiş hâlde. Yükleme YOK, kalıcı yazma YOK: DM'in kendi satırı
+/// yerel yollarını korur, baytlar [SharedMediaCourier.serve] ile talep üzerine
+/// çıkar. Okunamayan bir dosya olduğu gibi bırakılır (oyuncuda çözülemez —
+/// zaten kopyası olmayan bir dosyaydı).
+Future<Map<String, dynamic>> _payloadWithTransientRefs(
+  SharedMediaCourier courier,
+  Entity e,
+  List<String> imageFieldKeys,
+) async {
+  final remap = <String, String>{};
+  for (final path in localMediaPathsOf(e, imageFieldKeys)) {
+    final ref = await courier.refFor(path);
+    if (ref != null) remap[path] = ref;
+  }
+  return entityToRaw(remapEntityMedia(e, remap, imageFieldKeys));
 }
 
 /// Stops sharing a single entity with players. No cascade unshare —
@@ -204,59 +210,6 @@ Future<Map<String, String>> prepareEntityImagesForProjection(
   }
 
   return transientRemap;
-}
-
-/// Uploads every still-local image of [e] to cloud storage and persists the
-/// rewritten entity. Returns true when at least one ref actually changed.
-Future<bool> _uploadEntityImages(
-  WidgetRef ref,
-  Entity e,
-  List<String> imageFieldKeys,
-) async {
-  // Gather distinct local paths across portrait / gallery / image fields.
-  final localPaths = <String>{};
-  void scan(String s) {
-    if (s.isNotEmpty && AssetRef(s).isLocal) localPaths.add(s);
-  }
-
-  scan(e.imagePath);
-  e.images.forEach(scan);
-  for (final k in imageFieldKeys) {
-    for (final v in _asStringList(e.fields[k])) {
-      scan(v);
-    }
-  }
-  if (localPaths.isEmpty) return false;
-
-  final ordered = localPaths.toList();
-  final result = await eagerUploadEntityImages(ref, ordered);
-  final remap = <String, String>{};
-  for (var i = 0; i < ordered.length; i++) {
-    remap[ordered[i]] = result.refs[i];
-  }
-  // Offline / quota-full → refs come back unchanged; nothing to persist.
-  if (!remap.entries.any((en) => en.key != en.value)) return false;
-
-  String repl(String s) => remap[s] ?? s;
-  final newImages = e.images.map(repl).toList();
-  final newFields = Map<String, dynamic>.from(e.fields);
-  for (final k in imageFieldKeys) {
-    final v = e.fields[k];
-    if (v is List) {
-      newFields[k] = v.map((x) => x is String ? repl(x) : x).toList();
-    } else if (v is String && v.isNotEmpty) {
-      newFields[k] = repl(v);
-    }
-  }
-
-  ref.read(entityProvider.notifier).update(
-        e.copyWith(
-          imagePath: repl(e.imagePath),
-          images: newImages,
-          fields: newFields,
-        ),
-      );
-  return true;
 }
 
 List<String> _asStringList(dynamic v) {

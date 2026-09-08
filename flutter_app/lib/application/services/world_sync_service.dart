@@ -30,6 +30,9 @@ class WorldSyncService {
   /// worldId → ardışık resubscribe denemesi sayısı (exponential backoff).
   final Map<String, int> _retryCounts = {};
 
+  /// worldId → "kendim dışında en az bir üye kanalda" (oturum kapısı).
+  final Map<String, bool> _sessionOpen = {};
+
   /// Aynı anda açık tutulabilecek kanal sayısı tavanı (R3). Normalde aktif
   /// dünya provider dispose'da unsubscribe eder → ~1 kanal; bu tavan uzun
   /// oturumda dünya gezerken kazara sızıntıya karşı defansif ağ.
@@ -41,6 +44,23 @@ class WorldSyncService {
   /// payload'ları yayar. UI/sync hook'ları dinler.
   final _events = StreamController<WorldSyncEvent>.broadcast();
   Stream<WorldSyncEvent> get events => _events.stream;
+
+  /// Oturum kapısı — `(worldId, open)` yalnızca DEĞİŞTİĞİNDE yayılır.
+  ///
+  /// "Oturum açık" = kanalda benden başka en az bir üye var. Buton, kolon ya
+  /// da RPC yok: `dmt:world:{id}` kanalı zaten hem DM'de hem oyuncuda açık,
+  /// Supabase Presence onun üstünde bedava geliyor — DM oturum başlatmayı
+  /// unutamaz, çünkü başlatacağı bir şey yok.
+  ///
+  /// Sunucu tarafı zorlaması DEĞİL: presence Postgres'ten okunamaz, bir RPC
+  /// "oturum kapalıyken transient'e yazma" diye reddedemez. Kapı bir güvenlik
+  /// sınırı değil, israf önleyici — transient'e yazan tek şey DM'in kendi
+  /// client'ı ve dosya başı 100 MB + havuz LRU emniyet kapağı zaten duruyor.
+  final _sessions = StreamController<({String worldId, bool open})>.broadcast();
+  Stream<({String worldId, bool open})> get sessions => _sessions.stream;
+
+  /// [worldId] için oturum açık mı (kanal yoksa / presence boşsa false).
+  bool isSessionOpen(String worldId) => _sessionOpen[worldId] ?? false;
 
   bool isSubscribed(String worldId) => _channels.containsKey(worldId);
 
@@ -69,7 +89,16 @@ class WorldSyncService {
       await unsubscribe(oldest);
     }
 
-    final channel = client.channel('dmt:world:$worldId');
+    // Presence key = kullanıcı id'si, böylece `presenceState()` anahtarları
+    // doğrudan üye kimlikleri olur ve "benden başkası var mı" tek karşılaştırma.
+    final selfUid = client.auth.currentUser?.id ?? '';
+    final channel = client.channel(
+      'dmt:world:$worldId',
+      opts: RealtimeChannelConfig(key: selfUid, enabled: selfUid.isNotEmpty),
+    );
+    if (selfUid.isNotEmpty) {
+      channel.onPresenceSync((_) => _updateSession(worldId, channel, selfUid));
+    }
     final filter = PostgresChangeFilter(
       type: PostgresChangeFilterType.eq,
       column: 'world_id',
@@ -103,6 +132,12 @@ class WorldSyncService {
         case RealtimeSubscribeStatus.subscribed:
           // Her SUBSCRIBED'da catch-up — ilk bağlanma + her reconnect.
           _retryCounts.remove(worldId);
+          if (selfUid.isNotEmpty) {
+            // track() ancak SUBSCRIBED sonrası gönderilebilir. Hata yutulur:
+            // presence düşerse kapı kapanır, veri kaybı olmaz (bekleyen
+            // `missing_shas` kalıcı, bağlantı dönünce karşılanır).
+            channel.track({'uid': selfUid}).ignore();
+          }
           _onSubscribedCbs[worldId]?.call();
         case RealtimeSubscribeStatus.channelError:
         case RealtimeSubscribeStatus.timedOut:
@@ -138,6 +173,17 @@ class WorldSyncService {
     });
   }
 
+  /// Presence state'inden oturum kapısını türetir; yalnızca değişimde yayar.
+  void _updateSession(String worldId, RealtimeChannel channel, String selfUid) {
+    if (_disposed) return;
+    final open = channel
+        .presenceState()
+        .any((s) => s.key.isNotEmpty && s.key != selfUid);
+    if (_sessionOpen[worldId] == open) return;
+    _sessionOpen[worldId] = open;
+    if (!_sessions.isClosed) _sessions.add((worldId: worldId, open: open));
+  }
+
   Future<void> _removeChannel(String worldId) async {
     final ch = _channels.remove(worldId);
     if (ch == null) return;
@@ -148,6 +194,9 @@ class WorldSyncService {
     _resubTimers.remove(worldId)?.cancel();
     _onSubscribedCbs.remove(worldId);
     _retryCounts.remove(worldId);
+    if (_sessionOpen.remove(worldId) == true && !_sessions.isClosed) {
+      _sessions.add((worldId: worldId, open: false));
+    }
     await _removeChannel(worldId);
   }
 
@@ -199,7 +248,9 @@ class WorldSyncService {
     _onSubscribedCbs.clear();
     _retryCounts.clear();
     await unsubscribeAll();
+    _sessionOpen.clear();
     await _events.close();
+    await _sessions.close();
   }
 }
 

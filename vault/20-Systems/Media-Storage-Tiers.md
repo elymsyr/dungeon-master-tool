@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-09-07
+updated: 2026-09-08
 tags: [system]
 ---
 
@@ -58,3 +58,21 @@ tags: [system]
 ## Related
 - MoCs: [[Media-and-Assets]], [[Backend-Infra]]
 - Source Docs: `flutter_app/docs/security_media_supabase_r2_audit_may21.md`
+
+## Transient artık talep üzerine dolar (2026-09-08, Phase C)
+
+Paylaşım anında hiçbir bayt yüklenmez. Havuza yalnızca **o an gerçekten birine
+eksik olan** dosya girer:
+
+1. DM paylaşırken payload'daki yerel yollar `dmt-transient://{sha}{ext}`'e
+   çevrilir ([[shared_media_courier]]) — baytlar DM'in diskinde kalır.
+2. Oyuncu çözemediği sha'ları `world_members.missing_shas`'e yazar
+   ([[missing_media_reporter]] → `report_missing_shas`, migration 092).
+3. DM CDC ile görür ve **yalnızca istenenleri** `uploadTransientShare` ile
+   yükler — ama sadece `WorldSyncService.isSessionOpen(worldId)` doğruysa
+   (presence'ta DM'den başka üye var). DM tek başına hazırlık yaparken havuz
+   büyümez.
+
+Sonuç: oturumun ikinci haftasında transient yükü neredeyse sıfır — oyuncularda
+dosyalar zaten yerelde. Detay: `docs/media-storage-redesign.md`.
+

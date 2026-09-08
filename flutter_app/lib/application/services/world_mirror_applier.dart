@@ -21,8 +21,10 @@ import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
+import 'missing_media_reporter.dart';
 import 'package_sync_service.dart';
 import 'pending_write_buffer.dart';
+import 'shared_media_courier.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -112,6 +114,10 @@ class WorldMirrorApplier {
   /// down by a role-cache invalidation.
   late final ActiveCampaignNotifier _campaign;
 
+  /// Oyuncu tarafı: paylaşılan kartlarda çözülemeyen transient SHA'ları DM'e
+  /// bildirir ve gelince indirir. DM tarafında hiç tetiklenmez.
+  late final MissingMediaReporter _missingMedia;
+
   WorldMirrorApplier({
     required this.ref,
     required this.mirror,
@@ -119,7 +125,11 @@ class WorldMirrorApplier {
   }) {
     _campaign = ref.read(activeCampaignProvider.notifier);
     _batcher = _EventBatcher(window: _kBatchWindow, onFlush: _flushBatch);
+    _missingMedia = MissingMediaReporter(ref, onResolved: _bumpRevision);
   }
+
+  bool _isDm(String worldId) =>
+      _campaign.cachedWorldRole(worldId) == WorldRole.dm;
 
   PendingWriteBuffer get _buffer => ref.read(pendingWriteBufferProvider);
 
@@ -132,6 +142,7 @@ class WorldMirrorApplier {
     await _sub?.cancel();
     _sub = null;
     _batcher.dispose();
+    _missingMedia.dispose();
   }
 
   /// Batcher penceresi dolunca çağrılır — batch'i SIRALI uygular (paylaşılan
@@ -172,7 +183,13 @@ class WorldMirrorApplier {
 
     // Paylaşılan kartların gövdeleri — payload'ı olmayan satırlar linked
     // kartlar; onların içeriği oyuncunun kurulu paketinden gelir.
-    final data = ref.read(activeCampaignProvider.notifier).data;
+    // DM kendi paylaştığı kartların sahibi: gövde zaten yerelde ve yerel
+    // MEDYA YOLLARIYLA duruyor. Payload'ı geri yazmak o yolları paylaşımın
+    // transient ref'leriyle ezerdi — DM kendi dosyasının nerede olduğunu
+    // kaybederdi.
+    final data = _isDm(worldId)
+        ? null
+        : ref.read(activeCampaignProvider.notifier).data;
     if (data != null && snapshot.shares.isNotEmpty) {
       final raw = data['entities'];
       final Map<String, dynamic> entities;
@@ -189,6 +206,7 @@ class WorldMirrorApplier {
         final payload = _decodeSharePayload(row['payload_json']);
         if (payload != null) entities[id] = payload;
       }
+      _missingMedia.schedule(worldId);
     }
 
     if (snapshot.characters.isNotEmpty) {
@@ -264,6 +282,9 @@ class WorldMirrorApplier {
     if (entityId == null) return;
     final payload = _decodeSharePayload(e.newRecord['payload_json']);
     if (payload == null) return; // linked kart — gövdesi kurulu paketten gelir
+    // DM'de payload'ı geri yazma: kendi satırındaki yerel medya yollarını
+    // paylaşımın transient ref'leriyle ezerdi (bkz. applyInitialState).
+    if (_isDm(e.worldId)) return;
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final raw = data['entities'];
@@ -278,6 +299,7 @@ class WorldMirrorApplier {
     // gönderilmemiş yerel düzenlemesini eski payload'la ezerdi.
     if (_buffer.isPending('entity:${e.worldId}:$entityId')) return;
     entities[entityId] = payload;
+    _missingMedia.schedule(e.worldId);
     _bumpRevision();
   }
 
@@ -503,6 +525,21 @@ class WorldMirrorApplier {
     }
     final selfUid = ref.read(authProvider)?.uid;
     final isSelf = selfUid != null && eventUid == selfUid;
+    // Talep-üzerine medya: bir oyuncunun `missing_shas` listesi değiştiyse DM
+    // yalnızca o SHA'ları transient havuza yükler. Oturum kapısı burada:
+    // presence'ta benden başka kimse yoksa (DM tek başına hazırlık yapıyorsa)
+    // havuza hiçbir şey girmez — liste kalıcı, oturum açılınca karşılanır.
+    if (!isSelf &&
+        e.eventType != PostgresChangeEvent.delete &&
+        _isDm(e.worldId) &&
+        sync.isSessionOpen(e.worldId)) {
+      final shas = (e.newRecord['missing_shas'] as List?)?.whereType<String>();
+      if (shas != null && shas.isNotEmpty) {
+        unawaited(
+          ref.read(sharedMediaCourierProvider).serve(e.worldId, shas),
+        );
+      }
+    }
     if (!isSelf) return;
     // Snapshot role BEFORE invalidation — needed to choose trash vs purge
     // when the membership row just vanished (server-side cascade after a

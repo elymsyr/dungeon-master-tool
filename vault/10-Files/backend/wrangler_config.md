@@ -5,7 +5,7 @@ path: cloudflare/wrangler.toml
 layer: backend
 language: toml
 status: stable
-updated: 2026-09-07
+updated: 2026-09-08
 tags: [file]
 ---
 
@@ -36,7 +36,7 @@ tags: [file]
   - `SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"` (public, also visible client-side)
   - `MAX_UPLOAD_BYTES = 20971520` (20 MB per item ceiling)
   - `USER_QUOTA_BYTES = 104857600` (100 MB combined cloud_backups + community_assets)
-  - `DOWNLOAD_LIMIT_PER_HOUR = 20`
+  - `DOWNLOAD_LIMIT_PER_HOUR = 10000` (2026-09-08'de 20'den yükseltildi — talep-üzerine medyada bir oyuncunun ilk katılışı paylaşılmış her kart görselini tek tek çekiyor, 20'de 429 yiyordu)
   - `UPLOAD_LIMIT_PER_HOUR = 60`
 - `[triggers] crons = ["0 * * * *"]` — saatlik `scheduled()` tetikleyicisi; `transient_evict_queue`'yu boşaltır. Kuyruğu başka hiçbir şey otomatik boşaltmıyordu, `/transient/evict-sweep` yalnızca elle POST ediliyordu ve R2'da yetim obje birikiyordu. Bkz. [[worker]].
 - `[[ratelimits]] CATALOG_RL` (namespace 1001, 300/60s) — public catalog GET; KV sayacı kullanmaz.
