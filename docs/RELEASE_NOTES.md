@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v15.6.0 — Import, Share, and Stream Media (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.6.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release adds three new capabilities: importing world folders directly from your device, sharing individual entities with other players, and streaming media on demand during a session. All three work offline-first and require no account for local use.
+
+---
+
+### Highlights
+
+- **Import world folders from disk** — bring your own world files directly into the app.
+- **Entity sharing** — share characters and other entities with other players.
+- **On-demand media sharing** — media is shared only when needed during a session.
+
+---
+
+### Import
+
+#### Import world folders from disk
+
+You can now import a world folder directly from your device's storage. The app reads the folder structure and creates a new world with all its content. This is useful for sharing worlds offline or moving worlds between devices. Look for the new import option in the admin screen.
+
+### Sharing
+
+#### Entity sharing
+
+You can now share individual entities (characters, items, etc.) with other players. When you share an entity, it becomes available to the recipient's world, including its images and data. Sharing triggers are integrated into the entity sidebar.
+
+### Media
+
+#### On-demand media sharing and session gate
+
+Media is now shared on demand during a session. When a player joins, only the media needed for the current session is transferred, reducing bandwidth and storage usage. A session gate ensures media is only available while the session is active.
+
+---
+
+### Smaller improvements
+
+- **l10n** — new translation keys for import and sharing dialogs in English, Turkish, German, and French.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.5.0` → `15.6.0`.
+- **In-app migrations:** One migration adds a reporting mechanism for missing transient SHAs (idempotent).
+- **Backwards-compat caveat:** existing worlds remain unchanged; new import feature requires storage permissions on Android.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a world they shared on the marketplace, the listing goes away but the uploaded media under `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible effect; needs a cleanup pass (or delete-time media removal).
+
+---
+
+### For developers
+
+- **`SharedMediaCourier`** — manages transfer of media to the transient pool on demand.
+- **`MissingMediaReporter`** — reports unresolved transient SHAs after sharing events.
+- **`BundledWorldsInstaller.importFromDisk`** — new method to import a world folder from device storage.
+- **`EntitySharePrepare`** — enhanced with new triggers for entity sharing.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.5.0 — Publishing Tells You the Truth (Beta)
 
 **Release date:** September 2026
