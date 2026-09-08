@@ -15,15 +15,20 @@ Durum: **kısmen uygulandı.**
   `R2PoolStats` / `adminR2PoolStatsProvider` (kullanıcı başına `pinned_bytes` /
   `transient_bytes` kolonları hâlâ ⬜, `search_users` migration'ı gerekiyor)
 - ✅ Free tier eager upload'ları kaldırıldı — portre/kapak seçimi artık yüklemiyor
-- ⬜ **Phase C — oturum kapısı** (realtime presence) + talep-üzerine akış
-  (`media_shas`, `missing_shas`). Sıradaki iş.
+- ✅ **Phase C — oturum kapısı + talep-üzerine akış** — `092_media_on_demand.sql`
+  (`world_members.missing_shas`, `report_missing_shas` RPC),
+  `world_sync_service` presence, `shared_media_courier.dart` (DM),
+  `missing_media_reporter.dart` (oyuncu). Bkz. "Phase C nasıl uygulandı".
 - ⬜ **Phase D — counted tier sökümü** (client upload yolları, worker PUT 410, kota UI).
-  C'den SONRA; sıra önemli, çünkü counted yolu sökülünce paylaşılan medyanın tek
-  gideceği yer transient olur ve oturum kapısı o zamana kadar durmalı.
+  Sıradaki iş. Paylaşım yolu C'de zaten counted'dan çıktı; kalanlar harita,
+  PDF kütüphanesi, paket entity görselleri ve projeksiyon yolu.
 - ⬜ **Phase E — marketplace medya zip'i** (indirmede toptan, official `art-bundle` deseni). Bkz. son bölüm.
 
 > [!warning] Deploy bekleyenler
 > - `091_admin_delete_releases_media.sql` henüz deploy edilmedi.
+> - `092_media_on_demand.sql` henüz deploy edilmedi. **Client'tan önce gitmeli**:
+>   kolon/RPC yokken `report_missing_shas` hata verir, oyuncu eksik bildiremez ve
+>   paylaşılan resim hiç gelmez.
 > - Launch öncesi **Cloudflare Workers Paid** planına geçilmeli (cron + istek hacmi).
 
 > [!note] Karar değişikliği — pinner artık yayını bloklar
@@ -169,14 +174,18 @@ Oturum açıldığında DM'in bütün paylaşılmış medyasını topluca yükle
 en büyük israfı olurdu: oyuncuların çoğunda o dosyalar geçen oturumdan zaten
 yerelde. Onun yerine eksik listesi **oyuncudan** gelir:
 
-1. Paylaşım satırı medyayı **sha listesi** olarak taşır
-   (`entity_shares.media_shas TEXT[]`) — bayt değil, sadece kimlik.
-2. Oyuncu satırı uygular; yerelinde olmayan sha'ları kendi üyelik satırına yazar:
+1. Paylaşım satırının **gövdesi zaten sha listesidir**: DM paylaşırken yerel
+   yolları `dmt-transient://{sha}{ext}` ref'lerine çevirir (bayt yüklemez).
+2. Oyuncu satırı uygular; çözemediği sha'ları kendi üyelik satırına yazar:
    `world_members.missing_shas TEXT[]`. **Yeni abone tablo gerekmez** —
    `world_members` zaten beş abone tablodan biri.
-3. DM bu güncellemeyi görür, yalnızca listedeki sha'ları transient'e yükler,
-   sonra sha'yı listeden düşürür.
-4. Oyuncu indirir, yerele yazar. Aynı dosyayı bir daha hiç istemez.
+3. DM bu güncellemeyi görür, yalnızca listedeki sha'ları transient'e yükler.
+4. Oyuncu indirir, yerele yazar; listeyi baştan yazar, çözülen sha düşer.
+
+> [!note] Karar değişikliği — `entity_shares.media_shas` yazılmadı
+> Tasarımda ayrı bir sha kolonu vardı. Gerekmedi: gövde zaten içerik-adresli
+> ref taşıyor, yani `payload_json`'ı taramak aynı listeyi veriyor. İkinci bir
+> kolon, aynı gerçeğin ayrışabilen ikinci kopyası olurdu.
 
 Sonuç: havuza yalnızca **o an gerçekten birine eksik olan** bayt girer, ve
 oturumun ikinci haftasında transient yükü neredeyse sıfırdır.
@@ -393,6 +402,82 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
 - `flutter_app/lib/data/network/asset_service.dart`, `entity_image_upload.dart`,
   `map_image_upload.dart`, `pdf_library_service.dart` — counted yolunun sökülmesi.
 - `marketplace_cover_sync_service.dart` + paket yayın yolu — `pub/{sha}` dedup.
+
+## Phase C nasıl uygulandı (2026-09-08)
+
+Tasarımdan üç sapma var, üçü de bir şeyi **eksiltiyor**:
+
+1. **`entity_shares.media_shas` yazılmadı.** Gövde zaten içerik-adresli ref
+   taşıyor; ikinci kolon aynı gerçeğin ayrışabilen kopyası olurdu.
+2. **`world_members` üzerinde self-UPDATE policy'si yok, RPC var.** Düz bir
+   `USING (auth.uid() = user_id)` policy'si oyuncunun kendi `role`'ünü
+   `'dm'` yapmasına izin verirdi — `WITH CHECK` OLD satırı göremiyor.
+   `report_missing_shas` SECURITY DEFINER olarak yalnızca tek kolona dokunur,
+   sha256 hex'i olmayanı eler, tekilleştirir, `max_missing_shas()` (500) ile
+   kırpar.
+3. **Paylaşım artık DM'in kendi kartını hiç yeniden yazmıyor.** Eski yol
+   görselleri yükleyip entity'yi bulut ref'lerine göre kalıcı olarak
+   güncelliyordu; yeni yolda remap **yalnızca payload'da** yapılır. Sebep
+   `prepareEntityImagesForProjection`'daki ile aynı: transient obje LRU ile
+   atılabilir, kalıcı satırda ölü ref bırakmak DM'in kendi resmini kaybetmesi
+   demek. Yan etkisi olarak eager upload + `flushPrefix` + entity re-read
+   adımları silindi.
+
+### Akış
+
+```
+DM "Paylaş"                              entity_share_prepare.dart
+  └─ _payloadWithTransientRefs
+       ├─ localMediaPathsOf(entity)      shared_media_courier.dart
+       ├─ courier.refFor(path)           sha256(stream) → dmt-transient://{sha}{ext}
+       │                                 (sha → yerel yol BELLEKTE tutulur)
+       └─ remapEntityMedia (kopya)  ─▶ entity_shares.payload_json
+                                              │ CDC
+                                              ▼
+Oyuncu   WorldMirrorApplier._applyEntityShareEvent
+           └─ MissingMediaReporter.schedule (2 sn debounce)
+                ├─ collectTransientRefs(blob)      → sha listesi
+                ├─ ContentStore.read / resolver.resolve
+                └─ report_missing_shas RPC   ─▶ world_members.missing_shas
+                                                     │ CDC
+                                                     ▼
+DM       WorldMirrorApplier._applyMembersEvent
+           └─ presence açık mı?  ──hayır──▶ hiçbir şey yükleme
+                    │ evet
+                    └─ courier.serve → uploadTransientShare (yalnız istenenler)
+```
+
+### Oturum kapısı nerede
+
+`WorldSyncService` mevcut `dmt:world:{id}` kanalına presence bağladı: kanal
+`RealtimeChannelConfig(key: uid)` ile açılıyor, `SUBSCRIBED` sonrası
+`track({'uid'})`, `onPresenceSync` → `isSessionOpen(worldId)` = "benden başka
+anahtar var mı". Migration, kolon, düğme yok.
+
+Kapı **tek bir yerde** okunuyor: `_applyMembersEvent`'te upload'dan hemen önce.
+Yani DM tek başına hazırlık yaparken havuza hiçbir şey girmez, ama paylaşım
+satırı yazılır ve oyuncunun `missing_shas` listesi kalıcı olduğu için oturum
+açıldığında karşılanır.
+
+### DM payload'ı kendine geri yazmıyor
+
+`applyInitialState` ve `_applyEntityShareEvent`, rol DM ise gövde enjeksiyonunu
+atlıyor. Eskiden zararsızdı (payload kalıcı bulut ref'leri taşıyordu ve DM'in
+satırı da aynısını taşıyordu); artık payload transient ref taşıdığı için geri
+yazmak DM'in **yerel dosya yollarını ezerdi**.
+
+### Bilinen tavan — yeniden deneme timer'ı
+
+Oyuncunun "baytlar geldi" diye dinleyebileceği bir satır yok:
+`transient_shares` beş abone tablodan biri değil ve olmamalı. Bu yüzden
+`MissingMediaReporter` eksik varken 15 sn'de bir süpürüyor, liste boşalınca
+duruyor. Doğru yükseltme o tabloya abone olmak değil, DM'in yükleme sonrası
+oyuncunun **zaten dinlediği** bir satıra dokunması.
+
+İkinci tavan: `sha → yerel yol` eşlemesi yalnızca bellekte. Uygulama yeniden
+başladıktan sonra gelen ilk talep, dünyanın tüm yerel medyasını bir kez
+hash'liyor (`SharedMediaCourier._reindex`, `ponytail:` ile işaretli). Ölçülür
+bir gecikme olursa sha paylaşım anında `asset_refs` yan tablosuna yazılır.
 
 ## Phase E — marketplace medyası zip olarak iner (karar: 2026-09-07)
 

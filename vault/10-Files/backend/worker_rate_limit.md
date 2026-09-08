@@ -5,7 +5,7 @@ path: cloudflare/src/rate_limit.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-09-07
+updated: 2026-09-08
 tags: [file]
 ---
 
@@ -41,3 +41,9 @@ tags: [file]
 - Kalıcı çözüm `dl`/`ul` için de platform rate limiter binding'ine geçmek (catalog'un yaptığı gibi) ya da Workers Paid.
 - Limits configured in [[wrangler_config]]: `DOWNLOAD_LIMIT_PER_HOUR`, `UPLOAD_LIMIT_PER_HOUR`.
 - **Public catalog GET bu modülü kullanmaz** — `[[ratelimits]] CATALOG_RL` binding'ine taşındı (2026-09-07). Sebep: her çağrı bir KV write ve free tier günde 1000 write veriyor; kart görselleri geldikten sonra tek paket kurulumu bunu tek başına aşıyordu.
+
+## KV free tier'ı bu sayaç dolduruyor (2026-09-08)
+`checkRateLimit` **her authed `/assets/` isteğinde** `kv.put` yapıyor — saatte bir değil, istek başına. Free tier 1000 write/gün, yani hesap genelinde ~1000 medya isteğinden sonra kota biter. Sonucu **kesinti değil**: `put()` hatası yutuluyor (fail-open), istek geçer, kaybolan şey limiter'ın kendisi. Multiplayer koordinasyonu zaten Supabase Realtime üzerinden, worker'a hiç uğramıyor.
+
+Kalıcı çözüm dosyanın kendi yorumunda yazılı: `dl`/`ul`'yi `CATALOG_RL` gibi `[[ratelimits]]` platform binding'ine taşımak (unmetered, KV harcamaz), sonra bu modülü ve `RATE_KV` namespace'ini tamamen silmek. Bedeli iki tane: platform limiter'ında `period` **yalnızca 10 veya 60 saniye** olabiliyor (saatlik limitler dakikalığa döner) ve sayaçlar **per-colo**, global değil. İkisi de bir abuse freni için kabul edilebilir — `CATALOG_RL` bu takası zaten kabul etmiş durumda. **Henüz yapılmadı.**
+

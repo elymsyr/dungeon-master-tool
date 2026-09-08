@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-08-24
+updated: 2026-09-08
 tags: [system, sync, multiplayer]
 ---
 
@@ -39,9 +39,8 @@ Cihazdan cihaza taşıma artık [[LAN-Sync-Flow]]'un işi. Yerel Drift kaynak-do
 DM "Paylaş" der
   └─ shareEntityWithPlayers()            entity_share_prepare.dart
        ├─ ilişki kapanışı (transitive)   — bağlantılı kartlar da paylaşılır
-       ├─ yerel görselleri R2/free-media'ya yükle → AssetRef'e çevir
-       ├─ PendingWriteBuffer.flushPrefix('entity:{worldId}:')
-       │     └─ bayat kopya paylaşılmasın diye
+       ├─ _payloadWithTransientRefs      — yerel yollar → dmt-transient://{sha}{ext}
+       │     └─ YÜKLEME YOK, KALICI YAZMA YOK ([[shared_media_courier]])
        └─ her kapanış üyesi için:
             EntityShareService.shareWithAll(
               entityId, worldId,
@@ -57,6 +56,8 @@ DM "Paylaş" der
 - `entityToRaw` / `entityFromRaw` ([[entity_provider]]) simetrik çifttir; payload şekli campaign blob'undaki `entities` satırının şeklidir. Round-trip koruması: `test/application/services/entity_share_payload_test.dart`.
 - **`payload_json = NULL` → linked (paket / built-in) kart.** Gövdesi oyuncunun kurulu paketinden gelir; kopyalamak fork-on-edit riski ve gereksiz trafik olurdu.
 - Görseller `AssetRef`'e çevrilmeden paylaşılırsa oyuncu çözemez (RLS yok, dosya sistemi yok). `ProjectionOutputOnline._warnRawPaths` debug'da bunu yakalar.
+- **Medya artık paylaşım anında yüklenmez (2026-09-08).** Payload içerik-adresli `dmt-transient://{sha}{ext}` taşır; baytlar DM'in diskinde kalır. Oyuncu çözemediği sha'ları `world_members.missing_shas`'e yazar ([[missing_media_reporter]] → `report_missing_shas`, migration 092), DM CDC ile görüp **yalnızca onları** yükler ([[shared_media_courier]]) — ve yalnızca `WorldSyncService.isSessionOpen` doğruysa. DM tek başına hazırlık yaparken havuza hiçbir şey girmez. Detay: `docs/media-storage-redesign.md` → "Phase C nasıl uygulandı".
+- DM kendi payload'ını geri yazmaz: [[world_mirror_applier]] rol DM ise gövde enjeksiyonunu atlar, aksi halde transient ref'ler DM'in yerel dosya yollarını ezerdi.
 - **Un-share = DELETE.** Applier gövdeyi de düşürür (`_removeSharedEntity`) — aksi halde oyuncuda erişilemez ama duran bir kopya kalırdı. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
 
 ## Yazma yolu — kuyruk yok, doğrudan yazma

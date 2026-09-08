@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: media
-updated: 2026-09-07
+updated: 2026-09-08
 tags: [moc]
 ---
 
@@ -17,6 +17,8 @@ tags: [moc]
 - [[free_media_service]] — fetch free-tier media (quota-exempt).
 - [[first_party_art_service]] — `dmt-art://` kart görselleri (app bundle → R2 catalog).
 - [[entity_image_upload]] — upload entity portrait to media storage.
+- [[shared_media_courier]] — DM tarafı: paylaşılan kartın medyasını talep üzerine transient havuza yükler.
+- [[missing_media_reporter]] — oyuncu tarafı: çözülemeyen transient sha'ları DM'e bildirir, gelince indirir.
 - [[local_media_localizer]] — seçilen her dosyayı içeriğin kendi klasörüne kopyalar; ham seçici yolu hiçbir zaman saklanmaz.
 - [[unused_media_sweeper]] — dünya açılış/kapanışında referanssız yerel medyayı siler.
 - [[entity_media_cleanup_service]] — GC media on entity/world/package delete.

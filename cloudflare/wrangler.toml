@@ -47,5 +47,10 @@ simple = { limit = 300, period = 60 }
 SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"
 MAX_UPLOAD_BYTES = "20971520"           # 20 MB per item
 USER_QUOTA_BYTES = "104857600"          # 100 MB combined (cloud_backups + community_assets)
-DOWNLOAD_LIMIT_PER_HOUR = "20"
+# 20 idi — talep-üzerine medya (Phase C) ile bir oyuncunun dünyaya ilk
+# katılışı paylaşılmış her kart görselini tek tek çekiyor ve 20'de 429 yiyordu.
+# İçerik-adresli oldukları için her dosya bir kez inip kalıcı cache'leniyor,
+# yani burst meşru. Bu sayı bir abuse freni; asıl tavan `transient_max_file_bytes`
+# (dosya başı 100 MB) ve havuz LRU'su.
+DOWNLOAD_LIMIT_PER_HOUR = "10000"
 UPLOAD_LIMIT_PER_HOUR = "60"
