@@ -64,6 +64,9 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 
 ## 2. Act 1 — kapsam ve iskelet
 
+> Kart dökümü: [`lore/canon/act1-kartlar.md`](lore/canon/act1-kartlar.md) (Act 1) ·
+> [`lore/canon/genel-kartlar.md`](lore/canon/genel-kartlar.md) (perdeden bağımsız).
+>
 > Çalışma belgesi: [`lore/canon/act1.md`](lore/canon/act1.md) — açılış, background'lar,
 > Gümüşsu ve ilk savaş orada. Aşağısı perdenin genel çerçevesi.
 
