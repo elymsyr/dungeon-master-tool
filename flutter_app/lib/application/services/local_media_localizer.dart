@@ -36,11 +36,19 @@ class LocalMediaLocalizer {
 
   /// Dünya içeriğinin kendi klasörü.
   static String worldDir(String worldName) =>
-      p.join(AppPaths.worldsDir, worldName);
+      p.join(AppPaths.worldsDir, dirSafe(worldName));
 
   /// Paket içeriğinin kendi klasörü.
   static String packageDir(String packageName) =>
-      p.join(AppPaths.packagesDir, packageName);
+      p.join(AppPaths.packagesDir, dirSafe(packageName));
+
+  /// Ad → klasör adı. Windows'ta `\ / : * ? " < > |` yol adında yasak;
+  /// sanitize edilmezse `Directory.exists` bile ERROR_INVALID_NAME (123)
+  /// fırlatır ve o dünyada her medya işlemi hataya düşer.
+  static String dirSafe(String name) => name
+      .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+      .replaceAll(RegExp(r'[. ]+$'), '')
+      .trim();
 
   /// Tek bir yolu veri kökü altına alır; kopyalanamazsa [path] aynen döner.
   ///
