@@ -14,7 +14,6 @@ import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
-import '../../application/services/pdf_library_service.dart';
 import '../../application/providers/lan_sync_provider.dart';
 import '../dialogs/lan_sync_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -498,24 +497,10 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       // to `dm` on the same tick the publish succeeds.
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(worldId));
-      // PDF kütüphanesini R2'ye yükle + manifest'e yaz ki oyuncular görsün.
-      // Best-effort: yüklenemeyen dosya publish'i iptal etmez.
-      final pdfFailures = await ref
-          .read(pdfLibraryServiceProvider)
-          .shareAll(worldName: campaignName, worldId: worldId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),
       );
-      if (pdfFailures.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              L10n.of(context)!.pdfLibraryShareFailed(pdfFailures.length),
-            ),
-          ),
-        );
-      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

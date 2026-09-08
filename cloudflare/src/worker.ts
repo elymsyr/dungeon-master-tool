@@ -7,7 +7,10 @@
 //   OPTIONS             → CORS preflight
 //
 // R2 prefix sınıfları:
-//   {userId}/...            → counted (kalıcı, kullanıcı kotasına sayılır)
+//   {userId}/...            → RETIRED counted katmanı. GET çalışır (eski
+//                             kopyalar bir sürüm boyunca indirilebilsin),
+//                             PUT 410 döner. Bkz. docs/media-storage-redesign.md
+//                             "Göç" — sonraki sürümde prefix süpürülecek.
 //   transient/{userId}/...  → transient havuz (5 GB, LRU-atılır)
 //   pub/{sha}.{ext}         → pinned marketplace havuzu (5 GB, içerik-adresli,
 //                             dedup'lu, refcount 0 olunca silinir)
@@ -22,7 +25,6 @@ import { JwtError, verifyJwt } from './jwt';
 import { checkRateLimit } from './rate_limit';
 import {
   checkAssetAccess,
-  checkAssetQuota,
   checkPubUploadAllowed,
   checkTransientAccess,
   popTransientEvictQueue,
@@ -36,7 +38,6 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   MAX_UPLOAD_BYTES: string;
-  USER_QUOTA_BYTES: string;
   DOWNLOAD_LIMIT_PER_HOUR: string;
   UPLOAD_LIMIT_PER_HOUR: string;
   // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep +
@@ -78,10 +79,6 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
 const CATALOG_PATH_REGEX = /^\/catalog\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
-
-// Cloud backup (template/world/package) için son 4MB rezerve.
-// Asset (community_assets) upload'ları için effective limit = USER_QUOTA - bu sabit.
-const ASSET_QUOTA_RESERVE_BYTES = 4 * 1024 * 1024;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -240,11 +237,13 @@ async function handleUpload(
   // sonra).
   const isPinned = r2Key.startsWith('pub/');
   const isTransient = r2Key.startsWith('transient/');
-  if (!isPinned) {
-    const requiredPrefix = isTransient ? `transient/${userId}/` : `${userId}/`;
-    if (!r2Key.startsWith(requiredPrefix)) {
-      return jsonResponse(403, { error: 'prefix_mismatch' });
-    }
+  // Sayılan katman kaldırıldı: yeni obje yalnızca `transient/` ve `pub/`
+  // altına yazılır. Eski `{userId}/...` kopyaları GET ile inmeye devam eder.
+  if (!isPinned && !isTransient) {
+    return jsonResponse(410, { error: 'counted_tier_retired' });
+  }
+  if (!isPinned && !r2Key.startsWith(`transient/${userId}/`)) {
+    return jsonResponse(403, { error: 'prefix_mismatch' });
   }
 
   const rl = await checkRateLimit(
@@ -274,38 +273,6 @@ async function handleUpload(
       max_bytes: maxBytes,
       kind: assetKind,
     });
-  }
-
-  // Quota kontrolü YALNIZCA kalıcı (sayılan) upload'lar için. Transient
-  // objeler quota'ya sayılmaz — R2 lifecycle rule ile auto-purge edilir.
-  if (!isTransient && !isPinned) {
-    const quotaLimit = parseInt(env.USER_QUOTA_BYTES, 10);
-    // Asset upload'lar son ASSET_QUOTA_RESERVE_BYTES'i kullanamaz; o alan
-    // template/world/package backup'lara ayrılır.
-    const assetEffectiveLimit = Math.max(
-      0,
-      quotaLimit - ASSET_QUOTA_RESERVE_BYTES,
-    );
-    let quotaOk: boolean;
-    try {
-      quotaOk = await checkAssetQuota(
-        env.SUPABASE_URL,
-        env.SUPABASE_SERVICE_ROLE_KEY,
-        userId,
-        contentLength,
-        assetEffectiveLimit,
-      );
-    } catch (err) {
-      console.error('quota_check_failed', err);
-      return jsonResponse(502, { error: 'quota_check_failed' });
-    }
-    if (!quotaOk) {
-      return jsonResponse(413, {
-        error: 'quota_exceeded',
-        limit_bytes: assetEffectiveLimit,
-        reserved_for_backups_bytes: ASSET_QUOTA_RESERVE_BYTES,
-      });
-    }
   }
 
   const contentType = (request.headers.get('Content-Type') ?? '').toLowerCase();

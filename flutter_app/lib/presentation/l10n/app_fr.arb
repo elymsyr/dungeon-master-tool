@@ -216,9 +216,7 @@
   "landingInfoResetSent": "Si un compte existe pour cette adresse, un lien de réinitialisation a été envoyé.",
   "landingErrOffline": "Vous êtes hors ligne — vérifiez votre connexion Internet.",
   "menuReportBug": "Signaler un bug",
-  "mediaQuotaFull": "Quota de stockage plein — image conservée sur cet appareil.",
   "mediaImageLimitReached": "Jusqu'à {count} images par entité.",
-  "mediaImageTooLarge": "Image trop volumineuse ({actual} Mo, limite {max} Mo) — conservée sur cet appareil, non sauvegardée dans le cloud.",
   "hubBtnMarketplace": "Marché",
   "hubTooltipRefresh": "Actualiser depuis le cloud",
   "hubTooltipFilter": "Filtrer",
@@ -453,14 +451,10 @@
   "pdfLibraryEmpty": "Aucun PDF pour l'instant.",
   "pdfLibraryEmptyHint": "Les fichiers ouverts sont copiés dans ce monde.",
   "pdfLibraryOpenFile": "Ouvrir un fichier",
-  "pdfLibraryShared": "Partagé par le MJ",
-  "pdfLibraryDownload": "Télécharger",
-  "pdfLibraryDownloadFailed": "Échec du téléchargement : {error}",
   "pdfLibraryRemoveTitle": "Retirer le PDF",
   "pdfLibraryRemoveBody": "Retirer « {name} » de ce monde ? Le fichier sera supprimé.",
   "pdfLibraryRemove": "Retirer",
   "pdfLibraryMaxTabs": "Au maximum {count} PDF peuvent être ouverts en même temps.",
-  "pdfLibraryShareFailed": "{count} PDF n'ont pas pu être partagés.",
   "mainCloseSoundpad": "Fermer le Soundpad",
   "mainOpenSoundpad": "Ouvrir le Soundpad",
   "mainCloseCharacters": "Fermer les personnages",
@@ -645,11 +639,19 @@
   "deleteAccountFailed": "Échec de la suppression du compte : {error}",
   "deleteAccountSuccess": "Votre compte a été supprimé. Vos données locales sont toujours sur cet appareil — continuez en tant qu'invité.",
   "@deleteAccountFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountConfirmEmailLabel": "Saisissez {email} pour confirmer",
   "@deleteAccountConfirmEmailLabel": {
-    "placeholders": { "email": { "type": "String" } }
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountPasswordLabel": "Mot de passe actuel",
   "deleteAccountReauthFailed": "Mot de passe incorrect.",

@@ -263,9 +263,6 @@ class PdfLibraryPanel extends ConsumerStatefulWidget {
 class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
   late Future<List<_LibraryRow>> _rows;
 
-  /// İndirilme sırasındaki dosya adları — satır spinner gösterir.
-  final Set<String> _downloading = {};
-
   @override
   void initState() {
     super.initState();
@@ -293,9 +290,8 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
   }
 
   Future<List<_LibraryRow>> _load() async {
-    final svc = ref.read(pdfLibraryServiceProvider);
     final local = await PdfLibraryService.localFiles(widget.worldName);
-    final rows = <_LibraryRow>[
+    return [
       for (final f in local)
         _LibraryRow(
           name: p.basename(f.path),
@@ -303,43 +299,9 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
           size: await f.length(),
         ),
     ];
-    final localNames = rows.map((r) => r.name).toSet();
-    // Paylaşılmış ama henüz inmemiş olanlar.
-    for (final entry in svc.manifest()) {
-      if (entry.name.isEmpty || localNames.contains(entry.name)) continue;
-      rows.add(
-        _LibraryRow(name: entry.name, size: entry.sizeBytes, remote: entry),
-      );
-    }
-    return rows;
   }
 
-  Future<void> _open(_LibraryRow row) async {
-    if (row.path != null) {
-      widget.onOpenFile(row.path!);
-      return;
-    }
-    final entry = row.remote;
-    if (entry == null || _downloading.contains(row.name)) return;
-    setState(() => _downloading.add(row.name));
-    try {
-      final path = await ref
-          .read(pdfLibraryServiceProvider)
-          .download(entry, widget.worldName);
-      if (!mounted) return;
-      widget.onOpenFile(path);
-      _refresh();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.of(context)!.pdfLibraryDownloadFailed('$e')),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _downloading.remove(row.name));
-    }
-  }
+  void _open(_LibraryRow row) => widget.onOpenFile(row.path);
 
   Future<void> _remove(_LibraryRow row) async {
     final l10n = L10n.of(context)!;
@@ -362,10 +324,8 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
     );
     if (confirmed != true || !mounted) return;
     // Açık tab'ı önce kapat — silinen dosyaya bakan viewer kalmasın.
-    if (row.path != null) {
-      final idx = widget.openPaths.indexOf(row.path!);
-      if (idx != -1) widget.onCloseTab(idx);
-    }
+    final idx = widget.openPaths.indexOf(row.path);
+    if (idx != -1) widget.onCloseTab(idx);
     await ref
         .read(pdfLibraryServiceProvider)
         .remove(widget.worldName, row.name);
@@ -424,33 +384,20 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
                   itemCount: rows.length,
                   itemBuilder: (context, i) {
                     final row = rows[i];
-                    final isRemote = row.path == null;
                     return ListTile(
                       dense: true,
-                      leading: _downloading.contains(row.name)
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              isRemote
-                                  ? Icons.cloud_download_outlined
-                                  : Icons.picture_as_pdf,
-                              size: 20,
-                              color: isRemote
-                                  ? palette.sidebarLabelSecondary
-                                  : palette.tokenBorderHostile,
-                            ),
+                      leading: Icon(
+                        Icons.picture_as_pdf,
+                        size: 20,
+                        color: palette.tokenBorderHostile,
+                      ),
                       title: Text(
                         row.name,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 13),
                       ),
                       subtitle: Text(
-                        isRemote
-                            ? '${_formatSize(row.size)} · ${l10n.pdfLibraryShared}'
-                            : _formatSize(row.size),
+                        _formatSize(row.size),
                         style: TextStyle(
                           fontSize: 11,
                           color: palette.sidebarLabelSecondary,
@@ -533,16 +480,10 @@ class _LibraryRow {
   const _LibraryRow({
     required this.name,
     required this.size,
-    this.path,
-    this.remote,
+    required this.path,
   });
 
   final String name;
   final int size;
-
-  /// Local kopyanın yolu; yalnızca paylaşılmış (henüz inmemiş) satırlarda null.
-  final String? path;
-
-  /// Local karşılığı yoksa indirilecek manifest girdisi.
-  final PdfLibraryEntry? remote;
+  final String path;
 }

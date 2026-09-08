@@ -5,35 +5,36 @@ path: flutter_app/lib/application/services/pdf_library_service.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-20
+updated: 2026-09-08
 tags: [file]
 ---
 
 # `pdf_library_service.dart`
 
 > [!abstract] Primary Purpose
-> Bir dünyanın PDF kütüphanesini yönetir: açılan her PDF `{worldsDir}/{worldName}/pdfs/` altına kopyalanır (liste kaynağı **klasörün kendisi** — ayrı tablo yok), dünya online yapıldığında dosyalar R2'ye yüklenir ve `world_settings.settings_json['pdf_library']` manifest'i üzerinden oyunculara duyurulur. Oyuncu manifest satırını **talep üzerine** indirir.
+> Bir dünyanın PDF kütüphanesi: açılan her PDF `{worldsDir}/{worldName}/pdfs/` altına kopyalanır ve liste kaynağı **klasörün kendisi**dir. **Tamamen yerel** — Phase D'de bulut paylaşımı (R2 upload + `settings_json['pdf_library']` manifest'i + oyuncu indirmesi) kaldırıldı. PDF'ler cihazdan cihaza LAN sync ile taşınır; veri kökü altında oldukları için `LanSyncSession._mediaFor` onları zaten kapsıyor.
 
 ## Inputs / Outputs
 **Inputs**
-- Providers: `assetServiceProvider`, `activeCampaignProvider`, `campaignRepositoryProvider`, `appDatabaseProvider`, `syncEngineProvider`
 - Filesystem: `{AppPaths.worldsDir}/{worldName}/pdfs/`
-- Reads: `world_settings.settings_json` (`worldSettingsDao.get`)
+- Providers: yok (servis `const`).
 
 **Outputs**
 - Provider: `pdfLibraryServiceProvider`
-- R2 upload: `AssetService.uploadAsset(kind: MediaKind.worldPdf)` → `dmt-asset://…`
-- Writes: `world_settings.settings_json['pdf_library']`; online dünyada `sync_outbox` (`enqueueWorldSettings`)
+- Public API: `libraryDir(worldName)`, `localFiles(worldName)`, `import(worldName, sourcePath)`, `remove(worldName, fileName)`
+- Writes: yalnızca dosya sistemi. Bulut yazımı yok.
 
 ## Dependencies & Links
-- Depends on: [[asset_importer]], [[asset_service]], `sync_engine.dart` (kaldırıldı), [[world_repository_impl]]
-- Used by: `pdf_sidebar.dart` (`PdfLibraryPanel`), `main_screen.dart`, `player_main_screen.dart`, `save_sync_indicator.dart`, `online_world_section.dart`
+- Depends on: [[asset_importer]], `core/config/app_paths.dart`
+- Used by: `pdf_sidebar.dart` (`PdfLibraryPanel`), `main_screen.dart`, `player_main_screen.dart`, [[bundled_worlds_installer]]
 - Domain map: [[Media-and-Assets]]
-- System flow: [[Media-Storage-Tiers]], [[Share-Broadcast-Flow]]
+- System flow: `docs/media-storage-redesign.md` (Phase D — "Göç"), [[LAN-Sync-Flow]]
 
 ## Key Logic / Variables
-- `manifestKey = 'pdf_library'`. **`world_mirror_applier` bu anahtarı fetch-queue'dan hariç tutar** — aksi hâlde inbound settings'teki her PDF (50MB'a kadar) her oyuncuda eager indirilirdi. `scheduleReindex` tam blob'la çalışır, yani `asset_refs` grafiği eksiksiz kalır.
+- `localFiles()` klasörü tarar, `.pdf` uzantılıları son değişme tarihine göre sıralar.
 - `import()` → `AssetImporter.importOne`; idempotent (aynı ad + aynı boyut = aynı dosya, yeniden kullanılır).
-- `_writeManifest` iki yollu: dünya **açıksa** `activeCampaignProvider.notifier.saveSettingsPatch` (in-memory `_data` + DM gate + outbox); dünya açık **değilse** (hub'dan Make Online) repo'ya doğrudan yazıp merge sonrası **tam blob**'u enqueue eder — cloud satırı full overwrite olduğu için yalnız patch göndermek diğer ayarları silerdi.
-- Silme R2 nesnesini bilerek silmez: manifest'ten düşen ref `asset_refs`'ten çıkar, orphan'ı [[eviction_sweeper]] toplar.
-- `MediaKind.worldPdf` 50MB — Worker `MAX_UPLOAD_BYTES` ceiling'inin (20MB) üstünde; Worker artık per-kind limiti yetkili sayıyor (`KIND_MAX_BYTES[kind] ?? ceiling`, `Math.min` kaldırıldı).
+- `remove()` yalnızca yerel dosyayı siler.
+
+## Notes
+- Kaldırılanlar (Phase D): `share`, `shareAll`, `download`, `manifest`/`manifestOf`/`_writeManifest`, `manifestKey`, `PdfLibraryEntry`, `PdfShareFailure`. `world_pdf` buluttaki en büyük counted kalemdi (50 MB/dosya).
+- **Davranış değişikliği:** online oyuncu artık DM'in PDF'ini uygulama içinden indiremez. Eski dünyaların `settings_json['pdf_library']` girdileri zararsız artık veridir — okuyucusu kalmadı.

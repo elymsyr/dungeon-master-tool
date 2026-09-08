@@ -55,12 +55,6 @@ void main() {
     });
   });
 
-  group('AssetService.maxItemBytes', () {
-    test('is 10 MB — synced with cloud_backup_repository_impl', () {
-      expect(AssetService.maxItemBytes, 10 * 1024 * 1024);
-    });
-  });
-
   group('CommunityAssetRow.fromJson', () {
     test('parses full row', () {
       final row = CommunityAssetRow.fromJson({

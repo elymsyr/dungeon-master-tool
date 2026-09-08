@@ -10,12 +10,10 @@ import '../../../application/services/map_image_upload.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../../domain/value_objects/asset_ref.dart';
-import '../../../domain/value_objects/media_kind.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projectable.dart';
-import '../../widgets/quota_snackbar.dart';
 import 'mind_map_notifier.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
@@ -1287,24 +1285,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (path == null) return;
 
       final oldRef = widget.node.imageUrl;
-      // Eager cloud upload — online world → push to R2; offline / quota-full
-      // → keep the local path.
-      final (ref: uploaded, :quotaExceeded, :tooLarge, :actualBytes) =
-          await uploadMapImage(
-        ref.read,
-        path: path,
-        kind: MediaKind.mindMapImage,
-      );
+      // Buluta yükleme yok — dosya dünyanın `media/` klasörüne kopyalanır.
+      final localPath = await localizeMapImage(ref.read, path);
       if (!mounted) return;
-      widget.notifier.updateNodeImageUrl(widget.node.id, uploaded);
-      if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
-      if (tooLarge && context.mounted) {
-        showImageTooLargeSnackbar(
-          context,
-          maxBytes: MediaKind.mindMapImage.maxBytes,
-          actualBytes: actualBytes,
-        );
-      }
+      widget.notifier.updateNodeImageUrl(widget.node.id, localPath);
       // Replaced an earlier cloud image → best-effort orphan cleanup.
       unawaited(cleanupMapImageRef(
         ref.read,
@@ -1314,39 +1298,17 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     } catch (_) {}
   }
 
-  /// Projects this image node to the player screen. Uploads a still-local
-  /// image to the cloud first so remote players can resolve it.
+  /// Projects this image node to the player screen. A still-local image is
+  /// pushed to the transient pool first so remote players resolve it; the
+  /// returned ref is used for this projection only.
   Future<void> _projectImageNode(BuildContext context) async {
     final initial = widget.node.imageUrl;
     if (initial == null || initial.isEmpty) return;
     var url = initial;
     try {
-      if (AssetRef(url).isLocal) {
-        final (ref: uploaded, :quotaExceeded, :tooLarge, :actualBytes) =
-            await uploadMapImage(
-          ref.read,
-          path: url,
-          kind: MediaKind.mindMapImage,
-          transientFallback: true,
-        );
-        if (!mounted) return;
-        if (uploaded != url) {
-          // Transient ref (quota full) → projection-only, do not persist
-          // onto the node (R2 ~1-day TTL would orphan it).
-          if (!AssetRef(uploaded).isTransient) {
-            widget.notifier.updateNodeImageUrl(widget.node.id, uploaded);
-          }
-          url = uploaded;
-        }
-        if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
-        if (tooLarge && context.mounted) {
-          showImageTooLargeSnackbar(
-            context,
-            maxBytes: MediaKind.mindMapImage.maxBytes,
-            actualBytes: actualBytes,
-          );
-        }
-      }
+      // Transient ref projeksiyona özel — node'a yazılmaz.
+      url = await projectableMapImage(ref.read, url);
+      if (!mounted) return;
     } catch (_) {}
     ref.read(projectionControllerProvider.notifier).addItem(
           ProjectionItemBuilders.image(

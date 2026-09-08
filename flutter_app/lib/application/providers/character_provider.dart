@@ -860,6 +860,15 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         } else {
           await svc.deleteCharacter(id);
         }
+        // Karakterin pinned medyası (ek resimler) bırakılır; son ref gidince
+        // obje havuzdan düşer. Best-effort — silme akışını bozmasın.
+        try {
+          await _ref
+              .read(assetServiceProvider)
+              ?.releasePub(MediaBundler.characterPinKey(id));
+        } catch (e) {
+          debugPrint('character pinned media release error: $e');
+        }
       } catch (e) {
         debugPrint('delete RPC error: $e');
         // Local cleanup'a düş — kullanıcının cihazında en azından silinsin.

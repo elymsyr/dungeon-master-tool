@@ -11,7 +11,6 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
-import '../../application/services/pdf_library_service.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -247,21 +246,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(widget.campaignId));
-      // PDF kütüphanesini de paylaş — best-effort, publish'i iptal etmez.
-      final pdfFailures = await ref.read(pdfLibraryServiceProvider).shareAll(
-            worldName: widget.campaignName,
-            worldId: widget.campaignId,
-          );
       if (!mounted) return;
-      if (pdfFailures.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              L10n.of(context)!.pdfLibraryShareFailed(pdfFailures.length),
-            ),
-          ),
-        );
-      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),
       );

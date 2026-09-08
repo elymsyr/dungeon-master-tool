@@ -23,8 +23,6 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
-import '../../../domain/value_objects/media_kind.dart';
-import '../../widgets/quota_snackbar.dart';
 
 // ---------------------------------------------------------------------------
 // Tool enum
@@ -974,17 +972,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   /// Applies a map image from any source — a freshly picked local path or an
-  /// already-uploaded `dmt-asset://` ref (e.g. a location's `battlemaps`
-  /// entry). `uploadMapImage` is a no-op for non-local refs, so reused refs
-  /// skip R2 traffic but still flow through the same decode/state pipeline.
+  /// already-stored ref (e.g. a location's `battlemaps` entry).
+  /// `localizeMapImage` is a no-op for non-local refs, so reused refs skip the
+  /// copy but still flow through the same decode/state pipeline.
   Future<void> applyMapImage(BuildContext context, String pathOrRef) async {
     final oldRef = state.mapPath;
-    final (ref: stored, :quotaExceeded, :tooLarge, :actualBytes) =
-        await uploadMapImage(
-      _ref.read,
-      path: pathOrRef,
-      kind: MediaKind.battleMap,
-    );
+    final stored = await localizeMapImage(_ref.read, pathOrRef);
     final img = await _loadImageFromFile(stored);
     if (!mounted) return;
     state = state.copyWith(
@@ -997,14 +990,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       encounterId: encounterId,
       mapPath: stored,
     );
-    if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
-    if (tooLarge && context.mounted) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: MediaKind.battleMap.maxBytes,
-        actualBytes: actualBytes,
-      );
-    }
     unawaited(cleanupMapImageRef(
       _ref.read,
       removedRef: oldRef,
