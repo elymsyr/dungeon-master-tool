@@ -171,7 +171,7 @@ Ravenhall'da yok.
 ## 7. Gizli Liman — yer olarak
 
 Dünyanın her yerine açılabilen **gizli bir kapı**. Act 1'in en değerli kaynağı bu
-yüzden burada duruyor: Aethelgard'dan çıkmanın kayıtsız yolu.
+yüzden burada duruyor: Meridia'dan çıkmanın kayıtsız yolu.
 
 **Ad kuralı:** burada karışık ad kullanılır — herkes başka bir yerden gelmiş.
 Takma ad, meslek adı, gemi adı. Halk dili de Latin de duyulur; kurum olmadığı için
@@ -237,13 +237,17 @@ ilgi: kimse ona bir şey sormaz.
 
 ## 8. Bu belgeden çıkan yazım listesi
 
+> Kartların tek tek dökümü: [`act1-kartlar.md`](act1-kartlar.md).
+> Act'tan bağımsız kartlar (giriş kartı, background, evren lore'u):
+> [`genel-kartlar.md`](genel-kartlar.md).
+
 | Kategori | Act 1 açılışı için |
 |---|---|
 | `location` | Gümüşsu (+ kulübe, meyhane), Gizli Liman |
 | `npc` | Gümüşsu kadrosu (4) + üç hasta (1. gün hali) + Gizli Liman kadrosu (5) |
 | `monster` | Dönüşmüş üçlü (3 kart) |
 | `background` | §2'deki 9 background |
-| `item` | Her background'ın evrene özel başlangıç eşyası (9 kalem) |
+| eşya | Her background'ın evrene özel başlangıç eşyası (9 kalem). `item` diye bir kategori yok: `adventuring-gear` · `trinket` · `tool` |
 | `scene` | Köye varış · kulübe sorgusu · şafak dönüşümü · **limana kabul** · **geçiş pazarlığı** |
 | `encounter` | Şafak çatışması |
 | `quest` | "Söylentinin peşinde" (giriş) + "Nereden geldiler" |
