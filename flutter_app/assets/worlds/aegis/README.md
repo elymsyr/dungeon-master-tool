@@ -299,6 +299,15 @@ Kurulum yolu şimdilik **diskten içe aktarma**: Admin → *Import world folder*
 `installed_from: assets` damgalar — yani bundled toggle'ının kaldırma yolu
 bunu da temizler.
 
+Depoyu klonlamadan taşımak için aynı klasörün zip'i de burada duruyor:
+[`aegis-act1.zip`](aegis-act1.zip). Aç, çıkan `aegis-act1/` klasörünü seç —
+zip'in kökünde klasörün kendisi var, içeriği değil. `aegis-act1/` içindeki iki
+dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
+
+```bash
+cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
+```
+
 ### 4.8 Yazılan kartlar (0.1.0)
 
 `aegis-act1/world-blueprint.json` — **38 entity.** Kapsam bilerek dar:
