@@ -17,12 +17,16 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../services/entity_media_cleanup_service.dart';
+import '../services/entity_share_prepare.dart';
 import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
+import '../../domain/entities/online/world_role.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
+import 'entity_share_provider.dart';
+import 'online_worlds_provider.dart';
 import 'event_bus_provider.dart';
 import 'package_link_provider.dart' show packageReferenceOverlayProvider;
 import 'role_provider.dart';
@@ -762,8 +766,30 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
               json: row,
               worldId: worldId,
             );
+        await _pushIfShared(entity.id, worldId);
       },
     );
+  }
+
+  /// Zaten oyuncularla paylaşılmış bir kartın düzenlemesini otomatik iter.
+  /// Debounce'lu write flush'ına asılı, yani her tuş vuruşunda değil, satır
+  /// diske yazıldığında bir kez. Paylaşılmamış kart / offline world / DM
+  /// olmayan kullanıcı → no-op.
+  Future<void> _pushIfShared(String entityId, String? worldId) async {
+    if (worldId == null) return;
+    if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
+    try {
+      if (await _ref.read(currentWorldRoleProvider.future) != WorldRole.dm) {
+        return;
+      }
+      final shares = await _ref.read(worldEntitySharesProvider(worldId).future);
+      if (!shares.any((s) => s.entityId == entityId && s.isWorldWide)) return;
+      await _ref
+          .read(entitySharerProvider)
+          .share(entityId: entityId, worldId: worldId);
+    } catch (e) {
+      debugPrint('entity auto re-share failed for $entityId: $e');
+    }
   }
 
   /// F2: row-level delete. Drops the id from the in-memory blob then

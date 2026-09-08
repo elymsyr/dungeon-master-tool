@@ -13,6 +13,7 @@ import '../../application/providers/entity_sidebar_provider.dart';
 import '../../application/providers/pinned_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../application/services/entity_share_prepare.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
 import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
@@ -1218,6 +1219,16 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final isPhone = getScreenType(context) == ScreenType.phone;
 
+    // Multiplayer dünyada yeni kart doğrudan paylaşılabilir. Varsayılan
+    // tier'a bağlı: Tier 0/1 (lookup + içerik) açık, Tier 2 (DM/kampanya
+    // içeriği — NPC, sahne, quest) kapalı. Kullanıcı kutuya dokunduysa
+    // seçimi kategori değişse de korunur.
+    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
+    final canShare = widget.pinning &&
+        worldId != null &&
+        ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
+    bool? shareOverride;
+
     // Group by tier and sort alphabetically within each tier.
     final byTier = <int, List<EntityCategorySchema>>{0: [], 1: [], 2: []};
     for (final c in categories) {
@@ -1236,6 +1247,28 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
+            bool shareChecked() => shareOverride ?? _tierFor(selectedSlug) != 2;
+
+            void submit() {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              final id = ref
+                  .read(entityProvider.notifier)
+                  .create(selectedSlug, name: name);
+              if (canShare && shareChecked()) {
+                ref
+                    .read(entitySharerProvider)
+                    .share(entityId: id, worldId: worldId)
+                    .whenComplete(() {
+                  if (mounted) {
+                    ref.invalidate(worldEntitySharesProvider(worldId));
+                  }
+                });
+              }
+              Navigator.pop(ctx);
+              widget.onEntitySelected?.call(id);
+            }
+
             Widget buildCategoryRow(EntityCategorySchema cat) {
               final isSelected = cat.slug == selectedSlug;
               return InkWell(
@@ -1350,18 +1383,22 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           isDense: true,
                         ),
                         autofocus: true,
-                        onSubmitted: (_) {
-                          final name = nameController.text.trim();
-                          if (name.isNotEmpty) {
-                            final id = ref
-                                .read(entityProvider.notifier)
-                                .create(selectedSlug, name: name);
-                            Navigator.pop(ctx);
-                            widget.onEntitySelected?.call(id);
-                          }
-                        },
+                        onSubmitted: (_) => submit(),
                       ),
                     ),
+                    if (canShare)
+                      CheckboxListTile(
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: const EdgeInsets.only(left: 12),
+                        value: shareChecked(),
+                        onChanged: (v) =>
+                            setDialogState(() => shareOverride = v ?? false),
+                        title: Text(
+                          L10n.of(ctx)!.shareWithPlayers,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
                     Divider(height: 1, color: palette.sidebarDivider),
                     // Category label
                     Padding(
@@ -1428,16 +1465,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           ),
                           const SizedBox(width: 8),
                           FilledButton(
-                            onPressed: () {
-                              final name = nameController.text.trim();
-                              if (name.isNotEmpty) {
-                                final id = ref
-                                    .read(entityProvider.notifier)
-                                    .create(selectedSlug, name: name);
-                                Navigator.pop(ctx);
-                                widget.onEntitySelected?.call(id);
-                              }
-                            },
+                            onPressed: submit,
                             child: Text(L10n.of(ctx)!.btnCreate),
                           ),
                         ],

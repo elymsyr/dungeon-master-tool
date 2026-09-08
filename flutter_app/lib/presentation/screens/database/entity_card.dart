@@ -1667,11 +1667,11 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
   Future<void> _toggleShare(String worldId, bool isShared) async {
     setState(() => _busy = true);
     try {
+      final sharer = ref.read(entitySharerProvider);
       if (isShared) {
-        await unshareEntity(ref, entityId: widget.entityId, worldId: worldId);
+        await sharer.unshare(entityId: widget.entityId, worldId: worldId);
       } else {
-        await shareEntityWithPlayers(ref,
-            entityId: widget.entityId, worldId: worldId);
+        await sharer.share(entityId: widget.entityId, worldId: worldId);
       }
       ref.invalidate(worldEntitySharesProvider(worldId));
       if (!mounted) return;

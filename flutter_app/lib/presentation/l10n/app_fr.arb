@@ -1370,5 +1370,6 @@
   "lanSyncErrAccountMismatch": "Cet appareil est connecté à un autre compte. La synchronisation locale n'associe que vos propres appareils.",
   "lanSyncErrPairingClosed": "L'autre appareil n'accepte pas de nouvelles associations. Ouvrez-y d'abord la synchronisation locale.",
   "lanSyncErrNotSignedIn": "Connectez-vous pour associer des appareils.",
-  "lanSyncErrFailed": "Échec de l'association."
+  "lanSyncErrFailed": "Échec de l'association.",
+  "shareWithPlayers": "Partager avec les joueurs"
 }

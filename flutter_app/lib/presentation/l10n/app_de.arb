@@ -1370,5 +1370,6 @@
   "lanSyncErrAccountMismatch": "Dieses Gerät ist in einem anderen Konto angemeldet. Lokale Synchronisierung koppelt nur deine eigenen Geräte.",
   "lanSyncErrPairingClosed": "Das andere Gerät nimmt keine neuen Kopplungen an. Öffne dort zuerst die Lokale Synchronisierung.",
   "lanSyncErrNotSignedIn": "Melde dich an, um Geräte zu koppeln.",
-  "lanSyncErrFailed": "Kopplung fehlgeschlagen."
+  "lanSyncErrFailed": "Kopplung fehlgeschlagen.",
+  "shareWithPlayers": "Mit Spielern teilen"
 }
