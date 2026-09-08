@@ -5,14 +5,14 @@ path: cloudflare/src/rls.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-09-07
+updated: 2026-09-08
 tags: [file]
 ---
 
 # `rls.ts`
 
 > [!abstract] Primary Purpose
-> The Worker's authorization shim. It calls four `SECURITY DEFINER` Supabase RPCs over PostgREST using the service-role key (so RLS is bypassed and real authorization lives inside the SQL function bodies). Covers counted-asset access, combined storage quota, transient-share access, and the transient eviction queue pop.
+> The Worker's authorization shim. It calls the `SECURITY DEFINER` Supabase RPCs over PostgREST using the service-role key (so RLS is bypassed and real authorization lives inside the SQL function bodies). Covers asset access, transient-share access, pinned (`pub/`) upload reservation, and the eviction queue pop.
 
 ## Inputs / Outputs
 **Inputs**
@@ -21,7 +21,6 @@ tags: [file]
 
 **Outputs**
 - `checkAssetAccess(userId, r2Key) → bool` via `get_asset_access(p_user_id, p_r2_key)`.
-- `checkAssetQuota(userId, newBytes, limitBytes) → bool` via `check_asset_quota(p_user_id, p_new_bytes, p_limit)`.
 - `checkTransientAccess(userId, uploaderId) → bool` via `get_transient_access(p_user_id, p_uploader_id)`.
 - `popTransientEvictQueue(limit) → TransientEvictRow[]` via `transient_evict_pop(_limit)`.
 - Throws on non-2xx (`*_rpc_failed_<status>`); Worker maps these to `502`.

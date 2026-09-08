@@ -61,7 +61,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 - [[Share-Broadcast-Flow]] — DM'in paylaştığı → oyuncuda canlı. Beş tablo, doğrudan yazma.
 - [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme.
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
-- [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).
+- [[Media-Storage-Tiers]] — free (Supabase) vs transient (R2 LRU) vs pinned (R2 `pub/`, refcount). Sayılan katman emekli (Phase D).
 - [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.
 
 ## Source docs (design history)

@@ -19,9 +19,11 @@ Durum: **kısmen uygulandı.**
   (`world_members.missing_shas`, `report_missing_shas` RPC),
   `world_sync_service` presence, `shared_media_courier.dart` (DM),
   `missing_media_reporter.dart` (oyuncu). Bkz. "Phase C nasıl uygulandı".
-- ⬜ **Phase D — counted tier sökümü** (client upload yolları, worker PUT 410, kota UI).
-  Sıradaki iş. Paylaşım yolu C'de zaten counted'dan çıktı; kalanlar harita,
-  PDF kütüphanesi, paket entity görselleri ve projeksiyon yolu.
+- ✅ **Phase D — counted tier sökümü** — client upload yolları, worker PUT 410,
+  kota UI. Bkz. "Phase D nasıl uygulandı". Kalan tek adım göç listesinin 3.
+  maddesi: prefix süpürme + `check_asset_quota` / `get_user_total_storage_used`
+  RPC'lerinin düşürülmesi — **bir sonraki sürümde**, kullanıcılar mevcut bulut
+  kopyalarını indirebilsin diye.
 - ⬜ **Phase E — marketplace medya zip'i** (indirmede toptan, official `art-bundle` deseni). Bkz. son bölüm.
 
 > [!warning] Deploy bekleyenler
@@ -40,7 +42,7 @@ Durum: **kısmen uygulandı.**
 > geri alınırsa `marketplace_listing_provider.publishSnapshot`'taki
 > `PublishMediaPinFailure` throw'u kaldırılır.
 
-Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07, son güncelleme 2026-09-08)
+Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07, son güncelleme 2026-09-08 — Phase D)
 Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Systems/Media-Storage-Tiers.md) (üç tier: Free / Counted / Transient)
 
 ## Bir cümlede
@@ -326,13 +328,15 @@ bakılacak liste odur.
 
 Bu yıkıcı bir değişiklik; sırası önemli:
 
-1. Client yeni `counted` upload'u yapmayı bırakır (`entity_image_upload`,
-   `map_image_upload`, `pdf_library_service` → yerel-only veya transient).
-2. Worker `{userId}/{sha}` prefix'ini **read-only**'ye alır: GET çalışır, PUT 410 döner.
-   Kullanıcılar mevcut bulut kopyalarını indirebilsin diye bir sürüm boyunca kalır.
-3. Bir sonraki sürümde prefix süpürülür; `checkAssetQuota`,
-   `get_user_total_storage_used` ve kota UI'ı kaldırılır.
-4. `community_assets` satırlarından counted olanlar temizlenir.
+1. ✅ Client yeni `counted` upload'u yapmıyor (`entity_image_upload`,
+   `map_image_upload`, `pdf_library_service` → yerel-only; projeksiyon → transient).
+2. ✅ Worker `{userId}/{sha}` prefix'i **read-only**: GET çalışır, PUT
+   `410 counted_tier_retired` döner. Kullanıcılar mevcut bulut kopyalarını
+   indirebilsin diye bir sürüm boyunca kalır.
+3. ⬜ Bir sonraki sürümde prefix süpürülür; `check_asset_quota` ve
+   `get_user_total_storage_used` RPC'leri düşürülür. (Kota UI'ı ve client
+   tarafı bugün kaldırıldı; `USER_QUOTA_BYTES` Worker'dan silindi.)
+4. ⬜ `community_assets` satırlarından counted olanlar temizlenir.
 
 `world_pdf` (50 MB) buluttaki en büyük counted kalemdi — yeni modelde PDF
 kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
@@ -478,6 +482,53 @@ oyuncunun **zaten dinlediği** bir satıra dokunması.
 başladıktan sonra gelen ilk talep, dünyanın tüm yerel medyasını bir kez
 hash'liyor (`SharedMediaCourier._reindex`, `ponytail:` ile işaretli). Ölçülür
 bir gecikme olursa sha paylaşım anında `asset_refs` yan tablosuna yazılır.
+
+## Phase D nasıl uygulandı (2026-09-08)
+
+Tasarımdan üç sapma var; üçü de bir şeyi **eksiltiyor** ya da tasarımın başka
+bir yerindeki kuralı uyguluyor.
+
+1. **Karakter ek resimleri `pinned` oldu, transient değil.** "Counted'ı neye
+   çevirelim" sorusunun cevabı tasarımın kendi tablosunda yazıyordu: karakter
+   medyası oturum ortasında LRU'ya yem olmamalı. `MediaBundler` artık
+   portreyi free tier'a, ek resimleri `pub/{sha}{ext}`'e yüklüyor; refcount
+   sahibi `char:{characterId}`, karakter silinince `AssetService.releasePub`
+   ref'leri düşürüyor.
+2. **PDF paylaşımı tamamen kaldırıldı** — "yeni modelde PDF kütüphanesi
+   tamamen yereldir" kuralının sonucu. `share` / `shareAll` / `download` ve
+   `world_settings.settings_json['pdf_library']` manifest'i gitti.
+   **Kullanıcıya görünen davranış değişikliği:** online oyuncu artık DM'in
+   PDF'ini uygulama içinden indiremiyor; PDF'ler cihazlar arasında LAN sync
+   ile taşınıyor. Eski dünyalardaki manifest girdileri zararsız artık veri.
+3. **Projeksiyon yolu transient'e taşındı, kalıcı yazma kalmadı.** Eski akış
+   sayılan ref'i entity'ye kalıcı yazıyor, kota dolunca transient'e düşüyordu.
+   Artık tek yol var: `SharedMediaCourier.publish(worldId, path)` yükler, ref
+   **yalnızca projeksiyon anlık görüntüsünde** kullanılır. Gerekçe Phase C ile
+   aynı — LRU atarsa kalıcı satırda ölü ref kalırdı. Giriş noktaları
+   `prepareEntityImagesForProjection`, `projectableMapImage`,
+   `WorldMapNotifier.ensureMapImageProjectable`.
+
+### Silinenler
+
+Sayılan katmanla birlikte okuyucusu kalmayanlar: `AssetService.uploadAsset` /
+`listAssetsForUser` / `maxItemBytes` / `AssetQuotaExceededException`,
+`image_upload_helper.dart`, `storage_usage_provider.dart`,
+`media_manifest_restorer.dart`, `MediaBundler`'ın karakter dışı beş metodu,
+kota + "dosya çok büyük" snackbar'ları ve altı l10n anahtarı. Ayrıca zaten ölü
+olan iki dosya bu geçişte temizlendi: `fog_externalizer.dart` (fog projeksiyon
+patch'inde base64 gidiyor) ve `raw_path_migrator.dart`.
+
+Worker tarafında: `handleUpload` yalnızca `transient/{uid}/` ve `pub/` kabul
+ediyor, gerisi `410 counted_tier_retired`; `checkAssetQuota` (`rls.ts`),
+`USER_QUOTA_BYTES` (`wrangler.toml`) ve `ASSET_QUOTA_RESERVE_BYTES` kaldırıldı.
+Hesap silme sweep'i `{userId}/` prefix'ini hâlâ süpürüyor — eski objeler orada.
+
+### Bilinen tavan
+
+`char:{id}` ref_key'i altında eski sha bırakılmıyor: kullanıcı karakter
+resmini değiştirirse eskisi karakter silinene kadar refcount'ta kalır ve
+yayıncı başına 500 MB pinned payından düşer. Ölçülür bir sızıntı olursa
+bundle öncesi `releasePub(refKey)` çağrılır (`ponytail:` ile işaretli).
 
 ## Phase E — marketplace medyası zip olarak iner (karar: 2026-09-07)
 

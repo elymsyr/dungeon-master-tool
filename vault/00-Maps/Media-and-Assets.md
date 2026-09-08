@@ -8,7 +8,7 @@ tags: [moc]
 # Media & Assets — Map of Content
 
 > [!summary] Scope
-> Image/audio storage and lifecycle across three tiers (free / counted / transient), soundpack playback, bundling for export, and orphan GC. The storage *policy* lives here; the storage *backends* (Supabase Storage + R2) live in [[Backend-Infra]].
+> Image/audio storage and lifecycle across the live classes (free / transient / pinned — counted emekli, Phase D), soundpack playback, bundling for export, and orphan GC. The storage *policy* lives here; the storage *backends* (Supabase Storage + R2) live in [[Backend-Infra]].
 
 ## Key Files
 - [[soundpad_engine]] — audio playback/mixing via flutter_soloud. See [[Audio-SoLoud]].
@@ -27,7 +27,7 @@ tags: [moc]
 - [[pdf_library_service]] — dünyanın PDF kütüphanesi: klasöre kopyalama + online dünyada R2 paylaşımı.
 
 ## Data Flow
-Upload → tier decision ([[Media-Storage-Tiers]]): free (Supabase `free-media`, uncounted) vs counted (R2 permanent, 100 MB quota) vs transient (R2 LRU pool). Cleanup on delete via [[entity_media_cleanup_service]].
+Upload → sınıf kararı ([[Media-Storage-Tiers]]): free (Supabase `free-media`, kotasız) vs transient (R2 LRU havuzu, talep üzerine dolar) vs pinned (R2 `pub/`, refcount'lu). Sayılan katman kaldırıldı — dünyanın medyası yerelde kalır, cihazlar arasında LAN sync taşır. Cleanup on delete via [[entity_media_cleanup_service]].
 
 ## Related Domains
 - [[Backend-Infra]] (R2 worker, Supabase buckets) · [[World-and-Content]] (what owns media) · [[Projection-Second-Screen]] (displays it).
