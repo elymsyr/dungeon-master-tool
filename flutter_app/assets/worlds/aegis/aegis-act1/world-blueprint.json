@@ -1,0 +1,1043 @@
+{
+ "version": "0.1.0",
+ "source_system": "dnd5e",
+ "app_schema": "builtin-dnd5e-default-v2",
+ "pinned": [
+  "campaign/Aegis — Meridia",
+  "quest/Söylentinin Peşinde",
+  "quest/Nereden Geldiler",
+  "scene/Köye Varış"
+ ],
+ "categories": {
+  "campaign": [
+   {
+    "source_name": "Aegis — Meridia",
+    "mapping": {
+     "name": "Aegis — Meridia",
+     "description": "Aegis evreninin birinci kıtası Meridia'da geçen özgün bir kampanya. Birinci Perde Gümüşsu köyünde başlar ve ikinci kıta ufukta görülünce biter.",
+     "tags": [
+      "aegis",
+      "meridia",
+      "act-1"
+     ],
+     "dmNotes": "Bu kart **oyuncunun ilk okuduğu şey**; DM'in kitabı değil. Baş kötünün kim olduğu buraya yazılmaz (genel-kartlar.md §1 uyarısı).\n\nPaketin kapsamı şimdilik Birinci Perde'nin ilk iki bölümü: @[Gümüşsu](entity:location/Gümüşsu) ve @[Gizli Liman](entity:location/Gizli Liman). Lonca, Merkezi Şehir, Elymsyr, gemi ve perde kapanışı kart olarak yazılmadı — engel içerik değil, açık kararlar (act1-kartlar.md *Sonraki bölümler için planlama*).",
+     "pages": [
+      "# Bu dünyada oynamak\n\nAegis lanetli bir dünya değil, **devralınmış** bir dünya. Buradaki hiçbir sorunu siz yaratmadınız; hepsi sizin sorununuz.\n\n**Ton kuralı:** karanlık geçmişte ve yapılarda; ışık insanlarda ve bugünde.\n\nTarih ağır, kurumlar soğuk — ama bugünkü hayat çalışıyor. Kaynayan kazan, tebeşirle işaretli kapı, temiz bez: bakım estetiği çürüme estetiği kadar görünür. Herkesin bir yarası yok; işini iyi yapan, cömert, sıkıcı derecede sağlıklı insanlar da var.\n\nDengeyi tutan cümle şu: **dünya yaşanabilir, ama gidişat kötü.** Tehdit yaşam kalitesinde değil, ufukta.\n\nBirinci Perde'nin omurgası **Miras**: bu benim suçum değil ama benim sorunum. Korunan şey bir çağ değil, bir köy ve tek tek insanlar.",
+      "# Masa kuralları\n\n**Hikaye belirli karakterlere bağlanmaz.** Perdenin sahneleri rol *yuvalarına* yazıldı, kişilere değil: Uyarıcı, Şüphelenen, Kaçan, İşaretlenen. Bir yuva boş kalırsa sahne bir NPC'ye devredilir ya da çıkarılır; kimse kendi sahnesini bekleyerek oturmaz.\n\n**İki taşıyıcı kuralı.** Her kritik ipucunun en az iki taşıyıcısı vardır. Biri bir PC'nin yeteneği ya da geçmişiyse, diğeri mutlaka bir NPC ya da çevrede duran fiziksel bir izdir. Tek ağızda duran bilgi hikayeyi kilitler.\n\n**Sayaç oyuncuda değil.** Süre baskısı bir NPC'nin üzerinde taşınır; belirtileri sahnede görünür ve kötüleşir. Hastalanmak bir cezanın sonucu değil, bir seçimin sonucudur — cesede dokundun, hastayı taşıdın, hasta eve girdin.\n\n**Taban DnD 5e.** Bu dünyanın 5e'ye eklediği tek kural @[Blight enfeksiyonu](entity:lore/Blight — Bilinen Hali) kartında işaretlidir; sıfırdan sistem yazılmaz.",
+      "# Karakter yaratma\n\nKarakter yaratma **serbest**. Masaya oturmadan önce kabul edilen tek cümle var:\n\n> **Hastalık söylentileri seni bir şekilde Gümüşsu yoluna çıkardı.**\n\nBirbirinizi tanımak zorunda değilsiniz, aynı anda varmak zorunda değilsiniz. İlk karşılaşma @[Gümüşsu](entity:location/Gümüşsu)'da olur. \"Neden yoldasın\" sorusunun cevabı sizin; DM yalnız o sebebi dünyaya bağlar.\n\nEvrene özgü background'lar (arşivci, lonca üyesi, lonca ajanı, rıhtım işçisi, gemi kaptanı, paladin askeri…) tasarlandı ama **bu pakette kart olarak yok**: her birinin evrene özel feature'ı ve başlangıç eşyası henüz seçilmedi. Şimdilik SRD background'ları kullanın; kurgusal bağı DM ile birlikte kurun.",
+      "# DM'e\n\n**Sır yerleşimi.** DM-only bilgi ayrı bir \"DM lore\" kartında değil, ilgili kartın `Secrets` alanında durur: `location.secrets`, `npc.secrets`, `quest.secrets`, `encounter.tactics`. Oyuncu Kitabı ↔ DM Kitabı ayrımı bu alanlarla kurulur. Paylaşırken bunu unutma.\n\n**Bilgi eğimi.** Söylenti limanlarda bol ve açık, Merkezi Şehir'de bastırılmış, Ravenhall'da hiç yok — çünkü orada zaten biliniyor, kimse sormadı. Soruşturmanın haritasını bu eğim kendiliğinden çizer.\n\n**Perdenin ödülü eşya değil, bilgi ve müttefiktir.** Birinci Perde'de mızrak parçası yoktur. Oyuncular kimin doğru söylediğini, kimin sustuğunu ve kimin sattığını öğrenmiş olarak çıkar.\n\n**Neyin gizli kalacağı.** Hastalığın bir eser olduğu (ensedeki iğne) gösterilir, açıklanmaz. Kimin yaptığı, neden bu üç kişi olduğu ve kaydı kimin sildirdiği Birinci Perde'de **cevaplanmaz**; @[Nereden geldiler](entity:quest/Nereden Geldiler) zincirinin ucu bilerek limanın dışına çıkar.",
+      "# Sözlük\n\n*İlk oturumda duyacağınız kadarı. Dünyayı anlatmaz, kelimeleri açar.*\n\n- **Meridia** — üzerinde durduğunuz kıta. Adı \"öğle vakti, zirve\" demek; halk bunu gurur sanır.\n- **Lucid Triton** — başkent. Kralın adıyla kök paylaşır.\n- **Lucian** — kral. Üç yüz yıl önce tanrıları kesen adam; bugün bir kurum kadar uzak.\n- **İrade** — resmi öğreti: kimse gelmeyecek, karar senin. Bkz. @[İrade Çağı](entity:lore/İrade Çağı).\n- **Blight** — köylülerin hastalığa taktığı ad. Ne olduğunu bilmezler. Bkz. @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali).\n- **Occulus** — kıtanın tek gerçek arşivi.\n- **Gümüşsu** — adı hâlâ halk dilinde olan bir köy; bu, orayı kimsenin umursamadığının kanıtıdır. Bkz. @[Adlandırma Doktrini — Halk Dili ve Latin](entity:lore/Adlandırma Doktrini — Halk Dili ve Latin).\n- **Sancak Kaydı** — bir yerin adındaki ek, onun hukuki statüsüdür. Ekin yoksa devletin gözünde \"yer\" değil \"nüfus\"sun."
+     ]
+    }
+   }
+  ],
+  "lore": [
+   {
+    "source_name": "İrade Çağı",
+    "mapping": {
+     "name": "İrade Çağı",
+     "description": "Tanrıların kesilmesi ve özgürlüğün bedeli — halkın bildiği resmi tarih.",
+     "tags": [
+      "lore",
+      "tarih"
+     ],
+     "dmNotes": "**DM:** İrade doktrini özgürleştirici bir felsefe değil; insanları yardım istemekten alıkoyan bir kilit. 300 yıllık tanrısızlık bir kurtuluş değil, bir tasarım. Bu, oyuncuya Birinci Perde'de **söylenmez** — kurumsal sessizlik olarak yaşatılır.\n\nBaş kötü Lucian'dır; Suretsiz onun eli. Giriş kartına yazılmaz.",
+     "pages": [
+      "# İrade Çağı\n\nÜç yüz yıl önce kral tanrıları kesti ve insanlara özgürlük verdi. Özgürlük dehşet verici çıktı.\n\nSeçmenin yükünü taşıyamayan insanlar kendilerine yeni efendiler kurdu: arşiv (Occulus), liyakat sistemi, lejyon, loncalar. O günden bu yana her yeni efendi aynı şeyi satar — **seçmekten kurtulma vaadi**.\n\nResmi ad \"Işık Çağı\"dır. Halkın günlük dilinde İrade Çağı diye geçer ve öğretisi tek cümleye iner: *kimse gelmiyor, karar sende.*\n\nBu cümle bir teselli gibi öğretilir. Pratikte yaptığı şey başkadır: yardım istemeyi beceriksizlik sayar. Bir köy hastalanırsa önce kendi başının çaresine bakar; bakamazsa da kimseye söylemez."
+     ]
+    }
+   },
+   {
+    "source_name": "Tanrılar ve Fısıltı",
+    "mapping": {
+     "name": "Tanrılar ve Fısıltı",
+     "description": "Kesilen tanrılardan geriye kalan: bant genişliği kalmamış bir sevgi.",
+     "tags": [
+      "lore",
+      "din"
+     ],
+     "pages": [
+      "# Tanrılar ve Fısıltı\n\nTanrılar umursamayı bırakmadı. Tek bir şeyin mümkün olması için var oluşlarını verdiler — geriye fısıltı kaldı.\n\nBu tekinsiz bir şey değil, **şefkatli** bir şey: karşılığında yalnızca fısıldayabilen birinin sevgisi. Duyulan ses korku hikayesi değil, bant genişliği kalmamış bir yakınlık.\n\nSessizlik terk ediliş değil, yer açma. İlahi büyünün bugünkü hali de budur: cevap gelir, ama alçak sesle ve geç."
+     ],
+     "dmNotes": "Sapma işareti: ilahi büyünün durumu 5e'den ayrılan bir renktir; kural değişikliği olarak yazılmadı (README §6.5 gereği açıkça işaretlenir)."
+    }
+   },
+   {
+    "source_name": "Blight — Bilinen Hali",
+    "mapping": {
+     "name": "Blight — Bilinen Hali",
+     "description": "Köylülerin \"hastalık\" dediği şeyin bilinen yüzü: bir iklim değil, bir cephe.",
+     "tags": [
+      "lore",
+      "blight",
+      "kural-sapması"
+     ],
+     "pages": [
+      "# Blight — bilinen hali\n\nHalkın bildiği kadarı: kuzeyden gelen bir çürüme var, adına Blight diyorlar, ne olduğunu kimse bilmiyor.\n\n**Blight bir iklim değil, bir cephe.** Meridia'nın çoğu yeri sağlam; Blight'ın bir sınırı var ve o sınır kötü de olsa tutuluyor. Salgınlar hiçbir zaman düzgün yayılmaz — bu hem daha umutlu hem daha inandırıcıdır.\n\n## Hastalığın görünen seyri\n\n1. **Yaklaşık bir ay** yavaş belirti: yorgunluk, iştahsızlık, damar renginin koyulaşması.\n2. Sonra **ani patlama.** Belirtiler saatler içinde biçim değiştirir; sabah öksüren biri akşam konuşamaz hale gelir. Bu değişkenlik hastalığın imzasıdır — iki hasta hiç aynı seyri izlemez.\n3. Son evre: bilinç gider, **beden güçlenir.**\n\nBakan kişi bunların hiçbirini bir kitapta okumadı; kendi gördü. Bir isim koydu, bir de yöntem: ayrı tut, yiyecek götür, içeri girme."
+     ],
+     "dmNotes": "**Kural sapması (5e üstüne):** Blight enfeksiyonu ayrı bir `applied-condition` kartı olarak yazılmadı — evrelerin mekaniği (DC, süre, kurtulma) henüz kanon değil (genel-kartlar.md §6). Masada şimdilik anlatı olarak işlet: ~1 ay sessiz taşıma, sonra saatler içinde son evre.\n\n**DM bilgisi:** hastalık doğa değil, birinin eseri. Blight kralın mızrağının taşından çıkma ve insanı emir bekleyen bir ete çevirir. Son evreye geçen kişi ölmez, **dönüşür** — bkz. @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü).\n\n**Açık çelişki (#14):** \"kuzeyden gelen çürüme\" deniyor ama Gümüşsu güneyde. Hastalığın haritadaki konumu kapanmadan bu kartın coğrafyası yazılmamalı; o yüzden sayfada yön verilmedi."
+    }
+   },
+   {
+    "source_name": "Adlandırma Doktrini — Halk Dili ve Latin",
+    "mapping": {
+     "name": "Adlandırma Doktrini — Halk Dili ve Latin",
+     "description": "Bir yerin adı, oraya son kim hükmettiyse onu ele verir.",
+     "tags": [
+      "lore",
+      "dil"
+     ],
+     "pages": [
+      "# Adlandırma Doktrini — oyuncunun gördüğü yüz\n\nMeridia'da isimler iki dilde duyulur ve hangisini duyduğunuz size o yerin geçmişini söyler.\n\n- **Latin isim** = kralın kurduğu ya da yeniden adlandırdığı yer. Custodar, Claport, Altimont, Cinervik, Argenfon, Votumar.\n- **Latin olmayan isim** = fetihten kurtulmuş, kökü daha eski bir yer. Elymsyr. Gümüşsu.\n\nDilin kendisi bir sahtekarlıktır: sıradan bir savaşçı olan kral, meşruiyet için yıktığı düzenin dilini çaldı. İsim zarafeti bir fetih aracı, kültür değil.\n\n## Sancak Kaydı — ek, statüdür\n\nYerleşke eki süs değil hukuktur. Konsey tanımlı şehrin vergi ve temsil hakkı vardır; kayıtlı ama temsilsiz bir köy devletin gözünde \"yer\" değil \"nüfus\"tur.\n\n**Temanın kilidi burada:** temsilsiz bir köyde olan şey resmi olarak hiçbir yerde olmamıştır. @[Gümüşsu](entity:location/Gümüşsu)'nun adının hâlâ halk dilinde olması orayı kimsenin umursamadığının kanıtıdır — ve köyün kötü bitmesinin kimseye ulaşmamasının sebebidir."
+     ],
+     "dmNotes": "Kişi adları için de aynı ayrım: köyde halk dili, kurumlarda Latin. Gizli Liman kural dışı — orada takma ad, meslek adı ve gemi adı duyulur, çünkü kurum yok. Kişi adı dağarcığının kalanı (lonca/paladin kalıpları) yazılmadı (M5)."
+    }
+   }
+  ],
+  "location": [
+   {
+    "source_name": "Gümüşsu",
+    "mapping": {
+     "name": "Gümüşsu",
+     "description": "Birinci Perde'nin başladığı ufak köy. Huzursuz ama işleyen.",
+     "environment": "Ufak köy",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description_long": "Huzursuz ama işleyen bir köy. Kimse ölmemiş. Söylentiler artık fısıltı değil, günlük konuşma — ekmek alırken, kuyu başında, handa konuşuluyor.\n\nBakım her yerde görünür: kaynayan kazan, tebeşirle işaretli kapı, temiz bez, düzgün kazılmış mezar. Köy korkuyor ama dağılmıyor.\n\nKöyün biraz dışında bir @[Kulübe](entity:location/Kulübe) var; hasta olduğu düşünülen üç kişi oraya alınmış. Bu bir karantina değil, köyün kendi kararı: korku ile nezaketin karışımı. Yiyecek götürülüyor, kimse içeri girmiyor.\n\nAdı hâlâ halk dilinde: Latin resmi isim ağının dışında kalmış, kayda değer görülmemiş bir yer. Devletin gözünde burası \"yer\" değil \"nüfus\" (@[Adlandırma Doktrini — Halk Dili ve Latin](entity:lore/Adlandırma Doktrini — Halk Dili ve Latin)).",
+     "secrets": "**Üçlü buraya @[Gizli Liman](entity:location/Gizli Liman)'dan geldi** — yani kayıtsız girdiler. Kimse onları aramıyor, kimse kaybolduklarını fark etmedi; kayıtsız insanların kaybolması kayda geçmez.\n\nKayıt olmaması bir kaza değil bir tercih: **birisi bu üç kişinin görünmesini istememiş.** @[Duran](entity:npc/Duran) nereden geldiklerini biliyor ve söylemek istemiyor; @[Karaca](entity:npc/Karaca) yolu biliyor çünkü kendisi de oradan mal taşıyor.\n\nÜçünün de ensesinde **cerrahi bir iğne** var (@[Cerrahi İğne](entity:trinket/Cerrahi İğne)). Oyuncular bakmazsa da orada durur; ölümden sonra da bulunur. Sivil oldukları için iğne daha kötü bir soru sorar: *neden bu üç kişi?*\n\n**Köy kurtarılabilir.** Üçü ölür ama köy ayakta kalır — oyunun ilk zaferi kazanmak değil, kaybetmemektir. Paladin Şatosu'na bağ kurulmuyor: şato Birinci Perde'de kendi kapısından girilecek bir yer, buranın uzantısı değil."
+    }
+   },
+   {
+    "source_name": "Kulübe",
+    "mapping": {
+     "name": "Kulübe",
+     "parent_location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "description": "Köyün biraz dışında, üç hastanın alındığı kulübe.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description_long": "Köyün biraz dışında, tek göz bir kulübe. Hasta olduğu düşünülen üç kişi — @[Toygar](entity:npc/Toygar), @[Selvi](entity:npc/Selvi), @[Demir](entity:npc/Demir) — buraya alınmış.\n\n**Bu bir karantina değil**, köyün kendi kararı: korku ile nezaketin karışımı. Kapının önüne yiyecek bırakılıyor, kimse içeri girmiyor. Kapıda tebeşir izi, eşikte temiz bez yığını var; birileri buraya bakmaya devam ediyor.\n\nİçerisi konuşabilen üç insan barındırıyor: sayıklayan, korkmuş, hâlâ soru cevaplayabilen insanlar.",
+     "secrets": "Üçü **son evrenin eşiğinde.** Oyuncular bunu bilmiyor; kimse bilmiyor. Kulübede yapılacak sorgu, bu üç ağızdan çıkacak **son** bilgidir (@[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)).\n\nŞafakta üçü tamamen döner — bkz. @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) ve @[Şafak Çatışması](entity:encounter/Şafak Çatışması). Dönüşüm oyuncuların bir gece burada kalıp kalmamasına bağlı değil: sayaç hastalığın, oyuncunun değil."
+    }
+   },
+   {
+    "source_name": "Bulut'un Hanı",
+    "mapping": {
+     "name": "Bulut'un Hanı",
+     "parent_location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "description": "Köyün hanı; söylentinin ve yabancı kaydının toplandığı yer.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description_long": "Köyün tek hanı. @[Bulut](entity:npc/Bulut) işletiyor ve işin yürümesini istiyor: yolcu gelir, yolcu gider, defter tutulur.\n\nOyuncuların ilk gece burada kalması doğal seçimdir; köylüler de buna yönlendirir (\"sabah bakın, gece yol tehlikeli\").",
+     "dmNotes": "🟡 **Kanon kısmi:** act1.md §3 yalnız hancıyı yazdı, mekanı yazmadı. Buradaki tarif hancının işlevinden (söylenti + yabancı kaydı) türetildi; içerisi — kaç oda, kim kalıyor, kim kime borçlu — hâlâ boş. Doldurmadan önce karar al (README §4.2 kural 2)."
+    }
+   },
+   {
+    "source_name": "Gizli Liman",
+    "mapping": {
+     "name": "Gizli Liman",
+     "description": "Meridia'dan çıkmanın kayıtsız yolu. Kurumu yok, düzeni var.",
+     "environment": "Kayıtsız liman",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "description_long": "Dünyanın her yerine açılabilen gizli bir kapı. Birinci Perde'nin en değerli kaynağı bu yüzden burada duruyor: Meridia'dan çıkmanın **kayıtsız** yolu.\n\nBurada herkes başka bir yerden gelmiş; adlar karışık. Takma ad, meslek adı, gemi adı duyulur — halk dili de Latin de. Kurum olmadığı için tek dili yok.\n\n## Birinci kapı: içeri girmek\n\nYol son kapı değil. Yolun sonunda kayıt yok, kapı yok, sadece insan var: **kimse kefilsiz içeri alınmaz.** Üç giriş yolu vardır — içerideki birinin kefil olması, içerideki biri için bir iş görmek, ya da satılacak gerçek bir yükle gelmek. @[Karaca](entity:npc/Karaca) zayıf bir kefildir: kendisi de misafirdir. Onun sözü kapıyı aralar, açmaz.\n\n## İkinci kapı: buradan çıkmak\n\nYolculuk ya konseyden **iyi bir yazı**, ya **iyi para** ister. İkisi de Gümüşsu'dan çıkarken kesenizde yok. Liman geçilen bir yer değil, **çalışılan** bir yer — ve iyi yazı sizi başka lokasyonlara yollar. Burası bir çıkış değil, bir **kavşak**.\n\n## Tehdit işlemez\n\nKonseyle tehdit edilemezler: konsey burayı zaten biliyor ve kısmen kullanıyor. İhbar bir silah değil, bilinen bir gerçek. Genel tehdit de kavga başlatmaz, **ilan eder** — ilan edilen adama fiyat yükselir, kefil bulunmaz, kapılar kapanır. Ceza şiddet değil **yalnızlık**, ve yalnız adam bu limandan çıkamaz.\n\nYer yine de tehlikelidir: kimse kimseyi korumak zorunda değil.\n\n## Düzen\n\nReis yok, bayrak yok. İşleri yürüten birkaç kişi var; sözleri geçer çünkü sözlerinin bozulması herkese pahalıya patlar.",
+     "secrets": "**Üçlünün izi burada bitmiyor, burada başlıyor.** Kaydın silinmesi bir tercihti ve silmeyi birisi ödedi. @[Sicim](entity:npc/Sicim) kimin sildirdiğini biliyor; @[Kaptan Vela](entity:npc/Kaptan Vela) üçlüyü geri çevirdiğini ve sonra başka gemiyle gittiklerini duyduğunu söyleyebilir.\n\nCevap — *kim ödedi* — limanda **değil**: Lonca ve Şehir hattında. Birinci Perde'nin bu bölümü soruyu somutlaştırır, cevaplamaz.\n\n⚠️ **İki taşıyıcı açığı (açık karar):** \"kaydı kim sildirdi\" şu an yalnız Sicim'de duruyor. İkinci taşıyıcı olarak düşünülen lonca kadrosu bu kapsamın dışında kaldı. Ya bu bilgiye liman içinden ikinci bir ağız bulunur, ya da bilgi bu bölümün kapanışına taşınmaz — masaya çıkmadan karar ver."
+    }
+   },
+   {
+    "source_name": "Rıhtım",
+    "mapping": {
+     "name": "Rıhtım",
+     "parent_location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gizli Liman"
+     },
+     "description": "Limanın yanaşma yeri — @[Fare](entity:npc/Fare)'nin alanı, pazarlığın yapıldığı taş.",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "description_long": "Limanın suya değdiği yer: yanaşan gemi, boşalan yük, bekleyen adam. @[Fare](entity:npc/Fare) burada büyüdü; kim ne zaman yanaştı, hangi kaptan kimi alır, hepsi onun kafasında.\n\n@[Geçiş Pazarlığı](entity:scene/Geçiş Pazarlığı) burada yapılır: @[Kaptan Vela](entity:npc/Kaptan Vela) ile temiz yolculuk, @[Kaptan Halim](entity:npc/Kaptan Halim) ile ucuz ve kötü yolculuk.",
+     "dmNotes": "🟡 Ayrı kart olmayabilir (act1-kartlar.md §1). Masada Gizli Liman'ın bir köşesi gibi işletiliyorsa bu kartı kullanma; ayrı bir sahne yeri gerekiyorsa dursun."
+    }
+   }
+  ],
+  "npc": [
+   {
+    "source_name": "Duran",
+    "mapping": {
+     "name": "Duran",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Köy başkanı. Köyün dağılmamasını, dışarıdan müdahale gelmemesini istiyor. Yabancılara kapıyı kapatmaz ama açtığını da söylemez.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Köyün dağılmaması ve dışarıdan müdahale gelmemesi. Bir kurum bu işe el koyarsa köyün kendi kararının (kulübe) yerini bir karar alır ve köy artık kendi köyü olmaz.",
+     "secrets": "Üçlünün nereden geldiğini **biliyor** ve söylemek istemiyor. Söylerse köyün kayıtsız yolla ilişkisi kayda geçer.",
+     "dmNotes": "**Hangi kapıyı açar:** \"Limandan geldiler.\" — @[Gizli Liman](entity:location/Gizli Liman) hattının ilk ağzı. Baskıyla değil, köyün yararına olduğuna ikna olunca açılır."
+    }
+   },
+   {
+    "source_name": "Umay",
+    "mapping": {
+     "name": "Umay",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Friendly"
+     },
+     "description": "Hastalara bakan kişi. Kulübeye yiyeceği o götürüyor, bezi o kaynatıyor. Kimseden izin almadı, kimse de durdurmadı.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Üç kişinin yaşaması. Bunun için hiçbir teoriye ihtiyacı yok; sadece devam ediyor.",
+     "secrets": "**Kendi de temas etti** ve saklıyor. Söylerse kulübeye giren tek kişi kalmaz ve üçü yalnız kalır. Süre baskısı bu kartın üzerinde taşınır: belirtileri sahnede görünsün ve kötüleşsin.",
+     "dmNotes": "**Hangi kapıyı açar:** Belirtilerin seyri — @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali) kartındaki üç evre onun gözlemidir. Hastalığın **doğal olmadığını** ilk fark eden de o olabilir: iki hasta hiç aynı seyri izlemiyor.\n\nSayaç NPC'de: Umay'ın yorgunluğu, sesi, elinin titremesi masadaki saattir. Hastalanması bir ceza değil, bakmayı seçmiş olmasının sonucudur."
+    }
+   },
+   {
+    "source_name": "Karaca",
+    "mapping": {
+     "name": "Karaca",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Yolu bilen adam. Köyün içinde değil kıyısında durur; kimse ona iş sormaz, o da kimseye hesap vermez.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Para. Fazlası değil — rehberlik ücretini alır, yolu gösterir, kalmaz.",
+     "secrets": "@[Gizli Liman](entity:location/Gizli Liman)'ı biliyor **çünkü oradan mal taşıdı**. Bunu söylemesi kendi işini bitirir.",
+     "dmNotes": "**Hangi kapıyı açar:** Gizli Liman'a giden yol — ücret karşılığı rehberlik. Ama yol son kapı değil: içeride zayıf bir kefildir, kendisi de misafirdir.\n\nİkinci taşıyıcı: aynı yolu @[Duran](entity:npc/Duran)'ın \"limandan geldiler\" cümlesi de işaret eder. Oyuncular Karaca'yı hiç bulmasa da liman hattı kapanmaz."
+    }
+   },
+   {
+    "source_name": "Bulut",
+    "mapping": {
+     "name": "Bulut",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Bulut'un Hanı"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Friendly"
+     },
+     "description": "Hancı. İşinin iyi yapılmasından memnun, sıkıcı derecede sağlıklı bir adam — bu köyde yarası olmayan insanlardan biri.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "İşin yürümesi. Yolcu gelsin, yatak dolsun, defter tutulsun.",
+     "secrets": "— (02 §4 kotası: yarası olmayan NPC. Sakladığı bir şey yok ve bu bilerek böyle.)",
+     "dmNotes": "**Hangi kapıyı açar:** Söylenti ve **yabancı kaydı**: kim ne zaman geldi, kim kiminle konuştu, kim ödemedi. Defterini gösterir, çünkü gizlemek aklına gelmez."
+    }
+   },
+   {
+    "source_name": "Toygar",
+    "mapping": {
+     "name": "Toygar",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Kulübedeki üç hastadan biri. **Sivil yolcu** — paladin değil, asker değil, kimsenin aradığı biri değil. Konuşabiliyor, sayıklıyor, korkuyor.\n\nOnda hastalık **yorgunluk** olarak ilerledi: konuşurken uyuyakalıyor, cümlenin ortasında nerede olduğunu unutuyor.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Eve dönmek. Nereye döneceğini söylerken iki farklı yer adı veriyor.",
+     "secrets": "**Ensesinde cerrahi bir iğne var** (@[Cerrahi İğne](entity:trinket/Cerrahi İğne)). Kendisi bilmiyor. Buraya @[Gizli Liman](entity:location/Gizli Liman)'dan, yani kayıtsız girdi; geçişinin kaydını birisi sildirdi.\n\n**Son evrenin eşiğinde.** Şafakta döner — @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü).",
+     "dmNotes": "**Hangi kapıyı açar:** Yolculuğun kendisi: kiminle geldiği, kimin parasını ödediği. Sorulursa parça parça anlatır — ama bu bilgiyi verecek **son gecedir**.\n\n🟡 Kişilik detayı kanon değil: act1.md §4 yalnız \"iki hasta hiç aynı seyri izlemez\" diyor. Buradaki belirti farkı o kuralın uygulanışıdır, ayrı bir kanon değil. Monster ikizi: @[Dönüşmüş Toygar](entity:monster/Dönüşmüş Toygar)."
+    }
+   },
+   {
+    "source_name": "Selvi",
+    "mapping": {
+     "name": "Selvi",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Kulübedeki üç hastadan biri. **Sivil yolcu** — paladin değil, asker değil, kimsenin aradığı biri değil. Konuşabiliyor, sayıklıyor, korkuyor.\n\nOnda hastalık **kesik kesik** ilerledi: sabah iyi, öğlen konuşamıyor, akşam yine konuşuyor. En çok o korkutuyor, çünkü iyileşiyor gibi görünüyor.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Birine haber ulaştırmak. Adı söylemiyor, \"beklerler\" diyor.",
+     "secrets": "**Ensesinde cerrahi bir iğne var** (@[Cerrahi İğne](entity:trinket/Cerrahi İğne)). Kendisi bilmiyor. Buraya @[Gizli Liman](entity:location/Gizli Liman)'dan, yani kayıtsız girdi; geçişinin kaydını birisi sildirdi.\n\n**Son evrenin eşiğinde.** Şafakta döner — @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü).",
+     "dmNotes": "**Hangi kapıyı açar:** Değişkenliğin kendisi — iyileşme yanılsaması. @[Umay](entity:npc/Umay)'ın \"iki hasta aynı seyri izlemez\" gözleminin canlı kanıtı.\n\n🟡 Kişilik detayı kanon değil (bkz. @[Toygar](entity:npc/Toygar)). Monster ikizi: @[Dönüşmüş Selvi](entity:monster/Dönüşmüş Selvi)."
+    }
+   },
+   {
+    "source_name": "Demir",
+    "mapping": {
+     "name": "Demir",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Kulübedeki üç hastadan biri. **Sivil yolcu** — paladin değil, asker değil, kimsenin aradığı biri değil. Konuşabiliyor, sayıklıyor, korkuyor.\n\nOnda hastalık **bedende** ilerledi: damarların rengi koyulaşmış, elleri olması gerekenden güçlü. Kendisi bunu iyiye yoruyor.",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "goals": "Ayakta kalmak. Diğer ikisine su taşıyor, kimse istemese de.",
+     "secrets": "**Ensesinde cerrahi bir iğne var** (@[Cerrahi İğne](entity:trinket/Cerrahi İğne)). Kendisi bilmiyor. Buraya @[Gizli Liman](entity:location/Gizli Liman)'dan, yani kayıtsız girdi; geçişinin kaydını birisi sildirdi.\n\n**Son evrenin eşiğinde.** Şafakta döner — @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü).\n\nSon evreye en yakın olan o: **beden güçleniyor** aşaması onda başlamış durumda.",
+     "dmNotes": "**Hangi kapıyı açar:** Hastalığın son evresinin **görünen** yüzü: bilinç gitmeden önce beden güçleniyor. Oyuncular bunu görürse şafağı tahmin edebilirler.\n\n🟡 Kişilik detayı kanon değil (bkz. @[Toygar](entity:npc/Toygar)). Monster ikizi: @[Dönüşmüş Demir](entity:monster/Dönüşmüş Demir)."
+    }
+   },
+   {
+    "source_name": "Sicim",
+    "mapping": {
+     "name": "Sicim",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gizli Liman"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Defter tutan adam. Reis değil, düzenleyici: kimin kime ne borçlu olduğunu o bilir, o yüzden sözü geçer.",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "goals": "Limanın işlemeye devam etmesi. Kavga, ilan, ceset — hepsi işi bozar.",
+     "secrets": "**Üçlünün geçişini kimin sildirdiğini biliyor.** Söylemesi limanın bir müşterisini ele vermek demek; bedeli konuşulmadan söylemez.",
+     "dmNotes": "**Hangi kapıyı açar:** Ücret · kefalet · **üçlünün izi**. Defteri bu üç kapının da anahtarı (@[Yol Hakkı](entity:quest/Yol Hakkı), @[Nereden Geldiler](entity:quest/Nereden Geldiler)).\n\n⚠️ Şu an *kaydı kim sildirdi* bilgisinin **tek** taşıyıcısı. İki taşıyıcı kuralı burada açık; bkz. @[Gizli Liman](entity:location/Gizli Liman) sırları."
+    }
+   },
+   {
+    "source_name": "Fare",
+    "mapping": {
+     "name": "Fare",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Rıhtım"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Friendly"
+     },
+     "description": "Rıhtım çırağı. Kimsenin bir şey sormadığı çocuk; bu yüzden her şeyi duyar. Yarası olmayan NPC'lerden biri (02 §4 kotası).",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "goals": "Bir gün bir gemiye alınmak. Kaptanların adını sırayla sayabiliyor.",
+     "secrets": "— (saklamıyor; sadece kimse sormuyor.)",
+     "dmNotes": "**Hangi kapıyı açar:** **Her şey**: kim ne zaman yanaştı, hangi kaptan kimi alır, hangi yük kimin. Oyuncular tıkanırsa açılan kapı odur — bedeli para değil, **ilgi**.\n\nBilgi eğiminin taşıyıcısı (09 §4): limanda söylenti boldur ve Fare söylentinin haritasıdır."
+    }
+   },
+   {
+    "source_name": "Kaptan Vela",
+    "mapping": {
+     "name": "Kaptan Vela",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Rıhtım"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "İyi kaptan. Gemisi temiz, mürettebatı sabit, sözü tutulur. Pahalıdır ve bunun sebebini açıklamaz.",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "goals": "Göremediği yükü taşımamak. Ambarında ne olduğunu bilmediği hiçbir seferi kabul etmez.",
+     "secrets": "**Üçlüyü geri çevirdi.** Sonra başka bir gemiyle gittiklerini duydu ve o günden beri bunu kimseye söylemedi.",
+     "dmNotes": "**Hangi kapıyı açar:** Temiz yolculuk — ama **yazı ya da yüksek fiyat** karşılığında. Ayrıca üçlünün limandan geçtiğinin ikinci ağzı."
+    }
+   },
+   {
+    "source_name": "Kaptan Halim",
+    "mapping": {
+     "name": "Kaptan Halim",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Rıhtım"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Ucuz kaptan. Hızlı sefer sözü verir ve genellikle tutar; sonrasını garanti etmez.",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "goals": "Para ve hızlı sefer.",
+     "secrets": "Gemisi ve mürettebatı güvenilmez. Bunu inkar etmiyor, sadece konuyu açmıyor.",
+     "dmNotes": "**Hangi kapıyı açar:** Ucuz ve kötü yolculuk — **gerçek bir seçenek**. Parası olmayan grubun kapısı bu; bedeli yolda ödenir."
+    }
+   },
+   {
+    "source_name": "Konsey Aracısı",
+    "mapping": {
+     "name": "Konsey Aracısı",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gizli Liman"
+     },
+     "attitude_ref": {
+      "lookup": "attitude",
+      "match": "name",
+      "value": "Indifferent"
+     },
+     "description": "Konseyin buradaki adamı. Gizlenmiyor: açıkça orada, herkes kim olduğunu biliyor.",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "goals": "Limanın konseye yararlı kalması. Kapanmasını değil, kontrol edilebilir kalmasını istiyor.",
+     "secrets": "Hangi konsey koltuklarının bu limandan pay aldığını biliyor.",
+     "dmNotes": "**Hangi kapıyı açar:** \"İyi yazı\"nın nasıl alındığı — yani limanın ikinci kapısı. Cevabı oyuncuları limandan **dışarı**, Lonca ve Şehir hattına yollar.\n\n🟡 **Adı yok.** \"Konsey Aracısı\" bir unvan, ad değil; kişi adı dağarcığı (M5) yazılmadan gerçek ad verilmedi. Masada ad gerekiyorsa Latin sicilinden, 2-3 heceli seç ve buraya yaz."
+    }
+   }
+  ],
+  "creature-action": [
+   {
+    "source_name": "Ezici Vuruş",
+    "mapping": {
+     "name": "Ezici Vuruş",
+     "source": "Dönüşmüş — Blight son evresi",
+     "action_type": "Action",
+     "is_attack": true,
+     "attack_kind": "Melee Weapon",
+     "attack_bonus": 5,
+     "reach_ft": 5,
+     "damage_dice": "1d8+3",
+     "damage_type_ref": {
+      "lookup": "damage-type",
+      "match": "name",
+      "value": "Bludgeoning"
+     },
+     "description": "*Yakın dövüş saldırısı:* +5, erişim 5 ft. **Hasar:** 1d8+3 bludgeoning. Silah yok; el, omuz, alın. Vuran şey artık nişan almıyor, sadece geliyor."
+    }
+   },
+   {
+    "source_name": "Bırakmayan Kavrama",
+    "mapping": {
+     "name": "Bırakmayan Kavrama",
+     "source": "Dönüşmüş — Blight son evresi",
+     "action_type": "Bonus Action",
+     "is_attack": false,
+     "description": "Dönüşmüş, 5 ft içindeki bir yaratığı kavrar (kaçış DC 13). Kavradığı sürece başka bir hedefe saldırmaz — bıraktığında da bırakmak istediği için bırakmaz, dikkati dağıldığı için bırakır."
+    }
+   },
+   {
+    "source_name": "Sekmeyen Koşu",
+    "mapping": {
+     "name": "Sekmeyen Koşu",
+     "source": "Dönüşmüş — Blight son evresi",
+     "action_type": "Bonus Action",
+     "is_attack": false,
+     "description": "Dönüşmüş, hareket hızının yarısı kadar ilerler ve bu hareket sırasında fırsat saldırısı tetiklemez. Engelin etrafından dolaşmaz; üstünden geçer."
+    }
+   }
+  ],
+  "monster": [
+   {
+    "source_name": "Dönüşmüş Toygar",
+    "mapping": {
+     "name": "Dönüşmüş Toygar",
+     "size_ref": {
+      "lookup": "size",
+      "match": "name",
+      "value": "Medium"
+     },
+     "creature_type_ref": {
+      "lookup": "creature-type",
+      "match": "name",
+      "value": "Humanoid"
+     },
+     "tags_line": "Dönüşmüş",
+     "alignment_ref": {
+      "lookup": "alignment",
+      "match": "name",
+      "value": "Unaligned"
+     },
+     "alignment_note": "İradesi yok; hizalama taşımaz.",
+     "description": "Bir gün önce @[Toygar](entity:npc/Toygar) olan şey. Bilinç gitti, beden güçlendi. Yorgunluğu gitti; duran şey yorulmuyor.",
+     "ac": 12,
+     "ac_note": "doğal",
+     "initiative_modifier": 0,
+     "initiative_score": 10,
+     "hp_average": 26,
+     "hp_dice": "4d8+8",
+     "speed_walk_ft": 30,
+     "stat_block": {
+      "STR": 16,
+      "DEX": 10,
+      "CON": 15,
+      "INT": 3,
+      "WIS": 8,
+      "CHA": 5
+     },
+     "passive_perception": 9,
+     "language_note": "Anladığı diller kaldı ama konuşamıyor.",
+     "cr": "1/2",
+     "xp": 100,
+     "proficiency_bonus": 2,
+     "action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Ezici Vuruş"
+      }
+     ],
+     "bonus_action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Bırakmayan Kavrama"
+      }
+     ],
+     "tags": [
+      "act-1",
+      "blight",
+      "dönüşmüş"
+     ],
+     "traits_md": "**Bu bir canavar değil, bir insanın son hali.** Öldürüldüğünde ceset @[Toygar](entity:npc/Toygar)'in cesedidir ve ensesindeki @[Cerrahi İğne](entity:trinket/Cerrahi İğne) hâlâ yerindedir.\n\nAcı hissetmez, geri çekilmez, teslim olmaz. Konuşmaya cevap vermez — ama sesin geldiği yöne döner.",
+     "dmNotes": "⚠️ **Statblock kanon değil, mekanik karar.** act1.md §4 yalnız \"bilinç gider, beden güçlenir\" diyor; sayılar bunu 5e'ye oturtmak için yazıldı (perdenin ilk çatışması, 1. seviye bir grup için üçü birden ciddi ama kazanılabilir). Kanon bir sayı verdiğinde bu kart onunla değiştirilir.\n\nÜçünün farklı olması kanonun kendisi: *iki hasta hiç aynı seyri izlemez.*"
+    }
+   },
+   {
+    "source_name": "Dönüşmüş Selvi",
+    "mapping": {
+     "name": "Dönüşmüş Selvi",
+     "size_ref": {
+      "lookup": "size",
+      "match": "name",
+      "value": "Medium"
+     },
+     "creature_type_ref": {
+      "lookup": "creature-type",
+      "match": "name",
+      "value": "Humanoid"
+     },
+     "tags_line": "Dönüşmüş",
+     "alignment_ref": {
+      "lookup": "alignment",
+      "match": "name",
+      "value": "Unaligned"
+     },
+     "alignment_note": "İradesi yok; hizalama taşımaz.",
+     "description": "Bir gün önce @[Selvi](entity:npc/Selvi) olan şey. Bilinç gitti, beden güçlendi. Kesik kesik seyri son buldu; artık yalnız hızlı.",
+     "ac": 13,
+     "ac_note": "doğal",
+     "initiative_modifier": 2,
+     "initiative_score": 12,
+     "hp_average": 22,
+     "hp_dice": "4d8+4",
+     "speed_walk_ft": 40,
+     "stat_block": {
+      "STR": 16,
+      "DEX": 14,
+      "CON": 15,
+      "INT": 3,
+      "WIS": 8,
+      "CHA": 5
+     },
+     "passive_perception": 9,
+     "language_note": "Anladığı diller kaldı ama konuşamıyor.",
+     "cr": "1/2",
+     "xp": 100,
+     "proficiency_bonus": 2,
+     "action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Ezici Vuruş"
+      }
+     ],
+     "bonus_action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Sekmeyen Koşu"
+      }
+     ],
+     "tags": [
+      "act-1",
+      "blight",
+      "dönüşmüş"
+     ],
+     "traits_md": "**Bu bir canavar değil, bir insanın son hali.** Öldürüldüğünde ceset @[Selvi](entity:npc/Selvi)'in cesedidir ve ensesindeki @[Cerrahi İğne](entity:trinket/Cerrahi İğne) hâlâ yerindedir.\n\nAcı hissetmez, geri çekilmez, teslim olmaz. Konuşmaya cevap vermez — ama sesin geldiği yöne döner.",
+     "dmNotes": "⚠️ **Statblock kanon değil, mekanik karar.** act1.md §4 yalnız \"bilinç gider, beden güçlenir\" diyor; sayılar bunu 5e'ye oturtmak için yazıldı (perdenin ilk çatışması, 1. seviye bir grup için üçü birden ciddi ama kazanılabilir). Kanon bir sayı verdiğinde bu kart onunla değiştirilir.\n\nÜçünün farklı olması kanonun kendisi: *iki hasta hiç aynı seyri izlemez.*"
+    }
+   },
+   {
+    "source_name": "Dönüşmüş Demir",
+    "mapping": {
+     "name": "Dönüşmüş Demir",
+     "size_ref": {
+      "lookup": "size",
+      "match": "name",
+      "value": "Medium"
+     },
+     "creature_type_ref": {
+      "lookup": "creature-type",
+      "match": "name",
+      "value": "Humanoid"
+     },
+     "tags_line": "Dönüşmüş",
+     "alignment_ref": {
+      "lookup": "alignment",
+      "match": "name",
+      "value": "Unaligned"
+     },
+     "alignment_note": "İradesi yok; hizalama taşımaz.",
+     "description": "Bir gün önce @[Demir](entity:npc/Demir) olan şey. Bilinç gitti, beden güçlendi. İlk o dönüştü; bedeni zaten hazırlanmıştı.",
+     "ac": 12,
+     "ac_note": "doğal",
+     "initiative_modifier": 0,
+     "initiative_score": 10,
+     "hp_average": 32,
+     "hp_dice": "5d8+10",
+     "speed_walk_ft": 30,
+     "stat_block": {
+      "STR": 16,
+      "DEX": 10,
+      "CON": 15,
+      "INT": 3,
+      "WIS": 8,
+      "CHA": 5
+     },
+     "passive_perception": 9,
+     "language_note": "Anladığı diller kaldı ama konuşamıyor.",
+     "cr": "1/2",
+     "xp": 100,
+     "proficiency_bonus": 2,
+     "action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Ezici Vuruş"
+      }
+     ],
+     "bonus_action_refs": [
+      {
+       "lookup": "creature-action",
+       "match": "name",
+       "value": "Bırakmayan Kavrama"
+      }
+     ],
+     "tags": [
+      "act-1",
+      "blight",
+      "dönüşmüş"
+     ],
+     "traits_md": "**Bu bir canavar değil, bir insanın son hali.** Öldürüldüğünde ceset @[Demir](entity:npc/Demir)'in cesedidir ve ensesindeki @[Cerrahi İğne](entity:trinket/Cerrahi İğne) hâlâ yerindedir.\n\nAcı hissetmez, geri çekilmez, teslim olmaz. Konuşmaya cevap vermez — ama sesin geldiği yöne döner.",
+     "dmNotes": "⚠️ **Statblock kanon değil, mekanik karar.** act1.md §4 yalnız \"bilinç gider, beden güçlenir\" diyor; sayılar bunu 5e'ye oturtmak için yazıldı (perdenin ilk çatışması, 1. seviye bir grup için üçü birden ciddi ama kazanılabilir). Kanon bir sayı verdiğinde bu kart onunla değiştirilir.\n\nÜçünün farklı olması kanonun kendisi: *iki hasta hiç aynı seyri izlemez.*"
+    }
+   }
+  ],
+  "trinket": [
+   {
+    "source_name": "Cerrahi İğne",
+    "mapping": {
+     "name": "Cerrahi İğne",
+     "roll_d100": 1,
+     "description": "Ensedeki cerrahi iğne. Parmak boyu, ince, ucu kılcal. Yerleştirildiği yer iyileşmiş — yani günler önce takılmış.\n\nKimse yorumlayamaz. Bir hekim \"bunu bir hekim yapmış\" der ve orada durur.\n\n**Perdenin belkemiği bu nesnedir:** hastalık doğa değil, birinin eseri. *Salgın araştırılmaz, suç araştırılır.* Üç kapının — bedensel, belgesel, kültürel — ortak nesnesi budur.",
+     "tags": [
+      "act-1",
+      "prop",
+      "kanıt"
+     ],
+     "dmNotes": "Oyuncular bakmazsa da orada durur; ölümden sonra da bulunur. Üç kişide de aynısı var.\n\n`roll_d100: 1` şema zorunluluğu — bu bir d100 hatıra tablosu satırı değil, perdenin kanıtı. Kategori seçimi act1-kartlar.md §7'den: blueprint sözleşmesinde `item` kategorisi yok."
+    }
+   }
+  ],
+  "scene": [
+   {
+    "source_name": "Köye Varış",
+    "mapping": {
+     "name": "Köye Varış",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gümüşsu"
+     },
+     "status": "Planned",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description": "Perdenin açılışı. Oyuncular Gümüşsu'ya varır — aynı anda varmak zorunda değil.",
+     "beats": "1. **Köy işliyor.** Kazan kaynıyor, kapıda tebeşir izi var, biri hâlâ ekmek pişiriyor. Kimse ölmemiş. İlk izlenim çürüme değil **bakım** olmalı.\n2. **Söylenti günlük konuşma.** Kuyu başında, handa, ekmek sırasında hastalık konuşuluyor. Kimse fısıldamıyor.\n3. **Karşılaşma.** Oyuncular birbirini burada bulur. Kimse kimseye \"gel hadi\" demez; hepsi zaten aynı söylenti için yoldaydı.\n4. **Kulübe duyulur.** Üç kişinin köyün dışına alındığı söylenir — @[Duran](entity:npc/Duran) bunu bir karar olarak, @[Umay](entity:npc/Umay) bir sorumluluk olarak anlatır.\n5. **Gece daveti.** \"Sabah bakın, gece yol tehlikeli.\" @[Bulut'un Hanı](entity:location/Bulut'un Hanı) doğal seçimdir.",
+     "npc_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Duran"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Umay"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Bulut"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Karaca"
+      }
+     ],
+     "quest_refs": [
+      {
+       "lookup": "quest",
+       "match": "name",
+       "value": "Söylentinin Peşinde"
+      }
+     ],
+     "dmNotes": "**Sahne bir savaş değil, bir soruşturmadır.** Oyuncuya görev verilmez; köy gösterilir.\n\nRol yuvaları burada işler: Uyarıcı çürümenin doğal olmadığını söyler, Şüphelenen cesetlerdeki/enselerdeki izi arar, Kaçan kimin nereye götürüldüğünü sorar, İşaretlenen'in bedeni tepki verir. Yuva boşsa satır bir NPC'ye devredilir — @[Umay](entity:npc/Umay) dördünün de yerine geçebilir."
+    }
+   },
+   {
+    "source_name": "Kulübe Sorgusu",
+    "mapping": {
+     "name": "Kulübe Sorgusu",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "status": "Planned",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description": "Üç hastanın **son konuşabildiği** hal. Buradan çıkacak son bilgi budur.",
+     "beats": "1. **Kapı.** Yiyecek eşikte duruyor, kimse içeri girmemiş. İçeri girmek bir seçimdir ve bedeli vardır (temas).\n2. **Üç insan.** @[Toygar](entity:npc/Toygar), @[Selvi](entity:npc/Selvi), @[Demir](entity:npc/Demir): konuşabilen, sayıklayan, korkmuş insanlar. Üçü de aynı hastalığı **farklı** yaşıyor.\n3. **Sorgu.** Nereden geldiler, kiminle geldiler, kim ödedi. Cevaplar eksik ve birbirini tutmuyor — ama hepsi aynı yeri işaret ediyor: kayıtsız bir liman.\n4. **İğne.** Bakan biri enselerinde cerrahi bir iğne bulur (@[Cerrahi İğne](entity:trinket/Cerrahi İğne)). Kimse yorumlayamaz. Soru değişir: *neden bu üç kişi?*\n5. **Kapanış.** Üçü yorulur, konuşma biter. Bu son konuşmaydı.",
+     "npc_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Toygar"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Selvi"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Demir"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Umay"
+      }
+     ],
+     "quest_refs": [
+      {
+       "lookup": "quest",
+       "match": "name",
+       "value": "Nereden Geldiler"
+      }
+     ],
+     "dmNotes": "İğne oyuncular aramasa da vardır ve ölümden sonra bulunur — bu sahne kaçırılabilir ama ipucu kaçırılamaz (iki taşıyıcı kuralı).\n\n@[Umay](entity:npc/Umay)'ın kendi teması bu sahnede görünür hale gelebilir: elinin titremesi, kolunu saklaması."
+    }
+   },
+   {
+    "source_name": "Şafak Dönüşümü",
+    "mapping": {
+     "name": "Şafak Dönüşümü",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "status": "Planned",
+     "illumination_ref": {
+      "lookup": "illumination",
+      "match": "name",
+      "value": "Dim"
+     },
+     "tags": [
+      "act-1",
+      "gümüşsu",
+      "blight"
+     ],
+     "description": "Şafakta üçü tamamen döner. Bir gün önce NPC olan üç kişi artık monster.",
+     "beats": "1. **Ses.** Kulübeden gelen ses konuşma değil. Kapı içeriden zorlanıyor.\n2. **Görüntü.** Üçü ayakta. Damar rengi koyu, bakış boş, beden olması gerekenden güçlü.\n3. **Tanıma.** Oyuncular dün gece konuştukları insanları tanır. İsimlerini biliyorlar — sahnenin bütün ağırlığı bu.\n4. **Çatışma** → @[Şafak Çatışması](entity:encounter/Şafak Çatışması).",
+     "npc_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Umay"
+      }
+     ],
+     "dmNotes": "**Sayaç oyuncuda değil.** Dönüşüm bir seçimin cezası değil, hastalığın takvimi. Oyuncular gece köyde kalmazsa dönüşüm yine olur: köy ardından haber yollar ya da üçü yolda karşılarına çıkar. Savaş atlanabilir bir yan sahne değil; **nerede** olacağı oyuncuya bağlı.\n\nKöy kurtarılabilir: karantina tutulabilir, köyün bir kısmı yaşar. Perdenin ilk zaferi kazanmak değil, **kaybetmemektir.**"
+    }
+   },
+   {
+    "source_name": "Limana Kabul",
+    "mapping": {
+     "name": "Limana Kabul",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Gizli Liman"
+     },
+     "status": "Planned",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "description": "Birinci kapı: kefil, iş ya da yük. Para bu kapının konusu değil.",
+     "beats": "1. **Yol biter, kapı yoktur.** Ne tabela var ne kayıt; sadece bekleyen insanlar.\n2. **Soru tek:** kim kefil? @[Karaca](entity:npc/Karaca) kefil olabilir ama zayıftır — kendisi de misafir. Sözü kapıyı aralar, açmaz.\n3. **Üç yol.** İçeriden biri kefil olur · içeriden biri için bir iş görülür · satılacak gerçek bir yükle gelinir.\n4. **@[Sicim](entity:npc/Sicim) defteri açar.** Kabul bir tören değil, bir kayıt — ama devletin defterine değil, limanın defterine.\n5. **Para çıkarsa** cevap değişmez: \"burada para ikinci kapının konusu.\"",
+     "npc_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Karaca"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Sicim"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Fare"
+      }
+     ],
+     "dmNotes": "Bu sahnenin işi \"para verip tak diye varma\"yı kapatmaktır.\n\nTehdit denenirse: kavga çıkmaz, **ilan** olur. İlan edilen adama fiyat yükselir, kefil bulunmaz, kapılar kapanır — ceza yalnızlıktır."
+    }
+   },
+   {
+    "source_name": "Geçiş Pazarlığı",
+    "mapping": {
+     "name": "Geçiş Pazarlığı",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Rıhtım"
+     },
+     "status": "Planned",
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "description": "İkinci kapı: iyi yazı ya da iyi para. İkisi de kesede yok.",
+     "beats": "1. **Fiyat söylenir.** @[Kaptan Vela](entity:npc/Kaptan Vela)'nın fiyatı grubun taşıdığı paranın çok üstündedir; sebebini açıklamaz.\n2. **Ucuz seçenek.** @[Kaptan Halim](entity:npc/Kaptan Halim) hemen kalkar ve ucuzdur. Gemisi ve mürettebatı güvenilmez — bu gerçek bir seçenektir, tuzak değil.\n3. **Yazı yolu.** @[Konsey Aracısı](entity:npc/Konsey Aracısı) \"iyi yazı\"nın nasıl alındığını anlatır; cevap oyuncuları limandan **dışarı** yollar.\n4. **Para yolu.** @[Sicim](entity:npc/Sicim) iş verir, @[Fare](entity:npc/Fare) kimin ne ödediğini bilir. Liman geçilen değil **çalışılan** bir yerdir.\n5. **Vela'nın cümlesi.** Konuşma yeterince uzarsa üçlüyü geri çevirdiğini söyler — ve başka bir gemiyle gittiklerini duyduğunu.",
+     "npc_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Kaptan Vela"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Kaptan Halim"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Sicim"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Fare"
+      },
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Konsey Aracısı"
+      }
+     ],
+     "quest_refs": [
+      {
+       "lookup": "quest",
+       "match": "name",
+       "value": "Yol Hakkı"
+      }
+     ],
+     "dmNotes": "🟡 **Açık karar:** \"iyi yazı\" tam olarak nedir (hangi makam verir, karşılığında ne ister) ve \"iyi para\"nın rakamı ile kazanma yolları (limanda yapılabilecek 2-3 iş) yazılmadı — act1.md §9 açık 3-4. Masaya çıkmadan bu ikisini doldur."
+    }
+   }
+  ],
+  "encounter": [
+   {
+    "source_name": "Şafak Çatışması",
+    "mapping": {
+     "name": "Şafak Çatışması",
+     "location_ref": {
+      "lookup": "location",
+      "match": "name",
+      "value": "Kulübe"
+     },
+     "difficulty": "High",
+     "tags": [
+      "act-1",
+      "gümüşsu"
+     ],
+     "description": "Perdenin ilk çatışması. Dün gece konuşulan üç insan.",
+     "monsters_refs": [
+      {
+       "lookup": "monster",
+       "match": "name",
+       "value": "Dönüşmüş Toygar"
+      },
+      {
+       "lookup": "monster",
+       "match": "name",
+       "value": "Dönüşmüş Selvi"
+      },
+      {
+       "lookup": "monster",
+       "match": "name",
+       "value": "Dönüşmüş Demir"
+      }
+     ],
+     "npcs_refs": [
+      {
+       "lookup": "npc",
+       "match": "name",
+       "value": "Umay"
+      }
+     ],
+     "setup": "Şafak. Kulübenin kapısı içeriden zorlanıyor. @[Umay](entity:npc/Umay) kapının önünde — sabah yemeğini getirmiş.\n\nÜçü aynı anda çıkmaz: önce @[Dönüşmüş Demir](entity:monster/Dönüşmüş Demir) (ilk o dönüştü), bir tur sonra diğer ikisi.",
+     "tactics": "**Taktik yok, yönelim var.** Nişan almazlar, geri çekilmezler, teslim olmazlar; sesin ve hareketin geldiği yöne dönerler.\n\n@[Dönüşmüş Selvi](entity:monster/Dönüşmüş Selvi) hızlıdır ve en uzaktakine gider — arka sırayı ilk o bulur. @[Dönüşmüş Toygar](entity:monster/Dönüşmüş Toygar) kavradığını bırakmaz; kavradığı sürece başka hedefe saldırmaz, bu da bir kurtarma kararı yaratır.\n\n**Umay sahnede.** Onu korumak bir seçenektir, zorunluluk değil — ama korumazlarsa bunu görürler. Köy kurtarılabilir: kaçan köylüler kapıları kapatır, kazan devrilir, biri çocuğu içeri çeker. Işık burada.\n\nÖldükten sonra: cesetler tanıdıkları insanların cesetleridir ve enselerindeki @[Cerrahi İğne](entity:trinket/Cerrahi İğne) hâlâ oradadır.",
+     "xp_budget": 300,
+     "dmNotes": "⚠️ `difficulty` ve `xp_budget` kanon değil; yazılan statblocklardan hesaplandı (3 × CR 1/2 = 300 XP). 1. seviye dört kişilik bir grup için ciddi ama kazanılabilir. Grup daha kalabalık ya da yüksek seviyeliyse üçünü aynı anda çıkar."
+    }
+   }
+  ],
+  "quest": [
+   {
+    "source_name": "Söylentinin Peşinde",
+    "mapping": {
+     "name": "Söylentinin Peşinde",
+     "status": "Not Started",
+     "tags": [
+      "act-1",
+      "giriş"
+     ],
+     "description": "Perdenin giriş kancası: masaya oturmadan kabul edilen tek cümlenin karşılığı.",
+     "objective": "**Hastalık söylentileri seni bir şekilde Gümüşsu yoluna çıkardı.**\n\nNeden yolda olduğun senin cevabın: bir amacın var ve bu amacın \"kaynağı bulmak\" olmak zorunda değil. Birini arıyor, bir borcu ödüyor, bir emri yerine getiriyor ya da kaçtığın şeyden uzaklaşıyor olabilirsin.\n\nYol @[Gümüşsu](entity:location/Gümüşsu)'da bitiyor. İlk karşılaşma orada.",
+     "reward": "Perdenin ödülü eşya değil: **bilgi ve müttefik.**",
+     "secrets": "Bu quest bir görev değil, bir sözleşme. DM'in işi oyuncunun kendi sebebini dünyaya bağlamaktır — kuruma, loncaya, limana ya da paladin düzenine.\n\nKapanışı yok: @[Köye Varış](entity:scene/Köye Varış) sahnesi bittiğinde amacını yerine getirmiş sayılır ve yerini @[Nereden Geldiler](entity:quest/Nereden Geldiler) alır."
+    }
+   },
+   {
+    "source_name": "Nereden Geldiler",
+    "mapping": {
+     "name": "Nereden Geldiler",
+     "status": "Not Started",
+     "tags": [
+      "act-1",
+      "ana-hat"
+     ],
+     "description": "Perdenin ana hattı: iğne → kayıtsız giriş → kaydı kim sildirdi.",
+     "objective": "Üç hastanın ensesinde cerrahi bir iğne var. Bunu birisi taktı; birisi bu üç kişiyi buraya yolladı.\n\nZincir üç halka: **iğne** (bu hastalık doğa değil) → **kayıtsız giriş** (resmi limandan geçselerdi kayıt olurdu) → **kaydı kim sildirdi** (kayıt olmaması bir kaza değil, bir tercihti).\n\nİlk halka @[Kulübe](entity:location/Kulübe)'de, ikincisi @[Gizli Liman](entity:location/Gizli Liman)'da. Üçüncüsünün cevabı limanda değil.",
+     "secrets": "**Salgın araştırılmaz, suç araştırılır.** Oyuncular bir hastalığı araştırdıklarını sanıyor; kazdıkları şey bir kurumun kendi suçu.\n\nÜçü **sivil**. Aranmadılar çünkü kayıtsız insanların kaybolması kayda geçmez. Şatoya bağ kurulmaz.\n\nZincirin ucu bilerek Birinci Perde'nin bu kapsamının dışına çıkar: *kim ödedi* sorusunun cevabı Lonca ve Şehir hattında ve **bu pakette yazılı değil.** Masaya çıkmadan o hattın ilk NPC'sini kendin yaz.\n\nİki taşıyıcı: @[Duran](entity:npc/Duran) (\"limandan geldiler\") ve @[Karaca](entity:npc/Karaca) (yolu bilen). Limanda @[Sicim](entity:npc/Sicim) ve @[Kaptan Vela](entity:npc/Kaptan Vela)."
+    }
+   },
+   {
+    "source_name": "Yol Hakkı",
+    "mapping": {
+     "name": "Yol Hakkı",
+     "status": "Not Started",
+     "giver_ref": {
+      "lookup": "npc",
+      "match": "name",
+      "value": "Sicim"
+     },
+     "tags": [
+      "act-1",
+      "liman"
+     ],
+     "description": "Gizli Liman'dan çıkmanın bedeli: iyi bir yazı ya da iyi para.",
+     "objective": "@[Gizli Liman](entity:location/Gizli Liman) geçilen bir yer değil, çalışılan bir yer. Buradan çıkmak için ya konseyden **iyi bir yazı** ya da **iyi para** gerekiyor; ikisi de Gümüşsu'dan çıkarken kesenizde yoktu.\n\nYazı sizi limandan dışarı, Lonca ve Şehir hattına yollar. Para limanda kazanılır: iş, mal, ya da birinin borcunu devralmak.",
+     "secrets": "🟡 **Açık karar — masaya çıkmadan kapat:** \"iyi yazı\"yı hangi makam verir ve karşılığında ne ister; \"iyi para\"nın rakamı nedir ve limanda hangi 2-3 iş onu kazandırır (act1.md §9 açık 3-4).\n\nKapı @[Konsey Aracısı](entity:npc/Konsey Aracısı)'nda (yazı) ve @[Sicim](entity:npc/Sicim)'de (iş) duruyor; @[Fare](entity:npc/Fare) tıkanan grubun açacağı kapıdır."
+    }
+   }
+  ]
+ },
+ "cross_references": []
+}

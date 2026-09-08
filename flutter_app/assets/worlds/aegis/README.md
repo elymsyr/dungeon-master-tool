@@ -201,13 +201,14 @@ Yerine geçen kural — **aynı sertlikte:**
 ```
 assets/worlds/aegis/
   README.md              ← bu dosya (authoring brifingi, pakete girmez)
-  PROVENANCE.md          ← entity → kaynak izi (yazılacak)
+  PROVENANCE.md          ← entity → kaynak izi ✅
+  lore/canon/            ← damıtılmış Act 1 kanonu (pakete GİRMEZ)
   lore/archive/          ← ham arşiv, pakete GİRMEZ
-  aegis-act1/            ← modül dizini (yazılacak)
-    manifest.json
-    world-blueprint.json
-    blueprint.json       ← pre-gen PC'ler (Tier 3)
-    media/
+  aegis-act1/            ← modül dizini ✅
+    manifest.json        ← ✅
+    world-blueprint.json ← ✅ 38 entity (§4.8)
+    blueprint.json       ← pre-gen PC'ler (Tier 3) — yazılmadı, Faz 6
+    media/               ← yazılmadı, Faz 7 (§4.6)
       Maps/  Artwork/  Handouts/
 ```
 
@@ -228,13 +229,14 @@ dizini değil**, alt modül taşır. `convert_blueprint.dart --dir` her zaman
   "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
   "version": "0.1.0",
   "description": "…",
-  "files": ["media/Maps/…"]
+  "files": {}
 }
 ```
 
 `publisher` / `author` = **elymsyr** — dünya bu kimlik altında oluşturulacak,
-marketplace'e yayınlandığında da atıf buradan gelir. `files` listesinde
-olmayan medya installer tarafından **diske çıkarılmaz.**
+marketplace'e yayınlandığında da atıf buradan gelir. `files` içinde
+olmayan medya installer tarafından **diske çıkarılmaz**; medya henüz
+paketlenmediği için şimdilik boş bir nesne (`{}`).
 
 ### 4.5 Act 1 için kategori planı
 
@@ -287,8 +289,43 @@ CI karşılığı: `test/domain/services/bundled_worlds_blueprint_test.dart`.
 
 `pubspec.yaml`'da `assets/worlds/` bloğu **yorumda** (~326 MB) —
 `assets/worlds/manifest.json`'a giriş eklemek dünyayı "bundled" yapar ve
-`BundledWorldsInstaller` görür. Aegis'i oraya eklemek ayrı bir karar; önce
-`.pkg.json` üretilip elle kurulur.
+`BundledWorldsInstaller` görür. **Aegis oraya eklenmedi** (o ayrı bir karar,
+ayrıca CI'daki `bundled_worlds_blueprint_test` yalnız o listeyi gezer).
+
+Kurulum yolu şimdilik **diskten içe aktarma**: Admin → *Import world folder* →
+`assets/worlds/aegis/aegis-act1` klasörünü seç. `BundledWorldsInstaller
+.installFromDirectory` klasörü paketlenmiş dünyayla aynı düzende okur
+(`manifest.json` + blueprint'ler + `media/`), build almadan kurar ve
+`installed_from: assets` damgalar — yani bundled toggle'ının kaldırma yolu
+bunu da temizler.
+
+### 4.8 Yazılan kartlar (0.1.0)
+
+`aegis-act1/world-blueprint.json` — **38 entity.** Kapsam bilerek dar:
+[`lore/canon/act1-kartlar.md`](lore/canon/act1-kartlar.md)'ın ✅ satırları ve
+[`lore/canon/genel-kartlar.md`](lore/canon/genel-kartlar.md)'ın yazılabilir
+dördü. Bugün yazılamayanın önündeki engel içerik değil karar (§3.2).
+
+| Kategori | Adet | Ne |
+|---|---|---|
+| `campaign` | 1 | Aegis — Meridia, 5 sayfa (giriş kartı) |
+| `lore` | 4 | İrade Çağı · Tanrılar ve Fısıltı · Blight — Bilinen Hali · Adlandırma Doktrini |
+| `location` | 5 | Gümüşsu · Kulübe · Bulut'un Hanı · Gizli Liman · Rıhtım |
+| `npc` | 12 | Gümüşsu kadrosu (4) · kulübedeki üçlü (3) · Gizli Liman kadrosu (5) |
+| `monster` | 3 | Dönüşmüş Toygar · Selvi · Demir (`npc` ikizlerine linkli) |
+| `creature-action` | 3 | Dönüşmüşlerin aksiyonları |
+| `scene` | 5 | Köye Varış · Kulübe Sorgusu · Şafak Dönüşümü · Limana Kabul · Geçiş Pazarlığı |
+| `encounter` | 1 | Şafak Çatışması |
+| `quest` | 3 | Söylentinin Peşinde · Nereden Geldiler · Yol Hakkı |
+| `trinket` | 1 | Cerrahi İğne |
+
+Entity → kaynak izi ve **bilerek yazılmayanların** listesi:
+[PROVENANCE.md](PROVENANCE.md).
+
+⚠️ İki yerde kanon dışına çıkıldı ve ikisi de kartın `dmNotes`'unda işaretli:
+dönüşmüşlerin **statblock'u** (`act1.md §4` yalnız "bilinç gider, beden
+güçlenir" diyor) ve buna bağlı `encounter.difficulty` / `xp_budget`. Kanon bir
+sayı verdiğinde o kartlar değiştirilir.
 
 ---
 
@@ -298,12 +335,12 @@ CI karşılığı: `test/domain/services/bundled_worlds_blueprint_test.dart`.
 |---|---|---|---|
 | 0 | **M0 kilidini kapat** (§3) | Karar listesi | Kıta adı ✅ · Gümüşsu ✅ · pre-gen seti ✅ · #8 tonu ✅ · kalan: M0.2/M0.3/M0.6 |
 | 1 | Kanon damıtma | `lore/canon/` — çelişkisiz Act 1 kanonu (kronoloji, fraksiyonlar, bilgi eğimi) | Her madde §0 hiyerarşisinde bir kaynağa dayanıyor |
-| 2 | Lokasyonlar | 7 lokasyon, `location` + `parent_location_ref` | Her biri: kim yönetiyor · kim çalışıyor · neye benziyor · neyi gizliyor · hangi kapıyı açıyor |
-| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | Her kritik kapının iki taşıyıcısı var |
-| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | Her zorunlu sahne bir **yuvaya** bağlı, PC'ye değil |
-| 5 | Campaign + lore sayfaları | `campaign.pages[]` | Ton sözleşmesi + sansürlü tarih |
+| 2 | Lokasyonlar | 7 lokasyon, `location` + `parent_location_ref` | 🟡 Gümüşsu ✅ · Gizli Liman ✅ (5 kart, §4.8). Kalan 5 lokasyonun önünde karar var |
+| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | 🟡 12 NPC ✅ · fraksiyon kartları yazılmadı. **Açık:** *kaydı kim sildirdi* hâlâ tek taşıyıcıda (Sicim) |
+| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | 🟡 5 sahne · 1 encounter · 3 quest ✅ (trap yok). Hiçbiri belirli bir PC'ye bağlı değil |
+| 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 4 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
 | 6 | Pre-gen'ler | `blueprint.json` | Dört yuva, dört karakter |
-| 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | `--check` temiz, `PROVENANCE.md` tam |
+| 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | 🟡 `PROVENANCE.md` ✅ · medya yok · `.pkg.json` üretilmedi (Dart SDK'sı olan bir makinede §4.7) |
 
 Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
 
