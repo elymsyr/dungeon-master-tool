@@ -113,6 +113,50 @@ class BundledWorldsInstaller {
     return report;
   }
 
+  /// Diskteki bir dünya klasörünü kurar — admin/yazar akışı: paketlenmiş
+  /// dünyayla aynı düzende (`manifest.json`, `world-blueprint.json`,
+  /// `blueprint.json`, `media/`) bir klasör seçilir, build almadan kurulur.
+  /// `installed_from: assets` damgalanır, böylece toggle'ın kaldırma yolu
+  /// bunları da temizler.
+  Future<InstallReport> installFromDirectory(String dirPath) async {
+    final report = InstallReport();
+    final dir = p.basename(dirPath);
+    try {
+      final manifest = await _readJsonFile(p.join(dirPath, 'manifest.json'));
+      if (manifest == null) {
+        report.failures.add('$dir: manifest.json not found');
+        return report;
+      }
+      await _installWorld(
+        dir: dir,
+        manifest: manifest,
+        worldBlueprint:
+            await _readJsonFile(p.join(dirPath, 'world-blueprint.json')),
+        characterBlueprint:
+            await _readJsonFile(p.join(dirPath, 'blueprint.json')),
+        loadMedia: (rel) =>
+            _readFileBytes(p.join(dirPath, p.joinAll(p.posix.split(rel)))),
+        report: report,
+        installedFrom: 'assets',
+      );
+    } catch (e, st) {
+      report.failures.add('$dir: $e\n$st');
+    }
+    return report;
+  }
+
+  Future<Uint8List?> _readFileBytes(String path) async {
+    final f = File(path);
+    return await f.exists() ? await f.readAsBytes() : null;
+  }
+
+  Future<Map<String, dynamic>?> _readJsonFile(String path) async {
+    final bytes = await _readFileBytes(path);
+    if (bytes == null) return null;
+    final decoded = jsonDecode(utf8.decode(bytes));
+    return decoded is Map ? decoded.cast<String, dynamic>() : null;
+  }
+
   /// Kataloğun `world` girdisini kurar: payload zarfı R2'den (başarısızsa
   /// bundle'dan), medya R2'den (başarısızsa bundle'dan). Barındırmadığımız
   /// dosyalar (PDF) hiç indirilmez — bkz. [loadMedia].

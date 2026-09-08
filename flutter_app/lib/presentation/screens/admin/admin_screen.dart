@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -201,6 +203,30 @@ class _DashboardTab extends ConsumerWidget {
             ),
           ),
         ],
+        if (!kIsWeb) ...[
+          const SizedBox(height: 12),
+          _AdminCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              title: Text('Import world folder',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              subtitle: Text(
+                  'Install a world directly from disk (manifest.json + '
+                  'blueprints + media/) — no rebuild, for authoring.',
+                  style: TextStyle(
+                      fontSize: 11, color: palette.sidebarLabelSecondary)),
+              trailing: TextButton(
+                onPressed: () => _importWorldFolder(context, ref),
+                child: const Text('Choose folder…'),
+              ),
+            ),
+          ),
+        ],
         if (bundledWorldsAvailable) ...[
           const SizedBox(height: 12),
           _AdminCard(
@@ -256,6 +282,41 @@ class _DashboardTab extends ConsumerWidget {
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
             showAssetsPacks: !on,
           ));
+      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
+  Future<void> _importWorldFolder(BuildContext context, WidgetRef ref) async {
+    final dir = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Select a world folder');
+    if (dir == null || !context.mounted) return;
+    final installer = ref.read(bundledWorldsInstallerProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final summary = await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'world-folder-import',
+        'Importing world…',
+        () async {
+          final report = await installer.installFromDirectory(dir);
+          for (final issue in [...report.failures, ...report.issues]) {
+            debugPrint('[world-import] $issue');
+          }
+          if (report.count == 0) {
+            return 'Import failed — see logs.';
+          }
+          return report.isClean
+              ? 'Installed ${report.installed.join(", ")}.'
+              : 'Installed ${report.count} world(s) with '
+                  '${report.issues.length + report.failures.length} '
+                  'content issue(s) — see logs.';
+        },
+      );
+      ref.invalidate(campaignListProvider);
+      ref.invalidate(packageListProvider);
+      ref.invalidate(characterListProvider);
+      messenger.showSnackBar(SnackBar(content: Text(summary)));
+    } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
   }
