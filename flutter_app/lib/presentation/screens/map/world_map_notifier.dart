@@ -18,8 +18,6 @@ import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/value_objects/asset_ref.dart';
-import '../../../domain/value_objects/media_kind.dart';
-import '../../widgets/quota_snackbar.dart';
 
 const _uuid = Uuid();
 
@@ -1060,27 +1058,14 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     if (localPath == null) return;
 
     final oldRef = state.imagePath;
-    // Eager cloud upload — online world → push to R2; offline / quota-full
-    // → keep the local path.
-    final (ref: stored, :quotaExceeded, :tooLarge, :actualBytes) =
-        await uploadMapImage(
-      _ref.read,
-      path: localPath,
-      kind: MediaKind.battleMap,
-    );
+    // Buluta yükleme yok — dosya dünyanın `media/` klasörüne kopyalanır ve o
+    // yol saklanır; buluta ancak projeksiyonda çıkar.
+    final stored = await localizeMapImage(_ref.read, localPath);
     pushUndo(state);
     state = state.copyWith(imagePath: stored);
     await _fitImageInViewport();
     _debouncedSave();
     _debouncedViewportSave();
-    if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
-    if (tooLarge && context.mounted) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: MediaKind.battleMap.maxBytes,
-        actualBytes: actualBytes,
-      );
-    }
     // Replaced an earlier cloud image → best-effort orphan cleanup.
     unawaited(cleanupMapImageRef(
       _ref.read,
@@ -1089,27 +1074,13 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     ));
   }
 
-  /// Ensures the active map image is cloud-hosted so remote players can
-  /// resolve it: a still-local path is eager-uploaded, the rewritten ref is
-  /// persisted, and the resolved ref is returned (empty when no image).
-  Future<String> ensureMapImageUploaded() async {
-    final current = state.imagePath;
-    if (current.isEmpty || !AssetRef(current).isLocal) return current;
-    final (ref: stored, quotaExceeded: _, tooLarge: _, actualBytes: _) =
-        await uploadMapImage(
-      _ref.read,
-      path: current,
-      kind: MediaKind.battleMap,
-      transientFallback: true,
-    );
-    // Counted ref → persist (permanent). Transient ref (quota full) → use for
-    // this projection only; persisting it would orphan the row at R2 TTL.
-    if (stored != current && !AssetRef(stored).isTransient) {
-      state = state.copyWith(imagePath: stored);
-      _debouncedSave();
-    }
-    return stored;
-  }
+  /// Projeksiyon için haritanın görselini uzaktan çözülebilir hâle getirir:
+  /// hâlâ yerel olan yol transient havuza yüklenir ve dönen ref **yalnızca o
+  /// projeksiyonda** kullanılır. Kalıcı satıra yazılmaz — transient obje LRU
+  /// ile atılabilir, ölü ref bırakmak DM'in kendi resmini kaybetmesi olurdu.
+  /// Dünya online değilse / yükleme başarısızsa yerel yol aynen döner.
+  Future<String> ensureMapImageProjectable() =>
+      projectableMapImage(_ref.read, state.imagePath);
 
   // -------------------------------------------------------------------------
   // Pan / Zoom (manual GestureDetector — same pattern as BattleMap)

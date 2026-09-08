@@ -216,9 +216,7 @@
   "landingInfoResetSent": "Bu adrese ait bir hesap varsa, sıfırlama bağlantısı gönderildi.",
   "landingErrOffline": "Çevrimdışısın — internet bağlantını kontrol et.",
   "menuReportBug": "Hata Bildir",
-  "mediaQuotaFull": "Depolama kotanız dolu — resim bu cihazda saklandı.",
   "mediaImageLimitReached": "Her varlığa en fazla {count} resim eklenebilir.",
-  "mediaImageTooLarge": "Resim çok büyük ({actual} MB, limit {max} MB) — bu cihazda saklandı, buluta yedeklenmedi.",
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",
   "hubTooltipFilter": "Filtrele",
@@ -453,14 +451,10 @@
   "pdfLibraryEmpty": "Henüz PDF yok.",
   "pdfLibraryEmptyHint": "Açtığınız dosyalar bu dünyaya kopyalanır.",
   "pdfLibraryOpenFile": "Dosya Aç",
-  "pdfLibraryShared": "DM tarafından paylaşıldı",
-  "pdfLibraryDownload": "İndir",
-  "pdfLibraryDownloadFailed": "İndirme başarısız: {error}",
   "pdfLibraryRemoveTitle": "PDF'i Kaldır",
   "pdfLibraryRemoveBody": "\"{name}\" bu dünyadan kaldırılsın mı? Dosya silinecek.",
   "pdfLibraryRemove": "Kaldır",
   "pdfLibraryMaxTabs": "Aynı anda en fazla {count} PDF açık olabilir.",
-  "pdfLibraryShareFailed": "{count} PDF paylaşılamadı.",
   "mainCloseSoundpad": "Soundpad'i Kapat",
   "mainOpenSoundpad": "Soundpad'i Aç",
   "mainCloseCharacters": "Karakterleri Kapat",
@@ -645,11 +639,19 @@
   "deleteAccountFailed": "Hesap silinemedi: {error}",
   "deleteAccountSuccess": "Hesabınız silindi. Yerel verileriniz bu cihazda duruyor — misafir olarak devam edebilirsiniz.",
   "@deleteAccountFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountConfirmEmailLabel": "Onaylamak için {email} yazın",
   "@deleteAccountConfirmEmailLabel": {
-    "placeholders": { "email": { "type": "String" } }
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountPasswordLabel": "Mevcut parola",
   "deleteAccountReauthFailed": "Parola yanlış.",

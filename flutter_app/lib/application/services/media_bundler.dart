@@ -1,272 +1,35 @@
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
-import 'package:path/path.dart' as p;
-
-import '../../core/config/app_paths.dart';
 import '../../core/utils/deep_copy.dart';
 import '../../data/network/asset_service.dart';
 import '../../data/network/free_media_service.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 
-/// Walks a world-backup `data` map and uploads every local image referenced
-/// by an entity — or sitting loose in `{worldsDir}/{worldName}/media/` — to
-/// Cloudflare R2 via [AssetService]. Entity strings are rewritten in place
-/// to `dmt-asset://{r2_key}` and a `media_manifest` is attached to the
-/// returned map.
+/// Karakter medyasının bulut kopyasını üretir — `world_characters` satırı
+/// yazılmadan hemen önce (`character_provider._pushCharacterToMirror`).
 ///
-/// Uses [AssetService.uploadAsset]'s SHA dedupe ([lines 68-76]) so rerunning
-/// a backup after a partial failure is cheap.
+/// Dünyanın geri kalanı buluta HİÇ çıkmaz; sayılan katman Phase D'de
+/// kaldırıldı. Karakter bunun istisnası: `world_characters` beş abone
+/// tablodan biri, yani karakter her zaman sync'tir ve medyası oturum
+/// ortasında LRU'ya yem olmamalı. Bu yüzden:
+///   - portre → ücretsiz Supabase Storage (`dmt-public://`, kotasız),
+///   - ek resimler → **pinned** R2 havuzu (`pub/{sha}{ext}`), refcount sahibi
+///     `char:{characterId}`.
 ///
-/// Failures for individual files are collected in [MediaBundleResult.failures]
-/// and do NOT abort the bundle — upload best-effort, let the user retry.
+/// Zaten bulutta olan (local olmayan) ref'lere dokunulmaz; map deep-clone
+/// edilir, orijinal değişmez.
 class MediaBundler {
   MediaBundler(this._assetService, {this.freeMediaService});
 
   final AssetService _assetService;
 
-  /// Ücretsiz medya (karakter portresi) için. Null ise portre local kalır;
-  /// counted medya bundling'i bundan etkilenmez.
+  /// Ücretsiz medya (karakter portresi) için. Null ise portre local kalır.
   final FreeMediaService? freeMediaService;
 
-  /// Deep-clone [data] (so the in-memory entity graph is untouched), upload
-  /// all local-path media to R2, replace strings with `dmt-asset://` URIs,
-  /// attach `data['media_manifest']`, and return the new map.
-  Future<MediaBundleResult> bundleWorldMedia({
-    required String worldName,
-    required String worldId,
-    required Map<String, dynamic> data,
-  }) async {
-    final cloned = deepCopyJson(data) as Map<String, dynamic>;
-    final manifest = <Map<String, dynamic>>[];
-    final failures = <MediaBundleFailure>[];
-    // Dedupe by r2_key so the manifest lists each asset once even when
-    // multiple entities reference the same file.
-    final seenKeys = <String, int>{};
-
-    Future<String?> uploadAndTrack(
-      String localPath,
-      String refLabel, {
-      bool bubbleErrors = true,
-    }) async {
-      final file = File(localPath);
-      if (!await file.exists()) {
-        failures.add(MediaBundleFailure(localPath, 'file_not_found'));
-        return null;
-      }
-      try {
-        final uri = await _assetService.uploadAsset(
-          file,
-          campaignId: worldId,
-          kind: MediaKind.worldEntityImage,
-        );
-        final key = uri.toString().substring(AssetRef.scheme.length);
-
-        final existingIdx = seenKeys[key];
-        if (existingIdx != null) {
-          (manifest[existingIdx]['referenced_by'] as List).add(refLabel);
-          return AssetRef.formatCloudUri(key);
-        }
-
-        final bytes = await file.length();
-        final sha = AssetService.extractShaFromKey(key);
-        manifest.add({
-          'r2_key': key,
-          'sha256': sha,
-          'size_bytes': bytes,
-          'original_filename': p.basename(localPath),
-          'referenced_by': <String>[refLabel],
-        });
-        seenKeys[key] = manifest.length - 1;
-        return AssetRef.formatCloudUri(key);
-      } catch (e) {
-        if (bubbleErrors) {
-          failures.add(MediaBundleFailure(localPath, '$e'));
-        }
-        return null;
-      }
-    }
-
-    // Track already-cloud refs so we surface them in the manifest even when
-    // no re-upload is needed. This lets the restore side download them into
-    // the new device's media dir so the gallery shows them.
-    void trackExistingCloudRef(String cloudRef, String refLabel) {
-      final key = cloudRef.substring(AssetRef.scheme.length);
-      final existingIdx = seenKeys[key];
-      if (existingIdx != null) {
-        (manifest[existingIdx]['referenced_by'] as List).add(refLabel);
-        return;
-      }
-      try {
-        final sha = AssetService.extractShaFromKey(key);
-        manifest.add({
-          'r2_key': key,
-          'sha256': sha,
-          // size + filename are unknown here; the restorer doesn't need them
-          // (downloadAsset looks up by key).
-          'referenced_by': <String>[refLabel],
-        });
-        seenKeys[key] = manifest.length - 1;
-      } catch (_) {
-        // malformed key — skip
-      }
-    }
-
-    // 1. Walk entities.
-    final entities = cloned['entities'];
-    if (entities is Map<String, dynamic>) {
-      for (final entry in entities.entries) {
-        final entityId = entry.key;
-        final entityMap = entry.value;
-        if (entityMap is! Map<String, dynamic>) continue;
-
-        // Legacy imagePath
-        final legacyPath = entityMap['image_path'];
-        if (legacyPath is String && legacyPath.isNotEmpty) {
-          final assetRef = AssetRef(legacyPath);
-          if (assetRef.isCloud) {
-            trackExistingCloudRef(legacyPath, 'entity:$entityId:image_path');
-          } else {
-            final uri = await uploadAndTrack(
-              legacyPath,
-              'entity:$entityId:image_path',
-            );
-            if (uri != null) entityMap['image_path'] = uri;
-          }
-        }
-
-        // images list
-        final images = entityMap['images'];
-        if (images is List) {
-          for (var i = 0; i < images.length; i++) {
-            final raw = images[i];
-            if (raw is! String || raw.isEmpty) continue;
-            final assetRef = AssetRef(raw);
-            if (assetRef.isCloud) {
-              trackExistingCloudRef(raw, 'entity:$entityId:images[$i]');
-              continue;
-            }
-            final uri =
-                await uploadAndTrack(raw, 'entity:$entityId:images[$i]');
-            if (uri != null) images[i] = uri;
-          }
-        }
-      }
-    }
-
-    // 2. Walk the media directory for gallery files that aren't referenced
-    // by any entity — still bundle them so the gallery round-trips.
-    final mediaDir = Directory(p.join(AppPaths.worldsDir, worldName, 'media'));
-    if (await mediaDir.exists()) {
-      final referencedPaths = <String>{};
-      // Track which local paths already made it into the manifest via entities
-      // so we don't upload them twice. Note: entity paths got rewritten above,
-      // so we compute the original path from the sha <-> filename mapping by
-      // re-reading the original data.
-      final original = data['entities'];
-      if (original is Map<String, dynamic>) {
-        for (final e in original.values) {
-          if (e is! Map<String, dynamic>) continue;
-          final imagePath = e['image_path'];
-          if (imagePath is String &&
-              imagePath.isNotEmpty &&
-              !AssetRef(imagePath).isCloud) {
-            referencedPaths.add(p.canonicalize(imagePath));
-          }
-          final imgs = e['images'];
-          if (imgs is List) {
-            for (final x in imgs) {
-              if (x is String && x.isNotEmpty && !AssetRef(x).isCloud) {
-                referencedPaths.add(p.canonicalize(x));
-              }
-            }
-          }
-        }
-      }
-
-      await for (final entry in mediaDir.list()) {
-        if (entry is! File) continue;
-        final ext = p.extension(entry.path).toLowerCase();
-        if (!_imageExts.contains(ext)) continue;
-        final canonical = p.canonicalize(entry.path);
-        if (referencedPaths.contains(canonical)) continue;
-        await uploadAndTrack(entry.path, 'gallery');
-      }
-    }
-
-    cloned['media_manifest'] = manifest;
-    cloned['media_manifest_version'] = 1;
-
-    return MediaBundleResult(
-      data: cloned,
-      manifest: manifest,
-      failures: failures,
-    );
-  }
-
-  /// F4 row-level push helper. Uploads any local `image_path` / `images[]`
-  /// in [entityMap] to R2 and returns a clone with paths rewritten to
-  /// `dmt-asset://`. The full-world variant ([bundleWorldMedia]) does the
-  /// same plus gallery walk + manifest — but per-row outbox pushes only
-  /// need the entity itself, so this skips the manifest pass.
-  ///
-  /// SHA dedupe is delegated to [AssetService.uploadAsset], which is cheap
-  /// when the same file is repeatedly bundled.
-  ///
-  /// [scopeId] R2 key'in campaign segmenti olur (world id veya package adı).
-  /// [kind] entity'nin bağlamına göre verilir — world entity vs package entity.
-  Future<Map<String, dynamic>> bundleEntityMedia({
-    required String scopeId,
-    required String entityId,
-    required Map<String, dynamic> entityMap,
-    required MediaKind kind,
-  }) async {
-    final cloned = deepCopyJson(entityMap) as Map<String, dynamic>;
-
-    Future<String?> upload(String localPath) async {
-      final file = File(localPath);
-      if (!await file.exists()) return null;
-      try {
-        final uri = await _assetService.uploadAsset(
-          file,
-          campaignId: scopeId,
-          kind: kind,
-        );
-        final key = uri.toString().substring(AssetRef.scheme.length);
-        return AssetRef.formatCloudUri(key);
-      } catch (_) {
-        return null;
-      }
-    }
-
-    final legacyPath = cloned['image_path'];
-    if (legacyPath is String && legacyPath.isNotEmpty &&
-        !AssetRef(legacyPath).isCloud) {
-      final uri = await upload(legacyPath);
-      if (uri != null) cloned['image_path'] = uri;
-    }
-
-    final images = cloned['images'];
-    if (images is List) {
-      for (var i = 0; i < images.length; i++) {
-        final raw = images[i];
-        if (raw is! String || raw.isEmpty) continue;
-        if (AssetRef(raw).isCloud) continue;
-        final uri = await upload(raw);
-        if (uri != null) images[i] = uri;
-      }
-    }
-    return cloned;
-  }
-
   /// Bir karakter JSON map'inin (`Character.toJson()` formatı) medyasını
-  /// bundle eder:
-  /// - `entity.imagePath` (portre) → FreeMediaService (ücretsiz, dmt-public://)
-  /// - `entity.images[]` (ek resimler) → AssetService (sayılan, dmt-asset://)
-  ///
-  /// Zaten upload edilmiş (local olmayan) ref'lere dokunulmaz. Map deep-clone
-  /// edilir; orijinal değişmez.
+  /// bundle eder. Tek dosya hatası akışı kesmez — ref'siz satır yine de
+  /// karakteri taşır.
   Future<Map<String, dynamic>> bundleCharacterMedia({
     required String scopeId,
     required Map<String, dynamic> characterMap,
@@ -274,6 +37,7 @@ class MediaBundler {
     final cloned = deepCopyJson(characterMap) as Map<String, dynamic>;
     final entity = cloned['entity'];
     if (entity is! Map<String, dynamic>) return cloned;
+    final characterId = cloned['id'] as String? ?? '';
 
     // Portre → ücretsiz Supabase Storage (quota'ya sayılmaz).
     final portrait = entity['imagePath'];
@@ -285,98 +49,27 @@ class MediaBundler {
       if (ref != null) entity['imagePath'] = ref;
     }
 
-    // Ek resimler → sayılan R2.
+    // Ek resimler → pinned havuz.
     final images = entity['images'];
-    if (images is List) {
+    if (images is List && characterId.isNotEmpty) {
       for (var i = 0; i < images.length; i++) {
         final raw = images[i];
         if (raw is! String || raw.isEmpty || !AssetRef(raw).isLocal) continue;
-        final ref =
-            await _uploadCounted(raw, MediaKind.characterExtraImage, scopeId);
+        final ref = await _uploadPinned(
+          raw,
+          MediaKind.characterExtraImage,
+          characterPinKey(characterId),
+        );
         if (ref != null) images[i] = ref;
       }
     }
     return cloned;
   }
 
-  /// Battle map JSON map'inin (`MapData.toJson()` formatı) arkaplan resmini
-  /// R2'ya bundle eder (`battleMap` kind, 5MB limit). Map deep-clone edilir.
-  Future<Map<String, dynamic>> bundleMapMedia({
-    required String worldId,
-    required Map<String, dynamic> mapData,
-  }) async {
-    final cloned = deepCopyJson(mapData) as Map<String, dynamic>;
+  /// `pub_asset_refs.ref_key` — karakterin pinned medyasının refcount sahibi.
+  /// Karakter silinince [AssetService.releasePub] bu key ile çağrılır.
+  static String characterPinKey(String characterId) => 'char:$characterId';
 
-    final main = cloned['imagePath'];
-    if (main is String && main.isNotEmpty && AssetRef(main).isLocal) {
-      final ref = await _uploadCounted(main, MediaKind.battleMap, worldId);
-      if (ref != null) cloned['imagePath'] = ref;
-    }
-    return cloned;
-  }
-
-  /// `world_settings` patch'inin (mind map / world map / battle map) içindeki
-  /// local image path'lerini counted R2'ya bundle eder. Offline iken seçilip
-  /// eager-upload edilemeyen map resimlerini Make Online'da kurtarır — entity
-  /// `bundleEntityMedia` ile paralel. Map deep-clone edilir.
-  ///
-  /// Hedef alt-ağaçlar:
-  /// - `mind_maps` → node `imageUrl` (`mindMapImage` kind).
-  /// - `map_data` → root + epoch `image_path` (`battleMap` kind).
-  /// - `combat_state` → encounter `mapPath` (`battleMap` kind).
-  Future<Map<String, dynamic>> bundleSettingsMedia({
-    required String worldId,
-    required Map<String, dynamic> settings,
-  }) async {
-    final cloned = deepCopyJson(settings) as Map<String, dynamic>;
-    await _bundleLocalImagesUnder(
-        cloned['mind_maps'], worldId, MediaKind.mindMapImage);
-    await _bundleLocalImagesUnder(
-        cloned['map_data'], worldId, MediaKind.battleMap);
-    await _bundleLocalImagesUnder(
-        cloned['combat_state'], worldId, MediaKind.battleMap);
-    return cloned;
-  }
-
-  /// JSON keys carrying an image path inside `world_settings` subtrees.
-  static const _settingsImageKeys = {
-    'imageUrl', // mind map node
-    'image_path', // world map epoch
-    'imagePath', // legacy / MapData
-    'mapPath', // battle map encounter
-    'map_path',
-  };
-
-  /// Recursively walks [node], replacing every local image-path string under a
-  /// [_settingsImageKeys] key with its uploaded `dmt-asset://` ref. Mutates
-  /// [node] in place (caller passes a deep copy).
-  Future<void> _bundleLocalImagesUnder(
-    Object? node,
-    String worldId,
-    MediaKind kind,
-  ) async {
-    if (node is Map) {
-      for (final key in node.keys.toList()) {
-        final value = node[key];
-        if (value is String &&
-            key is String &&
-            _settingsImageKeys.contains(key) &&
-            value.isNotEmpty &&
-            AssetRef(value).isLocal) {
-          final ref = await _uploadCounted(value, kind, worldId);
-          if (ref != null) node[key] = ref;
-        } else {
-          await _bundleLocalImagesUnder(value, worldId, kind);
-        }
-      }
-    } else if (node is List) {
-      for (final child in node) {
-        await _bundleLocalImagesUnder(child, worldId, kind);
-      }
-    }
-  }
-
-  /// Local path'i ücretsiz Supabase Storage'a yükler, `dmt-public://` ref döner.
   /// Servis yoksa / dosya yoksa / hata olursa null (caller local path'i korur).
   Future<String?> _uploadFree(
     String localPath,
@@ -395,59 +88,23 @@ class MediaBundler {
     }
   }
 
-  /// Local path'i sayılan R2'ya yükler, `dmt-asset://` ref döner.
-  Future<String?> _uploadCounted(
+  /// Local path'i pinned havuza yükler, `dmt-asset://pub/{sha}{ext}` döner.
+  ///
+  /// ponytail: aynı [refKey] altında eski sha bırakılmıyor — kullanıcı
+  /// resmini değiştirirse eskisi karakter silinene kadar refcount'ta kalır.
+  /// Ölçülür bir sızıntı olursa bundle öncesi `releasePub(refKey)` çağrılır.
+  Future<String?> _uploadPinned(
     String localPath,
     MediaKind kind,
-    String scopeId,
+    String refKey,
   ) async {
     final file = File(localPath);
     if (!await file.exists()) return null;
     try {
-      final uri = await _assetService.uploadAsset(
-        file,
-        campaignId: scopeId,
-        kind: kind,
-      );
+      final uri = await _assetService.uploadPub(file, kind: kind, refKey: refKey);
       return uri.toString();
     } catch (_) {
       return null;
     }
   }
-
-  static const _imageExts = {
-    '.png',
-    '.jpg',
-    '.jpeg',
-    '.bmp',
-    '.webp',
-    '.gif',
-  };
-
-  /// For tests — stable SHA-256 hex of [file].
-  static Future<String> sha256Of(File file) async {
-    final bytes = await file.readAsBytes();
-    return sha256.convert(bytes).toString();
-  }
-}
-
-class MediaBundleResult {
-  MediaBundleResult({
-    required this.data,
-    required this.manifest,
-    required this.failures,
-  });
-
-  final Map<String, dynamic> data;
-  final List<Map<String, dynamic>> manifest;
-  final List<MediaBundleFailure> failures;
-}
-
-class MediaBundleFailure {
-  MediaBundleFailure(this.localPath, this.reason);
-  final String localPath;
-  final String reason;
-
-  @override
-  String toString() => '$localPath: $reason';
 }

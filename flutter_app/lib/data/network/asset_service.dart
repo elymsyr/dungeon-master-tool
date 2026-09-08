@@ -13,12 +13,15 @@ import '../../domain/value_objects/media_kind.dart';
 
 /// Cloudflare R2 asset pipeline — Worker gatekeeper'ı üzerinden upload/download.
 ///
-/// Mimari bkz. docs/ONLINE_REPORT.md §4.3, §7.3, §8.1.
+/// Mimari bkz. docs/media-storage-redesign.md.
 ///
-/// R2 object key formatı: `{uploader_id}/{campaign_id}/{sha256}.{ext}`
-/// - Worker PUT isteklerde key prefix'inin JWT sub'ı ile eşleştiğini doğrular
-///   (path traversal savunması).
-/// - Download sonrası client SHA-256 doğrulaması yapar; mismatch → cache silinir.
+/// Yazılan iki prefix var; sayılan (`{uploader}/{campaign}/{sha}`) katman
+/// kaldırıldı (Phase D) — Worker o prefix'e PUT'u 410 ile reddediyor, GET
+/// bir sürüm boyunca çalışmaya devam ediyor:
+/// - `transient/{uploaderId}/{sha}{ext}` — DM'in paylaştığı medya, LRU.
+/// - `pub/{sha}{ext}` — marketplace + karakter medyası, refcount'lu, pinned.
+///
+/// Download sonrası client SHA-256 doğrulaması yapar; mismatch → cache silinir.
 class AssetService {
   AssetService({
     required SupabaseClient supabase,
@@ -37,88 +40,6 @@ class AssetService {
 
   static const int _maxDownloadRetries = 2;
 
-  /// Per-item upload limiti — cloud_backup_repository_impl.dart'taki
-  /// cloudBackupItemSizeLimit ile aynı değer. Worker tarafında MAX_UPLOAD_BYTES
-  /// ile de senkron (wrangler.toml).
-  static const int maxItemBytes = 20 * 1024 * 1024;
-
-  /// Worker'a upload + `community_assets` metadata insert.
-  /// Dönen URI `dmt-asset://{r2_object_key}` — domain event'lerde referans.
-  Future<Uri> uploadAsset(
-    File file, {
-    required String campaignId,
-    required MediaKind kind,
-    String? sessionId,
-  }) async {
-    final user = _requireUser();
-    final token = _requireToken();
-
-    if (!await file.exists()) {
-      throw AssetServiceException('file_not_found', file.path);
-    }
-
-    final bytes = await file.readAsBytes();
-    // Tek yetkili sınır per-kind limit ([MediaKind.maxBytes]); Worker da
-    // `X-Asset-Kind` ile aynısını uygular. [maxItemBytes] cloud backup
-    // item'ları içindir, buradaki asset upload'ını kapsamaz.
-    if (bytes.length > kind.maxBytes) {
-      throw AssetServiceException(
-        'too_large',
-        '${bytes.length} > ${kind.maxBytes}',
-      );
-    }
-    final sha = sha256.convert(bytes).toString();
-    final ext = _extensionOf(file.path);
-    final mime = _guessMime(ext);
-
-    final r2Key = '${user.id}/$campaignId/$sha$ext';
-
-    // Dedupe — aynı sha zaten yüklenmişse re-upload yapma.
-    final existing = await _supabase
-        .from('community_assets')
-        .select('r2_object_key')
-        .eq('uploader_id', user.id)
-        .eq('r2_object_key', r2Key)
-        .maybeSingle();
-    if (existing != null) {
-      return Uri.parse('dmt-asset://$r2Key');
-    }
-
-    final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
-
-    final req = await _httpClient.putUrl(uri);
-    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-    req.headers.set(HttpHeaders.contentTypeHeader, mime);
-    req.headers.contentLength = bytes.length;
-    req.headers.set('X-Content-SHA256', sha);
-    req.headers.set('X-Asset-Kind', kind.wireName);
-    req.add(bytes);
-
-    final res = await req.close();
-    if (res.statusCode != 200) {
-      final body = await _readBody(res);
-      if (res.statusCode == 413 && body.contains('quota_exceeded')) {
-        throw AssetQuotaExceededException(body);
-      }
-      throw AssetServiceException('upload_failed_${res.statusCode}', body);
-    }
-    await res.drain<void>();
-
-    // Metadata insert — RLS policy `uploader_id = auth.uid()` doğrulamayı yapar.
-    await _supabase.from('community_assets').insert({
-      'id': _uuidV4(),
-      'uploader_id': user.id,
-      'r2_object_key': r2Key,
-      'sha256_hash': sha,
-      'mime_type': mime,
-      'size_bytes': bytes.length,
-      'original_filename': p.basename(file.path),
-      'campaign_id': campaignId,
-      'session_id': ?sessionId,
-    });
-
-    return Uri.parse('dmt-asset://$r2Key');
-  }
 
   /// Storage-dolu geçici paylaşım: dosyayı `transient/{uid}/{sha}.{ext}`
   /// key'ine yükler. `community_assets` satırı OLUŞTURULMAZ → sayılan
@@ -287,6 +208,12 @@ class AssetService {
     return Uri.parse('${AssetRef.scheme}$r2Key');
   }
 
+  /// [refKey]'in pinned ref'lerini bırakır (sha NULL → hepsi). Son ref
+  /// gidince obje havuzdan düşer. Best-effort — çağıran hata yutabilir.
+  Future<void> releasePub(String refKey) async {
+    await _supabase.rpc('pub_asset_release', params: {'_ref_key': refKey});
+  }
+
   /// Transient upload + `transient_shares` kaydı. Oyuncu, ref'teki SHA ile bu
   /// tabloyu sorgulayıp `uploader_id`'yi bulur ([downloadTransient]). Dünya
   /// başına aynı SHA için idempotent (re-share). [uploadTransient] gibi
@@ -424,20 +351,6 @@ class AssetService {
         .select()
         .eq('uploader_id', user.id)
         .eq('campaign_id', campaignId)
-        .order('created_at', ascending: false);
-    return (rows as List)
-        .map((row) => CommunityAssetRow.fromJson(row as Map<String, dynamic>))
-        .toList();
-  }
-
-  /// Kullanıcının tüm kampanyalardaki asset metadata'larını listele.
-  /// "All worlds" görünümü için kullanılır.
-  Future<List<CommunityAssetRow>> listAssetsForUser() async {
-    final user = _requireUser();
-    final rows = await _supabase
-        .from('community_assets')
-        .select()
-        .eq('uploader_id', user.id)
         .order('created_at', ascending: false);
     return (rows as List)
         .map((row) => CommunityAssetRow.fromJson(row as Map<String, dynamic>))
@@ -611,15 +524,6 @@ class AssetServiceException implements Exception {
 class AssetRateLimitException implements Exception {
   @override
   String toString() => 'AssetRateLimitException';
-}
-
-/// Worker 413 + `quota_exceeded` döndürdüğünde fırlatılır. Caller, dosyayı
-/// local fallback olarak kaydetme kararı için bu exception'ı yakalar.
-class AssetQuotaExceededException implements Exception {
-  AssetQuotaExceededException(this.detail);
-  final String detail;
-  @override
-  String toString() => 'AssetQuotaExceededException: $detail';
 }
 
 /// `transient_reserve` RPC `transient_per_user_full` veya

@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/field_schema.dart';
-import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/relation_value.dart';
+import '../providers/campaign_provider.dart';
 import '../providers/entity_provider.dart';
 import '../providers/entity_share_provider.dart';
-import 'entity_image_upload.dart';
+import '../providers/online_worlds_provider.dart';
 import 'shared_media_courier.dart';
 
 /// Shares an entity with all players, making it actually usable on the
@@ -131,15 +131,16 @@ Future<void> unshareEntity(
   await svc.unshareAll(entityId: entityId, worldId: worldId);
 }
 
-/// Uploads an entity's still-local images so a PROJECTION of it carries
-/// player-resolvable refs. Counted (`dmt-asset://`) refs are persisted onto
-/// the entity (permanent, sync-safe). Quota-full uploads fall back to a
-/// transient (`dmt-transient://`) share — these are NOT persisted (R2 ~1-day
-/// TTL would orphan the entity row) and returned as `{localPath:
-/// transientRef}` for the caller to apply to the projection snapshot only.
+/// Bir kartın hâlâ yerel olan görsellerini projeksiyon için transient havuza
+/// yükler ve `{yerelYol: dmt-transient://...}` eşlemesini döndürür.
 ///
-/// Linked (package / built-in) entities are skipped — their images are
-/// already cloud-hosted and editing them would fork-on-edit.
+/// Eşleme **yalnızca projeksiyon anlık görüntüsüne** uygulanır; DM'in kendi
+/// satırına yazılmaz — transient obje LRU ile atılabilir, kalıcı satırda ölü
+/// ref bırakmak DM'in kendi resmini kaybetmesi demek olurdu (Phase C ile aynı
+/// gerekçe; sayılan katman Phase D'de kaldırıldı).
+///
+/// Dünya online değilse, oturum yoksa ya da kart linked (paket/built-in) ise
+/// boş döner — o durumda projeksiyon yerel yolla çalışır.
 Future<Map<String, String>> prepareEntityImagesForProjection(
   WidgetRef ref, {
   required String entityId,
@@ -147,6 +148,12 @@ Future<Map<String, String>> prepareEntityImagesForProjection(
   final entities = ref.read(entityProvider);
   final e = entities[entityId];
   if (e == null || e.linked) return const {};
+
+  final worldId =
+      ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
+  if (worldId == null || !ref.read(onlineWorldIdsProvider).contains(worldId)) {
+    return const {};
+  }
 
   final schema = ref.read(worldSchemaProvider);
   final imageFieldKeys = <String>[
@@ -156,64 +163,11 @@ Future<Map<String, String>> prepareEntityImagesForProjection(
           if (f.fieldType == FieldType.image) f.fieldKey,
   ];
 
-  // Gather distinct local paths across portrait / gallery / image fields.
-  final localPaths = <String>{};
-  void scan(String s) {
-    if (s.isNotEmpty && AssetRef(s).isLocal) localPaths.add(s);
+  final courier = ref.read(sharedMediaCourierProvider);
+  final remap = <String, String>{};
+  for (final path in localMediaPathsOf(e, imageFieldKeys)) {
+    final uploaded = await courier.publish(worldId, path);
+    if (uploaded != null) remap[path] = uploaded;
   }
-
-  scan(e.imagePath);
-  e.images.forEach(scan);
-  for (final k in imageFieldKeys) {
-    for (final v in _asStringList(e.fields[k])) {
-      scan(v);
-    }
-  }
-  if (localPaths.isEmpty) return const {};
-
-  final ordered = localPaths.toList();
-  final result =
-      await eagerUploadEntityImages(ref, ordered, transientFallback: true);
-
-  // Counted/public refs → persist; transient refs → projection-only remap.
-  final countedRemap = <String, String>{};
-  final transientRemap = <String, String>{};
-  for (var i = 0; i < ordered.length; i++) {
-    final from = ordered[i];
-    final to = result.refs[i];
-    if (from == to) continue;
-    if (AssetRef(to).isTransient) {
-      transientRemap[from] = to;
-    } else {
-      countedRemap[from] = to;
-    }
-  }
-
-  if (countedRemap.isNotEmpty) {
-    String repl(String s) => countedRemap[s] ?? s;
-    final newFields = Map<String, dynamic>.from(e.fields);
-    for (final k in imageFieldKeys) {
-      final v = e.fields[k];
-      if (v is List) {
-        newFields[k] = v.map((x) => x is String ? repl(x) : x).toList();
-      } else if (v is String && v.isNotEmpty) {
-        newFields[k] = repl(v);
-      }
-    }
-    ref.read(entityProvider.notifier).update(
-          e.copyWith(
-            imagePath: repl(e.imagePath),
-            images: e.images.map(repl).toList(),
-            fields: newFields,
-          ),
-        );
-  }
-
-  return transientRemap;
-}
-
-List<String> _asStringList(dynamic v) {
-  if (v is List) return v.whereType<String>().toList();
-  if (v is String && v.isNotEmpty) return [v];
-  return const [];
+  return remap;
 }

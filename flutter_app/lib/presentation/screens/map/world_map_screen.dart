@@ -1486,7 +1486,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   Future<void> _projectMap(DmToolColors palette) async {
     final imagePath = await ref
         .read(worldMapProvider.notifier)
-        .ensureMapImageUploaded();
+        .ensureMapImageProjectable();
     if (!mounted) return;
     if (imagePath.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

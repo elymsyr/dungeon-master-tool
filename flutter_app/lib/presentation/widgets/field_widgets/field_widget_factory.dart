@@ -10,24 +10,19 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
-import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/online_worlds_provider.dart';
-import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../application/services/local_media_localizer.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/utils/screen_type.dart';
-import '../../../data/network/asset_service.dart';
 import '../../../data/network/network_providers.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/value_objects/asset_ref.dart';
-import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/map/world_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -3555,9 +3550,6 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   Future<void> _pickImages() async {
     // Single-image fields cap at 1; list fields share kMaxEntityImages.
     final cap = widget.schema.isList ? kMaxEntityImages : 1;
-    final fieldKind = widget.schema.mediaKindWire != null
-        ? MediaKind.fromWireName(widget.schema.mediaKindWire!)
-        : null;
     final remaining = cap - _images.length;
     if (remaining <= 0) {
       showImageLimitSnackbar(context, cap);
@@ -3577,20 +3569,9 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
     final overflow = newPaths.length > remaining;
     if (overflow) newPaths = newPaths.sublist(0, remaining);
 
-    // Eager cloud upload — mirrors the entity portrait flow: online + signed
-    // in → push to R2 now; offline / quota-full → keep the local path.
-    final (:refs, :quotaExceeded, :tooLarge, :tooLargeActualBytes, pushWorldId: _) =
-        await eagerUploadEntityImages(ref, newPaths, overrideKind: fieldKind);
+    final refs = await localizeEntityImages(ref, newPaths);
     if (!mounted) return;
     widget.onChanged([..._images, ...refs]);
-    if (quotaExceeded) showQuotaFullSnackbar(context);
-    if (tooLarge) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: (fieldKind ?? MediaKind.worldEntityImage).maxBytes,
-        actualBytes: tooLargeActualBytes,
-      );
-    }
     if (overflow) showImageLimitSnackbar(context, cap);
   }
 
@@ -3787,24 +3768,12 @@ class _ImagePerEraFieldWidgetState
     if (result == null || result.files.isEmpty) return;
     final path = result.files.first.path;
     if (path == null) return;
-    final kind = widget.schema.mediaKindWire != null
-        ? MediaKind.fromWireName(widget.schema.mediaKindWire!)
-        : null;
-    final (:refs, :quotaExceeded, :tooLarge, :tooLargeActualBytes, pushWorldId: _) =
-        await eagerUploadEntityImages(ref, [path], overrideKind: kind);
+    final refs = await localizeEntityImages(ref, [path]);
     if (!mounted || refs.isEmpty) return;
     final updated = Map<String, String>.from(_map);
     final oldRef = updated[eraId];
     updated[eraId] = refs.first;
     widget.onChanged(updated);
-    if (quotaExceeded) showQuotaFullSnackbar(context);
-    if (tooLarge) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: (kind ?? MediaKind.worldEntityImage).maxBytes,
-        actualBytes: tooLargeActualBytes,
-      );
-    }
     if (oldRef != null && oldRef != refs.first) {
       unawaited(cleanupRemovedEntityImageRef(
         ref,
@@ -4047,50 +4016,6 @@ class _PdfFieldWidget extends StatelessWidget {
     this.ref,
   });
 
-  /// Online dünyada seçilen PDF'leri R2'ye yükler (`world_pdf` kind).
-  /// Başarılı olanlar `dmt-asset://` ref olarak saklanır — oyuncular talep
-  /// üzerine indirir. Quota / boyut / ağ hatasında local `files/` yolu kalır;
-  /// dünya offline ise upload hiç denenmez.
-  Future<List<String>> _uploadForShare(
-    BuildContext context,
-    WidgetRef? r,
-    List<String> paths,
-  ) async {
-    if (r == null) return paths;
-    if (r.read(authProvider) == null) return paths;
-    final svc = r.read(assetServiceProvider);
-    if (svc == null) return paths;
-    if (r.read(activePackageProvider) != null) return paths;
-    final worldId =
-        r.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
-    if (worldId == null || !r.read(onlineWorldIdsProvider).contains(worldId)) {
-      return paths;
-    }
-    final out = <String>[];
-    for (final path in paths) {
-      try {
-        final uri = await svc.uploadAsset(
-          File(path),
-          campaignId: worldId,
-          kind: MediaKind.worldPdf,
-        );
-        out.add(uri.toString());
-      } on AssetQuotaExceededException {
-        if (context.mounted) showQuotaFullSnackbar(context);
-        out.add(path);
-      } on AssetServiceException catch (e) {
-        if (e.code == 'too_large' && context.mounted) {
-          showImageTooLargeSnackbar(context,
-              maxBytes: MediaKind.worldPdf.maxBytes);
-        }
-        out.add(path);
-      } catch (_) {
-        out.add(path);
-      }
-    }
-    return out;
-  }
-
   /// Açma çözümü: cloud ref'i önce `files/{sha}.pdf`'e indirir (cache-first),
   /// local yol zaten varsa direkt açılır. Ref çözülemiyorsa sessizce döner.
   Future<void> _open(BuildContext context, String value) async {
@@ -4199,10 +4124,7 @@ class _PdfFieldWidget extends StatelessWidget {
                     final newPaths = r == null
                         ? picked
                         : await localizeEntityFiles(r, picked);
-                    if (!context.mounted) return;
-                    final shared =
-                        await _uploadForShare(context, r, newPaths);
-                    onChanged([...files, ...shared]);
+                    onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 16),
                   label: const Text('Add PDF', style: TextStyle(fontSize: 12)),

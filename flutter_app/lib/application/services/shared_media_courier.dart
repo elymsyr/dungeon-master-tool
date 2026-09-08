@@ -83,6 +83,21 @@ class SharedMediaCourier {
     }
   }
 
+  /// [localPath]'i şimdi transient havuza yükler ve ref'ini döndürür; upload
+  /// başarısızsa null.
+  ///
+  /// Projeksiyon yolu için: oyuncu ekranı `world_projection` üzerinden geliyor,
+  /// orada eksik-bildirme turu yok — baytlar önden çıkmak zorunda. Paylaşım
+  /// yolu ([refFor] + [serve]) aksine talep üzerine çalışır.
+  Future<String?> publish(String worldId, String localPath) async {
+    final ref = await refFor(localPath);
+    if (ref == null) return null;
+    final sha = AssetRef(ref).transientSha;
+    if (sha == null) return null;
+    await serve(worldId, [sha]);
+    return _served.contains(sha) ? ref : null;
+  }
+
   /// Aktif dünyanın bütün kartlarındaki yerel medyayı hash'leyip eşlemeyi
   /// yeniden kurar — uygulama yeniden başladıktan sonra gelen ilk talep için.
   ///

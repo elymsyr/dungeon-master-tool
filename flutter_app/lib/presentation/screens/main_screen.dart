@@ -23,7 +23,6 @@ import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_sync_provider.dart';
-import '../../application/providers/online_worlds_provider.dart';
 import '../../application/services/pdf_library_service.dart';
 import '../../application/services/pending_write_buffer.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -276,30 +275,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _pdfActiveIndexNotifier.value = _pdfOpenPaths.length - 1;
     _rightSidebarCtrl.value = RightSidebar.pdf;
     _persistUiState();
-
-    // Dünya online ise yeni PDF'i oyunculara da aç. Best-effort — upload
-    // başarısız olursa kütüphane local olarak çalışmaya devam eder.
-    if (worldName != null && path != sourcePath) {
-      unawaited(_sharePdfIfOnline(File(path), worldName));
-    }
-  }
-
-  /// Online dünyada DM yeni bir PDF eklediğinde manifest'e ekler.
-  Future<void> _sharePdfIfOnline(File pdf, String worldName) async {
-    final worldId =
-        ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
-    if (worldId == null) return;
-    if (!ref.read(onlineWorldIdsProvider).contains(worldId)) return;
-    if (ref.read(worldRoleProvider(worldId)).valueOrNull != WorldRole.dm) {
-      return;
-    }
-    try {
-      await ref
-          .read(pdfLibraryServiceProvider)
-          .share(pdf, worldName: worldName, worldId: worldId);
-    } catch (_) {
-      // best-effort — kütüphane local olarak çalışmaya devam eder
-    }
   }
 
   void _closePdfTab(int index) {

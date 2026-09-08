@@ -14,13 +14,11 @@ import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/pinned_entity_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../application/services/entity_share_prepare.dart';
-import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
-import '../../../domain/value_objects/media_kind.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -1141,47 +1139,14 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
     final overflow = picked.length > remaining;
     if (overflow) picked = picked.sublist(0, remaining);
 
-    // Eager cloud upload: if the host item is online + signed-in, push each
-    // freshly picked file to the cloud now so the ref is portable on every
-    // device immediately (mirrors `_pickCover`). Offline / failure → the
-    // helper returns the local path and the image bundles later via the
-    // outbox push (`_handleWorldEntity`) or Make Online.
-    final (:refs, :pushWorldId, :quotaExceeded, :tooLarge, :tooLargeActualBytes) =
-        await _eagerUploadImages(picked);
+    // Buluta yükleme yok: dosyalar içeriğin `media/` klasörüne kopyalanır ve
+    // ref olarak o yol saklanır. Görsel buluta ancak kart paylaşıldığında ve
+    // bir oyuncu eksik bildirdiğinde çıkar (`SharedMediaCourier`).
+    final refs = await localizeEntityImages(ref, picked);
     if (!mounted) return;
     widget.onImagesChanged([...widget.images, ...refs]);
-    if (quotaExceeded) showQuotaFullSnackbar(context);
-    if (tooLarge) {
-      showImageTooLargeSnackbar(
-        context,
-        maxBytes: MediaKind.worldEntityImage.maxBytes,
-        actualBytes: tooLargeActualBytes,
-      );
-    }
     if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
-
-    // World entity: flush the just-scheduled debounced write so the
-    // `world_entities` outbox row is enqueued, then drain it now. Package
-    // entities have no per-row outbox (the whole package pushes on share),
-    // so the eager upload above is all that's needed there.
-    if (pushWorldId != null) {
-      await ref
-          .read(pendingWriteBufferProvider)
-          .flushPrefix('entity:$pushWorldId:');
-    }
   }
-
-  /// Uploads freshly picked local paths to the cloud when the host item is
-  /// online — delegates to the shared [eagerUploadEntityImages].
-  Future<
-      ({
-        List<String> refs,
-        String? pushWorldId,
-        bool quotaExceeded,
-        bool tooLarge,
-        int? tooLargeActualBytes,
-      })> _eagerUploadImages(List<String> paths) =>
-      eagerUploadEntityImages(ref, paths);
 
   void _removeCurrentImage() {
     if (widget.images.isEmpty) return;
@@ -1646,9 +1611,9 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     }
   }
 
-  /// Projects the currently-shown image. Eager-uploads still-local images
-  /// first (counted, or transient when quota is full) so online players get
-  /// a resolvable cloud link instead of a local path.
+  /// Projects the currently-shown image. Still-local images are pushed to the
+  /// transient pool first so online players resolve a cloud link instead of a
+  /// local path; the remap applies to the projection snapshot only.
   Future<void> _projectImage() async {
     setState(() => _busy = true);
     try {

@@ -216,22 +216,10 @@
   "landingInfoResetSent": "If an account exists for this address, a reset link has been sent.",
   "landingErrOffline": "You're offline — check your internet connection.",
   "menuReportBug": "Report a Bug",
-  "mediaQuotaFull": "Storage quota full — image kept on this device.",
   "mediaImageLimitReached": "Up to {count} images per entity.",
   "@mediaImageLimitReached": {
     "placeholders": {
       "count": {
-        "type": "int"
-      }
-    }
-  },
-  "mediaImageTooLarge": "Image too large ({actual} MB, limit {max} MB) — kept on this device, not backed up to the cloud.",
-  "@mediaImageTooLarge": {
-    "placeholders": {
-      "actual": {
-        "type": "String"
-      },
-      "max": {
         "type": "int"
       }
     }
@@ -470,16 +458,6 @@
   "pdfLibraryEmpty": "No PDFs yet.",
   "pdfLibraryEmptyHint": "Files you open are copied into this world.",
   "pdfLibraryOpenFile": "Open File",
-  "pdfLibraryShared": "Shared by the DM",
-  "pdfLibraryDownload": "Download",
-  "pdfLibraryDownloadFailed": "Download failed: {error}",
-  "@pdfLibraryDownloadFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "pdfLibraryRemoveTitle": "Remove PDF",
   "pdfLibraryRemoveBody": "Remove \"{name}\" from this world? The file will be deleted.",
   "@pdfLibraryRemoveBody": {
@@ -492,14 +470,6 @@
   "pdfLibraryRemove": "Remove",
   "pdfLibraryMaxTabs": "Maximum {count} PDFs can be open at the same time.",
   "@pdfLibraryMaxTabs": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "pdfLibraryShareFailed": "{count} PDFs could not be shared.",
-  "@pdfLibraryShareFailed": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -690,11 +660,19 @@
   "deleteAccountFailed": "Account deletion failed: {error}",
   "deleteAccountSuccess": "Your account has been deleted. Your local data is still on this device — continue as a guest.",
   "@deleteAccountFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountConfirmEmailLabel": "Type {email} to confirm",
   "@deleteAccountConfirmEmailLabel": {
-    "placeholders": { "email": { "type": "String" } }
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "deleteAccountPasswordLabel": "Current password",
   "deleteAccountReauthFailed": "Incorrect password.",
