@@ -1370,5 +1370,6 @@
   "lanSyncErrAccountMismatch": "O cihaz başka bir hesapta. Yerel eşleme yalnız kendi cihazlarını eşleştirir.",
   "lanSyncErrPairingClosed": "Diğer cihaz yeni eşleşme kabul etmiyor. Orada önce Yerel Eşleme'yi aç.",
   "lanSyncErrNotSignedIn": "Cihaz eşleştirmek için giriş yap.",
-  "lanSyncErrFailed": "Eşleşme başarısız."
+  "lanSyncErrFailed": "Eşleşme başarısız.",
+  "shareWithPlayers": "Oyuncularla paylaş"
 }

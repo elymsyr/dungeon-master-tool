@@ -60,6 +60,14 @@ DM "Paylaş" der
 - DM kendi payload'ını geri yazmaz: [[world_mirror_applier]] rol DM ise gövde enjeksiyonunu atlar, aksi halde transient ref'ler DM'in yerel dosya yollarını ezerdi.
 - **Un-share = DELETE.** Applier gövdeyi de düşürür (`_removeSharedEntity`) — aksi halde oyuncuda erişilemez ama duran bir kopya kalırdı. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
 
+## Paylaşım ne zaman tetiklenir
+
+Üç giriş noktası, hepsi `entitySharerProvider` ([[entity_share_prepare]] içindeki `EntitySharer`) üzerinden — köprü, paylaşımın hem widget'lardan (`WidgetRef`) hem `EntityNotifier`'dan (`Ref`) çağrılabilmesi için var:
+
+1. **Kart menüsü** — DM'in açık kartta "Paylaş" toggle'ı (`entity_card.dart`).
+2. **Oluşturma kutucuğu** — çok oyunculu dünyada (rol = DM) "Yeni kart" diyaloğundaki *Share with players* checkbox'ı. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) kapalı. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
+3. **Otomatik güncelleme** — zaten paylaşılmış bir kart düzenlenince push kendiliğinden tekrarlanır: `EntityNotifier._pushIfShared`, `_writeEntityToCampaign`'in [[pending_write_buffer]] flush'ına asılıdır (750–2000 ms debounce), yani tuş başına değil satır diske yazıldığında bir kez. Kapılar: world online + rol DM + `entity_shares`'te world-wide satır. `shareWithAll` delete+insert olduğu için idempotent; hata yutulur (debugPrint).
+
 ## Yazma yolu — kuyruk yok, doğrudan yazma
 
 Outbox + `SyncEngine` kaldırıldı. Kalan dört yazma yolu doğrudan yazar, last-write-wins, hata yutulur (yerel Drift kaynak-doğru):

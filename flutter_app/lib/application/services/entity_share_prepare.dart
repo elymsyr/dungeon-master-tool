@@ -10,6 +10,22 @@ import '../providers/entity_share_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import 'shared_media_courier.dart';
 
+/// Ref köprüsü — paylaşım hem widget'lardan (`WidgetRef`) hem
+/// [EntityNotifier]'dan (`Ref`) tetikleniyor; aradaki tip farkını bu provider
+/// kapatır. `SharedMediaCourier` ile aynı desen.
+final entitySharerProvider = Provider<EntitySharer>(EntitySharer.new);
+
+class EntitySharer {
+  EntitySharer(this._ref);
+  final Ref _ref;
+
+  Future<void> share({required String entityId, required String worldId}) =>
+      shareEntityWithPlayers(_ref, entityId: entityId, worldId: worldId);
+
+  Future<void> unshare({required String entityId, required String worldId}) =>
+      unshareEntity(_ref, entityId: entityId, worldId: worldId);
+}
+
 /// Shares an entity with all players, making it actually usable on the
 /// remote side:
 ///
@@ -29,7 +45,7 @@ import 'shared_media_courier.dart';
 /// would fork-on-edit. The entry [entityId] is always shared even if linked
 /// (explicit user action); cascade targets are restricted to non-linked.
 Future<void> shareEntityWithPlayers(
-  WidgetRef ref, {
+  Ref ref, {
   required String entityId,
   required String worldId,
 }) async {
@@ -122,7 +138,7 @@ Future<Map<String, dynamic>> _payloadWithTransientRefs(
 /// previously cascade-shared linked entities stay visible (harmless; another
 /// shared card may still point at them).
 Future<void> unshareEntity(
-  WidgetRef ref, {
+  Ref ref, {
   required String entityId,
   required String worldId,
 }) async {

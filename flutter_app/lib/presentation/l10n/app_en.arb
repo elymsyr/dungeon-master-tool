@@ -1452,5 +1452,6 @@
   "lanSyncErrAccountMismatch": "That device is signed into a different account. Local Sync only pairs your own devices.",
   "lanSyncErrPairingClosed": "The other device isn’t accepting new pairings. Open Local Sync there first.",
   "lanSyncErrNotSignedIn": "Sign in to pair devices.",
-  "lanSyncErrFailed": "Pairing failed."
+  "lanSyncErrFailed": "Pairing failed.",
+  "shareWithPlayers": "Share with players"
 }
