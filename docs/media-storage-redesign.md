@@ -15,8 +15,8 @@ Durum: **kısmen uygulandı.**
   `R2PoolStats` / `adminR2PoolStatsProvider` (kullanıcı başına `pinned_bytes` /
   `transient_bytes` kolonları hâlâ ⬜, `search_users` migration'ı gerekiyor)
 - ✅ Free tier eager upload'ları kaldırıldı — portre/kapak seçimi artık yüklemiyor
-- ⬜ **Phase C — oturum kapısı** + talep-üzerine akış (`session_started_at`, `media_shas`,
-  `missing_shas`). Sıradaki iş.
+- ⬜ **Phase C — oturum kapısı** (realtime presence) + talep-üzerine akış
+  (`media_shas`, `missing_shas`). Sıradaki iş.
 - ⬜ **Phase D — counted tier sökümü** (client upload yolları, worker PUT 410, kota UI).
   C'den SONRA; sıra önemli, çünkü counted yolu sökülünce paylaşılan medyanın tek
   gideceği yer transient olur ve oturum kapısı o zamana kadar durmalı.
@@ -35,7 +35,7 @@ Durum: **kısmen uygulandı.**
 > geri alınırsa `marketplace_listing_provider.publishSnapshot`'taki
 > `PublishMediaPinFailure` throw'u kaldırılır.
 
-Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07, son güncelleme 2026-09-07)
+Tarih: 2026-09-05 (uygulama başlangıcı 2026-09-07, son güncelleme 2026-09-08)
 Yerini aldığı model: [vault/20-Systems/Media-Storage-Tiers.md](../vault/20-Systems/Media-Storage-Tiers.md) (üç tier: Free / Counted / Transient)
 
 ## Bir cümlede
@@ -127,10 +127,20 @@ Bir dünyanın "online" olması ile **oyunun oynanıyor olması** aynı şey de�
 kampanyayı haftalarca tek başına hazırlar; bu hazırlığın buluta çıkması için
 sebep yok. Bu yüzden transient havuzu bir **oturum** kapısının arkasındadır.
 
-**Oturum = `worlds.session_started_at TIMESTAMPTZ NULL`.** Tek bir kolon; ayrı
-tablo yok. `NULL` → oturum kapalı, `NOT NULL` → oturum açık. DM
-`session_start(world_id)` / `session_end(world_id)` RPC'leri ile çevirir
-(yalnızca `role = 'dm'`).
+**Oturum = DM'in realtime kanalında kendisi dışında en az bir üye var.**
+Buton yok, kolon yok, RPC yok — DM oturum başlatmayı unutamaz.
+
+`world_sync_service.dart` her dünya için zaten ortak bir kanal açıyor
+(`dmt:world:{worldId}`); DM de oyuncu da oradadır. Supabase Realtime
+**Presence** bu kanalın üstünde bedava gelir: katılırken `channel.track(...)`,
+DM tarafında `onPresenceSync` bir `bool sessionOpen` çevirir ve transient
+upload'ı yalnızca o gate'ler.
+
+> [!note] Karar değişikliği — 2026-09-08
+> İlk tasarımda oturum `worlds.session_started_at TIMESTAMPTZ NULL` kolonu ve
+> `session_start()` / `session_end()` RPC'leriydi; DM bir düğmeye basardı.
+> Presence lehine kaldırıldı: kanal zaten açık, üye listesi zaten orada, ve
+> unutulan düğme diye bir hata sınıfı kalmıyor.
 
 | | Oturum kapalı | Oturum açık |
 |---|---|---|
@@ -142,6 +152,16 @@ tablo yok. `NULL` → oturum kapalı, `NOT NULL` → oturum açık. DM
 Yani "paylaş" dediği şey kaybolmaz: satır durur, oyuncu kartın **gövdesini**
 görür; eksik olan sadece görseldir ve oturum açılınca gelir. Oturum kapanınca
 hiçbir şey silinmez — objeler LRU sırasına düşer ve zamanı gelince atılır.
+
+Presence kapısının sağlamlığını asıl kurtaran şey, upload'ın zaten talep-üzerine
+olması (bir sonraki bölüm): kapı yanlış tarafa düşse bile kayıp yok.
+
+| Durum | Ne olur |
+|---|---|
+| DM'in soketi düşer, presence boşalır | Kapı kapanır; bekleyen `missing_shas` kalıcı olduğu için bağlantı dönünce yüklenir. |
+| Oyuncu uygulamayı günlerce açık bırakır | Kapı sürekli açık ama **hiçbir şey yüklenmez** — kimse eksik bildirmiyorsa upload da yok. |
+| Oyuncu sadece karakter sayfasına bakar | Oturum açılır, yalnızca onun eksikleri yüklenir. İstenen davranış. |
+| DM tek başına hazırlık yapar | Presence boş → kapı kapalı. Hedefin tamamı bu. |
 
 #### Medya talebe göre yüklenir (DM push değil, oyuncu pull)
 
@@ -169,7 +189,7 @@ beklememeli. Bu yüzden **karakter yaratım/ilerleme kategorilerindeki kartlar
 Bunlar dünyanın en küçük medya kümesi (sınıf/ırk/feat ikonları) ve karakter
 akışının çalışması için gerekli; kapının tuttuğu şey haritalar, handout'lar ve
 NPC portreleridir. Aynı talep-üzerine akış burada da geçerlidir, sadece
-`session_started_at` kontrolü atlanır.
+presence kontrolü atlanır.
 
 1. **Karakterler her zaman sync'tir.** `world_characters` zaten abone tablolar
    arasında; karakter medyası (portre, ekstra görsel) `pinned` olarak yüklenir —
@@ -320,10 +340,15 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
   indirmede tetiklenir; bir görseli herkes önbelleğe almışsa `last_used_at`
   tazelenmez ve obje atılabilir — sonra katılan oyuncu göremez. Kabul edilen
   tavan: oyuncu eksiği bildirir, DM tekrar yükler — talep-üzerine akış bu durumu
-  zaten kendiliğinden onarır. Havuz sıkışırsa bir adım daha var: **oturumu açık
-  olan dünyaların** asset'lerini kurban seçiminden muaf tutmak
-  (`session_started_at IS NULL` filtresi), ki oturum kapısı bunu ücretsiz
-  mümkün kılıyor.
+  zaten kendiliğinden onarır.
+- **Presence Postgres'ten okunamaz — sunucu tarafı oturum zorlaması yok.** Bir
+  RPC "oturum kapalıyken transient yazma" diye reddedemez; kapı yalnızca DM'in
+  client'ında uygulanır. Kabul edilen tavan, çünkü transient'e yazan tek şey
+  zaten DM'in kendi client'ı ve dosya başı 100 MB + havuz LRU emniyet kapağı
+  duruyor; kapı bir güvenlik sınırı değil, israf önleyici. Gerekirse yükseltme
+  yolu tek kolon: `world_members.last_seen_at` (60 sn'de bir dokunulur, oturum =
+  "son 2 dk içinde görülmüş üye var") — düğme yine gelmez, ama RPC okuyabilir.
+  Presence'ın yetmediği ölçülene kadar yapılmaz.
 - **5 GB / 5 GB bölünmesi ve yayıncı başı 500 MB elle seçilmiş sayılardır.** Ölçüm çıkınca ayarlanır;
   `pinned` doluluğu admin panelinde görünmeli, yoksa yayın reddi sürpriz olur.
 - Karakter yaratım kategorilerinin otomatik paylaşımı, dünyaya özgü çok sayıda
@@ -353,9 +378,12 @@ kütüphanesi tamamen yereldir ve LAN sync ile taşınır.
 - `supabase/migrations/` — paylaşım gövdesi sınırları: `payload_json` üzerinde
   512 KB `CHECK`, `max_shares_per_world()` (4000) + `entity_shares` BEFORE
   INSERT trigger (`078_share_payloads.sql` üzerine yeni bir migration).
-- `supabase/migrations/` — oturum kapısı: `worlds.session_started_at`,
-  `session_start()` / `session_end()` RPC'leri, `entity_shares.media_shas`,
-  `world_members.missing_shas` (+ oyuncunun kendi satırını güncellemesi için RLS).
+- `supabase/migrations/` — talep-üzerine akış: `entity_shares.media_shas`,
+  `world_members.missing_shas` (+ oyuncunun kendi satırını güncellemesi için
+  RLS). Oturum kapısı presence'ta olduğu için migration gerektirmiyor.
+- `flutter_app/lib/application/services/world_sync_service.dart` — mevcut
+  `dmt:world:{id}` kanalında presence `track` / `onPresenceSync`; DM'e
+  "kendim dışında üye var mı" bool'unu veren provider.
 - `flutter_app/lib/application/services/entity_share_prepare.dart` — yaratım
   kategorilerinin otomatik kapanışı, medya sınıfı seçimi, oturum kapalıyken
   upload'ın atlanması (sha listesi yine de yazılır).
