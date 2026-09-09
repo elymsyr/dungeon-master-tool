@@ -318,33 +318,53 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.1.0)
+### 4.8 Yazılan kartlar (0.2.0)
 
-`aegis-act1/world-blueprint.json` — **38 entity.** Kapsam bilerek dar:
-[`lore/canon/act1-kartlar.md`](lore/canon/act1-kartlar.md)'ın ✅ satırları ve
-[`lore/canon/genel-kartlar.md`](lore/canon/genel-kartlar.md)'ın yazılabilir
-dördü. Bugün yazılamayanın önündeki engel içerik değil karar (§3.2).
+`aegis-act1/world-blueprint.json` — **126 entity.** Kapsam artık
+[`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**:
+listedeki her satırın bir kartı var, `🟡` olanlar dahil (bir kartı 🟡 yapan şey
+kartın kendisi değil **tek bir alanı**, ve o alan boş ya da işaretli bırakıldı).
 
 | Kategori | Adet | Ne |
 |---|---|---|
-| `campaign` | 1 | Aegis — Meridia, 5 sayfa (giriş kartı) |
-| `lore` | 4 | İrade Çağı · Tanrılar ve Fısıltı · Blight — Bilinen Hali · Adlandırma Doktrini |
-| `location` | 5 | Gümüşsu · Kulübe · Bulut'un Hanı · Gizli Liman · Rıhtım |
-| `npc` | 12 | Gümüşsu kadrosu (4) · kulübedeki üçlü (3) · Gizli Liman kadrosu (5) |
-| `monster` | 3 | Dönüşmüş Toygar · Selvi · Demir (`npc` ikizlerine linkli) |
-| `creature-action` | 3 | Dönüşmüşlerin aksiyonları |
-| `scene` | 5 | Köye Varış · Kulübe Sorgusu · Şafak Dönüşümü · Limana Kabul · Geçiş Pazarlığı |
+| `campaign` | 1 | Aegis — 5 sayfa (giriş kartı) |
+| `lore` | 20 | Çağ ve din (2) · Blight/Vorstrand (2) · yönetim ve kayıt (2) · altı lonca (6) · doktrin ve toplum (4) · düzenler (3) · Kural Sapmaları (1) |
+| `location` | 18 | Dünya → kıta → yer zinciri eksiksiz; güzergahın tamamı |
+| `npc` | 34 | Gümüşsu (4) · kulübe (3) · liman (6) · Meclis (6) · şehir sokağı (5) · Elymsyr (4) · Votumar (4) · Ravenhall (2) |
+| `monster` | 4 | Jenerik Dönüşmüş + üç adlandırılmış hâli |
+| `creature-action` | 4 | Pençe'nin dört sürümü |
+| `trait` | 5 | Acıyı Tanımaz · Bulaştıran Yara · üç belirti hattı |
+| `curse` | 1 | Blight — Enfeksiyon (Yozlaşma Kontrolü dahil) |
+| `scene` | 11 | Gümüşsu (3) · liman (2) · şehir (3) · Elymsyr · Votumar · Ravenhall |
 | `encounter` | 1 | Şafak Çatışması |
-| `quest` | 3 | Söylentinin Peşinde · Nereden Geldiler · Yol Hakkı |
-| `trinket` | 1 | Cerrahi İğne |
+| `quest` | 3 | Söylentinin Peşinde · Nereden Geldiler · Silinen Sayfa |
+| `background` | 9 | Dokuz kurumsal background, mekanikleri SRD ref'i |
+| `adventuring-gear` | 8 | Yedi background eşyası + Direnç Şerbeti |
+| `trinket` | 7 | Dört mühür + rozet + künye + Mühürsüz Yüzük |
+
+**126, 127 değil.** `kart-listesi.md` §2'nin başlığı 21 `lore` diyor ama tablosu
+20 satır sayıyor; yazılan tablodaki 20. Eksik olan bir kart değil, başlıktaki bir
+sayı. (Aynı belgenin §3 başlığı 18 `location` diyor ve tablosu 17 sayıyor — oradaki
+18. satır **Meclis Salonu**, §8'in iki sahnesinin geçtiği yer, ve yazıldı.)
+
+**0.1.0'dan farkı:** paket 2026-09-09 revizyonlarından *önce* üretilmişti. Bu sürümde
+`trinket/Cerrahi İğne` **silindi** (`act1.md §3.2` kaldırdı), kulübedeki üçlü
+Alton/Merla/Kromanna oldu, köy kadrosu ve liman kadrosu kanondaki adlarını aldı,
+`lore/Adlandırma Doktrini` **kalktı** (dil ayrımı kanon değil).
+
+⚠️ **Kanon dışına çıkılan yerler ve hepsi kartın `dmNotes`'unda işaretli:**
+Dönüşmüşlerin **statblock'u** ve ona bağlı `encounter.difficulty` / `xp_budget` ·
+`lore/Kural Sapmaları`'nda Diriltme Sınavı'nın zarı ile Kalıcı Yara bandları ·
+`curse` kartındaki Yozlaşma DC'si (13) · `Direnç Şerbeti`'nin fiyatı (0 bırakıldı) ·
+`Mühürsüz Yüzük`'ün içeriği (yedek okuma, kanon değil) · her NPC'nin
+`attitude_ref`'i (şema zorunluluğu). Kanon bir sayı verdiğinde o alanlar değişir,
+kartlar değil.
+
+**On NPC unvanla yazıldı** (Elymsyr'in dördü, Votumar'ın dördü, Ravenhall'ın ikisi):
+ad kararı verilince tek `name` değişikliği yeter.
 
 Entity → kaynak izi ve **bilerek yazılmayanların** listesi:
 [PROVENANCE.md](PROVENANCE.md).
-
-⚠️ İki yerde kanon dışına çıkıldı ve ikisi de kartın `dmNotes`'unda işaretli:
-dönüşmüşlerin **statblock'u** (`act1.md §4` yalnız "bilinç gider, beden
-güçlenir" diyor) ve buna bağlı `encounter.difficulty` / `xp_budget`. Kanon bir
-sayı verdiğinde o kartlar değiştirilir.
 
 ---
 
@@ -354,12 +374,12 @@ sayı verdiğinde o kartlar değiştirilir.
 |---|---|---|---|
 | 0 | **M0 kilidini kapat** (§3) | Karar listesi | Kıta adı ✅ · Gümüşsu ✅ · pre-gen seti ✅ · #8 tonu ✅ · kalan: M0.2/M0.3/M0.6 |
 | 1 | Kanon damıtma | `lore/canon/` — çelişkisiz Act 1 kanonu (kronoloji, fraksiyonlar, bilgi eğimi) | 🟡 Dört belge yazıldı (§2). Kalan: kronoloji tablosu · fraksiyonlar |
-| 2 | Lokasyonlar | Güzergahın tamamı, `location` + `parent_location_ref` | 🟡 **Kanon tarafı bitti** — 18 lokasyon kartı yazılabilir (Elymsyr · Votumar · Ravenhall · Cinervik · Argenfon eklendi). Blueprint'te hâlâ 5 kart var |
-| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | 🟡 34 NPC kart listesinde (10'u ad bekliyor) · blueprint'te 12. **İki taşıyıcı kuralı her hatta sağlandı** |
-| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | 🟡 11 sahne · 1 encounter · 3 quest (trap yok). Hiçbiri belirli bir PC'ye bağlı değil |
-| 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 4 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
-| 6 | Pre-gen'ler | `blueprint.json` | Dört yuva, dört karakter |
-| 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | 🟡 `PROVENANCE.md` ✅ · medya yok · `.pkg.json` üretilmedi (Dart SDK'sı olan bir makinede §4.7) |
+| 2 | Lokasyonlar | Güzergahın tamamı, `location` + `parent_location_ref` | ✅ 18 lokasyon, dünya → kıta → yer zinciri kırılmadan |
+| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | ✅ 34 NPC · altı lonca `lore` kartı. **İki taşıyıcı kuralı her hatta sağlandı.** 10 NPC unvanla yazıldı, adı bekliyor |
+| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | ✅ 11 sahne · 1 encounter · 3 quest (trap yok — kanonda tuzak yok). Hiçbiri belirli bir PC'ye bağlı değil |
+| 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 20 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
+| 6 | Pre-gen'ler | `blueprint.json` | Dört yuva, dört karakter — yazılmadı |
+| 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | 🟡 `PROVENANCE.md` ✅ · `--check` temiz ✅ · medya yok · `.pkg.json` modül dizinine yazılmadı (§4.7 komutuyla üretilir) |
 
 Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
 
