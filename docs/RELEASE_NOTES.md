@@ -1,5 +1,61 @@
 # Release Notes
 
+## Dungeon Master Tool v15.7.0 — The Aegis Module (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.7.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release ships the first installable world module, Aegis Act 1, and fixes a couple of rough edges in the database and media import paths.
+
+---
+
+### Highlights
+
+- **Aegis Act 1 world module** — a ready-to-import world folder covering Gümüşsu and Gizli Liman, with campaign, lore, location, NPC, monster, scene, encounter, quest, and trinket cards.
+
+---
+
+### Worlds
+
+#### Aegis Act 1
+
+A new world module, `aegis-act1`, is available as a zip under Admin → Import world folder. It contains 38 entities: a 5-page campaign, lore, locations, NPCs, monsters, scenes, an encounter, quests, and a trinket, scoped to the finished parts of the Aegis story. It installs without a rebuild and works fully offline.
+
+---
+
+### Bug fixes
+
+- **Database screen** — switching tabs no longer occasionally reopened a stale selection; the consumed selection is now tracked correctly.
+- **Media import** — directory names used when localizing imported media are now sanitized, preventing invalid folder names from breaking the import.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.6.0` → `15.7.0`.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a world they shared on the marketplace, the listing goes away but the uploaded media under `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible effect; needs a cleanup pass (or delete-time media removal).
+
+---
+
+### For developers
+
+- **`BundledWorldsInstaller.installFromDirectory`** — the Aegis module exercises the folder-import path (not the manifest-bundled path); see `flutter_app/assets/worlds/aegis/README.md` §4.7 for the re-zip command.
+- **`LocalMediaLocalizer.dirSafe`** — new method sanitizing directory names before they're used on disk.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.6.0 — Import, Share, and Stream Media (Beta)
 
 **Release date:** September 2026
