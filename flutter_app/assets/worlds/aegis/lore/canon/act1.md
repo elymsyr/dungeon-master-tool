@@ -13,6 +13,17 @@
 > yer olarak yazıldı · Dönüşmüş üçlünün statblock'ları (§5.1) · Konsey aracısı
 > tanımlandı (§7.4) · "Liman kaçışı" ve "Yol hakkı" kart olmaktan çıktı (§7.2, §7.3).
 >
+>
+> **2026-09-09 revizyonu (4. tur — belirsizlik turu):** Hastalığın **ne olduğu
+> bilinmiyor** ilan edildi, "bu bir hastalık mı" sorusu bile açık (§4) · Blight
+> yalnız biyolojik değil **büyülü** ve **bir kaynağa bağlı**; Arcana ile hissedilir
+> (§3.3 iz 5, §4.6) · üçlünün üzerindeki eşya listesi yeniden yazıldı: altın kesesi
+> + boş parşömen, yüzük **gizli cepte** ve içeriği askıda (§3.3) · üçlünün geçmişi,
+> yolu ve nasıl hastalandıkları **askıya alındı** (§3.1, §3.2) · gerçek adların
+> nerede karşılık bulduğu yazıldı (§3.1 → Lonca Meclisi) · doğrudan lonca yolu
+> yazıldı (§6.1) · Paladin Şatosu · Ravenhall · Elymsyr liman kenti **sonraya
+> bırakıldı** (§6).
+>
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
 > §10'da ayrı duruyor — kartların içine girmez.
 
@@ -73,8 +84,9 @@ kategorisi ve neyi açtığı yazılıyor. İçerik, o kurum (Lonca · Sancak Ka
 Paladin düzeni) yazılırken doldurulur.
 
 Mühür bu setin merkezinde: Sancak Kaydı'nda mühür hukuki kimliktir, yüzük taşımak
-"kayıtlıyım" demektir. Bu yüzden §3.3'teki **mührü eğelenmiş yüzük** bu kartların
-tam tersidir ve masadaki herhangi bir mühür sahibi onu ilk bakışta okur.
+"kayıtlıyım" demektir. §3.3'teki **gizli cepteki yüzük** bu kartların karşı kutbudur
+— içeriği askıda olsa da (4. tur), saklanmış bir yüzükle açıkta taşınan bir mühür
+arasındaki fark masada kendiliğinden okunur.
 
 | Background | Yetenek seçimi | Skill | Tool | Origin feat | Evrene özel eşya (kapı) | Eksi (kurgusal bedel) |
 |---|---|---|---|---|---|---|
@@ -177,12 +189,20 @@ kıtada olmayan bir boya. Yanlarında bavul yok. Kumaşın üçünde de aynı ka
 olması ayrı bir iz: hizmetli de efendisi gibi giydirilmiş, yani bu hane onu
 **yanında götürecek kadar** değerli görmüş.
 
-**Hikaye:** İkinci kıtada hastalık yayılırken limanlar kapanmadan çıkmak için çok
-para ödediler. **Kaçamadılar** — bindiklerinde zaten taşıyorlardı. Meridia'ya
-vardıklarında bir kez daha ödediler: bu sefer karaya çıkışlarının **kayıttan
-silinmesi** ve kimsenin soru sormadığı bir yere yerleştirilmeleri için. Daha içeri
-gitmeyi planlıyorlardı; **limandan sonra belirtiler başladı ve yol bitti.**
-Gümüşsu seçilmiş bir yer değil, **gidebildikleri son yer.**
+**Hikaye — ASKIDA (KARAR, 2026-09-09 4. tur).** Üçlünün hastalığı **nasıl kaptığı**,
+tam geçmişleri ve izledikleri yol **karar verilmedi.** Aşağıdaki anlatı bu belgenin
+şu anki *en güçlü adayıdır*, kanon değil:
+
+> İkinci kıtada hastalık yayılırken limanlar kapanmadan çıkmak için çok para ödediler.
+> **Kaçamadılar** — bindiklerinde zaten taşıyorlardı. Meridia'ya vardıklarında bir kez
+> daha ödediler: bu sefer karaya çıkışlarının **kayıttan silinmesi** ve kimsenin soru
+> sormadığı bir yere yerleştirilmeleri için.
+
+**Karar verilene kadar masada doğru olan üç şey:** üçü de **ikinci kıtadan** geldi ·
+**kayıtsız** geldi · ve **limandan sonra yol bitti** — Gümüşsu seçilmiş bir yer değil,
+**gidebildikleri son yer.** Bunun ötesi (kim ödedi, kim aldı, nasıl hastalandılar)
+Act 1'de *kanıtlanmaz*. Oyuncuların ulaşabildiği en uç katman aşağıda yazılı ve
+orada bitiyor.
 
 **İki ad sahte, biri değil (KARAR).**
 
@@ -192,12 +212,27 @@ Gümüşsu seçilmiş bir yer değil, **gidebildikleri son yer.**
 | **Merla Tealeaf** | *Portia Greenbottle* | Aynı sebep. **Ayrı soyadı seçtiler:** kayıtta karı koca değil, yolda tanışmış iki yolcu görünüyorlar |
 | **Kromanna** | *Kromanna* | Tiefling adı saklanamaz: hangi adı verirse versin tiefling olduğunu söyler. Değiştirmenin faydası yoktu, değiştirmedi |
 
-Gerçek adlar **Act 1'de yazılmıyor** — masada bir kez duyulursa tek sahnede, açıklama
-yapılmadan duyulur. Cevap zaten limanın dışında, Lonca ve Şehir hattında.
+**Gerçek adlar nerede karşılık buluyor (KARAR, 4. tur).** Köyde hiçbir yerde. Bir
+yerde: **Lonca Meclisi.** Oyuncular üçlünün nereden geldiğini araştırmayı seçerse
+ulaşabilecekleri bilgi katmanı **iki basamaktır ve orada biter:**
+
+1. **Geldikleri yer** — ikinci kıta. (Kumaş · beden · boş parşömen; §3.3.)
+2. **Gerçek adları** — *Cortia* ve *Portia Greenbottle*.
+
+İkinci basamak zar değil **yer** ister: gerçek adı Meclis'te **bir üye tanır**, çünkü
+ikinci kıta kayıtları o odaya girer, köye girmez. Tanıyan üye üç şey söyler ve
+fazlasını söylemez: bu iki isim **serbest ticaretçi**, ikinci kıtada kayıtlı, ve
+*"oradan buraya, hele gizli bir yoldan gelmişlerse ortada bir sorun var — ve sorun
+onlar değil, onları geçiren."* Ad bir cevap değil, **soruyu kuruma taşıyan bilettir**
+(bkz. [`lonca-sehir.md` §6.3](lonca-sehir.md)).
+
+**Bu hat hiç yaşanmayabilir.** Oyuncular üçlünün geçmişini hiç kurcalamadan doğrudan
+loncaya gidebilir — §6.1 o yolu ayrıca yazıyor. İki yol da aynı kapıya çıkar; biri
+diğerinin ön koşulu değil.
 
 > **Perdenin en erken çatlağı bu.** İki halfling aynı yatakta yatıyor ve ellerinde
-> **eş bir çift alyans** var *(mührü eğelenmiş yüzükle karıştırma — o Kromanna'da,
-> §3.3 iz 2)*, ama verdikleri iki ad iki ayrı soyadı taşıyor. Oyuncu ikisinin evli
+> **eş bir çift alyans** var *(gizli cepteki yüzükle karıştırma — o saklı ve ayrı bir
+> nesne, §3.3 iz 3)*, ama verdikleri iki ad iki ayrı soyadı taşıyor. Oyuncu ikisinin evli
 > olduğunu gördüğü an kayıt ile oda birbirini yalanlar — ve bunun için hiçbir zar
 > gerekmez. Sorulduğunda ikisi de aynı cevabı verir, ayrı ayrı, fazla hazır:
 > *"Yolda tanıştık."*
@@ -215,28 +250,64 @@ kıtadan getirdi.**
 
 > **Salgın araştırılmaz, suç araştırılır.**
 
-Suç artık *bulaştırma* değil **gizleme**: birileri para alıp üç hasta zengini
-kordonun içinden geçirdi, kayıtlarını sildi ve kayıtsız bir köye yerleştirdi. Bu
-insanlar kurban değil müşteri; onları buraya sokan kişi ise Gümüşsu'yu satmış oldu.
-Soru da bu yüzden daha kötü: *neden bu üç kişi değil — **kim aldı bu parayı?***
+Suç artık *bulaştırma* değil **gizleme**: birileri üç hasta insanı kordonun içinden
+geçirdi, kayıtlarını sildi ve kayıtsız bir köye yerleştirdi. Onları buraya sokan kişi
+Gümüşsu'yu satmış oldu.
 
-### 3.3 Catch — iğnenin yerine geçen üç iz
+**Üçlünün bu işlemdeki rolü açık değil (4. tur).** Parayı onlar mı verdi, biri onlar
+için mi ödedi, yoksa sadece taşındılar mı — **karar verilmedi** (§3.1, §9 açık).
+Önceki turun "bu insanlar kurban değil müşteri" cümlesi bu belgeden **çıkarıldı**;
+masada iki okuma da açık duruyor ve kulübede söylenen hiçbir cümle ikisi arasında
+seçim yapmıyor.
 
-Üçü de bulunabilir, hiçbiri zorunlu değil, üçü aynı yeri gösteriyor. İki taşıyıcı
-kuralı (§1) her satırda ayrıca sağlanmış durumda.
+Değişmeyen soru şu: *neden bu üç kişi değil — **kim aldı bu parayı?***
+
+### 3.3 Catch — iğnenin yerine geçen izler
+
+Hiçbiri zorunlu değil, hepsi aynı yeri gösteriyor.
+
+**Üçlünün üzerinde ne var (KARAR, 4. tur):** giysileri, **bir altın kesesi**, **birkaç
+boş parşömen**, ve **gizli bir cepte bir yüzük.** Bavul yok, mektup yok, mühürlü kağıt
+yok, ensede iğne yok. Liste bu kadar — DM buraya kendiliğinden bir şey eklemez.
 
 | # | İz | Nasıl bulunur | Ne söyler |
 |---|---|---|---|
 | 1 | **Kumaş** | Zar yok. Bakan görür; @[Milo](entity:npc/Milo) (hancı, kumaş görmüş adam) ya da @[Corvin](entity:npc/Corvin) (mal taşır) sorulmadan söyler | Yabancılar, ve zengindiler |
-| 2 | **Mührü eğelenmiş yüzük** | Kromanna'nın parmağında; saklamıyor. **Investigation DC 15** *veya* Jeweler's Tools yeterliliği *veya* mühür taşıyan herhangi bir PC (§2: Lonca Üyesi · Mertebeli · Ajan · Rütbeli) — o zar atmaz, tanır | Mühür yüzü **eğelenerek düzleştirilmiş**, kırılmamış. İç kenardaki ayar damgası **Meridia damgası ve taze**: yüzük bu kıtaya geldikten *sonra* işlenmiş. Yani bu insanları biri, karaya çıktıktan sonra, para karşılığı sildi |
-| 3 | **Beden** | **Medicine DC 12** (Umay'a sorulursa zarsız: kendisi zaten fark etti ama adını koyamıyor) | Hastalık köyün sandığından **eski**. Bu üçü hasta *geldi*. Gümüşsu bu hastalığı üretmedi, **teslim aldı** |
+| 2 | **Altın kesesi + boş parşömenler** | Zar yok, üstlerinde duruyor | Kese **dolu**: parası bitmiş insanlar değil, **yolu** bitmiş insanlar. Parşömenler **boş**: yazılı bir şey taşıyorlardı ya da taşıyacaklardı, ve şimdi ellerinde tek bir kayıt yok. Kayıtsızlık bir kaza değil, bir **hâl** |
+| 3 | **Gizli cepteki yüzük** | **Investigation DC 15** — üstlerini arama beyanı ister; kimse göstermez, kimse söylemez | Saklanan tek nesne, ve saklanmış olması tek başına bir cümle: bu üçünün gizleyecek bir **kaydı** var. *(Yüzüğün ne olduğu askıda — aşağı bak)* |
+| 4 | **Beden** | **Medicine DC 12** (Umay'a sorulursa zarsız: kendisi zaten fark etti ama adını koyamıyor) | Hastalık köyün sandığından **eski**. Bu üçü hasta *geldi*. Gümüşsu bu hastalığı üretmedi, **teslim aldı** |
+| 5 | **Hava** | **Arcana DC 13** — yalnız büyü yapan/bilen bir PC atar. Köyde ikinci taşıyıcısı **yok**; Umay bunu göremez | Bu yalnızca hastalık değil. Üçünün üstünde **duran** bir şey var: sönmeyen, dağılmayan, **bir yere bağlı** bir iz. Yön yok, mesafe yok, ad yok — sadece *"bunun bir sahibi var"* (§4.6) |
 
-**Yüzük neden bu dünyada işe yarıyor:** Sancak Kaydı'nda mühür hukuki kimliktir
-(§2). Mühürlü yüzük "kayıtlıyım" demek; **mührü kazınmış yüzük**, kendi kaydını
-sildirmiş bir insanın üzerinde kalan tek delildir. Perdenin kanıtı bu nesnedir.
+**İki taşıyıcı kuralının bu tablodaki karşılığı (4. tur).** Perdeyi taşıyan kritik
+cümle *"bu üçü hasta **geldi**"* ve onun iki taşıyıcısı var: **beden** (iz 4) ve
+**Umay** (zarsız). Buna kumaş (iz 1) ve kese (iz 2) de zarsız eşlik ediyor.
 
-**Zincir:** yüzük → *kim eğeledi* → @[Gizli Liman](entity:location/Gizli Liman)
-(§7.5) → *kim ödedi* → Lonca ve Şehir hattı, yani Act 1'in bu kapsamının dışı.
+Buna karşılık **yüzük (iz 3) ve Arcana (iz 5) kritik değil** — tek kapıları var,
+kaçırılabilirler, ve kaçırıldıklarında hiçbir hat kapanmaz. Bu bilinçli:
+**kritik olan kolay, ödül olan zor.**
+
+**Yüzüğün ne olduğu askıda (KARAR, 4. tur — §9 açık).** Nesnenin *var olduğu* ve
+*saklandığı* kanon; içeriği değil. Karar verilene kadar bu belgedeki **yedek içerik**
+şudur ve kanon sayılmaz:
+
+> Mühür yüzü **eğelenerek düzleştirilmiş**, kırılmamış. İç kenardaki ayar damgası
+> **taze Meridia damgası** — yani yüzük bu kıtaya geldikten *sonra* işlenmiş.
+
+Bu okuma seçilirse §7.4'teki **Mine** (klan adını söylemeyen cüce kuyumcu) ve
+aşağıdaki zincir olduğu gibi çalışır. Başka bir yüzük seçilirse ikisi de onunla
+birlikte değişir — **Mine'ın kartı bu karara bağlı.**
+
+**Yüzük neden bu dünyada bir şey ifade eder** (hangi içerik seçilirse seçilsin):
+Sancak Kaydı'nda mühür **hukuki kimliktir** (§2); mühürlü yüzük "ben defterde varım"
+demektir. Böyle bir yüzüğün **gizli cepte** taşınması, sahibiyle kayıt arasında
+düzeltilmiş bir şey olduğunu söyler. Nesnenin ayrıntısı bu cümleyi *güçlendirir*,
+kurmaz.
+
+**Zincir (yedek içerik doğrulanırsa):** yüzük → *kim işledi* →
+@[Gizli Liman](entity:location/Gizli Liman) (§7.5) → *kim ödedi* → Lonca ve Şehir
+hattı, yani Act 1'in bu kapsamının dışı. İçerik değişse bile zincirin **girişi**
+duruyor: üçlü kayıtsız geldi, kayıtsızlık satın alınmış bir hizmettir, ve satan
+liman orada.
 
 Üçlü **Gizli Liman'dan gelmiş** (KARAR, korunuyor): resmi limandan geçselerdi kayıt
 olurdu. **Kayıt olmaması bir kaza değil, satın alınmış bir hizmet.** Corvin'in yolu
@@ -273,6 +344,16 @@ tıkandığında dönülecek NPC.
 
 Bu, 5e'nin üstüne eklenen **tek** kuraldır. Sapma işareti zorunlu (Yönerge §3.3,
 README §6.5).
+
+**Bu bölüm DM'in bildiğidir. Masada "Blight" diye *bilinen* bir şey yok
+(KARAR, 4. tur).** Köy bir ad koydu; adın arkasında ne olduğunu **kimse** bilmiyor —
+köylüler de, Umay da, oyuncular da, Meclis'in Simya koltuğu da
+([`lonca-sehir.md` §6](lonca-sehir.md)). Dahası: **bunun bir hastalık olduğu bile
+kesin değil.** Bulaşıyor *gibi görünüyor*, hasta ediyor *gibi görünüyor*; ama Act 1
+boyunca "bu bir hastalıktır" cümlesini kanıtlayan tek bir sahne yok. Oyuncular buna
+hastalık der çünkü ellerinde başka kelime yok — ve §4.6 o kelimeyi zayıflatır.
+
+Aşağıdaki kural kartı **hastalık gibi işler.** Bu bir mekanik tercih, bir teşhis değil.
 
 **Kategori kararı (2026-09-09):** kart `curse` olarak yazılır, `applied-condition`
 olarak değil. Sebep şema: `applied-condition` zorunlu `condition_ref` ister ve
@@ -330,12 +411,40 @@ değişkenlikte, Kromanna bedende.
 ### 4.5 DM bilgisi — oyuncuya verilmez
 
 Hastalık doğa değil, **birinin eseri**: Blight kralın mızrağının taşından çıkma
-(02 §2). Bu Act 1'de **gösterilmez de, kanıtlanmaz da** — iğne kaldırıldığı için
-(§3.2) perdede artık bunu işaret eden fiziksel bir nesne yok. Act 1'in kanıtladığı
-tek şey suçun **gizleme** olduğu. Eserin kendisi sonraki perdelere kalır.
+(02 §2). Act 1'de bu **kanıtlanmaz** — iğne kaldırıldığı için (§3.2) perdede bunu
+işaret eden fiziksel bir nesne yok. Ama artık **tamamen görünmez de değil**: §4.6.
+Act 1'in kanıtladığı tek şey suçun **gizleme** olduğu; eserin kendisi sonraki
+perdelere kalır.
 
 Üçlü **şu an son evrenin eşiğinde** (Evre 2'nin sonunda). Oyuncular bunu bilmiyor;
 kimse bilmiyor.
+
+### 4.6 Yalnız biyolojik değil — büyülü de (KARAR, 4. tur)
+
+Blight bir hastalık gibi bulaşır ve bir hastalık gibi ilerler, ama **büyüseldir** ve
+**bir kaynağa bağlıdır.** Kaynağın ne olduğu Act 1'de söylenmez, gösterilmez,
+adlandırılmaz.
+
+Perdedeki karşılığı **tek bir duyu**:
+
+> **Arcana DC 13** (§3.3, iz 5) — büyü yapan/bilen bir PC hastanın yanında durunca
+> bunun kendiliğinden olmuş bir şey olmadığını **hisseder.** Sönmeyen, yayılmayan,
+> bir yere **bağlı duran** bir iz. Doğrultu yok, mesafe yok, ad yok.
+
+**Ne verir:** perdenin "bu doğal değil" anı. Kaldırılan iğnenin (§3.2) yerini bir
+nesne değil **bir PC'nin yeteneği** alıyor — yani her masada çıkmaz, ve çıktığında
+o oyuncunun *kazandığı* bir şeydir.
+
+**Ne vermez:** kaynağı, yönü, sorumluyu, tedaviyi. Bir de şunu vermez: **kesinlik.**
+Büyülü olması hastalığın biyolojik *olmadığı* anlamına gelmiyor — ikisi birden, ve
+Act 1 hangisinin önce geldiğini söylemiyor. *Detect Magic* ve benzeri tespit büyüleri
+de aynı yere varır: bir şey **var**, ne olduğu **okunmuyor.** (Meclis'in Büyücü
+koltuğu bunu zaten denedi ve okuyamadı — [`lonca-sehir.md` §6](lonca-sehir.md);
+"sonuç yok" dediği şey aslında "okuyamadım".)
+
+**Neden DC bu kadar düşük (13):** amaç saklamak değil. Masada büyücü varsa bu anın
+**çıkması** isteniyor; yoksa perde onsuz da tam çalışıyor, çünkü §3.3'ün kritik hattı
+zaten zarsız.
 
 ---
 
@@ -424,12 +533,16 @@ Savaştan sonra yön **oyuncuya kalır.** Köyün elinde şunlar var:
 - **"Hastalık" / "Blight"** — köylüler adı koyar; ne olduğunu bilmezler.
 - **"Bir limandan geldiler"** — kimin söylediğine göre hangi liman değişir (§8).
 - **Gizli Liman** — yolu bilen kişi para karşılığı götürür. Resmi olmayan giriş.
-- **Mührü eğelenmiş yüzük** — perdenin kanıtı (§3.3). Üç kapının (07: bedensel ·
-  belgesel · kültürel) hepsine giden ortak nesne: beden hastalığın eski olduğunu,
-  damga kaydın satın alınarak silindiğini, mührün kendisi de bu dünyada kayıtlı
-  olmanın ne demek olduğunu söyler.
+- **Gizli cepteki yüzük** — perdenin en sağlam **nesnesi** (§3.3, iz 3), ama içeriği
+  askıda. Şimdilik masaya verdiği şey saklanmış olmasıdır: bu insanların gizleyecek
+  bir kaydı vardı.
 - **"Hasta geldiler"** — Medicine DC 12'nin ya da Umay'ın verdiği cümle. Köyün
-  kendini suçlamasını bitirir ve yönü limana çevirir.
+  kendini suçlamasını bitirir ve yönü limana çevirir. **Perdenin kritik cümlesi
+  budur** (§3.3).
+- **"Üstlerinde bir hastalıktan fazlası var"** — yalnız Arcana atan bir PC varsa
+  (§3.3 iz 5, §4.6). Yön vermez, **ton** verir: bunun bir sahibi var.
+- **İkinci kıta ve gerçek adlar** — üçlünün geçmişini kurcalayan masanın gidebildiği
+  en uç katman (§3.1). Cevabı köyde değil, Meclis'te.
 
 Buradan sonraki lokasyonlar (README §2 güzergahı) sırayla değil, oyuncunun seçtiği
 sırayla açılır. Her biri için **en az 3–4 NPC** yazılacak, aynı üç satırlık
@@ -444,6 +557,41 @@ standartla:
 
 Bilgi eğimi (09 §4) burada işler: limanda söylenti bol, şehirde bastırılmış,
 Ravenhall'da yok.
+
+**Paladin Şatosu · Ravenhall · Elymsyr liman kenti — KARAR VERİLMEDİ (4. tur).**
+Üçü de bu turda detaylandırılmadı ve sonraya bırakıldı. Yukarıdaki NPC ihtiyacı
+satırları onlar için **taslak**, söz değil. Yazılan tek yan hat Lonca/Şehir'dir
+([`lonca-sehir.md`](lonca-sehir.md)) — ve Act 1'in kapsamı (Gümüşsu → ufukta ikinci
+kıta) o hatla kapanıyor.
+
+### 6.1 Doğrudan loncaya gitmek — en kısa yol (KARAR, 4. tur)
+
+Oyuncular üçlünün geçmişini hiç kurcalamayabilir. Köyden çıkıp doğrudan **loncaya**
+gidebilirler; bu yol kapalı değil, **en hızlısı.**
+
+**Lonca ne yapar: bastırır.** Kurum olarak hastalığın konuşulmasını istemez ve sebebi
+kötülük değil **hesap** — söylenti tek başına ticareti kesiyor. Altı koltuğun altı
+ayrı inkârı için bkz. [`lonca-sehir.md` §6](lonca-sehir.md).
+
+**Ama üyelerden biri görevlendirir.** Kurum bastırırken tek bir üye tersini yapar ve
+oyunculara işi verir: **bu şeyin ne olduğunu bulun.** Karşılığında iki şey teklif eder:
+
+1. **Ücretsiz seyahat** — perdenin sonundaki gemi bileti, parayla değil imzayla
+   (§7.2'nin "iyi yazı"sı).
+2. **Tüm mirasına ortaklık** — verecek parası yok, ama bir hanesi var.
+
+> **Masanın görebileceği ince yer:** o miras **her gün küçülüyor.** Bu üyenin geliri
+> akıştan gelir ve söylenti ticaret gemilerini azaltıyor — yani teklif ettiği pay,
+> tam da oyuncuların çözmesi istenen sorun yüzünden eriyor.
+>
+> Bunu fark eden oyuncu iki şeyi birden anlar: teklif **düşündüğünden küçük**, ve adam
+> **samimi** — elindeki tek şeyi veriyor, ve verdiği şey ancak iş biterse bir değer
+> taşıyor. Insight istemez; rakamları duyan duyar.
+
+**Kilitlenme yok:** bu görev yolun tek kapısı değil. Aynı yazıyı para da alır (§7.2),
+aynı bilgiyi liman hattı da taşır (§7.5), ve üçlünün geçmişi hattı (§3.1) aynı odaya
+başka kapıdan girer. Teklif metni ve ayrıntı:
+[`lonca-sehir.md` §6.2](lonca-sehir.md).
 
 ---
 
@@ -560,15 +708,21 @@ ilgi: kimse ona bir şey sormaz.
 ### 7.5 Buranın Act 1'e verdiği
 
 Üçlünün izi burada bitmiyor, **burada başlıyor**: kaydın silinmesi satın alınmış
-bir hizmetti (§3.1) ve birisi o parayı aldı. Yüzüğün iç kenarındaki taze Meridia
-ayar damgası (§3.3) bu limanı işaret eder — eğeleme burada, bir arka odada yapıldı.
+bir hizmetti ve birisi o parayı aldı. Yüzüğün yedek içeriği doğrulanırsa (§3.3, iz 3)
+iç kenardaki taze Meridia ayar damgası bu limanı işaret eder — eğeleme burada, bir
+arka odada yapıldı. *Yüzük içeriği askıda olduğu için bu cümle şu an **koşulludur**;
+limanın Act 1'deki yeri ona bağlı değil.*
 
 Sicim'in defteri soruyu somutlaştırır: *kim ödedi.* Cevap limanda **değil**;
 Lonca ve Şehir hattında. Limanın verdiği şey cevap değil, **bir sonraki kapı.**
 
-✅ Yüzüğü eğeleyen kuyumcu artık yazıldı (§7.4): **Mine**, klan adını söylemeyen
-bir cüce. *Kaydı kim sildirdi*'nin ikinci taşıyıcısı odur — bilgi artık yalnız
-Sicim'de değil, iki taşıyıcı kuralı (§1) bu hatta da sağlanmış durumda.
+✅ Yüzüğü eğeleyen kuyumcu yazıldı (§7.4): **Mine**, klan adını söylemeyen bir cüce.
+*Kaydı kim sildirdi*'nin ikinci taşıyıcısı odur — bilgi yalnız Sicim'de değil, iki
+taşıyıcı kuralı (§1) bu hatta da sağlanmış durumda.
+
+⚠️ **Mine'ın kartı yüzük kararına bağlı (4. tur).** Yüzüğün içeriği değişirse Mine'ın
+"ne gizlediği" de değişir; **kişi durur, işi değişir.** Klan adını söylemeyen,
+kendini kayıttan düşürmüş bir cüce kuyumcu her senaryoda ayakta kalıyor.
 
 ### 7.6 Rıhtım — yer olarak
 
@@ -610,7 +764,7 @@ kendiliğinden işe alınır, ve işçi ağı ona ilk gün konuşmaz ama ikinci 
 | `monster` | Dönüşmüş üçlü (3 kart, statblock §5.1) |
 | `background` | §2'deki 9 background — mekanikleri kapandı, yazılabilir |
 | `curse` | **Blight — Enfeksiyon** (§4): perdenin tek kural sapması |
-| eşya | **Mühürsüz Yüzük** (§3.3) + **13 background eşyası** (§2) — hepsi kendi kartı |
+| eşya | **Mühürsüz Yüzük** (§3.3) ⚠️ *içerik askıda, ad geçici* + **13 background eşyası** (§2) — hepsi kendi kartı |
 | `scene` | Köye varış · kulübe sorgusu · şafak dönüşümü · **limana kabul** · **geçiş pazarlığı** |
 | `encounter` | Şafak çatışması *(tek — "Liman kaçışı" kaldırıldı, §7.3)* |
 | `quest` | "Söylentinin peşinde" (giriş) + "Nereden geldiler" *("Yol hakkı" kaldırıldı, §7.2)* |
@@ -632,10 +786,11 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 2. **Üçlü kim** (§3.1): iki halfling + bir tiefling, üçü de zengin, ikinci kıtadan
    kaçtılar, kaçamadılar, kayıtlarını parayla sildirdiler, limandan sonra yol bitti.
    "Sivil yolcu" kararı korundu — paladin/asker değiller.
-3. **Adları sahte** (§3.1). Gerçek adlar Act 1'de yazılmıyor; bu, M5 ad
-   dağarcığının Act 1'i bloke etmemesini de sağlıyor.
-4. **Catch = üç iz** (§3.3): kumaş (zarsız) · mührü eğelenmiş yüzük (Investigation
-   DC 15 / Jeweler's Tools / mühür taşıyan PC) · beden (Medicine DC 12).
+3. **Adları sahte** (§3.1). Gerçek adlar köyde yazılmıyor; **4. turda** karşılığını
+   Meclis'te buldular ([`lonca-sehir.md` §6.3](lonca-sehir.md)).
+4. ~~**Catch = üç iz**~~ — **4. turda beşe çıktı ve içeriği değişti** (§3.3):
+   kumaş (zarsız) · altın kesesi + boş parşömen (zarsız) · **gizli cepteki** yüzük
+   (Investigation DC 15, tek kapı) · beden (Medicine DC 12) · hava (Arcana DC 13).
 5. **Background mekanik yükü** (§2): evrene özel *feature* yok — şemada yeri yok.
    Feature'ın işini eşya + kurgu yapıyor.
 6. **Background eşyaları için yeni kart yazılmıyor** (§2): dokuzu da SRD nesnesi.
@@ -683,6 +838,24 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 21. **Konsey Aracısı'nın iki katmanı** (§7.4): limanda *Kadife*, defterde
     *Halet Custar* — Custarlar, yani Askeri Hukuk koltuğu.
 
+**Kapatılanlar (2026-09-09, 4. tur — belirsizlik turu):**
+
+22. **Hastalığın ne olduğu bilinmiyor, ve "hastalık mı" sorusu bile açık** (§4).
+    Blight bir DM adı; masada kimsenin elinde teşhis yok. Kural kartı hastalık *gibi*
+    işler — bu mekanik tercih, teşhis değil.
+23. **Blight büyülü + biyolojik, ve bir kaynağa bağlı** (§4.6). Perdedeki tek
+    karşılığı **Arcana DC 13** (§3.3 iz 5). Kaynak adlandırılmıyor, yön verilmiyor.
+24. **Üçlünün üzerindeki eşya listesi kapandı** (§3.3): giysi · **altın kesesi** ·
+    **birkaç boş parşömen** · **gizli cepte bir yüzük.** Başka hiçbir şey yok.
+25. **Yüzük artık parmakta değil, gizli cepte** ve **tek kapılı** (Investigation
+    DC 15). Bu yüzden **kritik iz değil**; kritik hat beden + Umay (§3.3).
+26. **"Kurban değil müşteri" geri alındı** (§3.2). Üçlünün ödeyen mi taşınan mı
+    olduğu karar verilmedi; iki okuma da masada açık.
+27. **Gerçek adların karşılık bulduğu yer: Lonca Meclisi** (§3.1). Bilgi katmanı iki
+    basamak — geldikleri yer, gerçek adları — ve orada biter.
+28. **Doğrudan lonca yolu yazıldı** (§6.1): kurum bastırır, bir üye görevlendirir;
+    ödül **ücretsiz seyahat + mirasa ortaklık**, ve miras her gün küçülüyor.
+
 **Açık:**
 
 1. ~~**M5 kişi adı dağarcığı**~~ — **KAPANDI** (3. tur, yukarıda 17–21).
@@ -694,8 +867,21 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 3. **"İyi para"nın rakamı ve kazanma yolları** — limanda yapılabilecek 2-3 iş.
    Liman `scene`'leri yazılırken.
 4. ~~**Yüzüğü kim eğeledi**~~ — **KAPANDI** (3. tur): **Mine**, Gizli Liman'ın
-   kuyumcusu, klan adını söylemeyen bir cüce (§7.4).
-5. Devam eden M0 kalıntıları: M0.2 · M0.3 · M0.6 (README §3.2).
+   kuyumcusu, klan adını söylemeyen bir cüce (§7.4). ⚠️ *Yüzüğün içeriği 4. turda
+   askıya alındığı için bu cevap **koşullu**: eğeleme okuması düşerse Mine'ın işi
+   değişir, kendisi durur.*
+5. **Yüzüğün ne olduğu** (§3.3, iz 3) — **AÇIK, 4. tur.** Nesnenin var olduğu ve
+   gizli cepte taşındığı kanon; ne olduğu değil. Yedek içerik (mührü eğelenmiş,
+   ayar damgası taze Meridia) belgede duruyor ve kanon sayılmıyor. Karar verilince
+   §3.3 · §6 · §7.5 · Mine'ın kartı ve `Mühürsüz Yüzük` kart adı birlikte güncellenir.
+6. **Üçlünün geçmişi, yolu ve hastalığı nasıl kaptıkları** (§3.1, §3.2) — **AÇIK,
+   4. tur.** Sabit olan üç şey: ikinci kıtadan geldiler · kayıtsız geldiler ·
+   limandan sonra yol bitti. Gerisi karar bekliyor, ve Act 1 gerisi olmadan da oynanır.
+7. **Hastalığın kaynağı** (§4.6) — Act 1'de adlandırılmıyor; kaynağın *ne* olduğu
+   sonraki perdelerin kararı.
+8. **Paladin Şatosu · Ravenhall · Elymsyr liman kenti** (§6) — **AÇIK, 4. tur.**
+   Detaylandırma sonraya bırakıldı; §6 tablosundaki NPC ihtiyaçları taslak.
+9. Devam eden M0 kalıntıları: M0.2 · M0.3 · M0.6 (README §3.2).
 
 ---
 
@@ -703,27 +889,50 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 
 *Karar sahibine, kartın içine girmeyecek notlar.*
 
-- **İğne gitti, perdenin "bu doğal değil" anı da gitti.** Eskiden ilk oturumda
-  fiziksel bir nesne "birisi bunu yaptı" diyordu. Şimdi Act 1 yalnızca *birileri
-  bunu sakladı* diyor. Daha gerçekçi ve daha soğuk bir suç; ama daha az doğaüstü.
-  Mızrak/eser hattının ilk fiziksel işareti artık Act 2'ye kaldı — bilerek mi,
-  karar senin.
-- **Üçlü artık kurban değil müşteri.** Bu iyi bir şey: masada onlara acımak yerine
-  onlara kızmak da mümkün, ve kızan bir masa daha çok soru sorar. Ama "köyü öldüren
-  şey aslında zenginlerin parasıydı" cümlesi tonu politikleştiriyor — 02'nin
-  "kimse kötü olduğu için hareket etmiyor" kuralına uyuyor, yine de bilerek seçtiğini
-  bil.
-- **Yüzük, mühür sistemine bağlı.** Sancak Kaydı (10 M1) hâlâ yazılmadı ve şu an
-  perdenin kanıtı ona yaslanıyor. Sancak Kaydı yazılırken "mühür = hukuki kimlik"
-  cümlesi korunmak zorunda, yoksa yüzük anlamını kaybeder.
-- **Medicine DC 12 kasten düşük.** Amaç ipucu saklamak değil, ipucuna *bir* kapı
-  daha açmak; Umay zaten zarsız taşıyıcı. Investigation DC 15 ise gerçekten
-  başarısız olabilsin diye yüksek — çünkü orada üçüncü bir kapı var (mühür taşıyan PC).
-- **Eşya kartı sayısı 1'den 14'e çıktı.** Bunun bedeli yazım işi değil, **bakım
-  işi**: 13 kartın içeriği boş duruyor ve boş kart masada "bu ne işe yarıyor"
-  sorusunu doğurur. Kitapların içi Lonca/Sancak Kaydı yazılırken doldurulmazsa,
-  arşivcinin çantası dekorasyona döner — yani tam kaçındığımız şeye. Not: kitapların
-  içeriğini yazmak, Sancak Kaydı'nı (10 M1) yazmadan mümkün değil.
+- **İğne gitti ama "bu doğal değil" anı gitmedi** *(4. turda düzeltildi).* Eski not
+  fazla kesin yazılmıştı. Doğal olmadığı zaten **kısmen anlaşılıyor**: beden,
+  hastalığın köyün sandığından eski olduğunu söylüyor (§3.3 iz 4) ve kimsenin
+  ölmemesi Umay'ın kırk yılıyla çelişiyor. 4. turda buna **Arcana DC 13** eklendi
+  (§4.6) — hastalık büyülü ve bir kaynağa bağlı, ve bir büyücü bunu **hissedebiliyor.**
+  Değişen şey şu: eskiden bu an bir nesneyle **garantiydi**, şimdi bir yetenekle
+  **kazanılıyor.** Doğaüstünün ilk *kanıtı* yine Act 2'de; ilk **sezgisi** Act 1'de.
+- **Üçlünün ne olduğu açık değil, ve bu bilerek böyle** *(4. tur).* "Kurban değil
+  müşteri" cümlesi geri alındı — geçmişleri, yolları ve hastalığı nasıl kaptıkları
+  karar verilmedi (§3.1, §3.2). Masada iki okuma da açık: parayı verenler onlarsa
+  masa onlara kızar, taşınanlarsa acır, ve kulübede söylenen hiçbir cümle ikisi
+  arasında seçim yapmıyor. **Karar vermeden oynanır.** Ama *kim aldı bu parayı*
+  sorusunun cevabı buna dayanıyor, yani Act 2'den önce kapanması gerekiyor.
+- **"Yüzük mühür sistemine bağlı" ne demekti** *(anlaşılmadı, sade yazıldı).* Üç
+  cümlede: **(1)** Bu dünyada mühür = kimlik; mühürlü yüzük taşımak "ben devletin
+  defterinde varım" demek. **(2)** Bu kural henüz **hiçbir yerde yazılı değil** —
+  Sancak Kaydı belgesi yok (10 M1). **(3)** Yani yüzük şu an *henüz yazılmamış bir
+  kuralın kanıtı*; Sancak Kaydı'nı yazarken "mühür = hukuki kimlik" cümlesini
+  koymazsan yüzük anlamsız bir takıya döner.
+  **Yapılacak iş tek satır:** Sancak Kaydı yazılırken o cümleyi kanon olarak koy.
+  *(4. turda yüzüğün içeriği askıya alındı, yani risk şimdilik ertelendi — ama içerik
+  yine mühre bağlanırsa aynen geri gelir.)*
+- **"Medicine DC 12 kasten düşük" ne demekti** *(anlaşılmadı, sade yazıldı).* DC 12'yi
+  Medicine'e bakan bir 1. seviye karakter neredeyse **her zaman** geçer. Bu bilerek:
+  o ipucu (*"bu üçü hasta geldi"*) perdenin yönünü veren cümle, kaçırılırsa masa
+  köyü suçlamaya devam eder. O yüzden zarı **engel değil hediye** yaptım — üstelik
+  Umay aynı şeyi zaten zarsız söylüyor, yani zar atmayı seven masa atsın diye duruyor.
+  Tersi Investigation DC 15 (yüzük, §3.3 iz 3): **gerçekten başarısız olunabilsin**
+  diye yüksek, çünkü yüzük kritik değil — kaçırılırsa hiçbir hat kapanmıyor.
+- **Üçlünün üstünde ne var, artık kapalı bir liste** *(4. tur).* Altın kesesi + boş
+  parşömen + gizli cepte yüzük. Bu listenin sessiz faydası: **arama sahnesi kısa.**
+  DM "başka ne var" sorusuna üç kez "bu kadar" der ve boşluğun kendisi bilgi olur —
+  bavulu olmayan, mektubu olmayan, kağıdı boş üç zengin. Kese dolu olduğu için de
+  masa "parayı bitirmişler" diye yanlış hikayeye sapmıyor.
+- **Eşya kartı sayısı 1'den 14'e çıktı** *(4. turda düzeltildi).* Haklısın: kartların
+  **kendileri yazıldı** — ad, kategori, SRD muadili ve neyi açtığı
+  ([`genel-kartlar.md` §4](genel-kartlar.md)). Boş duran şey kart değil, kartların
+  içindeki **metin**: kitapların içi, rozetin nakşı, künyenin ibaresi. O da bilerek
+  bekliyor, çünkü kitabın içini yazmak Sancak Kaydı'nı (10 M1) yazmadan mümkün değil.
+  Yani bu bir borç değil, **sıraya konmuş bir iş.**
+- **Üç lokasyon bilerek boş** *(4. tur).* Paladin Şatosu · Ravenhall · Elymsyr liman
+  kenti (§6) yazılmadı. Riski yok: Act 1'in kapsamı Gümüşsu → liman → (Lonca/Şehir) →
+  ufukta ikinci kıta ile kapanıyor. Tek dikkat edilecek şey, §6 tablosundaki o üç
+  satırın **taslak** olduğunu unutmamak — masaya söz verme.
 - **Statblock'lar "1–2. seviye" dedin, ben 1. seviyeye ayarladım.** Üçü birlikte
   400 XP; 4 kişilik 1. seviye masa için zorlu-üstü, 2. seviye için tam yerinde.
   §5.1'in sonundaki tempo notu iki yönde de kolu veriyor. Masan 2. seviyede

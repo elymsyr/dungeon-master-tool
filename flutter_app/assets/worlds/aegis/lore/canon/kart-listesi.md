@@ -93,7 +93,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 |---|---|---|
 | **Alton Leagallow** (halfling) | Yorgunluk hattı. Zengin, **adı sahte** — gerçeği *Cortia Greenbottle*. Merla'nın kocası | ✅ |
 | **Merla Tealeaf** (halfling) | Değişkenlik hattı. Zengin, **adı sahte** — gerçeği *Portia Greenbottle*. Alton'ın karısı; kayıtta ayrı soyadı taşıyorlar | ✅ |
-| **Kromanna** (tiefling, kadın) | Beden hattı. Çiftin hizmetlisi ve koruyucusu — köle değil, tutulmuş. **Adı gerçek:** tiefling adı saklanamaz. Mührü eğelenmiş yüzük onun parmağında | ✅ |
+| **Kromanna** (tiefling, kadın) | Beden hattı. Çiftin hizmetlisi ve koruyucusu — köle değil, tutulmuş. **Adı gerçek:** tiefling adı saklanamaz. Yüzük onun **gizli cebinde** (4. tur — parmağında değil) | ✅ |
 
 **Gizli Liman**
 
@@ -104,7 +104,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Kaptan Caelynn** *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
 | **Kaptan Holg** *(yarı-orc)* | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
 | **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | "İyi yazı"nın nasıl alındığı | ✅ |
-| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **klan adını söylemiyor** | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı | ✅ |
+| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **klan adını söylemiyor** | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı ⚠️ *(yüzük kararına bağlı, 4. tur)* | ✅ |
 
 **Meclis — altı koltuk, altı inkâr.** Kartlar koltuk adıyla yazılır.
 
@@ -232,11 +232,17 @@ ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
 | **Sahte Mühür** | `trinket` | Signet Ring | Çalışan bir yalan. Yakalanırsa suç | ✅ |
 | **Kışla Künyesi** | `trinket` | Emblem (Holy Symbol) | Düzenin lojistiği: yemek, yatak, geçiş | ✅ |
 | **Emir Mührü** | `trinket` | Signet Ring + Sealing Wax | Sorgusuz geçiş ve düzen içi bilgi | ✅ |
-| **Mühürsüz Yüzük** | `trinket` | — (yeni nesne) | Mühür yüzü eğelenmiş, ayar damgası taze Meridia. Kendi kaydını sildirmiş insanın üzerinde kalan tek delil | ✅ |
+| **Mühürsüz Yüzük** *(ad geçici)* | `trinket` | — (yeni nesne) | **Gizli cepte** taşınan tek nesne (act1.md §3.3 iz 3). Saklanmış olması kanon; **ne olduğu askıda.** Yedek içerik: mühür yüzü eğelenmiş, ayar damgası taze Meridia | ⚠️ |
 
 Mühür bu evrenin merkezî nesnesi: Sancak Kaydı'nda mühür bir deftere yazma
-yetkisidir. On dört kartın **beşi** mühür, ve **Mühürsüz Yüzük** diğer dördünün tam
-tersidir — mühür taşıyan PC onu zar atmadan okur.
+yetkisidir. On dört kartın **beşi** mühür, ve **Mühürsüz Yüzük** diğer dördünün karşı
+kutbudur — açıkta taşınan mühür "defterdeyim" der, gizli cepte taşınan yüzük tersini
+ima eder.
+
+⚠️ **4. tur (2026-09-09):** yüzük artık Kromanna'nın parmağında değil, **gizli bir
+cepte**; bulunması **Investigation DC 15** ister ve mühür taşıyan PC'nin zarsız okuma
+imtiyazı kalktı. İçeriği karar bekliyor (act1.md §3.3, §9 açık 5) — kart yazılabilir
+ama `description` alanı o karar verilmeden kilitlenmemeli.
 
 **SRD'de kalanlar** (kart açılmaz, ref verilir): Cartographer's Tools ·
 Calligrapher's Supplies · Gaming Set · Alchemist's Supplies · Forgery Kit ·
@@ -302,8 +308,8 @@ taşıyıcı kuralı her hatta sağlanmış durumda.
 ## Yazılmayacaklar (bilerek)
 
 - **Karantina doktoru** — karantina yok; kulübe köyün kendi kararı.
-- **Cerrahi iğne** — kimse kimseye bir şey yerleştirmedi. Perdenin kanıtı
-  **Mühürsüz Yüzük**.
+- **Cerrahi iğne** — kimse kimseye bir şey yerleştirmedi. Perdenin "bu doğal değil"
+  anını artık **beden** (Medicine DC 12) ve **Arcana DC 13** taşıyor (act1.md §4.6).
 - **Mızrak parçası** ve **kolye (pusula)** — bu kapsamda yoklar; yokmuş gibi
   davranılır.
 - **Üçlünün gerçek adları** — cevap limanın dışında.

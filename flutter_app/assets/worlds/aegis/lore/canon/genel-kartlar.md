@@ -150,9 +150,12 @@ ilgili kurum (Lonca · Sancak Kaydı · Paladin düzeni) yazılırken doldurulur
 
 **Mühür, bu evrenin merkezî nesnesi.** Sancak Kaydı'nda mühür hukuki kimliktir;
 mühürlü yüzük "kayıtlıyım" demektir. On üç kartın **dördü** mühür, ve act1.md
-§3.3'ün **mührü eğelenmiş yüzüğü** onların tam tersidir — o dört karttan birini
-taşıyan PC yüzüğü zar atmadan okur. Background eşyası ile perdenin kanıtı aynı
-sistemin iki ucu.
+§3.3'ün **gizli cepteki yüzüğü** onların karşı kutbudur: mühür açıkta taşınır,
+o yüzük saklanır. Background eşyası ile perdenin nesnesi aynı sistemin iki ucu.
+
+⚠️ **4. tur (2026-09-09):** yüzüğün *içeriği* askıya alındı ve mühür taşıyan PC'nin
+zarsız okuma imtiyazı kalktı (act1.md §3.3). Bu kartların hiçbiri değişmiyor —
+değişen yalnız o dördünün Act 1'deki **bonusu**.
 
 ## 5. `species` — 0 kart (bloke), ama ref serbest
 

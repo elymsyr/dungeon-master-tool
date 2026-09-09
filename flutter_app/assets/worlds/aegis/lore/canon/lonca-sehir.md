@@ -33,8 +33,9 @@ Bu, üç şeyi bedavaya veriyor:
 - **Mühür** (act1.md §2) neden bu evrenin merkezî nesnesi belli oluyor: mühür, bir
   deftere yazma yetkisidir. On üç background eşyasının dördünün mühür olması
   tesadüf değil.
-- **Act 1'in kanıtı** (§3.3, mührü eğelenmiş yüzük) doğrudan buraya bağlanıyor:
-  bir sayfanın silinmesi, bir loncanın hizmetidir. Ücreti vardır.
+- **Act 1'in kanıt hattı** (act1.md §3.3) doğrudan buraya bağlanıyor: bir sayfanın
+  silinmesi, bir loncanın hizmetidir. Ücreti vardır. *(Yüzüğün içeriği act1.md 4.
+  turda askıya alındı; bağ nesneye değil **kayıt sistemine** dayandığı için ayakta.)*
 
 ---
 
@@ -213,15 +214,62 @@ geçiş memuru değil; onun kendi çırağı). Oturumda konuşmadığı şeyi bu
    benim memurlarımdan biri. Bana **kimin ödediğini** getirin."*
 3. *"Param yok. Verebileceğim şey imza."*
 
-**Ödül = "iyi yazı"** (act1.md §7.2, §9 açık 2): koltuğun karşı-imzalı geçiş
-kağıdı. Yani perdenin sonundaki gemi biletini Meclis'in en fakir üyesi ödüyor —
-parayla değil yetkiyle. Grup gemiye para bulamazsa bile hat kapanmıyor.
+**Ödül iki parça (KARAR, 2026-09-09 4. tur):**
+
+1. **Ücretsiz seyahat** = "iyi yazı" (act1.md §7.2): koltuğun karşı-imzalı geçiş
+   kağıdı. Perdenin sonundaki gemi biletini Meclis'in **en fakir** üyesi ödüyor —
+   parayla değil yetkiyle. Grup gemiye para bulamazsa bile hat kapanmıyor.
+2. **Tüm mirasına ortaklık.** Verecek nakdi yok, ama bir **hane**si var: Sancarlar,
+   Meclis'in en eski mührü. Teklif ettiği şey para değil, adının arkasındaki her şey.
+
+> **Masanın görebileceği ince yer:** o miras **her gün küçülüyor.** Bu koltuğun geliri
+> akıştan gelir (§6.1), ve söylenti ticaret gemilerini azaltıyor — yani teklif ettiği
+> pay, tam da oyuncuların çözmesi istenen sorun yüzünden eriyor.
+>
+> Bunu fark eden oyuncu iki şeyi birden anlar: teklif **düşündüğünden küçük**, ve adam
+> **samimi** — elindeki tek şeyi veriyor, ve verdiği şey ancak iş biterse bir değer
+> taşıyor. Insight istemez; §6.1'i dinleyen ya da limanda gemi sayan masa kendiliğinden
+> görür. Sorulursa adam inkâr etmez: *"Doğru. Bekleyemem, o yüzden buradayım."*
+
+**Görevin iki yüzü var (4. tur).** Koltuğun kendi istediği *kim ödedi.* Ama oyunculara
+verdiği iş bundan geniş de yazılabilir — **"bu şeyin ne olduğunu bulun."** İkisi aynı
+işin iki ucudur; DM masayı hangisi çekiyorsa onu öne alır: kayıt peşindeki masa silinen
+sayfayı kovalar, hastalık peşindeki masa kulübeye ve kaynağa döner (act1.md §4.6).
+Aynı `quest` kartı (*Silinen sayfa*) ikisini de taşır.
+
+**Kurum bastırır, üye görevlendirir.** Bu çelişki tasarımın kendisi: Meclis'in
+hastalığı susturması altı ayrı çıkarın toplamı (§6), tek üyenin konuşması ise tek bir
+çıkarın — kaybedecek malı olmayan adamın. act1.md §6.1 bu yolu köyden bakınca yazıyor.
 
 **Neden kilitlenmez:** bu görev yolun tek kapısı değil. Aynı yazıyı para da alır
 (act1.md §7.2), aynı bilgiyi liman hattı da taşır (Sicim + ayar ustası, §7). Meclis
 yolu **en ucuz** yol, tek yol değil.
 
 **Bunun `quest` kartı var:** *Silinen sayfa* (§8).
+
+### 6.3 Gerçek adı tanıyan üye (KARAR, 2026-09-09 4. tur)
+
+Oyuncular üçlünün gerçek adlarını (*Cortia* ve *Portia Greenbottle*, act1.md §3.1)
+buraya taşırsa adları **bir üye tanır.** Bu bir zar değil bir **yer**: ikinci kıta
+kayıtları bu odaya girer, köye girmez.
+
+**Tanıyan koltuk:** Sınır ve Ticaret (§6.1) — sınır defteri onun, ve serbest
+ticaretçileri o defter tanır. Üç cümle söyler, dördüncüyü söylemez:
+
+1. *"Bu iki ad bana yabancı değil. Serbest ticaretçiler — ikinci kıtada kayıtlılar."*
+2. *"Kayıtlı insan kayıtlı gelir: kapıdan girer, deftere yazılır, vergisini verir."*
+3. *"Bunlar öyle gelmediyse — hele gizli bir yoldan geldilerse — ortada bir sorun var,
+   ve sorun onlar değil. **Onları geçiren.**"*
+
+**Ne açar:** üçlünün geçmişi hattını doğrudan *kim ödedi* sorusuna bağlar; yani liman
+hattıyla (act1.md §7.5) **aynı kapıya** varır, başka yönden. Ad bir cevap değil,
+soruyu kuruma taşıyan **bilet**.
+
+**Ne açmaz:** üçlünün nasıl hastalandığını. Bunu bu odada kimse bilmiyor, ve act1.md
+§3.1'de de karar verilmedi.
+
+**Zorunlu değil.** Oyuncular gerçek adları hiç öğrenmeyebilir; §6.2'nin teklifi
+adlardan bağımsız gelir. İki hat birbirinin ön koşulu değil, aynı odaya iki kapı.
 
 ---
 
@@ -255,7 +303,8 @@ taşıyıcı, yani hat kilitlenmiyor.
 | `npc` | Meclis'in altı koltuğu (§6) | ✅ |
 | `npc` | Sokağın beşi (§7) | ✅ |
 | `scene` | **Meclis oturumu** (altı inkâr, tek sessiz üye) · **Kapı önündeki teklif** (§6.2) · **Geçiş Divanı'nda sıra** | ✅ |
-| `quest` | **Silinen sayfa** — kim ödedi; ödülü "iyi yazı" (§6.2) | ✅ |
+| `quest` | **Silinen sayfa** — kim ödedi / bu şey ne; ödülü **"iyi yazı" + mirasa ortaklık** (§6.2) | ✅ |
+| `scene` | **Adı tanıyan üye** (§6.3) — gerçek adlar Meclis'e taşınırsa | ✅ |
 
 Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.
 
@@ -274,7 +323,10 @@ Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.
 6. **Meclis hastalığı altı ayrı gerekçeyle reddediyor** (§6), hiçbiri kötü niyetli
    değil.
 7. **Ret sonrası gizli görev** (§6.2): teklifi Meclis'in en fakir koltuğu yapar,
-   ödülü para değil **karşı-imza**.
+   ödülü para değil **karşı-imza + mirasa ortaklık** (4. tur) — ve o miras söylenti
+   yüzünden her gün küçülüyor.
+7b. **Gerçek adları tanıyan üye** (§6.3, 4. tur): aynı koltuk. act1.md §3.1'in
+   "gerçek adlar nerede karşılık bulur" sorusu burada kapandı.
 8. **"İyi yazı" = Sınır ve Ticaret koltuğunun karşı-imzalı geçiş kağıdı** —
    act1.md §9 açık 2 kapandı.
 9. **Haneler ayrı kart değil** (§3), masaya çıkana kadar.
@@ -315,6 +367,10 @@ Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.
   açıyor hem de kağıdın kendisi bir iz: karşı-imza kayda geçer, yani gruba
   bindikleri gemide kim olduklarını söyleyen bir belge veriyoruz. Ucuz kapı,
   görünür kapı.
+- **Ödülün ikinci parçası bir tuzak gibi duruyor ama değil.** Eriyen bir mirasa
+  ortaklık teklifi masaya "bu adam bizi kandırıyor" dedirtebilir. Dedirtsin — adam
+  sorulduğunda inkâr etmiyor, ve inkâr etmemesi güveni *kazandırıyor.* Yalnız dikkat:
+  DM bunu bir "aha" anı gibi oynamamalı; sayı zaten ortada, oyuncu görürse görür.
 - **Ayar damgası artık işçi loncasında.** Bu, act1.md'nin yüzüğünü kalabalık ve
   fakir bir loncaya bağladı — yani kanıtın kaynağı zenginler değil, tezgahtaki
   adam. Ton olarak iyi, ama unutma: o tezgahtaki adam artık bir hane değil, ve
