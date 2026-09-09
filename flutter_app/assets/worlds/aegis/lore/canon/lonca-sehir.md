@@ -166,16 +166,18 @@ haberi geldi. Ve haber altı koltukta altı ayrı biçimde eritiliyor (§6).
 uzmanlığından** reddediyor, ve her reddin arkasında o loncanın gerçek bir çıkarı
 var. 02'nin kuralı korunuyor: kimse kötü olduğu için hareket etmiyor.
 
-Adlar bu turda konmadı (M5); kartlar koltuk adıyla yazılır.
+**Adlar kondu (2026-09-09, adlandırma turu).** Kart başlığı koltuk adıyla kalır,
+ad gövdeye girer: `**Rektör** — Quarion`. Altı koltukta **dört ırk** oturuyor ama
+masadaki herkesin **iki adı var** — odanın asıl ayrımı ırk değil kayıt.
 
 | Koltuk | Ne istiyor | İnkârı | Ne gizliyor |
 |---|---|---|---|
-| **Büyücü Loncası koltuğu** — Rektör | Loncanın Meclis'e bağımlılığının görünmemesi | *"Sınadık. Hiçbir tespit büyüsü bir şey göstermedi. Görülmeyen şey yoktur."* | Sınama yapıldı ve **sonuç okunamadı** — bu, "yok" değil "bilmiyoruz" demek |
-| **Sınır ve Ticaret koltuğu** — bkz. §6.1 | Sınırın yeniden açılması | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini |
-| **Demircilik ve İşçi koltuğu** — Kalfa Başı | Yevmiyenin kesilmemesi | *"Tezgahlar dönüyor, üretim düşmedi. Hasta adam çekiç sallayamaz."* | Rakamlar düşmedi çünkü **aynı adamlar iki vardiya** çalışıyor; eksilenler yerine yenisi yazıldı |
-| **Simya ve Şifacılar koltuğu** — Baş Otacı | Loncasının aciz görünmemesi | *"Bu bilinmeyen bir şey değil, ilerlemiş bir humma. Adı var, tedavisi var."* | Beyanları kendisi değiştirtti. Bilmediğini kabul etmek ruhsat sisteminin sonu olur |
-| **Askeri Hukuk koltuğu** — Sicil Ağası | Yetkisini kullanmak zorunda kalmamak | *"Hastalık hukuki bir kategori değil. Karantina savaş hukuku ister, ilan edilmiş savaş yok."* | Yetkisi **var.** İki mevsimdir kullanmıyor, çünkü kullandığı gün sorumluluk da onun olur |
-| **Mimarlık ve Planlama koltuğu** — Levha Sahibi | Şehrin planının sorgulanmaması | *"Bu şehir hastalanmayacak biçimde planlandı: su ayrı akar, rüzgar temizler."* | Sur onarımı kağıt üstünde kaldı; plan bir süredir gerçeği tarif etmiyor |
+| **Büyücü Loncası koltuğu** — Rektör **Quarion** *(elf, hanesiz → tek isim)* | Loncanın Meclis'e bağımlılığının görünmemesi | *"Sınadık. Hiçbir tespit büyüsü bir şey göstermedi. Görülmeyen şey yoktur."* | Sınama yapıldı ve **sonuç okunamadı** — bu, "yok" değil "bilmiyoruz" demek |
+| **Sınır ve Ticaret koltuğu** — **Orvan Sancar** *(insan)*, bkz. §6.1 | Sınırın yeniden açılması | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini |
+| **Demircilik ve İşçi koltuğu** — Kalfa Başı **Adrik Ferrun** *(cüce)* | Yevmiyenin kesilmemesi | *"Tezgahlar dönüyor, üretim düşmedi. Hasta adam çekiç sallayamaz."* | Rakamlar düşmedi çünkü **aynı adamlar iki vardiya** çalışıyor; eksilenler yerine yenisi yazıldı |
+| **Simya ve Şifacılar koltuğu** — Baş Otacı **Caramip Kalender** *(gnome)* | Loncasının aciz görünmemesi | *"Bu bilinmeyen bir şey değil, ilerlemiş bir humma. Adı var, tedavisi var."* | Beyanları kendisi değiştirtti. Bilmediğini kabul etmek ruhsat sisteminin sonu olur |
+| **Askeri Hukuk koltuğu** — Sicil Ağası **Valen Custar** *(insan)* | Yetkisini kullanmak zorunda kalmamak | *"Hastalık hukuki bir kategori değil. Karantina savaş hukuku ister, ilan edilmiş savaş yok."* | Yetkisi **var.** İki mevsimdir kullanmıyor, çünkü kullandığı gün sorumluluk da onun olur |
+| **Mimarlık ve Planlama koltuğu** — Levha Sahibi **Perhun Mizan** *(insan)* | Şehrin planının sorgulanmaması | *"Bu şehir hastalanmayacak biçimde planlandı: su ayrı akar, rüzgar temizler."* | Sur onarımı kağıt üstünde kaldı; plan bir süredir gerçeği tarif etmiyor |
 
 ### 6.1 Meclisin en fakir koltuğu — Sınır ve Ticaret
 
@@ -229,11 +231,11 @@ yolu **en ucuz** yol, tek yol değil.
 
 | NPC | Nerede | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|---|
-| **Geçiş memuru** | Geçiş Divanı | Terfi. Karşı-imza yetkisi olan bir masa | Silinen sayfanın altındaki ikinci imza onun | ***Kim ödedi*** — act1.md §3.3 zincirinin ucu |
-| **Ayar ustası** | Demirci çarşısı | Damgasının temiz kalması | Eğelenmiş mührü daha önce de gördü, bir kez değil | Yüzüğün **tezgahı**: fihristten hangi kuyumcunun vurduğu okunur (act1.md §9 açık 4'ün ikinci taşıyıcısı) |
-| **Simyacı çırağı** (bastırılan tanık) | Şifacılar kışlası | Yazdığının doğru kalması | İlk beyanın kopyası onda | Hastalığın şehirde **bilindiğinin** belgesi |
-| **Borçlu esnaf** | Çarşı | Borcunun ertelenmesi | Kolluğun kimi dövdüğünü ve kimin emrettiğini | Sokak hattı, lonca kolluğu, "iyi para"nın şehirdeki karşılığı |
-| **Kolluk çavuşu** | Kapılar / gece devriyesi | Nöbetinde sorun çıkmaması | Emirlerin Askeri Hukuk'tan değil tek bir haneden geldiğini | Kapılar, gece hareketi, kimin şehre girdiği |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | Terfi. Karşı-imza yetkisi olan bir masa | Silinen sayfanın altındaki ikinci imza onun | ***Kim ödedi*** — act1.md §3.3 zincirinin ucu |
+| **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Damgasının temiz kalması | Eğelenmiş mührü daha önce de gördü, bir kez değil | Yüzüğün **tezgahı**: fihristten hangi kuyumcunun vurduğu okunur (kuyumcu **Mine**'nin tezgahı — act1.md §7.4) |
+| **Sindri** — simyacı çırağı *(gnome, bastırılan tanık)* | Şifacılar kışlası | Yazdığının doğru kalması | İlk beyanın kopyası onda | Hastalığın şehirde **bilindiğinin** belgesi |
+| **Kandil** — borçlu esnaf *(insan)* | Çarşı | Borcunun ertelenmesi | Kolluğun kimi dövdüğünü ve kimin emrettiğini | Sokak hattı, lonca kolluğu, "iyi para"nın şehirdeki karşılığı |
+| **Çavuş Krusk** — kolluk çavuşu *(yarı-orc)* | Kapılar / gece devriyesi | Nöbetinde sorun çıkmaması | Emirlerin Askeri Hukuk'tan değil tek bir haneden geldiğini | Kapılar, gece hareketi, kimin şehre girdiği |
 
 **İki taşıyıcı kuralı sağlandı** (09 §7): *kim ödedi* artık iki yerde — **geçiş
 memuru** (imza) ve **ayar ustası** (damga fihristi). Act 1'in Sicim'i üçüncü
@@ -247,15 +249,15 @@ taşıyıcı, yani hat kilitlenmiyor.
 |---|---|---|
 | `lore` | **Büyücü** · **Sınır ve Ticaret** · **Demircilik ve İşçi** · **Simya ve Şifacılar** · **Askeri Hukuk** · **Mimarlık ve Planlama** Loncası — 6 kart | ✅ |
 | `lore` | **Konsey ve Lonca Meclisi** — yapı kartı (§1) | ✅ |
-| `lore` | **Sancak Kaydı** — statü sistemi (10 M1) | 🟡 lonca yüzü yazıldı; **kayıt sınıfları hâlâ yok** |
-| `location` | **Merkezi Şehir** | 🟡 **adı yok** (M0) |
-| `location` | **Meclis Salonu** · **Geçiş Divanı** | ✅ |
-| `npc` | Meclis'in altı koltuğu (§6) | 🟡 adlar M5 |
-| `npc` | Sokağın beşi (§7) | 🟡 adlar M5 |
+| `lore` | **Sancak Kaydı** — statü sistemi (10 M1). Üç sınıf: **Mühürlü · Kayıtlı · Yazısız** | ✅ |
+| `location` | **Lucid Triton** *(resmi kayıtta Lucidum Triton)* | ✅ |
+| `location` | **Mühür Salonu** · **Karşı-İmza Masası** | ✅ |
+| `npc` | Meclis'in altı koltuğu (§6) | ✅ |
+| `npc` | Sokağın beşi (§7) | ✅ |
 | `scene` | **Meclis oturumu** (altı inkâr, tek sessiz üye) · **Kapı önündeki teklif** (§6.2) · **Geçiş Divanı'nda sıra** | ✅ |
 | `quest` | **Silinen sayfa** — kim ödedi; ödülü "iyi yazı" (§6.2) | ✅ |
 
-Toplam **24 kart.** Yazılamaz olan yok; on üçü ad kararı bekliyor.
+Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.
 
 ---
 
@@ -279,15 +281,16 @@ Toplam **24 kart.** Yazılamaz olan yok; on üçü ad kararı bekliyor.
 
 **Açık:**
 
-1. **Şehrin adı** (M0). En pahalı boşluk: `location` kartı bu yüzden 🟡.
-2. **Lonca ve hane adları** — §2'nin on bir adı öneri. Onayla ya da değiştir.
-3. **Kayıt sınıfları** (10 M1): 4–5 sınıf, hakları, geçiş yolları. Loncalar
-   yazıldı ama insanların hangi sınıflara bölündüğü hâlâ yazılmadı — bu belgenin
-   bıraktığı en büyük eksik.
+1. ~~**Şehrin adı** (M0)~~ — **KAPANDI:** **Lucid Triton.**
+2. ~~**Lonca ve hane adları**~~ — **KAPANDI:** §2'nin adları onaylandı. **Ferrunlar bir cüce hanesi** (KARAR) — ayar damgasının neden taklit edilemediği, kuyumcunun neden cüce olduğu ve ayar ustasının neden aynı soyadı taşıdığı bu tek karardan çıkıyor.
+3. ~~**Kayıt sınıfları** (10 M1)~~ — **KAPANDI:** üç sınıf, **Mühürlü · Kayıtlı ·
+   Yazısız.** Sokaktaki karşılığı ad katmanıdır: iki isim = mühürlü ve mensup ·
+   tek isim = kayıtlı, hizmet eder · **lakap = yazısız.** Lakap, Sancak Kaydı'nın
+   negatifidir; bir insana eşya adı takılmışsa mührü yoktur.
 4. **Büyücü Loncası'nın koltuğunu kim atıyor** — "Meclis" diyoruz ama Meclis beş
    haneden ibaret; atamayı fiilen bir hane yapıyor. Hangisi?
-5. **Kuyumcunun adı** (act1.md §9 açık 4) — kapıyı artık ayar ustası açıyor, ama
-   kuyumcunun kendisi hâlâ yazılmadı.
+5. ~~**Kuyumcunun adı**~~ — **KAPANDI:** **Mine**, Gizli Liman'ın kuyumcusu, klan
+   adını söylemeyen bir cüce (act1.md §7.4).
 6. **Sancarlar neden düştü** — hane fakirleşti, sebebini yalnız "akış kesildi"
    diye yazdım. Daha eski bir sebep (bir skandal, bir kayıp gemi filosu, bir
    kaybedilen dava) istersen buraya girer.

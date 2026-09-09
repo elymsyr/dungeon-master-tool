@@ -62,7 +62,7 @@ Asgari linkleme:
 |---|---|---|---|
 | **Gümüşsu** | — | ✅ | act1.md §3 |
 | **Kulübe** | Gümüşsu | ✅ | §3 — karantina değil, köyün kendi kararı |
-| **Bulut'un Hanı** | Gümüşsu | ✅ | §3.4 — mekan, fiyat, ne verdiği yazıldı |
+| **Goodbarrel'ın Ocak Başı** | Gümüşsu | ✅ | §3.4 — mekan, fiyat, ne verdiği yazıldı |
 | **Gizli Liman** | — | ✅ | §7 |
 | **Rıhtım** | Gizli Liman | ✅ | §7.6 — ayrı kart (KARAR): liman bir *durum*, rıhtım bir *yer* |
 
@@ -70,15 +70,14 @@ Asgari linkleme:
 
 | Kart | Yer | Durum | Not |
 |---|---|---|---|
-| **Duran** · **Umay** · **Karaca** · **Bulut** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
-| **Toygar** · **Selvi** · **Demir** | Kulübe | ✅ | §3.1 — iki halfling + bir tiefling, zengin yolcular, adları sahte. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
-| **Sicim** · **Fare** · **Kaptan Vela** · **Kaptan Halim** | Gizli Liman | ✅ | §7.4 |
-| **Konsey Aracısı** | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Adı sonra girer (M5), kart başlıkla yazılır |
+| **Duran** · **Umay** · **Corvin** · **Milo** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
+| **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
+| **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el |
+| **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
 
-**İki taşıyıcı açığı:** *kaydı kim sildirdi* şu an yalnız **Sicim**'de. İkinci
-taşıyıcı için yer artık belli — **yüzüğü eğeleyen kuyumcu** (act1.md §3.3, §9 açık 4);
-kart yazılmadı, adı yok. Ya o kuyumcu bir `npc` kartı olur, ya bilgi bu iki bölümün
-kapanışına taşınmaz. **Karar gerek.**
+**İki taşıyıcı açığı kapandı:** *kaydı kim sildirdi* artık iki yerde — **Sicim**
+(defter) ve **Mine** (tezgah). Kuyumcu bir `npc` kartı oldu: klan adını söylemeyen
+bir cüce, yani kayıtsız değil *kendini kayıttan düşürmüş* biri (act1.md §7.4).
 
 *Yüzüğün kendisinin taşıyıcı açığı yok:* Investigation DC 15 · Jeweler's Tools ·
 mühür taşıyan herhangi bir PC — üç kapı (act1.md §3.3).
@@ -87,7 +86,7 @@ mühür taşıyan herhangi bir PC — üç kapı (act1.md §3.3).
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Dönüşmüş Toygar** (halfling, CR 1/2) · **Dönüşmüş Selvi** (halfling, CR 1/2) · **Dönüşmüş Demir** (tiefling, CR 1) | ✅ | act1.md **§5.1 — statblock'lar yazıldı.** Aynı üç kişinin 2. gün hali; `npc` ikizine linkli |
+| **Dönüşmüş Alton** (halfling, CR 1/2) · **Dönüşmüş Merla** (halfling, CR 1/2) · **Dönüşmüş Kromanna** (tiefling, CR 1) | ✅ | act1.md **§5.1 — statblock'lar yazıldı.** Aynı üç kişinin 2. gün hali; `npc` ikizine linkli |
 
 Üçü de jenerik **Dönüşmüş** gövdesinden türer (act üstü, genel-kartlar §7);
 o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
@@ -152,17 +151,17 @@ Background eşyaları (13 kart) act'a özgü değil → [`genel-kartlar.md` §4]
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
 | `location` | 5 | — | — | 5 |
-| `npc` | 12 | — | — | 12 |
+| `npc` | 13 | — | — | 13 |
 | `monster` | 3 | — | — | 3 |
 | `scene` | 5 | — | — | 5 |
 | `encounter` | 1 | — | — | 1 |
 | `quest` | 2 | — | — | 2 |
 | eşya/prop | 1 | — | — | 1 |
 | `curse` | 1 | — | — | 1 |
-| **Toplam** | **30** | **0** | **0** | **30** |
+| **Toplam** | **31** | **0** | **0** | **31** |
 
-**Act 1 listesinde bekleyen kart kalmadı — otuzu da bugün yazılabilir.** Açık kalan
-tek şey kart değil, bir NPC boşluğu: yüzüğü eğeleyen kuyumcu (yukarı bak).
+**Act 1 listesinde bekleyen kart kalmadı — otuz birinin hepsi bugün yazılabilir.**
+Kuyumcu boşluğu da kapandı: **Mine**, otuz birinci kart.
 
 ---
 
@@ -173,8 +172,9 @@ Yazılmayacak, sadece unutulmasın diye duruyor. Sırası geldiğinde kart olur.
 **Lonca ve Merkezi Şehir** — artık plan değil, yazılmış kanon:
 [`lonca-sehir.md`](lonca-sehir.md). Yedi lonca (`lore`), Konsey/Meclis ayrımı,
 şehir tarifi, altı NPC ve 19 kartlık yazım listesi orada. Kalan engeller:
-**şehrin adı yok** (M0) ve lonca/hane adları onay bekliyor. *Kim ödedi* cevabı da
-oraya düştü — iki taşıyıcıyla (kayıt memuru + ayar ustası), yani zincir kilitlenmiyor.
+şehir **Lucid Triton**, lonca ve hane adları onaylandı. *Kim ödedi* cevabı da
+oraya düştü — iki taşıyıcıyla (**Corin Sancar** + **Kildrak Ferrun**), yani zincir
+kilitlenmiyor.
 
 **Resmi liman / Elymsyr** — Gizli Liman'ın alternatif yolu. İki liman gerçekten
 gerekli mi, yoksa Gizli Liman tek mi kalsın → karar.
