@@ -9,7 +9,7 @@
 > kural kartı).
 >
 > **2026-09-09 revizyonu (2. tur):** Adlandırma Doktrini askıya alındı (§3) ·
-> background eşyaları **kart oluyor** (§2) · Bulut'un Hanı (§3.4) ve Rıhtım (§7.6)
+> background eşyaları **kart oluyor** (§2) · Goodbarrel'ın Ocak Başı (§3.4) ve Rıhtım (§7.6)
 > yer olarak yazıldı · Dönüşmüş üçlünün statblock'ları (§5.1) · Konsey aracısı
 > tanımlandı (§7.4) · "Liman kaçışı" ve "Yol hakkı" kart olmaktan çıktı (§7.2, §7.3).
 >
@@ -145,19 +145,37 @@ Bu, aşağıdaki dört adı ve Gümüşsu'nun adını değiştirmez; sadece onla
 
 | NPC | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|
-| **Duran** — köy başkanı | Köyün dağılmaması, dışarıdan müdahale gelmemesi | Üçlünün nereden geldiğini biliyor, söylemek istemiyor | "Limandan geldiler" |
-| **Umay** — hastalara bakan | Üç kişinin yaşaması | Kendi de temas etti, saklıyor | Belirtilerin seyri (§4) |
-| **Karaca** — yolu bilen | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik |
-| **Bulut** — hancı | İşin yürümesi | — (yarası olmayan NPC, 02 §4 kotası) | Söylenti, yabancı kaydı |
+| **Duran** — köy başkanı *(insan)* | Köyün dağılmaması, dışarıdan müdahale gelmemesi | Üçlünün nereden geldiğini biliyor, söylemek istemiyor | "Limandan geldiler" |
+| **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti, saklıyor | Belirtilerin seyri (§4) |
+| **Corvin** — yolu bilen *(insan)* | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik |
+| **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarası olmayan NPC, 02 §4 kotası) | Söylenti, yabancı kaydı |
+
+**Umay'ın yarı-elf olması bedava bir kanıt hattı:** kırk yıldır aynı köyde hasta
+bakıyor ve köylülerin yarısını doğarken gördü. "Kimse ölmedi"yi ilk yadırgayan
+odur, çünkü karşılaştıracağı kırk yılı var.
+
+**Kayıt notu.** Köyde iki adı olan tek kişi Milo — ve onunki bile hane değil:
+halfling soyadı Sancak Kaydı'nda hane sayılmaz, defter onu *"tek isim + boş hane"*
+yazar. Gümüşsu'da **kimsenin hanesi yok**; köyün kayıttaki yeri tek satırda budur.
 
 ### 3.1 Üçlü — kim oldukları (KARAR, 2026-09-09 revizyonu)
 
-**Toygar · Selvi · Demir.** İkisi halfling (Toygar, Selvi), biri tiefling (Demir).
-SRD'de üçünün de ırkı var → `species_ref` ile ref verilir, `species` kartı
-yazılmaz (genel-kartlar §5 bloğu yeni ırk *yazmayı* engelliyor, ref vermeyi değil).
+**Alton · Merla · Kromanna.** İkisi halfling, biri tiefling. SRD'de üçünün de ırkı
+var → `species_ref` ile ref verilir, `species` kartı yazılmaz (genel-kartlar §5
+bloğu yeni ırk *yazmayı* engelliyor, ref vermeyi değil).
+
+**Üçü bir aile değil, bir hane (KARAR, 2026-09-09).** İki halfling **karı koca**;
+tiefling kadın onların **hizmetlisi ve koruyucusu** — köle değil, tutulmuş ve
+yıllardır aynı evde. Üçü de **Vorstrand'dan** geldi.
+
+Bu tek karar üç şeyi bedavaya açıklıyor: kulübedeki üç yatağın neden eşit olmadığını,
+birinin neden kapıya en yakın yattığını, ve Şafak Çatışması'nda (§5) neden **iki
+zayıf bir güçlü** gövdeyle karşılaşıldığını.
 
 **Üçü de zengin.** Yıpranmış ama pahalı kumaş, bu kıtada dokunmamış bir dokuma, bu
-kıtada olmayan bir boya. Yanlarında bavul yok.
+kıtada olmayan bir boya. Yanlarında bavul yok. Kumaşın üçünde de aynı kalitede
+olması ayrı bir iz: hizmetli de efendisi gibi giydirilmiş, yani bu hane onu
+**yanında götürecek kadar** değerli görmüş.
 
 **Hikaye:** İkinci kıtada hastalık yayılırken limanlar kapanmadan çıkmak için çok
 para ödediler. **Kaçamadılar** — bindiklerinde zaten taşıyorlardı. Meridia'ya
@@ -166,11 +184,23 @@ silinmesi** ve kimsenin soru sormadığı bir yere yerleştirilmeleri için. Dah
 gitmeyi planlıyorlardı; **limandan sonra belirtiler başladı ve yol bitti.**
 Gümüşsu seçilmiş bir yer değil, **gidebildikleri son yer.**
 
-**Adları sahte (KARAR).** "Toygar", "Selvi", "Demir" köye verdikleri adlar;
-kayıtlarını sildirdikten sonra uydurdular. Seçim kasıtlı olarak **sıradan**: bu
-kıyıda kimsenin dönüp bakmayacağı, akılda kalmayan adlar — görünmemenin yolu buydu.
-Gerçek adları **Act 1'de yazılmıyor**: cevap zaten limanın dışında, Lonca ve Şehir
-hattında.
+**İki ad sahte, biri değil (KARAR).**
+
+| Köyün bildiği ad | Gerçek ad | Neden |
+|---|---|---|
+| **Alton Leagallow** | *Cortia Greenbottle* | Halfling soyadı Sancak Kaydı'nda **hane sayılmaz** — yani kontrol edilecek bir kaydı yoktur. Sahte kimlik için kusursuz seçim |
+| **Merla Tealeaf** | *Portia Greenbottle* | Aynı sebep. **Ayrı soyadı seçtiler:** kayıtta karı koca değil, yolda tanışmış iki yolcu görünüyorlar |
+| **Kromanna** | *Kromanna* | Tiefling adı saklanamaz: hangi adı verirse versin tiefling olduğunu söyler. Değiştirmenin faydası yoktu, değiştirmedi |
+
+Gerçek adlar **Act 1'de yazılmıyor** — masada bir kez duyulursa tek sahnede, açıklama
+yapılmadan duyulur. Cevap zaten limanın dışında, Lonca ve Şehir hattında.
+
+> **Perdenin en erken çatlağı bu.** İki halfling aynı yatakta yatıyor ve ellerinde
+> **eş bir çift alyans** var *(mührü eğelenmiş yüzükle karıştırma — o Kromanna'da,
+> §3.3 iz 2)*, ama verdikleri iki ad iki ayrı soyadı taşıyor. Oyuncu ikisinin evli
+> olduğunu gördüğü an kayıt ile oda birbirini yalanlar — ve bunun için hiçbir zar
+> gerekmez. Sorulduğunda ikisi de aynı cevabı verir, ayrı ayrı, fazla hazır:
+> *"Yolda tanıştık."*
 
 Şatoya bağ **kurulmuyor** — Paladin Şatosu Act 1'de kendi kapısından girilecek bir
 yer, buranın uzantısı değil.
@@ -197,8 +227,8 @@ kuralı (§1) her satırda ayrıca sağlanmış durumda.
 
 | # | İz | Nasıl bulunur | Ne söyler |
 |---|---|---|---|
-| 1 | **Kumaş** | Zar yok. Bakan görür; @[Bulut](entity:npc/Bulut) (hancı, kumaş görmüş adam) ya da @[Karaca](entity:npc/Karaca) (mal taşır) sorulmadan söyler | Yabancılar, ve zengindiler |
-| 2 | **Mührü eğelenmiş yüzük** | Demir'in parmağında; saklamıyor. **Investigation DC 15** *veya* Jeweler's Tools yeterliliği *veya* mühür taşıyan herhangi bir PC (§2: Lonca Üyesi · Mertebeli · Ajan · Rütbeli) — o zar atmaz, tanır | Mühür yüzü **eğelenerek düzleştirilmiş**, kırılmamış. İç kenardaki ayar damgası **Meridia damgası ve taze**: yüzük bu kıtaya geldikten *sonra* işlenmiş. Yani bu insanları biri, karaya çıktıktan sonra, para karşılığı sildi |
+| 1 | **Kumaş** | Zar yok. Bakan görür; @[Milo](entity:npc/Milo) (hancı, kumaş görmüş adam) ya da @[Corvin](entity:npc/Corvin) (mal taşır) sorulmadan söyler | Yabancılar, ve zengindiler |
+| 2 | **Mührü eğelenmiş yüzük** | Kromanna'nın parmağında; saklamıyor. **Investigation DC 15** *veya* Jeweler's Tools yeterliliği *veya* mühür taşıyan herhangi bir PC (§2: Lonca Üyesi · Mertebeli · Ajan · Rütbeli) — o zar atmaz, tanır | Mühür yüzü **eğelenerek düzleştirilmiş**, kırılmamış. İç kenardaki ayar damgası **Meridia damgası ve taze**: yüzük bu kıtaya geldikten *sonra* işlenmiş. Yani bu insanları biri, karaya çıktıktan sonra, para karşılığı sildi |
 | 3 | **Beden** | **Medicine DC 12** (Umay'a sorulursa zarsız: kendisi zaten fark etti ama adını koyamıyor) | Hastalık köyün sandığından **eski**. Bu üçü hasta *geldi*. Gümüşsu bu hastalığı üretmedi, **teslim aldı** |
 
 **Yüzük neden bu dünyada işe yarıyor:** Sancak Kaydı'nda mühür hukuki kimliktir
@@ -209,10 +239,10 @@ sildirmiş bir insanın üzerinde kalan tek delildir. Perdenin kanıtı bu nesne
 (§7.5) → *kim ödedi* → Lonca ve Şehir hattı, yani Act 1'in bu kapsamının dışı.
 
 Üçlü **Gizli Liman'dan gelmiş** (KARAR, korunuyor): resmi limandan geçselerdi kayıt
-olurdu. **Kayıt olmaması bir kaza değil, satın alınmış bir hizmet.** Karaca'nın yolu
+olurdu. **Kayıt olmaması bir kaza değil, satın alınmış bir hizmet.** Corvin'in yolu
 bilmesi de aynı sebeple doğal: o da oradan mal taşıyor.
 
-### 3.4 Bulut'un Hanı — yer olarak
+### 3.4 Goodbarrel'ın Ocak Başı — yer olarak
 
 Köyün tek toplanma yeri. Han değil, **hanlaşmış bir ev**: alt katta ocaklı bir
 salon ve altı masa, üst katta iki oda, arkada üç atlık bir ahır. Yolcu çok
@@ -220,20 +250,20 @@ gelmediği için oda genelde boştur; salon ise akşamları köyün yarısını 
 Gümüşsu'da "haber" denen şey burada üretilir.
 
 **Fiyat:** yatak + iki öğün **4 sp/gece**, sadece yemek 3 cp, ahır 1 sp.
-Pazarlık yok; Bulut fiyat düşürmez ama borç yazar.
+Pazarlık yok; Milo fiyat düşürmez ama borç yazar.
 
 **Ne verir:**
 
-- **Söylenti.** Salonda oturup dinlemek Perception ya da Insight istemez; Bulut
+- **Söylenti.** Salonda oturup dinlemek Perception ya da Insight istemez; Milo
   konuşulanı zaten tekrarlar. Bilgi eğiminin (09 §4) köydeki ucu burasıdır.
-- **Yabancı kaydı.** Bulut resmi bir kayıt tutmaz — tuttuğu şey alışkanlık: kim
+- **Yabancı kaydı.** Milo resmi bir kayıt tutmaz — tuttuğu şey alışkanlık: kim
   geldi, kaç gece kaldı, kim ödedi. Sorulursa söyler, saklamaz.
-- **Üçlünün ilk iki gecesi.** @[Toygar](entity:npc/Toygar), @[Selvi](entity:npc/Selvi)
-  ve @[Demir](entity:npc/Demir) köye geldiklerinde iki gece burada kaldılar;
-  kulübeye sonra alındılar. Kumaşı gören adam bu yüzden Bulut'tur (§3.3, iz 1) —
+- **Üçlünün ilk iki gecesi.** @[Alton](entity:npc/Alton), @[Merla](entity:npc/Merla)
+  ve @[Kromanna](entity:npc/Kromanna) köye geldiklerinde iki gece burada kaldılar;
+  kulübeye sonra alındılar. Kumaşı gören adam bu yüzden Milo'dur (§3.3, iz 1) —
   ve parayı da o gördü: peşin, tartışmasız, **fazla**.
 
-**Ne vermez:** Bulut'un yarası yok (02 §4 kotası). Sırrı yok, planı yok, kapıyı
+**Ne vermez:** Milo'nun yarası yok (02 §4 kotası). Sırrı yok, planı yok, kapıyı
 para karşılığı açmaz — çünkü kapı zaten açık. Masayı tıkayan bir NPC değil,
 tıkandığında dönülecek NPC.
 
@@ -284,8 +314,8 @@ bir ete çevirir (02 §2). PC artık PC değildir: kağıt DM'e geçer, karakter
 Hastalığın imzası budur (02 §5.1) ve **mekanik değil anlatı** olarak işler: her Evre
 2 başarısızlığında DM belirtiyi değiştirir — birinde yorgunluk, birinde kesik kesik
 gidip gelme, birinde bedenin erken güçlenmesi. Sayılar aynı, görüntü asla aynı değil.
-Kulübedeki üçlü bu kuralın canlı örneğidir: Toygar yorgunlukta, Selvi
-değişkenlikte, Demir bedende.
+Kulübedeki üçlü bu kuralın canlı örneğidir: Alton yorgunlukta, Merla
+değişkenlikte, Kromanna bedende.
 
 ### 4.4 Tedavi
 
@@ -352,7 +382,7 @@ belirti hattı statblock'a yansır.
 > **Eylem — Pençe.** Yakın silahlı saldırı: **+5** isabet, erişim 5 ft, tek hedef.
 > **Vuruş:** 1d8 + 3 delici (ort. 7).
 
-**Dönüşmüş Toygar** — halfling, *yorgunluk hattı* (§4.3) · **CR 1/2**
+**Dönüşmüş Alton** — halfling, *yorgunluk hattı* (§4.3) · **CR 1/2**
 
 > Small. **AC** 13 · **HP** 18 (4d6 + 4) · **Hız** 25 ft · **STR** 14 (+2) · **DEX** 14 (+2)
 > **Pençe** +4, 1d6 + 2 delici (ort. 5).
@@ -360,7 +390,7 @@ belirti hattı statblock'a yansır.
 > fırsat saldırılarına maruz kalmaz. Yorgunluk hattı böyle biter: beden yorulmayı
 > unutur.
 
-**Dönüşmüş Selvi** — halfling, *değişkenlik hattı* (§4.3) · **CR 1/2**
+**Dönüşmüş Merla** — halfling, *değişkenlik hattı* (§4.3) · **CR 1/2**
 
 > Small. **AC** 13 · **HP** 18 (4d6 + 4) · **Hız** 30 ft · **STR** 14 (+2) · **DEX** 14 (+2)
 > **Pençe** +4, 1d6 + 2 delici (ort. 5).
@@ -368,7 +398,7 @@ belirti hattı statblock'a yansır.
 > kaybeder. **5–6:** fazladan bir Pençe saldırısı yapar. Masaya "iki hasta aynı
 > seyri izlemez" kuralını gösteren tek mekanik budur; DM zarı **açıkta** atar.
 
-**Dönüşmüş Demir** — tiefling, *beden hattı* (§4.3) · **CR 1 (200 XP)**
+**Dönüşmüş Kromanna** — tiefling, *beden hattı* (§4.3) · **CR 1 (200 XP)**
 
 > Medium. **AC** 13 · **HP** 30 (4d8 + 12) · **Hız** 30 ft
 > **STR** 18 (+4) · **CON** 16 (+3) · **Direnç** ateş (tiefling kalıntısı)
@@ -379,7 +409,7 @@ belirti hattı statblock'a yansır.
 
 **Tempo notu (DM).** Üçü birlikte 400 XP; 4 kişilik 1. seviye bir masa için
 **zorlu-üstü.** Bilerek: köy tehlikede olmalı. Yumuşatma kolu üçü aynı anda
-saldırmasın — Toygar önce, diğer ikisi bir tur sonra kulübeden çıksın. Sertleştirme
+saldırmasın — Alton önce, diğer ikisi bir tur sonra kulübeden çıksın. Sertleştirme
 kolu tersi. Masa 2. seviyeyse üçü birlikte gelir.
 
 **Kurtarılabilirlik (06 #8 ✅):** köy ayakta kalır. Üçü ölür ama köy oyunun ilk
@@ -427,12 +457,12 @@ bir yerden gelmiş, kimse doğduğu adı vermiyor. (Dil ayrımı kanon değil, �
 
 ### 7.1 İçeri girmek — birinci kapı
 
-Karaca yolu bilir ama **yol son kapı değil.** Yolun sonunda kayıt yok, kapı yok,
+Corvin yolu bilir ama **yol son kapı değil.** Yolun sonunda kayıt yok, kapı yok,
 sadece insan var: kimse kefilsiz içeri alınmaz.
 
 > **Kural: kefil, iş veya yük.** Üç giriş yolu var — içerideki birinin kefil olması,
 > içerideki biri için bir iş görmek, ya da satılacak gerçek bir yükle gelmek.
-> Karaca zayıf bir kefildir: kendisi de misafirdir. Onun sözü kapıyı aralar,
+> Corvin zayıf bir kefildir: kendisi de misafirdir. Onun sözü kapıyı aralar,
 > açmaz.
 
 Bu, "para verip tak diye varma"yı kapatan yerdir: para ikinci kapının konusu,
@@ -485,11 +515,24 @@ sözlerinin bozulması herkese pahalıya patlar.
 
 | NPC | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|
-| **Sicim** — defter tutan, düzenleyici | Limanın işlemeye devam etmesi | Üçlünün geçişini kimin sildirdiğini biliyor | Ücret · kefalet · **üçlünün izi** |
-| **Fare** — rıhtım çırağı | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
-| **Kaptan Vela** — iyi kaptan | Göremediği yükü taşımamak | Üçlüyü geri çevirdi; sonra başka gemiyle gittiklerini duydu | Temiz yolculuk — **yazı ya da yüksek fiyat** |
-| **Kaptan Halim** — ucuz kaptan | Para, hızlı sefer | Gemisi ve mürettebatı güvenilmez | Ucuz ve kötü yolculuk (gerçek bir seçenek) |
-| **Konsey aracısı** — açıkça orada, saklanmıyor | Limanın konseye yararlı kalması | Hangi konsey koltuklarının pay aldığı | "İyi yazı"nın nasıl alındığı |
+| **Sicim** — defter tutan, düzenleyici *(gnome)* | Limanın işlemeye devam etmesi | Üçlünün geçişini kimin sildirdiğini biliyor · gerçek adı **Burgell** | Ücret · kefalet · **üçlünün izi** |
+| **Fare** — rıhtım çırağı *(halfling)* | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) · gerçek adı **Trym** | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
+| **Kaptan Caelynn** — iyi kaptan *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi; sonra başka gemiyle gittiklerini duydu | Temiz yolculuk — **yazı ya da yüksek fiyat** |
+| **Kaptan Holg** — ucuz kaptan *(yarı-orc)* | Para, hızlı sefer | Gemisi ve mürettebatı güvenilmez | Ucuz ve kötü yolculuk (gerçek bir seçenek) |
+| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** | "İyi yazı"nın nasıl alındığı |
+| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki · **klan adını söylemiyor** | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı (§9) |
+
+**Adlandırma kuralı — limanın tamamı lakapla konuşur.** *Sicim · Fare · Kadife ·
+Mine* ad değil takma addır, ve kuralı şudur: **bir insana eşya adı takılmışsa o
+insanın mührü yoktur.** Lakap, Sancak Kaydı'nın negatifidir. Gerçek adlar bir
+ödüldür — oyuncu kazanır, DM dağıtmaz. **Kaptan Caelynn'in lakabı yok** çünkü
+kayıtlı: limandaki tek tek-katmanlı insan o, ve oyuncu farkı üç cümlede duyar.
+
+**Kuyumcunun cüce olması kartı kendi kendine yazıyor.** Ayar damgası Demirci-İşçi
+Loncası'nın, o loncanın hanesi (Ferrunlar) cüce; mührü eğeleyip damgayı tazeleyen
+elin cüce eli olması masada hiçbir açıklama istemez. Ve **klan adını söylemiyor** —
+bir cüce için bu, insan için "adım yok" demekten ağırdır. Adam kayıtsız değil,
+*kendini kayıttan düşürmüş* biri: üçlüyle aynı şeyi yapmış, onlardan önce.
 
 **Konsey aracısı — nasıl tanınır (2026-09-09 2. tur).** Rıhtımdaki herkesten
 **daha iyi giyimli**: temiz yaka, lekesiz çizme, tuz lekesi olmayan bir palto.
@@ -505,8 +548,10 @@ limanın konseyce bilindiği zaten kabul edilmiş bir gerçek (§7.3).
 > Diğer PC'ler için **Insight DC 13**: adamın rıhtıma ait olmadığını görür, kime
 > ait olduğunu göremez.
 
-Adı bu turda konmadı (M5, §9 açık 1); kart **Konsey Aracısı** başlığıyla yazılır,
-ad sonradan girer.
+Kart **Konsey Aracısı** başlığıyla yazılır; rıhtımda **Kadife** diye çağrılır,
+defterdeki adı **Halet Custar**'dır (KARAR, 2026-09-09 3. tur). İki adı birleştiren
+oyuncu "konsey aracısı"nı soyut bir rolden bir haneye çevirir: **Askeri Hukuk
+koltuğunun limanda parası var** demektir. İkinci ad şehirde bulunur, limanda değil.
 
 **Fare, bilgi eğiminin taşıyıcısı (09 §4):** limanda söylenti boldur, ve Fare
 söylentinin haritasıdır. Oyuncular tıkanırsa açılan kapı odur — bedeli para değil,
@@ -521,8 +566,9 @@ ayar damgası (§3.3) bu limanı işaret eder — eğeleme burada, bir arka odad
 Sicim'in defteri soruyu somutlaştırır: *kim ödedi.* Cevap limanda **değil**;
 Lonca ve Şehir hattında. Limanın verdiği şey cevap değil, **bir sonraki kapı.**
 
-⚠️ Yüzüğü eğeleyen kuyumcu bu kapsamda yazılmadı (§9 açık 4) — *kaydı kim
-sildirdi*'nin ikinci taşıyıcısı orası olacaktı. Şu an bilgi yalnız Sicim'de.
+✅ Yüzüğü eğeleyen kuyumcu artık yazıldı (§7.4): **Mine**, klan adını söylemeyen
+bir cüce. *Kaydı kim sildirdi*'nin ikinci taşıyıcısı odur — bilgi artık yalnız
+Sicim'de değil, iki taşıyıcı kuralı (§1) bu hatta da sağlanmış durumda.
 
 ### 7.6 Rıhtım — yer olarak
 
@@ -559,7 +605,7 @@ kendiliğinden işe alınır, ve işçi ağı ona ilk gün konuşmaz ama ikinci 
 
 | Kategori | Act 1 açılışı için |
 |---|---|
-| `location` | Gümüşsu · Kulübe · **Bulut'un Hanı** (§3.4) · Gizli Liman · **Rıhtım** (§7.6) |
+| `location` | Gümüşsu · Kulübe · **Goodbarrel'ın Ocak Başı** (§3.4) · Gizli Liman · **Rıhtım** (§7.6) |
 | `npc` | Gümüşsu kadrosu (4) + üç hasta (1. gün hali) + Gizli Liman kadrosu (5, **Konsey Aracısı** dahil) |
 | `monster` | Dönüşmüş üçlü (3 kart, statblock §5.1) |
 | `background` | §2'deki 9 background — mekanikleri kapandı, yazılabilir |
@@ -608,7 +654,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 10. **Background eşyaları kart oluyor** (§2) — 5. kararın (1. tur) tersi. 13 eşya
     kartı; içerikleri sonraya. Gerekçe: eşya kapıdır, kapının ne açtığı SRD
     satırında yazmıyor.
-11. **Bulut'un Hanı** (§3.4) ve **Rıhtım** (§7.6) yer olarak yazıldı; ikisi de
+11. **Goodbarrel'ın Ocak Başı** (§3.4) ve **Rıhtım** (§7.6) yer olarak yazıldı; ikisi de
     ayrı `location` kartı.
 12. **Dönüşmüş üçlünün statblock'ları** (§5.1): ortak CR 1/2 gövde + iki halfling
     (CR 1/2) + bir tiefling (CR 1). Jenerik *Blight'lı köylü* kartı bu gövdedir.
@@ -621,11 +667,25 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     ihtiyacı yok.
 16. **Kolye (pusula) Act 1'de yok** — karar verilene kadar yokmuş gibi davranılır.
 
+**Kapatılanlar (2026-09-09, 3. tur — adlandırma):**
+
+17. **M5 kapandı: bütün adlar kondu.** Kadro artık *Duran · Umay · Corvin · Milo
+    Goodbarrel* (köy), *Alton Leagallow · Merla Tealeaf · Kromanna* (kulübe),
+    *Sicim · Fare · Kaptan Caelynn · Kaptan Holg · Kadife · Mine* (liman).
+18. **Irk ve statblock her NPC'ye yazıldı** — ad ırkı ele veriyor, DM tarif etmiyor.
+    Kural: **soyadı ≠ hane.** Halfling ve cüce soyadları Sancak Kaydı'nda hane
+    sayılmaz, defter onları *"tek isim + boş hane"* yazar.
+19. **Üçlü bir hane** (§3.1): karı koca halfling + tiefling kadın hizmetli-koruyucu.
+    İki sahte ad **ayrı soyadı** taşıyor → alyans çifti perdenin ilk çatlağı.
+    Kromanna adını değiştirmedi çünkü tiefling adı saklanamaz.
+20. **Kuyumcu yazıldı** (§7.4): **Mine**, klan adını söylemeyen cüce. ⬜ kapandı,
+    *kaydı kim sildirdi*'nin ikinci taşıyıcısı yerine oturdu.
+21. **Konsey Aracısı'nın iki katmanı** (§7.4): limanda *Kadife*, defterde
+    *Halet Custar* — Custarlar, yani Askeri Hukuk koltuğu.
+
 **Açık:**
 
-1. **M5 kişi adı dağarcığının kalanı** — lonca / paladin / ork ad kalıpları. Artık
-   bir dil kuralına bağlı değil; adlar tek tek seçilecek. **Konsey Aracısı**'nın
-   adı da buraya düşüyor (§7.4).
+1. ~~**M5 kişi adı dağarcığı**~~ — **KAPANDI** (3. tur, yukarıda 17–21).
 2. ~~**"İyi yazı" tam olarak nedir**~~ — **KAPANDI** (2026-09-09, lonca turu):
    Sınır ve Ticaret koltuğunun **karşı-imzalı geçiş kağıdı.** Karşılığında para
    istemez, iş ister — Meclis'in en fakir üyesinin gizli görevi
@@ -633,9 +693,8 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
    ve ucuz yol.
 3. **"İyi para"nın rakamı ve kazanma yolları** — limanda yapılabilecek 2-3 iş.
    Liman `scene`'leri yazılırken.
-4. **Yüzüğü kim eğeledi** — limandaki kuyumcunun adı ve bağlantısı (§3.3 zinciri).
-   *Kaydı kim sildirdi*'nin ikinci taşıyıcısı buraya düşüyor; şu an bilgi yalnız
-   Sicim'de (act1-kartlar §2). **Masaya çıkmadan kapat.**
+4. ~~**Yüzüğü kim eğeledi**~~ — **KAPANDI** (3. tur): **Mine**, Gizli Liman'ın
+   kuyumcusu, klan adını söylemeyen bir cüce (§7.4).
 5. Devam eden M0 kalıntıları: M0.2 · M0.3 · M0.6 (README §3.2).
 
 ---

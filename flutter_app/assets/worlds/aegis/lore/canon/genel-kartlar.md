@@ -41,7 +41,7 @@ Tek kart: **Aegis — Meridia**. İçerik `pages[]` listesinde (README §4.5).
 | **Masa kuralları** — rol yuvaları, iki taşıyıcı kuralı, sayaç NPC'de | ✅ | Yönerge §3.2 · 09 §7 · 08 §4 |
 | **Karakter yaratma** — serbest, tek cümlelik sözleşme | ✅ | act1.md §1 |
 | **DM'e** — bilgi eğimi, sır yerleşimi (`secrets`), neyin gizli kalacağı | ✅ | 09 §4 · README §4.5 |
-| **Sözlük** — oyuncunun ilk oturumda duyacağı kadarı | 🟡 | Adlandırma Doktrini; M0.2/M0.3 açık |
+| **Sözlük** — oyuncunun ilk oturumda duyacağı kadarı | ✅ | Sancak Kaydı'nın üç sınıfı (Mühürlü · Kayıtlı · Yazısız), ad katmanları (iki isim / tek isim / lakap), Meridia · Vorstrand ("Öte") · Lucid Triton |
 
 > **Uyarı:** giriş kartı DM'in kitabı değil, **oyuncunun ilk okuduğu şey.**
 > Baş kötünün kim olduğu buraya yazılmaz. Sözlük de dünyayı anlatmaz, ilk
@@ -67,7 +67,7 @@ Sadece giriş kartının ve ilk bölümlerin dayandığı dördü. Gerisi planla
 | **İrade Çağı** — tanrıların kesilmesi, özgürlüğün bedeli | ✅ | 02 §2 |
 | **Tanrılar ve fısıltı** — bant genişliği kalmamış sevgi | ✅ | 02 §5.3 |
 | **Blight — bilinen hali** | ✅ | 02 §5.1 cephe kuralı. **#14 coğrafya çelişkisi kapandı**: hastalık Meridia'ya kuzeyden değil **ikinci kıtadan** taşındı (act1.md §3.1), o yüzden Gümüşsu'nun güneyde olması çelişki değil. Kartta yön verilmez, *taşıyıcı* verilir |
-| **İkinci Kıta — bilinen hali** | 🟡 | act1.md §3.1: hastalığın geldiği yer, üçlünün kaçtığı yer. **Adı yok** — kart adı konana kadar `location` ikizi de bekler |
+| **Vorstrand — bilinen hali** | ✅ | act1.md §3.1: hastalığın geldiği yer, üçlünün kaçtığı yer. Meridia'da kimse adını kullanmaz, **"Öte"** der; Sancak Kaydı'nda tek satırdır: *"kıta dışı"* |
 
 DM sırları ayrı kart değil, ilgili kartın `secrets` alanı (README §4.5).
 
@@ -86,7 +86,7 @@ Kart eşiği gereği kıtaların da kartı var; Act 1'in yerleri bunların altı
 |---|---|---|---|
 | **Aegis** — dünya | — | ✅ | README §1. Kökü tutan kart; altında iki kıta |
 | **Meridia** — kıta | Aegis | ✅ | Act 1'in tamamı burada. Sancak Kaydı'nın geçerli olduğu yer |
-| **İkinci Kıta** | Aegis | 🟡 | act1.md §3.1: Blight oradan geldi, üçlü oradan kaçtı. **Adı yok** (M5). Perde bu kıta ufukta görülünce biter (06 #12) — yani kart Act 1'in *son karesi* |
+| **Vorstrand** | Aegis | ✅ | act1.md §3.1: Blight oradan geldi, üçlü oradan kaçtı. Sert sicil (*vost-* doğu + *-strand* kıyı) — Meridia'nın hafif Latin adlarının yanında duyulur fark budur. Perde bu kıta ufukta görülünce biter (06 #12) |
 
 Bölge/güzergah kartları (Cinervik · Argenfon · Votumar · Ravenhall) henüz yazılmıyor:
 ikisi ad kararı bekliyor, ikisi Act 1'de yer alıp almadığı belli değil
@@ -199,18 +199,18 @@ SRD'de birebir adı olan hiçbir şey tekrar yazılmaz, ref verilir.
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 (5 sayfa) |
-| `lore` | 3 | 1 | — | 4 |
-| `location` (dünya ölçeği) | 2 | 1 | — | 3 |
+| `lore` | 4 | — | — | 4 |
+| `location` (dünya ölçeği) | 3 | — | — | 3 |
 | `background` | 9 | — | — | 9 |
 | eşya (background) | 13 | — | — | 13 |
 | `species` | — | — | 0 | bloke *(ref vermek serbest)* |
 | kural kartı (`curse`) | 1 | — | — | 1 |
 | `monster` | 1 | — | — | 1 |
-| **Toplam** | **30** | **2** | **0** | **32** |
+| **Toplam** | **32** | **—** | **0** | **32** |
 
 Act 1 listesiyle birlikte toplam **61 kart** (30 + 32, `curse` iki listede de
-görünüyor, bir kez sayıldı); bugün yazılabilir olan **59**. Bekleyen iki kartın da
-engeli aynı: **İkinci Kıta'nın adı yok** (`lore` + `location` ikizi).
+görünüyor, bir kez sayıldı) ve **hepsi bugün yazılabilir.** Bekleyen iki kartın
+engeli olan ad kondu: ikinci kıta **Vorstrand**, halk ağzında **"Öte"**.
 
 ---
 

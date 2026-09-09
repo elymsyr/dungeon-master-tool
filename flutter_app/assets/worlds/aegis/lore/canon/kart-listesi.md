@@ -35,7 +35,7 @@ yazılabilir, olmayan kart yazılamaz.
 
 | Kart | Sayfa | Durum |
 |---|---|---|
-| **Aegis — Meridia** | Bu dünyada oynamak (ton sözleşmesi) · Masa kuralları (rol yuvaları, iki taşıyıcı kuralı, sayaç NPC'de) · Karakter yaratma (serbest, tek cümlelik sözleşme) · DM'e (bilgi eğimi, sır yerleşimi) · Sözlük | 🟡 Sözlük |
+| **Aegis** | Bu dünyada oynamak (ton sözleşmesi) · Masa kuralları (rol yuvaları, iki taşıyıcı kuralı, sayaç NPC'de) · Karakter yaratma (serbest, tek cümlelik sözleşme) · DM'e (bilgi eğimi, sır yerleşimi) · Sözlük | ✅ |
 
 Giriş kartı oyuncunun ilk okuduğu şeydir: baş kötünün kim olduğu buraya yazılmaz,
 sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
@@ -47,9 +47,9 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **İrade Çağı** | Tanrıların kesilmesi, özgürlüğün bedeli | ✅ |
 | **Tanrılar ve Fısıltı** | Bant genişliği kalmamış sevgi; ilahi büyünün bugünkü durumu | ✅ |
 | **Blight — Bilinen Hali** | Halkın bildiği yüz. Yön değil **taşıyıcı** anlatılır | ✅ |
-| **İkinci Kıta — Bilinen Hali** | Hastalığın geldiği, üçlünün kaçtığı yer | 🟡 adı yok |
+| **Vorstrand — Bilinen Hali** | Hastalığın geldiği, üçlünün kaçtığı yer. Halk ağzında sadece **"Öte"** | ✅ |
 | **Konsey ve Lonca Meclisi** | Konsey çerçeve, Meclis içerik; altı koltuğu loncalar doldurur | ✅ |
-| **Sancak Kaydı** | Mühür = hukuki kimlik; kayıtsızın kaybolması kayda geçmez | 🟡 kayıt sınıfları yok |
+| **Sancak Kaydı** | Mühür = hukuki kimlik; kayıtsızın kaybolması kayda geçmez. Üç sınıf: **Mühürlü · Kayıtlı · Yazısız** | ✅ |
 | **Büyücü Loncası** | İzinli büyü, akademi, ışınlanma kaydı. Hanesiz koltuk | ✅ |
 | **Sınır ve Ticaret Loncası** | Geçiş, gümrük, tonaj, tahıl; taşrada Sancak Kaydı'nın kalemi. Hane: Sancarlar | ✅ |
 | **Demircilik ve İşçi Loncası** | Metal, sikke, **ayar damgası**, yevmiye. Hane: Ferrunlar | ✅ |
@@ -66,15 +66,15 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 |---|---|---|---|
 | **Aegis** | — | Dünya. Kökü tutan kart | ✅ |
 | **Meridia** | Aegis | Kıta. Sancak Kaydı'nın geçerli olduğu yer | ✅ |
-| **İkinci Kıta** | Aegis | Blight oradan geldi | 🟡 adı yok |
+| **Vorstrand** | Aegis | Blight oradan geldi. Meridia'da kimse adını kullanmaz, **"Öte"** der | ✅ |
 | **Gümüşsu** | Meridia | Huzursuz ama işleyen köy; kimse ölmemiş | ✅ |
 | **Kulübe** | Gümüşsu | Karantina değil, köyün kendi kararı. Yiyecek götürülür, kimse girmez | ✅ |
-| **Bulut'un Hanı** | Gümüşsu | Hanlaşmış ev; köyde "haber" burada üretilir. 4 sp/gece | ✅ |
+| **Goodbarrel'ın Ocak Başı** | Gümüşsu | Hanlaşmış ev; köyde "haber" burada üretilir. 4 sp/gece | ✅ |
 | **Gizli Liman** | Meridia | Kayıtsız çıkış. Bir yer değil bir **durum** | ✅ |
 | **Rıhtım** | Gizli Liman | Limanın çalışan yüzü; üç iskele, tebeşir işareti, bayraksız tekneler | ✅ |
-| **Merkezi Şehir** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir | 🟡 adı yok |
-| **Meclis Salonu** | Merkezi Şehir | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
-| **Geçiş Divanı** | Merkezi Şehir | Karşı-imza masası; geçiş kağıdı buradan çıkar | ✅ |
+| **Lucid Triton** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir. Resmi kayıtta *Lucidum Triton* | ✅ |
+| **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
+| **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
 
 ## 4. `npc` — 24
 
@@ -82,18 +82,18 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **Duran** — köy başkanı | Köyün dağılmaması | Üçlünün nereden geldiğini biliyor | "Limandan geldiler" | ✅ |
-| **Umay** — hastalara bakan | Üç kişinin yaşaması | Kendi de temas etti | Belirtilerin seyri (zarsız) | ✅ |
-| **Karaca** — yolu bilen | Para | Gizli Liman'ı biliyor, oradan mal taşıdı | Gizli Liman'a rehberlik | ✅ |
-| **Bulut** — hancı | İşin yürümesi | — (yarasız NPC) | Söylenti, yabancı kaydı, kumaş | ✅ |
+| **Duran** — köy başkanı *(insan)* | Köyün dağılmaması | Üçlünün nereden geldiğini biliyor | "Limandan geldiler" | ✅ |
+| **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti | Belirtilerin seyri (zarsız) | ✅ |
+| **Corvin** — yolu bilen *(insan)* | Para | Gizli Liman'ı biliyor, oradan mal taşıdı | Gizli Liman'a rehberlik | ✅ |
+| **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarasız NPC) | Söylenti, yabancı kaydı, kumaş | ✅ |
 
 **Kulübe** — üçü de 1. gün hali; her birinin `monster` ikizi var, `species_ref` SRD'ye
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Toygar** (halfling) | Yorgunluk hattı. Zengin, adı sahte | ✅ |
-| **Selvi** (halfling) | Değişkenlik hattı. Zengin, adı sahte | ✅ |
-| **Demir** (tiefling) | Beden hattı. Mührü eğelenmiş yüzük onun parmağında | ✅ |
+| **Alton Leagallow** (halfling) | Yorgunluk hattı. Zengin, **adı sahte** — gerçeği *Cortia Greenbottle*. Merla'nın kocası | ✅ |
+| **Merla Tealeaf** (halfling) | Değişkenlik hattı. Zengin, **adı sahte** — gerçeği *Portia Greenbottle*. Alton'ın karısı; kayıtta ayrı soyadı taşıyorlar | ✅ |
+| **Kromanna** (tiefling, kadın) | Beden hattı. Çiftin hizmetlisi ve koruyucusu — köle değil, tutulmuş. **Adı gerçek:** tiefling adı saklanamaz. Mührü eğelenmiş yüzük onun parmağında | ✅ |
 
 **Gizli Liman**
 
@@ -101,31 +101,31 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 |---|---|---|---|---|
 | **Sicim** — defter tutan | Limanın işlemesi | Üçlünün geçişini kimin sildirdiğini | Ücret · kefalet · üçlünün izi | ✅ |
 | **Fare** — rıhtım çırağı | Bir gemiye alınmak | — (yarasız NPC) | Her şey: kim ne zaman yanaştı | ✅ |
-| **Kaptan Vela** | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
-| **Kaptan Halim** | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
-| **Konsey Aracısı** | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı | "İyi yazı"nın nasıl alındığı | 🟡 adı yok |
-| **Kuyumcu** — yüzüğü eğeleyen | — | — | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı | ⬜ karar |
+| **Kaptan Caelynn** *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
+| **Kaptan Holg** *(yarı-orc)* | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
+| **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | "İyi yazı"nın nasıl alındığı | ✅ |
+| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **klan adını söylemiyor** | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı | ✅ |
 
 **Meclis — altı koltuk, altı inkâr.** Kartlar koltuk adıyla yazılır.
 
 | Kart | İnkârı | Ne gizliyor | Durum |
 |---|---|---|---|
-| **Rektör** (Büyücü) | "Sınadık, hiçbir tespit büyüsü bir şey göstermedi" | Sonuç **okunamadı** — "yok" değil "bilmiyoruz" | 🟡 adı yok |
-| **Sınır ve Ticaret koltuğu** | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini | 🟡 adı yok |
-| **Kalfa Başı** (Demirci-İşçi) | "Tezgahlar dönüyor, üretim düşmedi" | Aynı adamlar iki vardiya çalışıyor | 🟡 adı yok |
-| **Baş Otacı** (Simya) | "İlerlemiş bir humma. Adı var, tedavisi var" | Beyanları kendisi değiştirtti | 🟡 adı yok |
-| **Sicil Ağası** (Askeri Hukuk) | "Hastalık hukuki bir kategori değil" | Yetkisi var, kullanmıyor | 🟡 adı yok |
-| **Levha Sahibi** (Mimarlık) | "Bu şehir hastalanmayacak biçimde planlandı" | Sur onarımı kağıt üstünde kaldı | 🟡 adı yok |
+| **Rektör — Quarion** (Büyücü, *elf*, hanesiz) | "Sınadık, hiçbir tespit büyüsü bir şey göstermedi" | Sonuç **okunamadı** — "yok" değil "bilmiyoruz" | ✅ |
+| **Sınır ve Ticaret — Orvan Sancar** *(insan)* | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini | ✅ |
+| **Kalfa Başı — Adrik Ferrun** (Demirci-İşçi, *cüce*) | "Tezgahlar dönüyor, üretim düşmedi" | Aynı adamlar iki vardiya çalışıyor | ✅ |
+| **Baş Otacı — Caramip Kalender** (Simya, *gnome*) | "İlerlemiş bir humma. Adı var, tedavisi var" | Beyanları kendisi değiştirtti | ✅ |
+| **Sicil Ağası — Valen Custar** (Askeri Hukuk, *insan*) | "Hastalık hukuki bir kategori değil" | Yetkisi var, kullanmıyor | ✅ |
+| **Levha Sahibi — Perhun Mizan** (Mimarlık, *insan*) | "Bu şehir hastalanmayacak biçimde planlandı" | Sur onarımı kağıt üstünde kaldı | ✅ |
 
 **Merkezi Şehir sokağı**
 
 | Kart | Nerede | Hangi kapıyı açar | Durum |
 |---|---|---|---|
-| **Geçiş Memuru** | Geçiş Divanı | ***Kim ödedi*** — silinen sayfanın ikinci imzası onun | 🟡 adı yok |
-| **Ayar Ustası** | Demirci çarşısı | Yüzüğün tezgahı: fihristten hangi kuyumcunun vurduğu | 🟡 adı yok |
-| **Simyacı Çırağı** | Şifacılar kışlası | Hastalığın şehirde **bilindiğinin** belgesi | 🟡 adı yok |
-| **Borçlu Esnaf** | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | 🟡 adı yok |
-| **Kolluk Çavuşu** | Kapılar / gece devriyesi | Kapılar, gece hareketi, kimin şehre girdiği | 🟡 adı yok |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | ***Kim ödedi*** — silinen sayfanın ikinci imzası onun | ✅ |
+| **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Yüzüğün tezgahı: fihristten hangi kuyumcunun vurduğu | ✅ |
+| **Sindri** — simyacı çırağı *(gnome)* | Şifacılar kışlası | Hastalığın şehirde **bilindiğinin** belgesi | ✅ |
+| **Kandil** — borçlu esnaf *(insan)* | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | ✅ |
+| **Çavuş Krusk** — kolluk çavuşu *(yarı-orc)* | Kapılar / gece devriyesi | Kapılar, gece hareketi, kimin şehre girdiği | ✅ |
 
 > **İki taşıyıcı kuralı:** *kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
 > Ustası). *Kaydı kim sildirdi* şu an **yalnız Sicim'de** — ikinci taşıyıcı
@@ -136,9 +136,9 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | Kart | Ne | Durum |
 |---|---|---|
 | **Dönüşmüş** | Jenerik gövde: Blight'lı köylü. CR 1/2, AC 12, HP 22, Pençe +5 (1d8+3) | ✅ |
-| **Dönüşmüş Toygar** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Selvi** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Demir** | Tiefling, HP 30, ateşe direnç, CR 1 | ✅ |
+| **Dönüşmüş Alton** | Halfling, Small, HP 18, CR 1/2 | ✅ |
+| **Dönüşmüş Merla** | Halfling, Small, HP 18, CR 1/2 | ✅ |
+| **Dönüşmüş Kromanna** | Tiefling, HP 30, ateşe direnç, CR 1 | ✅ |
 
 Üçü de jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
 hiçbir yaratık tekrar yazılmaz, ref verilir.
@@ -150,13 +150,13 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 | Kart | Tip | Ait olduğu | Durum |
 |---|---|---|---|
 | **Pençe** | `creature-action` | Dönüşmüş — +5, 1d8+3 delici | ✅ |
-| **Pençe (Toygar)** · **Pençe (Selvi)** | `creature-action` | +4, 1d6+2 delici | ✅ |
-| **Pençe (Demir)** | `creature-action` | +6, 1d10+4 delici | ✅ |
+| **Pençe (Alton)** · **Pençe (Merla)** | `creature-action` | +4, 1d6+2 delici | ✅ |
+| **Pençe (Kromanna)** | `creature-action` | +6, 1d10+4 delici | ✅ |
 | **Acıyı Tanımaz** | `trait` | 0 HP'de ölüm zarı atmaz, ölür | ✅ |
 | **Bulaştıran Yara** | `trait` | İsabette CON DC 12 → Blight Evre 1 | ✅ |
-| **Durmayan Adım** | `trait` | Toygar: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
-| **Kesik Kesik** | `trait` | Selvi: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
-| **Erken Güçlenme** | `trait` | Demir: ilk turunda ek Pençe | ✅ |
+| **Durmayan Adım** | `trait` | Alton: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
+| **Kesik Kesik** | `trait` | Merla: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
+| **Erken Güçlenme** | `trait` | Kromanna: ilk turunda ek Pençe | ✅ |
 
 ## 7. `curse` — 1
 
@@ -184,7 +184,7 @@ ayrı kart: `lore/Blight — Bilinen Hali`.
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Toygar önce, diğer ikisi bir tur sonra | ✅ |
+| **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
 ## 10. `quest` — 3
 
@@ -254,10 +254,10 @@ verilir (Halfling · Tiefling).
 
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
-| `campaign` | — | 1 | — | 1 |
-| `lore` | 10 | 2 | — | 12 |
-| `location` | 9 | 2 | — | 11 |
-| `npc` | 12 | 11 | 1 | 24 |
+| `campaign` | 1 | — | — | 1 |
+| `lore` | 12 | — | — | 12 |
+| `location` | 11 | — | — | 11 |
+| `npc` | 24 | — | — | 24 |
 | `monster` | 4 | — | — | 4 |
 | `creature-action` | 4 | — | — | 4 |
 | `trait` | 5 | — | — | 5 |
@@ -269,12 +269,33 @@ verilir (Halfling · Tiefling).
 | `adventuring-gear` | 7 | — | — | 7 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
-| **Toplam** | **80** | **16** | **1** | **97** |
+| **Toplam** | **97** | **—** | **—** | **97** |
 
-🟡'lerin hepsi **yazılabilir**: eksik olan bir ad, kartın kendisi değil. Kart
-başlıkla (koltuk adı, meslek adı) yazılır, ad sonradan girer.
+**97/97 ✅** (2026-09-09, adlandırma turu). Bekleyen tek şey olan **adlar kondu**;
+16 🟡 ve 1 ⬜ kapandı. ⬜ olan **Kuyumcu** artık **Mine** — klan adını söylemeyen
+bir cüce — ve *kaydı kim sildirdi*'nin ikinci taşıyıcısı yerine oturdu, yani iki
+taşıyıcı kuralı her hatta sağlanmış durumda.
 
-⬜ tek: **Kuyumcu**. Kart değil karar eksik.
+### Adlandırma kuralları (kartlar yazılırken uyulacak)
+
+| Katman | Biçim | Kim | Örnek |
+|---|---|---|---|
+| **İki isim** | ad + hane | kayıtlı **ve** mensup | Orvan Sancar · Adrik Ferrun |
+| **Tek isim** | yalnız ad | kayıtlı, hizmet eder | Duran · Umay · Quarion |
+| **Lakap** | nesne / hayvan / alet | **kayıtsız** — defterde yok | Sicim · Fare · Kadife · Mine · Kandil |
+
+- **Lakap, Sancak Kaydı'nın negatifidir.** Bir insana eşya adı takılmışsa mührü
+  yoktur. Gizli Liman'ın tamamı lakapla konuşur; Lucid Triton'da tek lakap **Kandil**
+  vardır ve o da adı olup borçtan düşmüş biridir. Oyuncu kuralı kimse söylemeden
+  çözer.
+- **Soyadı ≠ hane.** Halfling ve cüce soyadları (Goodbarrel, Leagallow, Tealeaf)
+  aile geleneğidir; defter onları *"tek isim + boş hane"* yazar. Üçlünün sahte
+  kimliği bunun üstüne kurulu: **kontrol edilecek bir kayıt yok.**
+- **Ad ırkı söyler,** DM tarif etmez: insan hafif Latin (Doran, Valen, Corin),
+  cüce sert ünsüz + klan, gnome kısa ve tıkırtılı, elf akıcı, halfling yumuşak ad +
+  tasvir soyadı, tiefling cehennem kökü ya da erdem adı.
+- **Yer adları ayrı sicilden:** Meridia hafif Latin (Lucid Triton, Claport),
+  Vorstrand sert küme. İkisi yan yana okununca fark duyulmalı.
 
 ---
 
