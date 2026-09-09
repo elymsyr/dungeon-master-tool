@@ -82,6 +82,17 @@ göre bölünmüş; o yüzden bir lonca birden çok işi kapsıyor.
 en az birinde yazıyor olması demek. Hiçbirinde yazmayan insana **kayıtsız** denir,
 ve kayıtsızın kaybolması kayda geçmez — act1.md §3'ün teması bu cümleye bağlı.
 
+**Üç defterin mekanik yüzü yazıldı** ([`mekanikler.md`](mekanikler.md)):
+
+- **Büyücü Loncası** → şehir içinde büyü **Lonca Lisansı** ister; lisanssız büyü
+  "kamu güvenliğini tehdit" suçudur. Necromancy ve zihin kontrolü içeren Enchantment
+  lisansla dahi açılmaz. Uzun mesafe ışınlanma yalnız bu loncadan geçer, ve kaydı
+  tutması bir formalite değil hizmetin kendisidir (§2, §4.2).
+- **Askeri Hukuk** → lisans suçunu **o** yazar. Yani lisanssız büyücü iki loncaya
+  birden borçlanır; tek zarla çözülen bir sorun değil.
+- **Simya ve Şifacılar** → şifa iksirinin kıt olmasının sebebi ruhsat. İksir para
+  sorunu değil **erişim** sorunu (§7).
+
 **Kapsam notları:**
 
 - **Kayıt ayrı lonca değil.** Sancak Kaydı Konsey'in kitabıdır; taşrada kalemini
@@ -122,6 +133,11 @@ Ordu değil (10 M8). Yetki **Askeri Hukuk Loncası'nda**: sicili o tutar, cezay�
 yazar. Ama sokakta duran adam onun adamı değil — her loncanın kendi kolluğu var,
 kendi çarşısında, kendi defterini korur.
 
+**Mahkemenin yapısı yazıldı** ([`bolgeler.md` §1.5](bolgeler.md)): küçük suç lonca
+mahkemesinde, büyük suç Konsey'in atadığı yargıcın **Onur Mahkemesi**'nde görülür.
+Ceza genelde hapis değil kamu hizmetidir; ihanetin cezası **kayıttan düşürülme ve
+sürgün** — ve ağır olan yarısı silme işlemidir, sürgün değil (§9, üç kayıt sınıfı).
+
 Şehirli için pratik sonuç: **kime şikayet edeceğin, nerede dövüldüğüne bağlı.**
 Askeri Hukuk'un sözü nihai olarak geçer, ama gelmesi zaman alır ve genelde iş
 bitmiş olur. Bir suçun sahibi yoksa suç da yoktur. Act 1'in Gizli Liman'daki
@@ -140,6 +156,10 @@ Kıtanın malı buraya girip çıkmaz, buraya **yazılır**: geçiş kağıdı, 
 ruhsat, karşı-imza. Zenginlik el değiştiren maldan değil, o malın kayıt ücretinden
 geliyor. Bu yüzden şehir bir kıtlıkta bile aç kalmaz, ama bir kayıt tıkanmasında
 felç olur.
+
+Bu cümlenin diğer yarısı **Elymsyr**'dedir ([`bolgeler.md` §2.2](bolgeler.md)): malın
+fiziksel olarak geçtiği yer orası, kağıdın geldiği yer burası. İkisi aynı işin iki
+ucu — biri yükü tutar, diğeri satırı.
 
 **Sosyal.** İki isimli insanlar ve tek isimli insanlar var (M5). İkinci isim bir
 haneye ya da bir loncaya aitliktir; tek isimli olan hizmet eder. Kimse kimseyi
@@ -341,6 +361,11 @@ Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.
    negatifidir; bir insana eşya adı takılmışsa mührü yoktur.
 4. **Büyücü Loncası'nın koltuğunu kim atıyor** — "Meclis" diyoruz ama Meclis beş
    haneden ibaret; atamayı fiilen bir hane yapıyor. Hangisi?
+   **Aynı soru ikinci bir yerde çıktı:** Votumar'ın Başkumandanı'nı da Konsey atıyor
+   ([`bolgeler.md` §3.1](bolgeler.md)), yani onu da fiilen bir lonca oturttu — ve o
+   koltukta **Suretsiz** var. İki atama sorusunun aynı cevabı olması gerekmiyor, ama
+   ikisi de "Konsey atar" cümlesinin arkasındaki eli soruyor. Birini kapatan karar
+   diğerine de bakmalı.
 5. ~~**Kuyumcunun adı**~~ — **KAPANDI:** **Mine**, Gizli Liman'ın kuyumcusu, klan
    adını söylemeyen bir cüce (act1.md §7.4).
 6. **Sancarlar neden düştü** — hane fakirleşti, sebebini yalnız "akış kesildi"

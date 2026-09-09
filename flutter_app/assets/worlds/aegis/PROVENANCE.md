@@ -11,7 +11,11 @@ Kaynak kısaltmaları:
 | `act1` | [lore/canon/act1.md](lore/canon/act1.md) |
 | `kart1` | [lore/canon/act1-kartlar.md](lore/canon/act1-kartlar.md) |
 | `kartG` | [lore/canon/genel-kartlar.md](lore/canon/genel-kartlar.md) |
+| `lonca` | [lore/canon/lonca-sehir.md](lore/canon/lonca-sehir.md) |
+| `bolge` | [lore/canon/bolgeler.md](lore/canon/bolgeler.md) |
+| `mek` | [lore/canon/mekanikler.md](lore/canon/mekanikler.md) |
 | `RM` | [README.md](README.md) (bu dizin) |
+| `AE` · `YT` | `lore/archive/AETHELGARD- İRADENİN SON ADASI.pdf` · `lore/archive/YAKIN TARİH VE OYUN MEKANİKLERİ 1.pdf` — **PDF, hiyerarşinin en altı.** Bu iki kaynaktan geleni doğrudan bir entity'ye bağlama: önce `bolge`/`mek`'in filtresinden geçmiş olması gerekir (`bolge §8`, `mek §10` reddedilenler listeleri) |
 | `02` · `07` · `08` · `09` · `AD` | `lore/archive/notion-notes/` — 02 Ton ve Atmosfer, 07 Açılış, 08 Kanon Revizyonu, 09 Kıta Yapısı, Adlandırma Doktrini |
 
 ---
@@ -107,6 +111,8 @@ verdiğinde bu kartlar onunla değiştirilir. Aynı şey `encounter.difficulty` 
 | Kolye (pusula) | Act 1'de var mı belli değil (`kart1 §7`) |
 | Liman kaçışı `encounter` | Tehdit ilan edilirse çıkabilecek sonuç, kanon değil (`kart1 §5`) |
 | Karantina doktoru · mızrak parçası | `kart1` *Yazılmayacaklar* — `act1 §3` karantinayı kaldırdı, `RM §1` mızrağı |
-| Lonca · Merkezi Şehir · Elymsyr · Gemi · Votumar · Ravenhall · Cinervik/Argenfon | Kapsam dışı; hepsinin önünde bir karar var (`kart1` *Sonraki bölümler için planlama*) |
+| Lonca · Merkezi Şehir · Elymsyr · Votumar · Ravenhall · Cinervik/Argenfon | **Kanonu artık var** (`lonca`, `bolge §2–5`) — blueprint'e girmediler, engel içerik değil sıra. Elymsyr/Votumar/Ravenhall NPC'lerinin **adı** ayrı bir tur ister (`bolge §9` açık 1) |
+| Gemi (kapalı mekan bölümü) | `RM §2` adım 6; hâlâ yazılmadı |
+| `lore/Kural Sapmaları` · `Direnç Şerbeti` | Kanonu var (`mek §5, §7–8`), blueprint'e girmedi. İkisinin de **sayıları** karar bekliyor (`mek §11`) |
 | Tier 3 `blueprint.json` (dört pre-gen) | Faz 6; serbest yaratım kararından sonra zorunlu değil |
 | `media/` | Arşivdeki 17 görsel 110 MB ve `.webp`'e çevrilmeden paketlenemez (`RM §4.6`). Dönüştürme aracı bu ortamda yok; `manifest.json → files` bilerek boş |

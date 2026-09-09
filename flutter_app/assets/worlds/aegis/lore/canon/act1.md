@@ -24,6 +24,12 @@
 > yazıldı (§6.1) · Paladin Şatosu · Ravenhall · Elymsyr liman kenti **sonraya
 > bırakıldı** (§6).
 >
+> **2026-09-09 revizyonu (bölge turu):** §4 artık 5e'nin üstündeki *tek* kural değil —
+> kalan sapmalar [`mekanikler.md`](mekanikler.md)'de · §4.4'e şifa büyülerinin
+> **yapana** bedeli eklendi · §6'nın üç açık lokasyonu (Elymsyr · Votumar ·
+> Ravenhall) [`bolgeler.md`](bolgeler.md)'de yazıldı ve §9 açık 8 kapandı · bilgi
+> eğimi beş noktaya çıktı (§6).
+>
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
 > §10'da ayrı duruyor — kartların içine girmez.
 
@@ -342,8 +348,12 @@ tıkandığında dönülecek NPC.
 
 ## 4. Blight — hastalık ve kural kartı
 
-Bu, 5e'nin üstüne eklenen **tek** kuraldır. Sapma işareti zorunlu (Yönerge §3.3,
-README §6.5).
+Bu, 5e'nin üstüne eklenen kurallardan **Act 1'de fiilen işleyen** olanıdır. Sapma
+işareti zorunlu (Yönerge §3.3, README §6.5). Kalan sapmalar
+[`mekanikler.md`](mekanikler.md)'de — lisans, diriltmenin bedeli, ışınlanma, yozlaşma
+ve kalıcı yaralar. Perdede o belgeden gerçekten atılan üç şey var: **Kalıcı Yaralar**
+([`mekanikler.md` §8](mekanikler.md)), **Direnç Şerbeti** (§7) ve şifa iksirinin
+bulunamaması (§7).
 
 **Bu bölüm DM'in bildiğidir. Masada "Blight" diye *bilinen* bir şey yok
 (KARAR, 4. tur).** Köy bir ad koydu; adın arkasında ne olduğunu **kimse** bilmiyor —
@@ -403,10 +413,18 @@ değişkenlikte, Kromanna bedende.
 **Bilinen bir tedavi yok** ve Act 1'de kimse bulmaz.
 
 - *Lesser Restoration* — bir Evre 2 başarısızlığını siler. Bir gün kazandırır,
-  hastalığı kaldırmaz.
-- *Greater Restoration* — Evre 1 veya 2'de hastalığı **kaldırır.** Meridia'da bu
-  büyüyü kimin yapabildiği ayrı ve **siyasi** bir sorudur; cevap Act 1'de verilmez.
+  hastalığı kaldırmaz. **Yapan 1 seviye Exhaustion alır.**
+- *Greater Restoration* — Evre 1 veya 2'de hastalığı **kaldırır.** **Yapan kalıcı bir
+  Can Zarı (Hit Die) kaybeder.** Meridia'da bu büyüyü kimin yapabildiği ayrı ve
+  **siyasi** bir sorudur; cevap Act 1'de verilmez.
 - Evre 3'te hiçbir şey işe yaramaz. Dönüşmüş bir insan öldürülür, iyileştirilmez.
+- **Direnç Şerbeti** hastalığı geriletmez, **girmesini** zorlaştırır: 24 saat boyunca
+  Blight kurtarma zarlarına +5 ([`mekanikler.md` §7](mekanikler.md)).
+
+**Bedeller yeni (2026-09-09, bölge turu)** ve etkileri değiştirmiyor — yalnız
+*"kimin yapabildiği siyasi bir sorudur"* cümlesinin yarısına cevap veriyor: yapabilen
+az, çünkü her seferinde kendinden bir parça veriyor
+([`mekanikler.md` §7](mekanikler.md)).
 
 ### 4.5 DM bilgisi — oyuncuya verilmez
 
@@ -551,18 +569,23 @@ standartla:
 | Yer | NPC ihtiyacı |
 |---|---|
 | **Gizli Liman** | → §7'de yazıldı |
-| **Lonca** (Merkezi Şehir) | mertebeli lonca yetkilisi · kayıt memuru · sahada ajan · borçlu esnaf |
-| **Merkezi Şehir** | meclis üyesi · şehir muhafızı · söylenti taşıyan · bastırılan tanık |
-| **Paladin Şatosu (Votumar)** | kapı komutanı · rütbeli · kışkırtılmış genç asker · şüpheci vaiz |
+| **Lonca + Merkezi Şehir** | → [`lonca-sehir.md`](lonca-sehir.md) §6–7: Meclis'in altı koltuğu + sokağın beşi |
+| **Elymsyr** | → [`bolgeler.md`](bolgeler.md) §2.7: gümrük valisi · nehir muhafızı çavuşu · vinç ustası · çevirmen |
+| **Paladin Şatosu (Votumar)** | → [`bolgeler.md`](bolgeler.md) §3.7: Başkumandan · kapı komutanı · şüpheci rütbeli · kule nöbetçisi |
+| **Ravenhall Avlusu** | → [`bolgeler.md`](bolgeler.md) §4.6: en yaşlı druid · patika gözcüsü |
+| **Cinervik · Argenfon** | → [`bolgeler.md`](bolgeler.md) §5: iki köyün profili yazıldı, NPC'leri ayrı turda |
 
-Bilgi eğimi (09 §4) burada işler: limanda söylenti bol, şehirde bastırılmış,
-Ravenhall'da yok.
+**Bilgi eğimi (09 §4) beş noktaya çıktı** ([`bolgeler.md` §9](bolgeler.md) madde 12):
+Elymsyr'de söylenti **okunur** (defterde izi var) · Cinervik'te **bol ve yanlış** ·
+Argenfon'da bastırılmıyor **teselli ediliyor** · Lucid Triton'da **bastırılmış** ·
+Votumar'da **fısıltı** · Ravenhall'da **yok, çünkü zaten biliniyor.**
 
-**Paladin Şatosu · Ravenhall · Elymsyr liman kenti — KARAR VERİLMEDİ (4. tur).**
-Üçü de bu turda detaylandırılmadı ve sonraya bırakıldı. Yukarıdaki NPC ihtiyacı
-satırları onlar için **taslak**, söz değil. Yazılan tek yan hat Lonca/Şehir'dir
-([`lonca-sehir.md`](lonca-sehir.md)) — ve Act 1'in kapsamı (Gümüşsu → ufukta ikinci
-kıta) o hatla kapanıyor.
+**Paladin Şatosu · Ravenhall · Elymsyr — KAPANDI (2026-09-09, bölge turu):**
+üçü de [`bolgeler.md`](bolgeler.md)'de yazıldı, artı kıta geneli katmanı (doktrin,
+adalet, mimari, ırk, mesafe) ve iki büyük köy. Yukarıdaki satırlar artık taslak değil,
+o belgenin tabloları. **Act 1'in kapsamı değişmedi:** perde hâlâ Gümüşsu'da başlıyor
+ve ikinci kıta ufukta görülünce bitiyor — üç durak da o kapsamın içinde birer *durak*,
+zorunlu değil.
 
 ### 6.1 Doğrudan loncaya gitmek — en kısa yol (KARAR, 4. tur)
 
@@ -763,7 +786,7 @@ kendiliğinden işe alınır, ve işçi ağı ona ilk gün konuşmaz ama ikinci 
 | `npc` | Gümüşsu kadrosu (4) + üç hasta (1. gün hali) + Gizli Liman kadrosu (5, **Konsey Aracısı** dahil) |
 | `monster` | Dönüşmüş üçlü (3 kart, statblock §5.1) |
 | `background` | §2'deki 9 background — mekanikleri kapandı, yazılabilir |
-| `curse` | **Blight — Enfeksiyon** (§4): perdenin tek kural sapması |
+| `curse` | **Blight — Enfeksiyon** (§4): perdede fiilen işleyen kural sapması. Kalanlar [`mekanikler.md` §9](mekanikler.md)'da |
 | eşya | **Mühürsüz Yüzük** (§3.3) ⚠️ *içerik askıda, ad geçici* + **13 background eşyası** (§2) — hepsi kendi kartı |
 | `scene` | Köye varış · kulübe sorgusu · şafak dönüşümü · **limana kabul** · **geçiş pazarlığı** |
 | `encounter` | Şafak çatışması *(tek — "Liman kaçışı" kaldırıldı, §7.3)* |
@@ -879,9 +902,15 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
    limandan sonra yol bitti. Gerisi karar bekliyor, ve Act 1 gerisi olmadan da oynanır.
 7. **Hastalığın kaynağı** (§4.6) — Act 1'de adlandırılmıyor; kaynağın *ne* olduğu
    sonraki perdelerin kararı.
-8. **Paladin Şatosu · Ravenhall · Elymsyr liman kenti** (§6) — **AÇIK, 4. tur.**
-   Detaylandırma sonraya bırakıldı; §6 tablosundaki NPC ihtiyaçları taslak.
-9. Devam eden M0 kalıntıları: M0.2 · M0.3 · M0.6 (README §3.2).
+8. ~~**Paladin Şatosu · Ravenhall · Elymsyr liman kenti**~~ — **KAPANDI**
+   (2026-09-09, bölge turu): [`bolgeler.md`](bolgeler.md) §2–4. Kalan açık, o üç
+   yerin **NPC adları** ve M0.6'ya bağlı iki bölüm (Elymsyr'in zinciri, Votumar'ın
+   bugünkü hali).
+9. Devam eden M0 kalıntıları: M0.2 · M0.3 · **M0.6** (README §3.2). M0.6 artık iki
+   yazılmış bölümü doğrudan etkiliyor ([`bolgeler.md` §2.3, §3.6](bolgeler.md)).
+10. **Mekanik sapmaların açıkları** ([`mekanikler.md` §11](mekanikler.md)): Diriltme
+    Sınavı'nın zarı · Yozlaşma DC'si (13 türetildi) · Kalıcı Yara bandları ·
+    lisansın ve Direnç Şerbeti'nin fiyatı.
 
 ---
 

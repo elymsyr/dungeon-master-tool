@@ -65,13 +65,19 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 ## 2. Act 1 — kapsam ve iskelet
 
 > **Kart dökümü: [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)** —
-> oluşturulacak bütün kartlar (97), kategoriye göre, tek listede. Yazarken buna
+> oluşturulacak bütün kartlar (**127**), kategoriye göre, tek listede. Yazarken buna
 > bakılır. Perdeye bölünmüş eski çalışma listeleri
 > [`act1-kartlar.md`](lore/canon/act1-kartlar.md) ve
 > [`genel-kartlar.md`](lore/canon/genel-kartlar.md)'de duruyor.
 >
-> Çalışma belgesi: [`lore/canon/act1.md`](lore/canon/act1.md) — açılış, background'lar,
-> Gümüşsu ve ilk savaş orada. Aşağısı perdenin genel çerçevesi.
+> **Kanon dört belge** (`lore/canon/`, çelişkide sırayla değil, konuya göre):
+>
+> | Belge | Ne kapsar |
+> |---|---|
+> | [`act1.md`](lore/canon/act1.md) | Açılış, background'lar, Gümüşsu, Gizli Liman, Blight kural kartı, ilk savaş |
+> | [`lonca-sehir.md`](lore/canon/lonca-sehir.md) | Altı lonca, haneler, Konsey/Meclis, Lucid Triton, Meclis oturumu |
+> | [`bolgeler.md`](lore/canon/bolgeler.md) | Kıta geneli (doktrin, adalet, mimari, ırk, mesafe) + **Elymsyr · Votumar · Ravenhall** + Cinervik/Argenfon |
+> | [`mekanikler.md`](lore/canon/mekanikler.md) | 5e'nin üstündeki kural sapmaları: lisans, diriltme, ışınlanma, yozlaşma, simya, kalıcı yaralar |
 
 **Sınır (06 #12, ÇÖZÜLDÜ):** Act 1, **Gümüşsu'da başlar**; deniz yolculuğunun
 bitmesi ve **ikinci kıtanın ufukta görülmesiyle biter.** Yolculuk perdenin
@@ -145,7 +151,7 @@ kapanmadan yazılan her şey yeniden yazılır:
 |---|---|---|
 | M0.2 | **Lucian'ın doğum adı** — Cor / Rhen / Bast / Dorn / Vell | Seçilmedi. Act 1'i bloke etmez (sır) |
 | M0.3 | **Triton isminin kökeni** — A+C önerildi (isim fetihten kaldı + Oculus kökeni sildi; halk "üç dişli mızrak" sanıyor) | Onay bekliyor |
-| M0.6 | **Kara Gemiler ablukasının zamanı** | Öneri: Act 1 sonu — liman seçimi gerçek baskı altında yapılsın |
+| M0.6 | **Kara Gemiler ablukasının zamanı** | Öneri: Act 1 sonu — liman seçimi gerçek baskı altında yapılsın. ⚠️ **Artık iki yazılmış bölümü doğrudan etkiliyor:** Elymsyr'in zinciri ve Votumar'ın bugünkü hali ([`bolgeler.md` §2.3, §3.6](lore/canon/bolgeler.md)). Filonun **kimliği** de yazılmadı (arşivdeki "ork donanması" reddedildi) |
 
 `06 · Açık Kararlar`'dan Act 1'i doğrudan etkileyenler:
 
@@ -160,10 +166,11 @@ kapanmadan yazılan her şey yeniden yazılır:
   Ravenhall da kuzeyde; Gümüşsu güneyde. Coğrafya çelişkisi açık.
 - **#15 Abluka**, **#16 Occulus tekelciliği**, **#17 gerçek Başkumandan nerede**.
 
-**Kanon ama henüz yazılmamış:** kronoloji tablosu (`03` boş), fraksiyonlar
-(09 §8 adım 2), Sancak Kaydı statü sistemi (10 M1 — "omurga, M2–M17 buna bağlı"),
-kişi adı dağarcığı (10 M5 — Adlandırma Doktrini yalnız *yer* adlarını çözdü),
-mesafe/seyahat süreleri (10 M12 — "bu olmadan Act 1'in temposu hesaplanamaz").
+**Kanon ama henüz yazılmamış:** kronoloji tablosu (`03` boş) ve fraksiyonlar
+(09 §8 adım 2). ~~Sancak Kaydı statü sistemi~~ (10 M1) `lonca-sehir.md` §9'da,
+~~kişi adı dağarcığı~~ (10 M5) `kart-listesi.md`'nin adlandırma kurallarında kapandı.
+**10 M12 (mesafeler) kısmen açıldı:** ilk sayı yazıldı — Lucid Triton → Votumar
+2 gün atlı ([`bolgeler.md` §1.7](lore/canon/bolgeler.md)); diğer mesafeler hâlâ yok.
 
 ---
 
@@ -346,10 +353,10 @@ sayı verdiğinde o kartlar değiştirilir.
 | # | Faz | Çıktı | Bitti sayılma koşulu |
 |---|---|---|---|
 | 0 | **M0 kilidini kapat** (§3) | Karar listesi | Kıta adı ✅ · Gümüşsu ✅ · pre-gen seti ✅ · #8 tonu ✅ · kalan: M0.2/M0.3/M0.6 |
-| 1 | Kanon damıtma | `lore/canon/` — çelişkisiz Act 1 kanonu (kronoloji, fraksiyonlar, bilgi eğimi) | Her madde §0 hiyerarşisinde bir kaynağa dayanıyor |
-| 2 | Lokasyonlar | 7 lokasyon, `location` + `parent_location_ref` | 🟡 Gümüşsu ✅ · Gizli Liman ✅ (5 kart, §4.8). Kalan 5 lokasyonun önünde karar var |
-| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | 🟡 12 NPC ✅ · fraksiyon kartları yazılmadı. **Açık:** *kaydı kim sildirdi* hâlâ tek taşıyıcıda (Sicim) |
-| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | 🟡 5 sahne · 1 encounter · 3 quest ✅ (trap yok). Hiçbiri belirli bir PC'ye bağlı değil |
+| 1 | Kanon damıtma | `lore/canon/` — çelişkisiz Act 1 kanonu (kronoloji, fraksiyonlar, bilgi eğimi) | 🟡 Dört belge yazıldı (§2). Kalan: kronoloji tablosu · fraksiyonlar |
+| 2 | Lokasyonlar | Güzergahın tamamı, `location` + `parent_location_ref` | 🟡 **Kanon tarafı bitti** — 18 lokasyon kartı yazılabilir (Elymsyr · Votumar · Ravenhall · Cinervik · Argenfon eklendi). Blueprint'te hâlâ 5 kart var |
+| 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | 🟡 34 NPC kart listesinde (10'u ad bekliyor) · blueprint'te 12. **İki taşıyıcı kuralı her hatta sağlandı** |
+| 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | 🟡 11 sahne · 1 encounter · 3 quest (trap yok). Hiçbiri belirli bir PC'ye bağlı değil |
 | 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 4 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
 | 6 | Pre-gen'ler | `blueprint.json` | Dört yuva, dört karakter |
 | 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | 🟡 `PROVENANCE.md` ✅ · medya yok · `.pkg.json` üretilmedi (Dart SDK'sı olan bir makinede §4.7) |
