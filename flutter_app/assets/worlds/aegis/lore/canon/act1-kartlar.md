@@ -72,7 +72,7 @@ Asgari linkleme:
 |---|---|---|---|
 | **Duran** · **Umay** · **Corvin** · **Milo** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
 | **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
-| **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el |
+| **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el — ⚠️ *işi yüzük kararına bağlı (§3.3, 4. tur); kişi durur, gizlediği değişebilir* |
 | **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
 
 **İki taşıyıcı açığı kapandı:** *kaydı kim sildirdi* artık iki yerde — **Sicim**
@@ -118,7 +118,7 @@ o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
 
 | Kart | Kategori | Durum | Not |
 |---|---|---|---|
-| **Mühürsüz Yüzük** | `trinket` | ✅ | act1.md §3.3 — perdenin kanıtı; üç kapının (bedensel/belgesel/kültürel) ortak nesnesi. *Cerrahi iğne'nin yerine geçti (§3.2)* |
+| **Mühürsüz Yüzük** *(ad geçici)* | `trinket` | ⚠️ | act1.md §3.3 iz 3 — **gizli cepte**, Investigation DC 15. Nesnenin var olduğu ve saklandığı kanon; **ne olduğu askıda (4. tur).** Yedek içerik: mühür yüzü eğelenmiş, ayar damgası taze Meridia. Karar verilince kart adı da değişebilir |
 
 Background eşyaları (13 kart) act'a özgü değil → [`genel-kartlar.md` §4](genel-kartlar.md).
 
@@ -136,7 +136,12 @@ Background eşyaları (13 kart) act'a özgü değil → [`genel-kartlar.md` §4]
   kararı var.
 - **Mızrak parçası** — README §1: Act 1'de yok.
 - **Cerrahi iğne** — act1.md §3.2'de **kaldırıldı.** Yerine `Mühürsüz Yüzük`.
-- **Üçlünün gerçek adları** — act1.md §3.1: bilerek yazılmıyor.
+- **Üçlünün gerçek adları** — act1.md §3.1: köyde yazılmıyor. Karşılığını Meclis'te
+  buluyorlar ([`lonca-sehir.md` §6.3](lonca-sehir.md)), ayrı bir kart gerektirmiyor.
+- **Altın kesesi ve boş parşömenler** (act1.md §3.3 iz 2) — SRD `Pouch` + `Paper`;
+  evrene özel anlamı **bağlamda**, nesnede değil. Kart açmak boş kart açmak olurdu.
+- **Hastalığın kaynağı** (act1.md §4.6) — Act 1'de adlandırılmıyor, kartı da yok.
+  Arcana izi `curse` kartının `mechanical_notes` alanında duruyor.
 - **Sicim'in defteri** (KARAR 2026-09-09, 2. tur) — sahnede duran prop; ayrı karta
   ihtiyacı yok, §7.5'in metni yetiyor.
 - **Kolye (pusula)** (KARAR) — Act 1'de **yok.** Karar verilene kadar yokmuş gibi
