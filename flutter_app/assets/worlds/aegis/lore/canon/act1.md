@@ -626,8 +626,11 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 1. **M5 kişi adı dağarcığının kalanı** — lonca / paladin / ork ad kalıpları. Artık
    bir dil kuralına bağlı değil; adlar tek tek seçilecek. **Konsey Aracısı**'nın
    adı da buraya düşüyor (§7.4).
-2. **"İyi yazı" tam olarak nedir** — hangi konsey/lonca makamı verir, karşılığında ne
-   ister. Lonca hattı yazılırken çıkacak.
+2. ~~**"İyi yazı" tam olarak nedir**~~ — **KAPANDI** (2026-09-09, lonca turu):
+   Sınır ve Ticaret koltuğunun **karşı-imzalı geçiş kağıdı.** Karşılığında para
+   istemez, iş ister — Meclis'in en fakir üyesinin gizli görevi
+   ([`lonca-sehir.md` §6.2](lonca-sehir.md)). Para yolu (§7.2) kapanmadı; bu ikinci
+   ve ucuz yol.
 3. **"İyi para"nın rakamı ve kazanma yolları** — limanda yapılabilecek 2-3 iş.
    Liman `scene`'leri yazılırken.
 4. **Yüzüğü kim eğeledi** — limandaki kuyumcunun adı ve bağlantısı (§3.3 zinciri).

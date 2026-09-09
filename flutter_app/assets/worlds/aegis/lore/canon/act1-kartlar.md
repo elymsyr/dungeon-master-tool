@@ -170,13 +170,11 @@ tek şey kart değil, bir NPC boşluğu: yüzüğü eğeleyen kuyumcu (yukarı b
 
 Yazılmayacak, sadece unutulmasın diye duruyor. Sırası geldiğinde kart olur.
 
-**Lonca bölümü** — `location` Lonca · 4 `npc` (yetkili · kayıt memuru · ajan ·
-borçlu esnaf) · `scene` Lonca kapısı. Engel: "iyi yazı" nedir (act1.md §9 açık 3).
-Buraya *kim ödedi* cevabı düşüyor — zincirin ucu (act1.md §3.3).
-
-**Merkezi şehir** — `location` + 4 `npc` (meclis üyesi · muhafız · söylenti taşıyan ·
-bastırılan tanık) · `scene` Meclis oturumu (kurumsal sessizlik). Engel: **şehrin adı
-yok** (M0.5 Latin listesi).
+**Lonca ve Merkezi Şehir** — artık plan değil, yazılmış kanon:
+[`lonca-sehir.md`](lonca-sehir.md). Yedi lonca (`lore`), Konsey/Meclis ayrımı,
+şehir tarifi, altı NPC ve 19 kartlık yazım listesi orada. Kalan engeller:
+**şehrin adı yok** (M0) ve lonca/hane adları onay bekliyor. *Kim ödedi* cevabı da
+oraya düştü — iki taşıyıcıyla (kayıt memuru + ayar ustası), yani zincir kilitlenmiyor.
 
 **Resmi liman / Elymsyr** — Gizli Liman'ın alternatif yolu. İki liman gerçekten
 gerekli mi, yoksa Gizli Liman tek mi kalsın → karar.
