@@ -40,7 +40,7 @@ yazılabilir, olmayan kart yazılamaz.
 Giriş kartı oyuncunun ilk okuduğu şeydir: baş kötünün kim olduğu buraya yazılmaz,
 sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 
-## 2. `lore` — 12
+## 2. `lore` — 21
 
 | Kart | Ne | Durum |
 |---|---|---|
@@ -56,11 +56,23 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **Simya ve Şifacılar Loncası** | Hekimlik ruhsatı, iksir, ölüm sebebi beyanı. Hane: Kalenderler | ✅ |
 | **Askeri Hukuk Loncası** | Suç sicili, kolluk yetkisi, karantina hukuku. Hane: Custarlar | ✅ |
 | **Mimarlık ve Planlama Loncası** | Yapı ruhsatı, su yolları, mahalle sınırları, sur. Hane: Mizanlar | ✅ |
+| **İrade Yolu** | Yaşayan doktrin: kendi kaderinin efendisi · sıradan kahramanlık · Düzen ve İrade Metni. Ve bozulması: kolektif tapınma, **lidere körü körüne güven** | ✅ |
+| **Sessiz Mabetler** | Kayıt dışı inanç: kadim tanrı kırıntıları · atalar kültü · doğa ruhları · kör şans · Akışın Ruhu. Yasak değil, **görülmeyen** | ✅ |
+| **Hizmet Basamakları** | 18 yaş, çırak→üstat; yükseliş gerçek ama **kayda geçmesi** karşı-imza ister | ✅ |
+| **Onur Mahkemeleri** | Lonca mahkemesi / Onur Mahkemesi / kamu hizmeti. İhanet: **kayıttan düşürme + sürgün** | ✅ |
+| **Gümüş Kalkan Nişanı** | Votumar'ın paladin düzeni: ağır zırh, kule kalkanı, kusursuz nizam | ✅ |
+| **Kuzeyin Gözcüleri** | Ravenhall'ın druid kabilesi; kararı döngü ve rün verir, oylama değil | ✅ |
+| **Liman Ahdi** | Gizli Liman'ın sözlü kanunu. İki ağır ihlal: **yeri ifşa etmek** · **izinsiz gemiye girmek** | ✅ |
+| **Kural Sapmaları** | 3 sayfa: *Ölümün Ağırlığı* (diriltmenin bedeli) · *Işınlanma ve Mesafe* · *Kalıcı Yaralar* | 🟡 |
+
+`lore/Kural Sapmaları` 🟡: üç sayfanın da **sayıları** karar bekliyor (Diriltme
+Sınavı'nın zarı, Kalıcı Yara bandları — `mekanikler.md` §11). Kart başlıkla ve
+anlatıyla yazılır, `pages[]` içindeki rakamlar kilitlenmez.
 
 Haneler ayrı kart değil — ait oldukları loncanın kartı içinde yazılır. Bir hane
 masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi kartını alır.
 
-## 3. `location` — 11
+## 3. `location` — 18
 
 | Kart | Üst (`parent_location_ref`) | Ne | Durum |
 |---|---|---|---|
@@ -75,8 +87,14 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Lucid Triton** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir. Resmi kayıtta *Lucidum Triton* | ✅ |
 | **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
 | **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
+| **Elymsyr** | Meridia | Resmi kapı. Teraslı taş kent, gnome vinçleri, gümrük. Mal buradan geçer, **kağıt şehre gider** | ✅ |
+| **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
+| **Gözcü Kuleleri Hattı** | Votumar | İşaret ağı: gece ateş, gündüz dev aynalar. En uçta deniz feneri | ✅ |
+| **Ravenhall Avlusu** | Meridia | Rünlü taş dairesi. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
+| **Cinervik** | Meridia | Yol köyü. Han, at kiralama, nalbant. Söylenti bol **ve yanlış** | ✅ |
+| **Argenfon** | Meridia | Kıyı köyü. Balıkçılık, Deniz Festivali, paladin dostluğu | ✅ |
 
-## 4. `npc` — 24
+## 4. `npc` — 34
 
 **Gümüşsu**
 
@@ -127,9 +145,39 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | ✅ |
 | **Çavuş Krusk** — kolluk çavuşu *(yarı-orc)* | Kapılar / gece devriyesi | Kapılar, gece hareketi, kimin şehre girdiği | ✅ |
 
+**Elymsyr** — `bolgeler.md` §2.7. Kartlar **unvanla** yazılır; adlar ayrı turda.
+
+| Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
+|---|---|---|---|---|
+| **Gümrük Valisi** *(insan)* | Rakamların düzgün görünmesi | Eksik boşaltılan yükün defterde tam yazıldığını | Resmi geçiş; "iyi yazı"nın burada da geçtiği | 🟡 ad |
+| **Nehir Muhafızı Çavuşu** *(insan)* | Zincirin denenmemesi | Mekanizmanın bakımsız olduğunu | Boğaz, kuleler, hangi gemi ne zaman geçti | 🟡 ad |
+| **Vinç Ustası** *(gnome)* | Tezgahının kapanmaması | Bazı gece boşaltmalarına vinç verdiğini | Kayıtsız yükün **resmi** limandan geçişi | 🟡 ad |
+| **Çevirmen** *(yarı-elf)* | Bir sonraki işi | Duyduğu her şeyi | **Vorstrand**'dan taze haber | 🟡 ad |
+
+**Votumar** — `bolgeler.md` §3.7
+
+| Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
+|---|---|---|---|---|
+| **Başkumandan** *(insan görünümünde)* | İtaat ve zaman | **Suretsiz olduğunu** (`secrets`). Ne aradığı yazılmadı | Şatonun her kapısı; ve hiçbiri | 🟡 ad |
+| **Kapı Komutanı** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda **hiçbir emrin yazılı gelmediğini** | Şatoya giriş; ve kayıt evreninde en ağır kanıt: yazılı emir yokluğu | 🟡 ad |
+| **Şüpheci Rütbeli** *(insan / ejderdoğan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini | Çatlak — inanılacak ilk kurum içi ses | 🟡 ad |
+| **Kule Nöbetçisi** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** | 🟡 ad |
+
+**Ravenhall** — `bolgeler.md` §4.6
+
+| Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
+|---|---|---|---|---|
+| **En Yaşlı Druid** *(insan / elf)* | Platonun kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladı, hangi yöne yürüyor | 🟡 ad |
+| **Patika Gözcüsü** *(yarı-elf)* | Kimsenin yukarı çıkmaması | Son aylarda çıkmayı deneyen ilk kişilerin kim olduğunu | Kimin Ravenhall'ı aradığı — ve neden | 🟡 ad |
+
 > **İki taşıyıcı kuralı:** *kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
-> Ustası). *Kaydı kim sildirdi* şu an **yalnız Sicim'de** — ikinci taşıyıcı
-> Kuyumcu kartıdır ve yazılmadı. Masaya çıkmadan kapat.
+> Ustası). *Kaydı kim sildirdi* iki yerde (Sicim · Mine). *Kayıtsız geçiş nasıl
+> satın alınır* iki limanda birden (Sicim · Vinç Ustası). *Başkumandan'da bir
+> terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi).
+
+**Adı bekleyen 10 NPC** (🟡): Elymsyr'in dördü, Votumar'ın dördü, Ravenhall'ın ikisi.
+Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
+`npc/Konsey Aracısı`'nın **Kadife** olmadan önceki hali gibi.
 
 ## 5. `monster` — 4
 
@@ -164,10 +212,15 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 |---|---|---|
 | **Blight — Enfeksiyon** | Bulaşma CON DC 12 · Evre 1 sessiz taşıma (~1 ay) · Evre 2 her uzun dinlenmede CON DC 13, üç başarı/üç başarısızlık · Evre 3 dönüşüm, geri dönüş yok · tedavi: *Lesser Restoration* bir başarısızlığı siler, *Greater Restoration* Evre 1–2'de kaldırır | ✅ |
 
-Dünyanın **tek** kural sapması; kartta sapma işareti zorunlu. Halkın bildiği yüzü
-ayrı kart: `lore/Blight — Bilinen Hali`.
+Act 1'de **fiilen işleyen** kural sapması; kartta sapma işareti zorunlu. Halkın
+bildiği yüzü ayrı kart: `lore/Blight — Bilinen Hali`.
 
-## 8. `scene` — 8
+Karta ayrıca **Yozlaşma Kontrolü** (cephenin ötesinde 3+ seviye büyü → CON ya da
+Spellcasting Ability DC 13, başarısızlıkta Evre 1) ve şifa büyülerinin **yapana**
+bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
+`lore/Kural Sapmaları`.
+
+## 8. `scene` — 11
 
 | Kart | Yer | Ne | Durum |
 |---|---|---|---|
@@ -179,6 +232,9 @@ ayrı kart: `lore/Blight — Bilinen Hali`.
 | **Meclis Oturumu** | Meclis Salonu | Altı inkâr, tek sessiz üye; masa reddedilir | ✅ |
 | **Kapı Önündeki Teklif** | Meclis Salonu | Oturumun **hemen ardından**: "bana kimin ödediğini getirin" | ✅ |
 | **Geçiş Divanı'nda Sıra** | Geçiş Divanı | Karşı-imza nasıl alınır, kim bekletir | ✅ |
+| **Gümrükte Kayıt** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi | ✅ |
+| **Susan Kule** | Gözcü Kuleleri Hattı | Bir kulenin raporu şatoya ulaşmadı. Sessizlik, yalandan yüksek sesle konuşur | ✅ |
+| **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor** | ✅ |
 
 ## 9. `encounter` — 1
 
@@ -212,7 +268,7 @@ Hepsinin zorunlu alanı SRD ref'i: `granted_skill_refs` · `ability_score_option
 | **Paladin Askeri** | Athletics · Intimidation | Smith's Tools | Savage Attacker | Kışla Künyesi (+ SRD Spear) | 10 | ✅ |
 | **Paladin Rütbelisi** | Religion · Persuasion | Calligrapher's Supplies | Healer | Emir Mührü | 20 | ✅ |
 
-## 12. Eşya — 14
+## 12. Eşya — 15
 
 Kart evrenin adıyla yazılır; SRD muadili yalnız `description`'da anılır, ayrıca
 ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
@@ -226,6 +282,7 @@ ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
 | **Öğrenci Defteri** | `adventuring-gear` | Spellbook | Lonca kütüphanesi; her açılış kayda geçer | ✅ |
 | **Yük Kancası** | `adventuring-gear` | Grappling Hook | Kaçak yollar ve işçi ağı | ✅ |
 | **Seyir Defteri** | `adventuring-gear` | Book | Rota ve yanaşma hakkı; limanda kimlik yerine geçer | ✅ |
+| **Direnç Şerbeti** | `adventuring-gear` | — (yeni nesne) | Hastalığa karşı **tek** savunma: 24 saat, Blight kurtarma zarlarına **+5**. Ruhsatlı bir otacı, Druid bilgisi ya da Simya Seti üretir (`mekanikler.md` §7) | 🟡 |
 | **Lonca Mührü** | `trinket` | Signet Ring | Barınma, kredi, isim sorma hakkı | ✅ |
 | **Lonca Rozeti** | `trinket` | — (yeni nesne) | Görünür üyelik: kapıda tartışma bitirir | ✅ |
 | **Aile Mührü** | `trinket` | Signet Ring | Kapılar isimle açılır, isim yükümlülük getirir | ✅ |
@@ -261,26 +318,35 @@ verilir (Halfling · Tiefling).
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
-| `lore` | 12 | — | — | 12 |
-| `location` | 11 | — | — | 11 |
-| `npc` | 24 | — | — | 24 |
+| `lore` | 20 | 1 | — | 21 |
+| `location` | 17 | 1 | — | 18 |
+| `npc` | 24 | 10 | — | 34 |
 | `monster` | 4 | — | — | 4 |
 | `creature-action` | 4 | — | — | 4 |
 | `trait` | 5 | — | — | 5 |
 | `curse` | 1 | — | — | 1 |
-| `scene` | 8 | — | — | 8 |
+| `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
 | `quest` | 3 | — | — | 3 |
 | `background` | 9 | — | — | 9 |
-| `adventuring-gear` | 7 | — | — | 7 |
+| `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
-| **Toplam** | **97** | **—** | **—** | **97** |
+| **Toplam** | **114** | **13** | **—** | **127** |
 
-**97/97 ✅** (2026-09-09, adlandırma turu). Bekleyen tek şey olan **adlar kondu**;
-16 🟡 ve 1 ⬜ kapandı. ⬜ olan **Kuyumcu** artık **Mine** — klan adını söylemeyen
-bir cüce — ve *kaydı kim sildirdi*'nin ikinci taşıyıcısı yerine oturdu, yani iki
-taşıyıcı kuralı her hatta sağlanmış durumda.
+**114/127 ✅, 13 🟡, 0 ⬜** (2026-09-09, bölge turu). Liste 97'den 127'ye çıktı:
+[`bolgeler.md`](bolgeler.md) 24 kart (7 `lore` · 7 `location` · 10 `npc` · 3 `scene`),
+[`mekanikler.md`](mekanikler.md) 2 kart (`lore/Kural Sapmaları` · `Direnç Şerbeti`)
+ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
+
+13 🟡'nin **onu tek bir iş:** üç bölgenin NPC adları. Kalan üçü sayı ya da karar
+bekliyor: (Diriltme Sınavı'nın
+zarı, Kalıcı Yara bandları), `Direnç Şerbeti` (fiyat ve üretim süresi). Hiçbiri kartın
+yazılmasını engellemiyor — hepsi tek bir alanı boş bırakıyor.
+
+**Öncesi (adlandırma turu):** 97/97 ✅ — bekleyen tek şey olan adlar kondu, 16 🟡 ve
+1 ⬜ kapandı. ⬜ olan **Kuyumcu** artık **Mine**, ve *kaydı kim sildirdi*'nin ikinci
+taşıyıcısı yerine oturdu.
 
 ### Adlandırma kuralları (kartlar yazılırken uyulacak)
 
