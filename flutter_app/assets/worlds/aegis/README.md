@@ -64,8 +64,11 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 
 ## 2. Act 1 — kapsam ve iskelet
 
-> Kart dökümü: [`lore/canon/act1-kartlar.md`](lore/canon/act1-kartlar.md) (Act 1) ·
-> [`lore/canon/genel-kartlar.md`](lore/canon/genel-kartlar.md) (perdeden bağımsız).
+> **Kart dökümü: [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)** —
+> oluşturulacak bütün kartlar (97), kategoriye göre, tek listede. Yazarken buna
+> bakılır. Perdeye bölünmüş eski çalışma listeleri
+> [`act1-kartlar.md`](lore/canon/act1-kartlar.md) ve
+> [`genel-kartlar.md`](lore/canon/genel-kartlar.md)'de duruyor.
 >
 > Çalışma belgesi: [`lore/canon/act1.md`](lore/canon/act1.md) — açılış, background'lar,
 > Gümüşsu ve ilk savaş orada. Aşağısı perdenin genel çerçevesi.
@@ -356,6 +359,16 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
 ---
 
 ## 6. Yazarken uyulacak ilkeler
+
+0. **Kart son ürün gibi yazılır.** Kartı yazarken evrenin tamamı varmış gibi yaz:
+   bu Aegis'in kendisidir, bir yazım sürecinin ara çıktısı değil. Kart gövdesinde
+   **"Act 1" / "birinci perde" / "şimdilik" / "sonraki turda" geçmez**, ve
+   **hiçbir belgeye atıf yapılmaz** — ne bu README'ye, ne `lore/canon/`'a, ne
+   arşive, ne bir karar numarasına. Okuyan DM bu klasörü hiç görmemiştir; elinde
+   yalnız kart vardır. Kapsam kararları (neyin yazılıp neyin yazılmadığı) burada
+   ve `kart-listesi.md`'de kalır, kartın içine girmez. Örnek için diğer dünyaların
+   `world-blueprint.json`'larına bak (ör. `99_devils_of_uzrahs_palace_shadowdark`):
+   hiçbir kart kendi yazım sürecinden söz etmiyor.
 
 1. **DM Kitabı önce yazılır**, Oyuncu Kitabı ondan damıtılır → app'te bu
    `secrets` alanı ayrımıdır.
