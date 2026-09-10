@@ -5,12 +5,6 @@
 > Act'tan bağımsız kartlar (giriş kartı, background, evren lore'u) →
 > [`genel-kartlar.md`](genel-kartlar.md).
 
-> ⚠️ **Paketle senkron değil.** `aegis-act1/world-blueprint.json` (0.1.0, 38 entity)
-> **2026-09-09 revizyonlarından önce** üretildi: içinde hâlâ `trinket/Cerrahi İğne`
-> var, üçlü "sivil yolcu" olarak yazılı, background · eşya · `curse` kartı yok.
-> Bu listeler kanonu gösteriyor, paketi değil — blueprint bir sonraki üretimde bu
-> kanona göre yeniden yazılacak.
-
 **Kapsam:** şimdilik yalnız **Gümüşsu** ve **Gizli Liman**. Perdenin geri kalanı
 (lonca, merkezi şehir, gemi, ufuk) en alttaki *Sonraki bölümler için planlama*
 başlığında duruyor — orada kart yok, plan var.
