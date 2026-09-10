@@ -925,21 +925,18 @@ Map<String, dynamic> buildSeedFields({
       ],
     };
   }
-  final classGrantedToolIds = <String>[
-    if (characterClass != null)
-      for (final v in (characterClass.fields['granted_tool_refs'] is List
-              ? characterClass.fields['granted_tool_refs'] as List
-              : const []))
-        if (v is String) v,
-  ];
   appendIds(
     const ['tool_proficiencies'],
     [
       ...draft.toolChoiceIds,
       for (final id in featToolIds)
         if (!draft.toolChoiceIds.contains(id)) id,
-      // Class-granted tools (Druid Herbalism Kit, Rogue Thieves' Tools).
-      ...classGrantedToolIds,
+      // Class-granted tools (Druid Herbalism Kit, Rogue Thieves' Tools) and
+      // background-granted tools (Acolyte Calligrapher's Supplies). Refs may be
+      // plain ids or softRef maps — resolve both.
+      ...resolveEntityRefList(
+          characterClass?.fields['granted_tool_refs'], entities),
+      ...resolveEntityRefList(background?.fields['granted_tool_refs'], entities),
       // Soldier-style background variant pick (e.g. one Gaming Set type).
       if (draft.backgroundToolVariantId != null &&
           draft.backgroundToolVariantId!.isNotEmpty)
@@ -1075,6 +1072,10 @@ Map<String, dynamic> buildSeedFields({
   var goldGain = 0;
   void absorbFrom(Entity? src) {
     if (src == null) return;
+    // Unconditional kit (`default_inventory_refs`) — resolver already lists
+    // it on the sheet summary; the PC inventory needs it too.
+    equipmentItemIds
+        .addAll(resolveEntityRefList(src.fields['default_inventory_refs'], entities));
     final raw = src.fields['equipment_choice_groups'];
     if (raw is! List) return;
     for (final g in raw) {
@@ -1082,10 +1083,19 @@ Map<String, dynamic> buildSeedFields({
       final groupId = g['group_id']?.toString() ?? '';
       // Storage key is scoped by source entity id so class + background
       // picks don't collide on identical group_ids (e.g. both 'A').
-      final optionId = draft.equipmentChoices['${src.id}:$groupId'];
-      if (optionId == null || optionId.isEmpty) continue;
       final options = g['options'];
       if (options is! List) continue;
+      // No pick made → default to the first option (SRD kit "A") so skipping
+      // the equipment step doesn't leave the sheet empty. Recorded so the
+      // resolver sees the same choice.
+      var optionId = draft.equipmentChoices['${src.id}:$groupId'];
+      if (optionId == null || optionId.isEmpty) {
+        final first = options.whereType<Map>().firstOrNull;
+        optionId = first?['option_id']?.toString();
+        if (optionId == null || optionId.isEmpty) continue;
+        (out['equipment_choices'] as Map<String, String>)['${src.id}:$groupId'] =
+            optionId;
+      }
       for (final o in options) {
         if (o is! Map) continue;
         if (o['option_id']?.toString() != optionId) continue;
