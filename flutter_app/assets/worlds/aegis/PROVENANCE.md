@@ -165,7 +165,6 @@ hizalandı, kanon bir sayı vermiyor.
 | Şafak Çatışması | `act1 §5` + `§5.1` tempo notu + `mek §8` (Kalıcı Yaralar ilk kez burada) |
 | Söylentinin Peşinde | `act1 §1` giriş sözleşmesi |
 | Nereden Geldiler | `act1 §3.3, §6, §7.5` (izler → kayıtsız giriş → kaydı kim sildirdi) + `act1 §3.1` (gerçek adlar Meclis'te) |
-| Silinen Sayfa | `lonca §6.2` (görevin iki yüzü, ödül) + `lonca §7` (üç taşıyıcı) |
 
 `lonca §8`'in *Adı tanıyan üye* sahnesi ayrı kart olarak yazılmadı: `liste §8` on bir
 sahne sayıyor ve bunu içermiyor. İçerik `scene/Meclis Oturumu`'nun 5. beat'ine ve
@@ -223,6 +222,7 @@ sahne sayıyor ve bunu içermiyor. İçerik `scene/Meclis Oturumu`'nun 5. beat'i
 | Sicim'in defteri | Sahnede duran prop, ayrı karta ihtiyacı yok (`act1 §9` madde 15) |
 | Liman kaçışı `encounter` | Kavga bir kurgu değil bir sonuç; DM doğaçlar (`act1 §7.3`) |
 | Yol hakkı `quest` | Yol serbest; fiyatı olan tek şey gemiye binmek (`act1 §7.2`) |
+| Silinen Sayfa `quest` | Kanonda dayanağı yok — DM onayı olmadan yazılmış bir kart olarak geri alındı, elymsyr onayından sonra tekrar açılabilir |
 | Haneler (Sancarlar · Ferrunlar · Kalenderler · Custarlar · Mizanlar) | Ait oldukları loncanın `lore` kartında; masaya çıkana kadar ayrı kart değil (`lonca §3`) |
 | Gemi (kapalı mekan bölümü) | `RM §2` adım 6; kanonu yazılmadı |
 | Kronoloji tablosu · fraksiyon kartları | `RM §5` Faz 1'in kalanı — kanon henüz yok |

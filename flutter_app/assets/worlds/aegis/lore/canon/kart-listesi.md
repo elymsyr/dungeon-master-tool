@@ -40,7 +40,7 @@ yazılabilir, olmayan kart yazılamaz.
 Giriş kartı oyuncunun ilk okuduğu şeydir: baş kötünün kim olduğu buraya yazılmaz,
 sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 
-## 2. `lore` — 21
+## 2. `lore` — 22
 
 | Kart | Ne | Durum |
 |---|---|---|
@@ -50,6 +50,7 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **Vorstrand — Bilinen Hali** | Hastalığın geldiği, üçlünün kaçtığı yer. Halk ağzında sadece **"Öte"** | ✅ |
 | **Konsey ve Lonca Meclisi** | Konsey çerçeve, Meclis içerik; altı koltuğu loncalar doldurur | ✅ |
 | **Sancak Kaydı** | Mühür = hukuki kimlik; kayıtsızın kaybolması kayda geçmez. Üç sınıf: **Mühürlü · Kayıtlı · Yazısız** | ✅ |
+| **Kayıt Nasıl İşler** | Defterin işleyişi: kim yazar, ne yazılır, nasıl yükselinir, nasıl silinir. Sancak Kaydı'nın prosedür yüzü | ✅ |
 | **Büyücü Loncası** | İzinli büyü, akademi, ışınlanma kaydı. Hanesiz koltuk | ✅ |
 | **Sınır ve Ticaret Loncası** | Geçiş, gümrük, tonaj, tahıl; taşrada Sancak Kaydı'nın kalemi. Hane: Sancarlar | ✅ |
 | **Demircilik ve İşçi Loncası** | Metal, sikke, **ayar damgası**, yevmiye. Hane: Ferrunlar | ✅ |
@@ -64,6 +65,39 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **Kuzeyin Gözcüleri** | Ravenhall'ın druid kabilesi; kararı döngü ve rün verir, oylama değil | ✅ |
 | **Liman Ahdi** | Gizli Liman'ın sözlü kanunu. İki ağır ihlal: **yeri ifşa etmek** · **izinsiz gemiye girmek** | ✅ |
 | **Kural Sapmaları** | 3 sayfa: *Ölümün Ağırlığı* (diriltmenin bedeli) · *Işınlanma ve Mesafe* · *Kalıcı Yaralar* | 🟡 |
+
+`lore/Kayıt Nasıl İşler` — `Sancak Kaydı` sınıfları anlatır, bu kart **işlemi**
+anlatır. Altı sayfa, hepsi masada sorulan bir soruya karşılık gelir:
+
+1. **Kim yazar** — defter Konsey'in, kalem loncanın: şehirde her lonca kendi
+   sicilini kendi tutar, taşrada tek kalem **Sınır ve Ticaret**'tir
+   (`lonca-sehir.md` §2). Bu yüzden bir köylünün kaydı, sınırdan geçen bir yükle
+   aynı elden çıkar.
+2. **Ne yazılır** — satır dört alandır: *ad · hane · lonca ve mertebe · kefil.*
+   Hane kutusu boşsa adam mühürsüzdür; kefil kutusu boşsa satır hiç açılmaz.
+   Halfling ve cüce soyadları hane sayılmaz, defter onları *"tek isim + boş hane"*
+   yazar (act1.md §2) — üçlünün sahte kimliği bu boşluğa oturuyor.
+3. **Satır nasıl açılır** — kayıt doğumla gelmez, **kefaletle** gelir: 18'inde bir
+   loncaya çırak yazılırsan (`lore/Hizmet Basamakları`) ya da kayıtlı biri sana
+   kefil olursa. Kefil olan, kefil olduğunun borcunu da taşır. Kimsenin yazmadığı
+   çocuk Yazısız doğar ve öyle kalır.
+4. **Nasıl yükselinir** — mertebe ustanın imzasıyla *fiilen*, **karşı-imzayla**
+   *hukuken* değişir. İki imza arasındaki gecikme, bu evrenin en yaygın rüşvet
+   yeridir: kimse "hayır" demez, sadece kağıt masada bekler
+   (`scene/Geçiş Divanı'nda Sıra`).
+5. **Mühür nasıl alınır** — mühür terfi değil **yetki**: bir defteri imzalama
+   hakkı. Konseyin verdiği değil, hanenin devrettiği şeydir — mühür kimdeyse hane
+   odur (`lonca-sehir.md` §3). Bu yüzden mühürlü sayısı yükselmez, el değiştirir.
+6. **Nasıl silinir** — üç yol: Onur Mahkemesi'nin **kayıttan düşürmesi** (`lore/Onur
+   Mahkemeleri`), kefilin kefaletini geri çekmesi, ve **ödenmiş silme** — bir
+   sayfanın hiç yazılmamış gibi çıkarılması. Üçüncüsü suçtur ve Act 1'in bütün
+   soruşturması odur: silinen sayfa arkasında iki iz bırakır — **kefilin karşı-imzası
+   defterde kalır** (Corin Sancar) ve satırın kopyası taşra kaleminde durur (Orvan
+   Sancar'ın "kendi defterinden sayfa silindi" dediği şey). Kağıt şehre gider, ama
+   ikinci nüsha gitmez.
+
+Kartın `secrets` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir** —
+Sicim de Vinç Ustası da aynı rakamı söyler, çünkü rakamı koyan yer aynıdır.
 
 `lore/Kural Sapmaları` 🟡: üç sayfanın da **sayıları** karar bekliyor (Diriltme
 Sınavı'nın zarı, Kalıcı Yara bandları — `mekanikler.md` §11). Kart başlıkla ve
@@ -242,13 +276,12 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 3
+## 10. `quest` — 2
 
 | Kart | Zincir | Durum |
 |---|---|---|
 | **Söylentinin Peşinde** | Giriş kancası: hastalık söylentileri seni Gümüşsu yoluna çıkardı | ✅ |
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → kaydı kim sildirdi | ✅ |
-| **Silinen Sayfa** | Kim ödedi. Ödül para değil **karşı-imzalı geçiş kağıdı** | ✅ |
 
 ## 11. `background` — 9
 
@@ -318,7 +351,7 @@ verilir (Halfling · Tiefling).
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
-| `lore` | 20 | 1 | — | 21 |
+| `lore` | 21 | 1 | — | 22 |
 | `location` | 17 | 1 | — | 18 |
 | `npc` | 24 | 10 | — | 34 |
 | `monster` | 4 | — | — | 4 |
@@ -327,17 +360,17 @@ verilir (Halfling · Tiefling).
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
-| `quest` | 3 | — | — | 3 |
+| `quest` | 2 | — | — | 2 |
 | `background` | 9 | — | — | 9 |
 | `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
 | **Toplam** | **114** | **13** | **—** | **127** |
 
-**114/127 ✅, 13 🟡, 0 ⬜** (2026-09-09, bölge turu). Liste 97'den 127'ye çıktı:
+**114/127 ✅, 13 🟡, 0 ⬜** (2026-09-10, kayıt turu). Liste 97'den 127'ye çıktı:
 [`bolgeler.md`](bolgeler.md) 24 kart (7 `lore` · 7 `location` · 10 `npc` · 3 `scene`),
-[`mekanikler.md`](mekanikler.md) 2 kart (`lore/Kural Sapmaları` · `Direnç Şerbeti`)
-ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
+[`mekanikler.md`](mekanikler.md) 2 kart (`lore/Kural Sapmaları` · `Direnç Şerbeti`),
+kayıt turu 1 kart (`lore/Kayıt Nasıl İşler`) ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
 
 13 🟡'nin **onu tek bir iş:** üç bölgenin NPC adları. Kalan üçü sayı ya da karar
 bekliyor: (Diriltme Sınavı'nın
