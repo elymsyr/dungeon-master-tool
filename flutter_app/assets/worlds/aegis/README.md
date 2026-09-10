@@ -22,6 +22,7 @@ kendi "bu sayfa geçerlidir" beyanları):
 
 | # | Kaynak | Tarih / kanıt | Not |
 |---|---|---|---|
+| 0 | `lore/canon` | Burada düzenlediğimiz amna notlar | En öncelikli ve sürekli güncellenen içerik |
 | 1 | `lore/archive/notion-notes/00 · Proje Yönergesi` | 3b0f…, "tüm belgelerin üstündedir" | Anayasa |
 | 2 | `notion-notes/08` → `09` → `Adlandırma Doktrini` → `10` → `Başlıyoruz` | 3d2f…/3d3f… (en yeni Notion batch) | **Kanon revizyonu.** 08 ve 09 kendi başlıklarında "eskiyle çelişirse bu sayfa geçerlidir" diyor |
 | 3 | `notion-notes/01–07` | 3b0f… | Revizyondan önce; 06 açık kararların kaydı, güncel tutuluyor |
@@ -70,7 +71,9 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 > [`act1-kartlar.md`](lore/canon/act1-kartlar.md) ve
 > [`genel-kartlar.md`](lore/canon/genel-kartlar.md)'de duruyor.
 >
-> **Kanon dört belge** (`lore/canon/`, çelişkide sırayla değil, konuya göre):
+> **Kanon dört içerik belgesi** (`lore/canon/`, çelişkide sırayla değil, konuya
+> göre); klasördeki diğer üç dosya (`kart-listesi`, `act1-kartlar`, `genel-kartlar`)
+> bunlardan türeyen kart listeleridir:
 >
 > | Belge | Ne kapsar |
 > |---|---|
@@ -88,14 +91,16 @@ Akış (08 §2):
 1. **Başlangıç** — herkes birinci kıtada, herkesin hastalıkla ilgili *bir* amacı
    var. "Kaynağı bul" olmak zorunda değil.
 2. **Gümüşsu** — köyde buluşma. Aynı anda varmak şart değil. Sahne bir savaş
-   değil bir **soruşturma** (07: "Salgın araştırılmaz, suç araştırılır" — üç genç
-   paladinin ensesine cerrahi iğne yerleştirilmiş). Köy kötü biter; ölmekte olan
-   hastalar sayıklar, ilk iz oradan çıkar.
-3. **Diplomasi Kuşağı** — Paladin Şatosu, Merkezi Şehir, diğer köyler. Asıl
+   değil bir **soruşturma**. Köy **huzursuz ama işleyen** bir yer, kimse ölmemiş;
+   hasta sanılan üç kişi köyün dışındaki kulübede. Üçü **ikinci kıtadan, kayıtsız**
+   geldi — Gümüşsu hastalığı üretmedi, **teslim aldı.** "Bu doğal değil" anını
+   iğne değil **beden** (Medicine DC 12) ve **Arcana DC 13** taşır
+   ([`act1.md` §3–4](lore/canon/act1.md)). Köy **kurtarılabilir** (06 #8).
+3. **Diplomasi Kuşağı** — Paladin Şatosu, Lucid Triton, diğer köyler. Asıl
    direnç **kurumsal sessizlik**: hastalık gizlenmek isteniyor.
 4. **Süre baskısı** — sayaç oyuncuların değil **bir NPC'nin** üzerinde taşınır.
-   Hastalanma zorlama değil, bir seçimin sonucu olur (cesede dokundu, hastayı
-   taşıdı).
+   Hastalanma zorlama değil, bir seçimin sonucu olur (hastaya dokundu, kulübeye
+   girdi).
 5. **Geçiş** — iki liman: **Elymsyr** (açık, resmi, hızlı / donanma riski) veya
    **Gizli Liman** (donanmadan güvenli / yaratık riski).
 6. **Gemi** — kapalı mekan bölümü: kimin ne bildiği, kimin hasta olduğu orada
@@ -107,7 +112,7 @@ belirli bir PC'ye bağlanamaz. Act 1'in dört yuvası (07 "Yakınsama Tasarımı
 | Yuva | Neden Gümüşsu'da | Ne fark eder |
 |---|---|---|
 | **Uyarıcı** | Rüyalar/işaretler güneye çekti | Çürümenin doğal olmadığını ilk o söyler |
-| **Şüphelenen** | Kayıp askerleri aramaya geldi | Cesetlerdeki iğneyi o bulur |
+| **Şüphelenen** | Söylentinin doğal olmadığından şüphelendi | Hastalığın köyden eski olduğunu (beden izi) o okur |
 | **Kaçan** | Buraya yerleştirdiği insanlar var | Kimin nereye götürüldüğünü o bilir |
 | **İşaretlenen** | Kaçtığı şey buraya kadar geldi | Bedeni tepki verir |
 
@@ -121,11 +126,11 @@ hangi kapıyı açıyor*. **Kilitlenme kuralı:** her kritik kapının **en az i
 taşıyıcısı** olmalı. Tek NPC'de duran bilgi hikayeyi kilitler.
 
 **Bilgi eğimi (09 §4)** — soruşturmanın haritasını kendiliğinden çizer:
-limanlarda söylenti bol · Merkezi Şehir'de bastırılmış · Ravenhall'da yok
+limanlarda söylenti bol · Lucid Triton'da bastırılmış · Ravenhall'da yok
 (çünkü zaten biliniyor, kimse sormadı).
 
 **Act 1 lokasyon güzergahı (09 §5, 10 M13):**
-Gümüşsu → büyük köyler (Cinervik / Argenfon) → Merkezi Şehir → Elymsyr →
+Gümüşsu → büyük köyler (Cinervik / Argenfon) → Lucid Triton → Elymsyr →
 Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 
 ---
@@ -137,12 +142,12 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | # | Karar | İçerik |
 |---|---|---|
 | M0.1 | **Kıta adı: Meridia** | Adlandırma Doktrini **tam** uygulanıyor. Kral **Lucian**, başkent **Lucid Triton**, kıta **Meridia**. `Aethel` / `Aethelgard` **terk edildi** — arşivdeki her geçiş aktarımda çevrilecek |
-| M0.4 | **Gümüşsu Türkçe kalıyor** | Latin resmi isim ağının dışında, kayda değer görülmemiş bir köy. Adının hâlâ halk dilinde olması, orayı kimsenin umursamadığının kanıtı |
-| M0.5 | **Latin hafif dozu** | Custodar · Claport · Altimont · Cinervik · Argenfon · Votumar (2-3 hece). Ağır sonekler (-castrum, -arx, -portus, -montes) kullanılmıyor |
+| M0.4 | **Gümüşsu adı kalıyor** | Latinleştirilmiyor. Halk dili / Latin ayrımı kanon **değil** — adlar karışık kalır, hiçbir ad bir dil kuralına uymak zorunda değil ([`act1.md` §3](lore/canon/act1.md)) |
+| M0.5 | **Hafif ad dozu** | Cinervik · Argenfon · Votumar · Elymsyr (ikinci adı **Claport**) — 2-3 hece. Ağır sonekler (-castrum, -arx, -portus, -montes) kullanılmıyor |
 | 06 #1 | **Pre-gen isim seti: Jaonos · Bızdır · Aly · Will** | Diğer set (Ilysard / Fyli / Goliath) terk edildi |
 | A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
-| 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. **Not: Gümüşsu bölümü ve açılış yeniden kurgulanacak** — 07'deki ilkeler geçerli, sahne akışı değil |
+| 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. Gümüşsu bölümü ve açılış [`act1.md` §1–3](lore/canon/act1.md)'te yeniden kurgulandı — 07'deki ilkeler geçerli, sahne akışı değil |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
 
@@ -157,15 +162,15 @@ kapanmadan yazılan her şey yeniden yazılır:
 
 `06 · Açık Kararlar`'dan Act 1'i doğrudan etkileyenler:
 
-- **#9 Açılış yeniden kurgulanacak** — 3.1'de teyit edildi. Gümüşsu bir *yer*
-  olarak kurulmadan akış yazılmaz (07 "Yöntem Notu": kim yaşıyor, kim kimi
-  seviyor, kim ne saklıyor, karantinayı kim yönetiyor, kaç gün var).
+- ~~**#9 Açılış yeniden kurgulanacak**~~ — **KAPANDI:** Gümüşsu yer olarak
+  [`act1.md` §3](lore/canon/act1.md)'te kuruldu, akış oradan çıkıyor.
 - **#10 Lucian şu an ne halde?** (yaşıyor / kurum olarak işliyor / yarı-varlık)
   — öneri (b)+(c). Act 1'de düşman zaten kurum, o yüzden Act 1'i bloke etmiyor.
 - **#11 Irksal özellikler de simyacı güçlendirmesinden mi geliyor?** — Act 2
   ikilemini kuruyor; Act 1'de `species` kartı yazacaksak bilmemiz gerekir.
-- **#14 Hastalığın haritadaki konumu** — "kuzeyden gelen çürüme" deniyor ama
-  Ravenhall da kuzeyde; Gümüşsu güneyde. Coğrafya çelişkisi açık.
+- ~~**#14 Hastalığın haritadaki konumu**~~ — **KAPANDI:** hastalık Meridia'ya
+  kuzeyden değil **ikinci kıtadan** taşındı ([`act1.md` §3.1](lore/canon/act1.md)),
+  Gümüşsu'nun güneyde olması çelişki değil.
 - **#15 Abluka**, **#16 Occulus tekelciliği**, **#17 gerçek Başkumandan nerede**.
 
 **Kanon ama henüz yazılmamış:** kronoloji tablosu (`03` boş) ve fraksiyonlar
@@ -278,7 +283,7 @@ zincirine uyar. Act 1'de kullanılacaklar:
 | Sıra | Kategori | Act 1 içeriği |
 |---|---|---|
 | 1 | `campaign` | Kitabın giriş bölümü: ton sözleşmesi, "bu dünyada oynamak", DM'e bağlama (`pages[]`) |
-| 2 | `location` | Gümüşsu → Cinervik/Argenfon → Merkezi Şehir → Elymsyr → Gizli Liman → Votumar → Ravenhall. Hiyerarşi `parent_location_ref` ile |
+| 2 | `location` | Gümüşsu → Cinervik/Argenfon → Lucid Triton → Elymsyr → Gizli Liman → Votumar → Ravenhall. Hiyerarşi `parent_location_ref` ile |
 | 3 | `lore` | Sansürlü resmi tarih, İrade doktrini, Adlandırma Doktrini'nin oyuncuya görünen yüzü, fraksiyonlar, Blight'ın bilinen hali. **DM sırları buraya değil** — `secrets` alanlarına |
 | 4 | `monster` | Blight'lı asker/köylü, ele geçirilmiş paladin. SRD'de birebir adı olan hiçbir şeyi tekrar yazma, referans ver |
 | 5 | `npc` | Halder, Elara, Başkumandan (= Suretsiz, `secrets`'te), Gümüşsu kadrosu, karantina doktoru, meclis üyesi, kaçakçı. Her biri *ne istiyor / ne gizliyor / hangi kapıyı açıyor* |
@@ -429,8 +434,6 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
    istenmeyen sonucu var; boşa giden şeyler var; kimse "kötü olduğu için"
    hareket etmiyor.
 3. **Hikaye belirli karakterlere bağlanmaz** — rol yuvaları.
-4. **Ton kuralı:** karanlık geçmişte ve yapılarda; ışık insanlarda ve bugünde.
-   *Dünya yaşanabilir, ama gidişat kötü.* En az üç NPC'nin yarası olmasın.
 5. **Taban DnD 5e**, ikincil referans Forgotten Realms. Sapmalar (Blight
    kuralları, ilahi büyünün durumu) açıkça işaretlenir; sıfırdan sistem yazılmaz.
 6. **Gerçekçilik iddia edilmez, hissettirilir.** "Bu dünya gerçekçidir" cümlesi

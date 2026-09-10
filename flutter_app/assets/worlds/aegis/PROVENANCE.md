@@ -194,7 +194,7 @@ sahne sayıyor ve bunu içermiyor. İçerik `scene/Meclis Oturumu`'nun 5. beat'i
 | Entity | Kaynak |
 |---|---|
 | Tasnif Çantası · Kayıt Elifbası · Sancak Fihristi · Mertebe Kaftanı · Öğrenci Defteri · Yük Kancası · Seyir Defteri | `act1 §2` eşya tablosu + `kartG §4` (SRD muadilleri) |
-| Direnç Şerbeti | `mek §7` (24 saat, +5, kim üretir) |
+| Direnç Şerbeti | `mek §7` (24 saat, +8, kim üretir) |
 | Lonca Mührü · Lonca Rozeti · Aile Mührü · Sahte Mühür · Kışla Künyesi · Emir Mührü | `act1 §2` eşya tablosu + `kartG §4` |
 | Mühürsüz Yüzük | `act1 §3.3` iz 3 (gizli cep, Investigation DC 15) + yedek içerik (`act1 §3.3`) |
 

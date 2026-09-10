@@ -1,7 +1,7 @@
 # Lonca ve Şehir — Plan
 
 > **Durum: plan belgesi.** [`act1.md`](act1.md) Gümüşsu ve Gizli Liman'ı yazdı;
-> bu belge güzergahın bir sonraki iki durağını (**Lonca** ve **Merkezi Şehir**)
+> bu belge güzergahın bir sonraki iki durağını (**Lonca** ve **Lucid Triton**)
 > kart yazılabilir hale getiriyor. Detay değil **yapı**: kimin neyin tekelinde
 > olduğu, kimin kimi yönettiği, şehrin ne durumda olduğu, meclis, ve NPC'ler.
 >
@@ -11,8 +11,7 @@
 
 **Adlar geçici.** Bu belgedeki lonca ve hane adlarının hiçbiri kilit değil; hepsi
 kart adı olarak yazılır ve tek bir grep ile değişir ([`act1-kartlar.md` §0]
-(act1-kartlar.md)). Merkezi Şehir'in adı hâlâ **yok** (M0), o yüzden burada da
-"Merkezi Şehir" diye geçiyor.
+(act1-kartlar.md)). Şehrin adı **Lucid Triton** (README §3.1 M0.1).
 
 **Kart eşiği geçerli** (genel-kartlar): adı olan ve masada işaret edilebilen her
 şey kart. Loncalar `lore`, binalar `location`, insanlar `npc`.
@@ -146,7 +145,7 @@ orada kayıt yokluğu cezalandırıyordu, burada kayıt fazlalığı.
 
 ---
 
-## 5. Merkezi Şehir — kısa tarif
+## 5. Lucid Triton — kısa tarif
 
 Kanon veri: çok büyük · çoğunluk insan · beyaz mermer mimari · canlı renklerde
 ağaçlar (09 §5) · söylenti **bastırılmış** (09 §4). Üstüne dört başlık:

@@ -121,7 +121,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Lucid Triton** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir. Resmi kayıtta *Lucidum Triton* | ✅ |
 | **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
 | **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
-| **Elymsyr** | Meridia | Resmi kapı. Teraslı taş kent, gnome vinçleri, gümrük. Mal buradan geçer, **kağıt şehre gider** | ✅ |
+| **Elymsyr** | Meridia | Resmi kapı; ikinci adı **Claport**. Teraslı taş kent, gnome vinçleri, gümrük. Mal buradan geçer, **kağıt şehre gider** | ✅ |
 | **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
 | **Gözcü Kuleleri Hattı** | Votumar | İşaret ağı: gece ateş, gündüz dev aynalar. En uçta deniz feneri | ✅ |
 | **Ravenhall Avlusu** | Meridia | Rünlü taş dairesi. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
@@ -169,7 +169,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Sicil Ağası — Valen Custar** (Askeri Hukuk, *insan*) | "Hastalık hukuki bir kategori değil" | Yetkisi var, kullanmıyor | ✅ |
 | **Levha Sahibi — Perhun Mizan** (Mimarlık, *insan*) | "Bu şehir hastalanmayacak biçimde planlandı" | Sur onarımı kağıt üstünde kaldı | ✅ |
 
-**Merkezi Şehir sokağı**
+**Lucid Triton sokağı**
 
 | Kart | Nerede | Hangi kapıyı açar | Durum |
 |---|---|---|---|
@@ -244,7 +244,7 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Blight — Enfeksiyon** | Maruziyet CON DC 8 → +1 Hastalık Puanı · güvenli bölge dışında her uzun dinlenmede CON DC 10 → +1 · beş aşama: Kuluçka 1–2 · Sistemik Yayılma 3–4 · Ağır Bozulma 5–6 · Morfolojik Çözülme 7–8 · Tam Çöküş 9+ (dönüşüm, geri dönüş yok) · iniş: güvenli bölgede uzun dinlenme −1, vahşide Medicine DC 15 o günü durdurur · tedavi: *Lesser Restoration* −1 puan, *Greater Restoration* bir aşama (−2) | ✅ |
+| **Blight — Enfeksiyon** | Maruziyet CON DC 8 → +1 Hastalık Puanı · günlük CON DC 13 → +1 (güvenli bölgede uzun dinlenme alınmayan her gün; alınsa bile her 3 günde bir) · beş aşama: Kuluçka 1–2 · Sistemik Yayılma 3–4 · Ağır Bozulma 5–6 · Morfolojik Çözülme 7–8 · Tam Çöküş 9+ (dönüşüm, geri dönüş yok) · puan silinmez; vahşide Medicine DC 15 o günün zarını atlatır · tedavi: *Lesser Restoration* sonraki zara +2, *Greater Restoration* +4 | ✅ |
 
 Act 1'de **fiilen işleyen** kural sapması; kartta sapma işareti zorunlu. Halkın
 bildiği yüzü ayrı kart: `lore/Blight — Bilinen Hali`.
@@ -315,7 +315,7 @@ ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
 | **Öğrenci Defteri** | `adventuring-gear` | Spellbook | Lonca kütüphanesi; her açılış kayda geçer | ✅ |
 | **Yük Kancası** | `adventuring-gear` | Grappling Hook | Kaçak yollar ve işçi ağı | ✅ |
 | **Seyir Defteri** | `adventuring-gear` | Book | Rota ve yanaşma hakkı; limanda kimlik yerine geçer | ✅ |
-| **Direnç Şerbeti** | `adventuring-gear` | — (yeni nesne) | Hastalığa karşı **tek** savunma: 24 saat, Blight kurtarma zarlarına **+5**. Ruhsatlı bir otacı, Druid bilgisi ya da Simya Seti üretir (`mekanikler.md` §7) | 🟡 |
+| **Direnç Şerbeti** | `adventuring-gear` | — (yeni nesne) | Hastalığa karşı **tek** savunma: 24 saat, Blight kurtarma zarlarına **+8**. Ruhsatlı bir otacı, Druid bilgisi ya da Simya Seti üretir (`mekanikler.md` §7) | 🟡 |
 | **Lonca Mührü** | `trinket` | Signet Ring | Barınma, kredi, isim sorma hakkı | ✅ |
 | **Lonca Rozeti** | `trinket` | — (yeni nesne) | Görünür üyelik: kapıda tartışma bitirir | ✅ |
 | **Aile Mührü** | `trinket` | Signet Ring | Kapılar isimle açılır, isim yükümlülük getirir | ✅ |
@@ -396,11 +396,9 @@ taşıyıcısı yerine oturdu.
 - **Soyadı ≠ hane.** Halfling ve cüce soyadları (Goodbarrel, Leagallow, Tealeaf)
   aile geleneğidir; defter onları *"tek isim + boş hane"* yazar. Üçlünün sahte
   kimliği bunun üstüne kurulu: **kontrol edilecek bir kayıt yok.**
-- **Ad ırkı söyler,** DM tarif etmez: insan hafif Latin (Doran, Valen, Corin),
-  cüce sert ünsüz + klan, gnome kısa ve tıkırtılı, elf akıcı, halfling yumuşak ad +
-  tasvir soyadı, tiefling cehennem kökü ya da erdem adı.
-- **Yer adları ayrı sicilden:** Meridia hafif Latin (Lucid Triton, Claport),
-  Vorstrand sert küme. İkisi yan yana okununca fark duyulmalı.
+- **Ad ırkı söyler,** DM tarif etmez: insan (Doran, Valen, Corin), cüce sert
+  ünsüz + klan, gnome kısa ve tıkırtılı, elf akıcı, halfling yumuşak ad + tasvir
+  soyadı, tiefling cehennem kökü ya da erdem adı.
 
 ---
 

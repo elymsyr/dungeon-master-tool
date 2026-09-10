@@ -513,8 +513,8 @@ tek bir dar patika çıkıyor.
 09 §5 ve README §2 güzergahı ikisini sayıyor ama hangisinin ne olduğunu söylemiyordu.
 `AE §5` iki farklı köy portresi veriyor ve ikisi de kanonla çelişmiyor.
 
-**Ad ataması (KARAR, geri alınabilir — tek grep):** Adlandırma Doktrini'nin hafif
-Latin havuzundan (README §3.1 M0.5) türetildi.
+**Ad ataması (KARAR, geri alınabilir — tek grep):** adlar hafif ad dozundan
+(README §3.1 M0.5); bir dil kuralından türetilmedi (act1.md §3).
 
 | Köy | Ad neden bu | Ne |
 |---|---|---|
@@ -687,8 +687,7 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
     tercih.
 12. **Bilgi eğimi beş noktaya çıktı** (09 §4'ün genişlemesi): Elymsyr okunur · Cinervik
     bol ve yanlış · Argenfon teselli · Votumar fısıltı · Ravenhall gereksiz.
-13. **Cinervik = yol köyü, Argenfon = kıyı köyü** (§5) — Latin havuzundan türetildi,
-    geri alınabilir.
+13. **Cinervik = yol köyü, Argenfon = kıyı köyü** (§5) — geri alınabilir.
 14. **Liman Ahdi** (§6.2): `act1.md` §7.3'ün kurallarına ad ve iki madde.
 15. **Gümüşsu'ya İhtiyar Heyeti, milis, takas ve Koca Orman eklendi** (§6.1) — manzarası
     değişmedi.
@@ -708,14 +707,12 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 4. **M0.6 — Kara Gemiler ablukasının zamanı.** İki bölüm buna bağlı: Elymsyr'in zinciri
    (§2.3) ve Votumar'ın bugünkü hali (§3.6). Karar verilene kadar ikisi de 🟡.
    Filonun **kimliği** de yazılmadı (ork değil, ne olduğu belli değil).
-5. **Nehrin adı.** `AE` "Altın Nehir" diyor; Meridia'nın yer adları hafif Latin
-   (README §3.1 M0.5) ve bu kıtanın en büyük ekonomik arteri resmi kayıtta olurdu.
-   Türkçe ad mı Latin ad mı — karar verilmedi, belgede adsız geçiyor.
-6. **06 #14 daralıyor ama kapanmadı.** "Kuzeyden gelen çürüme" iddiasını bu turdaki iki
-   kaynağın **hiçbiri** desteklemiyor: `act1.md` §3.1 hastalığı **Vorstrand'dan**
-   getiriyor, `AE §5` Gümüşsu'yu (güney) ilk hisseden yer sayıyor, ve Ravenhall (kuzey)
-   hasta değil. Karar sahibinin işi: #14'ü kapatmak ya da kuzey hattını ayrıca yazmak.
-7. **Cinervik/Argenfon ataması** (§5) tek grep'le tersine çevrilebilir; onay bekliyor.
+5. **Nehrin adı.** `AE` "Altın Nehir" diyor; karar verilmedi, belgede adsız geçiyor.
+6. ~~**06 #14**~~ — **KAPANDI** (genel-kartlar): hastalık **Vorstrand'dan** geldi
+   (`act1.md` §3.1); kuzeyden gelen çürüme yok, Gümüşsu'nun güneyde olması çelişki değil.
+7. **Argenfon'un adı** (§5). Adlandırma Doktrini'nde *Argentfons* Gümüşsu'nun
+   Latinleşmiş haliydi; aynı anlamdaki ad şimdi ayrı bir köyde (`AE`'nin Büyük Köy'ü)
+   duruyor. Kıyı köyü yeni ad bekliyor — tek grep.
 
 ---
 

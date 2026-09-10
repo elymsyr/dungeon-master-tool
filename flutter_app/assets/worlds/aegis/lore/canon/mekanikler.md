@@ -231,10 +231,10 @@ bulunması bir kayıt işlemidir, ve kaydı olmayan iksir satılmaz.
 **Direnç Şerbeti (yeni kart, `adventuring-gear`).** Bu evrende hastalığa karşı var
 olan **tek** savunma.
 
-> İçildiğinde **24 saat** boyunca **Hastalık Puanı kazanma** zarlarına **+5** verir —
-> hem maruziyet zarına (CON DC 12) hem uzun dinlenme zarına (CON DC 13).
+> İçildiğinde **24 saat** boyunca **Hastalık Puanı kazanma** zarlarına **+8** verir —
+> hem maruziyet zarına (CON DC 12) hem günlük hastalık zarına (CON DC 13).
 
-+5 kasten yüksek: bu bir kolaylık değil, **kıt bir kaynak.** Kural şerbeti güçlü
++8 kasten yüksek: bu bir kolaylık değil, **kıt bir kaynak.** Kural şerbeti güçlü
 yapıp bulunmasını zorlaştırıyor; tersi (zayıf ve bol) hastalığı bir tempo kuralından
 bir muhasebe kalemine çevirirdi.
 
@@ -243,8 +243,8 @@ yazdı; `YT` *ücretini* ekliyor ve ikisi çelişmiyor:
 
 | Büyü | Etki (kanon, `act1.md` §4.4) | Yapanın ödediği (bu belge) |
 |---|---|---|
-| *Lesser Restoration* | **1 Hastalık Puanı** siler | **1 seviye Exhaustion** |
-| *Greater Restoration* | **Bir aşama geriletir (2 puan)** — hastalığı kaldırmaz | Kalıcı bir **Can Zarı (Hit Die)** |
+| *Lesser Restoration* | Bir sonraki hastalık zarına **+2** — puan silmez | **1 seviye Exhaustion** |
+| *Greater Restoration* | Bir sonraki hastalık zarına **+4** — puan silmez | Kalıcı bir **Can Zarı (Hit Die)** |
 
 Bu, `act1.md` §4.4'ün *"Meridia'da bu büyüyü kimin yapabildiği ayrı ve siyasi bir
 sorudur"* cümlesine cevabın yarısını veriyor: yapabilen az, çünkü **her seferinde
@@ -286,7 +286,7 @@ Yeni kart açmak, kuralı dünyadan koparıyor.
 | Kategori | Kart | Ne |
 |---|---|---|
 | `lore` | **Kural Sapmaları** | 3 sayfa: *Ölümün Ağırlığı* (§5) · *Işınlanma ve Mesafe* (§4.2) · *Kalıcı Yaralar* (§8) |
-| `adventuring-gear` | **Direnç Şerbeti** | Hastalığa karşı tek savunma; 24 saat, +5 (§7) |
+| `adventuring-gear` | **Direnç Şerbeti** | Hastalığa karşı tek savunma; 24 saat, +8 (§7) |
 
 **Var olan kartlara giren — 5**
 
@@ -316,8 +316,8 @@ kanonuyla çelişiyorlar (README §0).
 **Kapsam dışı bırakılanlar (çelişmiyor, sadece bu turda alınmadı).**
 **Geri alınanlar (2026-09-10).** İlk turda burada duran dört satır kanona girdi:
 Hastalık Puanı ve beş aşama · Hastalık Sisi (artık bir **maruziyet yolu**, zar yine
-maruziyetsiz atılmaz) · güvenli bölgede −1 puan ve Medicine DC 15 · *Greater
-Restoration*'ın bir aşama geriletmesi. Hepsi `act1.md` §4.1–4.4'te.
+maruziyetsiz atılmaz) · güvenli bölge ve Medicine DC 15 (puan silmez, artışı
+yavaşlatır) · şifa büyülerinin hastalık zarına bonusu. Hepsi `act1.md` §4.1–4.4'te.
 
 Kaynak PDF'in `Aşama 3–5`'i (dinlenme ve erzak kuralları, bölgesel fiyatlandırma,
 mühimmat ve ekipman yıpranması, zihinsel gerilim, Aranma Durumu ve "Gümüş İğne
@@ -346,8 +346,8 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
 9. **Yozlaşma Kontrolü kanon** (§6), ama **cephenin ötesinde** işler; Act 1'de
    atılmaz. Druid +2, Paladin fiziksel etkilere dayanıklı.
 10. **Şifa İksiri kıt** ve sebebi ruhsat (§7); **Direnç Şerbeti** tek savunma.
-11. **Şifa büyülerinin bedeli yapana ait** (§7): *Lesser* → 1 puan siler, yapana 1
-    exhaustion; *Greater* → bir aşama (2 puan) geriletir, yapana kalıcı Can Zarı.
+11. **Şifa büyülerinin bedeli yapana ait** (§7): *Lesser* → sonraki hastalık zarına
+    +2, yapana 1 exhaustion; *Greater* → sonraki hastalık zarına +4, yapana kalıcı Can Zarı.
 12. **Kalıcı Yaralar kanon** (§8): 0 HP ya da tek vuruşta yarı can.
 13. **Hastalık Puanı sistemi kanon** (2026-09-10, `act1.md` §4.2) — Blight'ın tek
     sayacı **puan**, beş aşama, 9+ dönüşüm. Üç evre kaldırıldı.
@@ -361,7 +361,8 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
    zarıyla hizalandı; kanon bir sayı verirse değişir.
 2a. **Günlük hastalık zarı türetildi** (`act1.md` §4.2) — `YT` puanın maruziyet
    dışında nasıl arttığını söylemiyor, Medicine DC 15 ise günlük bir artışı
-   varsayıyor. Güvenli bölge dışında her uzun dinlenmede CON DC 13 yazıldı.
+   varsayıyor. CON DC 13 yazıldı: güvenli bölgede uzun dinlenme alınmayan her gün,
+   alınsa bile her 3 günde bir.
 2b. **Aşama 4'ün yozlaşma tablosu yazılmadı** — "Wild Magic benzeri" deniyor, tablo yok.
 3. **Kalıcı Yara bandları türetildi** (§8) — kaynak yalnız iki ucu veriyor. Üç
    bandın sınırları (1–5 / 6–14 / 15–20) ve örnek yaralar karar bekliyor.
@@ -391,7 +392,7 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
   bağlıdır (çağrıldığında gitmek zorunda), olmayan PC şehirde gizlenmek zorundadır.
   İkisi de oynanacak bir şey; hiçbiri "büyü yapamazsın" değil. Bir kuralı ceza gibi
   oynatırsan masa büyüyü bırakır, ve bu belgenin amacı bu değil.
-- **Şerbetin +5'i büyük görünüyor, ama korkutucu olan kıtlığı.** Masa şerbeti bir
+- **Şerbetin +8'i büyük görünüyor, ama korkutucu olan kıtlığı.** Masa şerbeti bir
   kez içtiğinde bir daha bulamayacağını anlar, ve o andan sonra kulübeye girmeyi
   konuşarak karar verir — kural tam olarak bunu istiyordu (08 §4: hastalanmak bir
   seçimin sonucu). Şerbeti bollaştırırsan o konuşma ölür.
@@ -405,8 +406,8 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
   hikayesi aynı kaldı: 8 puanla gelip kulübedeki gecenin zarıyla 9'a çıkıyorlar.
   Kalan satırların neden düştüğü tabloda yazılı.
 - **Puan sistemi Act 1'de yavaş değil, sayılı işler.** Kulübeye giren her PC bir
-  maruziyet zarı atar ve o puanı köyden çıkınca da taşır — Medicine DC 15 ve
-  güvenli bölge olmadan puan inmez. Masaya bunu Umay'ın ağzından **önceden** söyle.
+  maruziyet zarı atar ve o puanı köyden çıkınca da taşır — puan **hiç inmez**;
+  güvenli bölge ve Medicine DC 15 yalnız artışı yavaşlatır. Masaya bunu Umay'ın ağzından **önceden** söyle.
 - **Yozlaşma Kontrolü'nün asıl işi bir sonraki perdenin haritasını çizmek.**
   "3. seviye büyü yapmanın bedeli olan bir zemin" demek, "bu kıtanın bir yerinde
   büyücünün işe yaramadığı bir bölge var" demektir. O bölgeyi yazarken bu kural
