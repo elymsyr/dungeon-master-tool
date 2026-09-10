@@ -86,11 +86,11 @@ Kart eşiği gereği kıtaların da kartı var; Act 1'in yerleri bunların altı
 |---|---|---|---|
 | **Aegis** — dünya | — | ✅ | README §1. Kökü tutan kart; altında iki kıta |
 | **Meridia** — kıta | Aegis | ✅ | Act 1'in tamamı burada. Sancak Kaydı'nın geçerli olduğu yer |
-| **Vorstrand** | Aegis | ✅ | act1.md §3.1: Blight oradan geldi, üçlü oradan kaçtı. Sert sicil (*vost-* doğu + *-strand* kıyı) — Meridia'nın hafif Latin adlarının yanında duyulur fark budur. Perde bu kıta ufukta görülünce biter (06 #12) |
+| **Vorstrand** | Aegis | ✅ | act1.md §3.1: Blight oradan geldi, üçlü oradan kaçtı. Ad: *vost-* doğu + *-strand* kıyı. Perde bu kıta ufukta görülünce biter (06 #12) |
 
-Bölge/güzergah kartları (Cinervik · Argenfon · Votumar · Ravenhall) henüz yazılmıyor:
-ikisi ad kararı bekliyor, ikisi Act 1'de yer alıp almadığı belli değil
-([`act1-kartlar.md`](act1-kartlar.md) planlama başlığı).
+Bölge/güzergah kartları (Cinervik · Argenfon · Votumar · Ravenhall) bu listede değil:
+içerikleri [`bolgeler.md`](bolgeler.md)'de yazıldı, kartları
+[`kart-listesi.md`](kart-listesi.md) §3'te.
 
 ## 3. `background` — 9 kart ✅
 
@@ -234,7 +234,7 @@ yarı-varlık) · Occulus arşivcisi (belgesel kapının kurumsal yüzü).
 **Jenerik düşmanlar** — `monster` Blight'lı asker · Ele geçirilmiş paladin.
 
 **Blight cephesi** — `environmental-effect`; 02 §5.1, sınır var ve tutuluyor.
-Blight bir iklim değil cephe olduğu için harita kararına bağlı (#14).
+Blight bir iklim değil cephe; hastalık ikinci kıtadan taşındı (#14 kapandı, yukarıda).
 
 **Açık kalan kategori kararları** — `class`/`subclass`/`spell` kartı gerekiyor mu,
 yoksa ilahi büyü sapması için `lore` notu yeter mi (README §6.5) · `service`/`hireling`

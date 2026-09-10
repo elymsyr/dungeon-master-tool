@@ -32,7 +32,7 @@
 >
 > **2026-09-10 revizyonu (hastalık turu):** Blight'ın üç evresi yerine **Hastalık
 > Puanı + beş aşama** kanon oldu (§4.1–4.2) · *Greater Restoration* hastalığı artık
-> kaldırmıyor, **bir aşama (2 puan) geriletiyor** (§4.4) · üçlünün hikayesi
+> kaldırmıyor ve puan da silmiyor, **bir sonraki hastalık zarına +4** veriyor (§4.4) · üçlünün hikayesi
 > değişmedi, eşikleri 8 puan olarak yazıldı (§4.5).
 >
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
@@ -394,8 +394,12 @@ Blight bir anda bulaşan bir virüs değil, bedende **yavaş yavaş biriken bir 
 Tek sayacı **Hastalık Puanı**dır *(kaynakta "HP"; can puanıyla karışmasın diye kartta
 açık yazılır)*. 1 puanı olan herkes **taşıyıcıdır ve bulaştırır.**
 
-**Puan nasıl artar:** her maruziyet başarısızlığı (§4.1) +1. Ayrıca taşıyıcı,
-**güvenli bölge dışında** her uzun dinlenmede **CON DC 13** atar; başarısızlık +1.
+**Puan nasıl artar:** her maruziyet başarısızlığı (§4.1) +1. Ayrıca hastalığa zaten
+sahip olan (1+ puan) taşıyıcı **CON DC 13** atar; başarısızlık +1:
+
+- **Güvenli bölgede uzun dinlenme alınmayan her gün** zar atılır.
+- Her gün güvenli bölgede uzun dinlenme alınsa bile **her 3 günde bir** zar atılır.
+
 ⚠️ *Günlük zarın DC'si türetildi — eski Evre 2 zarından korundu.*
 
 | Aşama | Puan | Belirtiler | Mekanik etki |
@@ -414,7 +418,8 @@ değil — [`mekanikler.md` §10](mekanikler.md).)*
 **Puan nasıl iner:**
 
 - **Güvenli bölge** — maruziyet kaynağı (hasta, ceset, Blight zemini) olmayan korunaklı
-  bir yerleşim: şehir, lonca binası. Uzun dinlenme **puan silmez** ama  zar da atılmaz.
+  bir yerleşim: şehir, lonca binası. Uzun dinlenme **puan silmez**; günlük zar yalnız
+  her 3 günde bir atılır.
 - **Vahşi doğa** — puan silinmez. **Medicine DC 15** başarılı bir müdahale o günün
   zarını atlatır: puan artışı o gün için durur.
 - Büyüler ve Direnç Şerbeti yavaşlatabilir §4.4.
@@ -454,7 +459,7 @@ Act 1'in kanıtladığı tek şey suçun **gizleme** olduğu; eserin kendisi son
 perdelere kalır.
 
 Üçlü **şu an son aşamanın eşiğinde** (8 puan, Aşama 4'ün sonunda). Kulübedeki gecenin
-uzun dinlenme zarı onları 9'a taşır — şafaktaki dönüşüm budur (§5). Oyuncular bunu
+günlük hastalık zarı onları 9'a taşır — şafaktaki dönüşüm budur (§5). Oyuncular bunu
 bilmiyor; kimse bilmiyor.
 
 ### 4.6 Yalnız biyolojik değil — büyülü de (KARAR, 4. tur)
@@ -589,7 +594,7 @@ standartla:
 | Yer | NPC ihtiyacı |
 |---|---|
 | **Gizli Liman** | → §7'de yazıldı |
-| **Lonca + Merkezi Şehir** | → [`lonca-sehir.md`](lonca-sehir.md) §6–7: Meclis'in altı koltuğu + sokağın beşi |
+| **Lonca + Lucid Triton** | → [`lonca-sehir.md`](lonca-sehir.md) §6–7: Meclis'in altı koltuğu + sokağın beşi |
 | **Elymsyr** | → [`bolgeler.md`](bolgeler.md) §2.7: gümrük valisi · nehir muhafızı çavuşu · vinç ustası · çevirmen |
 | **Paladin Şatosu (Votumar)** | → [`bolgeler.md`](bolgeler.md) §3.7: Başkumandan · kapı komutanı · şüpheci rütbeli · kule nöbetçisi |
 | **Ravenhall Avlusu** | → [`bolgeler.md`](bolgeler.md) §4.6: en yaşlı druid · patika gözcüsü |

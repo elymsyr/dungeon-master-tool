@@ -168,7 +168,7 @@ Kuyumcu boşluğu da kapandı: **Mine**, otuz birinci kart.
 
 Yazılmayacak, sadece unutulmasın diye duruyor. Sırası geldiğinde kart olur.
 
-**Lonca ve Merkezi Şehir** — artık plan değil, yazılmış kanon:
+**Lonca ve Lucid Triton** — artık plan değil, yazılmış kanon:
 [`lonca-sehir.md`](lonca-sehir.md). Yedi lonca (`lore`), Konsey/Meclis ayrımı,
 şehir tarifi, altı NPC ve 19 kartlık yazım listesi orada. Kalan engeller:
 şehir **Lucid Triton**, lonca ve hane adları onaylandı. *Kim ödedi* cevabı da
@@ -188,10 +188,8 @@ belirsiz.
 **Votumar (Paladin Şatosu)** ve **Ravenhall Avlusu** — README §2 güzergahında var ama
 act1.md'de hiç geçmiyor. Act 1'de yer alıyorlar mı → karar.
 
-**Cinervik · Argenfon** — README §2 güzergah adları, içerik yok. *Argenfon*
-(argentum + fons) ile *Gümüşsu* aynı anlama geliyor: aynı yerin iki adı mı, iki ayrı
-yer mi → **ad kararı.** (Dil ayrımı kanon olmaktan çıktı, act1.md §3; bu artık bir
-doktrin sorusu değil, tek bir yer sorusu.)
+**Cinervik · Argenfon** — yazıldı: [`bolgeler.md`](bolgeler.md) §5 (yol köyü ·
+kıyı köyü). Gümüşsu'dan ayrı yerler (`AE` §5'in üç köyü).
 
 **Tier 3 — `blueprint.json`** — dört pre-gen (Jaonos · Bızdır · Aly · Will), rol
 yuvası başına bir tane. Faz 6; serbest yaratım kararından sonra zorunlu değil, örnek.
