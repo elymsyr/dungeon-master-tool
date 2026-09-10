@@ -173,12 +173,12 @@ etkilemez: soru "ırksal özellik nereden geliyor", "hangi ırklar var" değil.
 
 | Kart | Kategori | Durum | Not |
 |---|---|---|---|
-| **Blight — Enfeksiyon** | `curse` | ✅ | act1.md §4 — bulaşma DC'si, üç evre, üç başarı/üç başarısızlık, tedavi. Perdenin **tek** kural sapması |
+| **Blight — Enfeksiyon** | `curse` | ✅ | act1.md §4 — bulaşma DC'si, Hastalık Puanı, beş aşama, tedavi. Perdenin **tek** kural sapması |
 
 **Kategori kararı (2026-09-09): `curse`, `applied-condition` değil.** Sebep şema:
 `applied-condition` zorunlu `condition_ref` ister ve Blight bir SRD condition'ı
 değil. `curse` ise `trigger` · `effect` · `mechanical_notes` · `removed_by`
-alanlarını serbest bırakıyor (`world-blueprint.md` §3.10) — evre tablosu ve DC'ler
+alanlarını serbest bırakıyor (`world-blueprint.md` §3.10) — aşama tablosu ve DC'ler
 oraya sığıyor.
 
 **Ad ayrımı:** `curse/Blight — Enfeksiyon` = kural kartı (DM). `lore/Blight —

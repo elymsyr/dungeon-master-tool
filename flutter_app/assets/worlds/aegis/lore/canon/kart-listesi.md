@@ -235,7 +235,7 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 | **Pençe (Alton)** · **Pençe (Merla)** | `creature-action` | +4, 1d6+2 delici | ✅ |
 | **Pençe (Kromanna)** | `creature-action` | +6, 1d10+4 delici | ✅ |
 | **Acıyı Tanımaz** | `trait` | 0 HP'de ölüm zarı atmaz, ölür | ✅ |
-| **Bulaştıran Yara** | `trait` | İsabette CON DC 12 → Blight Evre 1 | ✅ |
+| **Bulaştıran Yara** | `trait` | İsabette CON DC 12 → +1 Hastalık Puanı | ✅ |
 | **Durmayan Adım** | `trait` | Alton: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
 | **Kesik Kesik** | `trait` | Merla: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
 | **Erken Güçlenme** | `trait` | Kromanna: ilk turunda ek Pençe | ✅ |
@@ -244,13 +244,13 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Blight — Enfeksiyon** | Bulaşma CON DC 12 · Evre 1 sessiz taşıma (~1 ay) · Evre 2 her uzun dinlenmede CON DC 13, üç başarı/üç başarısızlık · Evre 3 dönüşüm, geri dönüş yok · tedavi: *Lesser Restoration* bir başarısızlığı siler, *Greater Restoration* Evre 1–2'de kaldırır | ✅ |
+| **Blight — Enfeksiyon** | Maruziyet CON DC 8 → +1 Hastalık Puanı · güvenli bölge dışında her uzun dinlenmede CON DC 10 → +1 · beş aşama: Kuluçka 1–2 · Sistemik Yayılma 3–4 · Ağır Bozulma 5–6 · Morfolojik Çözülme 7–8 · Tam Çöküş 9+ (dönüşüm, geri dönüş yok) · iniş: güvenli bölgede uzun dinlenme −1, vahşide Medicine DC 15 o günü durdurur · tedavi: *Lesser Restoration* −1 puan, *Greater Restoration* bir aşama (−2) | ✅ |
 
 Act 1'de **fiilen işleyen** kural sapması; kartta sapma işareti zorunlu. Halkın
 bildiği yüzü ayrı kart: `lore/Blight — Bilinen Hali`.
 
 Karta ayrıca **Yozlaşma Kontrolü** (cephenin ötesinde 3+ seviye büyü → CON ya da
-Spellcasting Ability DC 13, başarısızlıkta Evre 1) ve şifa büyülerinin **yapana**
+Spellcasting Ability DC 13, başarısızlıkta +1 Hastalık Puanı) ve şifa büyülerinin **yapana**
 bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 `lore/Kural Sapmaları`.
 

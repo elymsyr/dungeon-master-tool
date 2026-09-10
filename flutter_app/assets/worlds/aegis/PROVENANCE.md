@@ -73,7 +73,7 @@ tablodaki 20; eksik olan bir kart değil, başlıktaki bir sayı.
 | Meridia | Aegis | `kartG §2b` + `bolge §0` (arazi: dağlar/nehir, kireçtaşı kıyı, kuzey platosu) + `act1 §7.2` (yol serbest) |
 | Vorstrand | Aegis | `kartG §2b` + `act1 §3.1` |
 | Gümüşsu | Meridia | `act1 §3` (manzara, kadro) + `bolge §6.1` (İhtiyar Heyeti, milis, takas, Koca Orman) + `RM §3.1 M0.4` |
-| Kulübe | Gümüşsu | `act1 §3` (köyün kendi kararı) + `act1 §3.3` (kapalı eşya listesi) + `act1 §5` (son evre eşiği) |
+| Kulübe | Gümüşsu | `act1 §3` (köyün kendi kararı) + `act1 §3.3` (kapalı eşya listesi) + `act1 §4.5` + `act1 §5` (son aşama eşiği, 8 puan) |
 | Goodbarrel'ın Ocak Başı | Gümüşsu | `act1 §3.4` tamamı (fiyatlar dahil) |
 | Gizli Liman | Meridia | `act1 §7` tamamı + `bolge §6.2` (Liman Ahdi) + `mek §4.3` (büyü malzemesi), `mek §2` (lisans bir şaka) |
 | Rıhtım | Gizli Liman | `act1 §7.6` tamamı |
@@ -138,14 +138,14 @@ oturtmak için yazıldı ve her kartın `dmNotes`'unda böyle işaretlendi. Ayn�
 
 | Entity | Kaynak |
 |---|---|
-| Blight — Enfeksiyon | `act1 §4` tamamı (bulaşma DC 12 · üç evre · üç başarı/üç başarısızlık · tedavi) + `mek §6` (Yozlaşma Kontrolü) + `mek §7` (şifa büyülerinin yapana bedeli, Direnç Şerbeti) + `act1 §4.6` (büyülü + biyolojik, Arcana DC 13) |
+| Blight — Enfeksiyon | `act1 §4` tamamı (bulaşma DC 12 · Hastalık Puanı · beş aşama · güvenli bölge / Medicine DC 15 · tedavi) + `mek §6` (Yozlaşma Kontrolü) + `mek §7` (şifa büyülerinin yapana bedeli, Direnç Şerbeti) + `act1 §4.6` (büyülü + biyolojik, Arcana DC 13) |
 
 Kategori kararı `act1 §4`: `curse`, `applied-condition` değil — Blight bir SRD
 condition'ı değil ve `curse` şeması `trigger`/`effect`/`mechanical_notes`/`removed_by`
 alanlarını serbest bırakıyor.
 
-⚠️ **Yozlaşma DC'si 13 türetildi** (`mek §6`, `mek §11` açık 2); Evre 2 zarıyla
-hizalandı, kanon bir sayı vermiyor.
+⚠️ **Yozlaşma DC'si 13 türetildi** (`mek §6`, `mek §11` açık 2); günlük hastalık
+zarıyla (CON DC 13, o da türetildi — `act1 §4.2`) hizalandı, kanon bir sayı vermiyor.
 
 ## scene — 11 · encounter — 1 · quest — 3
 
