@@ -120,7 +120,7 @@ Background eşyaları (13 kart) act'a özgü değil → [`genel-kartlar.md` §4]
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Blight — Enfeksiyon** | ✅ | act1.md §4 — evreler, DC'ler, tedavi yazıldı. Perdenin **tek** kural sapması. Act'a özgü değil ama ilk burada masaya çıkıyor; sayım genel listede |
+| **Blight — Enfeksiyon** | ✅ | act1.md §4 — Hastalık Puanı, beş aşama, DC'ler, tedavi yazıldı. Perdenin **tek** kural sapması. Act'a özgü değil ama ilk burada masaya çıkıyor; sayım genel listede |
 
 ---
 

@@ -32,8 +32,9 @@ mekaniğe çeviriyor mu?** Çevirmiyorsa girmiyor, ne kadar iyi bir kural olursa
   satırın fiyatını yazıyor.
 - **Diriltmenin bedeli** giriyor, çünkü bu dünyada tanrılar 300 yıldır cevap
   vermiyor (`lore/İrade Çağı`). Bedava diriltme, hikayenin omurgasını yalanlar.
-- **Hastalık Puanı sistemi girmiyor**, çünkü `act1.md` §4 hastalığı üç **evreye**
-  bağladı ve o karar bu belgeden üstün. Aynı hastalık iki sayaçla ölçülemez.
+- **Hastalık Puanı sistemi giriyor** (2026-09-10), çünkü Blight bir anda gelen bir
+  darbe değil **biriken bir zehir**. Tek sayacı puan; `act1.md` §4.2 eski üç evreyi
+  onunla değiştirdi. Aynı hastalık iki sayaçla ölçülmez — artık tek sayaç var.
 
 ---
 
@@ -192,20 +193,21 @@ Blight bir cephedir, iklim değil (README §1): sınırı var ve tutuluyor. Bu k
 > **Zar:** Constitution **veya** Spellcasting Ability kurtarma zarı — büyücü hangisini
 > istiyorsa. **DC 13.** ⚠️
 >
-> **Başarısızlık:** büyü **gerçekleşir**, ama **Bozulma** olur: büyücü `Blight —
-> Enfeksiyon`un (`act1.md` §4) **Evre 1'ine** girer. Zaten Evre 1'deyse bir sonraki
-> uzun dinlenmede Evre 2 zarını atmaya başlar.
+> **Başarısızlık:** büyü **gerçekleşir**, ama **Bozulma** olur: büyücü **+1 Hastalık
+> Puanı** alır (`Blight — Enfeksiyon`, `act1.md` §4.2).
+>
+> **Aşama 2 ve üstü taşıyıcı:** zemin fark etmeksizin her 3.+ seviye büyüde kontrol
+> **zorunlu.** Başarısızlıkta ayrıca **büyü seviyesi kadar can** kaybeder.
 
-⚠️ **İki sayı türetildi, kanon değil** — `YT` DC vermiyor ve başarısızlığı "Geçici
-Hastalık Puanı" diye ölçüyor; o sayaç bu evrende yok (§0). DC 13, `act1.md` §4.2'nin
-Evre 2 zarıyla aynı tutuldu. Kanon bir sayı verdiğinde bu satır onunla değişir.
+⚠️ **DC 13 türetildi, kanon değil** — `YT` DC vermiyor. `act1.md` §4.2'nin günlük
+zarıyla aynı tutuldu. Kanon bir sayı verdiğinde bu satır onunla değişir.
 
 **Sınıfsal istisnalar:**
 
 | Sınıf | Fark |
 |---|---|
 | **Druid** | Yozlaşma zarına **+2**. Doğanın hastalandığını okuyabilen tek meslek; Ravenhall'un öğrettiği şey bu ([`bolgeler.md` §4](bolgeler.md)) |
-| **Paladin** | Bozulmanın **fiziksel** etkilerini daha kolay savuşturur: Evre 1'in belirtileri onda görünmez, ilerleyişi değişmez |
+| **Paladin** | Bozulmanın **fiziksel** etkilerini daha kolay savuşturur: Aşama 1'in belirtileri onda görünmez, puanı ve mekaniği değişmez |
 
 **Neden Act 1'de hiç atılmıyor:** perdenin tamamı cephenin **iç** tarafında geçiyor
 ve masa 3. seviye büyü yapmıyor. Kural, bir sonraki perdenin coğrafyası için yazıldı.
@@ -229,8 +231,8 @@ bulunması bir kayıt işlemidir, ve kaydı olmayan iksir satılmaz.
 **Direnç Şerbeti (yeni kart, `adventuring-gear`).** Bu evrende hastalığa karşı var
 olan **tek** savunma.
 
-> İçildiğinde **24 saat** boyunca `Blight — Enfeksiyon`un kurtarma zarlarına
-> **+5** verir — hem maruziyet zarına (CON DC 12) hem Evre 2 zarına (CON DC 13).
+> İçildiğinde **24 saat** boyunca **Hastalık Puanı kazanma** zarlarına **+5** verir —
+> hem maruziyet zarına (CON DC 12) hem uzun dinlenme zarına (CON DC 13).
 
 +5 kasten yüksek: bu bir kolaylık değil, **kıt bir kaynak.** Kural şerbeti güçlü
 yapıp bulunmasını zorlaştırıyor; tersi (zayıf ve bol) hastalığı bir tempo kuralından
@@ -241,8 +243,8 @@ yazdı; `YT` *ücretini* ekliyor ve ikisi çelişmiyor:
 
 | Büyü | Etki (kanon, `act1.md` §4.4) | Yapanın ödediği (bu belge) |
 |---|---|---|
-| *Lesser Restoration* | Bir Evre 2 başarısızlığını siler. Bir gün kazandırır | **1 seviye Exhaustion** |
-| *Greater Restoration* | Evre 1 veya 2'de hastalığı **kaldırır** | Kalıcı bir **Can Zarı (Hit Die)** |
+| *Lesser Restoration* | **1 Hastalık Puanı** siler | **1 seviye Exhaustion** |
+| *Greater Restoration* | **Bir aşama geriletir (2 puan)** — hastalığı kaldırmaz | Kalıcı bir **Can Zarı (Hit Die)** |
 
 Bu, `act1.md` §4.4'ün *"Meridia'da bu büyüyü kimin yapabildiği ayrı ve siyasi bir
 sorudur"* cümlesine cevabın yarısını veriyor: yapabilen az, çünkü **her seferinde
@@ -305,17 +307,18 @@ kanonuyla çelişiyorlar (README §0).
 
 | Reddedilen | Çeliştiği kanon |
 |---|---|
-| **Hastalık Puanı (HP) sistemi — 5 aşama, 9+ puanda çöküş** | `act1.md` §4: hastalık **üç evre**, Evre 2'de üç başarı / üç başarısızlık. Aynı hastalık iki sayaçla ölçülemez |
-| **"Hastalık Sisi"nde sürekli CON zarı** | `act1.md` §4.1: zar **maruziyet olmadan atılmaz** — hastalanmak bir cezanın değil **bir seçimin** sonucu (08 §4) |
-| **Aşama 5: "Simyacı'nın iradesine bağlanmış NPC"** | README §1: baş kötü **Lucian**, Simyacı Act 1 kanonunda yok. Evre 3'ün *"emir bekleyen bir et"* hali kanon (02 §2) — **kimin** emri değil |
+| **Aşama 5: "Simyacı'nın iradesine bağlanmış NPC"** *(yalnız Simyacı kısmı — Aşama 5'in kendisi kanon)* | README §1: baş kötü **Lucian**, Simyacı Act 1 kanonunda yok. Dönüşmüş'ün *"emir bekleyen bir et"* hali kanon (02 §2) — **kimin** emri değil |
 | **"Mızrak Etkisi: hasta bir priz gibi kullanılır"** | README §1: Act 1'de **mızrak parçası yok** |
 | **Orklar dezavantajlı, yarı-orklar −3 ("hastalık orklar için özelleştirildi")** | `act1.md` §3.1, `lore/Vorstrand`: hastalık **Vorstrand'dan** geldi, bir ırk için tasarlanmadı. Ayrıca kanonun iki yarı-orc NPC'si var (Kaptan Holg · Çavuş Krusk) ve ikisinde de böyle bir işaret yok. 06 #11 (ırksal özelliklerin kaynağı) **açık** — kapanmadan ırka mekanik ceza yazılmaz |
-| **Greater Restoration "1 aşama geriletir"** | `act1.md` §4.4: Evre 1–2'de hastalığı **kaldırır.** Yapanın bedeli alındı, etkisi alınmadı |
 | ***Resistance* büyüsü hastalık zarına +5** | SRD: *Resistance* **+1d4** verir. README §6.5: sıfırdan sistem yazılmaz, SRD satırı yeniden tanımlanmaz. Cantrip olduğu gibi kullanılır ve yine işe yarar |
-| **"Güvenli bölgede uzun dinlenme 1 Hastalık Puanı siler"** · **"Medicine DC 15 puan artışını durdurur"** | Puan sistemi düştüğü için dayanağı kalmadı. Evre 2'nin çıkış yolu kanonda **üç başarı** |
 | **`AE §3.3`: "Aethelgard'da Büyücü Loncası yoktur", ışınlanma ve büyüsel mesajlaşma yok** | [`lonca-sehir.md` §2](lonca-sehir.md): Büyücü Loncası **Meclis'in altı koltuğundan biri** ve tekeli **ışınlanma kaydı.** `AE` bu noktada tamamen ters; `YT`'nin lonca temelli büyüsü kanonla örtüşen okuma |
 
 **Kapsam dışı bırakılanlar (çelişmiyor, sadece bu turda alınmadı).**
+**Geri alınanlar (2026-09-10).** İlk turda burada duran dört satır kanona girdi:
+Hastalık Puanı ve beş aşama · Hastalık Sisi (artık bir **maruziyet yolu**, zar yine
+maruziyetsiz atılmaz) · güvenli bölgede −1 puan ve Medicine DC 15 · *Greater
+Restoration*'ın bir aşama geriletmesi. Hepsi `act1.md` §4.1–4.4'te.
+
 Kaynak PDF'in `Aşama 3–5`'i (dinlenme ve erzak kuralları, bölgesel fiyatlandırma,
 mühimmat ve ekipman yıpranması, zihinsel gerilim, Aranma Durumu ve "Gümüş İğne
 Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu turun kapsamı
@@ -343,18 +346,23 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
 9. **Yozlaşma Kontrolü kanon** (§6), ama **cephenin ötesinde** işler; Act 1'de
    atılmaz. Druid +2, Paladin fiziksel etkilere dayanıklı.
 10. **Şifa İksiri kıt** ve sebebi ruhsat (§7); **Direnç Şerbeti** tek savunma.
-11. **Şifa büyülerinin bedeli yapana ait** (§7): *Lesser* → 1 exhaustion,
-    *Greater* → kalıcı Can Zarı. Etkileri `act1.md` §4.4'te olduğu gibi kaldı.
+11. **Şifa büyülerinin bedeli yapana ait** (§7): *Lesser* → 1 puan siler, yapana 1
+    exhaustion; *Greater* → bir aşama (2 puan) geriletir, yapana kalıcı Can Zarı.
 12. **Kalıcı Yaralar kanon** (§8): 0 HP ya da tek vuruşta yarı can.
-13. **Hastalık Puanı sistemi reddedildi** (§10) — Blight'ın tek sayacı **evre**.
+13. **Hastalık Puanı sistemi kanon** (2026-09-10, `act1.md` §4.2) — Blight'ın tek
+    sayacı **puan**, beş aşama, 9+ dönüşüm. Üç evre kaldırıldı.
 
 **Açık:**
 
 1. **Diriltme Sınavı'nın zarı ve DC'si** (§5) — sınav kanon, zarı değil. Öneri:
    büyücünün Spellcasting Ability kontrolü, DC ölümün üstünden geçen süreye göre
    yükselen bir merdiven. Karar verilmedi.
-2. **Yozlaşma DC'si 13 türetildi** (§6) — `YT` sayı vermiyor. Evre 2 zarıyla
-   hizalandı; kanon bir sayı verirse değişir.
+2. **Yozlaşma DC'si 13 türetildi** (§6) — `YT` sayı vermiyor. Günlük hastalık
+   zarıyla hizalandı; kanon bir sayı verirse değişir.
+2a. **Günlük hastalık zarı türetildi** (`act1.md` §4.2) — `YT` puanın maruziyet
+   dışında nasıl arttığını söylemiyor, Medicine DC 15 ise günlük bir artışı
+   varsayıyor. Güvenli bölge dışında her uzun dinlenmede CON DC 13 yazıldı.
+2b. **Aşama 4'ün yozlaşma tablosu yazılmadı** — "Wild Magic benzeri" deniyor, tablo yok.
 3. **Kalıcı Yara bandları türetildi** (§8) — kaynak yalnız iki ucu veriyor. Üç
    bandın sınırları (1–5 / 6–14 / 15–20) ve örnek yaralar karar bekliyor.
 4. **Lisansın fiyatı** (§2) yazılmadı — `service` kartı ancak fiyat kararıyla
@@ -392,11 +400,13 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
   atmadan önce şunu bil: **1–5 bandı bir PC'yi kalıcı topallatabilir** ve perdenin
   ilk savaşında bu ağır bir sonuç. Masaya kuralı **önceden** söyle. Sürpriz kalıcı
   hasar, oyuncunun kabul etmediği bir bedeldir.
-- **Reddedilenler listesini (§10) sil me.** Hastalık Puanı sistemi iyi yazılmış ve
-  cazip; bir sonraki turda biri onu yeniden getirmek isteyecek. O tabloda neden
-  düştüğü yazıyor — geri getirmek istiyorsan `act1.md` §4'ün evrelerini **birlikte**
-  değiştirmen gerekir, ve o zaman `curse` kartı, üç `trait` kartı ve Şafak
-  Çatışması'nın tempo notu da değişir. Yani bu ucuz bir geri alma değil.
+- **Reddedilenler listesini (§10) silme.** Hastalık Puanı sistemi o listeden
+  2026-09-10'da geri geldi ve `act1.md` §4'ün evreleri **birlikte** değişti. Üçlünün
+  hikayesi aynı kaldı: 8 puanla gelip kulübedeki gecenin zarıyla 9'a çıkıyorlar.
+  Kalan satırların neden düştüğü tabloda yazılı.
+- **Puan sistemi Act 1'de yavaş değil, sayılı işler.** Kulübeye giren her PC bir
+  maruziyet zarı atar ve o puanı köyden çıkınca da taşır — Medicine DC 15 ve
+  güvenli bölge olmadan puan inmez. Masaya bunu Umay'ın ağzından **önceden** söyle.
 - **Yozlaşma Kontrolü'nün asıl işi bir sonraki perdenin haritasını çizmek.**
   "3. seviye büyü yapmanın bedeli olan bir zemin" demek, "bu kıtanın bir yerinde
   büyücünün işe yaramadığı bir bölge var" demektir. O bölgeyi yazarken bu kural

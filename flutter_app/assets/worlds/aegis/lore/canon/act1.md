@@ -30,6 +30,11 @@
 > Ravenhall) [`bolgeler.md`](bolgeler.md)'de yazıldı ve §9 açık 8 kapandı · bilgi
 > eğimi beş noktaya çıktı (§6).
 >
+> **2026-09-10 revizyonu (hastalık turu):** Blight'ın üç evresi yerine **Hastalık
+> Puanı + beş aşama** kanon oldu (§4.1–4.2) · *Greater Restoration* hastalığı artık
+> kaldırmıyor, **bir aşama (2 puan) geriletiyor** (§4.4) · üçlünün hikayesi
+> değişmedi, eşikleri 8 puan olarak yazıldı (§4.5).
+>
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
 > §10'da ayrı duruyor — kartların içine girmez.
 
@@ -374,36 +379,53 @@ yüzü ayrı kalır: `lore` kartı *Blight — Bilinen Hali*.
 
 ### 4.1 Bulaşma
 
-Temasla. Üç yol: hastanın ya da cesedin sıvılarıyla temas · bir gece aynı kapalı
-mekanda kalmak · bir Dönüşmüş'ün açtığı yara.
+Temasla. Dört yol: hastanın ya da cesedin sıvılarıyla temas · bir gece aynı kapalı
+mekanda kalmak · bir Dönüşmüş'ün açtığı yara · **Hastalık Sisi**'nde (cephenin
+ötesindeki Blight zemini) geçirilen her gün.
 
-> Her maruziyet: **CON kurtulma zarı DC 12.** Başarısızlık = taşıyıcı, Evre 1.
+> Her maruziyet: **CON kurtulma zarı DC 12.** Başarısızlık = **+1 Hastalık Puanı.**
 
 Hastalanmak bir cezanın sonucu değil, **bir seçimin sonucu** (08 §4): cesede
 dokundun, hastayı taşıdın, kulübeye girdin. Zar maruziyet olmadan atılmaz.
 
-### 4.2 Evreler
+### 4.2 Hastalık Puanı ve beş aşama — "Yavaş Çürüme" (KARAR, 2026-09-10)
 
-**Evre 1 — sessiz taşıma (~1 ay).** Yorgunluk, iştahsızlık, damar renginin
-koyulaşması. **Mekanik yük yok** — ve taşıyıcı bu sürede bulaştırır. Bu, üçlünün
-gemiye binerken sağlıklı görünmesinin sebebidir (§3.1).
+Blight bir anda bulaşan bir virüs değil, bedende **yavaş yavaş biriken bir zehirdir.**
+Tek sayacı **Hastalık Puanı**dır *(kaynakta "HP"; can puanıyla karışmasın diye kartta
+açık yazılır)*. 1 puanı olan herkes **taşıyıcıdır ve bulaştırır.**
 
-**Evre 2 — patlama.** Bir zorlanma tetikler: uzun yolculuk, yara, açlık, uykusuz
-gece. O andan sonra **her uzun dinlenmede CON DC 13.**
+**Puan nasıl artar:** her maruziyet başarısızlığı (§4.1) +1. Ayrıca taşıyıcı,
+**güvenli bölge dışında** her uzun dinlenmede **CON DC 13** atar; başarısızlık +1.
+⚠️ *Günlük zarın DC'si türetildi — eski Evre 2 zarından korundu.*
 
-> **Üç başarı** → atlatır. Bağışıklık kazanmaz; yeniden maruz kalırsa yeniden atar.
-> **Üç başarısızlık** → Evre 3, saatler içinde.
-> Her başarısızlık ayrıca **1 seviye exhaustion** verir ve belirtinin **biçimini
-> değiştirir** (bkz. 4.3).
+| Aşama | Puan | Belirtiler | Mekanik etki |
+|---|---|---|---|
+| **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince siyah damarlar, sürekli metalik tat | CON temelli **yetenek kontrollerinde** dezavantaj. Büyülerde görsel "bozulmalar" başlar, mekanik engel yok |
+| **2 — Sistemik Yayılma** | 3–4 | Yüksek ateş, yaraların geç iyileşmesi, tenin grileşmesi | Hız **−10 ft** · uzun dinlenmede harcanan Can Zarlarının şifası **yarıya** düşer · 3.+ seviye büyüde **Yozlaşma Kontrolü** zorunlu ([`mekanikler.md` §6](mekanikler.md)) |
+| **3 — Ağır Bozulma** | 5–6 | Göz ve kulaklardan siyah sıvı, nefes darlığı, halüsinasyon (tanrıların fısıltıları) | **TÜM** yetenek kontrollerinde dezavantaj |
+| **4 — Morfolojik Çözülme** | 7–8 | Derinin sertleşip pul pul olması, irade dışı kasılmalar, konuşma bozukluğu | **TÜM** kurtarma zarlarında dezavantaj · her büyü (seviyesiz) bir **yozlaşma tablosu** tetikler ⚠️ · sürekli **3. seviye Exhaustion** etkisindeymiş gibi |
+| **5 — Tam Çöküş / Dönüşüm** | 9+ | Bilinç kapanır | Karakter ölür ya da **Dönüşmüş** olur |
 
-**Evre 3 — dönüşüm.** Bilinç gider, **beden güçlenir.** Blight insanı emir bekleyen
+**Aşama 5 — dönüşüm.** Bilinç gider, **beden güçlenir.** Blight insanı emir bekleyen
 bir ete çevirir (02 §2). PC artık PC değildir: kağıt DM'e geçer, karakter
-`Dönüşmüş` statblock'unu alır. **Geri dönüş yok.**
+`Dönüşmüş` statblock'unu alır. **Geri dönüş yok.** *(Kimin emrini beklediği kanon
+değil — [`mekanikler.md` §10](mekanikler.md).)*
+
+**Puan nasıl iner:**
+
+- **Güvenli bölge** — maruziyet kaynağı (hasta, ceset, Blight zemini) olmayan korunaklı
+  bir yerleşim: şehir, lonca binası. Uzun dinlenme **puan silmez** ama  zar da atılmaz.
+- **Vahşi doğa** — puan silinmez. **Medicine DC 15** başarılı bir müdahale o günün
+  zarını atlatır: puan artışı o gün için durur.
+- Büyüler ve Direnç Şerbeti yavaşlatabilir §4.4.
+
+⚠️ **Yozlaşma tablosu yazılmadı** (Aşama 4) — kaynak "Wild Magic benzeri" diyor,
+tablo vermiyor. Açık karar ([`mekanikler.md` §11](mekanikler.md)).
 
 ### 4.3 İki hasta hiç aynı seyri izlemez
 
-Hastalığın imzası budur (02 §5.1) ve **mekanik değil anlatı** olarak işler: her Evre
-2 başarısızlığında DM belirtiyi değiştirir — birinde yorgunluk, birinde kesik kesik
+Hastalığın imzası budur (02 §5.1) ve **mekanik değil anlatı** olarak işler: her yeni
+aşamada DM belirtiyi değiştirir — birinde yorgunluk, birinde kesik kesik
 gidip gelme, birinde bedenin erken güçlenmesi. Sayılar aynı, görüntü asla aynı değil.
 Kulübedeki üçlü bu kuralın canlı örneğidir: Alton yorgunlukta, Merla
 değişkenlikte, Kromanna bedende.
@@ -412,14 +434,11 @@ değişkenlikte, Kromanna bedende.
 
 **Bilinen bir tedavi yok** ve Act 1'de kimse bulmaz.
 
-- *Lesser Restoration* — bir Evre 2 başarısızlığını siler. Bir gün kazandırır,
-  hastalığı kaldırmaz. **Yapan 1 seviye Exhaustion alır.**
-- *Greater Restoration* — Evre 1 veya 2'de hastalığı **kaldırır.** **Yapan kalıcı bir
-  Can Zarı (Hit Die) kaybeder.** Meridia'da bu büyüyü kimin yapabildiği ayrı ve
-  **siyasi** bir sorudur; cevap Act 1'de verilmez.
-- Evre 3'te hiçbir şey işe yaramaz. Dönüşmüş bir insan öldürülür, iyileştirilmez.
+- *Lesser Restoration* — Bir sonraki hastalık zarına +2 verir. **Yapan 1 seviye
+  Exhaustion alır.**
+- *Greater Restoration* — Bir sonraki hastalık zarına +4 verir.
 - **Direnç Şerbeti** hastalığı geriletmez, **girmesini** zorlaştırır: 24 saat boyunca
-  Blight kurtarma zarlarına +5 ([`mekanikler.md` §7](mekanikler.md)).
+  Hastalık Puanı kazanma zarlarına +8 ([`mekanikler.md` §7](mekanikler.md)).
 
 **Bedeller yeni (2026-09-09, bölge turu)** ve etkileri değiştirmiyor — yalnız
 *"kimin yapabildiği siyasi bir sorudur"* cümlesinin yarısına cevap veriyor: yapabilen
@@ -434,8 +453,9 @@ işaret eden fiziksel bir nesne yok. Ama artık **tamamen görünmez de değil**
 Act 1'in kanıtladığı tek şey suçun **gizleme** olduğu; eserin kendisi sonraki
 perdelere kalır.
 
-Üçlü **şu an son evrenin eşiğinde** (Evre 2'nin sonunda). Oyuncular bunu bilmiyor;
-kimse bilmiyor.
+Üçlü **şu an son aşamanın eşiğinde** (8 puan, Aşama 4'ün sonunda). Kulübedeki gecenin
+uzun dinlenme zarı onları 9'a taşır — şafaktaki dönüşüm budur (§5). Oyuncular bunu
+bilmiyor; kimse bilmiyor.
 
 ### 4.6 Yalnız biyolojik değil — büyülü de (KARAR, 4. tur)
 
@@ -499,11 +519,11 @@ belirti hattı statblock'a yansır.
 > **Bağışıklık (durum)** charmed · frightened · exhaustion
 >
 > ***Acıyı Tanımaz.*** Sıfır HP'ye düştüğünde ölüm zarı atmaz; **ölür.** İnsan hâli
-> zaten Evre 3'te bitmişti (§4.2) — bu kural masaya "kurtarma şansı yok" demenin
+> zaten Aşama 5'te bitmişti (§4.2) — bu kural masaya "kurtarma şansı yok" demenin
 > mekanik hâli.
 >
-> ***Bulaştıran Yara.*** Pençesinin isabet ettiği yaratık **CON DC 12** atar;
-> başarısızlık = Blight Evre 1 (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).
+> ***Bulaştıran Yara.*** Pençesinin isabet ettiği yaratık **CON DC 8** atar;
+> başarısızlık = +1 Hastalık Puanı (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).
 > Zar savaşın sonunda bir kez atılır, her isabette değil.
 >
 > **Eylem — Pençe.** Yakın silahlı saldırı: **+5** isabet, erişim 5 ft, tek hedef.
@@ -818,8 +838,8 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
    Feature'ın işini eşya + kurgu yapıyor.
 6. **Background eşyaları için yeni kart yazılmıyor** (§2): dokuzu da SRD nesnesi.
    Bu, genel-kartlar §4'teki 9 ⬜ kartı tamamen kapatıyor.
-7. **Blight kural kartı `curse`** (§4), `applied-condition` değil. Evreler, DC'ler
-   ve tedavi yazıldı.
+7. **Blight kural kartı `curse`** (§4), `applied-condition` değil. Aşamalar, DC'ler
+   ve tedavi yazıldı. *(2026-09-10: üç evre → Hastalık Puanı + beş aşama, §4.2.)*
 8. **Giriş kartında Miras vurgusu düşürülüyor** (genel-kartlar §1): üç aşamalı
    omurga (Act 1 = Miras) kanon olarak duruyor ama **oyuncunun ilk okuduğu sayfada
    ilan edilmiyor.** Ton kuralı zaten aynı şeyi gösteriyor; söylemek fazlaydı.
