@@ -140,6 +140,8 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | M0.4 | **Gümüşsu Türkçe kalıyor** | Latin resmi isim ağının dışında, kayda değer görülmemiş bir köy. Adının hâlâ halk dilinde olması, orayı kimsenin umursamadığının kanıtı |
 | M0.5 | **Latin hafif dozu** | Custodar · Claport · Altimont · Cinervik · Argenfon · Votumar (2-3 hece). Ağır sonekler (-castrum, -arx, -portus, -montes) kullanılmıyor |
 | 06 #1 | **Pre-gen isim seti: Jaonos · Bızdır · Aly · Will** | Diğer set (Ilysard / Fyli / Goliath) terk edildi |
+| A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
+| A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
 | 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. **Not: Gümüşsu bölümü ve açılış yeniden kurgulanacak** — 07'deki ilkeler geçerli, sahne akışı değil |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
@@ -199,8 +201,28 @@ Yerine geçen kural — **aynı sertlikte:**
 1. **Kanon dışı uydurma yok.** §0 hiyerarşisinde bir dayanağı olmayan mekan,
    NPC, olay veya mekanik yazılmaz. Kaynak bir alanı söylemiyorsa alan **boş**
    bırakılır.
-2. **Boşluk doldurmak yazmak değil, karar almaktır.** Kanonda olmayan bir şey
-   gerekiyorsa önce §3'e madde olarak eklenir ve sorulur; sonra yazılır.
+2. **Boşluk doldurmak yazmak değil, karar almaktır** (karar A2). Kanonda olmayan
+   bir şey gerekiyorsa önce §3'e madde olarak eklenir ve sorulur; sonra yazılır.
+
+   **Ana akışa yalnız teyit edilmiş öğe girer.** Konuşulup onaylanmamış hiçbir
+   görev, NPC, mekan, nesne, olay örgüsü veya kırılma anı — ne kart gövdesine,
+   ne sahne metnine, ne `secrets` alanına — **kesinleşmiş gerçeklik gibi
+   yazılmaz.** Bir alan kanonda yoksa alan boş kalır; DM'e "burada bir şey var"
+   izlenimi veren dolgu cümlesi de uydurmadır.
+
+   **Fikir üretmek serbest, gömmek yasak.** Bir yan görev, bağlantı ya da detay
+   yakışıyorsa metnin **sonuna ayrı bir blok** olarak yazılır ve onay sorulur:
+
+   ```
+   ### Öneri / Fikir
+   - <öneri> — nereye takılır, ne açar, hangi kanona yaslanıyor.
+     Eklensin mi?
+   ```
+
+   Bu blok kartın içine, blueprint'e veya kanon belgesine **girmez**; sohbette
+   ya da çalışma notunda durur. Onay verildiği an öğe §3'e karar olarak yazılır,
+   sonra metne girer. Onaysız öneri, tekrar sorulmadan hiçbir turda metne
+   taşınmaz.
 3. **Her entity'nin izi sürülebilir olmalı.** Blueprint'in yanında
    `PROVENANCE.md` tutulur: `<entity adı> ← <kaynak dosya> § <bölüm>`.
    Kapsam denetiminin yerini bu tutar.
@@ -320,7 +342,7 @@ cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis
 
 ### 4.8 Yazılan kartlar (0.2.0)
 
-`aegis-act1/world-blueprint.json` — **126 entity.** Kapsam artık
+`aegis-act1/world-blueprint.json` — **125 entity.** Kapsam artık
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**:
 listedeki her satırın bir kartı var, `🟡` olanlar dahil (bir kartı 🟡 yapan şey
 kartın kendisi değil **tek bir alanı**, ve o alan boş ya da işaretli bırakıldı).
@@ -337,12 +359,12 @@ kartın kendisi değil **tek bir alanı**, ve o alan boş ya da işaretli bırak
 | `curse` | 1 | Blight — Enfeksiyon (Yozlaşma Kontrolü dahil) |
 | `scene` | 11 | Gümüşsu (3) · liman (2) · şehir (3) · Elymsyr · Votumar · Ravenhall |
 | `encounter` | 1 | Şafak Çatışması |
-| `quest` | 3 | Söylentinin Peşinde · Nereden Geldiler · Silinen Sayfa |
+| `quest` | 2 | Söylentinin Peşinde · Nereden Geldiler |
 | `background` | 9 | Dokuz kurumsal background, mekanikleri SRD ref'i |
 | `adventuring-gear` | 8 | Yedi background eşyası + Direnç Şerbeti |
 | `trinket` | 7 | Dört mühür + rozet + künye + Mühürsüz Yüzük |
 
-**126, 127 değil.** `kart-listesi.md` §2'nin başlığı 21 `lore` diyor ama tablosu
+**125, 126 değil.** `kart-listesi.md` §2'nin başlığı 21 `lore` diyor ama tablosu
 20 satır sayıyor; yazılan tablodaki 20. Eksik olan bir kart değil, başlıktaki bir
 sayı. (Aynı belgenin §3 başlığı 18 `location` diyor ve tablosu 17 sayıyor — oradaki
 18. satır **Meclis Salonu**, §8'in iki sahnesinin geçtiği yer, ve yazıldı.)
@@ -351,6 +373,10 @@ sayı. (Aynı belgenin §3 başlığı 18 `location` diyor ve tablosu 17 sayıyo
 `trinket/Cerrahi İğne` **silindi** (`act1.md §3.2` kaldırdı), kulübedeki üçlü
 Alton/Merla/Kromanna oldu, köy kadrosu ve liman kadrosu kanondaki adlarını aldı,
 `lore/Adlandırma Doktrini` **kalktı** (dil ayrımı kanon değil).
+
+**`quest/Silinen Sayfa` geri alındı (2026-09-10):** kanonda dayanağı olmadan
+yazılmış bir görevdi — §6.0 ihlali. Bkz. [PROVENANCE.md](PROVENANCE.md) §Bilerek
+yazılmayanlar.
 
 ⚠️ **Kanon dışına çıkılan yerler ve hepsi kartın `dmNotes`'unda işaretli:**
 Dönüşmüşlerin **statblock'u** ve ona bağlı `encounter.difficulty` / `xp_budget` ·
@@ -409,3 +435,30 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
    kuralları, ilahi büyünün durumu) açıkça işaretlenir; sıfırdan sistem yazılmaz.
 6. **Gerçekçilik iddia edilmez, hissettirilir.** "Bu dünya gerçekçidir" cümlesi
    metinde geçmez.
+
+7. **Anlatım üslubu: WotC modülü read-aloud'u** (karar A1). Ölçü, resmi 5e
+   modüllerinin yüksek sesle okunan metnidir: sahne kurulur, duyusal detay verilir
+   (koku, ses, ışık, sıcaklık), gerilim ortamdan okunur ve metin **oyuncunun
+   hamlesine bırakılarak** biter. Tolkien'in kadim/destansı üslubu bu dünyanın
+   üslubu **değil**.
+
+   - **Somut ol.** Sıfat yığmak yerine sayılabilir ayrıntı ver: "beş kapıda
+     tebeşir işareti var, altıncıda yok" > "kapılar uğursuz işaretlerle doluydu".
+   - **Aktif ve şimdiki zaman.** Pasif anlatı ve "…mişti" yığını yok.
+   - **Duyulardan en az ikisi** her açılış metninde geçer, ve biri görme olmasın.
+   - **Metin oyuncuya devredilir.** Okunan parça bir soruyla ya da bekleyen bir
+     durumla biter; DM oyuncunun ne hissettiğini yazmaz.
+   - **Tarih metnin içinde anlatılmaz.** Geçmiş, bugün ortada duran bir nesne
+     olarak görünür (yıpranmış ama bu kıtada dokunmamış kumaş gibi). Kadim
+     ağırlık lore kartlarında ve `secrets` alanlarında taşınır, read-aloud'da
+     değil.
+   - **Klişe yasağı:** zorlama dramatik giriş ("Kader sizi buraya getirdi"),
+     üst üste üç sıfat, ve "hava ağırdı / kan donduran / kadim bir kötülük"
+     kalıpları kullanılmaz.
+7. **Onaylanmamış içerik ana metne girmez (2026-09-10).** Kanonda (§0 hiyerarşisi)
+   veya §3'te karara bağlanmamış bir görev, NPC, mekan ya da olay örgüsü **asla**
+   doğrudan kart olarak yazılmaz — bu §4.8'in "kanon dışı uydurma yok" kuralının
+   (§4.8 madde 1) tekrarı, gevşetilmesi değil. Yeni bir yan görev / kırılma anı /
+   detay fikri varsa kartın içine değil, ilgili notun sonuna **"Öneri / Fikir:"**
+   başlığıyla yazılır ve elymsyr'e sorulur; onay gelmeden hikâyeye kesinleşmiş gibi
+   girmez.
