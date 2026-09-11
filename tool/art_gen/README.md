@@ -315,6 +315,62 @@ ComfyUI + Flux.1-schnell fp8 (17GB) veya Z-Image-Turbo, Docker içinde, tek GPU.
 
 Resume edilebilir: `out/` içinde `.webp` dosyası olan job atlanır.
 
+### ComfyUI Container'ını Başlatma
+
+Sunucu: `ssh -p 8772 sadektech@192.168.1.12`. Container adı `comfyui`, image
+`yanwk/comfyui-boot:cu124-slim`. Tüm kalıcı veri host'ta `/home/sadektech/comfy`
+altında (container içinde `/root`); modeller `ComfyUI/models/` içinde (~20GB) —
+container silinse de kaybolmaz.
+
+```bash
+# Durum
+docker ps -a --filter name=comfyui
+
+# Var olan container'ı başlat / durdur (durdurmak VRAM'i boşaltır)
+docker start comfyui
+docker stop comfyui
+
+# Container yoksa veya "Dead" durumdaysa: silip aynı ayarlarla yeniden oluştur
+docker rm -f comfyui
+docker run -d --name comfyui \
+  --gpus all \
+  -p 8188:8188 \
+  -v /home/sadektech/comfy:/root \
+  --restart unless-stopped \
+  -e CLI_ARGS="" \
+  yanwk/comfyui-boot:cu124-slim
+
+# Log / hazır mı?
+docker logs -f comfyui
+curl -s http://192.168.1.12:8188/system_stats
+```
+
+İlk job'da model VRAM'e yüklenir (~1-2 dk).
+
+### Önceki Çalışmadan Kalanları Silme (Temiz Başlangıç)
+
+Kuyruk ve history bellekte tutulur; container'ı yeniden başlatmak onları sıfırlar.
+Diskte kalanlar ise `/home/sadektech/comfy/ComfyUI/` altındadır:
+
+| Yol | İçerik |
+|-----|--------|
+| `output/` | Üretilmiş PNG'ler (`generate.py` zaten indirip `out/`'a yazar — sunucudaki kopya gereksiz, GB'larca birikir) |
+| `input/` | Yüklenen girdi görselleri |
+| `temp/` | Önizleme geçicileri |
+| `user/comfyui.db` | Asset veritabanı (silinirse açılışta yeniden oluşur) |
+| `user/comfyui_8188*.log` | Eski loglar |
+
+```bash
+docker stop comfyui
+cd /home/sadektech/comfy/ComfyUI
+sudo rm -rf output/* input/* temp/*       # container root olarak yazdığı için sudo
+sudo rm -f user/comfyui.db user/comfyui_8188*.log
+docker start comfyui
+```
+
+`models/`, `custom_nodes/` ve `user/default/` (ayarlar/workflow'lar) **silinmez** —
+bunlar silinirse modeller yeniden indirilmek zorunda kalır.
+
 ---
 
 ## Öğrenilenler
