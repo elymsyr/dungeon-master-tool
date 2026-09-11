@@ -7,14 +7,14 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.4.0",
+    "pack_version": "0.5.0",
     "counts": {
       "campaign": 1,
       "lore": 20,
       "location": 18,
       "npc": 34,
-      "trait": 5,
-      "creature-action": 4,
+      "trait": 15,
+      "creature-action": 12,
       "monster": 4,
       "curse": 1,
       "scene": 11,
@@ -23,6 +23,9 @@
       "adventuring-gear": 8,
       "trinket": 7,
       "background": 9,
+      "resource-pool": 6,
+      "subclass": 2,
+      "animal": 1,
       "player-character": 0
     }
   },
@@ -2148,6 +2151,294 @@
         "benefits": "Hastalığın en çok güçlendirdiği beden. Karakterlerin onu önce durdurması akıllıca olur."
       }
     },
+    "bfc01fac-0a1d-58a8-b4c2-445eae9e18be": {
+      "name": "Kayıt Tezahürü",
+      "type": "trait",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "Büyü yaptığında her seferinde aynı şey olur. Birini seç:\n\n1. Parmak uçlarında bir an mürekkep izi belirir, sonra kurur ve yok olur.\n2. Sesin bir anlığına iki ses olur — biri sen, biri arkada yazan bir katip.\n3. Etrafındaki toz, havada tek bir satır boyunca hizalanır.\n4. Gözbebeğin kısa süre bir mühür şekline döner.\n5. Duyulmayan bir sayfa hışırtısı odayı geçer.\n6. Derinde bir an okunmayan bir el yazısı görünür.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "trait_kind": "Spellcasting",
+        "benefits": "Mekanik etkisi yok. Ama bir Büyücü Loncası kalfası bunu görürse ne gördüğünü anlar: bu adam okula gitmemiş."
+      }
+    },
+    "b2f9e7b8-ca7e-5ede-a7ec-19d88c508081": {
+      "name": "Dengeyi Geri Ver",
+      "type": "trait",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "60 ft içinde bir yaratık avantajlı ya da dezavantajlı bir d20 atacakken, **tepkinle** avantajı veya dezavantajı iptal edersin.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "trait_kind": "Other",
+        "benefits": "**Yetkinlik bonusun kadar** kullanım; hepsi uzun dinlenmede geri gelir.",
+        "granted_reaction_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Dengeyi Geri Ver"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:kayit_dengeyi_geri_ver"
+            },
+            "recharge": "long_rest",
+            "count_formula": "pb"
+          }
+        ]
+      }
+    },
+    "1a953a6e-5e1b-5296-b852-e7710173ed9c": {
+      "name": "Fihrist Hali",
+      "type": "trait",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "**Bonus aksiyon**, 1 dakika: sana yapılan saldırı atışları avantaj alamaz ve senin d20 atışlarında 9 ve altı 10 sayılır.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "trait_kind": "Other",
+        "benefits": "Uzun dinlenmede 1 bedava kullanım; ondan sonra 5 büyü puanı.",
+        "granted_bonus_action_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Fihrist Hali"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:kayit_fihrist_hali"
+            },
+            "recharge": "long_rest",
+            "count": 1
+          }
+        ],
+        "mechanical_notes": "Bedava kullanım bitince 5 büyü puanı ödenerek tekrar açılabilir — büyü puanı havuzu sınıfın kendi sayacıdır, bu satır onu takip etmez."
+      }
+    },
+    "0342310a-1a8d-5a9f-ab26-f0372fa94d66": {
+      "name": "Sayım",
+      "type": "trait",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "**Aksiyon:** 30 ft'lik küpte toplam 100 can dağıtır, hasarlı nesneleri onarır, 6. seviye ve altı büyüleri sonlandırırsın.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "trait_kind": "Other",
+        "benefits": "Uzun dinlenmede 1 bedava kullanım; ondan sonra 7 büyü puanı.",
+        "granted_action_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Sayım"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:kayit_sayim"
+            },
+            "recharge": "long_rest",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "ed72c258-c0f4-53dd-859d-4c59f8b7c01a": {
+      "name": "Bağıt Armağanı",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Bağıt taşa kazındığı gün iki şey öğrenirsin: taşın üstündeki işaretleri okumayı, ve elini havada oynattığında havanın cevap verdiğini.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Spellcasting",
+        "benefits": "**Thaumaturgy** cantrip'ini öğrenirsin; senin için bir Ranger cantrip'idir ve bildiğin büyü sayısına sayılmaz.\n\n**Primordial** dilini öğrenirsin — Ravenhall'da bu dile *Taş Dili* denir, rünlerin okunduğu dildir.\n\nBağıtın **salgı tipini** burada seçersin: asit, zehir, soğuk ya da yıldırım.",
+        "granted_cantrip_refs": [
+          {
+            "slug": "spell",
+            "name": "Thaumaturgy"
+          }
+        ],
+        "granted_languages": [
+          {
+            "_lookup": "language",
+            "name": "Primordial"
+          }
+        ],
+        "player_choices": [
+          {
+            "group_id": "pul_salgi",
+            "label": "Salgı Tipi",
+            "prompt": "Bağıtı kurarken Pullu'nun bezinin salgısı seçilir ve bir daha değişmez.",
+            "pick_kind": "enum",
+            "pick": 1,
+            "options": [
+              {
+                "id": "acid",
+                "label": "Asit"
+              },
+              {
+                "id": "poison",
+                "label": "Zehir"
+              },
+              {
+                "id": "cold",
+                "label": "Soğuk"
+              },
+              {
+                "id": "lightning",
+                "label": "Yıldırım"
+              }
+            ]
+          }
+        ],
+        "mechanical_notes": "Seçtiğin salgı tipi üç yeri birden belirler: Pullu'nun hasar bağışıklığını, Pullu'ya bağlı bütün ekstra hasarın tipini, ve 7. seviyede senin kazandığın direnci. Ateş seçilemez — bu dünyada ateş püskürten hayvan yok."
+      }
+    },
+    "92c399f5-bd05-5791-8b56-cc4be8c250f1": {
+      "name": "Bağıt Yoldaşı",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Bağıta girmiş Pullu'yu yanına çağırırsın. Taşa kazınan söz mesafe tanımaz.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Other",
+        "benefits": "**Aksiyon** ile Pullu'yu 30 ft içinde gördüğün boş bir alana çağırırsın.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra her çağırış **1. seviye ya da üstü bir büyü slotu** harcar.\n\nPullu inisiyatifini seninle paylaşır ama senden **sonra** oynar. Ona bonus aksiyonla komut vermezsen sırasında **Dodge** alır. Sen etkisiz (incapacitated) hale gelirsen Pullu kendi başına hareket eder ve saldırır.\n\nPullu yeni çağrıldığında tam canla gelir.",
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:pul_bagit_yoldasi"
+            },
+            "recharge": "long_rest",
+            "count": 1
+          }
+        ],
+        "mechanical_notes": "Pullu'nun statbloğu `animal/Pullu` kartında; AC ve can senin Ranger seviyenle ölçeklenir.\nPullu Sancak Kaydı'nda **Yazısız**'dır — hukuken yoktur. Mühürlü bir şehirde kimse onu sana ait sayamaz, ama kimse senden alamaz da; nöbetçinin defterinde yazacak kutu yok. Taşrada Sınır ve Ticaret kaleminin çözümü hayvanı **yük** yazmaktır."
+      }
+    },
+    "4f8eb871-f361-51fa-8cee-ca99b8eb711b": {
+      "name": "Salgı",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Boğazının iki yanındaki bez, Pullu'yu kendi salgısına karşı da kapatır.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pullu",
+        "trait_kind": "Defensive",
+        "benefits": "Pullu, bağıtta seçilen salgı tipine (**asit, zehir, soğuk ya da yıldırım**) **bağışıktır**. Pullu'ya bağlı bütün ekstra hasar da o tiptendir."
+      }
+    },
+    "c1484d08-0e59-5d4e-a959-85aa38c422d9": {
+      "name": "Pul ve Diş",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Bağıt sıkılaştıkça Pullu büyür: omuzları genişler, pençeleri kayaya oturur. **Kanatlanmaz** — bu hayvanın kanadı yok ve olmayacak.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Other",
+        "benefits": "Pullu **Medium** boyuta çıkar ve **tırmanma hızı 40 ft** kazanır.\n\nMedium ya da daha küçük bir biniciyi **karada** taşıyabilir; senin bineğin olur.\n\nPullu **zorlu araziyi yok sayar**.\n\nPullu'nun ısırığı **+1d6** salgı hasarı verir.\n\n**Sen** seçtiğin salgı tipine **dirençli** olursun.",
+        "mechanical_notes": "Direnç seçilen salgı tipine bağlıdır (`Bağıt Armağanı`), o yüzden burada sabit bir hasar tipi yazılmadı: karakter sayfasına dirençi elle ekle.\nÖzgün metnin 7. seviyedeki **kanat + uçuş hızı** maddesi bu evrende yok; yerine tırmanma ve zorlu arazi geldi."
+      }
+    },
+    "1ef1647d-580e-5fd6-9bf9-8ec18f2d8a78": {
+      "name": "Refleks Direnci",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Bağıt iki yönlü çalışır: biriniz vurulduğunda diğeri kasılır.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Defensive",
+        "benefits": "Sen ve Pullu birbirinizin **60 ft**'i içindeyken biriniz hasar aldığında, **tepki** kullanarak o hasara **direnç** kazandırırsın.\n\n**Yetkinlik bonusun kadar** kullanım; hepsi uzun dinlenmede geri gelir.",
+        "granted_reaction_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Refleks Direnci"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:pul_refleks_direnci"
+            },
+            "recharge": "long_rest",
+            "count_formula": "pb"
+          }
+        ]
+      }
+    },
+    "98c8a987-9532-5d44-ac64-490d7aa54150": {
+      "name": "Tam Bağıt",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Taştaki söz artık iki bedeni de kapsıyor. Pullu son boyuna ulaşır — **hâlâ kanatsız**, hâlâ yere basan bir hayvan.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Other",
+        "benefits": "Pullu **Large** boyuta çıkar ve yürüme hızı **50 ft** olur.\n\nPullu'ya binmek ya da inmek **hareketine mal olmaz**.\n\nPullu'nun ısırığı **bir 1d6 daha** ekler (toplam +2d6 salgı hasarı).\n\n**Salgı Püskürtmesi** artık **10d6** hasar verir.",
+        "mechanical_notes": "Özgün metnin 15. seviyedeki **\"binildiğinde uçabilir\"** maddesi bu evrende yok; yerine 50 ft yürüme ve bedava biniş/iniş geldi. Refleks Direnci'nin menzili de 30 ft yerine 60 ft — uçuşun götürdüğü esnekliğin bir kısmını geri veriyor.\nMasanız kaybı fazla ağır buluyorsa tek düğme: **\"Pullu devrilemez (Prone'a bağışık)\"** satırını ekleyin."
+      }
+    },
     "743b6ad0-d17f-5375-ad17-105d029b2f67": {
       "name": "Pençe",
       "type": "creature-action",
@@ -2246,6 +2537,158 @@
           "_lookup": "damage-type",
           "name": "Piercing"
         }
+      }
+    },
+    "5bb02ebe-3734-5d6e-a1e8-828779d5276a": {
+      "name": "Dengeyi Geri Ver",
+      "type": "creature-action",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "*Tetikleyici:* 60 ft içinde gördüğün bir yaratık bir d20 atışını **avantajlı** ya da **dezavantajlı** atacak.\n\nTepkinle o atıştaki avantajı **veya** dezavantajı iptal edersin; zar düz atılır.\n\nBir şey iki türlü olamaz. Satır tektir.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "action_type": "Reaction",
+        "recharge_kind": "Long Rest"
+      }
+    },
+    "4d6edc11-8ae2-5fdc-b703-e9daf6b6c768": {
+      "name": "Mühür Kalkanı",
+      "type": "creature-action",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "**1–5 büyü puanı** harca. Kendine ya da 30 ft içinde gördüğün bir yaratığa, harcadığın puan kadar **d8 mühür zarı** ver.\n\nKorunan yaratık hasar aldığında, istediği kadar mühür zarını harcayıp atabilir; toplam, aldığı hasardan düşülür.\n\nUzun dinlenmene kadar ya da zarlar bitene kadar sürer. Aynı anda tek bir mühür kalkanın olabilir.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "action_type": "Action",
+        "range_normal_ft": 30
+      }
+    },
+    "17c733a0-def2-5d81-94c0-745e8dd36748": {
+      "name": "Fihrist Hali",
+      "type": "creature-action",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "1 dakika boyunca:\n\n- Sana yapılan saldırı atışları **avantaj alamaz**.\n- Senin attığın her d20'de **9 ve altı gelen sonuç 10 sayılır**.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **5 büyü puanı**.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "action_type": "Bonus Action",
+        "recharge_kind": "Long Rest",
+        "uses_per_day": 1
+      }
+    },
+    "959142c7-53d2-5f27-9070-69b7c23b5aa7": {
+      "name": "Sayım",
+      "type": "creature-action",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "Kendini merkez alan **30 ft'lik bir küpte** düzen ruhları belirir. Küpte, sen dahil seçtiğin her yaratığa toplam **100 can**ı istediğin gibi bölüştürerek iyileştirirsin.\n\nKüpteki hasarlı ama yok olmamış nesneler onarılır ve tamamen tamir olur.\n\nKüpteki **6. seviye ve altı** her büyü sonlanır.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **7 büyü puanı**.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Kayıt Ruhu",
+        "action_type": "Action",
+        "recharge_kind": "Long Rest",
+        "uses_per_day": 1
+      }
+    },
+    "a56cd4b1-190e-5e20-8e8a-dd7dc9562a70": {
+      "name": "Salgı Püskürtmesi",
+      "type": "creature-action",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Sen ya da Pullu, önünüzdeki **30 ft'lik koniye** bezin salgısını püskürtür.\n\nKonideki her yaratık bir **Dexterity** kurtarma zarı atar — DC **senin büyü kurtarma DC'n**. Başarısız olan **8d6** salgı hasarı alır; başaran yarısını alır.\n\n**15. seviyede 10d6.**\n\nUzun dinlenmede **1 kez bedava**; ondan sonra her kullanım **3. seviye ya da üstü bir büyü slotu** harcar.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "action_type": "Action",
+        "recharge_kind": "Long Rest",
+        "uses_per_day": 1,
+        "damage_dice": "8d6",
+        "save_ability_ref": {
+          "_lookup": "ability",
+          "name": "Dexterity"
+        }
+      }
+    },
+    "4b351f78-17fd-501c-b0cc-5822a9b36626": {
+      "name": "Refleks Direnci",
+      "type": "creature-action",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "*Tetikleyici:* sen ya da Pullu hasar alırsınız ve birbirinizin 60 ft'i içindesinizdir.\n\nTepkinle, hasarı alan tarafa o hasara karşı **direnç** verirsin.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "action_type": "Reaction",
+        "recharge_kind": "Long Rest"
+      }
+    },
+    "5d4f30f8-0b24-5548-8532-d5031f878930": {
+      "name": "Isırık",
+      "type": "creature-action",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "*Yakın dövüş saldırısı:* **+3 + bağıtlısının yetkinlik bonusu** isabet, erişim 5 ft, tek hedef. **Vuruş:** **1d6 + yetkinlik bonusu** delici hasar.\n\n*(Tablodaki +5 ve 1d6+2, 3. seviyedeki — yetkinlik bonusu 2 — halidir.)*\n\n**7. seviyeden itibaren** ayrıca **+1d6**, **15. seviyeden itibaren** toplam **+2d6** salgı hasarı ekler.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pullu",
+        "action_type": "Action",
+        "is_attack": true,
+        "attack_kind": "Melee Weapon",
+        "attack_bonus": 5,
+        "reach_ft": 5,
+        "damage_dice": "1d6+2",
+        "damage_type_ref": {
+          "_lookup": "damage-type",
+          "name": "Piercing"
+        }
+      }
+    },
+    "9a080b95-6641-5b21-9c66-e14fa9eb9c28": {
+      "name": "Salgılı Vuruş",
+      "type": "creature-action",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "*Tetikleyici:* Pullu'nun 30 ft'i içindeki bir yaratık bir silahlı saldırıyla vurur.\n\nPullu tepkisiyle o vuruşa bezinin salgısını bulaştırır: saldırı **+1d6** salgı hasarı verir.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pullu",
+        "action_type": "Reaction",
+        "damage_dice": "1d6"
       }
     },
     "92b47bc4-2ece-59a2-b4eb-6bbe1d9bc28a": {
@@ -4141,6 +4584,394 @@
         ],
         "starting_gold_gp": 20,
         "gold_alternative_gp": 50
+      }
+    },
+    "beddcf38-96bb-526b-b39b-28008f4a99d2": {
+      "name": "pool:kayit_dengeyi_geri_ver",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Kayıt Ruhu — Dengeyi Geri Ver kullanımları.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "b642f64e-c688-5061-a2bf-8e028d48799c": {
+      "name": "pool:kayit_fihrist_hali",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Kayıt Ruhu — Fihrist Hali'nin bedava kullanımı.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "b3487f98-c2ff-58af-8ae0-90ba77514751": {
+      "name": "pool:kayit_sayim",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Kayıt Ruhu — Sayım'ın bedava kullanımı.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "c01c50c4-6346-5d30-8c56-78b93714cee6": {
+      "name": "pool:pul_bagit_yoldasi",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Pul Bağıtlısı — Pullu'yu slot harcamadan çağırma.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "2f25ee3f-98f3-5b9e-b2a2-f3961fd4aba3": {
+      "name": "pool:pul_salgi_puskurtmesi",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Pul Bağıtlısı — Salgı Püskürtmesi'nin bedava kullanımı.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "721a9ab0-b68e-52db-9d03-bb10253332e2": {
+      "name": "pool:pul_refleks_direnci",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Pul Bağıtlısı — Refleks Direnci kullanımları.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {}
+    },
+    "51b1165b-4115-5c69-af72-336d037f30d3": {
+      "name": "Kayıt Ruhu",
+      "type": "subclass",
+      "source": "Aegis — Tasha's Cauldron of Everything",
+      "description": "Bu dünyada düzenin somut hali tek bir nesnedir: **defter.** Yazılmayan yoktur, silinen hiç olmamıştır, mühürsüz adam kaybolursa aranmaz.\n\nKayıt Ruhu, o defterin bir sayfasının kan yoluyla bir insana geçmesidir. Böyle bir büyücünün büyüsü ateş ya da yıldırım değil **düzeltme**dir: fazlalığı siler, eksiği tamamlar, sapmayı satıra geri çeker. Elini kaldırdığında olan şey bir saldırı değil, bir **karşı-imza**.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "alt-sınıf",
+        "sancak-kaydı",
+        "büyücü-loncası"
+      ],
+      "dm_notes": "Uyarlama: *Clockwork Soul* (Tasha's Cauldron of Everything). Sapmalar: alt sınıf 1. değil **3. seviyede** açılır (SRD 5.2.1 düzeni), ve 7. kademedeki *Summon Construct* yerine **Death Ward** verilir — Summon Construct SRD'de yok, ve bu evrende konstrükt yok. Kısmak isterseniz yerine *Stone Shape* koyun.\n\nGeri kalan bütün sayılar özgünüyle aynıdır.",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "parent_class_ref": {
+          "slug": "class",
+          "name": "Sorcerer"
+        },
+        "granted_at_level": 3,
+        "flavor_description": "Kaynağı üç şeyden biri olabilir; hiçbiri mekanik değiştirmez:\n\n- Bir atan ödenmiş bir silmenin sayfasıydı — sayfa çıkarıldı, satır adama sindi.\n- Doğumun bir kefalet töreninin tam ortasına denk geldi ve defter seni **iki kere** yazdı.\n- Kimse bilmiyor; okuma bilmeden mühür şekilleri çiziyordun.\n\n**Mühürsüz Kalem.** Büyücü Loncası bunlara kendi adını koydu. Senin lisansın yok, çünkü büyüyü öğrenmedin — doğuştan getirdin: akademin yok, ustan yok, defterde bir çırak satırın yok. Loncanın iki refleksi var: geriye dönük bir çırak satırı açıp seni kayda sokmak, ya da satırı hiç açmayıp büyü yaptığının duyulmamasını sağlamak. İkisi de bedava değil.\n\nRavenhall'da hukuki sorunun yok — orada zaten kimse yazılı değil. Sosyal sorunun var: taşa yazılan bir yerde kağıdın sesini taşıyorsun.",
+        "features": [
+          {
+            "level": 3,
+            "name": "Kayıt Büyüsü",
+            "description": "Şu büyüler senin için daima hazırdır ve bildiğin büyü sayısına sayılmaz: **Alarm · Protection from Evil and Good · Aid · Lesser Restoration.**\n\nHer kademede, o kademede gelen büyülerden **birini** sorcerer, warlock ya da wizard listesindeki başka bir **abjuration** veya **transmutation** büyüsüyle değiştirebilirsin.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Alarm"
+              },
+              {
+                "slug": "spell",
+                "name": "Protection from Evil and Good"
+              },
+              {
+                "slug": "spell",
+                "name": "Aid"
+              },
+              {
+                "slug": "spell",
+                "name": "Lesser Restoration"
+              }
+            ],
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Kayıt Tezahürü"
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "name": "Dengeyi Geri Ver",
+            "description": "**Tepki.** 60 ft içinde bir yaratık avantajlı ya da dezavantajlı bir d20 atacakken, avantajı **veya** dezavantajı iptal edersin. Yetkinlik bonusun kadar kullanım; uzun dinlenmede yenilenir.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Dengeyi Geri Ver"
+              }
+            ]
+          },
+          {
+            "level": 5,
+            "name": "Kayıt Büyüsü — üçüncü kademe",
+            "description": "**Dispel Magic · Protection from Energy** daima hazır büyülerine eklenir.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Dispel Magic"
+              },
+              {
+                "slug": "spell",
+                "name": "Protection from Energy"
+              }
+            ]
+          },
+          {
+            "level": 6,
+            "name": "Mühür Kalkanı",
+            "description": "**Aksiyon.** 1–5 büyü puanı harca; kendine ya da 30 ft içinde bir yaratığa harcadığın puan kadar **d8 mühür zarı** ver. Korunan yaratık hasar alırken istediği kadar zarı harcayıp atar, toplam hasardan düşülür. Uzun dinlenmene ya da zarlar bitene kadar sürer; aynı anda tek kalkan.",
+            "granted_action_refs": [
+              {
+                "_ref": "creature-action",
+                "name": "Mühür Kalkanı"
+              }
+            ]
+          },
+          {
+            "level": 7,
+            "name": "Kayıt Büyüsü — dördüncü kademe",
+            "description": "**Freedom of Movement · Death Ward** daima hazır büyülerine eklenir.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Freedom of Movement"
+              },
+              {
+                "slug": "spell",
+                "name": "Death Ward"
+              }
+            ]
+          },
+          {
+            "level": 9,
+            "name": "Kayıt Büyüsü — beşinci kademe",
+            "description": "**Greater Restoration · Wall of Force** daima hazır büyülerine eklenir.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Greater Restoration"
+              },
+              {
+                "slug": "spell",
+                "name": "Wall of Force"
+              }
+            ]
+          },
+          {
+            "level": 14,
+            "name": "Fihrist Hali",
+            "description": "**Bonus aksiyon**, 1 dakika: sana yapılan saldırı atışları avantaj alamaz, senin d20 atışlarında 9 ve altı 10 sayılır. Uzun dinlenmede 1 bedava; sonra 5 büyü puanı.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Fihrist Hali"
+              }
+            ]
+          },
+          {
+            "level": 18,
+            "name": "Sayım",
+            "description": "**Aksiyon.** 30 ft'lik küpte toplam 100 canı bölüştürerek iyileştirir, hasarlı nesneleri onarır, 6. seviye ve altı büyüleri sonlandırırsın. Uzun dinlenmede 1 bedava; sonra 7 büyü puanı.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Sayım"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "5e8ead0d-fd4f-5c1a-8e54-cb1efb23c53b": {
+      "name": "Pul Bağıtlısı",
+      "type": "subclass",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Ravenhall'un Avlusu'nda karar taşla verilir: rün, o platonun kağıdıdır. Kuzeyin Gözcüleri bir avcıyla bir hayvan arasına söz kurarken onu deftere değil **taşa** kazır. O söze **bağıt** denir.\n\nBağıta giren hayvan, plato eteklerinin pullu yırtıcısıdır — halk ona sadece **Pullu** der. Ve bağıt taşta olduğu için Sancak Kaydı'nda karşılığı yoktur: o hayvan hukuken **yoktur**.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "alt-sınıf",
+        "ravenhall",
+        "yazısız"
+      ],
+      "dm_notes": "Uyarlama: *Drakewarden* (Fizban's Treasury of Dragons). Sapmalar:\n\n- **Uçuş tamamen çıkarıldı** — 7. seviyedeki kanat ve 15. seviyedeki uçan binek yok. Yerine tırmanma 40 ft, zorlu arazi bağışıklığı, 50 ft yürüme ve bedava biniş/iniş geldi.\n- Refleks Direnci'nin menzili 30 → **60 ft** (uçuş kaybının kısmi karşılığı).\n- Salgı listesinden **ateş çıkarıldı**; dört tip kaldı.\n- Draconic yerine **Primordial**; drake bir dragon değil **beast**.\n\n**Net:** özgününden bir tık zayıf, ve bu bilerek. Kalan bütün sayılar (AC 14+YB, can 5+5×sv, ısırık, +1d6'lar, 8d6→10d6 koni, çağırma ekonomisi) özgünüyle aynıdır.\n\nMasanız kaybı fazla ağır buluyorsa tek düğme: 15. seviyeye **\"Pullu devrilemez\"** satırını ekleyin.",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "parent_class_ref": {
+          "slug": "class",
+          "name": "Ranger"
+        },
+        "granted_at_level": 3,
+        "flavor_description": "**Ejderha değil.** Bu dünyada ejderha yok; Pullu bir hayvandır, bezi vardır, ölür. Bağıt onu sadıklaştırır, tanrılaştırmaz.\n\n**Kanat yok.** Ne Pullu'nun ne senin hiçbir seviyede kanadın olmaz ve ikiniz de uçmazsınız. Meridia'nın bütün baskısı **geçiş** üstüne kurulu — gümrük rıhtımı, tek dar patika, gözcü kuleleri, abluka. Uçan bir binek o baskının tamamını es geçerdi.\n\n**Yazısız yoldaş.** Pullu'yu mühürlü bir şehre soktuğunda kimse onu senden alamaz, çünkü kimse onu sana ait de sayamaz. Defterde yazacak kutu yok. Bu, kapıda her seferinde yeniden çözülen bir sorundur.",
+        "features": [
+          {
+            "level": 3,
+            "name": "Bağıt Armağanı",
+            "description": "**Thaumaturgy** cantrip'ini öğrenirsin (Ranger cantrip'i sayılır, bildiğin büyü sayısına sayılmaz) ve **Primordial** dilini — Ravenhall'ın *Taş Dili* — öğrenirsin. Bağıtın **salgı tipini** seçersin: asit, zehir, soğuk ya da yıldırım.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Bağıt Armağanı"
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "name": "Bağıt Yoldaşı",
+            "description": "**Aksiyon** ile Pullu'yu 30 ft içine çağırırsın. Uzun dinlenmede 1 bedava; sonrası 1. seviye ya da üstü bir büyü slotu. İnisiyatifini paylaşır, senden sonra oynar, komut verilmezse Dodge alır.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Bağıt Yoldaşı"
+              }
+            ]
+          },
+          {
+            "level": 7,
+            "name": "Pul ve Diş",
+            "description": "Pullu **Medium** olur, **tırmanma 40 ft** kazanır, zorlu araziyi yok sayar ve seni **karada** taşıyabilir. Isırığı +1d6 salgı hasarı ekler. **Sen** seçtiğin salgı tipine dirençli olursun. *(Kanat ve uçuş yok.)*",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Pul ve Diş"
+              }
+            ]
+          },
+          {
+            "level": 11,
+            "name": "Salgı Püskürtmesi",
+            "description": "**Aksiyon.** Sen ya da Pullu 30 ft'lik koniye salgı püskürtür: Dexterity kurtarma zarı (DC = senin büyü kurtarma DC'n), **8d6** salgı hasarı, başaran yarısını alır. Uzun dinlenmede 1 bedava; sonrası 3. seviye ya da üstü slot.",
+            "granted_action_refs": [
+              {
+                "_ref": "creature-action",
+                "name": "Salgı Püskürtmesi"
+              }
+            ]
+          },
+          {
+            "level": 15,
+            "name": "Tam Bağıt",
+            "description": "Pullu **Large** olur, yürüme hızı **50 ft**; binmek/inmek hareketine mal olmaz. Isırığı bir 1d6 daha ekler (toplam +2d6). Salgı Püskürtmesi **10d6** olur. **Refleks Direnci:** 60 ft içindeyken biriniz hasar aldığında tepkiyle o hasara direnç verirsin — yetkinlik bonusun kadar, uzun dinlenmede yenilenir. *(Uçuş yok.)*",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Tam Bağıt"
+              },
+              {
+                "_ref": "trait",
+                "name": "Refleks Direnci"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "9974b459-bb8b-5e8b-91d7-6cabbe1aed1f": {
+      "name": "Pullu",
+      "type": "animal",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "> Köpek büyüklüğünde, alçak ve geniş. Sırtı zeytin yeşili sert pullarla kaplı, karnı açık gri. Boynunun iki yanında yumruk büyüklüğünde iki bez var ve nefes alıp verdikçe hafifçe şişiyor. Gözleri yatay yarık; başını çevirdiğinde boynu kıpırdamıyor, gövdesi dönüyor. Sesi çıkarmıyor — sadece nefesini duyuyorsun.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "pul-bağıtlısı",
+        "ravenhall",
+        "yazısız"
+      ],
+      "dm_notes": "Bu kart bir düşman değil, bir oyuncu yoldaşı. Bağıtlısının sırasında, ondan sonra oynar; komut verilmezse Dodge alır.\n\n**Yazısız olmasının masadaki karşılığı:** Sancak Kaydı'nda satırı yok. Mühürlü bir şehirde kapıdaki nöbetçinin defterinde onu yazacak kutu yok — bu hem koruma hem risk. Taşrada Sınır ve Ticaret kalemi hayvanı **yük** yazarak çözüyor.",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Small"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Beast"
+        },
+        "tags_line": "Yazısız · bağıtlı",
+        "alignment_ref": {
+          "_lookup": "alignment",
+          "name": "Unaligned"
+        },
+        "alignment_note": "Bağıta bağlı, efendiye değil.",
+        "ac": 16,
+        "ac_note": "pul zırhı — 14 + bağıtlısının yetkinlik bonusu",
+        "initiative_modifier": 1,
+        "initiative_score": 11,
+        "hp_average": 20,
+        "hp_dice": "3d10",
+        "speed_walk_ft": 40,
+        "stat_block": {
+          "STR": 16,
+          "DEX": 12,
+          "CON": 15,
+          "INT": 8,
+          "WIS": 14,
+          "CHA": 8
+        },
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "passive_perception": 12,
+        "language_note": "Konuşmaz. Bağıtlısının söylediğini anlar.",
+        "immunity_note": "Bağıtta seçilen salgı tipine bağışık (asit, zehir, soğuk ya da yıldırım).",
+        "cr": "1/2",
+        "xp": 100,
+        "proficiency_bonus": 2,
+        "trait_refs": [
+          {
+            "_ref": "trait",
+            "name": "Salgı"
+          }
+        ],
+        "action_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Isırık"
+          }
+        ],
+        "reaction_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Salgılı Vuruş"
+          }
+        ],
+        "traits_md": "Plato eteklerinin ve kuzey bataklıklarının yırtıcısı. Halk ona sadece **Pullu** der. Avını ısırmadan önce üzerine bezinin salgısını püskürtür.\n\n**Ölçekleme.** Değerler bağıtlısının Ranger seviyesiyle büyür:\n\n- **AC** = 14 + bağıtlısının yetkinlik bonusu\n- **Can** = 5 + (5 × Ranger seviyesi); can zarı sayısı Ranger seviyesi kadar d10\n- **Isırık** = +3 + yetkinlik bonusu isabet, 1d6 + yetkinlik bonusu hasar\n- **Boyut** = 3. sv Small · 7. sv Medium · 15. sv Large\n- **Hız** = 40 ft · 7. sv'de ayrıca tırmanma 40 ft · 15. sv'de yürüme 50 ft\n\n**Kurtarma zarları:** Dexterity ve Wisdom'da yetkin — DEX +1 + yetkinlik bonusu, WIS +2 + yetkinlik bonusu.\n\n**Uçmaz.** Hiçbir seviyede kanadı olmaz."
       }
     }
   },
