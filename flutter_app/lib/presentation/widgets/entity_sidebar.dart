@@ -1580,9 +1580,43 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     String categoryLabel,
     DmToolColors palette,
     bool pinned,
-  ) {
+  ) =>
+      EntityRowTile(
+        name: entity.name,
+        source: entity.source,
+        categoryLabel: categoryLabel,
+        color: color,
+        pinned: pinned,
+        onTap: () => widget.onEntitySelected?.call(entity.id),
+      );
+}
+
+/// Sidebar'daki entity satırı: renkli kategori noktası (pinliyse iğne),
+/// ad + kaynak, sağda kategori etiketi. Kart geçmişi sheet'i de bunu
+/// kullanıyor — iki liste görsel olarak aynı kalsın diye.
+class EntityRowTile extends StatelessWidget {
+  final String name;
+  final String source;
+  final String categoryLabel;
+  final Color color;
+  final bool pinned;
+  final VoidCallback? onTap;
+
+  const EntityRowTile({
+    required this.name,
+    required this.source,
+    required this.categoryLabel,
+    required this.color,
+    this.pinned = false,
+    this.onTap,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     return InkWell(
-      onTap: () => widget.onEntitySelected?.call(entity.id),
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         child: Row(
@@ -1611,16 +1645,16 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entity.name,
+                    name,
                     style: TextStyle(
                       fontSize: 13,
                       color: palette.tabActiveText,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (entity.source.isNotEmpty)
+                  if (source.isNotEmpty)
                     Text(
-                      entity.source,
+                      source,
                       style: TextStyle(
                         fontSize: 10,
                         color: palette.sidebarLabelSecondary,

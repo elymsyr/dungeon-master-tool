@@ -31,6 +31,7 @@ import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
 import '../l10n/app_localizations.dart';
+import '../../application/providers/visible_entity_provider.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
@@ -293,13 +294,65 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _persistUiState();
   }
 
-  void _showMobileSidebar() {
-    final schema = ref.read(worldSchemaProvider);
+  /// Son 50 kartın listesi — kapatılmış olanlar dahil. Dokunma kartı açar.
+  /// Satırlar sidebar'la aynı [EntityRowTile] — renkli kategori noktası,
+  /// ad + kaynak, kategori etiketi.
+  void _showCardHistory() {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final recent = ref.read(dbRecentEntitiesProvider);
+    final entities = ref.read(visibleEntityProvider);
+    final cats = {
+      for (final c in ref.read(worldSchemaProvider).categories) c.slug: c,
+    };
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: palette.cbr.topLeft),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          // 50 satır ekrana sığmaz → kaydırılabilir; kısa listede
+          // shrinkWrap yüksekliği içeriğe göre küçülür.
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.7,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final id in recent)
+                if (entities[id] != null)
+                  Builder(builder: (_) {
+                    final e = entities[id]!;
+                    final cat = cats[e.categorySlug];
+                    return EntityRowTile(
+                      name: e.name,
+                      source: e.source,
+                      categoryLabel: cat?.name ?? e.categorySlug,
+                      color: cat != null
+                          ? parseHexColor(cat.color)
+                          : palette.tabText,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _selectEntity(id);
+                      },
+                    );
+                  }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMobileSidebar() {
+    final schema = ref.read(worldSchemaProvider);
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: palette.cbr.topLeft),
       ),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -1147,10 +1200,23 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
       // FAB for mobile/tablet entity sidebar
       floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
-          ? FloatingActionButton.small(
-              heroTag: 'main_screen_entity_sidebar_fab',
-              onPressed: _showMobileSidebar,
-              child: const Icon(Icons.list),
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'main_screen_card_history_fab',
+                  shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+                  onPressed: _showCardHistory,
+                  child: const Icon(Icons.history),
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton.small(
+                  heroTag: 'main_screen_entity_sidebar_fab',
+                  shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+                  onPressed: _showMobileSidebar,
+                  child: const Icon(Icons.list),
+                ),
+              ],
             )
           : null,
 

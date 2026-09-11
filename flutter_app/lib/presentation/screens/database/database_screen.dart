@@ -12,6 +12,11 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
 
+/// Son açılan kartların id'leri, en yeni başta, en fazla 50 tane. Kart
+/// kapansa da listede kalır — mobil geçmiş FAB'i bunu gösterir. Oturumluk;
+/// diske yazılmıyor.
+final dbRecentEntitiesProvider = StateProvider<List<String>>((_) => const []);
+
 /// Database tab — Dual-panel tabbed card workspace.
 /// Python ui/tabs/database_tab.py birebir karşılığı:
 /// Sol panel (EntityTabWidget) + Sağ panel (EntityTabWidget), splitter ile.
@@ -69,15 +74,24 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
   void _openTab(String entityId, {_Panel panel = _Panel.left}) {
     final tabs = panel == _Panel.left ? _leftTabs : _rightTabs;
+    _pushRecent(entityId);
 
     // Aynı tab zaten açıksa aktif yap
     final existing = tabs.indexWhere((t) => t.entityId == entityId);
     if (existing >= 0) {
+      // Telefonda liste bir geçmiş yığını — zaten açık kart tepeye taşınır,
+      // böylece geri tuşu her zaman en son açılanı kapatır.
+      final phone = getScreenType(context) == ScreenType.phone;
       setState(() {
+        var idx = existing;
+        if (phone && panel == _Panel.left && existing != tabs.length - 1) {
+          tabs.add(tabs.removeAt(existing));
+          idx = tabs.length - 1;
+        }
         if (panel == _Panel.left) {
-          _leftActiveIndex = existing;
+          _leftActiveIndex = idx;
         } else {
-          _rightActiveIndex = existing;
+          _rightActiveIndex = idx;
         }
       });
       _persistOpenTabs();
@@ -106,7 +120,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     Color catColor = const Color(0xFF808080);
     if (entity != null) {
       final cat = _firstWhereOrNull(schema.categories, (c) => c.slug == entity.categorySlug);
-      if (cat != null) catColor = _parseHexColor(cat.color);
+      if (cat != null) catColor = parseHexColor(cat.color);
     }
 
     final entry = _TabEntry(
@@ -125,6 +139,15 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
       }
     });
     _persistOpenTabs();
+  }
+
+  void _pushRecent(String entityId) {
+    final cur = ref.read(dbRecentEntitiesProvider);
+    if (cur.firstOrNull == entityId) return;
+    ref.read(dbRecentEntitiesProvider.notifier).state = [
+      entityId,
+      ...cur.where((e) => e != entityId),
+    ].take(50).toList();
   }
 
   void _closeTab(int index, _Panel panel) {
@@ -167,7 +190,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     var catColor = const Color(0xFF808080);
     final cat = _firstWhereOrNull(
         schema.categories, (c) => c.slug == entity.categorySlug);
-    if (cat != null) catColor = _parseHexColor(cat.color);
+    if (cat != null) catColor = parseHexColor(cat.color);
     final replacement = _TabEntry(
       entityId: newId,
       title: entity.name,
@@ -283,33 +306,23 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     if (screen == ScreenType.phone) {
       if (_leftTabs.isEmpty) return _EmptyPanel(palette: palette);
       final active = _leftActiveIndex.clamp(0, _leftTabs.length - 1);
-      return Column(
+      // Sekme çubuğu yok: açık kartlar bir geçmiş yığını, geri tuşu üsttekini
+      // kapatır (_handleBack). IndexedStack alttakileri mount tutuyor →
+      // geri dönünce kart scroll/state'i yerinde.
+      return IndexedStack(
+        index: active,
+        sizing: StackFit.expand,
         children: [
-          _TabBar(
-            tabs: _leftTabs,
-            activeIndex: active,
-            palette: palette,
-            onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
-            onClose: (i) => _closeTab(i, _Panel.left),
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: active,
-              sizing: StackFit.expand,
-              children: [
-                for (final t in _leftTabs)
-                  EntityCard(
-                    key: ValueKey(t.entityId),
-                    entityId: t.entityId,
-                    categorySchema: _firstWhereOrNull(
-                        schema.categories, (c) => c.slug == t.categorySlug),
-                    readOnly: !editMode,
-                    panelId: 'left',
-                    onDeleted: () => _closeTabForEntity(t.entityId),
-                  ),
-              ],
+          for (final t in _leftTabs)
+            EntityCard(
+              key: ValueKey(t.entityId),
+              entityId: t.entityId,
+              categorySchema: _firstWhereOrNull(
+                  schema.categories, (c) => c.slug == t.categorySlug),
+              readOnly: !editMode,
+              panelId: 'left',
+              onDeleted: () => _closeTabForEntity(t.entityId),
             ),
-          ),
         ],
       );
     }
@@ -574,7 +587,8 @@ class _DragDropZone extends StatelessWidget {
   }
 }
 
-Color _parseHexColor(String hex) {
+/// `#RRGGBB` → Color. Kart geçmişi sheet'i de kullanıyor.
+Color parseHexColor(String hex) {
   try {
     final clean = hex.replaceFirst('#', '');
     return Color(int.parse('FF$clean', radix: 16));
