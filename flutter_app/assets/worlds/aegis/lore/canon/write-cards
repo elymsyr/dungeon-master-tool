@@ -1,4 +1,4 @@
-@cloudflare/README.md kurallarına dikkat et
-kartları yazarken özellikle Anlatım üslubu: WotC modülü read-aloud'u bölümüne uymanı istiyorum. canon dosyalarını içeriği buna uygun yazılmamış olabilir. Kartları yazarken sen buna uy.
+@flutter_app/assets/worlds/aegis/README.md  kurallarına dikkat et
+kartları yazarken özellikle Anlatım üslubu: WotC modülü read-aloud'u bölümüne uymanı istiyorum. canon dosyalarını içeriği buna uygun yazılmamış olabilir. Kart isimlerini ve kart içeriklerini yazarken sen buna uy. Özel isimleri değiştirme.
 
 Şimdi aegis canon dosyalarını takip ederek dünyamızı import hazır halde oluşturalım. Kartlara dönüştürelim bakalım.
