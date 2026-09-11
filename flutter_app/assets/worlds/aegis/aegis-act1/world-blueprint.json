@@ -27,7 +27,8 @@
             "# Macerayı yönetmek\n\n## Macera nasıl başlar\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır (@[Köye Varış](entity:scene/Köye Varış)). Köyün dışındaki kulübede üç hasta yabancı yatıyor. Karakterler kulübeye girer (@[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)), geceyi köyde geçirir, ve şafakta üç yabancı dönüşüp köye saldırır (@[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü)).\n\nBundan sonra karakterler yabancıların nereden geldiğini araştırabilir (@[Nereden Geldiler](entity:quest/Nereden Geldiler)), ya da doğrudan başkente, Meclis'e gidebilir.\n\n## Söylentiler nerede nasıl\n\n| Yer | Hastalık hakkında ne duyulur |\n|---|---|\n| @[Rıhtım](entity:location/Rıhtım) | Çok şey; çoğu doğru ve bedava |\n| @[Elymsyr](entity:location/Elymsyr) | Gümrük defterlerinde izi var; okumayı bilen görür |\n| @[Cinervik](entity:location/Cinervik) | Çok şey; yarısı uydurma |\n| @[Argenfon](entity:location/Argenfon) | Kaygıyla konuşulur; her konuşma *\"Başkumandan halleder\"* diye biter |\n| @[Lucid Triton](entity:location/Lucid Triton) | Az; Meclis konuyu susturuyor |\n| @[Votumar](entity:location/Votumar) | Fısıltıyla; kimse yüksek sesle söylemiyor |\n| @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu) | Söylenti yok; orada herkes zaten biliyor |\n\nKarakterlere iki farklı yerden söylenti ver. Çelişkiyi kendileri görsün.\n\n## Sırlar nerede\n\nOyuncuların bilmemesi gereken her şey kartların DM alanlarındadır: mekan ve NPC kartlarında **secrets**, görevlerde **secrets**, çatışmalarda **tactics**.\n\nÜç soru bu macerada sorulur ama cevaplanmaz: hastalığın ne olduğu, silinen sayfanın parasını kimin aldığı, ve @[Başkumandan](entity:npc/Başkumandan)'ın kim olduğu. Cevaplar ilgili kartlarda yazılıdır. Karakterlere sezdir; açıkça söyleme.\n\n## Umut\n\nMeclis reddedecek, kapılar kapanacak. Buna karşılık bir hancı borç yazacak, yaşlı bir şifacı kırk yıllık bilgisini karşılıksız verecek, bir rıhtım çırağı her şeyi anlatacak. @[Gümüşsu](entity:location/Gümüşsu) kurtarılabilir.",
             "# Sözlük\n\nİlk oyun gününde duyacağınız sözcükler.\n\n**Meridia** — üstünde durduğunuz kıta.\n\n**Öte** — denizin öbür yakasındaki kıta. Gerçek adı @[Vorstrand](entity:lore/Vorstrand — Bilinen Hali), ama Meridia'da bu adı kimse kullanmaz.\n\n**Lucid Triton** — kıtanın beyaz mermerden başkenti.\n\n**Konsey / Meclis** — halk ikisini de kullanır. Konsey kralın kurduğu yönetimdir; Meclis o yönetimin koltuklarında oturan altı lonca. Bkz. @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).\n\n**Lonca** — kıtanın bir işini yürüten kurum: ticaret, demircilik, şifa, hukuk, mimarlık, büyü. Altı lonca Meclis'te oturur.\n\n**Hane** — bir loncanın mührünü elinde tutan aile.\n\n**Mühürlü · Kayıtlı · Yazısız** — bir insanın loncalar karşısındaki yeri: deftere yazan, defterde yazılı olan, hiçbir defterde olmayan. Bkz. @[Sancak Kaydı](entity:lore/Sancak Kaydı).\n\n**Adlar** — iki isimli biri (ad ve hane) bir haneye ya da loncaya aittir. Tek isimli biri hizmet eder. Lakapla anılan birinin mührü yoktur.\n\n**Karşı-imza** — bir işin resmi olarak yapıldığını gösteren ikinci imza.\n\n**Blight** — köylülerin adını koyamadıkları hastalığa verdiği ad. Bkz. @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali)."
           ],
-          "dmNotes": "Bu kartı oyuncular ilk okur. Hastalığın kaynağı, silinen sayfanın arkasındaki el ve @[Başkumandan](entity:npc/Başkumandan)'ın kimliği burada yazmaz; hepsi ilgili kartların secrets alanındadır.\n\nMaceranın özü: karakterler bu sorunları yaratmadı, ama sorunlar artık onların."
+          "dmNotes": "Bu kartı oyuncular ilk okur. Hastalığın kaynağı, silinen sayfanın arkasındaki el ve @[Başkumandan](entity:npc/Başkumandan)'ın kimliği burada yazmaz; hepsi ilgili kartların secrets alanındadır.\n\nMaceranın özü: karakterler bu sorunları yaratmadı, ama sorunlar artık onların.",
+          "imagePath": "media/Artwork/campaign-Aegis.webp"
         }
       }
     ],
@@ -45,7 +46,8 @@
           "pages": [
             "# İrade Çağı\n\nMeridia'nın her meydanında aynı hikaye anlatılır: üç yüz yıl önce Kral Lucian tanrılarla insanlar arasındaki bağı kesti ve insanlara tek bir şey bıraktı, **kendi iradelerini.**\n\nO günden beri kıta tanrısız yaşıyor. Tapınak yerine meydan, rahip yerine usta, dua yerine iş var. Bir köy hastalanırsa önce kendi başının çaresine bakar. Yardım istemek suç değildir, ama bir eksiklik sayılır.\n\n## Seçmenin yükü\n\nİnsanlar kendi başlarına seçmenin ağırlığını kaldıramadı ve kendilerine yeni düzenler kurdu: loncalar, mertebeler, defterler. Bugün kıtada kimin yükseleceğini @[Hizmet Basamakları](entity:lore/Hizmet Basamakları), kimin karar vereceğini @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi) belirler.\n\n## Kral\n\nLucian'ın adı her yerde anılır; kendisi hiçbir yerde görünmez. Üç yüz yıldır Konsey'in oturumlarına gelmedi, ve bu kimseyi rahatsız etmiyor: Konsey onsuz da işliyor. Votumar'da onun *\"birbirinize bakın\"* sözü hâlâ her gün tekrarlanır.\n\n## Bilinmeyen\n\nÜç yüz yıl önce **gerçekte** ne olduğunu kimse bilmez. Lucian geride büyük bir öğreti bıraktı, ama neredeyse hiç belge bırakmadı. Kıtada o dönemden kalma belgeleri saklayan tek yer **Occulus**'tur; geri kalan arşivler yalnız öğretinin kendisini saklar.\n\nÖğretinin bugün nasıl yaşandığı: @[İrade Yolu](entity:lore/İrade Yolu)."
           ],
-          "dmNotes": "Bu karttaki her cümle doğrudur; eksik olan her şey bilerek eksiktir. Tarihteki boşluk bir ihmal değil, bir sansürün sonucudur.\n\nTanrısızlık ve irade öğretisi insanları yardım istemekten alıkoyar. Liyakat düzeninin kendi hatasını görmemesi, bir hastalığın gizlenebilmesini mümkün kılar. Bunu oyunculara söyleme; kurumların susması olarak oynat."
+          "dmNotes": "Bu karttaki her cümle doğrudur; eksik olan her şey bilerek eksiktir. Tarihteki boşluk bir ihmal değil, bir sansürün sonucudur.\n\nTanrısızlık ve irade öğretisi insanları yardım istemekten alıkoyar. Liyakat düzeninin kendi hatasını görmemesi, bir hastalığın gizlenebilmesini mümkün kılar. Bunu oyunculara söyleme; kurumların susması olarak oynat.",
+          "imagePath": "media/Artwork/İrade-Çağı.webp"
         }
       },
       {
@@ -61,7 +63,8 @@
           "pages": [
             "# Tanrılar ve Fısıltı\n\nTanrılar insanları umursamayı bırakmadı. Tek bir şeyin mümkün olabilmesi için var oluşlarından vazgeçtiler, ve ellerinde kalan tek şey fısıldayabilmek.\n\nFısıltıyı duyanlar onu korkutucu bulmaz. Duyanlar onu, söyleyecek çok şeyi olup ancak birkaç kelimeye gücü yeten birinin sesi gibi anlatır: yorgun, sıcak, kısa.\n\n## İlahi büyü\n\n**İlahi büyü çalışır, ve pek çok kişi yapar.** Biri ilahi büyü yapabiliyorsa, tanrılar ona cevap vermiş demektir. Neden cevap verdikleri söylenmez, sorulmaz, garanti edilmez.\n\n**Şifa rahatlatmaz.** Şifa büyüsü yapanın ve alanın bedenine ağırlık verir: kemiklerde bir basınç, ardından geçmeyen bir yorgunluk. Meridia'da kimse iyileştirilmeyi ferahlatıcı bir şey olarak anlatmaz.\n\n**Kutsal sembol bir alettir.** Süs değil; ilahi olanı odaklayan bir araç. Sembolünü kaybeden bir rahip, bir bileşenden fazlasını kaybeder.\n\n## Şehirde\n\nLucid Triton'da ilahi büyü yapan biri mucize gösteren biri olarak değil, usulsüzlük yapan biri olarak görülür. Şehirde tanrılardan gelen bir cevabın yazılacağı bir yer yoktur.\n\nİnancın şehrin gözünden uzakta nerede yaşadığı: @[Sessiz Mabetler](entity:lore/Sessiz Mabetler)."
           ],
-          "dmNotes": "Şifanın ağırlığı ve sembolün alet olması anlatıya dair kurallardır; zarları değiştirmez. Mekanik bedel yalnız iki büyüde vardır ve Blight kartında yazılıdır: *Lesser Restoration* yapan 1 seviye Exhaustion alır, *Greater Restoration* yapan kalıcı olarak bir Can Zarı kaybeder.\n\nBir karakter ilahi büyü yapıyorsa tanrıların ona neden cevap verdiğini açıklama."
+          "dmNotes": "Şifanın ağırlığı ve sembolün alet olması anlatıya dair kurallardır; zarları değiştirmez. Mekanik bedel yalnız iki büyüde vardır ve Blight kartında yazılıdır: *Lesser Restoration* yapan 1 seviye Exhaustion alır, *Greater Restoration* yapan kalıcı olarak bir Can Zarı kaybeder.\n\nBir karakter ilahi büyü yapıyorsa tanrıların ona neden cevap verdiğini açıklama.",
+          "imagePath": "media/Artwork/Tanrılar-ve-Fısıltı.webp"
         }
       },
       {
@@ -77,7 +80,8 @@
           "pages": [
             "# Blight — bilinen hali\n\nKöylüler ona **hastalık** der, bazıları **Blight**. İki kelime de aynı şeyi söyler: adını koyduk, ne olduğunu bilmiyoruz.\n\nBulaşıyor gibi görünür, hasta ediyor gibi görünür, bir hekimin önüne bir hastalık gibi gelir. Gerçekten bir hastalık olup olmadığını söyleyebilen yok.\n\n## Belirtiler\n\n1. Önce hafif bir öksürük, eklemlerin iç yüzünde saç teli inceliğinde siyah damarlar, ağızda geçmeyen bir metal tadı.\n2. Sonra yüksek ateş, geç kapanan yaralar, grileşen bir ten.\n3. Daha sonra gözlerden ve kulaklardan sızan siyah bir sıvı, daralan nefes, ve kimsenin olmadığı yerden gelen fısıltılar.\n4. En sonunda deri sertleşip pul pul olur, kaslar kişinin iradesi dışında kasılır, konuşma dağılır.\n\nVe sonra bilinç kapanır.\n\n## İki hasta aynı yolu yürümez\n\nHastalara bakanları en çok bu yorar. Birinde yorgunluk öne geçer; biri bir an berrak, bir an kayıptır; birinin bedeni olması gerekenden erken güçlenir.\n\n## Nasıl geçer\n\nBilinen kadarıyla temasla: bir hastaya dokunmak, onunla aynı kapalı odada bir gece kalmak. Hastalık düzgün yayılmaz; bir köyde görülür, yanındaki köyde görülmez.\n\n## Tedavi\n\nBilinen bir tedavi yok. Şehrin otacıları ona *ilerlemiş bir humma* der. Köylerin yöntemi basit: **hastayı ayrı tut, yemeğini götür, içeri girme.**\n\nHastalığa karşı bilinen tek korunma @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti)'dir. Şerbet hastalığı iyileştirmez; yalnız bulaşmasını zorlaştırır."
           ],
-          "dmNotes": "Bu kart halkın bildiğini anlatır. Kurallar: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon).\n\nHastalık Meridia'ya bir rüzgarla gelmedi; @[Öte](entity:lore/Vorstrand — Bilinen Hali)'den gelen insanlarla geldi. Karakterlerin karşılaştığı kimse bunu bilmez.\n\nBlight büyülüdür ve bir kaynağa bağlıdır. Kaynağı adlandırma, gösterme ya da işaret etme. Karakterlerin bunu sezebileceği tek yol Arcana DC 13'tür."
+          "dmNotes": "Bu kart halkın bildiğini anlatır. Kurallar: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon).\n\nHastalık Meridia'ya bir rüzgarla gelmedi; @[Öte](entity:lore/Vorstrand — Bilinen Hali)'den gelen insanlarla geldi. Karakterlerin karşılaştığı kimse bunu bilmez.\n\nBlight büyülüdür ve bir kaynağa bağlıdır. Kaynağı adlandırma, gösterme ya da işaret etme. Karakterlerin bunu sezebileceği tek yol Arcana DC 13'tür.",
+          "imagePath": "media/Artwork/Blight-Bilinen-Hali.webp"
         }
       },
       {
@@ -93,7 +97,8 @@
           "pages": [
             "# Vorstrand — bilinen hali\n\nMeridia'nın karşısındaki kıta. Gemiyle gidilir, gemiyle gelinir, ve iki kıta arasındaki ticaret hiç kesilmedi.\n\nAdı **Vorstrand**'dır, ama Meridia'da bu adı neredeyse kimse söylemez. Halk **Öte** der: *Öte'den geldi, Öte'ye gidiyor, Öte'de öyleymiş.* Bir yer adından çok bir yön adı gibi kullanılır.\n\n## Limanlarda\n\nElymsyr'in rıhtımında Öte'nin kumaşı, boyası ve baharatı satılır. Öte'den gelen tayfalar kendi dillerini konuşur; @[Elymsyr'in çevirmenleri](entity:npc/Çevirmen) onların haberlerini kıtaya taşır.\n\n## Öte'den gelenler\n\nÖte'den gelen birinin geçmişi hakkında Meridia'da doğrulanabilecek hiçbir şey yoktur. Verdiği ad, söylediği meslek, anlattığı yol, hepsi kendi sözüdür.\n\nTek istisna @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın defteridir: Öte'nin tanınmış serbest tüccarlarının adları o defterde yazılıdır."
           ],
-          "dmNotes": "Blight Meridia'ya buradan taşındı. @[Alton Leagallow](entity:npc/Alton Leagallow), @[Merla Tealeaf](entity:npc/Merla Tealeaf) ve @[Kromanna](entity:npc/Kromanna) buradan geldi.\n\nKartta bilerek az şey var: karakterler bu kıta hakkında doğrulanmış tek bir bilgi bulamamalı."
+          "dmNotes": "Blight Meridia'ya buradan taşındı. @[Alton Leagallow](entity:npc/Alton Leagallow), @[Merla Tealeaf](entity:npc/Merla Tealeaf) ve @[Kromanna](entity:npc/Kromanna) buradan geldi.\n\nKartta bilerek az şey var: karakterler bu kıta hakkında doğrulanmış tek bir bilgi bulamamalı.",
+          "imagePath": "media/Artwork/Vorstrand-Bilinen-Hali.webp"
         }
       },
       {
@@ -109,7 +114,8 @@
           "pages": [
             "# Konsey ve Lonca Meclisi\n\nHalk *\"Konsey karar verdi\"* de der, *\"Meclis toplandı\"* da. İkisi de @[Meclis Salonu](entity:location/Meclis Salonu)'nda oturan aynı altı kişiyi kasteder.\n\n| | Konsey | Lonca Meclisi |\n|---|---|---|\n| **Ne** | Kralın kurduğu yönetim | Loncaların kendi aralarındaki kurul |\n| **Ne yapar** | Şehirleri tanımlar, vergi koyar, valileri atar | Konsey'in hangi koltuğuna kimin oturacağını belirler |\n| **Kim oturur** | Koltuklarını loncalar doldurur | Altı lonca, altı koltuk |\n\nKonsey adına konuşan herkes aslında bir loncanın adına konuşur.\n\n## Altı koltuk\n\n| Lonca | Hane | Koltukta |\n|---|---|---|\n| @[Büyücü Loncası](entity:lore/Büyücü Loncası) | Hanesiz; koltuğu Meclis atar | @[Rektör — Quarion](entity:npc/Rektör — Quarion) |\n| @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası) | Sancarlar | @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) |\n| @[Demircilik ve İşçi Loncası](entity:lore/Demircilik ve İşçi Loncası) | Ferrunlar | @[Kalfa Başı — Adrik Ferrun](entity:npc/Kalfa Başı — Adrik Ferrun) |\n| @[Simya ve Şifacılar Loncası](entity:lore/Simya ve Şifacılar Loncası) | Kalenderler | @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender) |\n| @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) | Custarlar | @[Sicil Ağası — Valen Custar](entity:npc/Sicil Ağası — Valen Custar) |\n| @[Mimarlık ve Planlama Loncası](entity:lore/Mimarlık ve Planlama Loncası) | Mizanlar | @[Levha Sahibi — Perhun Mizan](entity:npc/Levha Sahibi — Perhun Mizan) |\n\n## Nasıl karar verilir\n\nKararlar oturumda değil, oturumdan önce, koltuk sahiplerinin kendi odalarında alınır. Oturumda karar yalnız açıklanır, sonra @[Mühür Salonu](entity:location/Mühür Salonu)'nda mühürlenir.\n\nKarşı çıkmak isteyen bir koltuk sahibi oturumda konuşmaz; oturuma gelmez, ya da karşı-imzasını vermez.\n\n## Kral\n\nKral Lucian üç yüz yıldır oturumlarda görülmedi. Konsey onsuz da işliyor.\n\n## Atamalar\n\nElymsyr'in @[Gümrük Valisi](entity:npc/Gümrük Valisi)'ni ve Votumar'ın @[Başkumandan](entity:npc/Başkumandan)'ını Konsey atar; yani, fiilen, bir lonca."
           ],
-          "dmNotes": "Karakterler *\"hangi Konsey üyeleri limandan pay alıyor?\"* diye sorarsa asıl soru *\"hangi loncalar?\"* sorusudur. Rıhtımdaki @[Kadife](entity:npc/Kadife) bir loncanın adamıdır.\n\nBaşkumandan'ı Konsey atadı: bugün o koltukta oturanı bir lonca, farkında olmadan, kendi eliyle oturttu."
+          "dmNotes": "Karakterler *\"hangi Konsey üyeleri limandan pay alıyor?\"* diye sorarsa asıl soru *\"hangi loncalar?\"* sorusudur. Rıhtımdaki @[Kadife](entity:npc/Kadife) bir loncanın adamıdır.\n\nBaşkumandan'ı Konsey atadı: bugün o koltukta oturanı bir lonca, farkında olmadan, kendi eliyle oturttu.",
+          "imagePath": "media/Artwork/Konsey-ve-Lonca-Meclisi.webp"
         }
       },
       {
@@ -125,7 +131,8 @@
             "# Sancak Kaydı\n\nKonsey'in büyük defteri. Meridia'da bir insanın adı, hanesi, loncası ve mertebesi bu defterde yazılıdır. Defter Konsey'indir; kalemi loncalar tutar.\n\n## Üç sınıf\n\n| Sınıf | Ne demek | Sokakta nasıl anılır |\n|---|---|---|\n| **Mühürlü** | Bir hanenin ya da loncanın mührünü taşır; deftere kendi eliyle yazar | İki isimle: ad ve hane |\n| **Kayıtlı** | Defterde yazılıdır, ama yazan el değildir | Tek isimle |\n| **Yazısız** | Hiçbir defterde yoktur; ya hiç deftere girmedi ya da çıkarıldı | Lakapla |\n\nYazısız biri kaybolursa bunu kimse bir yere yazmaz.\n\n## Mühür\n\nMühür bir deftere yazma yetkisidir; mühür yüzüğü bu yetkinin taşınabilir hali. Mühürlü biri yüzüğünü açıkta taşır.\n\n## Soyadları\n\nHalfling ve cüce soyadları aile geleneğidir, hane değildir. Defter bu soyadlarını hane olarak yazmaz; bir halfling soyadının arkasında kontrol edilecek bir kayıt yoktur.\n\n## Defterin dışı\n\n@[Öte](entity:lore/Vorstrand — Bilinen Hali) defterde tek bir satırdır: *kıta dışı*. @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu)'nun halkının hiçbiri defterde yazılı değildir, ve orada kimse bunun eksikliğini çekmez.",
             "# Defter nasıl işler\n\n## Kim yazar\n\nŞehirde her lonca kendi defterini kendi tutar. Taşrada tek bir kalem vardır: @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası). Bir köylünün adı da, sınırdan geçen bir yükün listesi de aynı loncanın memurunun elinden çıkar.\n\n## Bir satır\n\nBir satırda dört kutu vardır: **ad · hane · lonca ve mertebe · kefil.** Hane kutusu boşsa kişi mühürsüzdür. Kefil kutusu boşsa satır açılmaz.\n\n## Satır nasıl açılır\n\nBir insan deftere doğarak değil, kefaletle girer: on sekizinde bir loncaya çırak yazılır (@[Hizmet Basamakları](entity:lore/Hizmet Basamakları)), ya da defterde yazılı biri ona kefil olur. Kefil, kefil olduğu kişinin borcunu da üstlenir.\n\n## Nasıl yükselinir\n\nMertebe ustanın imzasıyla değişir, ve karşı-imzayla resmileşir. İki imza arasındaki bekleme rüşvetle kısalır. Bkz. @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).\n\n## Mühür nasıl alınır\n\nMührü Konsey vermez; hane devreder. Bu yüzden mühürlülerin sayısı artmaz, mühür yalnız el değiştirir.\n\n## Satır nasıl silinir\n\n1. **Defterden düşürme** — @[Onur Mahkemeleri](entity:lore/Onur Mahkemeleri)'nin ihanete verdiği ceza.\n2. **Kefaletin geri çekilmesi** — kefil elini çekerse satır düşer.\n3. **Parayla silme** — bir sayfanın hiç yazılmamış gibi çıkarılması. Bu bir suçtur.\n\nParayla silme iki iz bırakır. **Kefilin karşı-imzası defterde kalır**, çünkü imza sayfanın değil sütunun parçasıdır. **Satırın taşra kalemindeki nüshası kalır**: sayfa şehre gider, ikinci nüsha gitmez."
           ],
-          "dmNotes": "**Parayla silmenin bir fiyatı var.** @[Sicim](entity:npc/Sicim) de @[Vinç Ustası](entity:npc/Vinç Ustası) da aynı rakamı söyler.\n\nÜç yabancının geçişini gösteren sayfa bu yolla silindi. Kalan karşı-imza @[Corin Sancar](entity:npc/Corin Sancar)'ın; taşra nüshası @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın loncasının defterinde.\n\nKromanna'nın gizli cebindeki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük) bir mühür yüzüğüdür, ama açıkta değil saklı taşınıyordu ve mühür yüzü eğelenmişti."
+          "dmNotes": "**Parayla silmenin bir fiyatı var.** @[Sicim](entity:npc/Sicim) de @[Vinç Ustası](entity:npc/Vinç Ustası) da aynı rakamı söyler.\n\nÜç yabancının geçişini gösteren sayfa bu yolla silindi. Kalan karşı-imza @[Corin Sancar](entity:npc/Corin Sancar)'ın; taşra nüshası @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın loncasının defterinde.\n\nKromanna'nın gizli cebindeki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük) bir mühür yüzüğüdür, ama açıkta değil saklı taşınıyordu ve mühür yüzü eğelenmişti.",
+          "imagePath": "media/Artwork/Sancak-Kaydı.webp"
         }
       },
       {
@@ -141,7 +148,8 @@
           "pages": [
             "# Büyücü Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Büyü lisansı, akademi, uzun mesafe ışınlanma |\n| **Hane** | Yok; koltuğa Meclis atar |\n| **Koltukta** | @[Rektör — Quarion](entity:npc/Rektör — Quarion) |\n| **Kiminle çatışır** | Hepsiyle; kimin nereye gittiğini bilmesi herkesi rahatsız eder |\n\nMeclis'teki tek hanesiz koltuk. Öteki beş hane için bir koltuğun bir haneden alınabileceğinin kanıtı.\n\n## Akademi\n\nLoncanın akademisi Lucid Triton'dadır: kütüphanesi, çalışma salonları ve ustalarıyla. Şehirde büyü disiplinli bir meslektir; öğrenciler bir ustanın yanında basamak basamak yükselir.\n\n## Lisans\n\n> Şehir sınırları içinde büyü yapmak **Lonca Lisansı** ister. Lisanssız büyü, *kamu güvenliğini tehdit* suçudur.\n\nLisansı bu lonca verir; suçu @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) yazar. Ceza hapis değildir: kamu hizmeti, para cezası ve sicilde bir satır. Sicilde bu satırı taşıyan biri bir daha lisans alamaz.\n\nLisans yalnız şehirde sorulur. Köyde, yolda ve limanda soran olmaz; @[Gizli Liman](entity:location/Gizli Liman)'da lisans bir şakadır.\n\n## Yasak iki okul\n\n| Yasak | Neden |\n|---|---|\n| **Necromancy** | Ölüm sebebini @[Simya ve Şifacılar Loncası](entity:lore/Simya ve Şifacılar Loncası) yazar. Ölüyü kaldıran büyü o beyanı yalanlar |\n| **Zihin kontrolü yapan Enchantment** | Meridia'nın öğretisi iradeye dayanır. Birinin iradesini elinden alan büyü öğretiye karşı işlenmiş bir suçtur |\n\nİkisi lisansla da yapılamaz. Bu okullarla çalışan biri yakalanırsa defterden düşürülür.\n\n## Işınlanma ve malzeme\n\nUzun mesafe ışınlanma yalnız bu loncadan geçer, ve lonca kimin nereye gittiğini bilir. Nadir büyü malzemesi ya lonca izniyle ya karaborsadan bulunur. Ayrıntı: @[Kural Sapmaları](entity:lore/Kural Sapmaları)."
           ],
-          "dmNotes": "Lisans bir büyücü karaktere ceza değil, bir ilişki verir. Lisanslı olan bir loncaya bağlıdır ve çağrıldığında gider; lisanssız olan şehirde dikkatli olmak zorundadır. Kuralı *\"şehirde büyü yapamazsın\"* diye oynatma."
+          "dmNotes": "Lisans bir büyücü karaktere ceza değil, bir ilişki verir. Lisanslı olan bir loncaya bağlıdır ve çağrıldığında gider; lisanssız olan şehirde dikkatli olmak zorundadır. Kuralı *\"şehirde büyü yapamazsın\"* diye oynatma.",
+          "imagePath": "media/Artwork/Büyücü-Loncası.webp"
         }
       },
       {
@@ -157,7 +165,8 @@
           "pages": [
             "# Sınır ve Ticaret Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Geçiş, gümrük, tonaj, tahıl ve fiyat; taşrada bütün defterler |\n| **Hane** | Sancarlar |\n| **Koltukta** | @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) |\n| **Kiminle çatışır** | @[Demircilik ve İşçi Loncası](entity:lore/Demircilik ve İşçi Loncası) (ithal mal yerli tezgahı keser) ve @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) (sınırda kimin sözü geçer) |\n\nSınırdan geçen yükü de, taşrada doğan çocuğu da bu loncanın memuru yazar. Ekmeğin fiyatı da bu loncanın işidir: tahıl kıtaya ithal edilir.\n\n## En eski mühür, en boş kese\n\nSancarların mührü Meclis'in en eskisidir, ama paraları yoktur. Loncanın geliri mülkten değil ticaretten gelir: gemi gecikince, sınır kapıları yavaşlayınca, tahıl gelmeyince lonca fakirleşir. Öteki beş loncanın gelirleri şehrin kendi çarşısından ve bütçesinden gelir.\n\n## Taşrada\n\n@[Elymsyr](entity:location/Elymsyr)'in gümrüğü bu loncaya bağlıdır. Bu yüzden gümrük valisi, Meclis'in en fakir loncasının en zengin memurudur.\n\nArşivciler bu loncanın taşra memurlarıdır.\n\n## Geçiş kağıdı\n\nBir gemiye resmi olarak binmenin yolu @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası)'ndan çıkan karşı-imzalı geçiş kağıdıdır. Limanlarda buna **iyi yazı** denir."
           ],
-          "dmNotes": "Hastalık sınırdan girdi, ve sınırın defteri bu loncanın. Meclis'te hastalığa inanan tek koltuk bu yüzden bu koltuk, ve salonda sözü dinlenmeyen koltuk da bu.\n\nLoncanın defterinden bir sayfa silindi; silen Orvan'ın memurlarından biri. Sayfanın altındaki ikinci imza @[Corin Sancar](entity:npc/Corin Sancar)'ın."
+          "dmNotes": "Hastalık sınırdan girdi, ve sınırın defteri bu loncanın. Meclis'te hastalığa inanan tek koltuk bu yüzden bu koltuk, ve salonda sözü dinlenmeyen koltuk da bu.\n\nLoncanın defterinden bir sayfa silindi; silen Orvan'ın memurlarından biri. Sayfanın altındaki ikinci imza @[Corin Sancar](entity:npc/Corin Sancar)'ın.",
+          "imagePath": "media/Artwork/Sınır-ve-Ticaret-Loncası.webp"
         }
       },
       {
@@ -173,7 +182,8 @@
           "pages": [
             "# Demircilik ve İşçi Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Metal, sikke basımı, ayar damgası, yevmiye |\n| **Hane** | Ferrunlar, bir cüce hanesi |\n| **Koltukta** | @[Kalfa Başı — Adrik Ferrun](entity:npc/Kalfa Başı — Adrik Ferrun) |\n| **Kiminle çatışır** | @[Mimarlık ve Planlama Loncası](entity:lore/Mimarlık ve Planlama Loncası) (işi kim planlar, işçiyi kim çağırır) ve @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası) |\n\nKıtanın en kalabalık loncası. Üyelerinin çoğu zengin değildir, ama sayıları çoktur.\n\n## Demirci çarşısı\n\nLucid Triton'un demirci çarşısında örsler gün doğmadan başlar ve fenerler yanana kadar susmaz. Sokak kömür dumanı ve sıcak demir kokar; kapıların önünde soğumaya bırakılmış nallar, zincirler ve bıçak ağızları durur.\n\n## Ayar damgası\n\nBir metalin saflığını ve hangi tezgahtan çıktığını gösteren küçük bir vuruş. Her kuyumcunun ve ayar ustasının kendi damgası vardır. Damgaların hangi tezgaha ait olduğu bir fihristte yazılıdır, ve fihristi okuyabilen az kişi var. Biri: @[Kildrak Ferrun](entity:npc/Kildrak Ferrun).\n\n## Cüceler ve metal\n\nKıtada metal işçiliği, sur, zırh ve ağır mekanizmalar çoğunlukla cücelerin elindedir. Bu bir kural değil, bir eğilim; ama damga fihristindeki adların çoğu cüce adıdır."
           ],
-          "dmNotes": "Loncanın bilgisi zenginlerde değil, tezgahtaki ustalardadır. Tezgahtaki ustayı susturmak da kolaydır.\n\nMeclis'te bu loncanın rakamları düşmedi, çünkü aynı işçiler iki vardiya çalışıyor ve eksilenlerin yerine yenileri yazıldı."
+          "dmNotes": "Loncanın bilgisi zenginlerde değil, tezgahtaki ustalardadır. Tezgahtaki ustayı susturmak da kolaydır.\n\nMeclis'te bu loncanın rakamları düşmedi, çünkü aynı işçiler iki vardiya çalışıyor ve eksilenlerin yerine yenileri yazıldı.",
+          "imagePath": "media/Artwork/Demircilik-ve-İşçi-Loncası.webp"
         }
       },
       {
@@ -189,7 +199,8 @@
           "pages": [
             "# Simya ve Şifacılar Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Hekimlik ruhsatı, iksir ve simya, ölüm sebebi beyanı |\n| **Hane** | Kalenderler |\n| **Koltukta** | @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender) |\n| **Kiminle çatışır** | @[Büyücü Loncası](entity:lore/Büyücü Loncası); iyileştirmeyi kimin yapacağı konusunda |\n\nŞehirde bir insanın neden öldüğünü bu lonca yazar.\n\n## Şifa iksiri kıttır\n\nŞehirde şifa iksiri yalnız ruhsatlı otacıların tezgahında satılır ve pahalıdır. Taşrada parayla bulunmaz; yapılır.\n\n## Kim yapabilir\n\nRuhsatlı bir otacı, druid bilgisi olan biri, ya da simya takımıyla çalışan biri. Hepsinin ihtiyacı aynı: **temiz su** ve doğru bitki.\n\nHastalığa karşı bilinen tek korunma olan @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti) de aynı ellerde yapılır.\n\n## Şifacılar kışlası\n\nLoncanın çırakları Lucid Triton'da taş bir kışlada yaşar ve çalışır. Kışlanın uzun koridorları kafur ve sirke kokar; odalarda kaynayan kazanların buharı pencereleri buğulandırır. Beyanlar önce burada, çırakların elinde temize çekilir. Çıraklardan biri: @[Sindri](entity:npc/Sindri)."
           ],
-          "dmNotes": "Baş Otacı hastalığın beyanlarını kendisi değiştirtti. İlk beyanın kopyası @[Sindri](entity:npc/Sindri)'de duruyor; hastalığın şehirde bilindiğinin belgesi o kopya.\n\nBu lonca *\"bilmiyoruz\"* diyemez: bilmediğini kabul etmek, hekimlik ruhsatı verme hakkının dayandığı iddiayı yıkar."
+          "dmNotes": "Baş Otacı hastalığın beyanlarını kendisi değiştirtti. İlk beyanın kopyası @[Sindri](entity:npc/Sindri)'de duruyor; hastalığın şehirde bilindiğinin belgesi o kopya.\n\nBu lonca *\"bilmiyoruz\"* diyemez: bilmediğini kabul etmek, hekimlik ruhsatı verme hakkının dayandığı iddiayı yıkar.",
+          "imagePath": "media/Artwork/Simya-ve-Şifacılar-Loncası.webp"
         }
       },
       {
@@ -206,7 +217,8 @@
           "pages": [
             "# Askeri Hukuk Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Suç sicili, kolluk yetkisi, karantina ve olağanüstü hal hukuku |\n| **Hane** | Custarlar |\n| **Koltukta** | @[Sicil Ağası — Valen Custar](entity:npc/Sicil Ağası — Valen Custar) |\n| **Kiminle çatışır** | @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası); sınırda kimin sözü geçer |\n\n## Şehirde asayiş\n\nLucid Triton'un asayişini ordu sağlamaz; yetki bu loncadadır. Suçu bu lonca yazar, cezayı bu lonca verir.\n\nAma sokakta nöbet tutan adam her zaman bu loncanın adamı değildir. Her loncanın kendi çarşısında kendi kolluğu vardır. Şikayetinizi kime yapacağınız, nerede başınıza geldiğine bağlıdır.\n\nAskeri Hukuk'un sözü en sonunda geçer, ama gelmesi zaman alır, ve geldiğinde iş çoğu zaman bitmiştir.\n\n## Yazdığı suçlar\n\nLisanssız büyünün suçunu bu lonca yazar. Büyük suçlar ve ihanet @[Onur Mahkemeleri](entity:lore/Onur Mahkemeleri)'ne gider.\n\n## Karantina\n\nKarantina ilan etme yetkisi bu loncadadır. Yasaya göre karantina, savaş hukukunun yürürlüğe girmesini gerektirir."
           ],
-          "dmNotes": "Sicil Ağası'nın karantina ilan etme yetkisi **var**, ve iki mevsimdir kullanmıyor: kullandığı gün sorumluluk da onun olur.\n\nCustarların limanda parası var. Rıhtımdaki @[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**'dır."
+          "dmNotes": "Sicil Ağası'nın karantina ilan etme yetkisi **var**, ve iki mevsimdir kullanmıyor: kullandığı gün sorumluluk da onun olur.\n\nCustarların limanda parası var. Rıhtımdaki @[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**'dır.",
+          "imagePath": "media/Artwork/Askeri-Hukuk-Loncası.webp"
         }
       },
       {
@@ -222,7 +234,8 @@
           "pages": [
             "# Mimarlık ve Planlama Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Yapı ruhsatı, su yolları, mahalle sınırları, sur |\n| **Hane** | Mizanlar |\n| **Koltukta** | @[Levha Sahibi — Perhun Mizan](entity:npc/Levha Sahibi — Perhun Mizan) |\n| **Kiminle çatışır** | @[Demircilik ve İşçi Loncası](entity:lore/Demircilik ve İşçi Loncası); işi kim planlar, işçiyi kim çağırır |\n\nBir mahallenin nerede başlayıp bittiği, suyun hangi yoldan aktığı bu loncanın planlarında yazılıdır.\n\n## Meridia'nın mimarisi\n\n- **Büyük ama insan ölçüsünde.** Binalar göğe tırmanmaz; içinde rahat yaşanacak kadar büyüktür ve taşın ve ahşabın en iyi işçiliğiyle yapılır.\n- **Anıtlar insan heykelidir.** Meydanlarda tanrı heykeli yoktur: mimarlar, mühendisler ve adı bilinmeyen askerler vardır.\n- **Fenerler.** Şehirler geceleri fenerlerle titizlikle aydınlatılır. Sönmüş bir fener kötü bir işaret sayılır.\n- **Beyaz taş.** @[Lucid Triton](entity:location/Lucid Triton) beyaz mermerden, @[Votumar](entity:location/Votumar) beyaz kireçtaşından yapılmıştır."
           ],
-          "dmNotes": "Levha Sahibi'nin elindeki plan bir süredir şehri doğru göstermiyor. Sur onarımı kağıt üstünde kaldı."
+          "dmNotes": "Levha Sahibi'nin elindeki plan bir süredir şehri doğru göstermiyor. Sur onarımı kağıt üstünde kaldı.",
+          "imagePath": "media/Artwork/Mimarlık-ve-Planlama-Loncası.webp"
         }
       },
       {
@@ -238,7 +251,8 @@
           "pages": [
             "# İrade Yolu\n\n@[İrade Çağı](entity:lore/İrade Çağı)'ndan kalan öğreti. Tapınağı, rahibi, duası yoktur; meydanları, törenleri ve bir ana metni vardır.\n\n## Üç temel\n\n**Kendi kaderinin efendisisin.** Başına gelen her şey kendi seçiminin sonucudur. Bir felaket karşısında dua etmek acizliktir; çözüm üretmek erdemdir.\n\n**İyi yapılmış iş.** Bir tarlayı iyi sürmek, bir kılıcı kusursuz dövmek, bir nöbeti aksatmadan tutmak. Öğretinin en büyük erdemleri bunlardır.\n\n**Düzen ve İrade Metni.** Kuruluştan kalma ana metin. Her meydanda ve neredeyse her evde bir kopyası vardır; adalet, dürüstlük ve dayanıklılık üzerine. Kimse baştan sona okumamıştır, herkes birkaç satırını ezbere bilir.\n\n## Bozulma\n\nBunu kimse yüksek sesle söylemez. Uzun barış, iradeyi her insanın her gün harcadığı bir emek olmaktan çıkarıp soyut bir güce çevirdi:\n\n| Öğretinin istediği | Bugün olan |\n|---|---|\n| Herkes kendi iradesini kullanır | İrade, toplumu koruyan bir gelenekler bütünü sanılıyor |\n| Kimseye diz çökülmez | Halk, liyakatle seçildiğine inandığı insanlara körü körüne güveniyor |\n| Tanrı yok | Tanrı yok, ama tören çok |\n\n## Üç yerde üç yorum\n\n- **Votumar:** Lucian'ın *\"birbirinize bakın\"* sözü orada *\"birbirinizin kalkanı olun\"* diye okunur.\n- **Ravenhall:** İrade Yolu orada bir öğreti değil, doğanın kanunudur.\n- **Lucid Triton:** İrade bir mertebedir; kimin sözünün geçtiğini karşı-imza söyler.\n\nÖğretinin dışında kalan inançlar: @[Sessiz Mabetler](entity:lore/Sessiz Mabetler)."
           ],
-          "dmNotes": "**Öğretinin zayıf noktası lidere duyulan güvendir.** @[Votumar](entity:location/Votumar)'da halk o koltukta oturan kişiye korktuğu için değil, gerçekten güvendiği için itaat eder. O koltuğa oturan birinin kimseyi ikna etmesi gerekmez. Bkz. @[Başkumandan](entity:npc/Başkumandan).\n\nVotumar öğretinin en sağlam yaşandığı yerdir, ve bu yüzden en kolay istismar edilen yerdir."
+          "dmNotes": "**Öğretinin zayıf noktası lidere duyulan güvendir.** @[Votumar](entity:location/Votumar)'da halk o koltukta oturan kişiye korktuğu için değil, gerçekten güvendiği için itaat eder. O koltuğa oturan birinin kimseyi ikna etmesi gerekmez. Bkz. @[Başkumandan](entity:npc/Başkumandan).\n\nVotumar öğretinin en sağlam yaşandığı yerdir, ve bu yüzden en kolay istismar edilen yerdir.",
+          "imagePath": "media/Artwork/İrade-Yolu.webp"
         }
       },
       {
@@ -253,7 +267,8 @@
           "pages": [
             "# Sessiz Mabetler\n\nEski inançlar yok olmadı; gözden uzağa çekildi. Konsey onları yasaklamaz, ve kamu düzenini bozmadıkları sürece görmezden gelir.\n\n| İnanç | Nerede | Ne yapılır |\n|---|---|---|\n| **Eski tanrılar** | Arka sokaklar, bodrumlar, en eski evler, mağaralar | Deniz tanrılarına ve hasat tanrıçalarına küçük sunaklar. Adları yarı unutulmuş |\n| **Atalar** | Evin baş köşesi | Büyük bir iş başarmış atanın büstü ya da silahı sergilenir. Öğretiye en yakın inanç: sonuçta bir insana saygı duyuluyor |\n| **Doğa ruhları** | @[Gümüşsu](entity:location/Gümüşsu) ve @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu) | Doğanın kendi bilinci olduğuna, rünlerin o bilincin dili olduğuna inanılır |\n| **Kör şans** | @[Gizli Liman](entity:location/Gizli Liman) | Denizcilerin unutulmuş tanrısı. Kuytularda tütsü yakılır, kayalara eski semboller kazınır |\n| **Akışın Ruhu** | @[Elymsyr](entity:location/Elymsyr) | Denizci yola çıkmadan suya bir parça gümüş atar. Herkes yapar, kimse konuşmaz |\n\n## Kıyıda ve köyde\n\n@[Votumar](entity:location/Votumar)'ın balıkçıları denizin öfkesini dindirmek için kıyıya sessizce çiçek bırakır ve taşlara rün kazır; bunu şövalyelerin görmediği saatlerde yaparlar. @[Cinervik](entity:location/Cinervik)'te bir İrade anıtının hemen yanında eski tanrılar için küçük bir sunak durur, ve kimse rahatsız olmaz. Gümüşsu'da kapıların çoğunda tahtadan oyulmuş bir tılsım vardır; köy **Koca Orman**'ın sesine inanır."
           ],
-          "dmNotes": "İlahi büyü yapan bir karakter yasa dışı değil, usulsüzdür. Bu kart ona şehirde rahat nefes alabileceği yerleri gösterir."
+          "dmNotes": "İlahi büyü yapan bir karakter yasa dışı değil, usulsüzdür. Bu kart ona şehirde rahat nefes alabileceği yerleri gösterir.",
+          "imagePath": "media/Artwork/Sessiz-Mabetler.webp"
         }
       },
       {
@@ -268,7 +283,8 @@
           ],
           "pages": [
             "# Hizmet Basamakları\n\n> On sekiz yaşına giren herkes bir **loncaya**, **orduya** ya da **bürokrasiye** katılır. Yükselmek başarıyla olur: *Çırak → Kalfa → Usta → Üstat*, ya da *Er → Onbaşı → Subay*. Kan bağının resmi bir yeri yoktur.\n\n## Sonuçları\n\n**Aylaklık utançtır.** İşsizlik bir talihsizlik değil, bir karakter kusuru sayılır. Meridia'da bir kuruma bağlı olmayan bir yetişkin, kendini açıklamak zorunda kalır.\n\n**Yükselmek gerçekten olur.** Çırak usta olur, er subay olur. Ama yükselişin resmileşmesi bir loncanın karşı-imzasına bağlıdır, ve karşı-imza kimin yanında durduğunuza göre çabuk ya da geç gelir.\n\n**Haneler.** *Nüfuzlu aile* resmi bir unvan değildir. Kuşaklardır sınavlara daha iyi hazırlanan çocukların ailesidir, yani bir loncanın mührünü elinde tutan aile.\n\n## Hane ve mühür\n\nHane bir loncanın mührünü tutan ailedir, ve mühür kanla değil devirle geçer: evlat edinme, damat alma, nadiren satın alma. Mührü kaybeden aile hane olmaktan çıkar. Haneler arasındaki kavgalar bu yüzden kılıçla değil, mühürle yapılır.\n\nDefterin nasıl işlediği: @[Sancak Kaydı](entity:lore/Sancak Kaydı)."
-          ]
+          ],
+          "imagePath": "media/Artwork/Hizmet-Basamakları.webp"
         }
       },
       {
@@ -284,7 +300,8 @@
           "pages": [
             "# Onur Mahkemeleri\n\nMeridia'da suç bir kişiye karşı değil, **Ortak İrade'ye** karşı işlenmiş sayılır. Yargılama hızlı, ceza kesindir.\n\n| Suç | Nerede görülür | Ceza |\n|---|---|---|\n| **Küçük** | Lonca mahkemesi | Para cezası, tazminat, sicilde bir satır |\n| **Büyük** | Onur Mahkemesi; yargıcı Konsey atar | Kamu hizmeti: nehir ıslahı, maden, sınır hattında ağır işçilik |\n| **İhanet** | Onur Mahkemesi | Defterden düşürülme ve sürgün |\n\n**Hapis yaygın değildir.** Bir insanı besleyip tutmak, onu çalıştırmaktan pahalıdır.\n\n## İhanet\n\nİhanetin cezası ölümden ağır sayılır. Sürgün edilen kişi defterden de düşürülür ve Yazısız olur: adı hiçbir yerde yazmaz, başına ne gelirse gelsin kimse bir yere not etmez.\n\n## Kolluk ve mahkeme\n\nSicili ve cezayı @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) yazar; sokaktaki kolluk her loncanın kendi adamıdır.\n\n## Votumar\n\n@[Votumar](entity:location/Votumar)'da sivil yasanın yerine **Onur ve Yemin Yasaları** geçer. Orada küçük bir suç bile *İradeye İhanet* sayılabilir, ve yargılama başkenttekinden de hızlıdır.\n\n## Elymsyr\n\n@[Elymsyr](entity:location/Elymsyr)'de en ağır suç kaçakçılıktır. Cezası nehir işlerinde ömür boyu ağır işçiliktir."
           ],
-          "dmNotes": "@[Gizli Liman](entity:location/Gizli Liman)'ın halkının çoğu bu mahkemelerden kaçmış insanlardır: borçlular, kaçaklar, defterden düşürülmüşler. @[Mine](entity:npc/Mine) kendi adını kendi isteğiyle geride bırakmıştır."
+          "dmNotes": "@[Gizli Liman](entity:location/Gizli Liman)'ın halkının çoğu bu mahkemelerden kaçmış insanlardır: borçlular, kaçaklar, defterden düşürülmüşler. @[Mine](entity:npc/Mine) kendi adını kendi isteğiyle geride bırakmıştır.",
+          "imagePath": "media/Artwork/Onur-Mahkemeleri.webp"
         }
       },
       {
@@ -301,7 +318,8 @@
           "pages": [
             "# Gümüş Kalkan Nişanı\n\n@[Votumar](entity:location/Votumar) şatosunun paladin birliği, ve Meridia ordusunun en seçkin savunma birliği. Ağır plaka zırh, boylarından uzun kule kalkanları, beyaz pelerinler.\n\n## Talim\n\nNişan'ın paladinleri sabahları şatonun avlusunda kalkan duvarı talimi yapar: kalkanlar yan yana, omuz omuza, tek bir emirle ilerleyen bir duvar. Talim sırasında tek bir sesin, emir veren subayın sesinin duyulması beklenir.\n\n## Kalkan olmak\n\nLucian'ın *\"birbirinize bakın\"* sözü Nişan'da *\"birbirinizin kalkanı olun\"* diye okunur. Bir paladinin inancı soyut bir güce değil, yanında duran yoldaşa bağlıdır.\n\nGereksiz gürültü hoş karşılanmaz. *\"Körfez kadar sabırlı, şato kadar dik\"* bir övgüdür.\n\n## Yemin\n\nŞatoda sivil yasa değil **Onur ve Yemin Yasaları** geçer. Küçük bir suç bile *İradeye İhanet* sayılabilir.\n\n## Künye ve mühür\n\nNişan'ın askerleri boynunda bir @[Kışla Künyesi](entity:trinket/Kışla Künyesi), rütbelileri parmağında bir @[Emir Mührü](entity:trinket/Emir Mührü) taşır. Künye bir kutsal sembol gibi de kullanılır.\n\nNişan'dan ayrılan bir paladin yalnız unvanını değil, yemeğini, yatağını ve geçiş hakkını da kaybeder; ve künyesini geride bırakmak zorundadır.\n\n## Halk\n\nŞatoya hizmet eden halk paladinlere derin bir bağla bağlıdır. @[Argenfon](entity:location/Argenfon)'da paladinler sık sık köye iner, esnafla sohbet eder, şenliklere katılır.\n\n## Başkumandanlık\n\nŞatodaki idari, adli ve askeri yetkinin tamamı tek bir makamdadır: @[Başkumandan](entity:npc/Başkumandan). Başkumandanı Konsey atar."
           ],
-          "dmNotes": "Nişan'daki herkes iyi niyetlidir, disiplinlidir, ve sevdiği bir komutana güvenir. Nişan'ı bir düşman gibi oynatma.\n\nPaladinler Blight'ın bedensel belirtilerine daha dayanıklıdır: Kuluçka aşamasının belirtileri onlarda görünmez. Puanları ve mekanikleri değişmez."
+          "dmNotes": "Nişan'daki herkes iyi niyetlidir, disiplinlidir, ve sevdiği bir komutana güvenir. Nişan'ı bir düşman gibi oynatma.\n\nPaladinler Blight'ın bedensel belirtilerine daha dayanıklıdır: Kuluçka aşamasının belirtileri onlarda görünmez. Puanları ve mekanikleri değişmez.",
+          "imagePath": "media/Artwork/Gümüş-Kalkan-Nişanı.webp"
         }
       },
       {
@@ -318,7 +336,8 @@
           "pages": [
             "# Kuzeyin Gözcüleri\n\n@[Ravenhall Avlusu](entity:location/Ravenhall Avlusu)'nu yöneten druid kabilesi. Kararları en yaşlı druid verir; dayanağı oylama değil, doğanın döngüsü ve rünlerin işaretidir.\n\n## Ordu yerine\n\n- **Düzenli ordu yoktur.** Platoyu ehlileştirilmiş dev kurtlar, kuzgunlar, ve doğayı silaha çevirebilen koruyucular korur.\n- **Tek dar patika.** Platoya çıkan yol bir tanedir ve sürekli izlenir. Meridia ordusu buraya girmeyi lojistik bir kabus sayar, ve girmez.\n- **Mülk azdır.** Neredeyse her şey paylaşılır. Kabilenin halkı, başka yerlerden kaçıp gelmiş insanlardan ve farklı ırklardan oluşur.\n\n## Taş ve şarkı\n\nHasat, doğum ve ölüm törenleri Avlu'nun rünlü taşlarının etrafında yapılır. Kabilenin tarihi kitaba değil şarkıya yazılır; ozanlar ve şifacılar en saygı gören üyelerdir. Evler doğaya zarar vermeden ağaçların ve kayaların içine kurulur.\n\n## Rünler\n\nGözcüler tanrılardan çok toprağın altındaki ve gökyüzündeki eski güçlere inanır, ve rünleri o güçlerin dili sayar. İrade Yolu burada bir öğreti değil, doğanın kanunudur.\n\n## Takas\n\nAltın burada pek geçmez. Şifalı ot, kürk ve rünlü taş el değiştirir."
           ],
-          "dmNotes": "Doğanın hastalandığını okuyabilen bilgi burada öğretilir. Druidlerin Yozlaşma Kontrolü'ne aldığı +2 bu eğitimin sonucudur.\n\nGözcüler çürümeyi söylentiden değil, doğrudan doğadan okudu, ve aylardır biliyorlar. Kimse gelip sormadı."
+          "dmNotes": "Doğanın hastalandığını okuyabilen bilgi burada öğretilir. Druidlerin Yozlaşma Kontrolü'ne aldığı +2 bu eğitimin sonucudur.\n\nGözcüler çürümeyi söylentiden değil, doğrudan doğadan okudu, ve aylardır biliyorlar. Kimse gelip sormadı.",
+          "imagePath": "media/Artwork/Kuzeyin-Gözcüleri.webp"
         }
       },
       {
@@ -334,7 +353,8 @@
           "pages": [
             "# Liman Ahdi\n\n@[Gizli Liman](entity:location/Gizli Liman)'da yazılı kanun yoktur. Herkesin bildiği sözlü bir kural vardır, ve adı **Ahit**tir. Kuralı çiğneyen birinin duyacağı cümle bellidir: *\"Ahdi bozdun.\"*\n\n## İki ağır suç\n\n1. **Limanın yerini dışarıya söylemek.**\n2. **Birinin gemisine izinsiz girmek.**\n\nCezası limandan kalıcı sürgündür. Sürgün edilen kişiye kimse kefil olmaz, ve kefilsiz biri limana giremez.\n\n## Tehdit\n\nLimanda tehdit kavga başlatmaz; haberi yayılır. Tehdit eden kişiye fiyatlar yükselir, kimse kefil olmaz, kapılar kapanır. Ceza dayak değil, yalnızlıktır; ve yalnız biri bu limandan bir gemiye binemez.\n\nKonsey'le tehdit etmek de işe yaramaz: Konsey bu limanı biliyor.\n\n## Üç sabit doğru\n\n1. **Kimse yardıma gelmez.** Bir kavgaya karışan, kavgayı çıkaranla aynı ceza görür. Rıhtım seyreder.\n2. **Kaçmak kurtarır, ama pahalıdır.** Kaçan kişi kefilini kaybeder. Limana bir daha girmek için yeni bir kefil bulması gerekir.\n3. **Öldüren kaybeder.** Limanda birini öldüren kişi bu limana bir daha giremez.\n\nLiman yine de tehlikelidir. Kimse kimseyi korumak zorunda değildir."
           ],
-          "dmNotes": "Limanda kavga olursa hazır bir çatışma kartı yoktur. Doğaçla, ve üç sabit doğrunun dışına çıkma.\n\nÜçüncü doğruyu oyunculara önceden söyle. @[Fare](entity:npc/Fare) ilk gün, bedava söyler."
+          "dmNotes": "Limanda kavga olursa hazır bir çatışma kartı yoktur. Doğaçla, ve üç sabit doğrunun dışına çıkma.\n\nÜçüncü doğruyu oyunculara önceden söyle. @[Fare](entity:npc/Fare) ilk gün, bedava söyler.",
+          "imagePath": "media/Artwork/Liman-Ahdi.webp"
         }
       },
       {
@@ -352,7 +372,8 @@
             "# Işınlanma ve Mesafe\n\n*5e'ye eklenmiş kural.*\n\n> **4. seviye ve üstü bir ışınlanma büyüsü, yapana 1 seviye Exhaustion verir.** Uzun mesafe ışınlanma **loncalar dışında mümkün değildir.**\n\n## Mesafe\n\nKıtada haber at sırtında gider. İki gün uzaktaki bir yer, siyasi olarak da iki gün uzaktadır.\n\n> **Lucid Triton → Votumar:** atlı bir kurye için **2 gün**.\n\nBu süreyi kısaltabilecek tek kurum @[Büyücü Loncası](entity:lore/Büyücü Loncası)'dır, ve o da kimin nereye gittiğini bilir.\n\n## Nadir malzeme\n\nYüksek seviye büyülerin nadir bileşenleri ya **lonca izniyle** ya **karaborsadan** bulunur. Karaborsanın adresi @[Gizli Liman](entity:location/Gizli Liman)'dır.",
             "# Kalıcı Yaralar\n\n*5e'ye eklenmiş kural.*\n\n> **Tetikleyici:** canın **0'a düşmesi**, ya da tek bir saldırıda **en yüksek canın yarısı** kadar hasar almak.\n>\n> **Zar:** d20. Düşük sonuç kötüdür.\n\n| d20 | Ağırlık | Örnek |\n|---|---|---|\n| **1–5** | **Kalıcı**; kendiliğinden iyileşmez, *Greater Restoration* ister | Topallama (hız −10 ft) · bir gözün kaybı · tutmayan bir el |\n| **6–14** | **Uzun süreli**; haftalar sürer, bakımla kısalır | Kaynamamış bir kemik · derin bir kesik · duymayan bir kulak |\n| **15–20** | **Geçici**; bir sonraki uzun dinlenmede geçer | Kaburga ağrısı · şişmiş bir göz · zonklayan bir el |"
           ],
-          "dmNotes": "**Diriltme kuralını bir tehdit olarak kullan.** Bir NPC'nin *\"onu geri getirebilirim, ama bir Can Zarım gider\"* demesi, hiç diriltme yapılmadan bu dünyanın nasıl bir yer olduğunu gösterir.\n\n**Kalıcı Yaraları oyunculara ilk çatışmadan önce söyle.** 1–5 sonucu bir karakteri kalıcı olarak topal bırakabilir; oyuncular bunu önceden bilmeli. İlk kez büyük olasılıkla @[Şafak Çatışması](entity:encounter/Şafak Çatışması)'nda gerekecek.\n\nBlight'ın büyüye etkisi ayrı bir kartta: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) (Yozlaşma Kontrolü)."
+          "dmNotes": "**Diriltme kuralını bir tehdit olarak kullan.** Bir NPC'nin *\"onu geri getirebilirim, ama bir Can Zarım gider\"* demesi, hiç diriltme yapılmadan bu dünyanın nasıl bir yer olduğunu gösterir.\n\n**Kalıcı Yaraları oyunculara ilk çatışmadan önce söyle.** 1–5 sonucu bir karakteri kalıcı olarak topal bırakabilir; oyuncular bunu önceden bilmeli. İlk kez büyük olasılıkla @[Şafak Çatışması](entity:encounter/Şafak Çatışması)'nda gerekecek.\n\nBlight'ın büyüye etkisi ayrı bir kartta: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) (Yozlaşma Kontrolü).",
+          "imagePath": "media/Artwork/Kural-Sapmaları.webp"
         }
       }
     ],
@@ -367,7 +388,8 @@
           "secrets": "Kıtalar arasındaki gemi trafiği hiç kesilmedi. Blight da bu trafikle, Vorstrand'dan Meridia'ya gelen yolcuların bedeninde taşındı.",
           "tags": [
             "dünya"
-          ]
+          ],
+          "imagePath": "media/Artwork/location-Aegis.webp"
         }
       },
       {
@@ -386,7 +408,8 @@
           "tags": [
             "kıta",
             "meridia"
-          ]
+          ],
+          "imagePath": "media/Artwork/Meridia.webp"
         }
       },
       {
@@ -405,7 +428,8 @@
           "tags": [
             "kıta",
             "vorstrand"
-          ]
+          ],
+          "imagePath": "media/Artwork/Vorstrand.webp"
         }
       },
       {
@@ -424,7 +448,8 @@
           "tags": [
             "köy",
             "gümüşsu"
-          ]
+          ],
+          "imagePath": "media/Artwork/Gümüşsu.webp"
         }
       },
       {
@@ -444,7 +469,8 @@
             "gümüşsu",
             "kulübe",
             "blight"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kulübe.webp"
         }
       },
       {
@@ -463,7 +489,8 @@
           "tags": [
             "gümüşsu",
             "han"
-          ]
+          ],
+          "imagePath": "media/Artwork/Goodbarrelın-Ocak-Başı.webp"
         }
       },
       {
@@ -482,7 +509,8 @@
           "tags": [
             "gizli-liman",
             "liman"
-          ]
+          ],
+          "imagePath": "media/Artwork/Gizli-Liman.webp"
         }
       },
       {
@@ -501,7 +529,8 @@
           "tags": [
             "gizli-liman",
             "rıhtım"
-          ]
+          ],
+          "imagePath": "media/Artwork/Rıhtım.webp"
         }
       },
       {
@@ -520,7 +549,8 @@
           "tags": [
             "şehir",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Lucid-Triton.webp"
         }
       },
       {
@@ -538,7 +568,8 @@
           "secrets": "Meclis'te açıklanan bir karar buraya hiç gelmeyebilir. Bir koltuk sahibi kararın mühürlenmesini istemiyorsa kağıt yolda bekletilir. Meclis'te açıkça *hayır* denmez; kağıt buraya ulaşmaz.",
           "tags": [
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Mühür-Salonu.webp"
         }
       },
       {
@@ -557,7 +588,8 @@
           "tags": [
             "lucid-triton",
             "meclis"
-          ]
+          ],
+          "imagePath": "media/Artwork/Meclis-Salonu.webp"
         }
       },
       {
@@ -576,7 +608,8 @@
           "tags": [
             "lucid-triton",
             "geçiş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Karşı-İmza-Masası.webp"
         }
       },
       {
@@ -596,7 +629,8 @@
             "elymsyr",
             "liman",
             "şehir"
-          ]
+          ],
+          "imagePath": "media/Artwork/Elymsyr.webp"
         }
       },
       {
@@ -616,7 +650,8 @@
             "votumar",
             "şato",
             "paladin"
-          ]
+          ],
+          "imagePath": "media/Artwork/Votumar.webp"
         }
       },
       {
@@ -636,7 +671,8 @@
             "votumar",
             "kıyı",
             "işaret"
-          ]
+          ],
+          "imagePath": "media/Artwork/Gözcü-Kuleleri-Hattı.webp"
         }
       },
       {
@@ -656,7 +692,8 @@
             "ravenhall",
             "druid",
             "kuzey"
-          ]
+          ],
+          "imagePath": "media/Artwork/Ravenhall-Avlusu.webp"
         }
       },
       {
@@ -676,7 +713,8 @@
             "köy",
             "yol",
             "cinervik"
-          ]
+          ],
+          "imagePath": "media/Artwork/Cinervik.webp"
         }
       },
       {
@@ -696,7 +734,8 @@
             "köy",
             "kıyı",
             "argenfon"
-          ]
+          ],
+          "imagePath": "media/Artwork/Argenfon.webp"
         }
       }
     ],
@@ -730,7 +769,8 @@
           "tags": [
             "npc",
             "gümüşsu"
-          ]
+          ],
+          "imagePath": "media/Artwork/Duran.webp"
         }
       },
       {
@@ -757,7 +797,8 @@
             "npc",
             "gümüşsu",
             "şifacı"
-          ]
+          ],
+          "imagePath": "media/Artwork/Umay.webp"
         }
       },
       {
@@ -789,7 +830,8 @@
             "npc",
             "gümüşsu",
             "rehber"
-          ]
+          ],
+          "imagePath": "media/Artwork/Corvin.webp"
         }
       },
       {
@@ -820,7 +862,8 @@
             "npc",
             "gümüşsu",
             "hancı"
-          ]
+          ],
+          "imagePath": "media/Artwork/Milo-Goodbarrel.webp"
         }
       },
       {
@@ -853,7 +896,8 @@
             "kulübe",
             "yabancılar",
             "blight"
-          ]
+          ],
+          "imagePath": "media/Artwork/Alton-Leagallow.webp"
         }
       },
       {
@@ -886,7 +930,8 @@
             "kulübe",
             "yabancılar",
             "blight"
-          ]
+          ],
+          "imagePath": "media/Artwork/Merla-Tealeaf.webp"
         }
       },
       {
@@ -919,7 +964,8 @@
             "kulübe",
             "yabancılar",
             "blight"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kromanna.webp"
         }
       },
       {
@@ -951,7 +997,8 @@
           "tags": [
             "npc",
             "gizli-liman"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sicim.webp"
         }
       },
       {
@@ -984,7 +1031,8 @@
             "npc",
             "gizli-liman",
             "rıhtım"
-          ]
+          ],
+          "imagePath": "media/Artwork/Fare.webp"
         }
       },
       {
@@ -1011,7 +1059,8 @@
             "npc",
             "gizli-liman",
             "kaptan"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kaptan-Caelynn.webp"
         }
       },
       {
@@ -1038,7 +1087,8 @@
             "npc",
             "gizli-liman",
             "kaptan"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kaptan-Holg.webp"
         }
       },
       {
@@ -1071,7 +1121,8 @@
             "gizli-liman",
             "rıhtım",
             "konsey"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kadife.webp"
         }
       },
       {
@@ -1104,7 +1155,8 @@
             "npc",
             "gizli-liman",
             "kuyumcu"
-          ]
+          ],
+          "imagePath": "media/Artwork/Mine.webp"
         }
       },
       {
@@ -1137,7 +1189,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Rektör-Quarion.webp"
         }
       },
       {
@@ -1170,7 +1223,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sınır-ve-Ticaret-Orvan-Sancar.webp"
         }
       },
       {
@@ -1203,7 +1257,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kalfa-Başı-Adrik-Ferrun.webp"
         }
       },
       {
@@ -1236,7 +1291,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Baş-Otacı-Caramip-Kalender.webp"
         }
       },
       {
@@ -1269,7 +1325,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sicil-Ağası-Valen-Custar.webp"
         }
       },
       {
@@ -1302,7 +1359,8 @@
             "npc",
             "meclis",
             "lucid-triton"
-          ]
+          ],
+          "imagePath": "media/Artwork/Levha-Sahibi-Perhun-Mizan.webp"
         }
       },
       {
@@ -1335,7 +1393,8 @@
             "npc",
             "lucid-triton",
             "memur"
-          ]
+          ],
+          "imagePath": "media/Artwork/Corin-Sancar.webp"
         }
       },
       {
@@ -1368,7 +1427,8 @@
             "npc",
             "lucid-triton",
             "zanaat"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kildrak-Ferrun.webp"
         }
       },
       {
@@ -1401,7 +1461,8 @@
             "npc",
             "lucid-triton",
             "tanık"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sindri.webp"
         }
       },
       {
@@ -1433,7 +1494,8 @@
             "npc",
             "lucid-triton",
             "çarşı"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kandil.webp"
         }
       },
       {
@@ -1460,7 +1522,8 @@
             "npc",
             "lucid-triton",
             "kolluk"
-          ]
+          ],
+          "imagePath": "media/Artwork/Çavuş-Krusk.webp"
         }
       },
       {
@@ -1493,7 +1556,8 @@
             "npc",
             "elymsyr",
             "gümrük"
-          ]
+          ],
+          "imagePath": "media/Artwork/Gümrük-Valisi.webp"
         }
       },
       {
@@ -1526,7 +1590,8 @@
             "npc",
             "elymsyr",
             "asker"
-          ]
+          ],
+          "imagePath": "media/Artwork/Nehir-Muhafızı-Çavuşu.webp"
         }
       },
       {
@@ -1558,7 +1623,8 @@
             "npc",
             "elymsyr",
             "zanaat"
-          ]
+          ],
+          "imagePath": "media/Artwork/Vinç-Ustası.webp"
         }
       },
       {
@@ -1584,7 +1650,8 @@
           "tags": [
             "npc",
             "elymsyr"
-          ]
+          ],
+          "imagePath": "media/Artwork/Çevirmen.webp"
         }
       },
       {
@@ -1611,7 +1678,8 @@
           "tags": [
             "npc",
             "votumar"
-          ]
+          ],
+          "imagePath": "media/Artwork/Başkumandan.webp"
         }
       },
       {
@@ -1644,7 +1712,8 @@
             "npc",
             "votumar",
             "subay"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kapı-Komutanı.webp"
         }
       },
       {
@@ -1672,7 +1741,8 @@
             "npc",
             "votumar",
             "subay"
-          ]
+          ],
+          "imagePath": "media/Artwork/Şüpheci-Rütbeli.webp"
         }
       },
       {
@@ -1705,7 +1775,8 @@
             "npc",
             "votumar",
             "kule"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kule-Nöbetçisi.webp"
         }
       },
       {
@@ -1733,7 +1804,8 @@
             "npc",
             "ravenhall",
             "druid"
-          ]
+          ],
+          "imagePath": "media/Artwork/En-Yaşlı-Druid.webp"
         }
       },
       {
@@ -1760,7 +1832,8 @@
           "tags": [
             "npc",
             "ravenhall"
-          ]
+          ],
+          "imagePath": "media/Artwork/Patika-Gözcüsü.webp"
         }
       }
     ],
@@ -1776,7 +1849,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Acıyı-Tanımaz.webp"
         }
       },
       {
@@ -1790,7 +1864,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Bulaştıran-Yara.webp"
         }
       },
       {
@@ -1804,7 +1879,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Durmayan-Adım.webp"
         }
       },
       {
@@ -1818,7 +1894,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kesik-Kesik.webp"
         }
       },
       {
@@ -1832,7 +1909,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Erken-Güçlenme.webp"
         }
       }
     ],
@@ -1853,7 +1931,8 @@
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+5** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d8 + 3 delici hasar (ort. 7).\n\nSilah yok: sertleşmiş tırnaklar, dişler, omuz. Nişan almıyor; yürüyerek geliyor ve vuruyor."
+          "description": "*Yakın dövüş saldırısı:* **+5** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d8 + 3 delici hasar (ort. 7).\n\nSilah yok: sertleşmiş tırnaklar, dişler, omuz. Nişan almıyor; yürüyerek geliyor ve vuruyor.",
+          "imagePath": "media/Artwork/Pençe.webp"
         }
       },
       {
@@ -1872,7 +1951,8 @@
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nKüçük, pul pul olmuş eller ve taş gibi sertleşmiş tırnaklar. Alçaktan vurur: dizlere ve kalçaya."
+          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nKüçük, pul pul olmuş eller ve taş gibi sertleşmiş tırnaklar. Alçaktan vurur: dizlere ve kalçaya.",
+          "imagePath": "media/Artwork/Pençe-Alton.webp"
         }
       },
       {
@@ -1891,7 +1971,8 @@
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nBir an kıpırdamıyor, bir sonraki an iki kez üst üste tırmalıyor."
+          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nBir an kıpırdamıyor, bir sonraki an iki kez üst üste tırmalıyor.",
+          "imagePath": "media/Artwork/Pençe-Merla.webp"
         }
       },
       {
@@ -1910,7 +1991,8 @@
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+6** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d10 + 4 delici hasar (ort. 9).\n\nBütün gövdesinin ağırlığını verdiği bir darbe; kalkanı iter, zırhı ezer."
+          "description": "*Yakın dövüş saldırısı:* **+6** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d10 + 4 delici hasar (ort. 9).\n\nBütün gövdesinin ağırlığını verdiği bir darbe; kalkanı iter, zırhı ezer.",
+          "imagePath": "media/Artwork/Pençe-Kromanna.webp"
         }
       }
     ],
@@ -2008,7 +2090,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Dönüşmüş.webp"
         }
       },
       {
@@ -2109,7 +2192,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Dönüşmüş-Alton.webp"
         }
       },
       {
@@ -2210,7 +2294,8 @@
           "tags": [
             "blight",
             "dönüşmüş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Dönüşmüş-Merla.webp"
         }
       },
       {
@@ -2319,7 +2404,8 @@
               "value": "Fire"
             }
           ],
-          "resistance_note": "tiefling kanından kalma"
+          "resistance_note": "tiefling kanından kalma",
+          "imagePath": "media/Artwork/Dönüşmüş-Kromanna.webp"
         }
       }
     ],
@@ -2338,7 +2424,8 @@
           "effect": "## Hastalık Puanı\n\nBlight bir anda bulaşan bir şey değil, bedende **yavaş yavaş biriken bir zehirdir.** Tek sayacı **Hastalık Puanı**dır. *(Can puanıyla karışmasın.)*\n\n**1 puanı olan herkes taşıyıcıdır ve bulaştırır.**\n\n**Puan nasıl artar.** Her maruziyet başarısızlığı +1. Ayrıca hastalığı taşıyan biri (1+ puan) **CON DC 13** kurtarma zarı atar, başarısızlıkta +1:\n\n- güvenli bir bölgede uzun dinlenme alınmayan **her gün**;\n- her gün güvenli bir bölgede uzun dinlenme alınsa bile **her 3 günde bir**.\n\n**Puan inmez.** Güvenli bölge (maruziyet kaynağı olmayan korunaklı bir yerleşim: şehir, lonca binası) zarı seyrekleştirir, puanı silmez. Vahşi doğada başarılı bir **Medicine DC 15** müdahalesi o günün zarını atlatır.\n\n## Beş aşama\n\n| Aşama | Puan | Belirtiler | Etki |\n|---|---|---|---|\n| **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince siyah damarlar, ağızda geçmeyen metal tadı | CON'a dayanan **yetenek kontrollerinde** dezavantaj. Büyülerde görsel bozulmalar başlar; mekanik engel yok |\n| **2 — Sistemik Yayılma** | 3–4 | Yüksek ateş, geç kapanan yaralar, grileşen ten | Hız **−10 ft** · uzun dinlenmede harcanan Can Zarlarının iyileştirdiği can **yarıya** iner · 3. ve üstü seviye büyüde **Yozlaşma Kontrolü** zorunlu |\n| **3 — Ağır Bozulma** | 5–6 | Göz ve kulaklardan siyah sıvı, nefes darlığı, tanrıların fısıltılarını duymak | **Bütün** yetenek kontrollerinde dezavantaj |\n| **4 — Morfolojik Çözülme** | 7–8 | Sertleşip pul pul olan deri, irade dışı kasılmalar, dağılan konuşma | **Bütün** kurtarma zarlarında dezavantaj · seviyesi ne olursa olsun her büyü bir **yozlaşma dalgası** tetikler (Wild Magic benzeri) · sürekli 3. seviye Exhaustion etkisindeymiş gibi |\n| **5 — Tam Çöküş** | 9+ | Bilinç kapanır | Karakter ölür ya da @[Dönüşmüş](entity:monster/Dönüşmüş) olur |\n\n**Aşama 5.** Bilinç gider, beden güçlenir. Karakter artık karakter değildir: kağıt DM'e geçer ve Dönüşmüş statblock'unu alır. **Geri dönüş yoktur.**\n\n## İki hasta aynı yolu yürümez\n\nBu kural zarları değil, anlatımı etkiler. Her yeni aşamada DM belirtilerin görünüşünü değiştirir: bir hastada yorgunluk öne geçer, bir başkası kesik kesik gidip gelir, bir başkasının bedeni erken güçlenir. Puanlar aynıdır; görüntü aynı değildir.\n\n## Yalnız biyolojik değil\n\nBlight bir hastalık gibi bulaşır ve bir hastalık gibi ilerler, ama **büyüseldir** ve **bir kaynağa bağlıdır.**\n\n> **Arcana DC 13** — büyü yapan ya da bilen bir karakter bir hastanın yanında durduğunda bunun kendiliğinden olmuş bir şey olmadığını **hisseder.** Sönmeyen, dağılmayan, bir yere **bağlı duran** bir iz. Yön yok, mesafe yok, ad yok.\n\n*Detect Magic* ve benzeri tespit büyüleri aynı yere varır: bir şey **var**, ne olduğu **okunmuyor.** Büyülü olması biyolojik olmadığı anlamına gelmez.\n\n## Yozlaşma Kontrolü\n\n> **Tetikleyici:** ağır Blight altındaki bir zeminde **3. seviye ya da üstü** bir büyü yapmak. Aşama 2 ve üstündeki bir taşıyıcı için zemin fark etmez: her 3.+ seviye büyüde kontrol zorunludur.\n>\n> **Zar:** Constitution **ya da** büyü yeteneği kurtarma zarı, büyücü seçer. **DC 13.**\n>\n> **Başarısızlık:** büyü **gerçekleşir**, ama bozulur: büyücü **+1 Hastalık Puanı** alır. Aşama 2 ve üstündeki bir taşıyıcı ayrıca büyünün seviyesi kadar can kaybeder.\n\n- **Druid** bu zara **+2** alır.\n- **Paladin** bozulmanın fiziksel etkilerini daha kolay savuşturur: Aşama 1'in belirtileri onda görünmez. Puanı ve mekaniği değişmez.",
           "mechanical_notes": "Maruziyet: CON kurtarma zarı DC 12; başarısızlık +1 Hastalık Puanı.\nMaruziyet yolları: hastanın ya da cesedin sıvılarına dokunmak, aynı kapalı mekanda bir gece, Dönüşmüş yarası, Hastalık Sisi'nde geçen her gün.\nDönüşmüş yarası (Bulaştıran Yara): CON DC 8, çatışmanın sonunda bir kez.\n1 veya daha fazla puanı olan taşıyıcıdır ve bulaştırır.\nGünlük zar: CON DC 13, başarısızlık +1; güvenli bölgede uzun dinlenme alınmayan her gün.\nGüvenli bölgede her gün uzun dinlenme alınsa bile günlük zar her 3 günde bir atılır.\nPuan silinmez.\nVahşi doğada Medicine DC 15 o günün zarını atlatır.\nAşama 1 (1-2 puan): CON yetenek kontrollerinde dezavantaj.\nAşama 2 (3-4 puan): hız -10 ft; uzun dinlenmede Can Zarı iyileştirmesi yarıya iner; 3.+ seviye büyüde Yozlaşma Kontrolü.\nAşama 3 (5-6 puan): bütün yetenek kontrollerinde dezavantaj.\nAşama 4 (7-8 puan): bütün kurtarma zarlarında dezavantaj; her büyü bir yozlaşma dalgası tetikler; 3. seviye Exhaustion etkisindeymiş gibi.\nAşama 5 (9+ puan): ölüm ya da Dönüşmüş; geri dönüş yok.\nArcana DC 13: hastanın üzerindeki büyülü ve bir yere bağlı iz hissedilir.\nYozlaşma Kontrolü: ağır Blight zemininde 3.+ seviye büyü; CON ya da büyü yeteneği kurtarma zarı DC 13.\nYozlaşma Kontrolü başarısız: büyü gerçekleşir, +1 Hastalık Puanı; Aşama 2+ taşıyıcı ayrıca büyü seviyesi kadar can kaybeder.\nAşama 2+ taşıyıcı: zemin fark etmeksizin her 3.+ seviye büyüde Yozlaşma Kontrolü.\nDruid: Yozlaşma Kontrolü'ne +2.\nPaladin: Aşama 1 belirtileri görünmez; puan ve mekanik değişmez.\nLesser Restoration: bir sonraki hastalık zarına +2; puan silmez; yapan 1 seviye Exhaustion alır.\nGreater Restoration: bir sonraki hastalık zarına +4; puan silmez; yapan kalıcı olarak bir Can Zarı kaybeder.\nDirenç Şerbeti: 24 saat boyunca maruziyet ve günlük hastalık zarlarına +8.",
           "removed_by": "**Bilinen bir tedavi yok.** Puan silinmez; ancak artışı yavaşlatılabilir.\n\n- *Lesser Restoration* — bir sonraki hastalık zarına **+2**. **Yapan 1 seviye Exhaustion alır.**\n- *Greater Restoration* — bir sonraki hastalık zarına **+4**. **Yapan kalıcı olarak bir Can Zarı kaybeder.**\n- @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti) hastalığı geriletmez, **girmesini** zorlaştırır: 24 saat boyunca maruziyet ve günlük hastalık zarlarına **+8**.\n- **Aşama 5'te hiçbir şey işe yaramaz.** Bir Dönüşmüş öldürülür, iyileştirilmez.\n\nBu büyüleri yapabilen az kişi vardır, ve yapan her seferinde bedeninden bir şey kaybeder. Şehirde bu büyüleri kimin yapabileceğine loncalar karar verir.",
-          "dmNotes": "Halkın bildiği hali ayrı kartta: @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali). Dünyada kimsenin elinde bir teşhis yok; bu kart hastalık **gibi** işler.\n\n**Kaynak.** Blight doğanın değil, birinin eseri. Kaynağı adlandırma, gösterme ya da işaret etme. Karakterlerin bunu sezebileceği tek yol yukarıdaki Arcana DC 13'tür; o da bir yön göstermez, yalnız bunun bir sahibi olduğunu hissettirir.\n\n**Kulübedeki üç kişi 8 puanla** gelir; kulübedeki gecenin günlük zarı onları 9'a taşır.\n\nKulübeye giren her karakter bir maruziyet zarı atar ve aldığı puanı köyden çıkınca da taşır. Puanın **hiç inmediğini** oyunculara önceden söyle."
+          "dmNotes": "Halkın bildiği hali ayrı kartta: @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali). Dünyada kimsenin elinde bir teşhis yok; bu kart hastalık **gibi** işler.\n\n**Kaynak.** Blight doğanın değil, birinin eseri. Kaynağı adlandırma, gösterme ya da işaret etme. Karakterlerin bunu sezebileceği tek yol yukarıdaki Arcana DC 13'tür; o da bir yön göstermez, yalnız bunun bir sahibi olduğunu hissettirir.\n\n**Kulübedeki üç kişi 8 puanla** gelir; kulübedeki gecenin günlük zarı onları 9'a taşır.\n\nKulübeye giren her karakter bir maruziyet zarı atar ve aldığı puanı köyden çıkınca da taşır. Puanın **hiç inmediğini** oyunculara önceden söyle.",
+          "imagePath": "media/Artwork/Blight-Enfeksiyon.webp"
         }
       }
     ],
@@ -2389,7 +2476,8 @@
             "sahne",
             "gümüşsu",
             "açılış"
-          ]
+          ],
+          "imagePath": "media/Artwork/Köye-Varış.webp"
         }
       },
       {
@@ -2444,7 +2532,8 @@
             "gümüşsu",
             "kulübe",
             "soruşturma"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kulübe-Sorgusu.webp"
         }
       },
       {
@@ -2504,7 +2593,8 @@
             "gümüşsu",
             "kulübe",
             "dönüşüm"
-          ]
+          ],
+          "imagePath": "media/Artwork/Şafak-Dönüşümü.webp"
         }
       },
       {
@@ -2553,7 +2643,8 @@
             "sahne",
             "gizli-liman",
             "giriş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Limana-Kabul.webp"
         }
       },
       {
@@ -2601,7 +2692,8 @@
             "gizli-liman",
             "rıhtım",
             "pazarlık"
-          ]
+          ],
+          "imagePath": "media/Artwork/Geçiş-Pazarlığı.webp"
         }
       },
       {
@@ -2660,7 +2752,8 @@
             "sahne",
             "lucid-triton",
             "meclis"
-          ]
+          ],
+          "imagePath": "media/Artwork/Meclis-Oturumu.webp"
         }
       },
       {
@@ -2695,7 +2788,8 @@
             "lucid-triton",
             "meclis",
             "teklif"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kapı-Önündeki-Teklif.webp"
         }
       },
       {
@@ -2729,7 +2823,8 @@
             "sahne",
             "lucid-triton",
             "geçiş"
-          ]
+          ],
+          "imagePath": "media/Artwork/Geçiş-Divanında-Sıra.webp"
         }
       },
       {
@@ -2771,7 +2866,8 @@
             "sahne",
             "elymsyr",
             "gümrük"
-          ]
+          ],
+          "imagePath": "media/Artwork/Gümrük-Rıhtımı.webp"
         }
       },
       {
@@ -2809,7 +2905,8 @@
             "votumar",
             "kule",
             "işaret"
-          ]
+          ],
+          "imagePath": "media/Artwork/Susan-Kule.webp"
         }
       },
       {
@@ -2841,7 +2938,8 @@
             "sahne",
             "ravenhall",
             "druid"
-          ]
+          ],
+          "imagePath": "media/Artwork/Avluda-Karşılanma.webp"
         }
       }
     ],
@@ -2883,7 +2981,8 @@
             "kulübe",
             "çatışma",
             "blight"
-          ]
+          ],
+          "imagePath": "media/Artwork/Şafak-Çatışması.webp"
         }
       }
     ],
@@ -2901,7 +3000,8 @@
             "görev",
             "giriş",
             "gümüşsu"
-          ]
+          ],
+          "imagePath": "media/Artwork/Söylentinin-Peşinde.webp"
         }
       },
       {
@@ -2916,7 +3016,8 @@
           "tags": [
             "görev",
             "soruşturma"
-          ]
+          ],
+          "imagePath": "media/Artwork/Nereden-Geldiler.webp"
         }
       }
     ],
@@ -2932,7 +3033,8 @@
           "tags": [
             "eşya",
             "arşivci"
-          ]
+          ],
+          "imagePath": "media/Artwork/Tasnif-Çantası.webp"
         }
       },
       {
@@ -2946,7 +3048,8 @@
           "tags": [
             "eşya",
             "arşivci"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kayıt-Elifbası.webp"
         }
       },
       {
@@ -2960,7 +3063,8 @@
           "tags": [
             "eşya",
             "arşivci"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sancak-Fihristi.webp"
         }
       },
       {
@@ -2975,7 +3079,8 @@
             "eşya",
             "mertebeli",
             "hane"
-          ]
+          ],
+          "imagePath": "media/Artwork/Mertebe-Kaftanı.webp"
         }
       },
       {
@@ -2990,7 +3095,8 @@
             "eşya",
             "büyü",
             "lonca"
-          ]
+          ],
+          "imagePath": "media/Artwork/Öğrenci-Defteri.webp"
         }
       },
       {
@@ -3005,7 +3111,8 @@
             "eşya",
             "rıhtım",
             "işçi"
-          ]
+          ],
+          "imagePath": "media/Artwork/Yük-Kancası.webp"
         }
       },
       {
@@ -3020,7 +3127,8 @@
             "eşya",
             "kaptan",
             "deniz"
-          ]
+          ],
+          "imagePath": "media/Artwork/Seyir-Defteri.webp"
         }
       },
       {
@@ -3036,7 +3144,8 @@
             "blight",
             "simya"
           ],
-          "dmNotes": "+8 bilerek yüksek, çünkü şerbet kıttır. Karakterler bir şişeyi içtikten sonra bir daha kolay bulamayacaklarını anlar, ve kulübeye girmeden önce konuşup karar verir. Şerbeti bol dağıtırsan bu karar anlamını kaybeder."
+          "dmNotes": "+8 bilerek yüksek, çünkü şerbet kıttır. Karakterler bir şişeyi içtikten sonra bir daha kolay bulamayacaklarını anlar, ve kulübeye girmeden önce konuşup karar verir. Şerbeti bol dağıtırsan bu karar anlamını kaybeder.",
+          "imagePath": "media/Artwork/Direnç-Şerbeti.webp"
         }
       }
     ],
@@ -3051,7 +3160,8 @@
             "eşya",
             "mühür",
             "lonca"
-          ]
+          ],
+          "imagePath": "media/Artwork/Lonca-Mührü.webp"
         }
       },
       {
@@ -3063,7 +3173,8 @@
           "tags": [
             "eşya",
             "lonca"
-          ]
+          ],
+          "imagePath": "media/Artwork/Lonca-Rozeti.webp"
         }
       },
       {
@@ -3076,7 +3187,8 @@
             "eşya",
             "mühür",
             "hane"
-          ]
+          ],
+          "imagePath": "media/Artwork/Aile-Mührü.webp"
         }
       },
       {
@@ -3089,7 +3201,8 @@
             "eşya",
             "mühür",
             "ajan"
-          ]
+          ],
+          "imagePath": "media/Artwork/Sahte-Mühür.webp"
         }
       },
       {
@@ -3102,7 +3215,8 @@
             "eşya",
             "paladin",
             "votumar"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kışla-Künyesi.webp"
         }
       },
       {
@@ -3116,7 +3230,8 @@
             "mühür",
             "paladin",
             "votumar"
-          ]
+          ],
+          "imagePath": "media/Artwork/Emir-Mührü.webp"
         }
       },
       {
@@ -3131,7 +3246,8 @@
             "kulübe",
             "ipucu"
           ],
-          "dmNotes": "Bu yüzüğü bulmak zorunlu değil; karakterler kaçırırsa hikaye yine ilerler.\n\nYüzüğü eğeleyen @[Mine](entity:npc/Mine). Damganın hangi tezgahtan çıktığını @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) fihristten okur. İkisi de @[Nereden Geldiler](entity:quest/Nereden Geldiler) görevinde yer alır."
+          "dmNotes": "Bu yüzüğü bulmak zorunlu değil; karakterler kaçırırsa hikaye yine ilerler.\n\nYüzüğü eğeleyen @[Mine](entity:npc/Mine). Damganın hangi tezgahtan çıktığını @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) fihristten okur. İkisi de @[Nereden Geldiler](entity:quest/Nereden Geldiler) görevinde yer alır.",
+          "imagePath": "media/Artwork/Mühürsüz-Yüzük.webp"
         }
       }
     ],
@@ -3214,7 +3330,8 @@
             "background",
             "lonca"
           ],
-          "dmNotes": "Arşivciler @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın taşra memurlarıdır.\n\n**Bu karakterin öne çıktığı yerler:** @[Elymsyr](entity:location/Elymsyr)'in gümrük defterleri; @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra)'nda silinen sayfanın bıraktığı boşluk (zar gerekmez)."
+          "dmNotes": "Arşivciler @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın taşra memurlarıdır.\n\n**Bu karakterin öne çıktığı yerler:** @[Elymsyr](entity:location/Elymsyr)'in gümrük defterleri; @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra)'nda silinen sayfanın bıraktığı boşluk (zar gerekmez).",
+          "imagePath": "media/Artwork/Arşivci.webp"
         }
       },
       {
@@ -3280,7 +3397,8 @@
             "background",
             "lonca"
           ],
-          "dmNotes": "Lonca Mührü ve Lonca Rozeti karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır."
+          "dmNotes": "Lonca Mührü ve Lonca Rozeti karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır.",
+          "imagePath": "media/Artwork/Lonca-Üyesi.webp"
         }
       },
       {
@@ -3352,7 +3470,8 @@
             "lonca",
             "hane"
           ],
-          "dmNotes": "Aile Mührü karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır. Meclis'teki koltuk sahipleri karakterin hanesini bilir."
+          "dmNotes": "Aile Mührü karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır. Meclis'teki koltuk sahipleri karakterin hanesini bilir.",
+          "imagePath": "media/Artwork/Mertebeli-Lonca-Çocuğu.webp"
         }
       },
       {
@@ -3424,7 +3543,8 @@
             "büyü",
             "lonca"
           ],
-          "dmNotes": "Origin feat: *Magic Initiate*, **Wizard** listesinden.\n\n**Simya takımı.** Şifa iksiri taşrada parayla bulunmaz, yapılır; @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti) de. Bu karakter bu yüzden beklenmedik bir anda çok işe yarayabilir.\n\nKulübede Arcana DC 13 ile büyü izini sezebilecek karakterlerden biri."
+          "dmNotes": "Origin feat: *Magic Initiate*, **Wizard** listesinden.\n\n**Simya takımı.** Şifa iksiri taşrada parayla bulunmaz, yapılır; @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti) de. Bu karakter bu yüzden beklenmedik bir anda çok işe yarayabilir.\n\nKulübede Arcana DC 13 ile büyü izini sezebilecek karakterlerden biri.",
+          "imagePath": "media/Artwork/Sihir-Loncası-Öğrencisi.webp"
         }
       },
       {
@@ -3491,7 +3611,8 @@
             "lonca",
             "ajan"
           ],
-          "dmNotes": "Sahte Mühür karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez tanır: kendi mesleğinden biri."
+          "dmNotes": "Sahte Mühür karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez tanır: kendi mesleğinden biri.",
+          "imagePath": "media/Artwork/Lonca-Ajanı.webp"
         }
       },
       {
@@ -3568,7 +3689,8 @@
             "liman",
             "işçi"
           ],
-          "dmNotes": "**Bu karakterin öne çıktığı yer:** @[Rıhtım](entity:location/Rıhtım). İşçiler onu kısa sürede aralarına alır; ilk gün konuşmazlar, ikinci gün konuşurlar."
+          "dmNotes": "**Bu karakterin öne çıktığı yer:** @[Rıhtım](entity:location/Rıhtım). İşçiler onu kısa sürede aralarına alır; ilk gün konuşmazlar, ikinci gün konuşurlar.",
+          "imagePath": "media/Artwork/Rıhtım-İşçisi.webp"
         }
       },
       {
@@ -3640,7 +3762,8 @@
             "deniz",
             "liman"
           ],
-          "dmNotes": "@[Rıhtım](entity:location/Rıhtım)'da @[Kaptan Caelynn](entity:npc/Kaptan Caelynn) ve @[Kaptan Holg](entity:npc/Kaptan Holg) ile yolcu olarak değil, meslektaş olarak pazarlık eder."
+          "dmNotes": "@[Rıhtım](entity:location/Rıhtım)'da @[Kaptan Caelynn](entity:npc/Kaptan Caelynn) ve @[Kaptan Holg](entity:npc/Kaptan Holg) ile yolcu olarak değil, meslektaş olarak pazarlık eder.",
+          "imagePath": "media/Artwork/Gemi-Kaptanı.webp"
         }
       },
       {
@@ -3712,7 +3835,8 @@
             "paladin",
             "votumar"
           ],
-          "dmNotes": "Kışla Künyesi karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n@[Votumar](entity:location/Votumar) ve @[Argenfon](entity:location/Argenfon)'da kapılar ona kendiliğinden açılır. Nişan'dan ayrılırsa yemeğini, yatağını ve künyesini birlikte kaybeder."
+          "dmNotes": "Kışla Künyesi karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n@[Votumar](entity:location/Votumar) ve @[Argenfon](entity:location/Argenfon)'da kapılar ona kendiliğinden açılır. Nişan'dan ayrılırsa yemeğini, yatağını ve künyesini birlikte kaybeder.",
+          "imagePath": "media/Artwork/Paladin-Askeri.webp"
         }
       },
       {
@@ -3779,7 +3903,8 @@
             "paladin",
             "votumar"
           ],
-          "dmNotes": "Emir Mührü karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır."
+          "dmNotes": "Emir Mührü karakterin başlangıç eşyasıdır. Geçmiş kartının envanter alanı bu tür eşyayı tutmadığı için karaktere elle ekle.\n\n**Zar gerektirmeyen bir şey:** rıhtımdaki @[Kadife](entity:npc/Kadife)'yi görür görmez büyük bir kurumun adamı olarak tanır.",
+          "imagePath": "media/Artwork/Paladin-Rütbelisi.webp"
         }
       }
     ]
