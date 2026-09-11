@@ -27,7 +27,7 @@ void main() {
     test('schema metadata', () {
       expect(schema.schemaId, 'builtin-dnd5e-default-v2');
       expect(schema.baseSystem, 'dnd5e');
-      expect(schema.version, '2.8.0');
+      expect(schema.version, '2.9.0');
       expect(schema.originalHash, 'builtin-dnd5e-default-v2');
     });
 

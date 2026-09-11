@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dungeon_master_tool/domain/entities/character/effective_character.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/lookups.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/presentation/theme/dm_tool_colors.dart';
 import 'package:dungeon_master_tool/presentation/theme/palettes.dart';
@@ -132,5 +134,41 @@ void main() {
 
       expect(_pips, findsNothing);
     });
+
+    testWidgets('authored display_name beats the slug fallback',
+        (tester) async {
+      // `pool:hunters_mark_no_slot_uses` names the mechanic, not the resource:
+      // prettifying the slug yields "Hunters Mark No Slot Uses". The label is
+      // authored on the row, so the sheet must read it instead.
+      const pool = Entity(
+        id: 'p1',
+        name: 'pool:hunters_mark_no_slot_uses',
+        categorySlug: 'resource-pool',
+        fields: {'display_name': "Hunter's Mark (Free Casts)"},
+      );
+      await tester.pumpWidget(_wrap(ClassResourcesTracker(
+        effective: _withPool(id: pool.id, max: 3),
+        entities: {pool.id: pool},
+        palette: _palette,
+      )));
+
+      expect(find.textContaining("Hunter's Mark (Free Casts)"), findsOneWidget);
+      expect(find.textContaining('No Slot Uses'), findsNothing);
+    });
+  });
+
+  test('every seeded resource pool carries a display label', () {
+    final build = generateBuiltinDnd5eV2Schema();
+    final rows = build.seedRows['resource-pool'] ?? const [];
+    expect(rows, isNotEmpty);
+    for (final row in rows) {
+      final name = row['name'] as String;
+      final label = (row['fields'] as Map)['display_name'];
+      expect(label, isA<String>(),
+          reason: '$name has no display_name — the sheet would show the slug');
+      expect((label as String).trim(), isNotEmpty, reason: name);
+      expect(label.startsWith('pool:'), isFalse, reason: name);
+    }
+    expect(rows.length, kResourcePoolLabels.length);
   });
 }

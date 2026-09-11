@@ -19,11 +19,14 @@ import 'sources.dart';
 /// purpose: the installed-vs-catalog upgrade check (audit D2) is a plain
 /// comparison.
 ///
+/// 2.1.0 — class/subclass `features` rows now grant the feature as a real
+/// class-feature `feat` card instead of prose only, so a third-party subclass
+/// reaches the character sheet at all (745 refs, ~530 new cards). Additive.
 /// 2.0.0 — audit phases B1/B2/B3/B4/B8/B9/B11 (2026-08-13), plus L3's
 /// `class_refs`/`base_item_ref` and B5's `mechanical_notes` (2026-08-14).
 /// Not bumped for B5: 2.0.0 was never uploaded, so no immutable `r2_path`
 /// exists for it and folding is safe. Bump on the next release after publish.
-const packVersion = '2.0.0';
+const packVersion = '2.1.0';
 
 class PackResult {
   final SourceDoc doc;
@@ -133,6 +136,15 @@ void writeUnmappedReport(Map<String, dynamic> report, String outDir) {
 }
 
 /// Manifest the app reads (via rootBundle) to discover the bundled packs.
+/// Rewrite `manifest.json` for [results], **keeping** the entries this run did
+/// not produce.
+///
+/// `assets/open5e_packs/` is written by two pipelines: this one and
+/// `tool/content/cairn/build_cairn.dart`. A plain overwrite silently evicted
+/// the two Cairn packs from the manifest on every `build_packs` run — the files
+/// stayed on disk, so nothing failed; they just stopped being discovered. An
+/// entry is carried over only while its `.pkg.json` is still there, so a pack
+/// that is genuinely gone still leaves the manifest.
 void writeManifest(List<PackResult> results, String outDir) {
   final packs = [
     for (final r in results)
@@ -148,6 +160,22 @@ void writeManifest(List<PackResult> results, String outDir) {
       }
   ];
   final file = File('$outDir/manifest.json');
+  final mine = {for (final p in packs) p['asset'] as String};
+  final foreign = <Map<String, dynamic>>[];
+  if (file.existsSync()) {
+    final prev = jsonDecode(file.readAsStringSync());
+    if (prev is Map && prev['packs'] is List) {
+      for (final p in prev['packs'] as List) {
+        if (p is! Map) continue;
+        final asset = p['asset'];
+        if (asset is! String || mine.contains(asset)) continue;
+        if (File('$outDir/$asset').existsSync()) {
+          foreign.add(Map<String, dynamic>.from(p));
+        }
+      }
+    }
+  }
   const encoder = JsonEncoder.withIndent('  ');
-  file.writeAsStringSync(encoder.convert({'packs': packs}));
+  file.writeAsStringSync(
+      '${encoder.convert({'packs': [...foreign, ...packs]})}\n');
 }

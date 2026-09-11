@@ -54,6 +54,11 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
   final schema = WorldSchema(
     schemaId: schemaId,
     name: 'D&D 5e (SRD 5.2.1)',
+    // 2.9.0 — `resource-pool` gained `display_name`: its row *names* are
+    // machine keys (`pool:hunters_mark_no_slot_uses`) and the sheet was
+    // prettifying the slug, so a pool that names its mechanic rather than its
+    // resource read as "Hunters Mark No Slot Uses". Additive; no data
+    // migration — an unlabelled row still falls back to the slug.
     // 2.8.0 — added two Tier-2 reference categories (`lore`, `campaign`) for
     // campaign guides / world lore: markdown page lists + PDF lists. Additive;
     // no data migration.
@@ -68,7 +73,7 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
     // `creature-action.legendary_action_cost`. Additive; no data migration.
     // 2.5.1 — `pack.content_quantities` relabelled to say what its key really
     // is (audit T2-3). Shape unchanged; no data migration.
-    version: '2.8.0',
+    version: '2.9.0',
     baseSystem: 'dnd5e',
     description:
         'Built-in D&D 5e template aligned with SRD 5.2.1 (CC-BY-4.0). '

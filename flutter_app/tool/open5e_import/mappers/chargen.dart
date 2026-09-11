@@ -217,6 +217,29 @@ void mapClasses({
       if (raw is Map && raw['type'] == 'spell')
         (raw['name'] as String).toLowerCase(): raw['name'] as String,
   };
+  // R6 / F-toh-02: a document can ship a subclass with **no** `ClassFeatureItem`
+  // at all (`toh`'s `Path of Hellfire`), so `_levelFeatures` yields nothing and
+  // the schema-required `granted_at_level` stays absent. Both readers then
+  // default to 1 (`wizard_options.subclassGrantedAtLevel`,
+  // `CharacterResolver`), offering a Barbarian path at level 1 — a worse guess
+  // than the one the data can answer: its *siblings* under the same parent open
+  // at a level, and in 5e every path of a class shares it. Derived, not invented;
+  // a parent whose every subclass is featureless still gets nothing.
+  final siblingGrantLevel = <String, int>{};
+  for (final c in classes) {
+    final so = (c['subclass_of'] as String?)?.trim();
+    if (so == null || so.isEmpty) continue;
+    final rows = _levelFeatures(
+        featuresByParent[c['_pk'].toString()] ?? const <Fixture>[],
+        itemsByFeature);
+    final own = rows.where((r) => !_isSpellTableRow(r['name'] as String));
+    final base = own.isEmpty ? rows : own;
+    if (base.isEmpty) continue;
+    final lowest =
+        base.map((r) => r['level'] as int).reduce((a, b) => a < b ? a : b);
+    final cur = siblingGrantLevel[so];
+    if (cur == null || lowest < cur) siblingGrantLevel[so] = lowest;
+  }
   // Base-class pk → display name, so a subclass can link `parent_class_ref` to
   // its parent *when that parent ships in the same pack* (SRD docs carry both).
   // Subclasses whose base class lives in the built-in pack (toh/a5e/…) get no
@@ -270,6 +293,10 @@ void mapClasses({
       // taken at, and the schema requires it. Left absent when the document
       // ships no levelled feature for it: inventing 3 would be a guess.
       final rows = _levelFeatures(kids, itemsByFeature);
+      // B4 — before anything copies `rows`, so the spread below carries the
+      // minted refs too.
+      _mintFeatureFeats(pack, norm, rows,
+          source: source, owner: name, category: 'Subclass Feature');
       if (rows.isNotEmpty) {
         attrs['features'] = rows;
         // R4 / F-toh-01: `toh`'s `Underfoot` ships its spell progression as
@@ -291,6 +318,8 @@ void mapClasses({
         // parsed tier can never lower the level the subclass is taken at.
         final spellRows = _spellListRows(pack, packSpells, rows);
         if (spellRows.isNotEmpty) attrs['features'] = [...rows, ...spellRows];
+      } else if (siblingGrantLevel[subclassOf] != null) {
+        attrs['granted_at_level'] = siblingGrantLevel[subclassOf];
       }
       // R5 / F-pass0-10: an Eldritch Knight-shaped archetype brings its own
       // spellcasting to a non-caster class. Without this the app has no way to
@@ -380,6 +409,10 @@ void mapClasses({
     );
     attrs['description'] = desc;
     final rows = _levelFeatures(kids, itemsByFeature);
+    // B4 — a third-party base class (Marshal, Mechanist) is as inert as a bare
+    // subclass without this; same treatment, same reason.
+    _mintFeatureFeats(pack, norm, rows,
+        source: source, owner: name, category: 'Class Feature');
     if (rows.isNotEmpty) attrs['features'] = rows;
     pack.add(packEntity(
       slug: 'class', name: name, source: source,
@@ -1794,7 +1827,72 @@ void mapFeats({
 /// (3rd-party docs reuse generic subclass/feat names) — otherwise `pack.add`
 /// would silently merge the two. Prefers the parent tag as the suffix, then a
 /// counter, mirroring the monster mapper's ` (Creature)` convention.
-void _addUnique(
+/// Mint one class-feature `feat` card per named feature in [rows] and aim the
+/// row that first grants it at that card (audit **B4**).
+///
+/// Every grant path in the app is ref-based — `CharacterResolver`'s Pass 4b and
+/// the editor's `absorbFeatureRowsInRange` both read a `features` row's
+/// `granted_*_refs` and nothing else. A row carrying only `{level, name,
+/// description}` therefore put **nothing** on the character sheet, which is
+/// what left 82 of the 117 bundled subclasses (and every third-party base
+/// class) mechanically inert while their rules sat in prose nobody rendered.
+///
+/// The prose still names no *mechanic* this importer could type — deriving a
+/// resource pool or a damage die from free text is not on the table. But the
+/// feature itself is a card, and minting it is what makes it reachable: the
+/// sheet, the pickers, the level-up preview and search all consume feat cards
+/// already, exactly as they do for the SRD pack's own class features.
+///
+/// Only the lowest-level row of a feature carries the ref — a feature that
+/// improves at 6th and 14th is one card, not three, and re-granting it per row
+/// would stack it. The improvement rows keep their prose so the level table
+/// still reads as a progression.
+void _mintFeatureFeats(
+  PackBuilder pack,
+  Normalizer norm,
+  List<Map<String, dynamic>> rows, {
+  required String source,
+  required String owner,
+  required String category,
+}) {
+  final seen = <String>{};
+  for (final row in rows) {
+    final name = (row['name'] as String?)?.trim() ?? '';
+    // `seen` is what keeps the lowest level winning: `_levelFeatures` already
+    // returns the rows level-ascending.
+    if (name.isEmpty || !seen.add(name)) continue;
+    // A spell-progression table masquerading as a feature is not a card
+    // (F-toh-01), and a feature with no prose would mint an empty one.
+    if (_isSpellTableRow(name)) continue;
+    final body = (row['description'] as String?)?.trim() ?? '';
+    if (body.isEmpty) continue;
+    final attrs = <String, dynamic>{
+      'chooseable': false,
+      'repeatable': false,
+      'benefits': body,
+    };
+    final cat = norm.lookupRef('feat-category', category, context: name);
+    if (cat != null) attrs['category_ref'] = cat;
+    // `tags: [owner]` is what disambiguates the generic names third-party docs
+    // reuse across subclasses ("Extra Attack", "Bonus Proficiencies") into
+    // "Extra Attack (Circle of Ash)". `dropBuiltinDuplicates` still gets to
+    // drop the card afterwards when the built-in pack ships it verbatim — it
+    // re-aims this `_ref` at the built-in card in the same pass.
+    final minted = _addUnique(pack,
+        slug: 'feat',
+        name: name,
+        source: source,
+        description: body,
+        tags: [owner],
+        attributes: attrs);
+    row['granted_feat_refs'] = [ref('feat', minted)];
+  }
+}
+
+/// Returns the name the entity was actually registered under — the caller
+/// needs it to aim a `_ref` at the card, which the original `name` would miss
+/// whenever the disambiguating suffix fired.
+String _addUnique(
   PackBuilder pack, {
   required String slug,
   required String name,
@@ -1815,6 +1913,7 @@ void _addUnique(
   pack.add(packEntity(
     slug: slug, name: finalName, source: source,
     description: description, tags: tags, attributes: attributes));
+  return finalName;
 }
 
 /// Parent desc + named child rows → markdown with one `### Name` block each.

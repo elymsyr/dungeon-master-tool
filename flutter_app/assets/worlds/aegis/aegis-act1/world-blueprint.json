@@ -4307,6 +4307,7 @@
         "source_name": "pool:kayit_dengeyi_geri_ver",
         "mapping": {
           "name": "pool:kayit_dengeyi_geri_ver",
+          "display_name": "Dengeyi Geri Ver",
           "description": "Kayıt Ruhu — Dengeyi Geri Ver kullanımları."
         }
       },
@@ -4314,6 +4315,7 @@
         "source_name": "pool:kayit_fihrist_hali",
         "mapping": {
           "name": "pool:kayit_fihrist_hali",
+          "display_name": "Fihrist Hali",
           "description": "Kayıt Ruhu — Fihrist Hali'nin bedava kullanımı."
         }
       },
@@ -4321,6 +4323,7 @@
         "source_name": "pool:kayit_sayim",
         "mapping": {
           "name": "pool:kayit_sayim",
+          "display_name": "Sayım",
           "description": "Kayıt Ruhu — Sayım'ın bedava kullanımı."
         }
       },
@@ -4328,6 +4331,7 @@
         "source_name": "pool:pul_bagit_yoldasi",
         "mapping": {
           "name": "pool:pul_bagit_yoldasi",
+          "display_name": "Bağıt Yoldaşı",
           "description": "Pul Bağıtlısı — Pullu'yu slot harcamadan çağırma."
         }
       },
@@ -4335,6 +4339,7 @@
         "source_name": "pool:pul_salgi_puskurtmesi",
         "mapping": {
           "name": "pool:pul_salgi_puskurtmesi",
+          "display_name": "Salgı Püskürtmesi",
           "description": "Pul Bağıtlısı — Salgı Püskürtmesi'nin bedava kullanımı."
         }
       },
@@ -4342,6 +4347,7 @@
         "source_name": "pool:pul_refleks_direnci",
         "mapping": {
           "name": "pool:pul_refleks_direnci",
+          "display_name": "Refleks Direnci",
           "description": "Pul Bağıtlısı — Refleks Direnci kullanımları."
         }
       }

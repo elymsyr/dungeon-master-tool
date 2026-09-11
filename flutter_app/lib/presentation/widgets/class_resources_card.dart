@@ -60,8 +60,20 @@ class ClassResourcesTracker extends StatelessWidget {
     return out;
   }
 
-  /// `pool:bardic_inspiration` → "Bardic Inspiration".
-  static String displayName(String raw) {
+  /// The pool's human label. A Tier-0 pool row is *named* by a machine key
+  /// (`pool:hunters_mark_no_slot_uses` — `srdStableEntityId` mints its id from
+  /// that name), so the label is authored on the row as `display_name`
+  /// (`kResourcePoolLabels`, and `display_name` in a world blueprint).
+  ///
+  /// The slug fallback only runs for a pool whose author left the field empty;
+  /// it cannot recover a key that names the mechanic instead of the resource,
+  /// which is the whole reason the field exists.
+  static String displayName(Entity? pool, String id) {
+    final authored = pool?.fields['display_name'];
+    if (authored is String && authored.trim().isNotEmpty) {
+      return authored.trim();
+    }
+    final raw = pool?.name ?? id;
     if (!raw.startsWith('pool:')) return raw;
     final core = raw.substring(5).replaceAll('_', ' ');
     return core
@@ -82,8 +94,11 @@ class ClassResourcesTracker extends StatelessWidget {
   }
 
   Widget _poolRow(String id, int max, String? recharge) {
-    final rawName = entities[id]?.name ?? id;
-    final name = displayName(rawName);
+    final pool = entities[id];
+    // The row *name* stays the machine key — `pool:sorcery_points` below keys
+    // the Font of Magic affordance off it. Only the label is humanised.
+    final rawName = pool?.name ?? id;
+    final name = displayName(pool, id);
     final cur = (poolRemaining[id] ?? max).clamp(0, max);
     final sources = [
       ...?effective.grantSources[id],
