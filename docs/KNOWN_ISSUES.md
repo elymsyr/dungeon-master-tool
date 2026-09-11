@@ -24,6 +24,14 @@ items that are still open on the release date; do not edit past releases afterwa
   screen renders a counter for it, so a per-day limit authored on a creature action is
   invisible. Use a resource pool on a trait or feat card instead.
 
+- **59 tests fail on `main`** — As of v15.10.0 `flutter test` reports 1424 passing and 59
+  failing. None of them are caused by the version bump; they are fallout from the content
+  and schema changes in v15.10.0 that the tests were not updated for:
+  `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
+  `default_schema_test` (3, expects 19 categories but the schema now generates 18),
+  `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
+  clean apart from 27 pre-existing info-level lints.
+
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on
   that cache. Deliberate for now: the images are small individually and re-downloading them
