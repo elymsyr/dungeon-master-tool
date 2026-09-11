@@ -59,15 +59,9 @@ def build_final_prompt(
     style = f"{AEGIS_STYLE}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[int(uid[:8], 16) % len(STYLE_FLAVOR)]
 
-    # Kaynak etiketi
-    source_tag = "Gemini visual description" if use_gemini else "blueprint extract"
-
     return (
-        f"[Subject — {source_tag}]\n"
-        f"{body}\n\n"
-        f"[Style]\n"
-        f"{header}\n"
-        f"{FULL_BLEED}, {DND_CONTEXT}, "
+        f"{body}\n"
+        f"{header}, {FULL_BLEED}, {DND_CONTEXT}, "
         f"{AEGIS_PALETTE}, {AEGIS_LIGHT}, {style}, {flavor}"
     )
 
@@ -143,8 +137,6 @@ def self_check(jobs: list[dict]) -> None:
     assert jobs, "hiç job yok"
     for j in jobs:
         p = j["prompt"]
-        assert "[Subject" in p, f"[Subject] yok: {j['name']}"
-        assert "[Style]" in p, f"[Style] yok: {j['name']}"
         assert "hand-painted oil painting" in p, f"yağlı boya stili yok: {j['name']}"
         assert "full-bleed square artwork" in p, f"full-bleed yok: {j['name']}"
         assert "Dungeons & Dragons" in p, f"D&D bağlamı yok: {j['name']}"

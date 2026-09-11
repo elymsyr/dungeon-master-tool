@@ -30,7 +30,12 @@ python3 aegis_merge.py --sample 5                      # 5 örnek bas
 python3 aegis_merge.py --self-check                    # doğrula
 python3 aegis_merge.py --category npc                  # sadece NPC'ler
 
-# 4. Görsel üretimi (henüz yok)
+# 4. Görsel üretimi (ComfyUI gerekli → out/{uuid}.webp)
+python3 aegis_generate.py                                    # tüm job'lar
+python3 aegis_generate.py --limit 5                          # pilot: ilk 5
+python3 aegis_generate.py --categories npc,monster            # filtre
+python3 aegis_generate.py --loader checkpoint --ckpt flux1-schnell-fp8.safetensors
+python3 aegis_generate.py --host http://192.168.1.12:8188
 ```
 
 ## Kategoriler
