@@ -4,14 +4,15 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
-**Sürüm 0.3.0 — 126 entity** (2026-09-11). Kartlar güncel kanondan (Hastalık Puanı
-revizyonu dahil) **sıfırdan** yazıldı; 0.2.0'ın metni kullanılmadı. Üslup: README §6.7
-(WotC read-aloud). Kartların içinde süreç dili, belge atfı ve "kanon değil" işareti
+**Sürüm 0.4.0 — 125 entity** (2026-09-11). Kartlar güncel kanondan (Hastalık Puanı
+revizyonu dahil) **sıfırdan** yazıldı; 0.2.0'ın metni kullanılmadı. 0.4.0'da bütün kartlar
+README §6.7 (WotC read-aloud / modül sesi) ile yeniden yazıldı ve kayıt vurgusu azaltıldı
+(README §4.8). Kartların içinde süreç dili, belge atfı ve "kanon değil" işareti
 yok (README §6.0); o işaretlerin hepsi bu dosyanın **§Yorum ve türetme** bölümünde.
 
 Üretim: kartlar bir üretici betikle kuruldu, `world-blueprint.json` onun çıktısı.
 Betiğin denetimi: bütün `@[..](entity:..)` linkleri ve pakete ait ref'ler çözülüyor;
-kart metinlerinde `Act 1 · perde · kanon · § · .md · şimdilik · Aethel · Evre` geçmiyor.
+kart metinlerinde `Act 1 · perde · kanon · § · .md · şimdilik · Aethel · Evre` ve tasarım dili (`taşıyıcısı · Açtığı kapı · Kırılma noktası`) geçmiyor.
 `convert_blueprint.dart --check` temiz.
 
 Kaynak kısaltmaları:
@@ -37,7 +38,7 @@ Kaynak kısaltmaları:
 
 "Miras" omurgası sayfada ilan edilmiyor (`kartG §1`); `dmNotes`'ta tek cümle.
 
-## lore — 21
+## lore — 20
 
 | Entity | Kaynak |
 |---|---|
@@ -46,8 +47,7 @@ Kaynak kısaltmaları:
 | Blight — Bilinen Hali | `act1 §4` (kimse bilmiyor, hastalık olduğu bile kesin değil) + `act1 §4.2` belirtiler + `act1 §4.3` + `02` Beş Hamle #1 + `act1 §3` (köyün yöntemi) + `lonca §6` (humma) |
 | Vorstrand — Bilinen Hali | `kartG §2` ("Öte", *kıta dışı*) + `lonca §6.3` (serbest ticaretçiler) + `bolge §2.7` (çevirmen) |
 | Konsey ve Lonca Meclisi | `lonca §1, §2, §5` + `bolge §2.1, §3.1` (Konsey'in atadıkları) |
-| Sancak Kaydı | `lonca §0, §5, §9` + `act1 §2` (mühür = kimlik) + `bolge §1.4, §4.1` + `liste` adlandırma |
-| Kayıt Nasıl İşler | `liste §2` altı sayfanın tamamı; `dmNotes` ← aynı bölümün `secrets` cümlesi |
+| Sancak Kaydı | Sayfa 1 ← `lonca §0, §5, §9` + `act1 §2` (mühür = kimlik) + `bolge §1.4, §4.1` + `liste` adlandırma · Sayfa 2 *Defter nasıl işler* ← `liste §2` *Kayıt Nasıl İşler*'in altı sayfası; `dmNotes` ← aynı bölümün `secrets` cümlesi |
 | Büyücü Loncası | `lonca §2` + `mek §1, §2, §4.2–4.3, §12` |
 | Sınır ve Ticaret Loncası | `lonca §2, §6.1, §6.2` + `bolge §2.1–2.2` |
 | Demircilik ve İşçi Loncası | `lonca §2, §6, §9.2` + `bolge §1.6` |
@@ -120,7 +120,7 @@ Kaynak kısaltmaları:
 | Meclis Oturumu | `lonca §6, §6.1, §6.3, §10` |
 | Kapı Önündeki Teklif | `lonca §6.2, §10` + `act1 §6.1` |
 | Geçiş Divanı'nda Sıra | `liste §2` sayfa 4, 6 + `lonca §7` |
-| Gümrükte Kayıt | `bolge §2.2–2.7` |
+| Gümrük Rıhtımı | `bolge §2.2–2.7` |
 | Susan Kule | `bolge §3.3, §3.7` |
 | Avluda Karşılanma | `bolge §4.5, §4.6, §10` |
 | Şafak Çatışması | `act1 §5, §5.1` + `mek §8, §12` + `bolge §6.1` |
@@ -150,7 +150,7 @@ Kartların içinde işaret yok; kanon bir sayı ya da karar verdiğinde değişe
 
 - **Maruziyet DC'si 12.** `act1 §4.1` ve `mek §7` DC 12 diyor; `liste §7` curse satırı DC 8 diyor.
 - **Bulaştıran Yara DC'si 8.** `act1 §5.1` DC 8 diyor (revizyonda bilerek 12'den 8'e indi, `8a2b3f96`); `liste §6` ve `kartG §7` DC 12 diyor. `liste` iki sayıyı yer değiştirmiş görünüyor.
-- **Sayım.** `liste §2` başlığı 22 `lore` diyor, tablosu 21 satır; `§3` başlığı 18 `location`, tablosu 17 satır (+ Meclis Salonu). Toplam 126, başlıktaki 127 değil.
+- **Sayım.** `liste §2` başlığı 22 `lore` diyor, tablosu 21 satır; `§3` başlığı 18 `location`, tablosu 17 satır (+ Meclis Salonu). Toplam 126; `Kayıt Nasıl İşler` `Sancak Kaydı`'na sayfa olarak girdiği için 125.
 - **`quest/Silinen Sayfa` yazılmadı** — `lonca §6.2, §8` hâlâ sayıyor ama `RM §4.8` geri aldı ve `liste §10` iki görev sayıyor. Teklifin kendisi `scene/Kapı Önündeki Teklif`'te.
 
 **Türetilmiş sayılar:**
@@ -175,7 +175,10 @@ Kartların içinde işaret yok; kanon bir sayı ya da karar verdiğinde değişe
 - **Susan Kule** — nöbetçinin *ne gördüğü* kanonda yok; sahne yalnız "körfezin girişinde bir şey" diyor (`bolge §3.3`'ün sistem tarifi).
 - **Avluda Karşılanma** — druidin çürümeyi *nasıl okuduğunun* içeriği kanonda yok; sahne başlığını veriyor, içeriği vermiyor.
 - **Read-aloud dokusu (README §6.7 / A1).** Açılış metinlerine koku, ses, sıcaklık ve sayılabilir ayrıntı eklendi; hiçbiri yeni NPC, yer, nesne ya da olay değil. İlerde tartışılabilecek olanlar: Meclis Salonu'nda beş hane işareti + tek boş duvar (beş hane + hanesiz koltuktan) · Karşı-İmza Masası'nda kenarı sararmış kağıtlar · Susan Kule'de köşesi katlanmış defter sayfası · Gümrükte *Lucid Triton* yazan mühürlü torba · Lucid Triton ağaçlarının renkleri (kızıl/turuncu/mor; kanon "canlı renkler").
-- **NPC görünüş ve tavırları** kanonda çoğunlukla yok; rol ve ırktan türetilmiş yüzey ayrıntısı. Olay örgüsüne en yakın olanlar: Vinç Ustası "gece daha iyi çalışır" · Kandil'in tabelasız çivileri · Kaptan Caelynn'in kapalı sandığı beklemesi.
+- **NPC görünüş ve tavırları** kanonda çoğunlukla yok; rol ve ırktan türetilmiş yüzey ayrıntısı. **Yaş, cinsiyet, saç/göz rengi, giysi, koku, ses ve örnek replikler** hep doku (kanonda NPC cinsiyeti hiç geçmiyor). Kadın yazılanlar: Umay · Merla · Kromanna · Kaptan Caelynn · Mine · Nehir Muhafızı Çavuşu · Kapı Komutanı · Patika Gözcüsü. Olay örgüsüne en yakın olanlar: Vinç Ustası "gece daha iyi çalışır" · Kandil'in tabelasız çivileri · Kaptan Caelynn'in kapalı sandığı beklemesi · Başkumandan'ın göz kırpmaması · Kapı Komutanı'nın defterinde iki aydır boş *emir* sütunu · Umay'ın da kulübeye girdiğini sorulunca susması.
+- **Mekan bölümleri (0.4.0).** Mekanlara bölüm bölüm fiziksel tasvir eklendi; yeni NPC, olay ya da gizli bilgi yok. Tartışılabilecek dokular: Meclis Salonu duvar işaretleri (anahtar/Sancar · çekiç/Ferrun · terazi/Kalender · kılıç/Custar · pergel/Mizan) · Goodbarrel'da altı masa, iki oda, üç atlık ahır (kanondan) + geyik boynuzları · Kulübe'de penceresizlik, eşyaların kimde olduğu (kese Alton'da, parşömen Merla'da) · Mühür Salonu'nda mum ocakları ve gözlü dolap · Karşı-İmza Masası'nda kilitli eski defter dolabı · Elymsyr bölümleri (boğaz, zincir, aşağı rıhtım, gümrük binası, teraslar) · Votumar avlusu ve kalkan duvarı talimi · Gözcü kulesinin üç katı · Rıhtım'da barakalar (meyhane, depo, ağ tamircisi) · Paladin Rütbelisi / Emir Mührü'nde beyaz mühür mumu · Sancak Fihristi'nin renkli sekmeleri.
+- **Çatışma alanı.** Şafak Çatışması'nda patikanın genişliği, iki yanda zorlu arazi sayılan çalı ve köyün son evine altmış adım: harita dokusu, kanonda yok.
+- **Kanonda DC'si olmayan ikna anları DC'siz yazıldı** (Duran'ın "limandan geldiler"i, Sindri'nin kopyası, Kapı Komutanı'nın cümlesi): rol yapma koşulu var, zar yok.
 
 ---
 

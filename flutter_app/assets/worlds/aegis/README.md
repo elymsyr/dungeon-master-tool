@@ -243,7 +243,7 @@ assets/worlds/aegis/
   lore/archive/          ← ham arşiv, pakete GİRMEZ
   aegis-act1/            ← modül dizini ✅
     manifest.json        ← ✅
-    world-blueprint.json ← ✅ 126 entity (§4.8)
+    world-blueprint.json ← ✅ 125 entity (§4.8)
     blueprint.json       ← pre-gen PC'ler (Tier 3) — yazılmadı, Faz 6
     media/               ← yazılmadı, Faz 7 (§4.6)
       Maps/  Artwork/  Handouts/
@@ -345,23 +345,29 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.3.0)
+### 4.8 Yazılan kartlar (0.4.0)
 
-`aegis-act1/world-blueprint.json` — **126 entity**, 2026-09-11. Kapsam
+`aegis-act1/world-blueprint.json` — **125 entity**, 2026-09-11. Kapsam
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**; `🟡` olanlar
 dahil (bir kartı 🟡 yapan şey tek bir alan, ve o alan boş bırakıldı).
 
 **0.2.0'dan farkı:** paket `e917f024`'te silinmişti ve kanon ondan sonra iki kez
 değişti (Blight → Hastalık Puanı + beş aşama; Greater Restoration artık kaldırmıyor).
-0.3.0 güncel kanondan **sıfırdan** yazıldı, eski metin kullanılmadı. Üslup §6.7
-(WotC read-aloud): oyuncuya okunan alanlar (`location.description_long` açılışı,
-`scene.description`, `encounter.setup`, monster açılışları) blockquote olarak, şimdiki
-zamanda, görme dışında en az bir duyuyla ve oyuncuya devredilerek biter.
+0.3.0 güncel kanondan **sıfırdan** yazıldı, eski metin kullanılmadı.
+
+**0.4.0 (aynı gün): bütün kartlar §6.7 üslubuyla yeniden yazıldı.** 0.3.0 kanonun tasarım
+dilini taşıyordu ("açtığı kapı", "taşıyıcı", "masa", "bir yer değil bir durum"). 0.4.0'da
+oyuncuya okunan alanlar (`location.description_long` açılışı, `scene.description`,
+`encounter.setup`, monster açılışları) blockquote, şimdiki zaman, görme dışında en az bir
+duyu ve oyuncuya devredilen bir sonla yazıldı; DM metni WotC modülü sesiyle ("Karakterler
+sorarsa…"). Mekanlara bölüm bölüm tasvir, NPC'lere yaş/beden/giysi/koku/ses ve örnek
+replik eklendi. **Kayıt vurgusu azaltıldı:** "kayıt/kayd" 202 → 24 geçiş; kayıt yalnız
+hikayenin gerçekten kullandığı yerlerde (silinen sayfa, gümrük, Sancak Kaydı kartı).
 
 | Kategori | Adet | Ne |
 |---|---|---|
 | `campaign` | 1 | Aegis — 5 sayfa (giriş kartı) |
-| `lore` | 21 | Çağ ve din (2) · Blight/Vorstrand (2) · yönetim ve kayıt (3) · altı lonca (6) · doktrin ve toplum (4) · düzenler (3) · Kural Sapmaları (1) |
+| `lore` | 20 | Çağ ve din (2) · Blight/Vorstrand (2) · Konsey ve Sancak Kaydı (2) · altı lonca (6) · doktrin ve toplum (4) · düzenler (3) · Kural Sapmaları (1) |
 | `location` | 18 | Dünya → kıta → yer zinciri eksiksiz; güzergahın tamamı + Meclis Salonu |
 | `npc` | 34 | Gümüşsu (4) · kulübe (3) · liman (6) · Meclis (6) · şehir sokağı (5) · Elymsyr (4) · Votumar (4) · Ravenhall (2) |
 | `monster` | 4 | Jenerik Dönüşmüş + üç adlandırılmış hâli |
@@ -375,9 +381,12 @@ zamanda, görme dışında en az bir duyuyla ve oyuncuya devredilerek biter.
 | `adventuring-gear` | 8 | Yedi background eşyası + Direnç Şerbeti |
 | `trinket` | 7 | Dört mühür + rozet + künye + Mühürsüz Yüzük |
 
-**126, 127 değil.** `kart-listesi.md` başlıkları 22 `lore` ve 18 `location` diyor; tabloları
+**125, 127 değil.** `kart-listesi.md` başlıkları 22 `lore` ve 18 `location` diyor; tabloları
 21 ve 17 satır sayıyor. 18. lokasyon **Meclis Salonu** (§8'in iki sahnesinin yeri) ve
-yazıldı; 22. `lore` yok. `quest/Silinen Sayfa` 2026-09-10'da geri alındığı için yazılmadı.
+yazıldı; 22. `lore` yok. `Kayıt Nasıl İşler` 0.4.0'da ayrı kart olmaktan çıktı, `Sancak
+Kaydı`'nın ikinci sayfası oldu. `quest/Silinen Sayfa` 2026-09-10'da geri alındığı için
+yazılmadı. Sahne `Gümrükte Kayıt` → `Gümrük Rıhtımı`; pinlenen `lore/Sancak Kaydı` →
+`location/Gümüşsu`.
 
 **Kanon içi iki çelişki `act1.md` lehine çözüldü:** maruziyet DC'si **12** (`kart-listesi`
 8 diyor), Bulaştıran Yara DC'si **8** (`kart-listesi` 12 diyor).
@@ -399,7 +408,7 @@ ad kararı verilince tek `name` değişikliği ve link grep'i yeter.
 | 2 | Lokasyonlar | Güzergahın tamamı, `location` + `parent_location_ref` | ✅ 18 lokasyon, dünya → kıta → yer zinciri kırılmadan |
 | 3 | Fraksiyon + NPC | `lore` (fraksiyonlar) + `npc` | ✅ 34 NPC · altı lonca `lore` kartı. **İki taşıyıcı kuralı her hatta sağlandı.** 10 NPC unvanla yazıldı, adı bekliyor |
 | 4 | Sahne / encounter / quest | `scene`, `encounter`, `quest`, `trap` | ✅ 11 sahne · 1 encounter · 2 quest (trap yok — kanonda tuzak yok). Hiçbiri belirli bir PC'ye bağlı değil |
-| 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 21 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
+| 5 | Campaign + lore sayfaları | `campaign.pages[]` | ✅ 5 sayfalık giriş kartı + 20 `lore` kartı. Sansürlü resmi tarih ayrı kart olarak yazılmadı |
 | 6 | Pre-gen'ler | `blueprint.json` | Dört yuva, dört karakter — yazılmadı |
 | 7 | Medya + paketleme | `media/*.webp`, `.pkg.json` | 🟡 `PROVENANCE.md` ✅ · `--check` temiz ✅ · medya yok · `.pkg.json` modül dizinine yazılmadı (§4.7 komutuyla üretilir) |
 
