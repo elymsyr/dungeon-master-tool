@@ -40,6 +40,8 @@ class UiState {
   final Map<String, List<String>> dbFilterShareModesByWorld;
   /// Sort mode — stores `_SortMode.name` string.
   final Map<String, String> dbSortModeByWorld;
+  /// Sidebar arama metni — filtrelerle aynı şekilde dünya başına kalıcı.
+  final Map<String, String> dbSearchByWorld;
 
   // Session
   final double sessionMainSplitterRatio;
@@ -103,6 +105,7 @@ class UiState {
     this.dbFilterSourcesByWorld = const {},
     this.dbFilterShareModesByWorld = const {},
     this.dbSortModeByWorld = const {},
+    this.dbSearchByWorld = const {},
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
     this.sessionBottomTab = 0,
@@ -136,6 +139,7 @@ class UiState {
     Map<String, List<String>>? dbFilterSourcesByWorld,
     Map<String, List<String>>? dbFilterShareModesByWorld,
     Map<String, String>? dbSortModeByWorld,
+    Map<String, String>? dbSearchByWorld,
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
     int? sessionBottomTab,
@@ -170,6 +174,7 @@ class UiState {
       dbFilterShareModesByWorld:
           dbFilterShareModesByWorld ?? this.dbFilterShareModesByWorld,
       dbSortModeByWorld: dbSortModeByWorld ?? this.dbSortModeByWorld,
+      dbSearchByWorld: dbSearchByWorld ?? this.dbSearchByWorld,
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
@@ -206,6 +211,7 @@ class UiState {
     'dbFilterSourcesByWorld': dbFilterSourcesByWorld,
     'dbFilterShareModesByWorld': dbFilterShareModesByWorld,
     'dbSortModeByWorld': dbSortModeByWorld,
+    'dbSearchByWorld': dbSearchByWorld,
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
     'sessionBottomTab': sessionBottomTab,
@@ -252,6 +258,7 @@ class UiState {
       dbFilterShareModesByWorld:
           _decodeListMap(json['dbFilterShareModesByWorld']),
       dbSortModeByWorld: _decodeStringMap(json['dbSortModeByWorld']),
+      dbSearchByWorld: _decodeStringMap(json['dbSearchByWorld']),
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
       sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,

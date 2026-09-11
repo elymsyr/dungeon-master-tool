@@ -875,6 +875,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             child: FloatingActionButton(
               heroTag: 'session_screen_dice_fab',
               mini: true,
+              shape: RoundedRectangleBorder(borderRadius: palette.cbr),
               onPressed: () => _showDiceBottomSheet(palette),
               child: const Icon(Icons.casino),
             ),
