@@ -224,7 +224,7 @@ edilebilen her şey kart olur.
 | **Fihrist Hali** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + bonus aksiyon |
 | **Sayım** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + aksiyon |
 
-### 3.2 Pul Bağıtlısı — 11 kart
+### 3.2 Pul Bağıtlısı — 12 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -238,7 +238,7 @@ edilebilen her şey kart olur.
 | **Refleks Direnci** | `trait` + `creature-action` | Havuz (YB / uzun dinlenme) + tepki |
 | **Isırık** | `creature-action` | Pullu'nun saldırısı |
 | **Salgılı Vuruş** | `creature-action` | Pullu'nun tepkisi |
-| **Salgı Püskürtmesi** | `creature-action` | 11. seviye koni |
+| **Salgı Püskürtmesi** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + 11. seviye koni |
 
 ### 3.3 Kaynak havuzları — 6 satır
 
