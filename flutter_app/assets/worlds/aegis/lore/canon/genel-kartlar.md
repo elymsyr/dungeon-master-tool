@@ -164,6 +164,10 @@ güçlendirmesinden mi geliyor. Kapanmadan yazılan her ırk kartı yeniden yaz�
 (README §3.2). Karakter yaratmayı doğrudan etkilediği için burada duruyor —
 kapanması gereken ilk kararlardan.
 
+**Alt sınıf bloke değil (2026-09-11):** 06 #11 *ırksal* özellikleri bekletiyor,
+**sınıfsal** olanları değil. İki `subclass` kartı yazıldı —
+[`alt-siniflar.md`](alt-siniflar.md).
+
 **Ayrım (2026-09-09):** blok *yazmayı* engelliyor, *ref vermeyi* değil. SRD'de adı
 birebir olan bir ırka `species_ref` ile referans verilebilir ve verilir — Act 1'in
 üçlüsü böyle: iki `Halfling`, bir `Tiefling` (act1.md §3.1). Bu, 06 #11'i
@@ -236,6 +240,8 @@ yarı-varlık) · Occulus arşivcisi (belgesel kapının kurumsal yüzü).
 **Blight cephesi** — `environmental-effect`; 02 §5.1, sınır var ve tutuluyor.
 Blight bir iklim değil cephe; hastalık ikinci kıtadan taşındı (#14 kapandı, yukarıda).
 
-**Açık kalan kategori kararları** — `class`/`subclass`/`spell` kartı gerekiyor mu,
-yoksa ilahi büyü sapması için `lore` notu yeter mi (README §6.5) · `service`/`hireling`
-gerekiyor mu (Gizli Liman'ın "iyi para" ekonomisi, act1.md §9 açık 4).
+**Açık kalan kategori kararları** — ~~`class`/`subclass` kartı gerekiyor mu~~
+**kapandı (2026-09-11):** `subclass` **yazılıyor**, `class` yazılmıyor; iki alt sınıf
+[`alt-siniflar.md`](alt-siniflar.md)'de. `spell` kartı hâlâ açık — ilahi büyü sapması
+için `lore` notu yeter mi (README §6.5) · `service`/`hireling` gerekiyor mu (Gizli
+Liman'ın "iyi para" ekonomisi, act1.md §9 açık 4).

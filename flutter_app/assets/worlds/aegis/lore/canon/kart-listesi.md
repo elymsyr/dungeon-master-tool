@@ -344,6 +344,23 @@ Yeni ırk kartı **yazılmaz**; ırksal özelliklerin kaynağı kararı açık. 
 engelliyor, **ref vermeyi değil**: SRD'de adı birebir olan bir ırka `species_ref`
 verilir (Halfling · Tiefling).
 
+## 14. `subclass` — 2 ✅
+
+Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılıyorlar.
+`class` kartı **yazılmıyor** — SRD'nin on iki sınıfı olduğu gibi duruyor.
+
+| Kart | Ana sınıf | Ne | Durum |
+|---|---|---|---|
+| **Kayıt Ruhu** | Sorcerer (3. sv) | Sancak Kaydı'nın bir insana geçmiş sayfası. Büyüsü düzeltmedir: fazlalığı siler, eksiği tamamlar. Lisansı yok — Lonca'nın deyimiyle **Mühürsüz Kalem** | ✅ |
+| **Pul Bağıtlısı** | Ranger (3. sv) | Ravenhall'da taşa kazınan bağıt ve ona giren pullu yırtıcı. Yoldaş **Yazısız**'dır; hiçbir seviyede **uçuş yok** | ✅ |
+
+Bağlı kartlar: `animal/Pullu` · 10 `trait` · 8 `creature-action` · 6 `resource-pool`
+satırı — hepsi [`alt-siniflar.md` §3](alt-siniflar.md)'te adıyla sayılı.
+
+İkisi de WotC kaynaklarından **uyarlandı** ve her kartın `source` alanı bunu söylüyor
+(`Aegis — Tasha's Cauldron of Everything` · `Aegis — Fizban's Treasury of Dragons`).
+Sapma defteri [`alt-siniflar.md` §4](alt-siniflar.md).
+
 ---
 
 ## Sayım
@@ -355,8 +372,8 @@ verilir (Halfling · Tiefling).
 | `location` | 17 | 1 | — | 18 |
 | `npc` | 24 | 10 | — | 34 |
 | `monster` | 4 | — | — | 4 |
-| `creature-action` | 4 | — | — | 4 |
-| `trait` | 5 | — | — | 5 |
+| `creature-action` | 12 | — | — | 12 |
+| `trait` | 15 | — | — | 15 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
@@ -365,9 +382,15 @@ verilir (Halfling · Tiefling).
 | `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
-| **Toplam** | **114** | **13** | **—** | **127** |
+| `subclass` | 2 | — | — | 2 |
+| `animal` | 1 | — | — | 1 |
+| `resource-pool` | 6 | — | — | 6 |
+| **Toplam** | **141** | **13** | **—** | **154** |
 
-**114/127 ✅, 13 🟡, 0 ⬜** (2026-09-10, kayıt turu). Liste 97'den 127'ye çıktı:
+**141/154 ✅, 13 🟡, 0 ⬜** (2026-09-11, alt sınıf turu — 127'den 154'e;
+[`alt-siniflar.md`](alt-siniflar.md) 27 kart ekledi).
+
+**Öncesi (kayıt turu):** 114/127 ✅, 13 🟡, 0 ⬜ (2026-09-10). Liste 97'den 127'ye çıktı:
 [`bolgeler.md`](bolgeler.md) 24 kart (7 `lore` · 7 `location` · 10 `npc` · 3 `scene`),
 [`mekanikler.md`](mekanikler.md) 2 kart (`lore/Kural Sapmaları` · `Direnç Şerbeti`),
 kayıt turu 1 kart (`lore/Kayıt Nasıl İşler`) ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
