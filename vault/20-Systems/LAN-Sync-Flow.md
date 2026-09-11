@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-08-25
+updated: 2026-09-11
 tags: [system]
 ---
 
@@ -77,6 +77,11 @@ Medya olarak iki kaynak taranır:
    geçişi (`LocalMediaLocalizer.localizeWorldPayload`) eski dünyalarda kalmış
    ham yolları da içeri alıyor. Bu olmadan battle map arka planları ve mindmap
    not resimleri karşı cihaza hiç gitmiyordu.
+   Klasör adı **`LocalMediaLocalizer.dirSafe`** ile aranır: kopyayı oraya
+   yazan localizer adı sanitize ediyor (`:` → `_`), tarama ham adla bakınca
+   adında `:` olan dünyanın (bundled "Aegis — Meridia: Birinci Perde")
+   `media/` klasörü hiç bulunamıyor ve bütün resimler karşı cihaza
+   gitmiyordu. İkisi aynı fonksiyondan geçmek zorunda.
    Karakter medyası düz `{charactersDir}` altında durup `{id}_` önekiyle
    süzüldüğü için kopya o adla açılıyor (`localizeCharacterImage`).
    Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem

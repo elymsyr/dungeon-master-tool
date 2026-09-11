@@ -498,15 +498,18 @@ class LanSyncSession {
       case LanItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
         if (row == null) return entries;
+        // `dirSafe`: medyayı buraya kopyalayan `LocalMediaLocalizer` adı
+        // sanitize ediyor (`:` → `_`). Ham adla taranınca adında `:` olan
+        // dünyanın `media/` klasörü hiç bulunamıyor, resimler taşınmıyordu.
         await _collectDir(
-          Directory(p.join(AppPaths.worldsDir, row.worldName)),
+          Directory(LocalMediaLocalizer.worldDir(row.worldName)),
           entries,
         );
       case LanItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return entries;
         await _collectDir(
-          Directory(p.join(AppPaths.packagesDir, row.name)),
+          Directory(LocalMediaLocalizer.packageDir(row.name)),
           entries,
         );
       case LanItemType.character:
