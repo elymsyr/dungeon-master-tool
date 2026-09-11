@@ -169,8 +169,10 @@ defteri `alt` §1–4'te.
   biniş/iniş ve 30 → **60 ft**'e çıkan Refleks Direnci menzili geldi.
 - Salgı listesinden **ateş** çıkarıldı; dört tip kaldı. Draconic yerine **Primordial**.
 
-**Görselleri yok.** Bu 25 kart `imagePath` taşımıyor; `tool/aegis_art` akışından
-geçmedi. Diğer 127 kartın hepsinde görsel var.
+**Görselleri var.** Bu kartların 21'i `tool/aegis_art` akışından geçti ve
+`imagePath` taşıyor. Görseli olmayan tek grup 6 `resource-pool` kaydı — soyut
+sayaçlar, çizilecek bir nesnesi yok (`aegis_prompts.SKIP_CATEGORIES`). Kalan
+146 kartın hepsinde görsel var.
 
 ---
 

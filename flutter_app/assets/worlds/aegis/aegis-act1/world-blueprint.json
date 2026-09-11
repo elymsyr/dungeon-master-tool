@@ -1921,7 +1921,8 @@
           "source": "Kayıt Ruhu",
           "trait_kind": "Spellcasting",
           "description": "Büyü yaptığında her seferinde aynı şey olur. Birini seç:\n\n1. Parmak uçlarında bir an mürekkep izi belirir, sonra kurur ve yok olur.\n2. Sesin bir anlığına iki ses olur — biri sen, biri arkada yazan bir katip.\n3. Etrafındaki toz, havada tek bir satır boyunca hizalanır.\n4. Gözbebeğin kısa süre bir mühür şekline döner.\n5. Duyulmayan bir sayfa hışırtısı odayı geçer.\n6. Derinde bir an okunmayan bir el yazısı görünür.",
-          "benefits": "Mekanik etkisi yok. Ama bir Büyücü Loncası kalfası bunu görürse ne gördüğünü anlar: bu adam okula gitmemiş."
+          "benefits": "Mekanik etkisi yok. Ama bir Büyücü Loncası kalfası bunu görürse ne gördüğünü anlar: bu adam okula gitmemiş.",
+          "imagePath": "media/Artwork/Kayıt-Tezahürü.webp"
         }
       },
       {
@@ -1950,7 +1951,8 @@
               "recharge": "long_rest",
               "count_formula": "pb"
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/trait-Dengeyi-Geri-Ver.webp"
         }
       },
       {
@@ -1980,7 +1982,8 @@
               "count": 1
             }
           ],
-          "mechanical_notes": "Bedava kullanım bitince 5 büyü puanı ödenerek tekrar açılabilir — büyü puanı havuzu sınıfın kendi sayacıdır, bu satır onu takip etmez."
+          "mechanical_notes": "Bedava kullanım bitince 5 büyü puanı ödenerek tekrar açılabilir — büyü puanı havuzu sınıfın kendi sayacıdır, bu satır onu takip etmez.",
+          "imagePath": "media/Artwork/trait-Fihrist-Hali.webp"
         }
       },
       {
@@ -2009,7 +2012,8 @@
               "recharge": "long_rest",
               "count": 1
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/trait-Sayım.webp"
         }
       },
       {
@@ -2062,7 +2066,8 @@
               ]
             }
           ],
-          "mechanical_notes": "Seçtiğin salgı tipi üç yeri birden belirler: Pullu'nun hasar bağışıklığını, Pullu'ya bağlı bütün ekstra hasarın tipini, ve 7. seviyede senin kazandığın direnci. Ateş seçilemez — bu dünyada ateş püskürten hayvan yok."
+          "mechanical_notes": "Seçtiğin salgı tipi üç yeri birden belirler: Pullu'nun hasar bağışıklığını, Pullu'ya bağlı bütün ekstra hasarın tipini, ve 7. seviyede senin kazandığın direnci. Ateş seçilemez — bu dünyada ateş püskürten hayvan yok.",
+          "imagePath": "media/Artwork/Bağıt-Armağanı.webp"
         }
       },
       {
@@ -2085,7 +2090,8 @@
               "count": 1
             }
           ],
-          "mechanical_notes": "Pullu'nun statbloğu `animal/Pullu` kartında; AC ve can senin Ranger seviyenle ölçeklenir.\nPullu Sancak Kaydı'nda **Yazısız**'dır — hukuken yoktur. Mühürlü bir şehirde kimse onu sana ait sayamaz, ama kimse senden alamaz da; nöbetçinin defterinde yazacak kutu yok. Taşrada Sınır ve Ticaret kaleminin çözümü hayvanı **yük** yazmaktır."
+          "mechanical_notes": "Pullu'nun statbloğu `animal/Pullu` kartında; AC ve can senin Ranger seviyenle ölçeklenir.\nPullu Sancak Kaydı'nda **Yazısız**'dır — hukuken yoktur. Mühürlü bir şehirde kimse onu sana ait sayamaz, ama kimse senden alamaz da; nöbetçinin defterinde yazacak kutu yok. Taşrada Sınır ve Ticaret kaleminin çözümü hayvanı **yük** yazmaktır.",
+          "imagePath": "media/Artwork/Bağıt-Yoldaşı.webp"
         }
       },
       {
@@ -2096,7 +2102,8 @@
           "source": "Pullu",
           "trait_kind": "Defensive",
           "description": "Boğazının iki yanındaki bez, Pullu'yu kendi salgısına karşı da kapatır.",
-          "benefits": "Pullu, bağıtta seçilen salgı tipine (**asit, zehir, soğuk ya da yıldırım**) **bağışıktır**. Pullu'ya bağlı bütün ekstra hasar da o tiptendir."
+          "benefits": "Pullu, bağıtta seçilen salgı tipine (**asit, zehir, soğuk ya da yıldırım**) **bağışıktır**. Pullu'ya bağlı bütün ekstra hasar da o tiptendir.",
+          "imagePath": "media/Artwork/Salgı.webp"
         }
       },
       {
@@ -2108,7 +2115,8 @@
           "trait_kind": "Other",
           "description": "Bağıt sıkılaştıkça Pullu büyür: omuzları genişler, pençeleri kayaya oturur. **Kanatlanmaz** — bu hayvanın kanadı yok ve olmayacak.",
           "benefits": "Pullu **Medium** boyuta çıkar ve **tırmanma hızı 40 ft** kazanır.\n\nMedium ya da daha küçük bir biniciyi **karada** taşıyabilir; senin bineğin olur.\n\nPullu **zorlu araziyi yok sayar**.\n\nPullu'nun ısırığı **+1d6** salgı hasarı verir.\n\n**Sen** seçtiğin salgı tipine **dirençli** olursun.",
-          "mechanical_notes": "Direnç seçilen salgı tipine bağlıdır (`Bağıt Armağanı`), o yüzden burada sabit bir hasar tipi yazılmadı: karakter sayfasına dirençi elle ekle.\nÖzgün metnin 7. seviyedeki **kanat + uçuş hızı** maddesi bu evrende yok; yerine tırmanma ve zorlu arazi geldi."
+          "mechanical_notes": "Direnç seçilen salgı tipine bağlıdır (`Bağıt Armağanı`), o yüzden burada sabit bir hasar tipi yazılmadı: karakter sayfasına dirençi elle ekle.\nÖzgün metnin 7. seviyedeki **kanat + uçuş hızı** maddesi bu evrende yok; yerine tırmanma ve zorlu arazi geldi.",
+          "imagePath": "media/Artwork/Pul-ve-Diş.webp"
         }
       },
       {
@@ -2137,7 +2145,8 @@
               "recharge": "long_rest",
               "count_formula": "pb"
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/trait-Refleks-Direnci.webp"
         }
       },
       {
@@ -2149,7 +2158,8 @@
           "trait_kind": "Other",
           "description": "Taştaki söz artık iki bedeni de kapsıyor. Pullu son boyuna ulaşır — **hâlâ kanatsız**, hâlâ yere basan bir hayvan.",
           "benefits": "Pullu **Large** boyuta çıkar ve yürüme hızı **50 ft** olur.\n\nPullu'ya binmek ya da inmek **hareketine mal olmaz**.\n\nPullu'nun ısırığı **bir 1d6 daha** ekler (toplam +2d6 salgı hasarı).\n\n**Salgı Püskürtmesi** artık **10d6** hasar verir.",
-          "mechanical_notes": "Özgün metnin 15. seviyedeki **\"binildiğinde uçabilir\"** maddesi bu evrende yok; yerine 50 ft yürüme ve bedava biniş/iniş geldi. Refleks Direnci'nin menzili de 30 ft yerine 60 ft — uçuşun götürdüğü esnekliğin bir kısmını geri veriyor.\nMasanız kaybı fazla ağır buluyorsa tek düğme: **\"Pullu devrilemez (Prone'a bağışık)\"** satırını ekleyin."
+          "mechanical_notes": "Özgün metnin 15. seviyedeki **\"binildiğinde uçabilir\"** maddesi bu evrende yok; yerine 50 ft yürüme ve bedava biniş/iniş geldi. Refleks Direnci'nin menzili de 30 ft yerine 60 ft — uçuşun götürdüğü esnekliğin bir kısmını geri veriyor.\nMasanız kaybı fazla ağır buluyorsa tek düğme: **\"Pullu devrilemez (Prone'a bağışık)\"** satırını ekleyin.",
+          "imagePath": "media/Artwork/Tam-Bağıt.webp"
         }
       }
     ],
@@ -2242,7 +2252,8 @@
           "source": "Kayıt Ruhu",
           "action_type": "Reaction",
           "recharge_kind": "Long Rest",
-          "description": "*Tetikleyici:* 60 ft içinde gördüğün bir yaratık bir d20 atışını **avantajlı** ya da **dezavantajlı** atacak.\n\nTepkinle o atıştaki avantajı **veya** dezavantajı iptal edersin; zar düz atılır.\n\nBir şey iki türlü olamaz. Satır tektir."
+          "description": "*Tetikleyici:* 60 ft içinde gördüğün bir yaratık bir d20 atışını **avantajlı** ya da **dezavantajlı** atacak.\n\nTepkinle o atıştaki avantajı **veya** dezavantajı iptal edersin; zar düz atılır.\n\nBir şey iki türlü olamaz. Satır tektir.",
+          "imagePath": "media/Artwork/creature-action-Dengeyi-Geri-Ver.webp"
         }
       },
       {
@@ -2253,7 +2264,8 @@
           "source": "Kayıt Ruhu",
           "action_type": "Action",
           "range_normal_ft": 30,
-          "description": "**1–5 büyü puanı** harca. Kendine ya da 30 ft içinde gördüğün bir yaratığa, harcadığın puan kadar **d8 mühür zarı** ver.\n\nKorunan yaratık hasar aldığında, istediği kadar mühür zarını harcayıp atabilir; toplam, aldığı hasardan düşülür.\n\nUzun dinlenmene kadar ya da zarlar bitene kadar sürer. Aynı anda tek bir mühür kalkanın olabilir."
+          "description": "**1–5 büyü puanı** harca. Kendine ya da 30 ft içinde gördüğün bir yaratığa, harcadığın puan kadar **d8 mühür zarı** ver.\n\nKorunan yaratık hasar aldığında, istediği kadar mühür zarını harcayıp atabilir; toplam, aldığı hasardan düşülür.\n\nUzun dinlenmene kadar ya da zarlar bitene kadar sürer. Aynı anda tek bir mühür kalkanın olabilir.",
+          "imagePath": "media/Artwork/Mühür-Kalkanı.webp"
         }
       },
       {
@@ -2265,7 +2277,8 @@
           "action_type": "Bonus Action",
           "recharge_kind": "Long Rest",
           "uses_per_day": 1,
-          "description": "1 dakika boyunca:\n\n- Sana yapılan saldırı atışları **avantaj alamaz**.\n- Senin attığın her d20'de **9 ve altı gelen sonuç 10 sayılır**.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **5 büyü puanı**."
+          "description": "1 dakika boyunca:\n\n- Sana yapılan saldırı atışları **avantaj alamaz**.\n- Senin attığın her d20'de **9 ve altı gelen sonuç 10 sayılır**.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **5 büyü puanı**.",
+          "imagePath": "media/Artwork/creature-action-Fihrist-Hali.webp"
         }
       },
       {
@@ -2277,7 +2290,8 @@
           "action_type": "Action",
           "recharge_kind": "Long Rest",
           "uses_per_day": 1,
-          "description": "Kendini merkez alan **30 ft'lik bir küpte** düzen ruhları belirir. Küpte, sen dahil seçtiğin her yaratığa toplam **100 can**ı istediğin gibi bölüştürerek iyileştirirsin.\n\nKüpteki hasarlı ama yok olmamış nesneler onarılır ve tamamen tamir olur.\n\nKüpteki **6. seviye ve altı** her büyü sonlanır.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **7 büyü puanı**."
+          "description": "Kendini merkez alan **30 ft'lik bir küpte** düzen ruhları belirir. Küpte, sen dahil seçtiğin her yaratığa toplam **100 can**ı istediğin gibi bölüştürerek iyileştirirsin.\n\nKüpteki hasarlı ama yok olmamış nesneler onarılır ve tamamen tamir olur.\n\nKüpteki **6. seviye ve altı** her büyü sonlanır.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **7 büyü puanı**.",
+          "imagePath": "media/Artwork/creature-action-Sayım.webp"
         }
       },
       {
@@ -2295,7 +2309,8 @@
             "match": "name",
             "value": "Dexterity"
           },
-          "description": "Sen ya da Pullu, önünüzdeki **30 ft'lik koniye** bezin salgısını püskürtür.\n\nKonideki her yaratık bir **Dexterity** kurtarma zarı atar — DC **senin büyü kurtarma DC'n**. Başarısız olan **8d6** salgı hasarı alır; başaran yarısını alır.\n\n**15. seviyede 10d6.**\n\nUzun dinlenmede **1 kez bedava**; ondan sonra her kullanım **3. seviye ya da üstü bir büyü slotu** harcar."
+          "description": "Sen ya da Pullu, önünüzdeki **30 ft'lik koniye** bezin salgısını püskürtür.\n\nKonideki her yaratık bir **Dexterity** kurtarma zarı atar — DC **senin büyü kurtarma DC'n**. Başarısız olan **8d6** salgı hasarı alır; başaran yarısını alır.\n\n**15. seviyede 10d6.**\n\nUzun dinlenmede **1 kez bedava**; ondan sonra her kullanım **3. seviye ya da üstü bir büyü slotu** harcar.",
+          "imagePath": "media/Artwork/Salgı-Püskürtmesi.webp"
         }
       },
       {
@@ -2306,7 +2321,8 @@
           "source": "Pul Bağıtlısı",
           "action_type": "Reaction",
           "recharge_kind": "Long Rest",
-          "description": "*Tetikleyici:* sen ya da Pullu hasar alırsınız ve birbirinizin 60 ft'i içindesinizdir.\n\nTepkinle, hasarı alan tarafa o hasara karşı **direnç** verirsin."
+          "description": "*Tetikleyici:* sen ya da Pullu hasar alırsınız ve birbirinizin 60 ft'i içindesinizdir.\n\nTepkinle, hasarı alan tarafa o hasara karşı **direnç** verirsin.",
+          "imagePath": "media/Artwork/creature-action-Refleks-Direnci.webp"
         }
       },
       {
@@ -2326,7 +2342,8 @@
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+3 + bağıtlısının yetkinlik bonusu** isabet, erişim 5 ft, tek hedef. **Vuruş:** **1d6 + yetkinlik bonusu** delici hasar.\n\n*(Tablodaki +5 ve 1d6+2, 3. seviyedeki — yetkinlik bonusu 2 — halidir.)*\n\n**7. seviyeden itibaren** ayrıca **+1d6**, **15. seviyeden itibaren** toplam **+2d6** salgı hasarı ekler."
+          "description": "*Yakın dövüş saldırısı:* **+3 + bağıtlısının yetkinlik bonusu** isabet, erişim 5 ft, tek hedef. **Vuruş:** **1d6 + yetkinlik bonusu** delici hasar.\n\n*(Tablodaki +5 ve 1d6+2, 3. seviyedeki — yetkinlik bonusu 2 — halidir.)*\n\n**7. seviyeden itibaren** ayrıca **+1d6**, **15. seviyeden itibaren** toplam **+2d6** salgı hasarı ekler.",
+          "imagePath": "media/Artwork/Isırık.webp"
         }
       },
       {
@@ -2337,7 +2354,8 @@
           "source": "Pullu",
           "action_type": "Reaction",
           "damage_dice": "1d6",
-          "description": "*Tetikleyici:* Pullu'nun 30 ft'i içindeki bir yaratık bir silahlı saldırıyla vurur.\n\nPullu tepkisiyle o vuruşa bezinin salgısını bulaştırır: saldırı **+1d6** salgı hasarı verir."
+          "description": "*Tetikleyici:* Pullu'nun 30 ft'i içindeki bir yaratık bir silahlı saldırıyla vurur.\n\nPullu tepkisiyle o vuruşa bezinin salgısını bulaştırır: saldırı **+1d6** salgı hasarı verir.",
+          "imagePath": "media/Artwork/Salgılı-Vuruş.webp"
         }
       }
     ],
@@ -4451,7 +4469,8 @@
             "alt-sınıf",
             "sancak-kaydı",
             "büyücü-loncası"
-          ]
+          ],
+          "imagePath": "media/Artwork/Kayıt-Ruhu.webp"
         }
       },
       {
@@ -4539,7 +4558,8 @@
             "alt-sınıf",
             "ravenhall",
             "yazısız"
-          ]
+          ],
+          "imagePath": "media/Artwork/Pul-Bağıtlısı.webp"
         }
       }
     ],
@@ -4625,7 +4645,8 @@
             "pul-bağıtlısı",
             "ravenhall",
             "yazısız"
-          ]
+          ],
+          "imagePath": "media/Artwork/Pullu.webp"
         }
       }
     ]

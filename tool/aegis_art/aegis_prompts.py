@@ -354,6 +354,10 @@ def build_prompt(uid: str, category: str, name: str, mapping: dict) -> dict | No
 # ---------------------------------------------------------------------------
 # Blueprint okuma
 # ---------------------------------------------------------------------------
+# Görseli olmayan kategoriler — soyut sayaçlar, çizilecek bir nesne yok.
+SKIP_CATEGORIES = {"resource-pool"}
+
+
 def load_blueprint(path: Path) -> list[dict]:
     """Blueprint'ten tüm entity'leri okur, art_jobs formatında döner."""
     data = json.loads(path.read_text())
@@ -361,6 +365,8 @@ def load_blueprint(path: Path) -> list[dict]:
     jobs = []
 
     for cat_name, entities in categories.items():
+        if cat_name in SKIP_CATEGORIES:
+            continue
         for entity in entities:
             source_name = entity.get("source_name", "")
             mapping = entity.get("mapping", {})

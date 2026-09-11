@@ -42,6 +42,8 @@ CATEGORY_GUIDE = {
     "quest":           "symbolic imagery of the journey or goal, visual metaphors, path or destination, key artifacts involved",
     "adventuring-gear": "object shape and proportions, material (wood, metal, leather, cloth), surface details (scratches, engravings, stitching), color, wear and age, scale relative to hand",
     "trinket":         "object shape, material and texture, ornamentation, surface detail and patina, color, scale in palm",
+    "subclass":        "a practitioner of this subclass in action, signature gear and iconography, the magical or natural phenomenon the subclass is named for, clothing and stance that read the archetype",
+    "animal":          "body proportions and silhouette, limb count and shape, skin texture (scales, fur, hide), head shape and jaw, teeth/horns/claws, tail, wings, color pattern, size relative to frame",
     "background":      "person in their professional setting, tools of the trade, clothing appropriate to role, environment that reflects the background, posture suggesting their occupation",
 }
 
