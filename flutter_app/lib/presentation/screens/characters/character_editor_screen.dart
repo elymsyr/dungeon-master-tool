@@ -2511,7 +2511,11 @@ class _CharacterEditorScreenState
         void copyRow(String fromKey, List<String> toKeys) {
           final raw = row[fromKey];
           if (raw is! List) return;
-          final ids = raw.whereType<String>().toList();
+          // Grants arrive either as bare ids or as `{_ref|slug|_lookup, name}`
+          // envelopes — blueprint-authored content never bakes ids in. Taking
+          // only the String shape silently dropped every packaged subclass
+          // grant (audit U1).
+          final ids = resolveEntityRefList(raw, entities);
           if (ids.isEmpty) return;
           for (final to in toKeys) {
             final existing = (updated[to] is List)
@@ -2556,7 +2560,7 @@ class _CharacterEditorScreenState
       void copy(String fromKey, List<String> toKeys) {
         final raw = src.fields[fromKey];
         if (raw is! List) return;
-        final ids = raw.whereType<String>().toList();
+        final ids = resolveEntityRefList(raw, entities);
         if (ids.isEmpty) return;
         for (final to in toKeys) {
           final existing = (updated[to] is List)
@@ -2809,7 +2813,7 @@ class _CharacterEditorScreenState
 
     final Map<String, Entity> base = campaign == null
         ? builtin
-        : CombinedMapView<String, Entity>([campaign, builtin]);
+        : mergeCampaignOverBuiltin(campaign, builtin);
 
     // Layer standalone source packages so species/class/spell refs outside the
     // bundled pack still render. Packages still loading contribute nothing yet;

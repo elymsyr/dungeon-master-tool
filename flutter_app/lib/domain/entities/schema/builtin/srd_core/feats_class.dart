@@ -1366,12 +1366,9 @@ List<Map<String, dynamic>> srdClassFeats() => [
         description:
             'Your spell slots regain on a Short or Long Rest. Charisma is your spellcasting ability.',
         grants: {
-          'resource_pool_grants': [
-            {
-              'pool_ref': _pool('pool:pact_slots'),
-              'recharge': 'short_rest',
-            },
-          ],
+          // Pact slot'ları `caster_progression.dart` (CasterKind.pact) büyü
+          // yuvası tablosundan veriyor; burada ayrıca havuz vermek ikinci bir
+          // sayaç demekti. Sayısı olmadığı için kart zaten çizmiyordu.
           'mechanical_notes':
               'Pact Magic spell slots recharge on a Short or Long Rest',
         },

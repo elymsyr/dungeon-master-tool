@@ -1028,9 +1028,7 @@ final effectiveCharacterProvider =
     // place without changing map.length, so they don't trigger a recompute.
     ref.watch(entityProvider.select((m) => m.length));
     final campaign = ref.read(entityProvider);
-    base = campaign.isEmpty
-        ? builtin
-        : CombinedMapView<String, Entity>([campaign, builtin]);
+    base = mergeCampaignOverBuiltin(campaign, builtin);
   }
   // Layer the character's standalone source packages on top so official-package
   // refs (species/class/subclass/feats/grants) dereference here the same way
