@@ -60,10 +60,51 @@ AEGIS_PALETTE = (
     "warm amber and cool slate, muted jewel accents"
 )
 
-AEGIS_LIGHT = (
-    "warm filtered light through old windows, "
-    "soft candlelit shadows, dusty golden hour"
+# Işık kategoriye göre değişir: her kart kendi mekanının ışığını alsın diye.
+# Subject cümlesi zaten kendi arka planını taşıyor; kuyruk onunla çelişmemeli.
+AEGIS_LIGHT_LAMP = (
+    "warm lamplight on paper and wood, "
+    "soft candlelit shadows, dust in the air"
 )
+AEGIS_LIGHT_DAY = (
+    "flat overcast daylight, pale diffused sky, "
+    "long soft shadows on stone"
+)
+AEGIS_LIGHT_DAWN = (
+    "cold grey dawn light, low ground mist, "
+    "weak sun behind cloud"
+)
+AEGIS_LIGHT_HEARTH = (
+    "warm hearth glow from one side, "
+    "deep amber shadows, smoky air"
+)
+
+AEGIS_LIGHT_BY_CATEGORY = {
+    "campaign":         AEGIS_LIGHT_DAWN,
+    "location":         AEGIS_LIGHT_DAY,
+    "lore":             AEGIS_LIGHT_LAMP,
+    "npc":              AEGIS_LIGHT_HEARTH,
+    "monster":          AEGIS_LIGHT_DAWN,
+    "animal":           AEGIS_LIGHT_DAWN,
+    "creature-action":  AEGIS_LIGHT_DAWN,
+    "encounter":        AEGIS_LIGHT_DAWN,
+    "curse":            AEGIS_LIGHT_DAWN,
+    "scene":            AEGIS_LIGHT_HEARTH,
+    "quest":            AEGIS_LIGHT_DAY,
+    "trait":            AEGIS_LIGHT_LAMP,
+    "subclass":         AEGIS_LIGHT_LAMP,
+    "adventuring-gear": AEGIS_LIGHT_LAMP,
+    "trinket":          AEGIS_LIGHT_LAMP,
+    "background":       AEGIS_LIGHT_LAMP,
+}
+
+# Geriye dönük ad: kategori bilinmiyorsa bu kullanılır.
+AEGIS_LIGHT = AEGIS_LIGHT_LAMP
+
+
+def light_for(category: str) -> str:
+    """Kategorinin ışık cümleciği; tanımsız kategoride lamba ışığı."""
+    return AEGIS_LIGHT_BY_CATEGORY.get(category, AEGIS_LIGHT)
 
 # ---------------------------------------------------------------------------
 # Metin temizleme — markdown, kural notasyonu, referansları at.
@@ -337,7 +378,7 @@ def build_prompt(uid: str, category: str, name: str, mapping: dict) -> dict | No
         f"{FULL_BLEED}, "
         f"{DND_CONTEXT}, "
         f"{AEGIS_PALETTE}, "
-        f"{AEGIS_LIGHT}, "
+        f"{light_for(category)}, "
         f"{style}, "
         f"{flavor}"
     )

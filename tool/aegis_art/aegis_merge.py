@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from aegis_prompts import (
-    AEGIS_LIGHT, AEGIS_PALETTE, AEGIS_STYLE, BLUEPRINT, DND_CONTEXT,
+    light_for, AEGIS_PALETTE, AEGIS_STYLE, BLUEPRINT, DND_CONTEXT,
     FULL_BLEED, STYLE_TAIL, STYLE_FLAVOR, entity_uuid, extract_subject,
     load_blueprint,
 )
@@ -62,7 +62,7 @@ def build_final_prompt(
     return (
         f"{body}\n"
         f"{header}, {FULL_BLEED}, {DND_CONTEXT}, "
-        f"{AEGIS_PALETTE}, {AEGIS_LIGHT}, {style}, {flavor}"
+        f"{AEGIS_PALETTE}, {light_for(category)}, {style}, {flavor}"
     )
 
 
