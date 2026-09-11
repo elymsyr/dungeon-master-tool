@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/services/entity_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import 'entity_link.dart';
 
@@ -546,11 +547,12 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
     this.entityFields,
   });
 
-  static List<String> _readStrList(Map row, String key) {
-    final v = row[key];
-    if (v is List) return v.whereType<String>().toList();
-    return const <String>[];
-  }
+  /// A grant cell holds either a bare entity id or a `{_ref|slug|_lookup,
+  /// name}` envelope — blueprint-authored content never has ids baked in.
+  /// Reading only the String shape is how a packaged grant renders as an
+  /// empty chip row (audit U1).
+  List<String> _readStrList(Map row, String key) =>
+      resolveEntityRefList(row[key], entities ?? const {});
 
   @override
   Widget build(BuildContext context) {

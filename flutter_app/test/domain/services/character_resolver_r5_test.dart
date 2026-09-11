@@ -147,5 +147,28 @@ void main() {
       final e = _resolve(subclass: sub(), level: 9);
       expect(e.alwaysPreparedSpellIds, containsAll(['sp_low', 'sp_high']));
     });
+
+    test('outright spell/cantrip grants on a row are gated the same way', () {
+      Map<String, dynamic> s() => {
+            'parent_class_ref': 'cls_rogue',
+            'features': [
+              {
+                'level': 3,
+                'name': 'Early',
+                'granted_cantrip_refs': ['sp_low'],
+              },
+              {
+                'level': 9,
+                'name': 'Late',
+                'granted_spell_refs': ['sp_high'],
+              },
+            ],
+          };
+      final low = _resolve(subclass: s(), level: 3);
+      expect(low.grantedCantripIds, ['sp_low']);
+      expect(low.grantedSpellIds, isEmpty);
+      final high = _resolve(subclass: s(), level: 9);
+      expect(high.grantedSpellIds, ['sp_high']);
+    });
   });
 }

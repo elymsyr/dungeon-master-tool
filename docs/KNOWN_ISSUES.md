@@ -11,6 +11,15 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
+- **Most third-party subclasses have no mechanical grants** — Of the 117 subclasses across the
+  bundled Open5e packs, 82 carry only descriptive text: their level tables list the feature
+  names but no granted trait, feat, action or spell, so picking one grants nothing on the
+  sheet. Worst affected are Tome of Heroes (63 of 76), Open5e Original (12 of 17), Tal'Dorei
+  (3 of 4), Level Up Adventurer's Guide (3 of 3) and Black Flag (1 of 1); "Path of Hellfire"
+  has no level table at all. The source data has no mechanical fields to import, so this
+  needs the importer to derive grants from the feature text. The built-in SRD (12 subclasses)
+  and the bundled Aegis world are unaffected — their grants resolve in full.
+
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on
   that cache. Deliberate for now: the images are small individually and re-downloading them
