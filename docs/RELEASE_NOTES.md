@@ -1,5 +1,84 @@
 # Release Notes
 
+## Dungeon Master Tool v15.10.0 — Subclasses That Actually Do Something (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.10.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Pick a subclass from one of the bundled third-party packs and, until now, your character sheet stayed empty. This release makes those subclasses put their features on the sheet, gives every resource counter a readable name instead of a slug, and caps how many cards a database panel keeps open so phones stop drowning in tabs.
+
+---
+
+### Highlights
+
+- **Third-party subclasses fill the sheet** — 82 subclasses that used to grant nothing now list their features at the right level.
+- **Resource counters read like names** — "Hunters Mark No Slot Uses" is now "Hunter's Mark".
+- **Open cards are capped** — 5 on a phone, 15 on desktop; the oldest closes as you open new ones.
+
+---
+
+### Character creation
+
+#### Subclasses from bundled packs grant their features
+
+Every named feature of a subclass in the bundled Open5e packs — Tome of Heroes, Open5e Original, Tal'Dorei, Level Up Adventurer's Guide, Black Flag — now appears on the character sheet as its own class-feature card, at the level the subclass first grants it. The Marshal and Mechanist base classes were equally empty and get the same treatment. A subclass that improves at several levels still produces one card, not one per level.
+
+The cards carry the text as written upstream, so nothing rolls or calculates itself — but the feature is now on the sheet where you can see it and use it.
+
+#### Resource pools have real names
+
+Counters on the sheet were named after the internal key that defines them, which is why a Ranger saw "Hunters Mark No Slot Uses". Pools now carry an authored display name, all 36 built-in ones are labelled, and the Aegis world labels its six in Turkish with the diacritics intact.
+
+---
+
+### Database
+
+#### A panel keeps only its most recent cards
+
+Each database panel now holds at most 5 open cards on a phone and 15 on desktop. Open a new one past the limit and the oldest closes. Nothing is lost: the history button and the sidebar still list everything you have looked at.
+
+---
+
+### Aegis
+
+- **Salgı Püskürtmesi** — the level 11 ability now shows its "one free use per long rest" counter on the character sheet.
+- **Action card artwork** — Dengeyi Geri Ver, Fihrist Hali, Refleks Direnci and Sayım had images generated from their category rather than their meaning (a lizard, a metal creature, a generic drake, a winged figure). All four now use the correct image.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.9.0` → `15.10.0`.
+- **Content versions:** the built-in content and the bundled packs are re-versioned so the fixes reach existing installs on first launch — without it, a card created earlier keeps its slug-named counters.
+- **Existing characters:** nothing is rewritten. Re-open a character to see its subclass features appear.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Third-party subclass features are name-only** — the features are on the sheet, but they carry upstream prose and no typed mechanic, so nothing is rolled or added automatically. "Path of Hellfire" ships no features at all upstream and still grants nothing.
+- **Aegis: Mühür Kalkanı has the wrong artwork** — the action card shows a shield-bearing turtle; it waits on a new drawing.
+- **Per-day limits on creature actions are not shown** — a per-day use count authored on a creature action never renders a counter; use a resource pool on a trait or feat card instead.
+- **Downloaded card art is never cleaned up** — images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+- **Deleted marketplace listings leave their images in R2** — when the publisher deletes a shared world the listing goes away but the uploaded media is not removed. No user-visible effect.
+
+---
+
+### For developers
+
+- **`_mintFeatureFeats`** — the Open5e importer mints a class-feature `feat` per named feature and points the first granting row at it; `granted_at_level` is derived from sibling rows instead of defaulting to 1.
+- **`resource-pool.display_name`** — new in builtin schema 2.9.0; `kResourcePoolLabels` supplies the 36 built-in labels, slug fallback survives for unlabelled rows.
+- **Content versions** — builtin schema 2.8.0 → 2.9.0, `srdCorePackVersion` 1.3.0 → 1.4.0, `packVersion` 2.0.0 → 2.1.0; the 19 rebuilt packs are published to R2 at @2.1.0.
+- **`writeManifest`** — no longer rewrites `manifest.json` from stale state.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.9.0 — Phone-First Database (Beta)
 
 **Release date:** September 2026

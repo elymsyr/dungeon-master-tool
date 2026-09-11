@@ -5,20 +5,24 @@ Living list of what is deferred, broken-on-purpose, or a real bug still being tr
 in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (copy the
 items that are still open on the release date; do not edit past releases afterwards).
 
-**Last reviewed:** September 2026 (v15.9.0)
+**Last reviewed:** September 2026 (v15.10.0)
 
 ---
 
 ## Open
 
-- **Most third-party subclasses have no mechanical grants** — Of the 117 subclasses across the
-  bundled Open5e packs, 82 carry only descriptive text: their level tables list the feature
-  names but no granted trait, feat, action or spell, so picking one grants nothing on the
-  sheet. Worst affected are Tome of Heroes (63 of 76), Open5e Original (12 of 17), Tal'Dorei
-  (3 of 4), Level Up Adventurer's Guide (3 of 3) and Black Flag (1 of 1); "Path of Hellfire"
-  has no level table at all. The source data has no mechanical fields to import, so this
-  needs the importer to derive grants from the feature text. The built-in SRD (12 subclasses)
-  and the bundled Aegis world are unaffected — their grants resolve in full.
+- **Third-party subclass features are name-only** — Subclasses from the bundled Open5e packs
+  now put every named feature on the sheet as a class-feature card, but the card carries the
+  upstream prose and no typed mechanic, so nothing is rolled or added automatically. "Path of
+  Hellfire" ships no features at all upstream and still grants nothing.
+
+- **Aegis: Mühür Kalkanı has the wrong artwork** — The action card shows a shield-bearing
+  turtle that does not match the ability. There is no correct sibling image to point at, so
+  it waits on a new drawing.
+
+- **`creature-action.uses_per_day` is never read** — The field exists in the schema but no
+  screen renders a counter for it, so a per-day limit authored on a creature action is
+  invisible. Use a resource pool on a trait or feat card instead.
 
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on
@@ -32,6 +36,15 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Resolved
 
+- **Most third-party subclasses granted nothing** — Fixed in v15.10.0: 82 of the 117 bundled
+  Open5e subclasses (and the Marshal and Mechanist base classes) carried only descriptive
+  level tables, so picking one put nothing on the sheet. Their features are now minted as
+  class-feature cards and granted at the level they first appear. See the open item above for
+  what is still missing.
+- **Resource pools were labelled by their machine key** — Fixed in v15.10.0: pools showed
+  slugs like "Hunters Mark No Slot Uses"; they now carry an authored display name.
+- **Aegis: Salgı Püskürtmesi had no counter** — Fixed in v15.10.0: the level 11 row now hangs
+  off a trait card, so the free long-rest use shows as a counter on the sheet.
 - **Bundled world references stayed soft** — Fixed: species and class on an imported player
   character now resolve to the installed entity, so the sheet shows the live card's name
   and the lineage (subspecies) picker appears for these characters too. A reference to
