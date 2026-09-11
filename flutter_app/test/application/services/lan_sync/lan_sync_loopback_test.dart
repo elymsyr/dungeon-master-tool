@@ -483,6 +483,43 @@ void main() {
       }
     });
 
+    /// Regresyon: `LocalMediaLocalizer` medyayı `dirSafe` ile sanitize
+    /// edilmiş klasöre kopyalıyor (`:` → `_`), `_mediaFor` ise ham adla
+    /// tarıyordu. Adında `:` olan dünyanın (bundled "Aegis — Meridia:
+    /// Birinci Perde") bütün resimleri karşı cihaza hiç gitmiyordu.
+    test('adında ":" olan dünyanın medyası da taşınır', () async {
+      const worldName = 'Aegis: Birinci Perde';
+      final src = File(p.join(tmp.path, 'disarida', 'art.webp'));
+      await src.parent.create(recursive: true);
+      await src.writeAsBytes(utf8.encode('bundled-artwork'));
+
+      await host.read(campaignRepositoryProvider).save(worldName, {
+        'entities': {
+          'e1': {
+            'id': 'e1',
+            'name': 'Strahd',
+            'type': 'npc',
+            'attributes': {'imagePath': src.path},
+          },
+        },
+      });
+
+      final client = await pairedClient();
+      final ref = (await client.fetchManifest())
+          .firstWhere((r) => r.name == worldName);
+      final item = await client.fetchItem(ref);
+
+      final copied = ((item.payload['entities'] as Map)['e1']
+          as Map)['attributes'] as Map;
+      final rel = p
+          .relative(copied['imagePath'] as String,
+              from: LanSyncSession.userBase)
+          .replaceAll(r'\', '/');
+      expect(item.media.where((m) => m.path == rel), hasLength(1),
+          reason: '$rel medya listesinde yok: ${item.media}');
+      expect(await client.fetchMedia(rel), await src.readAsBytes());
+    });
+
     /// Regresyon: `combat_state` 500 ms, `mind_maps` 1000 ms gecikmeyle
     /// yazılıyor. Eşleme o pencerede başlarsa hem payload hem
     /// `worlds.updatedAt` bayat okunuyor, karşı cihaz "ben daha yeniyim"
