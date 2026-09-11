@@ -455,6 +455,14 @@ class ResolvedGrantsCard extends StatelessWidget {
     final conditional = effective.conditionalGrants;
     final mechanicalNotes = effective.mechanicalNotes;
     final unarmoredFormulas = effective.unarmoredFormulas;
+    // Spells a level table / feat hands out automatically. Unlike traits and
+    // actions these are never mirrored onto the PC's `spells_known` — the set
+    // is derived from the class & subclass level tables, so a copy on the
+    // character would go stale the moment the level or subclass changes.
+    // Read-time only, exactly like the resistance / sense rows above.
+    final alwaysPrepared = effective.alwaysPreparedSpellIds;
+    final grantedSpells = effective.grantedSpellIds;
+    final grantedCantrips = effective.grantedCantripIds;
     final freeCast = effective.freeCastSpellIds;
     final ritualBook = effective.ritualBookSpellIds;
     final activeConditions = effective.activeConditionIds;
@@ -480,6 +488,9 @@ class ResolvedGrantsCard extends StatelessWidget {
         conditional.isEmpty &&
         mechanicalNotes.isEmpty &&
         unarmoredFormulas.isEmpty &&
+        alwaysPrepared.isEmpty &&
+        grantedSpells.isEmpty &&
+        grantedCantrips.isEmpty &&
         freeCast.isEmpty &&
         ritualBook.isEmpty &&
         activeConditions.isEmpty &&
@@ -529,6 +540,9 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Reactions', reactions, Colors.cyan),
             _mechanicalNotesBlock(mechanicalNotes),
             _unarmoredFormulasBlock(unarmoredFormulas),
+            _chipRow('Cantrips', grantedCantrips, Colors.lightGreen),
+            _chipRow('Always Prepared', alwaysPrepared, Colors.indigoAccent),
+            _chipRow('Granted Spells', grantedSpells, Colors.purple),
             _chipRow('Free Casts', freeCast, Colors.deepPurple),
             _chipRow('Ritual Book', ritualBook, Colors.brown),
             _chipRow('Active Conditions', activeConditions, Colors.redAccent),

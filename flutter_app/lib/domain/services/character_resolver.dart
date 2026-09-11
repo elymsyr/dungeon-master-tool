@@ -571,6 +571,16 @@ class CharacterResolver {
             row['always_prepared_spell_refs'], entitiesById)) {
           if (!alwaysPreparedSpells.contains(id)) alwaysPreparedSpells.add(id);
         }
+        // Their siblings on a card's top-level fields. A hand-authored level
+        // table reaches for the same key names, and reading only the
+        // always-prepared one dropped those rows in silence.
+        for (final id in _readRefList(row['granted_spell_refs'], entitiesById)) {
+          if (!grantedSpellIds.contains(id)) grantedSpellIds.add(id);
+        }
+        for (final id
+            in _readRefList(row['granted_cantrip_refs'], entitiesById)) {
+          if (!grantedCantripIds.contains(id)) grantedCantripIds.add(id);
+        }
       }
     }
 

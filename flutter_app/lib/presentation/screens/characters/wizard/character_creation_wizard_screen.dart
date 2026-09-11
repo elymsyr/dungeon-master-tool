@@ -654,14 +654,21 @@ class _CharacterCreationWizardScreenState
 /// "Darkvision 60 ft". The PC's own `senses` field is a plain relation list, so
 /// the range is dropped here and the resolved sheet carries it instead
 /// (`EffectiveCharacter.senseRanges`).
-List<String> _grantIds(List<dynamic> raw) {
+List<String> _grantIds(List<dynamic> raw, Map<String, Entity> byId) {
   final out = <String>[];
   for (final row in raw) {
     if (row is String) {
       if (row.isNotEmpty) out.add(row);
     } else if (row is Map) {
-      final ref = row['sense_ref'] ?? row['ref'];
-      if (ref is String && ref.isNotEmpty) out.add(ref);
+      // `{sense_ref|ref: ...}` wrapper rows first, then the bare envelope.
+      // Both inner values can still be a `{_ref|slug|_lookup, name}` map —
+      // blueprint-authored content carries names, not ids, so accepting only
+      // `String` dropped every packaged grant on the floor (audit U1).
+      final inner = row['sense_ref'] ?? row['ref'];
+      final id = (inner is String && inner.isNotEmpty)
+          ? inner
+          : resolveEntityRef(inner ?? row, byId);
+      if (id != null && id.isNotEmpty) out.add(id);
     }
   }
   return out;
@@ -1173,7 +1180,7 @@ Map<String, dynamic> buildSeedFields({
   ) {
     final raw = src.fields[fromKey];
     if (raw is! List) return;
-    final ids = _grantIds(raw);
+    final ids = _grantIds(raw, entities);
     if (ids.isEmpty) return;
     for (final to in toKeys) {
       if (!fieldsByKey.containsKey(to)) continue;
@@ -1277,7 +1284,7 @@ Map<String, dynamic> buildSeedFields({
       void copyRow(String fromKey, List<String> toKeys) {
         final raw = row[fromKey];
         if (raw is! List) return;
-        final ids = _grantIds(raw);
+        final ids = _grantIds(raw, entities);
         if (ids.isEmpty) return;
         for (final to in toKeys) {
           if (!fieldsByKey.containsKey(to)) continue;
