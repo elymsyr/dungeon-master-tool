@@ -17,6 +17,10 @@ import 'entity_card.dart';
 /// diske yazılmıyor.
 final dbRecentEntitiesProvider = StateProvider<List<String>>((_) => const []);
 
+/// Panel başına aynı anda açık tutulan kart sayısı; aşılınca en eski kapanır.
+const _phoneMaxOpenTabs = 5;
+const _desktopMaxOpenTabs = 15;
+
 /// Database tab — Dual-panel tabbed card workspace.
 /// Python ui/tabs/database_tab.py birebir karşılığı:
 /// Sol panel (EntityTabWidget) + Sağ panel (EntityTabWidget), splitter ile.
@@ -132,6 +136,15 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
     setState(() {
       tabs.add(entry);
+      // Yeni kart açıldıkça en eskiler kapanır; geçmiş FAB'i / sidebar
+      // onları yine gösterir.
+      final limit = getScreenType(context) == ScreenType.phone
+          ? _phoneMaxOpenTabs
+          : _desktopMaxOpenTabs;
+      while (tabs.length > limit) {
+        final dropped = tabs.removeAt(0);
+        if (dropped.entityId == _consumedSelection) _consumedSelection = null;
+      }
       if (panel == _Panel.left) {
         _leftActiveIndex = _leftTabs.length - 1;
       } else {
