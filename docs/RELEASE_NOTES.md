@@ -1,5 +1,72 @@
 # Release Notes
 
+## Dungeon Master Tool v15.8.0 — Player-Safe Shares (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.8.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release makes sharing a card with your players safe by default: DM-only content is stripped from the copy the players receive. It also finishes the character creation wizard's equipment and tool handling, so a freshly made character arrives with the gear and proficiencies its class and background promise.
+
+---
+
+### Highlights
+
+- **DM-only fields never leave your table** — secrets, tactics and DM notes are removed from any card you share with players.
+- **Characters start with their full kit** — background and class tools, default inventory, and the standard equipment pack are all applied at creation.
+
+---
+
+### Sharing
+
+#### DM-only content is stripped from shared cards
+
+When you share a card with your players, every field marked DM-only or private in the schema — secrets, tactics, and the card's DM notes — is now removed from the copy they receive. Your own card is untouched; only the outgoing copy is trimmed. This applies to cascaded shares too: a monster pulled in as a relation of a shared scene is redacted the same way.
+
+---
+
+### Character creation
+
+#### Tools, kits and equipment are applied without extra taps
+
+The wizard now grants tool proficiencies from your **background** as well as your class, so an Acolyte arrives with Calligrapher's Supplies rather than an empty list. Any unconditional starting kit a class or background defines is added to the character's inventory instead of only appearing on the sheet summary. And if you skip the equipment step, the first listed option of each equipment group (the standard kit) is picked for you, so no character is created empty-handed.
+
+---
+
+### Bug fixes
+
+- **Character sheet** — the lineage/subspecies row is now tappable when the selected value is a real card, opening it like other linked cards.
+- **LAN sync** — worlds and packages whose name contains a character that can't be used in a folder name (like `:`) now transfer their images correctly; previously the media folder was never found and the pictures were silently left behind.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.7.0` → `15.8.0`.
+- **Already-shared cards:** cards shared before this release keep the payload they were sent with — re-share them to apply the redaction.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a world they shared on the marketplace, the listing goes away but the uploaded media under `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible effect; needs a cleanup pass (or delete-time media removal).
+
+---
+
+### For developers
+
+- **`redactDmOnly`** — new function in `entity_share_prepare.dart`, applied to every outgoing share payload; it drops `FieldVisibility.dmOnly`/`private_` attribute keys and blanks `dm_notes`.
+- **`buildSeedFields`** — resolves `granted_tool_refs` and `default_inventory_refs` through `resolveEntityRefList`, so both plain ids and soft-ref maps work, and records the defaulted equipment pick in `equipment_choices` so the resolver agrees with the sheet.
+- **`LanSyncSession`** — media collection now goes through `LocalMediaLocalizer.worldDir`/`packageDir` instead of joining the raw name onto `AppPaths`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.7.0 — The Aegis Module (Beta)
 
 **Release date:** September 2026
