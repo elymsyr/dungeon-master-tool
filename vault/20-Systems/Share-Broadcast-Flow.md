@@ -40,7 +40,8 @@ DM "Paylaş" der
   └─ shareEntityWithPlayers()            entity_share_prepare.dart
        ├─ ilişki kapanışı (transitive)   — bağlantılı kartlar da paylaşılır
        ├─ _payloadWithTransientRefs      — yerel yollar → dmt-transient://{sha}{ext}
-       │     └─ YÜKLEME YOK, KALICI YAZMA YOK ([[shared_media_courier]])
+       │     ├─ YÜKLEME YOK, KALICI YAZMA YOK ([[shared_media_courier]])
+       │     └─ redactDmOnly()            — dmOnly/private alanlar + dm_notes silinir
        └─ her kapanış üyesi için:
             EntityShareService.shareWithAll(
               entityId, worldId,
@@ -54,6 +55,8 @@ DM "Paylaş" der
 ```
 
 - `entityToRaw` / `entityFromRaw` ([[entity_provider]]) simetrik çifttir; payload şekli campaign blob'undaki `entities` satırının şeklidir. Round-trip koruması: `test/application/services/entity_share_payload_test.dart`.
+- **DM'e özel içerik payload'a girmez (2026-09-11).** `redactDmOnly` giden kopyadan şemada `FieldVisibility.dmOnly` / `private_` işaretli her alanı (`secrets`, `tactics`, …) ve birinci sınıf `dm_notes` kolonunu siler. `payload_json` oyuncunun tek içerik kaynağı olduğu için kırpma burada yapılmak zorunda; DM'in kendi satırı tam kalır. Projeksiyon yolunda aynı işi [[entity_snapshot_builder]] yapar. Koruma: `test/application/services/entity_share_redact_test.dart`.
+- **UYARI — linked kartlar kapsam dışı.** `payload_json = NULL` olduğundan gövde oyuncunun kurulu paketinden gelir; o paketteki `secrets` alanları zaten oyuncunun diskindedir. Paket dağıtımı ayrı bir problem.
 - **`payload_json = NULL` → linked (paket / built-in) kart.** Gövdesi oyuncunun kurulu paketinden gelir; kopyalamak fork-on-edit riski ve gereksiz trafik olurdu.
 - Görseller `AssetRef`'e çevrilmeden paylaşılırsa oyuncu çözemez (RLS yok, dosya sistemi yok). `ProjectionOutputOnline._warnRawPaths` debug'da bunu yakalar.
 - **Medya artık paylaşım anında yüklenmez (2026-09-08).** Payload içerik-adresli `dmt-transient://{sha}{ext}` taşır; baytlar DM'in diskinde kalır. Oyuncu çözemediği sha'ları `world_members.missing_shas`'e yazar ([[missing_media_reporter]] → `report_missing_shas`, migration 092), DM CDC ile görüp **yalnızca onları** yükler ([[shared_media_courier]]) — ve yalnızca `WorldSyncService.isSessionOpen` doğruysa. DM tek başına hazırlık yaparken havuza hiçbir şey girmez. Detay: `docs/media-storage-redesign.md` → "Phase C nasıl uygulandı".

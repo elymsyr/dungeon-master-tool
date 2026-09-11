@@ -58,6 +58,7 @@ Future<void> shareEntityWithPlayers(
   // Relation + image field keys per category slug.
   final relationKeys = <String, List<String>>{};
   final imageKeys = <String, List<String>>{};
+  final dmOnlyKeys = <String, List<String>>{};
   for (final c in schema.categories) {
     relationKeys[c.slug] = [
       for (final f in c.fields)
@@ -66,6 +67,12 @@ Future<void> shareEntityWithPlayers(
     imageKeys[c.slug] = [
       for (final f in c.fields)
         if (f.fieldType == FieldType.image) f.fieldKey,
+    ];
+    dmOnlyKeys[c.slug] = [
+      for (final f in c.fields)
+        if (f.visibility == FieldVisibility.dmOnly ||
+            f.visibility == FieldVisibility.private_)
+          f.fieldKey,
     ];
   }
 
@@ -108,6 +115,7 @@ Future<void> shareEntityWithPlayers(
                 courier,
                 e,
                 imageKeys[e.categorySlug] ?? const [],
+                dmOnlyKeys[e.categorySlug] ?? const [],
               ),
       );
     } catch (err) {
@@ -125,13 +133,37 @@ Future<Map<String, dynamic>> _payloadWithTransientRefs(
   SharedMediaCourier courier,
   Entity e,
   List<String> imageFieldKeys,
+  List<String> dmOnlyFieldKeys,
 ) async {
   final remap = <String, String>{};
   for (final path in localMediaPathsOf(e, imageFieldKeys)) {
     final ref = await courier.refFor(path);
     if (ref != null) remap[path] = ref;
   }
-  return entityToRaw(remapEntityMedia(e, remap, imageFieldKeys));
+  return redactDmOnly(
+    entityToRaw(remapEntityMedia(e, remap, imageFieldKeys)),
+    dmOnlyFieldKeys,
+  );
+}
+
+/// Paylaşım gövdesinden DM'e özel her şeyi siler: şemada
+/// [FieldVisibility.dmOnly] / `private_` işaretli alanlar (`secrets`,
+/// `tactics`, …) ve kartın birinci sınıf `dm_notes` kolonu.
+///
+/// `entity_shares.payload_json` oyuncunun **tek** içerik kaynağı, yani
+/// buradan çıkan her şey oyuncunun eline geçer. Gövde DM'in diskinde tam
+/// kalır; yalnızca giden kopya kırpılır.
+Map<String, dynamic> redactDmOnly(
+  Map<String, dynamic> raw,
+  List<String> dmOnlyFieldKeys,
+) {
+  final out = Map<String, dynamic>.from(raw)..['dm_notes'] = '';
+  final attrs = out['attributes'];
+  if (attrs is Map<String, dynamic> && dmOnlyFieldKeys.isNotEmpty) {
+    out['attributes'] = Map<String, dynamic>.from(attrs)
+      ..removeWhere((k, _) => dmOnlyFieldKeys.contains(k));
+  }
+  return out;
 }
 
 /// Stops sharing a single entity with players. No cascade unshare —

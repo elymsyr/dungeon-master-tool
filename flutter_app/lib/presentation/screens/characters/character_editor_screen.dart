@@ -30,6 +30,7 @@ import '../../../application/services/entity_media_cleanup_service.dart';
 import '../../../application/services/marketplace_cover_sync_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../widgets/character_stat_chips.dart';
+import '../../widgets/field_widgets/entity_link.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
 import '../../../core/services/perf_probe.dart';
@@ -2067,6 +2068,11 @@ class _CharacterEditorScreenState
       }
     }
     final palette = Theme.of(context).extension<DmToolColors>();
+    // Seçili değer gerçek bir subspecies kartıysa satır tıklanabilir olsun —
+    // legacy `subspecies_options` adları düz metin kalır (açılacak kart yok).
+    final linkId = currentStr != null && entities.containsKey(currentStr)
+        ? currentStr
+        : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -2090,12 +2096,20 @@ class _CharacterEditorScreenState
           ),
           Expanded(
             child: _readOnly
-                ? Text(
-                    currentLabel ?? '—',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: palette?.srdInk ??
-                          Theme.of(context).colorScheme.onSurface,
+                ? EntityLink(
+                    targetId: linkId,
+                    ref: ref,
+                    entities: entities,
+                    child: Text(
+                      currentLabel ?? '—',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: palette?.srdInk ??
+                            Theme.of(context).colorScheme.onSurface,
+                        decoration:
+                            linkId == null ? null : TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.dotted,
+                      ),
                     ),
                   )
                 : DropdownButtonFormField<String?>(
@@ -2138,6 +2152,13 @@ class _CharacterEditorScreenState
                     },
                   ),
           ),
+          if (!_readOnly && linkId != null)
+            IconButton(
+              icon: const Icon(Icons.open_in_new, size: 16),
+              tooltip: currentLabel,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => navigateToEntity(ref, linkId),
+            ),
         ],
       ),
     );

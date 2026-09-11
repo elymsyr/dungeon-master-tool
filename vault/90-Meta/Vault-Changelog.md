@@ -1,13 +1,15 @@
 ---
 type: meta
 domain: meta
-updated: 2026-08-27
+updated: 2026-09-11
 tags: [meta, changelog]
 ---
 
 # Vault Changelog
 
 > [!note] Append-only log of vault structural changes. Newest first.
+
+- **2026-09-11** — **Paylaşılan kart sırlarını da götürüyordu.** `entity_share_prepare.dart` gövdeyi `entityToRaw` ile olduğu gibi `entity_shares.payload_json`'a yazıyordu; `attributes.secrets` / `tactics` (şemada `FieldVisibility.dmOnly`) ve `dm_notes` kolonu oyuncuya gidiyordu. Projeksiyon yolu temizdi ([[entity_snapshot_builder]] dmOnly'yi zaten eliyor), paylaşım yolunda karşılığı yoktu. Yeni `redactDmOnly` giden kopyadan bu alanları siler; DM'in kendi satırı bozulmaz. Linked (paket) kartlar kapsam dışı — gövdeleri oyuncunun kurulu paketinden geliyor. → [[Share-Broadcast-Flow]]
 
 - **2026-08-31** — **Multiplayer On karakterleri "yok ediyordu".** DM sidebar dünya online olunca yerel `characterListProvider` yerine bulut-kaynaklı `WorldCharactersView` → `worldCharactersProvider` (Supabase `world_characters`) listesine geçiyor. Hiç push edilmemiş karakterler — özellikle paketlenmiş dünyaların **sahipsiz** PC'leri — orada olmadığı için liste boş görünüyordu. `CharacterListNotifier.pushOwnedCharacters` tam bu iş için yazılmıştı ama **hiçbir yerden çağrılmıyordu**; `online_world_section.dart`'ın `_publish` akışı artık `onlineWorldIds.add`'den hemen sonra onu çağırıyor. Ayrıca döngü `_pushCharacterToMirror` yerine `_mirrorPush` kullanıyor: bulut yazımına ek olarak `worldCharactersProvider`'a iyimser satırı koyuyor, böylece bootstrap yarışı beklenmiyor. Sahipsiz satırlar zaten filtreyi geçiyor (`ownerId != null` koşulu), yani claim edilebilir olarak görünüyorlar. → [[character_provider]]
 
