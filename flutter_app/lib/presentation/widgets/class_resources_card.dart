@@ -47,15 +47,15 @@ class ClassResourcesTracker extends StatelessWidget {
   /// Çizilebilir havuzlar: `pool_ref` çözülmüş bir id olmalı ve kapasite
   /// pozitif olmalı. Resolver artık zarfı id'ye çeviriyor; çözemediğinde
   /// satır atlanır (uydurma kapasiteli bir sayaç göstermektense).
-  List<({String id, int max})> get entries {
-    final out = <({String id, int max})>[];
+  List<({String id, int max, String? recharge})> get entries {
+    final out = <({String id, int max, String? recharge})>[];
     for (final p in effective.resourcePools) {
       final ref = p['pool_ref'];
       if (ref is! String || !entities.containsKey(ref)) continue;
       final raw = p['max'];
       final max = raw is int ? raw : int.tryParse('$raw') ?? 0;
       if (max <= 0) continue;
-      out.add((id: ref, max: max));
+      out.add((id: ref, max: max, recharge: p['recharge']?.toString()));
     }
     return out;
   }
@@ -77,15 +77,21 @@ class ClassResourcesTracker extends StatelessWidget {
     if (rows.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [for (final r in rows) _poolRow(r.id, r.max)],
+      children: [for (final r in rows) _poolRow(r.id, r.max, r.recharge)],
     );
   }
 
-  Widget _poolRow(String id, int max) {
+  Widget _poolRow(String id, int max, String? recharge) {
     final rawName = entities[id]?.name ?? id;
     final name = displayName(rawName);
     final cur = (poolRemaining[id] ?? max).clamp(0, max);
-    final sources = effective.grantSources[id] ?? const <String>[];
+    final sources = [
+      ...?effective.grantSources[id],
+      // Havuz bir büyü yuvası değil: kaç kullanım ve hangi dinlenmede geri
+      // geldiği yazmayınca satır "1 slot" gibi okunuyordu.
+      if (recharge != null && recharge.isNotEmpty)
+        '$max/${recharge.replaceAll('_', ' ')}',
+    ];
     final readOnly = onPoolRemainingChanged == null;
 
     void emit(int next) {

@@ -110,6 +110,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           _searchQuery = _searchController.text;
           _visibleLimit = _kPageSize;
         });
+        _persistFilter();
       });
     });
     _scrollController = ScrollController()..addListener(_onScroll);
@@ -154,6 +155,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               ...s.dbSortModeByWorld,
               key: _sortMode.name,
             },
+            dbSearchByWorld: {
+              ...s.dbSearchByWorld,
+              key: _searchQuery,
+            },
           ),
         );
   }
@@ -179,6 +184,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           .whereType<_ShareFilter>());
     _sortMode =
         _sortModeFromName(ui.dbSortModeByWorld[worldKey]) ?? _SortMode.name;
+    _searchQuery = ui.dbSearchByWorld[worldKey] ?? '';
+    _searchController.text = _searchQuery;
     _visibleLimit = _kPageSize;
   }
 
@@ -1502,13 +1509,15 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   }) {
     final cat = catMap[entity.categorySlug];
     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
-    // On phone the regular Draggable swallowed vertical drags so the
+    // On touch the regular Draggable swallowed vertical drags so the
     // database list refused to scroll — fingers landing on an entity
     // row triggered a drag instead of a scroll. Switch to long-press
-    // initiation on phones so a plain swipe scrolls the list and only
-    // a deliberate long-press picks up an entity. Desktop keeps the
-    // immediate drag for the existing mouse workflow.
-    final isPhone = getScreenType(context) == ScreenType.phone;
+    // initiation on touch platforms (size-independent, so tablets in
+    // desktop layout count too) so a plain swipe scrolls the list and
+    // only a deliberate long-press picks up an entity. Mouse platforms
+    // keep the immediate drag for the existing workflow.
+    final touchDrag = isTouchPlatform ||
+        getScreenType(context) == ScreenType.phone;
     final feedback = Material(
       elevation: 2,
       borderRadius: palette.cbr,
@@ -1545,7 +1554,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     );
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
-      child: isPhone
+      child: touchDrag
           ? LongPressDraggable<String>(
               key: ValueKey(entity.id),
               data: entity.id,

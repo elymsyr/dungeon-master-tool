@@ -27,6 +27,7 @@ tags: [moc]
 - [[verify_packs]] — the correctness gate beside those three: *is the shipped value the one the fixture column holds?* Needs the pinned snapshot, exits non-zero on a disagreement, and is the only tool that can see a **fabricated** value (a mapper default with no source behind it).
 - [[check_findings]] — the sweep's bookkeeping gate (audit **F2**): validates every entry in the findings ledger (checklist item, affected-entity count, evidence block, cause code, options) and fails when the three summary counters drift from the real entries. `--selftest` proves the validator still bites.
 - [[scan_pack]] — the **reading** tool beside all of those counting ones (audit **F1**): opens one pack's category map, per-field fill table, sample entities and `metadata` inside a ~600-line budget, so Stage F's sweep can ask *is the filled value the right value* without reading a 3.3 MB file whole.
+- [[scan_resource_pools]] — `resource_pool_grants` denetçisi: builtin SRD + paketler + dünyalardaki her havuz satırını [[character_resolver]]'ın kurallarıyla karşılaştırır; sayfada sessizce düşen sayaçları (`DROP`) ve metni kullanım sayısı dediği hâlde havuz vermeyen kartları (`WARN`) çıkarır. `--selftest` denetçinin kendi kontrolü.
 
 ## Key Files — SRD core + catalog
 - [[srd_core_pack]] — hand-authored SRD 5.2.1 package builder (two-pass).

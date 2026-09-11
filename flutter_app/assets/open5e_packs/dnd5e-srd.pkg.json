@@ -10476,15 +10476,6 @@
         },
         "chooseable": false,
         "repeatable": false,
-        "resource_pool_grants": [
-          {
-            "pool_ref": {
-              "_lookup": "resource-pool",
-              "name": "pool:pact_slots"
-            },
-            "recharge": "short_rest"
-          }
-        ],
         "mechanical_notes": "Pact Magic spell slots recharge on a Short or Long Rest",
         "benefits": "Your spell slots regain on a Short or Long Rest. Charisma is your spellcasting ability."
       }

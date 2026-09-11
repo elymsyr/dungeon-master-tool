@@ -106,7 +106,66 @@ Map<String, Entity> mergeWithBuiltinSrd(
 }) {
   if (!useCampaign) return builtin;
   if (campaignEntities.isEmpty) return builtin;
-  return {...builtin, ...campaignEntities};
+  return mergeCampaignOverBuiltin(campaignEntities, builtin);
+}
+
+/// Campaign entities layered over the bundled SRD map, deduped by
+/// `(categorySlug, lowercased name)`.
+///
+/// A world's SRD rows never share ids with [builtinSrdEntitiesProvider]:
+/// imported worlds minted fresh v4 UUIDs, and F1 worlds synthesise per-world
+/// v5 ids from `package_entities`. A plain id-keyed union therefore keeps
+/// BOTH copies, and every picker that iterates the map (fighting style,
+/// spells, feats, species...) lists each SRD entry twice.
+///
+/// The suppressed builtin ids stay *resolvable* — a character created
+/// worldless and later bound to a world still holds builtin ids in its
+/// fields — they just don't show up in `keys` / `values` / `entries`.
+Map<String, Entity> mergeCampaignOverBuiltin(
+  Map<String, Entity> campaign,
+  Map<String, Entity> builtin,
+) {
+  if (campaign.isEmpty) return builtin;
+  final byKey = <String, Entity>{
+    for (final e in campaign.values)
+      '${e.categorySlug}::${e.name.toLowerCase()}': e,
+  };
+  final aliases = <String, Entity>{};
+  for (final entry in builtin.entries) {
+    final e = entry.value;
+    final twin = byKey['${e.categorySlug}::${e.name.toLowerCase()}'];
+    if (twin != null) aliases[entry.key] = twin;
+  }
+  return _CampaignOverBuiltinMap(campaign, builtin, aliases);
+}
+
+/// Lazy view backing [mergeCampaignOverBuiltin]. Hides the duplicated builtin
+/// ids from iteration while still answering lookups for them.
+class _CampaignOverBuiltinMap extends UnmodifiableMapBase<String, Entity> {
+  final Map<String, Entity> _campaign;
+  final Map<String, Entity> _builtin;
+  final Map<String, Entity> _aliases;
+
+  _CampaignOverBuiltinMap(this._campaign, this._builtin, this._aliases);
+
+  late final List<String> _keys = <String>[
+    ..._campaign.keys,
+    for (final k in _builtin.keys)
+      if (!_aliases.containsKey(k) && !_campaign.containsKey(k)) k,
+  ];
+
+  @override
+  Entity? operator [](Object? key) =>
+      _campaign[key] ?? _aliases[key] ?? _builtin[key];
+
+  @override
+  Iterable<String> get keys => _keys;
+
+  @override
+  bool containsKey(Object? key) =>
+      _campaign.containsKey(key) ||
+      _aliases.containsKey(key) ||
+      _builtin.containsKey(key);
 }
 
 /// Convenience: identifier used to flag an empty / unbound world. Avoids
@@ -179,25 +238,5 @@ final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
     return mergeBuiltinWithPackages(ref, builtin, packages);
   }
   final campaign = ref.watch(entityProvider);
-  if (campaign.isEmpty) return builtin;
-  // Dedupe by (categorySlug, name): when a world was created by importing
-  // the bundled SRD pack, every imported entity got a fresh v4 UUID
-  // (PackageImportService line 47). Plain id-based merge then keeps both
-  // copies — the user sees every race / spell / background twice.
-  // Suppress the builtin row whenever the campaign already supplies one
-  // with matching (slug, lowercased name); campaign wins for true
-  // overrides too.
-  final campaignKeys = <String>{};
-  for (final e in campaign.values) {
-    campaignKeys.add('${e.categorySlug}::${e.name.toLowerCase()}');
-  }
-  final merged = <String, Entity>{};
-  for (final entry in builtin.entries) {
-    final e = entry.value;
-    final key = '${e.categorySlug}::${e.name.toLowerCase()}';
-    if (campaignKeys.contains(key)) continue;
-    merged[entry.key] = e;
-  }
-  merged.addAll(campaign);
-  return Map<String, Entity>.unmodifiable(merged);
+  return mergeCampaignOverBuiltin(campaign, builtin);
 });
