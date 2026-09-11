@@ -1,5 +1,73 @@
 # Release Notes
 
+## Dungeon Master Tool v15.9.0 — Phone-First Database (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v15.9.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release rebuilds how you move between cards on a phone: the tab bar is gone, and a new history button gets you back to anything you looked at recently. Alongside it, character creation stops showing every piece of SRD content twice and finally applies the grants that packaged subclasses promise.
+
+---
+
+### Highlights
+
+- **Card history on phones** — a new button at the bottom right of the database jumps back to any of your last 50 cards.
+- **Full-width cards on phones** — the database tab bar is gone, so a card gets the whole screen.
+- **Search that stays put** — the database search box remembers what you typed, per world.
+
+---
+
+### Database
+
+#### Moving between cards on a phone
+
+The tab strip above the card is gone on phones. In its place there is a history button at the bottom right: tap it and a sheet lists the last 50 cards you opened, in the same row style as the sidebar — coloured category dot, name and source, category label — so you can jump straight back to anything without retracing your steps.
+
+#### Search is remembered per world
+
+Whatever you type in the database search box stays there when you leave and come back, and it is kept separately for each world, exactly like the category filters already were.
+
+---
+
+### Bug fixes
+
+- **Character creation** — SRD content (fighting styles, spells, feats, species) no longer appears twice in the editor and wizard pickers. Cards you already created keep their selections.
+- **Packaged subclasses** — a subclass from a bundled or imported package now actually grants its traits, feats, actions and spells. Granted spells show up on the character sheet in their own card, and stay correct if the underlying content changes.
+- **Entity sidebar on tablets** — a one-finger swipe in the database list scrolls again instead of picking up a card; dragging now needs a long press on every touch device, not just phones.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.8.0` → `15.9.0`.
+- **Existing characters:** the duplicate-content fix is read-time only — nothing is rewritten, and a character created without a world keeps resolving its SRD picks after you bind it to one.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Most third-party subclasses have no mechanical grants** — 82 of the 117 subclasses in the bundled Open5e packs carry only descriptive text, so picking one grants nothing on the sheet. The source data has no mechanical fields to import. The built-in SRD subclasses and the bundled Aegis world are unaffected.
+- **Downloaded card art is never cleaned up** — Images downloaded with an official package stay in the app's cache after the package is removed, and there is no size cap on that cache. Clearing the app's cache removes them.
+- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a world they shared on the marketplace, the listing goes away but the uploaded media is not removed. No user-visible effect.
+
+---
+
+### For developers
+
+- **`EntityRowTile`** — the sidebar row is now a shared widget, used by both the sidebar and the new history sheet.
+- **`dbSearchByWorld`** — sidebar search text is persisted per world, on the same path as the filter state.
+- **`mergeCampaignOverBuiltin`** — single (categorySlug, name) dedupe for campaign-over-builtin entity maps, returning a lazy view: suppressed builtin ids stay resolvable through `operator[]` but no longer appear in `keys`/`values`/`entries`.
+- **Grant envelopes** — the wizard grant reader, both editor absorb paths and the structured-list widget now accept `{_ref|slug|_lookup, name}` cells, and `collectLevelGrants` reads `granted_spell_refs`/`granted_cantrip_refs`.
+- **Debug builds** — desktop window minimum is 300x400 so the mobile layout can be exercised.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.8.0 — Player-Safe Shares (Beta)
 
 **Release date:** September 2026
