@@ -649,4 +649,63 @@ void main() {
           reason: 'grant ref names a Tier-0 row the app does not ship');
     });
   });
+
+  group('a third-party subclass reaches the sheet (audit B4)', () {
+    late final world = {...srd, ...installPack('open5e-toh.pkg.json')};
+
+    test('Circle of Ash grants Ash Cloud at its level, not before', () {
+      final sub = find(world, 'subclass', 'Circle of Ash');
+      final druid = find(world, 'class', 'Druid').id;
+      List<String> featsAt(int level) {
+        final eff = CharacterResolver.resolve(
+          pc({
+            'class_levels': {druid: level},
+            'subclass_id': sub.id,
+          }),
+          world,
+        );
+        return [
+          for (final id in eff.autoGrantedFeatIds) world[id]?.name ?? id,
+        ];
+      }
+
+      expect(featsAt(1), isNot(contains('Ash Cloud')));
+      expect(featsAt(2), contains('Ash Cloud'));
+    });
+
+    /// The asset-side half of `test/tool/class_feature_levels_test.dart`: that
+    /// one drives the mapper, this one reads what actually shipped. Before B4
+    /// this failed for 82 of the 117 bundled subclasses — their level tables
+    /// carried prose and nothing a grant reader looks at, so picking one put
+    /// nothing on the character.
+    test('every bundled subclass level table carries a grant', () {
+      // Upstream ships this one with zero `ClassFeatureItem` rows, so there is
+      // no feature to grant — a source limit, not a conversion failure. Listed
+      // by name so a *different* subclass going bare still fails.
+      const knownFeatureless = {'Path of Hellfire'};
+      final bare = <String>[];
+      var checked = 0;
+      for (final asset in Directory('assets/open5e_packs')
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.uri.pathSegments.last)
+          .where((n) => n.endsWith('.pkg.json'))) {
+        for (final e in installPack(asset).values) {
+          if (e.categorySlug != 'subclass') continue;
+          checked++;
+          expect(e.fields['granted_at_level'], isA<int>(),
+              reason: '$asset: ${e.name} has no granted_at_level, so both '
+                  'readers default it to 1');
+          if (knownFeatureless.contains(e.name)) continue;
+          final rows = (e.fields['features'] as List?) ?? const [];
+          final grants = rows.whereType<Map>().any((r) => r.keys.any((k) =>
+              '$k'.startsWith('granted_') || k == 'always_prepared_spell_refs'));
+          if (!grants) bare.add('$asset: ${e.name}');
+        }
+      }
+      expect(checked, greaterThan(100));
+      expect(bare, isEmpty,
+          reason: 'subclass grants nothing the resolver can read');
+    });
+  });
 }

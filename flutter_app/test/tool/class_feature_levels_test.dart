@@ -15,11 +15,11 @@ import '../../tool/open5e_import/refgraph.dart';
 /// about the file. This asserts the whole chain on the shapes Open5e actually
 /// ships: importer fixture → `mapClasses` → `CharacterResolver.activeFeatures`.
 ///
-/// It drives the mapper rather than a bundled asset on purpose —
-/// `assets/open5e_packs/` still predates B1 (promoting a rebuild is its own
-/// decision), so a test reading the shipped file could only prove the old
-/// emptiness. `bundled_pack_resolve_test` gains the asset-side assertion when
-/// the rebuild is promoted.
+/// It drives the mapper rather than a bundled asset on purpose: a fixture can
+/// state the upstream shapes (a table column, an unlevelled feature, a parent
+/// that lives in another pack) that no shipped document happens to combine.
+/// The asset-side half — what actually shipped after the rebuild — lives in
+/// `bundled_pack_resolve_test`'s "a third-party subclass reaches the sheet".
 void main() {
   /// Upstream shape, verified against the pinned snapshot: `ClassFeature` has
   /// `parent` → CharacterClass pk and no level; `ClassFeatureItem` has `parent`
@@ -126,6 +126,84 @@ void main() {
           containsPair('name', 'Base Feature'));
       // A base class is not gated by `granted_at_level` and must not carry it.
       expect(attrs.containsKey('granted_at_level'), isFalse);
+    });
+  });
+
+  group('B4 — a feature becomes a card the sheet can grant', () {
+    /// Every grant path is ref-based, so a row carrying only prose granted
+    /// nothing. These assert the ref exists, aims at a real card, and is
+    /// emitted **once** per feature however many levels it improves at.
+    test('the first row of each feature aims at a minted feat', () {
+      final ents = emit();
+      final sub = ents.values
+          .cast<Map>()
+          .firstWhere((e) => e['type'] == 'subclass');
+      final rows =
+          (((sub['attributes'] as Map)['features']) as List).cast<Map>();
+      String? featName(Map r) {
+        final refs = r['granted_feat_refs'];
+        if (refs is! List || refs.isEmpty) return null;
+        return ((ents[refs.first] as Map)['name']) as String;
+      }
+
+      expect(featName(rows[0]), 'Hellish Strike');
+      expect(featName(rows[1]), 'Improving Thing');
+      // Level 14 is the same feature improving — one card, granted once, or the
+      // resolver would apply it twice.
+      expect(featName(rows[2]), isNull);
+    });
+
+    test('the minted card is a Subclass Feature carrying the prose', () {
+      final feat = emit().values.cast<Map>().firstWhere(
+          (e) => e['type'] == 'feat' && e['name'] == 'Hellish Strike');
+      final a = feat['attributes'] as Map;
+      expect(a['benefits'], 'You strike.');
+      expect(a['chooseable'], isFalse);
+      expect(a['category_ref'],
+          containsPair('name', 'Subclass Feature'));
+    });
+
+    test('a base class feature is a Class Feature card', () {
+      final ents = emit();
+      final cls =
+          ents.values.cast<Map>().firstWhere((e) => e['type'] == 'class');
+      final rows =
+          (((cls['attributes'] as Map)['features']) as List).cast<Map>();
+      final refs = rows.single['granted_feat_refs'] as List;
+      final feat = ents[refs.single] as Map;
+      expect(feat['name'], 'Base Feature');
+      expect((feat['attributes'] as Map)['category_ref'],
+          containsPair('name', 'Class Feature'));
+    });
+
+    test('a subclass with no level table borrows the sibling level', () {
+      // F-toh-02: `Path of Hellfire` ships zero `ClassFeatureItem` rows, so
+      // there is no level to read off its own table. Both readers default to 1
+      // when the field is absent — a Barbarian path openable at level 1.
+      final pack = PackBuilder('b4-sibling');
+      mapClasses(
+        pack: pack,
+        norm: Normalizer(),
+        source: 'Test Doc',
+        classes: [
+          ...classes,
+          {
+            '_pk': 'x_featureless',
+            'name': 'Path of Nothing',
+            'subclass_of': 'srd_barbarian',
+            'desc': 'Upstream ships no feature rows for this one.',
+          },
+        ],
+        features: features,
+        featureItems: featureItems,
+      );
+      pack.resolveRefs();
+      final bare = pack.entities.values
+          .cast<Map>()
+          .firstWhere((e) => e['name'] == 'Path of Nothing');
+      // Its sibling `Path of Test` opens at 3, and in 5e every path of a class
+      // shares that level — derived from the data, not invented.
+      expect((bare['attributes'] as Map)['granted_at_level'], 3);
     });
   });
 

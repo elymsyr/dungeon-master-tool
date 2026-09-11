@@ -1432,10 +1432,37 @@ Tier0CategoryBuild _identifierLookup({
   required String icon,
   required int orderIndex,
   required List<String> rows,
+  Map<String, String>? labels,
 }) {
   final catId = _uuid.v4();
-  final fields = _commonLookupFields(categoryId: catId, now: now);
-  final seed = [for (final r in rows) {'name': r, 'fields': <String, dynamic>{}}];
+  var fields = _commonLookupFields(categoryId: catId, now: now);
+  // A category whose row *names* are machine keys (`pool:rage_uses`) carries the
+  // human label as data instead of leaving the UI to guess it from the slug —
+  // no slug prettifier can turn `pool:hunters_mark_no_slot_uses` into
+  // "Hunter's Mark". The name stays the key (`srdStableEntityId` mints ids from
+  // it, and `_lookup` placeholders match on it), so this is additive.
+  if (labels != null) {
+    fields = _withExtras(fields, [
+      (o) => _textField(
+            categoryId: catId,
+            now: now,
+            key: 'display_name',
+            label: 'Display Name',
+            helpText: 'Human label shown on the character sheet',
+            order: o,
+            groupId: grpIdentity,
+          ),
+    ]);
+  }
+  final seed = [
+    for (final r in rows)
+      {
+        'name': r,
+        'fields': <String, dynamic>{
+          if (labels?[r] != null) 'display_name': labels![r],
+        },
+      }
+  ];
   return Tier0CategoryBuild(
     _makeCategory(
       schemaId: schemaId,
@@ -1693,46 +1720,56 @@ Tier0CategoryBuild _resourcePoolCategory(String schemaId, String now) =>
       schemaId: schemaId, now: now,
       name: 'Resource Pool', slug: 'resource-pool',
       color: '#00897b', icon: 'battery_charging_full', orderIndex: 38,
-      rows: const [
-        // Class
-        'pool:rage_uses',
-        'pool:second_wind',
-        'pool:bardic_inspiration',
-        'pool:channel_divinity',
-        'pool:wild_shape',
-        'pool:focus_points',
-        'pool:action_surge',
-        'pool:lay_on_hands_hp',
-        'pool:hunters_mark_no_slot_uses',
-        'pool:tireless_temp_hp_uses',
-        'pool:sorcery_points',
-        'pool:pact_slots',
-        'pool:mystic_arcanum_6',
-        'pool:mystic_arcanum_7',
-        'pool:mystic_arcanum_8',
-        'pool:mystic_arcanum_9',
-        'pool:arcane_recovery_per_day',
-        'pool:divine_intervention',
-        'pool:eldritch_master',
-        'pool:lay_on_hands_uses_per_long_rest',
-        'pool:indomitable_uses',
-        'pool:magical_cunning_per_day',
-        'pool:sorcerous_restoration_per_short_rest',
-        'pool:dark_ones_own_luck',
-        'pool:hurl_through_hell',
-        'pool:abjure_foes',
-        'pool:stroke_of_luck',
-        'pool:dragon_wings',
-        'pool:dragon_companion',
-        'pool:innate_sorcery_uses',
-        'pool:paladin_channel_divinity',
-        'pool:holy_nimbus',
-        'pool:legendary_resistance',
-        // Feat
-        'pool:luck_points',
-        'pool:superiority_dice',
-        // Item
-        'pool:item_charges',
-      ],
+      rows: kResourcePoolLabels.keys.toList(),
+      labels: kResourcePoolLabels,
     );
+
+/// Row key → the label the character sheet shows. The key is a machine slug
+/// (see [_identifierLookup]'s `labels`); several of them name the *mechanic*
+/// rather than the resource (`pool:hunters_mark_no_slot_uses` is the Ranger's
+/// free Hunter's Mark casts), which is why the label has to be authored and
+/// cannot be derived.
+///
+/// Public so `tool/scan_resource_pools.py` can assert every seeded pool has one.
+const kResourcePoolLabels = <String, String>{
+  // Class
+  'pool:rage_uses': 'Rage',
+  'pool:second_wind': 'Second Wind',
+  'pool:bardic_inspiration': 'Bardic Inspiration',
+  'pool:channel_divinity': 'Channel Divinity',
+  'pool:wild_shape': 'Wild Shape',
+  'pool:focus_points': 'Focus Points',
+  'pool:action_surge': 'Action Surge',
+  'pool:lay_on_hands_hp': 'Lay on Hands (HP Pool)',
+  'pool:hunters_mark_no_slot_uses': "Hunter's Mark (Free Casts)",
+  'pool:tireless_temp_hp_uses': 'Tireless',
+  'pool:sorcery_points': 'Sorcery Points',
+  'pool:pact_slots': 'Pact Magic Slots',
+  'pool:mystic_arcanum_6': 'Mystic Arcanum (Level 6)',
+  'pool:mystic_arcanum_7': 'Mystic Arcanum (Level 7)',
+  'pool:mystic_arcanum_8': 'Mystic Arcanum (Level 8)',
+  'pool:mystic_arcanum_9': 'Mystic Arcanum (Level 9)',
+  'pool:arcane_recovery_per_day': 'Arcane Recovery',
+  'pool:divine_intervention': 'Divine Intervention',
+  'pool:eldritch_master': 'Eldritch Master',
+  'pool:lay_on_hands_uses_per_long_rest': 'Lay on Hands (Uses)',
+  'pool:indomitable_uses': 'Indomitable',
+  'pool:magical_cunning_per_day': 'Magical Cunning',
+  'pool:sorcerous_restoration_per_short_rest': 'Sorcerous Restoration',
+  'pool:dark_ones_own_luck': "Dark One's Own Luck",
+  'pool:hurl_through_hell': 'Hurl Through Hell',
+  'pool:abjure_foes': 'Abjure Foes',
+  'pool:stroke_of_luck': 'Stroke of Luck',
+  'pool:dragon_wings': 'Dragon Wings',
+  'pool:dragon_companion': 'Dragon Companion',
+  'pool:innate_sorcery_uses': 'Innate Sorcery',
+  'pool:paladin_channel_divinity': 'Channel Divinity (Paladin)',
+  'pool:holy_nimbus': 'Holy Nimbus',
+  'pool:legendary_resistance': 'Legendary Resistance',
+  // Feat
+  'pool:luck_points': 'Luck Points',
+  'pool:superiority_dice': 'Superiority Dice',
+  // Item
+  'pool:item_charges': 'Item Charges',
+};
 

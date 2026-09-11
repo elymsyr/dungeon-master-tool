@@ -4631,7 +4631,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Dengeyi Geri Ver"
+      }
     },
     "cd049f51-6324-5650-bbef-1398eb5ba54e": {
       "name": "pool:kayit_fihrist_hali",
@@ -4644,7 +4646,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Fihrist Hali"
+      }
     },
     "12480cf8-40fb-5c91-bad4-4f2b8a9b6370": {
       "name": "pool:kayit_sayim",
@@ -4657,7 +4661,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Sayım"
+      }
     },
     "9bf3d768-336d-5626-9aeb-cb8c4fe570b5": {
       "name": "pool:pul_bagit_yoldasi",
@@ -4670,7 +4676,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Bağıt Yoldaşı"
+      }
     },
     "ec2b541a-bac9-56ee-a613-e9d6dfe5f917": {
       "name": "pool:pul_salgi_puskurtmesi",
@@ -4683,7 +4691,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Salgı Püskürtmesi"
+      }
     },
     "3ac993a1-fe2b-5f58-8c0d-5a383de9e71e": {
       "name": "pool:pul_refleks_direnci",
@@ -4696,7 +4706,9 @@
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
-      "attributes": {}
+      "attributes": {
+        "display_name": "Refleks Direnci"
+      }
     },
     "6addcb5d-a6a2-5620-b8c6-6fd67d05e9da": {
       "name": "Kayıt Ruhu",

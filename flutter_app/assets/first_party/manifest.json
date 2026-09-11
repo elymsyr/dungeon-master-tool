@@ -31,7 +31,7 @@
       "r2_path": "package/cairn-2e-core@1.0.0.json.gz",
       "size_bytes": 806741,
       "art_count": 311,
-      "art_bytes": 33313552,
+      "art_bytes": 0,
       "banner_credit": {
         "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
         "link": "https://cairnrpg.com/second-edition/"
@@ -59,7 +59,7 @@
       "r2_path": "package/cairn-community@1.0.0.json.gz",
       "size_bytes": 423931,
       "art_count": 342,
-      "art_bytes": 37139610,
+      "art_bytes": 0,
       "banner_credit": {
         "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
         "link": "https://cairnrpg.com/resources/"
@@ -69,7 +69,7 @@
       "item_type": "package",
       "slug": "open5e-a5e-ag",
       "title": "Adventurer's Guide",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "EN Publishing",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -78,16 +78,14 @@
       "requires": [],
       "counts": {
         "spell": 371,
+        "feat": 100,
         "class": 1,
         "subclass": 3,
-        "background": 21,
-        "feat": 59
+        "background": 21
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
-      "r2_path": "package/open5e-a5e-ag@1.1.0.json.gz",
-      "size_bytes": 1143059,
-      "art_count": 454,
-      "art_bytes": 64159800,
+      "r2_path": "package/open5e-a5e-ag@2.1.0.json.gz",
+      "size_bytes": 1176472,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/two-travelers-discovered-ruins-ancient-city-dense-forest-3d-illustration_15174550.htm#fromView=author&page=1&position=11&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
@@ -97,7 +95,7 @@
       "item_type": "package",
       "slug": "open5e-a5e-ddg",
       "title": "Dungeon Delver’s Guide",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "EN Publishing",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -108,10 +106,8 @@
         "background": 4
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ddg.pkg.json",
-      "r2_path": "package/open5e-a5e-ddg@1.1.0.json.gz",
-      "size_bytes": 25886,
-      "art_count": 4,
-      "art_bytes": 320542,
+      "r2_path": "package/open5e-a5e-ddg@2.1.0.json.gz",
+      "size_bytes": 25660,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://fistfulofmeeples.wordpress.com/wp-content/uploads/2020/11/gauntlgrym.png"
@@ -121,7 +117,7 @@
       "item_type": "package",
       "slug": "open5e-a5e-gpg",
       "title": "Gate Pass Gazette",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "EN Publishing",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -132,10 +128,8 @@
         "background": 2
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-gpg.pkg.json",
-      "r2_path": "package/open5e-a5e-gpg@1.1.0.json.gz",
-      "size_bytes": 16928,
-      "art_count": 2,
-      "art_bytes": 171944,
+      "r2_path": "package/open5e-a5e-gpg@2.1.0.json.gz",
+      "size_bytes": 16804,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.goodfon.com/fantasy/wallpaper-nikolai-lebedev-kingdom-of-ashland-art.html"
@@ -145,7 +139,7 @@
       "item_type": "package",
       "slug": "open5e-a5e-mm",
       "title": "Monstrous Menagerie",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "EN Publishing",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -159,10 +153,8 @@
         "size": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-mm.pkg.json",
-      "r2_path": "package/open5e-a5e-mm@1.1.0.json.gz",
-      "size_bytes": 3400113,
-      "art_count": 586,
-      "art_bytes": 47084556,
+      "r2_path": "package/open5e-a5e-mm@2.1.0.json.gz",
+      "size_bytes": 3370205,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.polygon.com/24172797/dnd-dungeons-dragons-core-rulebook-cover-art-gallery-phb-dmg-mm/"
@@ -172,7 +164,7 @@
       "item_type": "package",
       "slug": "open5e-bfrd",
       "title": "Black Flag SRD",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "cc-by-40",
       "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
@@ -185,14 +177,13 @@
         "monster": 360,
         "sense": 1,
         "language": 1,
+        "feat": 20,
         "class": 1,
         "subclass": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-bfrd.pkg.json",
-      "r2_path": "package/open5e-bfrd@1.1.0.json.gz",
-      "size_bytes": 2274808,
-      "art_count": 361,
-      "art_bytes": 42336224,
+      "r2_path": "package/open5e-bfrd@2.1.0.json.gz",
+      "size_bytes": 2290084,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/digital-painting-ancient-warships-traveling-rough-seas_14402173.htm#fromView=author&page=2&position=29&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
@@ -202,7 +193,7 @@
       "item_type": "package",
       "slug": "open5e-ccdx",
       "title": "Creature Codex",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -217,10 +208,8 @@
         "sense": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-ccdx.pkg.json",
-      "r2_path": "package/open5e-ccdx@1.1.0.json.gz",
-      "size_bytes": 2658876,
-      "art_count": 356,
-      "art_bytes": 54049742,
+      "r2_path": "package/open5e-ccdx@2.1.0.json.gz",
+      "size_bytes": 2640698,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2024/08/dnd-dungeons-dragson-5.5e-monster-manual-skeletons-header.jpg"
@@ -230,7 +219,7 @@
       "item_type": "package",
       "slug": "open5e-deepm",
       "title": "Deep Magic for 5th Edition",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -241,10 +230,8 @@
         "spell": 515
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepm.pkg.json",
-      "r2_path": "package/open5e-deepm@1.1.0.json.gz",
-      "size_bytes": 1255338,
-      "art_count": 515,
-      "art_bytes": 39791584,
+      "r2_path": "package/open5e-deepm@2.1.0.json.gz",
+      "size_bytes": 1229051,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.gamepur.com/guides/how-one-dnd-has-changed-the-wizard-class"
@@ -254,7 +241,7 @@
       "item_type": "package",
       "slug": "open5e-deepmx",
       "title": "Deep Magic Extended",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -265,10 +252,8 @@
         "spell": 64
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepmx.pkg.json",
-      "r2_path": "package/open5e-deepmx@1.1.0.json.gz",
-      "size_bytes": 131456,
-      "art_count": 64,
-      "art_bytes": 6427764,
+      "r2_path": "package/open5e-deepmx@2.1.0.json.gz",
+      "size_bytes": 128170,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.polygon.com/dnd-dungeons-dragons-circle-magic-spells-best-use/"
@@ -278,7 +263,7 @@
       "item_type": "package",
       "slug": "open5e-kp",
       "title": "Kobold Press Compilation",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -289,10 +274,8 @@
         "spell": 31
       },
       "bundled_asset": "assets/open5e_packs/open5e-kp.pkg.json",
-      "r2_path": "package/open5e-kp@1.1.0.json.gz",
-      "size_bytes": 76184,
-      "art_count": 31,
-      "art_bytes": 3603948,
+      "r2_path": "package/open5e-kp@2.1.0.json.gz",
+      "size_bytes": 74581,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://nerdarchy.com/surprise-entertain-and-terrify-5e-dd-heroes-with-tome-of-beasts-2-from-kobold-press/"
@@ -302,7 +285,7 @@
       "item_type": "package",
       "slug": "open5e-open5e",
       "title": "Open5e Originals",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Open5e",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -311,15 +294,14 @@
       "requires": [],
       "counts": {
         "spell": 2,
+        "feat": 87,
         "subclass": 17,
         "subspecies": 1,
         "background": 2
       },
       "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
-      "r2_path": "package/open5e-open5e@1.1.0.json.gz",
-      "size_bytes": 225414,
-      "art_count": 22,
-      "art_bytes": 2417696,
+      "r2_path": "package/open5e-open5e@2.1.0.json.gz",
+      "size_bytes": 360599,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://screenrant.com/dnd-best-free-adventures/"
@@ -329,7 +311,7 @@
       "item_type": "package",
       "slug": "open5e-spells-that-dont-suck",
       "title": "Spells That Don't Suck",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "SoMany Robots",
       "license": "cc-by-40",
       "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
@@ -340,10 +322,8 @@
         "spell": 180
       },
       "bundled_asset": "assets/open5e_packs/open5e-spells-that-dont-suck.pkg.json",
-      "r2_path": "package/open5e-spells-that-dont-suck@1.1.0.json.gz",
-      "size_bytes": 520302,
-      "art_count": 180,
-      "art_bytes": 18908614,
+      "r2_path": "package/open5e-spells-that-dont-suck@2.1.0.json.gz",
+      "size_bytes": 511100,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.thegamer.com/dungeons-dragons-underrated-spells-uses/"
@@ -353,7 +333,7 @@
       "item_type": "package",
       "slug": "open5e-tdcs",
       "title": "Tal'dorei Campaign Setting",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Green Ronin",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -364,15 +344,13 @@
         "trait": 11,
         "creature-action": 11,
         "monster": 4,
+        "feat": 25,
         "subclass": 4,
-        "background": 5,
-        "feat": 1
+        "background": 5
       },
       "bundled_asset": "assets/open5e_packs/open5e-tdcs.pkg.json",
-      "r2_path": "package/open5e-tdcs@1.1.0.json.gz",
-      "size_bytes": 109212,
-      "art_count": 14,
-      "art_bytes": 1238834,
+      "r2_path": "package/open5e-tdcs@2.1.0.json.gz",
+      "size_bytes": 144944,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.dndspeak.com/wp-content/uploads/2022/02/art-city-town-paint-painting-fantastic-deviantart-fantasy-wo.jpg"
@@ -382,7 +360,7 @@
       "item_type": "package",
       "slug": "open5e-tob",
       "title": "Tome of Beasts",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -397,10 +375,8 @@
         "sense": 5
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob.pkg.json",
-      "r2_path": "package/open5e-tob@1.1.0.json.gz",
-      "size_bytes": 3034624,
-      "art_count": 391,
-      "art_bytes": 49492498,
+      "r2_path": "package/open5e-tob@2.1.0.json.gz",
+      "size_bytes": 3014661,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://drawyourweapon.com/dungeons-and-dragons-art/"
@@ -410,7 +386,7 @@
       "item_type": "package",
       "slug": "open5e-tob-2023",
       "title": "Tome of Beasts 1 (2023 Edition)",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -424,10 +400,8 @@
         "language": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob-2023.pkg.json",
-      "r2_path": "package/open5e-tob-2023@1.1.0.json.gz",
-      "size_bytes": 3474158,
-      "art_count": 408,
-      "art_bytes": 39709844,
+      "r2_path": "package/open5e-tob-2023@2.1.0.json.gz",
+      "size_bytes": 3453328,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.wargamer.com/wp-content/sites/wargamer/2022/11/dnd-displacer-beast-5e-and-monsters.jpg"
@@ -437,7 +411,7 @@
       "item_type": "package",
       "slug": "open5e-tob2",
       "title": "Tome of Beasts 2",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -451,10 +425,8 @@
         "language": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob2.pkg.json",
-      "r2_path": "package/open5e-tob2@1.1.0.json.gz",
-      "size_bytes": 2902040,
-      "art_count": 383,
-      "art_bytes": 34522648,
+      "r2_path": "package/open5e-tob2@2.1.0.json.gz",
+      "size_bytes": 2882485,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://arstechnica.com/gaming/2016/02/reviewed-dungeons-dragons-5th-edition/"
@@ -464,7 +436,7 @@
       "item_type": "package",
       "slug": "open5e-tob3",
       "title": "Tome of Beasts 3",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -478,10 +450,8 @@
         "language": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob3.pkg.json",
-      "r2_path": "package/open5e-tob3@1.1.0.json.gz",
-      "size_bytes": 2928088,
-      "art_count": 397,
-      "art_bytes": 33959174,
+      "r2_path": "package/open5e-tob3@2.1.0.json.gz",
+      "size_bytes": 2907819,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2025/07/Dnd-gelatinous-cube-2025-e1753770574655.jpg"
@@ -491,7 +461,7 @@
       "item_type": "package",
       "slug": "open5e-toh",
       "title": "Tome of Heroes",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -500,17 +470,15 @@
       "requires": [],
       "counts": {
         "spell": 91,
+        "feat": 400,
         "subclass": 76,
         "subspecies": 29,
         "species": 11,
-        "background": 19,
-        "feat": 13
+        "background": 19
       },
       "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
-      "r2_path": "package/open5e-toh@1.1.0.json.gz",
-      "size_bytes": 1512763,
-      "art_count": 239,
-      "art_bytes": 27125242,
+      "r2_path": "package/open5e-toh@2.1.0.json.gz",
+      "size_bytes": 2114520,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/challenger-stands-front-spooky-castle-illustration_14402210.htm#fromView=search&page=1&position=11&uuid=37bc4aac-de5b-4771-b758-f3ced966bee5&query=Dnd+art"
@@ -520,7 +488,7 @@
       "item_type": "package",
       "slug": "open5e-vom",
       "title": "Vault of Magic",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -531,10 +499,8 @@
         "magic-item": 1063
       },
       "bundled_asset": "assets/open5e_packs/open5e-vom.pkg.json",
-      "r2_path": "package/open5e-vom@1.1.0.json.gz",
-      "size_bytes": 2057990,
-      "art_count": 1063,
-      "art_bytes": 103903958,
+      "r2_path": "package/open5e-vom@2.1.0.json.gz",
+      "size_bytes": 2003755,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/wizard-dark-dungeon-illustration_14402228.htm#fromView=search&page=1&position=4&uuid=13bf4f9f-f40a-411d-94a7-969d828be57f&query=tomb+of+monsters+dnd+art"
@@ -544,7 +510,7 @@
       "item_type": "package",
       "slug": "open5e-wz",
       "title": "Warlock Zine",
-      "version": "1.1.0",
+      "version": "2.1.0",
       "publisher": "Kobold Press",
       "license": "ogl-10a",
       "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
@@ -555,10 +521,8 @@
         "spell": 43
       },
       "bundled_asset": "assets/open5e_packs/open5e-wz.pkg.json",
-      "r2_path": "package/open5e-wz@1.1.0.json.gz",
-      "size_bytes": 115515,
-      "art_count": 43,
-      "art_bytes": 7160706,
+      "r2_path": "package/open5e-wz@2.1.0.json.gz",
+      "size_bytes": 113300,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/terrible-fantasy-scenes-digital-illustrations_14541107.htm"

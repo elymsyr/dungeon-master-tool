@@ -43,12 +43,25 @@ def known_formulas():
     return {m.lower() for m in re.findall(r"case '([a-z0-9_]+)':", src)}
 
 
-def builtin_pool_slugs():
-    """`_resourcePoolCategory` satırları — builtin'de var olan havuz id'leri."""
+def builtin_pool_labels():
+    """`kResourcePoolLabels` — builtin havuz id'si → sayfadaki etiket.
+
+    Satırlar 2026-09-12'de `_resourcePoolCategory`'nin gövdesinden bu sabite
+    taşındı (id anahtar kaldı, etiket veri oldu); parser da oraya bakıyor.
+    """
     src = open(LOOKUPS_SRC, encoding='utf-8').read()
-    start = src.index('Tier0CategoryBuild _resourcePoolCategory')
-    end = src.index('    );', start)
-    return set(re.findall(r"'(pool:[a-z0-9_]+)'", src[start:end]))
+    start = src.index('const kResourcePoolLabels')
+    body = src[start:src.index('\n};', start)]
+    # Etiket ya tek ya çift tırnaklı ("Hunter's Mark (Free Casts)" kesme
+    # işareti taşıdığı için çift).
+    pairs = re.findall(
+        r"'(pool:[a-z0-9_]+)':\s*(?:'([^']*)'|\"([^\"]*)\")", body)
+    return {slug: single or double for slug, single, double in pairs}
+
+
+def builtin_pool_slugs():
+    """Builtin'de var olan havuz id'leri."""
+    return set(builtin_pool_labels())
 
 
 # ── satır denetimi (tek yerde; JSON ve Dart aynı kuralı kullanır) ────────────
@@ -180,6 +193,14 @@ def scan_json(path, formulas, builtin_pools):
                     problems.append((owner, lbl, 'DROP spell_ref çözülemiyor'))
                 rows.append((owner, f'spell:{lbl}', 'long_rest',
                              [] if ok else ['DROP spell_ref çözülemiyor']))
+        # Havuzun *adı* makine anahtarı; sayfadaki etiket `display_name`.
+        # Yoksa kart slug'ı güzelleştirmeye çalışır ve mekaniği adlandıran bir
+        # anahtar okunamaz hale gelir ("Hunters Mark No Slot Uses").
+        if e.get('type') == 'resource-pool':
+            attrs = e.get('attributes') or e.get('fields') or {}
+            if not str(attrs.get('display_name') or '').strip():
+                problems.append((owner, e.get('name', '?'),
+                                 'WARN display_name yok — kart slug gösterir'))
         if not hits and e.get('type') in POOLABLE:
             attrs = e.get('attributes') or e.get('fields') or {}
             text = ' '.join(str(attrs.get(k, '')) for k in

@@ -50,10 +50,10 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 371,
+        "feat": 100,
         "class": 1,
         "subclass": 3,
-        "background": 21,
-        "feat": 59
+        "background": 21
       }
     },
     {
@@ -109,6 +109,7 @@
         "monster": 360,
         "sense": 1,
         "language": 1,
+        "feat": 20,
         "class": 1,
         "subclass": 1
       }
@@ -175,6 +176,7 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 2,
+        "feat": 87,
         "subclass": 17,
         "subspecies": 1,
         "background": 2
@@ -204,9 +206,9 @@
         "trait": 11,
         "creature-action": 11,
         "monster": 4,
+        "feat": 25,
         "subclass": 4,
-        "background": 5,
-        "feat": 1
+        "background": 5
       }
     },
     {
@@ -280,11 +282,11 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 91,
+        "feat": 400,
         "subclass": 76,
         "subspecies": 29,
         "species": 11,
-        "background": 19,
-        "feat": 13
+        "background": 19
       }
     },
     {
