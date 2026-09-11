@@ -13,7 +13,7 @@
       "lore": 20,
       "location": 18,
       "npc": 34,
-      "trait": 15,
+      "trait": 16,
       "creature-action": 12,
       "monster": 4,
       "curse": 1,
@@ -2388,6 +2388,40 @@
         "mechanical_notes": "Direnç seçilen salgı tipine bağlıdır (`Bağıt Armağanı`), o yüzden burada sabit bir hasar tipi yazılmadı: karakter sayfasına dirençi elle ekle.\nÖzgün metnin 7. seviyedeki **kanat + uçuş hızı** maddesi bu evrende yok; yerine tırmanma ve zorlu arazi geldi."
       }
     },
+    "dd3b91fd-09cf-5408-951a-63dde9b05477": {
+      "name": "Salgı Püskürtmesi",
+      "type": "trait",
+      "source": "Aegis — Fizban's Treasury of Dragons",
+      "description": "Bağıt iki ciğeri aynı anda doldurur: sen ya da Pullu, önünüzdeki koniyi salgıyla kaplarsınız.",
+      "image_path": "media/Artwork/Salgı-Püskürtmesi.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Pul Bağıtlısı",
+        "trait_kind": "Other",
+        "benefits": "**Aksiyon.** Sen ya da Pullu 30 ft'lik koniye salgı püskürtür.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra her püskürtme **3. seviye ya da üstü bir büyü slotu** harcar.",
+        "granted_action_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Salgı Püskürtmesi"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:pul_salgi_puskurtmesi"
+            },
+            "recharge": "long_rest",
+            "count": 1
+          }
+        ],
+        "mechanical_notes": "Bedava kullanım bitince 3. seviye ya da üstü bir slot ödenerek tekrar açılabilir — slotları sınıfın kendi sayacı takip eder, bu satır onu takip etmez."
+      }
+    },
     "1ef1647d-580e-5fd6-9bf9-8ec18f2d8a78": {
       "name": "Refleks Direnci",
       "type": "trait",
@@ -2544,7 +2578,7 @@
       "type": "creature-action",
       "source": "Aegis — Tasha's Cauldron of Everything",
       "description": "*Tetikleyici:* 60 ft içinde gördüğün bir yaratık bir d20 atışını **avantajlı** ya da **dezavantajlı** atacak.\n\nTepkinle o atıştaki avantajı **veya** dezavantajı iptal edersin; zar düz atılır.\n\nBir şey iki türlü olamaz. Satır tektir.",
-      "image_path": "media/Artwork/creature-action-Dengeyi-Geri-Ver.webp",
+      "image_path": "media/Artwork/trait-Dengeyi-Geri-Ver.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2578,7 +2612,7 @@
       "type": "creature-action",
       "source": "Aegis — Tasha's Cauldron of Everything",
       "description": "1 dakika boyunca:\n\n- Sana yapılan saldırı atışları **avantaj alamaz**.\n- Senin attığın her d20'de **9 ve altı gelen sonuç 10 sayılır**.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **5 büyü puanı**.",
-      "image_path": "media/Artwork/creature-action-Fihrist-Hali.webp",
+      "image_path": "media/Artwork/trait-Fihrist-Hali.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2596,7 +2630,7 @@
       "type": "creature-action",
       "source": "Aegis — Tasha's Cauldron of Everything",
       "description": "Kendini merkez alan **30 ft'lik bir küpte** düzen ruhları belirir. Küpte, sen dahil seçtiğin her yaratığa toplam **100 can**ı istediğin gibi bölüştürerek iyileştirirsin.\n\nKüpteki hasarlı ama yok olmamış nesneler onarılır ve tamamen tamir olur.\n\nKüpteki **6. seviye ve altı** her büyü sonlanır.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **7 büyü puanı**.",
-      "image_path": "media/Artwork/creature-action-Sayım.webp",
+      "image_path": "media/Artwork/trait-Sayım.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2637,7 +2671,7 @@
       "type": "creature-action",
       "source": "Aegis — Fizban's Treasury of Dragons",
       "description": "*Tetikleyici:* sen ya da Pullu hasar alırsınız ve birbirinizin 60 ft'i içindesinizdir.\n\nTepkinle, hasarı alan tarafa o hasara karşı **direnç** verirsin.",
-      "image_path": "media/Artwork/creature-action-Refleks-Direnci.webp",
+      "image_path": "media/Artwork/trait-Refleks-Direnci.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -4868,9 +4902,9 @@
             "level": 11,
             "name": "Salgı Püskürtmesi",
             "description": "**Aksiyon.** Sen ya da Pullu 30 ft'lik koniye salgı püskürtür: Dexterity kurtarma zarı (DC = senin büyü kurtarma DC'n), **8d6** salgı hasarı, başaran yarısını alır. Uzun dinlenmede 1 bedava; sonrası 3. seviye ya da üstü slot.",
-            "granted_action_refs": [
+            "granted_trait_refs": [
               {
-                "_ref": "creature-action",
+                "_ref": "trait",
                 "name": "Salgı Püskürtmesi"
               }
             ]
