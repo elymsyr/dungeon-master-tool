@@ -49,9 +49,26 @@ def flux_workflow(ckpt: str, prompt: str, seed: int, size: int) -> dict:
 
 
 def zimage_workflow(model: str, text_encoder: str, vae: str,
-                    prompt: str, seed: int, size: int) -> dict:
-    """Z-Image-Turbo — ayrı diffusion/text_encoder/vae dosyaları."""
+                    prompt: str, seed: int, size: int,
+                    ref: str | None = None, denoise: float = 1.0) -> dict:
+    """Z-Image-Turbo — ayrı diffusion/text_encoder/vae dosyaları.
+
+    ref verilirse img2img: boş latent yerine referans görselin latenti,
+    denoise kadar üstüne boyanır (düşük denoise = referansa daha sadık).
+    """
+    latent = {
+        "6": {"class_type": "EmptySD3LatentImage",
+              "inputs": {"width": size, "height": size, "batch_size": 1}},
+    } if ref is None else {
+        "6a": {"class_type": "LoadImage", "inputs": {"image": ref}},
+        "6b": {"class_type": "ImageScale",
+               "inputs": {"image": ["6a", 0], "width": size, "height": size,
+                          "upscale_method": "lanczos", "crop": "center"}},
+        "6": {"class_type": "VAEEncode",
+              "inputs": {"pixels": ["6b", 0], "vae": ["3", 0]}},
+    }
     return {
+        **latent,
         "1": {"class_type": "UNETLoader",
               "inputs": {"unet_name": model, "weight_dtype": "default"}},
         "2": {"class_type": "CLIPLoader",
@@ -63,11 +80,10 @@ def zimage_workflow(model: str, text_encoder: str, vae: str,
               "inputs": {"text": prompt, "clip": ["2", 0]}},
         "5": {"class_type": "CLIPTextEncode",
               "inputs": {"text": "", "clip": ["2", 0]}},
-        "6": {"class_type": "EmptySD3LatentImage",
-              "inputs": {"width": size, "height": size, "batch_size": 1}},
         "7": {"class_type": "KSampler",
               "inputs": {"seed": seed, "steps": ZIMAGE_STEPS, "cfg": CFG,
-                         "sampler_name": SAMPLER, "scheduler": SCHEDULER, "denoise": 1.0,
+                         "sampler_name": SAMPLER, "scheduler": SCHEDULER,
+                         "denoise": denoise,
                          "model": ["1", 0], "positive": ["4", 0],
                          "negative": ["5", 0], "latent_image": ["6", 0]}},
         "8": {"class_type": "VAEDecode",
@@ -94,6 +110,27 @@ def get(host: str, path: str) -> bytes:
         return r.read()
 
 
+_UPLOADED: dict[str, str] = {}
+
+
+def upload_ref(host: str, path: str) -> str:
+    """Referans görseli ComfyUI'nin input/ klasörüne yükler, sunucu adını döner."""
+    if path in _UPLOADED:
+        return _UPLOADED[path]
+    data = Path(path).read_bytes()
+    b = b"--X\r\n"
+    b += b'Content-Disposition: form-data; name="image"; filename="'
+    b += Path(path).name.encode() + b'"\r\nContent-Type: image/webp\r\n\r\n'
+    b += data + b"\r\n--X\r\nContent-Disposition: form-data; name=\"overwrite\"\r\n\r\ntrue\r\n--X--\r\n"
+    req = urllib.request.Request(
+        f"{host}/upload/image", data=b,
+        headers={"Content-Type": "multipart/form-data; boundary=X"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        name = json.load(r)["name"]
+    _UPLOADED[path] = name
+    return name
+
+
 def run_job(host: str, job: dict, model: str, text_encoder: str, vae: str,
             size: int, timeout: int, loader: str = "diffusion") -> bytes:
     """Tek bir job'ı ComfyUI'ya gönderir ve PNG bytes döner."""
@@ -101,7 +138,10 @@ def run_job(host: str, job: dict, model: str, text_encoder: str, vae: str,
         wf = flux_workflow(model, job["prompt"], job["seed"], size)
         out_node = "7"
     else:
-        wf = zimage_workflow(model, text_encoder, vae, job["prompt"], job["seed"], size)
+        wf = zimage_workflow(model, text_encoder, vae, job["prompt"], job["seed"],
+                             size,
+                             upload_ref(host, job["ref"]) if job.get("ref") else None,
+                             job.get("denoise", 1.0))
         out_node = "9"
 
     pid = post(host, "/prompt", {"prompt": wf})["prompt_id"]

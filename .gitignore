@@ -5,6 +5,7 @@
 key.properties
 web-mockup
 __pycache__
+tool/**/out*
 .tmp/
 gcs
 .env

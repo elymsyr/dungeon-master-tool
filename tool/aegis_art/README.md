@@ -4,12 +4,16 @@ Aegis dünyasındaki tüm entity'ler (125 adet, 14 kategori) için D&D 5e SRD ya
 
 ## Amaç
 
-Aegis world blueprint'indeki her entity için ComfyUI/Flux ile görsel üretim. Dört aşamalı bir pipeline:
+Aegis world blueprint'indeki her entity için ComfyUI/Flux ile görsel üretim. Beş aşamalı bir pipeline:
 
 1. **Prompt üretimi** (`aegis_prompts.py`) — Blueprint'ten her entity için ham Flux prompt'u oluşturur. Entity'nin alanları (appearance, description, benefits vb.) salt görsel subject cümleciğine dönüştürülür, kural metni temizlenir. Çıktı: `art_jobs.jsonl`.
 2. **Subject cache** (`aegis_subject_gen.py`) — Gemini API ile her entity için profesyonel görsel betimleme üretilir. Ham blueprint içeriğini zengin, somut görsel betimlemeye dönüştürür. Çıktı: `aegis_subject_cache.json`.
 3. **Merge** (`aegis_merge.py`) — `art_jobs.jsonl` + `aegis_subject_cache.json` birleştirilir. Final prompt'ta raw blueprint içeriği yerine Gemini cevabı kullanılır. Çıktı: `art_jobs_final.jsonl`.
-4. **Görsel üretimi** — ComfyUI/Flux ile `art_jobs_final.jsonl` kullanılarak görseller üretilir (henüz yok).
+4. **Elden geçirme** (`aegis_polish.py`) — `art_jobs_final.jsonl`'i yeniden derler: konu metni
+   + **kart başına ışık/atmosfer** + kategori/kart bazlı çerçeveleme. Kaynağı
+   `art_jobs_final.orig.jsonl` (merge çıktısının kopyası); konusu yeniden yazılan kartlar
+   script içindeki `SUBJECT` sözlüğünde. Çıktı: `art_jobs_final.jsonl`.
+5. **Görsel üretimi** (`aegis_generate.py`) — ComfyUI ile `art_jobs_final.jsonl` → `out/{uuid}.webp`.
 
 ## Kullanım
 
@@ -30,7 +34,12 @@ python3 aegis_merge.py --sample 5                      # 5 örnek bas
 python3 aegis_merge.py --self-check                    # doğrula
 python3 aegis_merge.py --category npc                  # sadece NPC'ler
 
-# 4. Görsel üretimi (ComfyUI gerekli → out/{uuid}.webp)
+# 4. Elden geçirme (art_jobs_final.orig.jsonl → art_jobs_final.jsonl)
+python3 aegis_polish.py --check                        # doğrula, yazma
+python3 aegis_polish.py --show "location|Votumar"      # tek kartın prompt'u
+python3 aegis_polish.py                                # yaz
+
+# 5. Görsel üretimi (ComfyUI gerekli → out/{uuid}.webp)
 python3 aegis_generate.py                                    # tüm job'lar
 python3 aegis_generate.py --limit 5                          # pilot: ilk 5
 python3 aegis_generate.py --categories npc,monster            # filtre
@@ -74,7 +83,11 @@ Gemini cache yoksa `[Subject — blueprint extract]` etiketiyle ham blueprint i�
 
 ## Stil
 
-Tüm görseller aynı stil parametrelerini kullanır:
+`aegis_merge.py` her karta kategori sabiti bir ışık veriyordu (bütün location'lar
+"flat overcast daylight", bütün NPC'ler "hearth glow") — sonuçta her kartın arka planı
+birbirinin aynı çıkıyordu. `aegis_polish.py` ışığı/atmosferi **kart başına** verir ve
+prompt'tan `{isim}, Aegis {kategori}` başlığını çıkarır (Mine/Fare gibi adlar text
+encoder'da yanlış anlam üretiyordu). Ortak kalanlar:
 - D&D 5e SRD yağlı boya (hand-painted oil painting on canvas)
 - Aegis paleti (deep earthy tones, weathered parchment, warm amber, cool slate)
 - Anti-AI skeleton (digital art / concept art / render gibi tetikleyici kelimeler yasak)
