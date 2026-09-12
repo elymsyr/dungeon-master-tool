@@ -11,13 +11,108 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **59 tests fail on `main`** — As of v15.10.0 `flutter test` reports 1424 passing and 59
-  failing. None of them are caused by the version bump; they are fallout from the content
-  and schema changes in v15.10.0 that the tests were not updated for:
-  `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
-  `default_schema_test` (3, expects 19 categories but the schema now generates 18),
-  `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
-  clean apart from 27 pre-existing info-level lints.
+- **60 tests fail on `main`** — `flutter test` reports 1432 passing and 60 failing.
+  Superseded in detail by the audit section below, which gives the root cause of each
+  group: `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
+  `default_schema_test` (3), `content_store_test` (2), `guest_promotion_service_test` (1)
+  and `world_delete_orphans_characters_test` (1). Four of the seven groups are a real
+  product bug, not test drift. `flutter analyze` is clean: 0 errors, 0 warnings, 30
+  info-level lints.
+
+## Audit — 12 September 2026
+
+A full sweep on `f9f8b0e6`: `flutter analyze`, `flutter test` (with and without a working
+`libsqlite3`), `convert_blueprint --check` over all nine bundled world dirs, `build_catalog`,
+the worker's `tsc --noEmit`, `.arb` key parity and the migration numbering. Baseline is
+**1432 passing / 60 failing** tests and a clean analyze. The 60 failures reduce to seven root
+causes, listed below worst first.
+
+### Real product bugs
+
+- **Guest promotion silently swallows a same-named package — data loss** — `_computeNameConflicts`
+  in [guest_promotion_service.dart](../flutter_app/lib/application/services/guest_promotion_service.dart)
+  drops a guest package from the merge on `m.name = g.name` alone. The same file's own
+  contract (the doc comment on `_guestPackageRemap`) says equivalence is deliberately
+  "same name *and* at least one shared entity id", because that overlap is what makes the
+  guest rows unmergeable; two genuinely different packages that merely share a name mint
+  random ids, share nothing, and must both survive. So homebrew called "Notes" made while
+  signed out disappears on sign-in if the account already has anything called "Notes".
+  Introduced by `e900f257` (the SRD duplicate fix), which overrides the narrower rule from
+  `982a46cd`. Guarded by `guest_promotion_service_test` — "two different packages that
+  merely share a name both survive" (1 failure).
+
+- **Combat is frozen for good when a world has no campaign data** — `_loadFromCampaign` in
+  [combat_provider.dart](../flutter_app/lib/application/providers/combat_provider.dart)
+  returns early on `data == null` and therefore never reaches the `_isLoadWithoutDataSafe()`
+  check that is supposed to release the gate, so `_loaded` stays false. Every mutation —
+  `createEncounter`, `addDirectRow`, `_saveAndNotify` — is behind `if (!_loaded) return;`,
+  so the UI accepts the action, nothing happens, and no error is raised. Accounts for all
+  42 `combat_provider_test` failures on its own.
+
+- **`ContentStore._touch` is documented as best-effort but throws** — `read()` fires
+  `unawaited(_touch(sha))` and `_writeMeta`'s `tmp.rename` has no `catch`, so if the cache
+  directory goes away mid-read (cache clear, shutdown, teardown) a `PathNotFoundException`
+  escapes into the zone as an unhandled async error. One line to fix: swallow the failure in
+  `_touch`, which is what its own comment already promises. 2 `content_store_test` failures.
+
+- **A successful world delete can still be reported as a failure** — `_purgeWorld` calls
+  `FirstPartyArtService.sweepUnreferenced` after the transaction has committed, unguarded, so
+  a throw there propagates out of `deleteWorld` even though the world is already gone. It
+  currently throws whenever `AppPaths.cacheDir` is unset (`LateInitializationError`). The
+  sweep is best-effort cache GC and belongs in a `try`/`catch`; the same unguarded call sits
+  in [package_repository_impl.dart](../flutter_app/lib/data/repositories/package_repository_impl.dart).
+  1 `world_delete_orphans_characters_test` failure — this one is *not* fallout from v15.10.0
+  content changes and was missing from the earlier count.
+
+### Stale tests (the product change was deliberate)
+
+- **`account_gate_test` (6)** — `AppSurface.localSync` is now `requiresAccount: false` on
+  purpose: LAN sync never leaves the local network and is secured by the QR token / PIN. The
+  test still expects it inside the gated set.
+
+- **`srd_core/species_test` (5)** — subspecies (dragonborn ancestries, elf lineages, …) ship
+  as first-class `subspecies` entities in `subspecies.dart`; the nested `subspecies_options`
+  list is legacy and is no longer emitted. The test still casts it and gets
+  `Null is not a subtype of List`.
+
+- **`default_schema_test` (3)** — the `player` category was removed, so the schema generates
+  18 categories, not 19; legacy data is carried by `legacy_maps.dart` and
+  `kPlayerCategorySlugs`. The test asserts 19, asserts the slug is present, and then blows up
+  on a `firstWhere` for it.
+
+### Infrastructure and process
+
+- **Nothing gates a red build** — [analyze-test.yml](../.github/workflows/analyze-test.yml) is
+  `workflow_dispatch` only, and both jobs use `continue-on-error: true` with
+  `flutter test --machine > … || true`. Analyze and test results are uploaded as artifacts and
+  never fail the run, which is how 60 failures accumulate unnoticed. The worker is not
+  covered at all.
+
+- **The worker no longer typechecks** — `npm run typecheck` in `cloudflare/` fails with four
+  `TS2304`s at [jwt.ts:150-151](../cloudflare/src/jwt.ts#L150-L151):
+  `RsaHashedImportParams`, `EcKeyImportParams`, `AlgorithmIdentifier` and `EcdsaParams` are no
+  longer exported by `@cloudflare/workers-types`, which the `^4.20250101.0` caret floated up
+  to `4.20260412.1`. Types only — the deployed runtime is unaffected.
+
+- **The bundled catalog manifest is stale** — re-running `build_catalog.dart` rewrites 59
+  lines of `assets/first_party/manifest.json`: the 19 Open5e packs carry no `art_count` /
+  `art_bytes` at all and the two cairn packs claim `art_bytes: 0` against a real 33 MB and
+  37 MB. It was not regenerated after `875268e3` restored the pack art refs.
+
+- **~188 hard-coded UI strings** — `lib/presentation/screens/` still holds untranslated
+  literals (`Text('Package')`, `Text('Rule Settings')`, `SnackBar(content: Text('Share failed: $e'))`,
+  `Text('Level Up: …')`), against the rule that every user-facing string is localized. Language
+  names in the locale picker are a legitimate exception. Key parity itself is perfect: 724
+  keys in `app_en.arb`, nothing missing or extra in `tr` / `de` / `fr`.
+
+### Not a repository problem
+
+- **`libsqlite3.so` missing on a dev machine** — on a box with `libsqlite3-0` but no
+  `libsqlite3-dev`, every Drift-backed test dies with
+  `Failed to load dynamic library 'libsqlite3.so'` — 18 extra failures
+  (`v12_schema_smoke_test` 5, `guest_account_switch_test` 11, `pre_v12_file_guard_test` 2),
+  which is what turns the real 60 into a reported 77. `sudo apt install libsqlite3-dev` and
+  all 18 pass. Worth checking before reporting a test count.
 
 ## Resolved
 
