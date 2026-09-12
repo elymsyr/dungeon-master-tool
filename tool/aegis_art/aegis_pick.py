@@ -15,6 +15,8 @@ DIRS = sorted(d for d in ROOT.iterdir() if d.is_dir() and d.name.startswith("out
 PICKED = ROOT / "selected"
 LOG = ROOT / "comments.jsonl"
 
+IMG_EXT = {".webp", ".png", ".jpg", ".jpeg"}
+
 NAMES = {}
 for jl in ROOT.glob("art_jobs*.jsonl"):
     for line in jl.read_text().splitlines():
@@ -29,7 +31,7 @@ def items():
     groups = {}
     for d in DIRS:
         for f in d.iterdir():
-            if f.is_file():
+            if f.is_file() and f.suffix.lower() in IMG_EXT:
                 groups.setdefault(f.name, []).append(d.name)
     return [
         {"file": n, "label": NAMES.get(Path(n).stem, Path(n).stem), "dirs": sorted(ds)}
@@ -117,13 +119,19 @@ class H(BaseHTTPRequestHandler):
         out = ROOT / (d.get("outdir") or "out_final").strip().replace("/", "_")
         out.mkdir(parents=True, exist_ok=True)
         n = 0
+        srcdirs = set()
         with (out / "comments.jsonl").open("w") as fh:
             for e in d["picks"]:
                 src = ROOT / e["dir"] / e["file"]
                 if src.is_file():
                     shutil.copy2(src, out / e["file"])
                     n += 1
+                    srcdirs.add(e["dir"])
                 fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+        for dname in sorted(srcdirs):
+            for jl in (ROOT / dname).glob("000*"):
+                shutil.copy2(jl, out / (jl.name if len(srcdirs) == 1
+                                        else f"000{dname}-{jl.name[3:]}"))
         self._send(json.dumps({"copied": n, "outdir": out.name}).encode())
 
     def log_message(self, *a):

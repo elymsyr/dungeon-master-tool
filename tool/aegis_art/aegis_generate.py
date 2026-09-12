@@ -11,7 +11,7 @@ Kullanım:
     python3 aegis_generate.py --loader checkpoint --ckpt flux1-schnell-fp8.safetensors
     python3 aegis_generate.py --host http://192.168.1.12:8188
 """
-import argparse, json, sys, time, urllib.parse, urllib.request
+import argparse, json, shutil, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -220,6 +220,8 @@ def main() -> None:
         print(f"HATA: jobs dosyası yok: {args.jobs}", file=sys.stderr)
         print("Önce aegis_merge.py çalıştırın.", file=sys.stderr)
         sys.exit(1)
+
+    shutil.copy2(args.jobs, args.out / f"000{args.jobs.name}")
 
     jobs = [json.loads(l) for l in args.jobs.read_text().splitlines() if l.strip()]
 
