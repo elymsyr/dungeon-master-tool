@@ -5,6 +5,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../expandable_markdown.dart';
 import 'entity_link.dart';
 
 /// Typed structured-list editors for the structured list FieldTypes:
@@ -67,6 +68,7 @@ class _StructuredListShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (readOnly && rows.isEmpty) return const SizedBox.shrink();
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Padding(
@@ -82,10 +84,11 @@ class _StructuredListShell extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
-                Text(
-                  schema.fieldType.name,
-                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
-                ),
+                if (!readOnly)
+                  Text(
+                    schema.fieldType.name,
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
+                  ),
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
@@ -131,14 +134,16 @@ class _StructuredListShell extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(width: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            '${i + 1}.',
-                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline),
+                        if (!readOnly) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              '${i + 1}.',
+                              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: buildRow(i, row, (r) => _updateRow(i, r)),
                         ),
@@ -173,6 +178,53 @@ List<Map<String, dynamic>> _coerceRows(dynamic value) {
 // Common micro-inputs
 // ─────────────────────────────────────────────────────────────────────────
 
+/// Read-only rendering of one row cell: `label value` as compact text, and
+/// nothing at all when the value is empty. Read mode used to draw the same
+/// grid of `TextFormField`s as the editor, blank boxes included.
+Widget _roCell(String label, String? value,
+    {double maxWidth = 520, bool markdown = false}) {
+  final v = value?.trim() ?? '';
+  if (v.isEmpty) return const SizedBox.shrink();
+  return Builder(builder: (context) {
+    final scheme = Theme.of(context).colorScheme;
+    if (markdown) {
+      // Prose cells hold markdown, so read mode renders it instead of leaking
+      // literal `**`/`###`. Reuses the collapse/expand block used elsewhere.
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label,
+                style: TextStyle(fontSize: 11, color: scheme.outline)),
+            ExpandableMarkdown(
+              data: v,
+              collapsedTextStyle:
+                  TextStyle(fontSize: 12, color: scheme.onSurface),
+            ),
+          ],
+        ),
+      );
+    }
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: RichText(
+        text: TextSpan(children: [
+          TextSpan(
+            text: '$label ',
+            style: TextStyle(fontSize: 11, color: scheme.outline),
+          ),
+          TextSpan(
+            text: v,
+            style: TextStyle(fontSize: 12, color: scheme.onSurface),
+          ),
+        ]),
+      ),
+    );
+  });
+}
+
 Widget _miniText({
   required String label,
   required String value,
@@ -180,7 +232,9 @@ Widget _miniText({
   required ValueChanged<String> onChanged,
   double width = 120,
   TextInputType? keyboardType,
+  bool markdown = false,
 }) {
+  if (readOnly) return _roCell(label, value, markdown: markdown);
   return SizedBox(
     width: width,
     child: TextFormField(
@@ -205,6 +259,7 @@ Widget _miniInt({
   required ValueChanged<int?> onChanged,
   double width = 80,
 }) {
+  if (readOnly) return _roCell(label, value?.toString());
   return SizedBox(
     width: width,
     child: TextFormField(
@@ -231,6 +286,10 @@ Widget _miniEnum({
   double width = 140,
   String Function(String)? display,
 }) {
+  if (readOnly) {
+    return _roCell(
+        label, value == null ? null : (display?.call(value) ?? value));
+  }
   return SizedBox(
     width: width,
     // Builder so the selected-value text inherits the theme's on-surface ink
@@ -316,6 +375,28 @@ class _MiniRelationField extends StatelessWidget {
     // No `sourcePanel`: these rows sit inside a structured-list editor, which
     // is not panel-scoped, so the default routing applies.
     final linkId = entityLinkTarget(v, entities);
+    if (readOnly) {
+      if (!hasValue) return const SizedBox.shrink();
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label ',
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.outline)),
+          EntityLink(
+            targetId: linkId,
+            ref: ref,
+            child: Text(
+              displayName,
+              style: TextStyle(
+                fontSize: 12,
+                decoration: linkId != null ? TextDecoration.underline : null,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     return SizedBox(
       width: 200,
       child: InputDecorator(
@@ -399,11 +480,12 @@ class _MiniRelationListField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (readOnly && values.isEmpty) return const SizedBox.shrink();
     return SizedBox(
       width: 220,
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: '$label (${values.length})',
+          labelText: readOnly ? label : '$label (${values.length})',
           isDense: true,
           labelStyle: const TextStyle(fontSize: 11),
         ),
@@ -621,6 +703,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'description': v}),
                   width: 380,
+                  markdown: true,
                 ),
                 if (gateMiss)
                   Tooltip(
@@ -1580,21 +1663,22 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
             },
             width: 120,
           ),
-          FilterChip(
-            label: const Text('Cantrip', style: TextStyle(fontSize: 11)),
-            selected: row['is_cantrip'] == true,
-            onSelected: readOnly
-                ? null
-                : (sel) {
-                    final next = {...row};
-                    if (sel) {
-                      next['is_cantrip'] = true;
-                    } else {
-                      next.remove('is_cantrip');
-                    }
-                    onRowChanged(next);
-                  },
-          ),
+          if (!readOnly || row['is_cantrip'] == true)
+            FilterChip(
+              label: const Text('Cantrip', style: TextStyle(fontSize: 11)),
+              selected: row['is_cantrip'] == true,
+              onSelected: readOnly
+                  ? null
+                  : (sel) {
+                      final next = {...row};
+                      if (sel) {
+                        next['is_cantrip'] = true;
+                      } else {
+                        next.remove('is_cantrip');
+                      }
+                      onRowChanged(next);
+                    },
+            ),
         ],
       ),
     );
@@ -2028,6 +2112,7 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
                   onChanged: (s) =>
                       writeRow({...row, 'description': s}),
                   width: 400,
+                  markdown: true,
                 ),
               ),
             ],
