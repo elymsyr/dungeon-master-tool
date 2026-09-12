@@ -1,5 +1,115 @@
 # Release Notes
 
+## Dungeon Master Tool v16.0.0 — Content That Arrives Complete (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Everything you install now brings its pictures with it. Store packages had been shipping without card art, community downloads pulled their images only when you happened to scroll past a card, and nothing was ever cleaned up when you deleted a package again. This release fixes all three ends of that chain, makes the bundled D&D 5e SRD content optional when you create a world, and puts Half-Elf back on the species list.
+
+---
+
+### Highlights
+
+- **Store packages come with their card art again** — 5527 images had silently gone missing from the 19 bundled packs; every pack is stamped and published with its art bundle.
+- **Community downloads fetch their media up front** — a world you downloaded now opens with its pictures when you are offline.
+- **SRD content is optional** — a checkbox at world creation lets you start with an empty 5e world instead of the full SRD library.
+- **Half-Elf is back** — the SRD 5.1 species returns as its own card for 2014-era characters.
+- **Deleting a package frees its disk space** — the roughly 50 MB of card images that came with it are swept away with it.
+- **The character wizard shows the gear you are given** — equipment granted outright by your class or background is now visible in the equipment step.
+
+---
+
+### Content
+
+#### Card art reaches you again
+
+Nineteen bundled packs were rebuilt in the previous release and lost their image references in the process, so anything installed from the store arrived as blank cards. Every pack has been re-stamped and republished together with its art bundle, and the publishing command now produces and uploads that bundle itself instead of relying on someone remembering a separate step. If art is still incomplete during an install, the status line says so — "art 12/391" — rather than quietly leaving you with empty cards.
+
+#### Half-Elf
+
+Half-Elf was dropped from the SRD in the 2024 revision. It is back as its own species card, with Darkvision 60 ft., Fey Ancestry, Common and Elvish, and a new Skill Versatility trait for the two free skill proficiencies. It deliberately carries no ability score bonuses — those come from your background in the current rules, and stacking the old +2/+1 on top would be wrong.
+
+#### Aegis
+
+The Kayıt Ruhu and Pul Bağıtlısı subclasses are now adapted from Clockwork Soul and Drakewarden, and the world ships with its artwork bundled. A batch of card images that had come back looking modern — cranes, lamps, mirrors — were redrawn period-correct.
+
+---
+
+### Worlds
+
+#### Starting a world without the SRD
+
+The world creation dialog has a new **Add D&D 5e SRD content** checkbox. It is on by default and only appears when you pick the built-in 5e template. Turn it off and the world starts empty, and it stays empty — previously a world would quietly re-acquire the SRD package the next time you opened it.
+
+---
+
+### Character creation
+
+#### Equipment you are given, not chosen
+
+Gear that your class or background grants unconditionally used to land on the sheet without ever appearing in the wizard, so a build whose kit involved no choices read as "no equipment". The equipment step now shows those items as a card of their own, alongside the choices you actually make.
+
+---
+
+### Smaller improvements
+
+- **Marketplace** — the download button shows progress as the media is fetched.
+- **Read-only cards** — structured lists (traits, grants, benefits) render as readable text instead of the editor's grid of empty boxes; prose cells render their markdown instead of printing `**` and `###`.
+- **l10n** — one new key for the SRD checkbox, covered in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Packages** — deleting a package or a world now deletes the card images that came down with it. Images still referenced by another package, another world, or by something in the trash are kept.
+- **Worlds** — deleting a world no longer leaves its open cards, tabs, filters, searches and PDF tabs behind for the next world that happens to take the same name.
+- **Worlds** — the app no longer crashes on opening a world whose remembered PDF tab points at a file that is gone; saved PDF tabs are checked against disk before being reopened.
+
+---
+
+### Deprecations & removals
+
+- **The separate art upload script** — publishing the catalog now builds and uploads the art bundle itself; the standalone upload step is gone.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `15.10.0` → `16.0.0`.
+- **Content versions:** the built-in SRD content is re-versioned, so existing installs pick up Half-Elf and the restored art on first launch.
+- **Existing worlds:** nothing is rewritten. A world created before this release keeps its SRD content; the opt-out applies only to new worlds.
+- **Packages installed before this release:** re-download from **Marketplace → Official** to pick up card art that was missing.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1492 tests fail on `main` and no CI step blocks a red build.
+
+---
+
+### For developers
+
+- **`srdCorePackVersion`** — 1.4.0 → 1.5.0 for the Half-Elf row and the Skill Versatility trait.
+- **`CampaignRepository.create`** — takes `includeSrd`; opting out writes `_srdCoreOptOut: true` into the world settings blob, which the `_loadFromDb` self-heal also honours.
+- **`FirstPartyArtService.sweepUnreferenced`** — single-pass scan of `cacheDir/art/` against all live refs (`package_entities`, `world_entities`, `trash_items`, `world_characters`), no refcount table; called outside the transaction by `_purgePackage` and world delete.
+- **`stamp_art_refs.py`** — preserves line endings (dnd5e-srd is CRLF); `test/tool/pack_art_refs_test.dart` is the Dart equivalent of `--check` and runs in a normal `flutter test`.
+- **`publish_catalog.dart`** — invokes `pack_art_bundles.py` before the manifest; `--skip-art` opts out and the exit code propagates.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v15.10.0 — Subclasses That Actually Do Something (Beta)
 
 **Release date:** September 2026
