@@ -2,7 +2,7 @@
 //
 //   dart run tool/catalog_publish/bin/publish_catalog.dart \
 //       --worker https://dmt-assets.<acct>.workers.dev \
-//       [--token <ADMIN_TOKEN>] [--dry-run] [--force]
+//       [--token <ADMIN_TOKEN>] [--dry-run] [--force] [--skip-art]
 //
 // Reads `assets/first_party/manifest.json`, gzips each entry's bundled payload,
 // and uploads it to the worker's admin-gated write route at
@@ -11,6 +11,13 @@
 // points at objects already present. Versioned payload paths
 // (`{type}/{slug}@{ver}.json.gz`) are immutable — an already-present object is
 // skipped unless `--force`.
+//
+// Card art rides along: before the manifest goes up, `tool/art_gen/
+// pack_art_bundles.py` is run so every package's `catalog/art-bundle/
+// {slug}@{ver}.zip` matches the version just published. That used to be a
+// separate manual step, and forgetting it shipped art-less packages — the zip
+// is the only art source, there is no per-file fallback. `--skip-art` opts out
+// (needs python3 + wrangler otherwise).
 //
 // Token resolves from `--token` else the `ADMIN_TOKEN` env var. Worker URL from
 // `--worker` else the `DMT_WORKER_URL` env var.
@@ -106,6 +113,12 @@ Future<void> main(List<String> args) async {
       }
     }
 
+    // Art bundles BEFORE the manifest: the version the manifest advertises must
+    // already have its zip, otherwise every install of it comes up art-less.
+    if (!opts.containsKey('skip-art')) {
+      if (!await _packArtBundles(dryRun: dryRun)) failed++;
+    }
+
     // Manifest LAST, plain JSON — never points at a missing object.
     if (!dryRun) {
       final ok = await _put(client, '$worker/catalog/manifest.json', token,
@@ -122,6 +135,29 @@ Future<void> main(List<String> args) async {
   print('Done: $uploaded uploaded, $skipped skipped, $failed failed, '
       '${_kb(bytes)} transferred.');
   if (failed > 0) exit(1);
+}
+
+/// Build + upload one art zip per package via `tool/art_gen/pack_art_bundles.py`
+/// (which shells out to `wrangler`, not the worker: the biggest zip is over the
+/// Worker request-body limit).
+Future<bool> _packArtBundles({required bool dryRun}) async {
+  final script = File(
+      '${Directory.current.parent.path}/tool/art_gen/pack_art_bundles.py');
+  if (!script.existsSync()) {
+    stderr.writeln('  ✗ art bundles: ${script.path} not found');
+    return false;
+  }
+  print('Art bundles → catalog/art-bundle/');
+  final r = await Process.start(
+    'python3',
+    [script.path, if (dryRun) '--dry-run'],
+    mode: ProcessStartMode.inheritStdio,
+  ).then((p) => p.exitCode).catchError((Object e) {
+    stderr.writeln('  ✗ art bundles: $e');
+    return 1;
+  });
+  if (r != 0) stderr.writeln('  ✗ art bundles FAILED (exit $r)');
+  return r == 0;
 }
 
 Future<bool> _exists(HttpClient client, String url) async {

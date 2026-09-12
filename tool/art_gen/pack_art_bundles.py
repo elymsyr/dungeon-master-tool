@@ -69,6 +69,12 @@ def main() -> None:
                     missing += 1
                     continue
                 z.write(src, arcname=n)
+        if missing == len(names):
+            # Tek görsel bile yoksa boş zip yüklemenin anlamı yok — kurulumda
+            # 404 ile aynı sonucu verir, sadece sessizce.
+            print(f"{slug}@{version}: atlandi ({missing} gorsel out/ icinde yok)")
+            zpath.unlink(missing_ok=True)
+            continue
         size = zpath.stat().st_size
         print(f"{slug}@{version}: {len(names) - missing} görsel, "
               f"{size / 1e6:.1f} MB{f', {missing} eksik' if missing else ''}")

@@ -5,7 +5,7 @@ path: flutter_app/lib/data/services/first_party_art_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-07
+updated: 2026-09-12
 tags: [file]
 ---
 
@@ -40,9 +40,9 @@ tags: [file]
 - **Görsel başına indirme yolu yoktur.** `catalog/art/*.webp` objeleri R2'den kaldırıldı; zip inmezse görsel gelmez, kurulum yine de başarılı sayılır (ref pack'te kalır).
 - **Path guard:** `name` içinde `/`, `\`, `..` varsa null. Ref pack verisinden geliyor, cache dizininin dışına yazamamalı.
 - **Bundle görselleri diskte iki kez yer kaplar** (APK içinde + cache'te), çünkü Flutter asset'i `File` olarak açılamaz. Sadece görüntülenenler için, cache silinebilir.
-- Bundle q50 (~52 MB), R2 kopyası orijinal q82 (~762 MB). Aynı uuid, farklı kalite — bundle bir optimizasyon.
+- Bundle q50 (~52 MB), zip'lerdeki kopya orijinal q82. Aynı uuid, farklı kalite — bundle bir optimizasyon.
 - **LRU/kota yok:** `ContentStore` sha-adresli, art ref'leri uuid-adresli olduğu için oraya girmiyorlar. Tüm bestiary gezilirse cache 762 MB'ye kadar büyüyebilir.
 
 ## Notes
-- Görselleri `tool/art_gen/generate.py` üretir; `bundle_srd_art.py` bundle'ı, `stamp_art_refs.py` pack ref'lerini, `cloudflare/upload_art.sh` R2 kopyasını üretir.
+- Görselleri `tool/art_gen/generate.py` üretir; `bundle_srd_art.py` bundle'ı, `stamp_art_refs.py` pack ref'lerini, `pack_art_bundles.py` paket başına art zip'ini üretip R2'ye yükler ([[publish_catalog]] onu kendisi çağırır; `cloudflare/upload_art.sh` 2026-09-12'de silindi — tekil `catalog/art/*` objeleri artık tutulmuyordu).
 - SRD tarafında ref'i `srd_core_pack.dart` pass 1 basıyor (`_artedSlugs`), pack asset'lerinde ise `stamp_art_refs.py`.

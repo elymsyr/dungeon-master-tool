@@ -127,8 +127,9 @@ flutter:
     # Built-in SRD 5.2.1 paketinin kart görselleri (1247 adet, webp q50,
     # ~55MB) — `tool/art_gen/bundle_srd_art.py` üretir. Bundle'da oldukları
     # için çevrimdışı ve hesapsız açılırlar. Diğer resmî paketlerin ~6.2k
-    # görseli bundle'a GİRMEZ; R2 catalog'undan iner
-    # (`{worker}/catalog/art/<uuid>.webp`, `cloudflare/upload_art.sh`).
+    # görseli bundle'a GİRMEZ; kurulumda paket başına tek zip hâlinde iner
+    # (`{worker}/catalog/art-bundle/{slug}@{ver}.zip`, üreteci
+    # `tool/art_gen/pack_art_bundles.py`, `publish_catalog.dart` çağırır).
     - assets/art/srd/
     # Bundled worlds (blueprint format) are EXCLUDED from builds (~326MB).
     # They ship through the marketplace instead: the catalog entry's payload
