@@ -12,7 +12,8 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 REPO = BASE.parent.parent
 JOBS_FILE = BASE / "art_jobs_final.jsonl"
-OUT_DIR = BASE / "out"
+# Secilen gorseller — art_jobs_final.jsonl'in ham ciktisi (out/) degil.
+OUT_DIR = BASE / "out_choosen"
 BP_DIR = REPO / "flutter_app" / "assets" / "worlds" / "aegis" / "aegis-act1"
 BP_FILE = BP_DIR / "world-blueprint.json"
 MANIFEST_FILE = BP_DIR / "manifest.json"
@@ -71,6 +72,13 @@ def main() -> None:
             name = entity["source_name"]
             bp_index.setdefault(name, {})[cat] = i
 
+    # Birden fazla kategoride geçen job adları — dosya adına kategori öneki alırlar.
+    # Blueprint'ten değil JOB'lardan sayılır: blueprint'te kart adı değişirse
+    # (Refleks Direnci → Reflexive Resistance) önek düşer ve iki kategorinin
+    # görseli aynı dosyaya yazılırdı.
+    dupe_names = {n for n in (j["name"] for j in jobs)
+                  if sum(1 for j in jobs if j["name"] == n) > 1}
+
     # Eşleştir ve kopyala
     copied, skipped, missing_bp = 0, 0, []
     file_list: list[str] = []
@@ -84,8 +92,8 @@ def main() -> None:
         src = existing[uuid]
         fname = sanitize(name) + ".webp"
 
-        # Aynı isim farklı kategori varsa_kategori önek ekle
-        if name in bp_index and len(bp_index[name]) > 1:
+        # Aynı isim farklı kategori varsa kategori öneki ekle
+        if name in dupe_names:
             fname = sanitize(f"{cat}-{name}") + ".webp"
 
         dst = MEDIA_DIR / fname
