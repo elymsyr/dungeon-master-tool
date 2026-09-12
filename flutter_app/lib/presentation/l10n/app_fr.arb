@@ -1373,5 +1373,7 @@
   "lanSyncErrPairingClosed": "L'autre appareil n'accepte pas de nouvelles associations. Ouvrez-y d'abord la synchronisation locale.",
   "lanSyncErrNotSignedIn": "Connectez-vous pour associer des appareils.",
   "lanSyncErrFailed": "Échec de l'association.",
-  "shareWithPlayers": "Partager avec les joueurs"
+  "shareWithPlayers": "Partager avec les joueurs",
+  "worldContentSharedTitle": "Contenu du monde partagé avec les joueurs",
+  "worldContentSharedBody": "Tes propres cartes de règles — classes, espèces, historiques, dons, sorts, équipement et les tables de référence qu'elles utilisent — ont été partagées avec tes joueurs, afin qu'ils puissent créer correctement leurs personnages.\n\nLes monstres, objets magiques, PNJ, scènes et quêtes n'ont pas été partagés. Tu peux annuler le partage de n'importe quelle carte depuis son menu."
 }

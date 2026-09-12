@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -50,6 +51,61 @@ class EntityShareService {
       'shared_by': uid,
       'payload_json': payload == null ? null : jsonEncode(payload),
     });
+  }
+
+  /// Toplu world-wide paylaşım — publish tohumu için.
+  ///
+  /// Tek tek [shareWithAll] çağırmak kart başına İKİ round trip demek; birkaç
+  /// yüz homebrew kartlı bir dünyada publish dakikalarca sürüyordu. Burada
+  /// silme tek sorguya, insert 50'lik parçalara iner.
+  ///
+  /// Bir parça toptan düşerse (512KB/kart CHECK'i ya da 4000 satır tavanı —
+  /// migration 088) o parça satır satır tekrar denenir, böylece tek bozuk
+  /// kart geri kalanını götürmez. Dönen değer: yazılamayan kart id'leri.
+  Future<List<String>> shareManyWithAll({
+    required String worldId,
+    required Map<String, Map<String, dynamic>?> payloads,
+  }) async {
+    final uid = client.auth.currentUser?.id;
+    if (uid == null) throw StateError('auth required');
+    if (payloads.isEmpty) return const [];
+
+    final ids = payloads.keys.toList(growable: false);
+    for (var i = 0; i < ids.length; i += 200) {
+      await client
+          .from('entity_shares')
+          .delete()
+          .eq('world_id', worldId)
+          .inFilter('entity_id', ids.sublist(i, min(i + 200, ids.length)))
+          .filter('shared_with', 'is', null);
+    }
+
+    Map<String, dynamic> row(String id) => {
+          'entity_id': id,
+          'world_id': worldId,
+          'shared_with': null,
+          'shared_by': uid,
+          'payload_json': payloads[id] == null
+              ? null
+              : jsonEncode(payloads[id]),
+        };
+
+    final failed = <String>[];
+    for (var i = 0; i < ids.length; i += 50) {
+      final chunk = ids.sublist(i, min(i + 50, ids.length));
+      try {
+        await client.from('entity_shares').insert(chunk.map(row).toList());
+      } catch (_) {
+        for (final id in chunk) {
+          try {
+            await client.from('entity_shares').insert(row(id));
+          } catch (_) {
+            failed.add(id);
+          }
+        }
+      }
+    }
+    return failed;
   }
 
   Future<void> shareWithUser({

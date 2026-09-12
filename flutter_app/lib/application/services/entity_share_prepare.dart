@@ -2,7 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/schema/builtin/content.dart'
+    show seedExcludedSlugs, tier1Slugs;
+import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
 import '../../domain/entities/schema/field_schema.dart';
+import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/value_objects/relation_value.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/entity_provider.dart';
@@ -20,16 +24,108 @@ class EntitySharer {
   final Ref _ref;
 
   Future<void> share({required String entityId, required String worldId}) =>
-      shareEntityWithPlayers(_ref, entityId: entityId, worldId: worldId);
+      shareEntityWithPlayers(_ref, entityIds: {entityId}, worldId: worldId);
 
   Future<void> unshare({required String entityId, required String worldId}) =>
       unshareEntity(_ref, entityId: entityId, worldId: worldId);
+
+  Future<void> seedTierContent({
+    required String worldId,
+    Map<String, dynamic>? campaignData,
+  }) =>
+      seedTierContentToPlayers(
+        _ref,
+        worldId: worldId,
+        campaignData: campaignData,
+      );
 }
 
-/// Shares an entity with all players, making it actually usable on the
+/// Dünya online'a alındığında tek seferlik çalışır: DM'in **kendi yazdığı**
+/// (linked olmayan) Tier 0 + Tier 1 kural kartlarını oyunculara paylaşır.
+///
+/// Gerekçe karakter yaratılabilirlik — oyuncu katıldığında yalnızca SRD
+/// bootstrap'ini alıyor, DM'in homebrew sınıf/tür/geçmişi olmadan karakterini
+/// yanlış yaratıyor. [seedExcludedSlugs] (canavar, hayvan, creature-action,
+/// büyülü eşya) kapsam dışı; onlar DM'in tekil "Paylaş" akışında kalır.
+///
+/// `linked == true` kartlar da kapsam dışı: oyuncunun kurulu paketinde zaten
+/// varlar ve satır yazmak 4000 satır/dünya tavanını gereksiz yere yer.
+///
+/// Bayrak tutulmuyor — `unpublishWorld` bulut satırlarını cascade siliyor,
+/// yani tekrar online olmak zaten sıfırdan tohumlamalı.
+///
+/// [campaignData] verilirse kartlar ve şema **o dünyanın** diskteki
+/// blob'undan okunur. Hub'daki dünya ayarları diyaloğu aktif olmayan bir
+/// dünyayı publish edebiliyor; `entityProvider` / `worldSchemaProvider` ise
+/// her zaman AKTİF kampanyayı okur, yani oradan tohumlamak yanlış dünyanın
+/// kartlarını paylaşırdı (ya da hiçbir şey paylaşmazdı).
+Future<void> seedTierContentToPlayers(
+  Ref ref, {
+  required String worldId,
+  Map<String, dynamic>? campaignData,
+}) {
+  final entities = campaignData == null
+      ? ref.read(entityProvider)
+      : entitiesFromCampaignData(campaignData);
+  final schema = campaignData == null
+      ? null
+      : _schemaFromCampaignData(campaignData);
+  final ids = seedShareIds(entities);
+  if (ids.isEmpty) return Future.value();
+  return shareEntityWithPlayers(
+    ref,
+    entityIds: ids,
+    worldId: worldId,
+    allowedSlugs: seedAllowedSlugs,
+    entities: entities,
+    schema: schema,
+  );
+}
+
+/// Kampanya blob'undaki `entities` haritasını parse eder. Bozuk satır atlanır
+/// — tek bir kart yüzünden tüm tohum düşmesin.
+Map<String, Entity> entitiesFromCampaignData(Map<String, dynamic> data) {
+  final raw = data['entities'] as Map<String, dynamic>? ?? const {};
+  final out = <String, Entity>{};
+  for (final e in raw.entries) {
+    try {
+      out[e.key] = entityFromRaw(e.key, Map<String, dynamic>.from(e.value));
+    } catch (err) {
+      debugPrint('seedTierContent: entity ${e.key} parse failed: $err');
+    }
+  }
+  return out;
+}
+
+WorldSchema? _schemaFromCampaignData(Map<String, dynamic> data) {
+  final raw = data['world_schema'];
+  if (raw is! Map) return null;
+  try {
+    return WorldSchema.fromJson(Map<String, dynamic>.from(raw));
+  } catch (err) {
+    debugPrint('seedTierContent: world_schema parse failed: $err');
+    return null;
+  }
+}
+
+/// Tohumun kapsadığı kategoriler: tüm Tier 0 + Tier 1 eksi
+/// [seedExcludedSlugs]. Tier 0 tamamen dahil, çünkü Tier 1'in relation
+/// alanları oraya bakıyor — eksik kalırlarsa kartlar oyuncuda yarım görünür.
+final seedAllowedSlugs = <String>{
+  ...tier0Slugs,
+  ...tier1Slugs.where((s) => !seedExcludedSlugs.contains(s)),
+};
+
+/// [seedTierContentToPlayers]'ın seçim kuralı, saf hâlde.
+Set<String> seedShareIds(Map<String, Entity> entities) => {
+      for (final e in entities.values)
+        if (!e.linked && seedAllowedSlugs.contains(e.categorySlug)) e.id,
+    };
+
+/// Shares entities with all players, making them actually usable on the
 /// remote side:
 ///
-///  1. Walks the relation graph from [entityId] (transitive closure) so
+///  1. Walks the relation graph from [entityIds] (transitive closure) so
 ///     linked entities the card points at get shared too — otherwise the
 ///     player sees a card with dangling relation rows.
 ///  2. Rewrites every still-local image (portrait, gallery, and `image`-type
@@ -42,24 +138,34 @@ class EntitySharer {
 ///
 /// Linked (package / built-in) entities are traversed THROUGH (to discover
 /// nested custom entities) but never re-uploaded or persisted — editing them
-/// would fork-on-edit. The entry [entityId] is always shared even if linked
+/// would fork-on-edit. The entry [entityIds] are always shared even if linked
 /// (explicit user action); cascade targets are restricted to non-linked.
+///
+/// [allowedSlugs] non-null ise closure sonucu o kategorilere kısılır. Tohum
+/// yolu ([seedTierContentToPlayers]) bunu kullanır: aksi halde dışarıda
+/// bıraktığımız kategoriler relation alanları üzerinden arka kapıdan girerdi
+/// (homebrew bir `species` bir `monster`'a referans veriyorsa). Tekil paylaşım
+/// yolunda null — DM bir kartı paylaştığında bağlı her şey gitmeye devam eder.
 Future<void> shareEntityWithPlayers(
   Ref ref, {
-  required String entityId,
+  required Set<String> entityIds,
   required String worldId,
+  Set<String>? allowedSlugs,
+  Map<String, Entity>? entities,
+  WorldSchema? schema,
 }) async {
   final svc = ref.read(entityShareServiceProvider);
   if (svc == null) return;
 
-  final entities = ref.read(entityProvider);
-  final schema = ref.read(worldSchemaProvider);
+  // Verilmediyse aktif kampanyadan oku (tekil paylaşım yolu).
+  final Map<String, Entity> cards = entities ?? ref.read(entityProvider);
+  final WorldSchema worldSchema = schema ?? ref.read(worldSchemaProvider);
 
   // Relation + image field keys per category slug.
   final relationKeys = <String, List<String>>{};
   final imageKeys = <String, List<String>>{};
   final dmOnlyKeys = <String, List<String>>{};
-  for (final c in schema.categories) {
+  for (final c in worldSchema.categories) {
     relationKeys[c.slug] = [
       for (final f in c.fields)
         if (f.fieldType == FieldType.relation) f.fieldKey,
@@ -78,11 +184,11 @@ Future<void> shareEntityWithPlayers(
 
   // Transitive closure over relation fields (cycle-guarded).
   final closure = <String>{};
-  final queue = <String>[entityId];
+  final queue = entityIds.toList();
   while (queue.isNotEmpty) {
     final id = queue.removeLast();
     if (!closure.add(id)) continue;
-    final e = entities[id];
+    final e = cards[id];
     if (e == null) continue;
     for (final key in relationKeys[e.categorySlug] ?? const <String>[]) {
       for (final rid in extractRelationIds(e.fields[key])) {
@@ -99,28 +205,38 @@ Future<void> shareEntityWithPlayers(
   // içerik-adresli transient ref'e çevrilir; baytlar DM'in diskinde kalır ve
   // ancak bir oyuncu eksik bildirince yüklenir.
   final courier = ref.read(sharedMediaCourierProvider);
+  final payloads = <String, Map<String, dynamic>?>{};
   for (final id in closure) {
-    final e = entities[id];
+    final e = cards[id];
     if (e == null) continue;
-    if (e.linked && id != entityId) continue;
-    try {
-      await svc.shareWithAll(
-        entityId: id,
-        worldId: worldId,
-        // Linked (paket/built-in) kartın gövdesi zaten oyuncunun kurulu
-        // paketinden geliyor; payload göndermek kopya olurdu.
-        payload: e.linked
-            ? null
-            : await _payloadWithTransientRefs(
-                courier,
-                e,
-                imageKeys[e.categorySlug] ?? const [],
-                dmOnlyKeys[e.categorySlug] ?? const [],
-              ),
-      );
-    } catch (err) {
-      debugPrint('shareEntityWithPlayers: share $id failed: $err');
+    if (e.linked && !entityIds.contains(id)) continue;
+    if (allowedSlugs != null && !allowedSlugs.contains(e.categorySlug)) {
+      continue;
     }
+    // Linked (paket/built-in) kartın gövdesi zaten oyuncunun kurulu
+    // paketinden geliyor; payload göndermek kopya olurdu.
+    payloads[id] = e.linked
+        ? null
+        : await _payloadWithTransientRefs(
+            courier,
+            e,
+            imageKeys[e.categorySlug] ?? const [],
+            dmOnlyKeys[e.categorySlug] ?? const [],
+          );
+  }
+
+  // Tek sorguda sil + 50'lik parçalar hâlinde yaz. Kart başına iki round
+  // trip atan eski döngü, tohum yolunda (yüzlerce kart) publish'i
+  // dakikalarca bekletiyordu.
+  try {
+    final failed =
+        await svc.shareManyWithAll(worldId: worldId, payloads: payloads);
+    if (failed.isNotEmpty) {
+      debugPrint('shareEntityWithPlayers: ${failed.length} kart yazılamadı: '
+          '${failed.take(5).join(", ")}');
+    }
+  } catch (err) {
+    debugPrint('shareEntityWithPlayers: bulk share failed: $err');
   }
 }
 

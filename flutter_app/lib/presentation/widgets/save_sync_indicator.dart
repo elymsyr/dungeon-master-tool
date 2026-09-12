@@ -501,6 +501,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),
       );
+      await seedAndAnnounceWorldContent(context, ref, worldId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

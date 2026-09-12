@@ -3,11 +3,58 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/entity_share_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../../application/services/entity_share_prepare.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+
+/// Dünya online'a alındıktan sonra tek seferlik: DM'in **kendi yazdığı**
+/// Tier 0 / Tier 1 kural kartlarını oyunculara açar, sonra ne gidip ne
+/// gitmediğini bir kez anlatır.
+///
+/// Publish'in İKİ girişi var — dünya ayarlarındaki toggle
+/// (`online_world_section._publish`) ve dünya içindeki "Make Online"
+/// (`save_sync_indicator._makeOnline`). İkisi de buradan geçmek zorunda;
+/// biri atlanırsa o yoldan online olan dünyada oyuncu homebrew sınıf/tür/
+/// geçmişi hiç görmez ve karakterini yanlış yaratır.
+///
+/// [campaignData] aktif olmayan bir dünya publish edildiğinde zorunlu —
+/// tohum o blob'dan okur, yoksa aktif kampanyanın kartlarını paylaşırdı.
+Future<void> seedAndAnnounceWorldContent(
+  BuildContext context,
+  WidgetRef ref,
+  String worldId, {
+  Map<String, dynamic>? campaignData,
+}) async {
+  try {
+    await ref.read(entitySharerProvider).seedTierContent(
+          worldId: worldId,
+          campaignData: campaignData,
+        );
+  } catch (e) {
+    debugPrint('seedTierContent failed for $worldId: $e');
+  }
+  ref.invalidate(worldEntitySharesProvider(worldId));
+  if (!context.mounted) return;
+  final l10n = L10n.of(context)!;
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.worldContentSharedTitle),
+      content: Text(l10n.worldContentSharedBody),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.landingOk),
+        ),
+      ],
+    ),
+  );
+}
 
 /// Compact uppercase-style section heading shared by save&sync indicator
 /// and the world-settings online panel. Keeps the two surfaces visually

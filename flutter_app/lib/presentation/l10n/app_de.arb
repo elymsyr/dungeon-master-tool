@@ -1373,5 +1373,7 @@
   "lanSyncErrPairingClosed": "Das andere Gerät nimmt keine neuen Kopplungen an. Öffne dort zuerst die Lokale Synchronisierung.",
   "lanSyncErrNotSignedIn": "Melde dich an, um Geräte zu koppeln.",
   "lanSyncErrFailed": "Kopplung fehlgeschlagen.",
-  "shareWithPlayers": "Mit Spielern teilen"
+  "shareWithPlayers": "Mit Spielern teilen",
+  "worldContentSharedTitle": "Weltinhalte mit Spielern geteilt",
+  "worldContentSharedBody": "Deine eigenen Regelkarten — Klassen, Spezies, Hintergründe, Talente, Zauber, Ausrüstung und die Nachschlagetabellen, auf die sie verweisen — wurden mit deinen Spielern geteilt, damit sie ihre Charaktere korrekt erstellen können.\n\nMonster, magische Gegenstände, NSCs, Szenen und Quests wurden nicht geteilt. Du kannst jede einzelne Karte über ihr Menü wieder zurückziehen."
 }
