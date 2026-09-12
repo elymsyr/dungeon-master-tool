@@ -5,7 +5,7 @@ path: flutter_app/tool/catalog_publish/bin/publish_catalog.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-09-01
+updated: 2026-09-12
 tags: [file]
 ---
 
@@ -16,11 +16,12 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- CLI args: `--worker <url>` (else `DMT_WORKER_URL` env), `--token <ADMIN_TOKEN>` (else `ADMIN_TOKEN` env), `--dry-run`, `--force`.
+- CLI args: `--worker <url>` (else `DMT_WORKER_URL` env), `--token <ADMIN_TOKEN>` (else `ADMIN_TOKEN` env), `--dry-run`, `--force`, `--skip-art`.
 - `assets/first_party/manifest.json` (built by [[build_catalog]]) + each entry's `bundled_asset` payload file, or for `world` entries its `bundled_dir` and `media[]`.
 
 **Outputs**
 - HTTP PUTs to `{worker}/catalog/{r2_path}` (`application/gzip`), plus for worlds one raw PUT per `media[].r2_key` (content type by extension), and finally `{worker}/catalog/manifest.json` (`application/json`).
+- Bir de paket başına art zip'i: `_packArtBundles` `tool/art_gen/pack_art_bundles.py`'yi çağırır, o da `wrangler r2 object put` ile `catalog/art-bundle/{slug}@{ver}.zip` yazar.
 - Console summary (`uploaded / skipped / failed / KB transferred`); exit 1 if any failure, exit 2 on missing worker/token/manifest.
 
 ## Dependencies & Links
@@ -34,6 +35,7 @@ tags: [file]
 ## Key Logic / Variables
 - **Immutability**: versioned payload paths (`{type}/{slug}@{ver}.json.gz`) are immutable — an already-present object (checked via GET → 200 in `_exists`) is skipped unless `--force`.
 - **Manifest last**: ensures the live index only ever references objects already uploaded.
+- **Art zip'leri manifest'ten ÖNCE** (`_packArtBundles`, `--skip-art` ile atlanır). Eskiden ayrı elle bir adımdı ve `b664fe83`'te unutuldu: paket sürümü 2.1.0'a çıktı, R2'deki zip `@1.1.0` kaldı, `prefetchBundle` 404 aldı ve inen her paket kartsız kuruldu. Zip **tek** art kaynağı — tekil `catalog/art/*.webp` objeleri R2'de tutulmuyor — o yüzden adımın yayınla aynı komutta olması şart. Yükleme worker üzerinden değil `wrangler` ile: en büyük zip (open5e-vom, ~104 MB) Worker gövde limitini aşıyor.
 - `--dry-run`: gzips + counts but never PUTs (token not required); logs `~ <path>`.
 - Auth: `Authorization: Bearer <token>` header on every PUT.
 - `_publishWorld` handles `item_type == 'world'`: rebuilds the envelope from `bundled_dir` via the shared `world_payload.dart` (identical bytes to what [[build_catalog]] sized), PUTs it at `r2_path`, then PUTs every `media[]` file raw. `external_files` is **never uploaded** — those are links to content we deliberately do not host (the `all-rights-reserved` adventure PDF). The same `_exists`-skip / `--force` immutability rule applies per object, so re-publishing an unchanged world transfers nothing.

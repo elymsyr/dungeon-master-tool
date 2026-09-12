@@ -125,26 +125,25 @@ python3 tool/art_gen/stamp_art_refs.py            # --check ile sadece doğrula
 (cd flutter_app && dart run tool/srd_art_dump/bin/dump_srd.dart \
     assets/open5e_packs/dnd5e-srd.pkg.json)       # built-in dump'ı tazele
 
-# c) 7413 görselin TAMAMINI R2 catalog'una yükle (SRD dahil — bundle sadece
-#    bir optimizasyon, ref hangi görselin nerede olduğunu taşımıyor).
-DMT_WORKER_URL=https://<worker> ADMIN_TOKEN=<secret> \
-  ./cloudflare/upload_art.sh                      # resume edilebilir, -P8
-
-# d) Paket başına art zip'i üret + yükle — kurulum bunu TEK istekte indirir.
-#    Tek tek indirme worker'ın public catalog rate limit'ini (300/dk/IP)
-#    aşıyordu; zip yoksa istemci yine tek tek indirir, sadece yavaş.
-python3 tool/art_gen/pack_art_bundles.py          # --dry-run ile boyutları gör
+# c) Yayınla — art zip'leri bu komutun İÇİNDE üretilip yükleniyor, ayrı bir
+#    adım yok (ayrıydı, unutulunca paketler kartsız çıkıyordu).
+(cd flutter_app && dart run tool/catalog_publish/bin/build_catalog.dart \
+  && dart run tool/catalog_publish/bin/publish_catalog.dart \
+       --worker https://<worker> --token <secret>)
 ```
+
+Sadece zip boyutlarını görmek için: `python3 tool/art_gen/pack_art_bundles.py
+--dry-run`. Yayını art olmadan sürmek gerekirse `publish_catalog --skip-art`.
 
 Built-in SRD'nin ref'i pack asset'inden değil `srd_core_pack.dart` pass 1'den
 gelir (`_artedSlugs`) — **içerik değişince `srdCorePackVersion`'ı bump et**,
 yoksa mevcut kurulumlar yeniden seed olmaz.
 
-Uygulama tarafında çözüm [[first_party_art_service]]: önce bundle, sonra
-worker'ın public `GET /catalog/art/<uuid>.webp` route'u (hesap/JWT yok),
-sonuç `cacheDir/art/` altında cache'lenir. Kurulumda ise önce
-`GET /catalog/art-bundle/{slug}@{ver}.zip` denenir (tek istek), kalanlar
-tek tek.
+Uygulama tarafında çözüm [[first_party_art_service]]: kurulumda
+`GET /catalog/art-bundle/{slug}@{ver}.zip` **tek istekte** iner ve
+`cacheDir/art/` altına açılır; okuma anında sıra cache → app bundle. Tekil
+`catalog/art/<uuid>.webp` objeleri R2'de tutulmuyor, yani zip yüklenmemişse
+o paketin kartları görselsiz kalır — düşülecek bir yol yok.
 
 ## Stil Tutarlılığı
 
