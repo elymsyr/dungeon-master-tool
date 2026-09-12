@@ -22,10 +22,6 @@ items that are still open on the release date; do not edit past releases afterwa
   "Path of Hellfire" is the one subclass with no features at all: it ships none upstream, so
   there is not even prose to show.
 
-- **`creature-action.uses_per_day` is never read** — The field exists in the schema but no
-  screen renders a counter for it, so a per-day limit authored on a creature action is
-  invisible. Use a resource pool on a trait or feat card instead.
-
 - **59 tests fail on `main`** — As of v15.10.0 `flutter test` reports 1424 passing and 59
   failing. None of them are caused by the version bump; they are fallout from the content
   and schema changes in v15.10.0 that the tests were not updated for:
@@ -40,17 +36,26 @@ items that are still open on the release date; do not edit past releases afterwa
   `tool/art_gen` run for that uuid. `pack_art_bundles.py` skips the pack rather than uploading
   an empty zip, so nothing else is affected.
 
-- **Downloaded card art is never cleaned up** — Card images downloaded with an official
-  package stay in the app's cache after the package is removed, and there is no size cap on
-  that cache. Deliberate for now: the images are small individually and re-downloading them
-  costs a full install. Clearing the app's cache removes them.
-
 - **Deleted marketplace listings leave their images in R2** — When the publisher deletes a
   world they shared on the marketplace, the listing goes away but the uploaded media under
   `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible
   effect; needs a cleanup pass (or delete-time media removal).
 
 ## Resolved
+- **Downloaded card art was never cleaned up** — Fixed: deleting a package (or a world whose
+  packages have no other home) now runs `FirstPartyArtService.sweepUnreferenced`, which drops
+  every file under `cacheDir/art/` that nothing live still points at (`image_path` in
+  `package_entities` / `world_entities`, plus `trash_items` and `world_characters`
+  payloads — deletion is a 30-day soft delete, so a trashed package's art has to survive
+  until "Undo" is gone). A package's art bundle is ~50 MB, so the leak was the
+  whole install. No refcount table: one scan per delete, which also clears garbage left by
+  earlier versions. Deleted files are not lost — a reinstall re-extracts the zip and bundled
+  SRD art is re-copied on first render.
+
+- **`creature-action.uses_per_day` has no counter** — Not a bug, by design: the field is
+  visible and editable as "Uses / Day" on the action card, it just has no automatic tracker.
+  Per-use tracking belongs to `resource_pool_grants` on a trait or feat card, which renders a
+  real counter on the sheet; on a creature action the player tracks the limit themselves.
 
 - **Open5e art bundles in R2 were stale** — Fixed: the card-art refs that `b664fe83` dropped
   from the 19 Open5e packs are restored (guarded by `test/tool/pack_art_refs_test.dart`), and

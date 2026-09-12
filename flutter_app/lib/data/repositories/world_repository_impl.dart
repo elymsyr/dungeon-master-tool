@@ -18,6 +18,7 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../domain/value_objects/world_section_stamps.dart';
 import '../database/app_database.dart';
+import '../services/first_party_art_service.dart';
 
 const _uuid = Uuid();
 
@@ -809,5 +810,8 @@ class WorldRepositoryImpl implements CampaignRepository {
       await _db.timelinePinsDao.deleteByWorld(worldId);
       await _db.worldsDao.deleteById(worldId);
     });
+    // Dunya ile birlikte dusen paketlerin kart gorselleri de cache'te
+    // kalmasin. Transaction disinda: dosya IO'su DB kilidini tutmasin.
+    await FirstPartyArtService.sweepUnreferenced(_db);
   }
 }

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 
 import '../../core/config/app_paths.dart';
+import '../database/app_database.dart';
 import 'first_party_catalog_service.dart';
 
 /// `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in ve
@@ -35,6 +36,65 @@ class FirstPartyArtService {
   final FirstPartyCatalogService _catalog;
 
   static const String bundleDir = 'assets/art/srd';
+
+  /// Artık hiçbir kartın göstermediği cache'lenmiş kart görsellerini siler.
+  ///
+  /// Paket / dünya silindikten SONRA çağrılır: [prefetchBundle] paketin bütün
+  /// görsellerini `cacheDir/art/` altına açıyor ve silme yolu DB satırlarını
+  /// düşürüyordu, baytlar kalıyordu (bir paket ~50 MB). Refcount tutmak yerine
+  /// tek tarama: diskteki dosya, **hâlâ canlı olan hiçbir referansta** geçmiyorsa
+  /// gider. Referans kaynakları: `package_entities` + `world_entities`
+  /// `image_path`, `trash_items` ve `world_characters` payload'ları. Böylece
+  /// aynı görseli iki paket/dünya kullansa ya da dünya kopyalanmış olsa
+  /// doğru kalır, eski sürümlerden birikmiş çöp de aynı geçişte temizlenir.
+  ///
+  /// Çöp 30 günde bir purge edilir ve o purge sweep tetiklemez — çöpten düşen
+  /// görseller bir sonraki silmede gider, kasıtlı.
+  ///
+  /// Silinen dosya kayıp değil: yeniden kurulumda zip'ten, bundle'daki görsel
+  /// ise [resolve] ile anında geri gelir.
+  static Future<int> sweepUnreferenced(AppDatabase db) async {
+    final dir = Directory(p.join(AppPaths.cacheDir, 'art'));
+    if (!await dir.exists()) return 0;
+
+    final rows = await db.customSelect(
+      "SELECT DISTINCT image_path AS v FROM package_entities "
+      "WHERE image_path LIKE 'dmt-art://%' "
+      "UNION SELECT DISTINCT image_path AS v FROM world_entities "
+      "WHERE image_path LIKE 'dmt-art://%' "
+      // Silme soft-delete: paket/dünya 30 gün `trash_items`'ta durur ve
+      // "Geri al" payload'dan geri yazar — görselleri şimdi silersek restore
+      // kartsız gelir ve düzeltme yolu yoktur (restore zip'i yeniden
+      // indirmez). Karakter payload'ı da kart blob'u taşıyabilir. İkisi de
+      // opak JSON, o yüzden kolon değil metin taranır.
+      "UNION SELECT DISTINCT payload_json AS v FROM trash_items "
+      "WHERE payload_json LIKE '%dmt-art://%' "
+      "UNION SELECT DISTINCT payload_json AS v FROM world_characters "
+      "WHERE payload_json LIKE '%dmt-art://%'",
+    ).get();
+    final keep = <String>{};
+    final artRef = RegExp(r'dmt-art://([A-Za-z0-9._-]+)');
+    for (final r in rows) {
+      for (final m in artRef.allMatches(r.read<String>('v'))) {
+        keep.add(m.group(1)!);
+      }
+    }
+
+    var removed = 0;
+    await for (final f in dir.list(followLinks: false)) {
+      if (f is! File) continue;
+      final name = p.basename(f.path);
+      // `.slug@ver.zip` gibi yarım kalmış indirmeler de gitsin.
+      if (keep.contains(name)) continue;
+      try {
+        await f.delete();
+        removed++;
+      } catch (e) {
+        debugPrint('[art] sweep delete failed $name: $e');
+      }
+    }
+    return removed;
+  }
 
   /// [name] = `{uuid}.webp`. Çözülemeyen her durumda null.
   Future<File?> resolve(String name) async {

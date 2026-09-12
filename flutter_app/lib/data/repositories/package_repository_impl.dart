@@ -15,6 +15,7 @@ import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
 import '../database/app_database.dart';
+import '../services/first_party_art_service.dart';
 
 const _uuid = Uuid();
 
@@ -558,6 +559,10 @@ class PackageRepositoryImpl implements PackageRepository {
       await _db.packagesDao.deleteSchemasByPackage(packageId);
       await _db.packagesDao.deletePackage(packageId);
     });
+    // Kurulumda inen kart görselleri de gitsin — satirlar dusunce cache'te
+    // sahipsiz kaliyorlardi (paket basina ~50 MB). Transaction disinda:
+    // dosya IO'su DB kilidini tutmasin, hata silmeyi geri almasin.
+    await FirstPartyArtService.sweepUnreferenced(_db);
   }
 
   /// Package adını değiştir — DB kolonunu güncelle + klasörü yeniden adlandır.
