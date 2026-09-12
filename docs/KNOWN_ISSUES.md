@@ -16,10 +16,6 @@ items that are still open on the release date; do not edit past releases afterwa
   upstream prose and no typed mechanic, so nothing is rolled or added automatically. "Path of
   Hellfire" ships no features at all upstream and still grants nothing.
 
-- **Aegis: Mühür Kalkanı has the wrong artwork** — The action card shows a shield-bearing
-  turtle that does not match the ability. There is no correct sibling image to point at, so
-  it waits on a new drawing.
-
 - **`creature-action.uses_per_day` is never read** — The field exists in the schema but no
   screen renders a counter for it, so a per-day limit authored on a creature action is
   invisible. Use a resource pool on a trait or feat card instead.
@@ -32,12 +28,11 @@ items that are still open on the release date; do not edit past releases afterwa
   `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
   clean apart from 27 pre-existing info-level lints.
 
-- **Open5e art bundles in R2 are stale** — The card-art refs that `b664fe83` dropped from the
-  19 Open5e packs are restored, but the prebuilt zips still on R2 are named `@1.1.0` while the
-  packs are now `2.1.0`, so `prefetchBundle` 404s on install and downloaded packages show no
-  card art. There is no per-file fallback: `catalog/art/{uuid}.webp` objects are not kept in
-  R2, the zip is the only source. Clears once `python3 tool/art_gen/pack_art_bundles.py` is
-  re-run and the zips re-uploaded. Built-in SRD art is unaffected — it ships inside the app bundle.
+- **The SRD Barbarian class card has no artwork** — `dnd5e-srd` carries 1259 `dmt-art://` refs
+  and 1258 of the images exist; `eb131956-8e5f-5be1-ab00-a0ea8b3db774.webp` (Barbarian) is in
+  neither the app bundle nor `tool/art_gen/out/`, so the card renders art-less. Needs one
+  `tool/art_gen` run for that uuid. `pack_art_bundles.py` skips the pack rather than uploading
+  an empty zip, so nothing else is affected.
 
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on
@@ -51,6 +46,11 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Resolved
 
+- **Open5e art bundles in R2 were stale** — Fixed: the card-art refs that `b664fe83` dropped
+  from the 19 Open5e packs are restored (guarded by `test/tool/pack_art_refs_test.dart`), and
+  all 21 `catalog/art-bundle/{slug}@{ver}.zip` objects were rebuilt at the current pack
+  versions and re-uploaded. Building and uploading them is no longer a separate manual step:
+  `publish_catalog.dart` runs `pack_art_bundles.py` itself before the manifest goes up.
 - **Most third-party subclasses granted nothing** — Fixed in v15.10.0: 82 of the 117 bundled
   Open5e subclasses (and the Marshal and Mechanist base classes) carried only descriptive
   level tables, so picking one put nothing on the sheet. Their features are now minted as
