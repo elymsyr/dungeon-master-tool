@@ -18,7 +18,7 @@ import 'entity_card.dart';
 /// dünya adı, paket ekranında ise paket adı (activeCampaignProvider
 /// override'ı yüzünden ikisi de aynı yerden gelir).
 final dbRecentEntitiesProvider =
-    StateProvider.family<List<String>, String>((_, __) => const []);
+    StateProvider.family<List<String>, String>((_, _) => const []);
 
 /// Panel başına aynı anda açık tutulan kart sayısı; aşılınca en eski kapanır.
 const _phoneMaxOpenTabs = 5;
