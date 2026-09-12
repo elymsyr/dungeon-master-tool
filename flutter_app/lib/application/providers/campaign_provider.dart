@@ -24,6 +24,7 @@ import 'character_provider.dart';
 import 'online_worlds_provider.dart';
 import 'package_provider.dart';
 import 'role_provider.dart';
+import 'ui_state_provider.dart';
 import 'world_membership_provider.dart';
 import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -575,6 +576,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       worldData: data,
     );
     _cleanupMarketplace(campaignName);
+    _ref.read(uiStateProvider.notifier).forgetWorld(campaignName);
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -623,6 +625,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       worldData: data,
     );
     _cleanupMarketplace(campaignName);
+    _ref.read(uiStateProvider.notifier).forgetWorld(campaignName);
   }
 
   // ── CDC self-contained world-removal entry points ────────────────────
