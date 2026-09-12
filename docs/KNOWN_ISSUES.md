@@ -11,6 +11,29 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
+- **59 tests fail on `main`** — As of v15.10.0 `flutter test` reports 1424 passing and 59
+  failing. None of them are caused by the version bump; they are fallout from the content
+  and schema changes in v15.10.0 that the tests were not updated for:
+  `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
+  `default_schema_test` (3, expects 19 categories but the schema now generates 18),
+  `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
+  clean apart from 27 pre-existing info-level lints.
+
+## Resolved
+
+- **Deleted marketplace listings left their images in R2** — Fixed: the release chain is
+  complete end to end. The owner's delete calls `pub_asset_release(listingId)` right after
+  `delete_listing` (`marketplace_listings_remote_ds.dart`, `marketplace_listing_provider.dart`);
+  dropping the last row in `pub_asset_refs` fires `trg_drop_orphan_pub_asset` (migration 089),
+  which queues `pub/{sha}{ext}` into `transient_evict_queue`; the worker's hourly cron
+  (`wrangler.toml` `crons`) runs `sweepEvictQueue` and deletes the object from R2. Objects are
+  content-addressed and shared, so a sha another listing still references is left alone, and a
+  direct `DELETE pub/...` is refused (`pinned_delete_forbidden`) — refcount alone decides.
+  Moderator deletes were the remaining leak and migration 091 closed it: `pub_asset_release`
+  filters on `auth.uid()`, so `admin_delete_marketplace_listing` now drops the refs directly.
+  Residual: the owner-side release is best-effort (its failure is caught and logged), so a
+  network error there can still strand one listing's media in the pool.
+
 - **Third-party feature cards are narrative, by design** — The 559 class/subclass feature
   cards minted from the bundled Open5e packs (519 subclass, 40 class, across 100 subclasses)
   carry the upstream prose in `benefits` and no typed mechanic, so nothing is rolled, granted
@@ -21,21 +44,6 @@ items that are still open on the release date; do not edit past releases afterwa
   one-liners (languages, darkvision, swim speed) is the upgrade path if it ever earns itself.
   "Path of Hellfire" is the one subclass with no features at all: it ships none upstream, so
   there is not even prose to show.
-
-- **59 tests fail on `main`** — As of v15.10.0 `flutter test` reports 1424 passing and 59
-  failing. None of them are caused by the version bump; they are fallout from the content
-  and schema changes in v15.10.0 that the tests were not updated for:
-  `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
-  `default_schema_test` (3, expects 19 categories but the schema now generates 18),
-  `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
-  clean apart from 27 pre-existing info-level lints.
-
-- **Deleted marketplace listings leave their images in R2** — When the publisher deletes a
-  world they shared on the marketplace, the listing goes away but the uploaded media under
-  `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible
-  effect; needs a cleanup pass (or delete-time media removal).
-
-## Resolved
 
 - **The SRD Barbarian class card had no artwork** — Fixed: the missing
   `eb131956-8e5f-5be1-ab00-a0ea8b3db774.webp` was generated from its existing `art_jobs.jsonl`
