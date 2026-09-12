@@ -6,6 +6,7 @@ key.properties
 web-mockup
 __pycache__
 tool/**/out*
+tool/**/no_out*
 .tmp/
 gcs
 .env
