@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_paths.dart';
@@ -193,8 +194,9 @@ class FirstPartyInstallNotifier
       // gösterip kullanıcıyı her kartta beklettiği için tercih edilmedi —
       // boyut da bu yüzden `entry.downloadBytes` içinde art baytlarını sayıyor.
       final artNames = _artNames(payload);
+      var artReady = artNames.length;
       if (artNames.isNotEmpty) {
-        await _ref.read(firstPartyArtServiceProvider).prefetchBundle(
+        artReady = await _ref.read(firstPartyArtServiceProvider).prefetchBundle(
           'art-bundle/${entry.slug}@${entry.version}.zip',
           artNames,
           onProgress: (done, total) {
@@ -214,8 +216,24 @@ class FirstPartyInstallNotifier
       // update check reads (D2) — the family is invalidated whole because the
       // row is keyed by title, which only the importer resolves.
       _ref.invalidate(packageMetadataProvider);
-      _set(entry.slug,
-          const CatalogInstallStatus(phase: CatalogInstallPhase.done));
+      // Kart görselleri gelmediyse kurulum "done" demekle yetinmesin. Zip'in
+      // adı paket sürümünü taşıyor (`{slug}@{ver}.zip`), yani sürüm bump'lanıp
+      // zip yeniden yüklenmediğinde 404 oluyor ve paket sessizce kartsız
+      // kuruluyor — `b664fe83` sonrası 19 Open5e paketinde tam olarak bu oldu
+      // ve hiçbir yerde görünmedi. Paket kullanılabilir durumda olduğu için
+      // hata değil, ama artık söylüyor.
+      final artGap = artNames.length - artReady;
+      _set(
+        entry.slug,
+        CatalogInstallStatus(
+          phase: CatalogInstallPhase.done,
+          message: artGap > 0 ? 'art $artReady/${artNames.length}' : null,
+        ),
+      );
+      if (artGap > 0) {
+        debugPrint('[catalog] ${entry.slug}@${entry.version}: '
+            '$artGap kart görseli inmedi (art-bundle eksik/bayat)');
+      }
       return true;
     } catch (e) {
       _set(
