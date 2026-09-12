@@ -40,7 +40,7 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.4.0';
+const srdCorePackVersion = '1.5.0';
 
 /// `tool/art_gen` görseli olan slug'lar. Bu sekiz kategorinin HER satırının
 /// görseli var (1247/1247), diğerlerinin (creature-action, trait, gear, weapon,

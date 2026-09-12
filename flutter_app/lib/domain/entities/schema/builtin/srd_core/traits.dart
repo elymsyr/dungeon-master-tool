@@ -236,6 +236,13 @@ List<Map<String, dynamic>> srdTraits() => [
             'You are part of an Elven lineage (Drow, High Elf, or Wood Elf), granting additional traits and innate spells.',
       ),
       _t(
+        name: 'Skill Versatility',
+        kind: 'Other',
+        description:
+            'You gain proficiency in two skills of your choice.',
+        source: 'SRD 5.1',
+      ),
+      _t(
         name: 'Halfling Lucky',
         kind: 'Passive',
         description:
