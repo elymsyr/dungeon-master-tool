@@ -32,13 +32,12 @@ items that are still open on the release date; do not edit past releases afterwa
   `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
   clean apart from 27 pre-existing info-level lints.
 
-- **Official catalog packages ship without their card art** — Installing `cairn-2e-core` or
-  `cairn-community` from the store leaves every card image blank. The installer asks for
-  `catalog/art-bundle/{slug}@{version}.zip` in R2, but no tool in the repo builds or uploads
-  that zip (`publish_catalog.dart` sends payloads, world media and the manifest only), and
-  `FirstPartyArtService` has no per-file fallback. The SRD pack is unaffected because its
-  1247 images ship inside the app bundle; Cairn's 653 do not. The 404 is only `debugPrint`ed
-  and `prefetchBundle`'s return value is ignored, so the install still reports success.
+- **Open5e art bundles in R2 are stale** — The card-art refs that `b664fe83` dropped from the
+  19 Open5e packs are restored, but the prebuilt zips still on R2 are named `@1.1.0` while the
+  packs are now `2.1.0`, so `prefetchBundle` 404s on install and downloaded packages show no
+  card art. There is no per-file fallback: `catalog/art/{uuid}.webp` objects are not kept in
+  R2, the zip is the only source. Clears once `python3 tool/art_gen/pack_art_bundles.py` is
+  re-run and the zips re-uploaded. Built-in SRD art is unaffected — it ships inside the app bundle.
 
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on

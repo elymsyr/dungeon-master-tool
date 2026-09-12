@@ -34,12 +34,18 @@ def main() -> None:
     stamped = already = kept = 0
     unmatched = set(arted)
     for f in sorted(a.packs.glob("*.pkg.json")):
-        raw = f.read_text()
+        # Baytlardan oku: read_text satır sonlarını LF'e çeviriyor ve geri
+        # yazarken dosyanın kendi biçimini koruyamıyorduk.
+        raw = f.read_bytes().decode("utf-8")
         data = json.loads(raw)
         # build_packs compact yazar, cairn/srd dump'ları girintili — dosyanın
         # kendi biçimini koru, yoksa tek satırlık ref eklemesi tüm dosyayı
         # yeniden biçimlendirip devasa bir diff çıkarıyor.
         indent = 2 if "\n" in raw else None
+        # Aynı gerekçe satır sonu için de geçerli: dnd5e-srd CRLF ile duruyor,
+        # LF'e çevirmek 12 ref eklemesini 125k satırlık bir diff'e dönüştürüyor
+        # (bkz. 97a2d4da "satir sonlarini geri al").
+        crlf = "\r\n" in raw
         changed = 0
         for uuid, row in data.get("entities", {}).items():
             unmatched.discard(uuid)
@@ -56,12 +62,15 @@ def main() -> None:
                 changed += 1
         stamped += changed
         if changed and not a.check:
-            f.write_text(json.dumps(
+            out = json.dumps(
                 data,
                 ensure_ascii=False,
                 indent=indent,
                 separators=None if indent else (",", ":"),
-            ))
+            )
+            if crlf:
+                out = out.replace("\n", "\r\n")
+            f.write_bytes(out.encode("utf-8"))
         print(f"{f.name:36} +{changed}")
 
     print(f"\n{stamped} basıldı, {already} zaten doğru, {kept} elle konmuş "
