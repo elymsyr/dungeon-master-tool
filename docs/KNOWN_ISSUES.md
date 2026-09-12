@@ -11,10 +11,16 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **Third-party subclass features are name-only** — Subclasses from the bundled Open5e packs
-  now put every named feature on the sheet as a class-feature card, but the card carries the
-  upstream prose and no typed mechanic, so nothing is rolled or added automatically. "Path of
-  Hellfire" ships no features at all upstream and still grants nothing.
+- **Third-party feature cards are narrative, by design** — The 559 class/subclass feature
+  cards minted from the bundled Open5e packs (519 subclass, 40 class, across 100 subclasses)
+  carry the upstream prose in `benefits` and no typed mechanic, so nothing is rolled, granted
+  or counted automatically: a feature that reads "you gain darkvision out to 60 feet" prints
+  that sentence but does not touch the senses list. Deliberate — deriving a `granted_senses`
+  or a `resource_pool_grants` from free text would silently produce wrong grants, which is
+  worse than a sentence the player applies themselves. Typing the few high-frequency
+  one-liners (languages, darkvision, swim speed) is the upgrade path if it ever earns itself.
+  "Path of Hellfire" is the one subclass with no features at all: it ships none upstream, so
+  there is not even prose to show.
 
 - **`creature-action.uses_per_day` is never read** — The field exists in the schema but no
   screen renders a counter for it, so a per-day limit authored on a creature action is
@@ -51,7 +57,7 @@ items that are still open on the release date; do not edit past releases afterwa
   all 21 `catalog/art-bundle/{slug}@{ver}.zip` objects were rebuilt at the current pack
   versions and re-uploaded. Building and uploading them is no longer a separate manual step:
   `publish_catalog.dart` runs `pack_art_bundles.py` itself before the manifest goes up.
-- **Most third-party subclasses granted nothing** — Fixed in v15.10.0: 82 of the 117 bundled
+- **Most third-party subclasses granted nothing** — Fixed in v15.10.0: 100 of the 101 bundled
   Open5e subclasses (and the Marshal and Mechanist base classes) carried only descriptive
   level tables, so picking one put nothing on the sheet. Their features are now minted as
   class-feature cards and granted at the level they first appear. See the open item above for
