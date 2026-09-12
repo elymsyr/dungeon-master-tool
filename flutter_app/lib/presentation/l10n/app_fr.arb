@@ -250,6 +250,8 @@
   "worldsBtnGoToMarketplace": "Aller au Marché",
   "worldsCreateTitle": "Créer un nouveau monde",
   "worldsTemplateLabel": "Modèle",
+  "worldsIncludeSrd": "Ajouter le contenu SRD D&D 5e",
+  "@worldsIncludeSrd": {"description": "Ajoute le catalogue SRD 5.2.1 int\u00e9gr\u00e9 au nouveau monde."},
   "worldsNameHint": "Nom du monde",
   "worldsLeaveTitle": "Quitter le monde",
   "worldsDeleteTitle": "Supprimer le monde",

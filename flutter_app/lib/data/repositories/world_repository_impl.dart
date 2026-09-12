@@ -40,6 +40,7 @@ class WorldRepositoryImpl implements CampaignRepository {
   WorldRepositoryImpl(this._db);
 
   static const _schemaSettingsKey = '_world_schema';
+  static const _srdOptOutKey = '_srdCoreOptOut';
   static const _typedTopKeys = <String>{
     'world_id',
     'world_name',
@@ -147,7 +148,7 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<String> create(String worldName,
-      {domain.WorldSchema? template}) async {
+      {domain.WorldSchema? template, bool includeSrd = true}) async {
     final existing = await _findByName(worldName);
     if (existing != null) {
       throw StateError('Campaign already exists: $worldName');
@@ -175,10 +176,13 @@ class WorldRepositoryImpl implements CampaignRepository {
         deepCopyJson(schema.toJson()) as Map<String, dynamic>;
     await _db.worldSettingsDao.upsert(WorldSettingsCompanion.insert(
       worldId: worldId,
-      settingsJson: Value(jsonEncode({_schemaSettingsKey: schemaJson})),
+      settingsJson: Value(jsonEncode({
+        _schemaSettingsKey: schemaJson,
+        if (!includeSrd) _srdOptOutKey: true,
+      })),
     ));
 
-    if (schema.schemaId == builtinDnd5eV2SchemaId) {
+    if (includeSrd && schema.schemaId == builtinDnd5eV2SchemaId) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,
@@ -519,7 +523,8 @@ class WorldRepositoryImpl implements CampaignRepository {
     // A player who joined before the link-based idempotency fix has no
     // installed_packages row — without this, synthesis yields nothing and
     // the built-in catalog is empty. Cheap when already linked (one query).
-    if (world.templateId == builtinDnd5eV2SchemaId) {
+    if (world.templateId == builtinDnd5eV2SchemaId &&
+        settingsBlob[_srdOptOutKey] != true) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,

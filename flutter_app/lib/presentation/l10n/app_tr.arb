@@ -250,6 +250,8 @@
   "worldsBtnGoToMarketplace": "Pazar'a Git",
   "worldsCreateTitle": "Yeni Dünya Oluştur",
   "worldsTemplateLabel": "Template",
+  "worldsIncludeSrd": "D&D 5e SRD i\u00e7eri\u011fini ekle",
+  "@worldsIncludeSrd": {"description": "Yeni d\u00fcnyaya yerle\u015fik SRD 5.2.1 katalo\u011funu ekler."},
   "worldsNameHint": "Dünya adı",
   "worldsLeaveTitle": "Dünyadan Ayrıl",
   "worldsDeleteTitle": "Dünyayı Sil",

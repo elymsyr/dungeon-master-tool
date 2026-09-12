@@ -257,6 +257,8 @@
   "worldsBtnGoToMarketplace": "Go to Marketplace",
   "worldsCreateTitle": "Create New World",
   "worldsTemplateLabel": "Template",
+  "worldsIncludeSrd": "Add D&D 5e SRD content",
+  "@worldsIncludeSrd": {"description": "Bundles the built-in SRD 5.2.1 catalog into the new world."},
   "worldsNameHint": "World name",
   "worldsLeaveTitle": "Leave World",
   "worldsDeleteTitle": "Delete World",

@@ -357,9 +357,11 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     return completeLoad();
   }
 
-  Future<bool> create(String worldName, {WorldSchema? template}) async {
+  Future<bool> create(String worldName,
+      {WorldSchema? template, bool includeSrd = true}) async {
     try {
-      await _repo.create(worldName, template: template);
+      await _repo.create(worldName,
+          template: template, includeSrd: includeSrd);
       return load(worldName);
     } catch (e, st) {
       debugPrint('Campaign create error: $e\n$st');

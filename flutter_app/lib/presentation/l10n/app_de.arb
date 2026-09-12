@@ -250,6 +250,8 @@
   "worldsBtnGoToMarketplace": "Zum Marktplatz",
   "worldsCreateTitle": "Neue Welt erstellen",
   "worldsTemplateLabel": "Vorlage",
+  "worldsIncludeSrd": "D&D-5e-SRD-Inhalte hinzuf\u00fcgen",
+  "@worldsIncludeSrd": {"description": "F\u00fcgt der neuen Welt den integrierten SRD-5.2.1-Katalog hinzu."},
   "worldsNameHint": "Weltname",
   "worldsLeaveTitle": "Welt verlassen",
   "worldsDeleteTitle": "Welt löschen",
