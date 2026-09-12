@@ -1,19 +1,57 @@
 #!/usr/bin/env python3
 """Aegis art seçici: out* klasörlerindeki aynı isimli resimleri altalta gösterir,
 birini seçip yorum eklersin. Seçimler tarayıcıda tutulur; en alttaki tek Kaydet
-butonu hepsini verdiğin klasöre kopyalar ve comments.jsonl yazar.
+butonu hepsini verdiğin klasöre kopyalar ve picks.json yazar.
 
 Kullanım:  python3 aegis_pick.py   ->  http://127.0.0.1:8765
 """
-import json, shutil, webbrowser
+import argparse, json, shutil, webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
 ROOT = Path(__file__).parent
-DIRS = sorted(d for d in ROOT.iterdir() if d.is_dir() and d.name.startswith("out"))
-PICKED = ROOT / "selected"
-LOG = ROOT / "comments.jsonl"
+
+_ap = argparse.ArgumentParser(description="Aegis art secici")
+_ap.add_argument("--outdir", default="out_final", help="hedef klasor (footer'da onerilen)")
+_ap.add_argument("--missing-from", metavar="KLASOR",
+                 help="yalnizca bu klasorde karsiligi OLMAYAN kartlari goster")
+_ap.add_argument("--only-in", metavar="KLASOR",
+                 help="yalnizca bu klasorde karsiligi OLAN kartlari goster")
+_ap.add_argument("--dirs", metavar="A,B",
+                 help="kaynak klasorleri elle ver (panel sirasi yazdigin sira); "
+                      "verilmezse butun out* klasorleri")
+_ap.add_argument("--key", default="aegis",
+                 help="localStorage anahtar oneki — ayri tur icin ayri anahtar ver, "
+                      "boylece onceki turun secimleri ve yorumlari bozulmaz")
+_ap.add_argument("--port", type=int, default=8765)
+ARGS = _ap.parse_args()
+
+def _dir(name: str) -> Path:
+    d = ROOT / name
+    if not d.is_dir():
+        raise SystemExit(f"HATA: klasor yok: {d}")
+    return d
+
+
+if ARGS.dirs:
+    # Elle verilen sira panel sirasidir.
+    DIRS = [_dir(n.strip()) for n in ARGS.dirs.split(",") if n.strip()]
+else:
+    # Hedef ve referans klasorler kaynak olarak gosterilmez: zaten secilmis
+    # kopyalar, fazladan panel olarak cikip karistirmasin.
+    _HIDE = {ARGS.outdir, ARGS.missing_from, ARGS.only_in}
+    DIRS = sorted(d for d in ROOT.iterdir()
+                  if d.is_dir() and d.name.startswith("out") and d.name not in _HIDE)
+
+# --missing-from: o klasorde .webp'si olan kartlar listeden dusulur.
+# --only-in:     yalnizca o klasorde .webp'si OLAN kartlar kalir.
+SKIP_FILES: set[str] = set()
+KEEP_FILES: set[str] | None = None
+if ARGS.missing_from:
+    SKIP_FILES = {f.name for f in _dir(ARGS.missing_from).iterdir() if f.is_file()}
+if ARGS.only_in:
+    KEEP_FILES = {f.name for f in _dir(ARGS.only_in).iterdir() if f.is_file()}
 
 IMG_EXT = {".webp", ".png", ".jpg", ".jpeg"}
 
@@ -36,6 +74,7 @@ def items():
     return [
         {"file": n, "label": NAMES.get(Path(n).stem, Path(n).stem), "dirs": sorted(ds)}
         for n, ds in sorted(groups.items())
+        if n not in SKIP_FILES and (KEEP_FILES is None or n in KEEP_FILES)
     ]
 
 
@@ -64,12 +103,13 @@ figcaption{padding:4px 8px;color:#aaa}
 <div class=imgs id=v></div>
 <footer>
   <span id=stat></span>
-  <input id=outdir placeholder="hedef klasor adi" value="out_final">
+  <input id=outdir placeholder="hedef klasor adi" value="__OUTDIR__">
   <button class=go onclick=saveAll()>Tumunu kaydet</button>
 </footer>
 <script>
-let L=[],i=0,S=JSON.parse(localStorage.aegisPicks||'{}');
-fetch('/api/items').then(r=>r.json()).then(d=>{L=d;draw()});
+const K='__KEY__';
+let L=[],i=+(localStorage[K+'Idx']||0),S=JSON.parse(localStorage[K+'Picks']||'{}');
+fetch('/api/items').then(r=>r.json()).then(d=>{L=d;i=Math.min(i,L.length-1);draw()});
 function cur(){return S[L[i].file]||{}}
 function draw(){const it=L[i];if(!it)return;
  title.textContent=it.label;pos.textContent=` (${i+1}/${L.length})`;
@@ -79,9 +119,9 @@ function draw(){const it=L[i];if(!it)return;
  stat.textContent=Object.keys(S).length+' secili';scrollTo(0,0)}
 function pick(d){S[L[i].file]={dir:d,label:L[i].label,comment:c.value};flush();mark()}
 function mark(){const d=cur().dir;[...v.children].forEach((f,n)=>f.classList.toggle('sel',L[i].dirs[n]==d))}
-function flush(){const e=S[L[i].file];if(e)e.comment=c.value;localStorage.aegisPicks=JSON.stringify(S);
+function flush(){const e=S[L[i].file];if(e)e.comment=c.value;localStorage[K+'Picks']=JSON.stringify(S);
  stat.textContent=Object.keys(S).length+' secili'}
-function go(n){flush();i=Math.min(L.length-1,Math.max(0,i+n));draw()}
+function go(n){flush();i=Math.min(L.length-1,Math.max(0,i+n));localStorage[K+'Idx']=i;draw()}
 c.oninput=flush;
 function saveAll(){flush();
  const picks=Object.entries(S).map(([file,e])=>({file,...e}));
@@ -120,14 +160,19 @@ class H(BaseHTTPRequestHandler):
         out.mkdir(parents=True, exist_ok=True)
         n = 0
         srcdirs = set()
-        with (out / "comments.jsonl").open("w") as fh:
-            for e in d["picks"]:
-                src = ROOT / e["dir"] / e["file"]
-                if src.is_file():
-                    shutil.copy2(src, out / e["file"])
-                    n += 1
-                    srcdirs.add(e["dir"])
-                fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+        rec = []
+        for e in d["picks"]:
+            src = ROOT / e["dir"] / e["file"]
+            ok = src.is_file()
+            if ok:
+                shutil.copy2(src, out / e["file"])
+                n += 1
+                srcdirs.add(e["dir"])
+            rec.append({"file": e["file"], "from": e["dir"], "label": e.get("label", ""),
+                        "comment": e.get("comment", ""), "copied": ok})
+        (out / "picks.json").write_text(
+            json.dumps({"outdir": out.name, "count": n, "picks": rec},
+                       ensure_ascii=False, indent=2), encoding="utf-8")
         for dname in sorted(srcdirs):
             for jl in (ROOT / dname).glob("000*"):
                 shutil.copy2(jl, out / (jl.name if len(srcdirs) == 1
@@ -139,6 +184,11 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"klasorler: {[d.name for d in DIRS]}\nhttp://127.0.0.1:8765")
-    webbrowser.open("http://127.0.0.1:8765")
-    HTTPServer(("127.0.0.1", 8765), H).serve_forever()
+    HTML = HTML.replace("__OUTDIR__", ARGS.outdir).replace("__KEY__", ARGS.key)
+    url = f"http://127.0.0.1:{ARGS.port}"
+    print(f"kaynak klasorler: {[d.name for d in DIRS]}")
+    if ARGS.missing_from or ARGS.only_in:
+        print(f"{len(items())} kart gosteriliyor")
+    print(f"hedef: {ARGS.outdir} · localStorage anahtari: {ARGS.key}\n{url}")
+    webbrowser.open(url)
+    HTTPServer(("127.0.0.1", ARGS.port), H).serve_forever()

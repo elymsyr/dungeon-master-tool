@@ -1186,7 +1186,7 @@
       "name": "Fare",
       "type": "npc",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
-      "description": "@[Rıhtım](entity:7ec7fb05-5dce-5142-a8fc-a03278ea8730)'ın çırağı: halat taşır, mesaj götürür, fıçı sayar. Kimse ona bir şey sormadığı için rıhtımda olan her şeyi görür ve hatırlar.",
+      "description": "@[Rıhtım](entity:7ec7fb05-5dce-5142-a8fc-a03278ea8730)'ın çırağı: halat taşır, mesaj götürür, fıçı sayar. Kimse ona bir şey sormadığı için rıhtımda olan her şeyi görür ve hatırlar. Kimse ona güzel demez; yine de rıhtımın tamamı onu sever, geçen herkes ona bir laf atar.",
       "image_path": "media/Artwork/Fare.webp",
       "images": [],
       "tags": [
@@ -1194,7 +1194,7 @@
         "gizli-liman",
         "rıhtım"
       ],
-      "dm_notes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:13413bfc-886b-5d03-bb55-f503e854e5ac)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.",
+      "dm_notes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Rıhtım onu sever ama dinlemez — herkes ona bir laf atıp geçer, kimse durup soru sormaz. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:13413bfc-886b-5d03-bb55-f503e854e5ac)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.",
       "pdfs": [],
       "location_id": null,
       "attributes": {
@@ -1211,7 +1211,7 @@
           "name": "Friendly"
         },
         "faction": "Gizli Liman",
-        "appearance": "On dört on beş yaşlarında, çıplak ayaklı bir halfling. Güneşten kararmış, çilli bir yüz; kum rengi saçları kendi eliyle, bıçakla kesilmiş. Ön dişlerinden biri kırık. Ayak tabanları iskelenin kalaslarından sertleşmiş.\n\nKendisine üç beden büyük bir denizci gömleği giyer, kolları defalarca kıvrılmış. Belinde bir sicimle bağlı bir kese ve bir tahta düdük var. Üstünden tuz ve balık kokusu hiç çıkmaz.",
+        "appearance": "On dört on beş yaşlarında, çıplak ayaklı bir halfling kızı. Güneşten kararmış, is ve liman kiriyle lekeli bir yüz; kapkara saçları kendi eliyle, bıçakla kesilmiş, tutam tutam duruyor. Burnu eğri, ön dişlerinden biri kırık. Ayak tabanları iskelenin kalaslarından sertleşmiş.\n\nKendisine üç beden büyük bir denizci gömleği giyer, kolları defalarca kıvrılmış. Belinde bir sicimle bağlı bir kese ve bir tahta düdük var. Üstünden tuz ve balık kokusu hiç çıkmaz.",
         "mannerisms": "Bir fıçının üstüne oturur, bacaklarını sallar ve iskeledeki gemileri parmağıyla sayar.\n\nSoru sorulmadan cevap verir. Bir geminin adını söylerken hangi gece yanaştığını, kaç sandık indirdiğini ve kaptanının ne içtiğini de ekler: *\"O mavi olan, Kırlangıç. Üç gece önce geldi, gece yarısı. Sekiz sandık indirdi, ikisi ağırdı. Kaptanı elma şarabı içer.\"*\n\nBirisi onu dinlediğinde yüzü aydınlanır.",
         "goals": "Bir gün bir gemiye tayfa olarak alınmak.",
         "secrets": "Gerçek adı **Trym**."
@@ -1341,7 +1341,7 @@
           "name": "Indifferent"
         },
         "faction": "Gizli Liman",
-        "appearance": "Yüz yaşın üstünde, kısa ve tıknaz bir cüce kadın. Kızıl sakalını tek, kalın bir örgü halinde örmüş ve örgünün ucuna küçük bir demir halka geçirmiş. Kaşları gür, gözleri küçük ve dikkatli. Burnunun üstünde gözlük izinden kalma iki kırmızı çukur var.\n\nDeri bir önlük giyer; önlüğün cepleri eğe, cımbız ve tel dolu. Parmak uçları metal tozundan gri, tırnakları kısacık kesilmiş. Tezgahında ince eğeler, küçük bir örs, bir mercek ve bir kavanoz dolusu küçük damga çekici dizili. Odası sıcak kömür ve pirinç tozu kokuyor.",
+        "appearance": "Yüz yaşın üstünde, kısa ve tıknaz bir cüce kadın. Kızıl saçını tek, kalın bir örgü halinde omzuna salmış; örgünün ucunda küçük bir demir halka var. Sakalı yok. Kaşları gür, gözleri küçük ve dikkatli. Burnunun üstünde gözlük izinden kalma iki kırmızı çukur var.\n\nDeri bir önlük giyer; önlüğün cepleri eğe, cımbız ve tel dolu. Parmak uçları metal tozundan gri, tırnakları kısacık kesilmiş. Tezgahında ince eğeler, küçük bir örs, bir mercek ve bir kavanoz dolusu küçük damga çekici dizili. Odası sıcak kömür ve pirinç tozu kokuyor.",
         "mannerisms": "Adı sorulunca *\"Mine\"* der ve susar. Klanını soran olursa bir sonraki işe geçer ve bir daha başını kaldırmaz.\n\nBir metali eline aldığında önce tartar, sonra ışığa tutar. İşini yaparken konuşmaz: *\"Bekleyin. Ya da gidin.\"*",
         "goals": "Tezgahının açık kalması, ve kimsenin klanını sormaması.",
         "secrets": "**Yüzüğü eğeleyen o.** @[Mühürsüz Yüzük](entity:4e9e1485-9c75-591e-96d4-d242738e57b1)'ün mühür yüzünü kendi tezgahında düzleştirdi ve iç kenarına taze bir ayar damgası vurdu.\n\n**Klan adını söylemiyor.** Bir cüce için bu, bir insanın *\"adım yok\"* demesinden ağırdır. Mine eski adını ve bağlarını kendi isteğiyle geride bıraktı.\n\nKuyumcu olarak kendi ayar damgası hâlâ Lucid Triton'daki damga fihristinde yazılı."
@@ -1656,7 +1656,7 @@
           "name": "Friendly"
         },
         "faction": "Simya ve Şifacılar Loncası",
-        "appearance": "Genç bir gnome; yirmilerinin başında, gnome ölçüsüyle neredeyse çocuk. Kısa, dağınık, sarı saçları var ve biri kesmeye zaman bulamamış. Burnu çilli, gözleri iri ve mavi.\n\nLoncanın yeşil çırak önlüğünü giyer; önlüğün cepleri kağıt tomarı dolu. Parmakları iki ayrı renkte: sağ eli mürekkepten mavi, sol eli bitki suyundan yeşil. Kışlanın koridorunda elinde bir tomar kağıtla hep bir yere yetişiyor. Üstünde kafur ve mürekkep kokusu.",
+        "appearance": "Genç bir gnome kadın; yirmilerinin başında, ufak tefek ama boyunu tam almış. Kısa, dağınık, sarı saçları var ve biri kesmeye zaman bulamamış. Burnu çilli, gözleri iri ve mavi.\n\nLoncanın yeşil çırak önlüğünü giyer; önlüğün cepleri kağıt tomarı dolu. Parmakları iki ayrı renkte: sağ eli mürekkepten mavi, sol eli bitki suyundan yeşil. Kışlanın koridorunda elinde bir tomar kağıtla hep bir yere yetişiyor. Üstünde kafur ve mürekkep kokusu.",
         "mannerisms": "Bir beyanı ezberden okuyabilir, ve okurken tek bir kelimesini değiştirmez. Bir cümleyi yanlış aktaran birini düzeltmeden edemez.\n\nHeyecanlandığında hızlı konuşur ve gözlüğünü takmadığı halde gözlüğünü düzeltir gibi burnuna dokunur.",
         "goals": "Yazdığı şeyin doğru kalması.",
         "secrets": "**İlk beyanın kopyası onda.** @[Baş Otacı — Caramip Kalender](entity:49136109-7388-5661-9147-b38b3ee9f763) beyanları değiştirtti. Sindri ilk beyanın kopyasını temize çekerken bir nüshasını kendine ayırdı ve sakladı. Bu kopya, hastalığın şehirde bilindiğinin ve başka bir adla yeniden yazıldığının belgesi."
@@ -2015,7 +2015,7 @@
           "name": "Indifferent"
         },
         "faction": "Kuzeyin Gözcüleri",
-        "appearance": "Çok yaşlı, ama sırtı dik. Yüzü rüzgar görmüş bir kaya gibi derin çizgilerle dolu; beyaz saçları beline kadar uzun ve içine kuzgun tüyleri örülmüş. Gözleri açık yeşil ve berrak.\n\nOmuzlarında kalın bir kurt kürkü pelerin, altında kaba, kahverengi yünden bir cüppe. Elinde, üzerine rün kazınmış yassı bir taş taşır; taşın rünleri güneşe dönük tutulduğunda soluk bir ışıkla parlar. Üstünde reçine, duman ve ıslak toprak kokusu var.\n\nIrkı karakterlere göre insan ya da elftir.",
+        "appearance": "Çok yaşlı bir kadın, ama sırtı dik. Yüzü rüzgar görmüş bir kaya gibi derin çizgilerle dolu; beyaz saçları beline kadar uzun ve içine kuzgun tüyleri örülmüş. Gözleri açık yeşil ve berrak.\n\nOmuzlarında keçeleşmiş yünden ve kat kat deriden kalın bir pelerin, altında kaba, kahverengi yünden bir cüppe. Elinde, üzerine rün kazınmış yassı bir taş taşır; taşın rünleri güneşe dönük tutulduğunda soluk bir ışıkla parlar. Üstünde reçine, duman ve ıslak toprak kokusu var.\n\nIrkı karakterlere göre insan ya da elftir.",
         "mannerisms": "Şaşırmaz, azarlamaz, üzülmez. Sorulanı anlatır, sorulmayanı anlatmaz.\n\nKonuşurken elindeki taşı parmaklarıyla çevirir. Sessizlikten rahatsız olmaz; bir cevabı beklerken uzun süre susabilir.\n\n*\"Çürümeyi soracaksınız.\"*",
         "goals": "Platonun ve kabilesinin kendi kurallarıyla yaşamaya devam etmesi.",
         "secrets": "**Çürümeyi ne zamandır bildiğini saklıyor.**"
@@ -2578,7 +2578,7 @@
       "type": "creature-action",
       "source": "Tasha's Cauldron of Everything",
       "description": "*Tetikleyici:* 60 ft içinde gördüğün bir yaratık bir d20 atışını **avantajlı** ya da **dezavantajlı** atacak.\n\nTepkinle o atıştaki avantajı **veya** dezavantajı iptal edersin; zar düz atılır.",
-      "image_path": "media/Artwork/trait-Dengeyi-Geri-Ver.webp",
+      "image_path": "media/Artwork/creature-action-Dengeyi-Geri-Ver.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2612,7 +2612,7 @@
       "type": "creature-action",
       "source": "Tasha's Cauldron of Everything",
       "description": "1 dakika boyunca:\n\n- Sana yapılan saldırı atışları **avantaj alamaz**.\n- Senin attığın her d20'de **9 ve altı gelen sonuç 10 sayılır**.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **5 büyü puanı**.",
-      "image_path": "media/Artwork/trait-Fihrist-Hali.webp",
+      "image_path": "media/Artwork/creature-action-Fihrist-Hali.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2630,7 +2630,7 @@
       "type": "creature-action",
       "source": "Tasha's Cauldron of Everything",
       "description": "Kendini merkez alan **30 ft'lik bir küpte** düzen ruhları belirir. Küpte, sen dahil seçtiğin her yaratığa toplam **100 can**ı istediğin gibi bölüştürerek iyileştirirsin.\n\nKüpteki hasarlı ama yok olmamış nesneler onarılır ve tamamen tamir olur.\n\nKüpteki **6. seviye ve altı** her büyü sonlanır.\n\nUzun dinlenmede **1 kez bedava**; ondan sonra **7 büyü puanı**.",
-      "image_path": "media/Artwork/trait-Sayım.webp",
+      "image_path": "media/Artwork/creature-action-Sayım.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -2671,7 +2671,7 @@
       "type": "creature-action",
       "source": "Fizban's Treasury of Dragons",
       "description": "*Tetikleyici:* sen ya da drake hasar alırsınız ve birbirinizin 30 ft'i içindesinizdir.\n\nTepkinle, hasarı alan tarafa o hasara karşı **direnç** verirsin.",
-      "image_path": "media/Artwork/trait-Refleks-Direnci.webp",
+      "image_path": "media/Artwork/creature-action-Refleks-Direnci.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",

@@ -66,9 +66,11 @@ uygulamaya giren dünya
 | `aegis_polish.py` | `art_jobs_final.orig.jsonl` | `art_jobs_final.jsonl` |
 | `aegis_generate.py` | `art_jobs_final.jsonl` | `out/{uuid}.webp` |
 | `pick.py` | `art_jobs_final.jsonl` + `kategori|ad` | `one.jsonl` (tek kart yeniden üretimi) |
+| `aegis_pick.py` | `out*/` görselleri | `--outdir` klasörü: seçimler + `picks.json` |
+| `aegis_missing.py` | `out_choosen/000art_jobs_chosen.jsonl` | `art_jobs_final_missing.jsonl` (yorumlu kartlar) |
 | `aegis_bg.py` | (elle yazılmış tablo) | `art_bg_jobs.jsonl` |
 | `aegis_bg_compare.py` | kart + BG görselleri | `compare_*.jpg` |
-| `aegis_integrate.py` | `out/` | `media/Artwork/` + blueprint + manifest |
+| `aegis_integrate.py` | `out_choosen/` | `media/Artwork/` + blueprint + manifest |
 
 > ⚠️ **`aegis_merge.py` çalıştırırsan `art_jobs_final.jsonl`'i ezer ve
 > `aegis_polish.py`'nin bütün elle düzeltmeleri gider.** Merge'den sonra sıra
@@ -171,6 +173,101 @@ python3 pick.py "npc|Mine" "scene|Susan Kule" "location|Rıhtım"
 python3 pick.py "location|Votumar" --keep          # görseli silme
 python3 pick.py "location|Votumar" --out-dir out   # başka çıktı klasörü
 ```
+
+---
+
+## 3.4 `aegis_pick.py` — seçim turu, ve ikinci tur
+
+`out*` klasörlerindeki aynı uuid'li görselleri altalta gösterir; birini seçip
+yorum yazarsın. Seçimler tarayıcının `localStorage`'ında durur, alttaki tek buton
+hepsini hedef klasöre kopyalar ve `picks.json` yazar.
+
+```bash
+python3 aegis_pick.py --outdir out_choosen        # tamamı
+```
+
+**Seçilmemiş kalanlar için ikinci tur.** Üç bayrak birlikte, ilk turu bozmadan:
+
+```bash
+python3 aegis_pick.py \
+  --missing-from out_choosen \
+  --outdir out_final_missing \
+  --key aegisMissing
+```
+
+| Bayrak | Ne yapar |
+|---|---|
+| `--missing-from KLASOR` | O klasörde `.webp`'si olan kartları listeden düşürür — yalnız seçilmemişler kalır |
+| `--outdir KLASOR` | Footer'daki hedef; **ilk turun klasörüne yazmaz** |
+| `--key ONEK` | Ayrı `localStorage` anahtarı — ilk turun 139 seçimi ve yorumu olduğu gibi durur |
+
+> Hedef klasör ve `--missing-from` klasörü **kaynak panel olarak gösterilmez**;
+> zaten seçilmiş kopyalar fazladan panel olarak çıkıp karıştırmasın diye.
+
+İkinci tur bitince seçimler `out_choosen`'a katılır — görseller kopyalanır,
+`picks.json` kayıtları `comments.jsonl`'e eklenir (yedek alarak, aynı dosya iki
+kez yazılmadan). Birleştirmeden sonra `000art_jobs_chosen.jsonl`'in yeni satırları
+da eklenmelidir, yoksa düzeltme turu o kartları görmez:
+
+```bash
+python3 - <<'PY'
+import json, shutil, pathlib
+root = pathlib.Path('.'); src = root/'out_final_missing'; dst = root/'out_choosen'
+cj = dst/'comments.jsonl'
+shutil.copy2(cj, cj.with_suffix('.jsonl.bak'))
+have = {json.loads(l)['file'] for l in cj.read_text().splitlines() if l.strip()}
+add = [r for r in json.loads((src/'picks.json').read_text())['picks']
+       if r['file'] not in have]
+with cj.open('a', encoding='utf-8') as f:
+    for r in add:
+        shutil.copy2(src/r['file'], dst/r['file'])
+        f.write(json.dumps({'file': r['file'], 'dir': r['from'],
+                            'label': r['label'], 'comment': r['comment']},
+                           ensure_ascii=False) + '\n')
+print(len(add), 'kart eklendi')
+PY
+```
+
+---
+
+## 3.5 `aegis_missing.py` — yorumlara göre düzeltme turu
+
+`aegis_pick.py` ile seçim yapılırken bırakılan yorumlar seçilen görsellerin yanına,
+`out_choosen/000art_jobs_chosen.jsonl`'e yazılır. Her satırda **o görseli üreten**
+prompt + seed, `source_dir` ve `comment` birlikte durur — bu dosya tek başına yeterli,
+üretim turlarının `art_jobs` dosyalarına ihtiyaç yok.
+
+`aegis_missing.py` bu dosyadan **yalnızca yorumlu kartları** alır ve her biri için
+düzeltilmiş bir job satırı yazar. Taban, kartın kendi prompt'udur: çerçeveleme, ışık
+ve stil kuyruğu aynen korunur, **yalnız prompt'un 1. satırı** (`SUBJECT`) değişir,
+seed de aynı kalır. Beğenilen kompozisyonun düzeltilmiş hali gelir, bambaşka bir
+resim değil.
+
+```bash
+python3 aegis_missing.py --check      # yorum → yeni konu cümlesi listesi, dosya yazma
+python3 aegis_missing.py              # art_jobs_final_missing.jsonl (43 kart)
+python3 aegis_generate.py --jobs art_jobs_final_missing.jsonl --out out_fix
+```
+
+Düzeltmeler `aegis_missing.py` içindeki `SUBJECT` sözlüğünde; ışık cümlesi konuyla
+çelişiyorsa (ör. "daha karanlık olsun" ama kuyrukta *flat overcast daylight*)
+`TAIL_FIX` ile o parça değiştirilir. Yorumlu ama karşılığı yazılmamış bir kart —
+ya da karşılığı olmayan bir anahtar — hata verir, sessizce yutulmaz.
+
+---
+
+## 3.6 Klasör düzeni — hangisi taşıyıcı
+
+| Klasör / dosya | İçinde | Taşıyıcı mı |
+|---|---|---|
+| `out_choosen/` | **Seçilen 146 görsel** + `000art_jobs_chosen.jsonl` (prompt + seed + yorum) + `comments.jsonl` | **Evet** — `aegis_integrate.py` ve `aegis_missing.py` buradan okur |
+| `out/` | Bir üretim turunun ham çıktısı; seçilmeyen alternatifler | Hayır |
+| `out_fix/` | Düzeltme turunun çıktısı (`art_jobs_final_missing.jsonl`) | Karşılaştırma bitene kadar |
+
+Bütün `out*` klasörleri gitignore'da — silinirlerse geri dönüş yeniden üretimdir
+(~15 sn/görsel). Pipeline'ın tek taşıyıcı girdisi `out_choosen/000art_jobs_chosen.jsonl`;
+seçilen her görselin prompt'u, seed'i ve yorumu orada durduğu için üretim turlarının
+`art_jobs*.jsonl` dosyaları silinse de düzeltme turu çalışır.
 
 ---
 
