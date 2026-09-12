@@ -155,13 +155,6 @@ SUBJECT = {
  "base of the rock, half-erased ancient symbols carved into the cliff face at head height, "
  "the first lanterns showing along the piers, a burning red-gold sky over the open sea beyond "
  "the headlands",
-"location|Rıhtım":
- "Three uneven wooden jetties reaching out over green water at first light, planks sagging "
- "underfoot with the sea showing between them, barrels and crates stacked and marked in chalk "
- "with arrows crosses and numbers instead of stamps, no crane anywhere, dockhands hauling a "
- "load by rope and shoulder hook, a two-masted wooden cargo boat and a fishing skiff moored "
- "alongside, a barefoot halfling boy swinging his legs on a barrel, tarred sheds and a sheer "
- "cliff rising behind the shore end of the piers",
 "location|Lucid Triton":
  "A vast white marble capital seen from a high terrace in the late afternoon, the whole city "
  "laid out below: broad avenues lined with crimson orange and violet leaved trees running "
@@ -322,7 +315,63 @@ SUBJECT = {
  "lord, a plan-holder with a rolled drawing and an old man in a worn coat, a clerk reading "
  "aloud from a register at a lectern, petitioners standing at the low wooden railing across "
  "the foreground with their backs to the viewer",
+
+# --- anakronizm/sacmalik duzeltmeleri (ilk turdan sonra) -----------------
+# "crane" celik kule vinci, "jeweller's lamp" modern masa lambasi,
+# "great mirror" el aynasi, "winch crank" gemi dumeni cizdirdi.
+"location|Rıhtım":
+ "Three uneven wooden jetties reaching out over green water at first light, planks sagging "
+ "underfoot with the sea showing between them, barrels and crates stacked and marked in chalk "
+ "with arrows crosses and numbers instead of stamps, every load moved by hand, a dozen "
+ "dockhands hauling by rope and shoulder hook and rolling barrels down the planks, a "
+ "two-masted wooden cargo boat and a fishing skiff moored alongside, a barefoot halfling boy "
+ "swinging his legs on a barrel, tarred sheds and a sheer cliff rising behind the shore end "
+ "of the piers",
+"npc|Mine":
+ "A short stocky dwarf woman over a hundred years old, red beard worked into one thick braid "
+ "with a small iron ring at its end, heavy brows, small watchful eyes and round ears, two red "
+ "dents on the bridge of her nose from spectacles, wearing a scarred leather apron, holding a "
+ "ring on a mandrel with fine pliers, a cramped back-room bench behind her with files, punches "
+ "and a single clay oil lamp burning on an open wick",
+"npc|Gümrük Valisi":
+ "A short plump human man in his fifties, round clean-shaven face with red cheeks, thin oiled "
+ "hair, three rings on his fingers with a dark ruby in one, wearing a dark green "
+ "gold-embroidered coat straining at its buttons over the stomach, seated behind a desk of "
+ "open ledgers, a tall window behind him looking down on a river mouth crowded with the masts "
+ "of wooden sailing ships",
+"npc|Nehir Muhafızı Çavuşu":
+ "A bony tall human woman in her forties, face reddened and flaking from the river wind, "
+ "cracked lips, red hair cut very short, two fingers of her right hand crushed and badly "
+ "healed, wearing the guard's blue-grey cloak over leather armour, one hand resting on the "
+ "wooden bar of a hand capstan, a stone river tower behind her with a timber ballista on its "
+ "top and a great rusted iron chain running down into the water",
+"npc|Vinç Ustası":
+ "A short muscular gnome in his fifties, coal-black beard shortened in patches by burns, a "
+ "clean ring of skin around the eyes left by smoked-glass brass goggles pushed up on his "
+ "forehead, the rest of the face darkened with grease, wearing a stained leather apron with "
+ "three sizes of iron spanner hanging from his belt, standing on the timber roof platform of "
+ "a warehouse beside the oak gear housing and hemp rope drum of a great wooden treadwheel "
+ "crane, the masts of sailing ships and stacked stone terraces behind him",
+"npc|Kule Nöbetçisi":
+ "A young powerfully built dragonborn, bronze scales dulled by salt and wind, a row of short "
+ "spines running from the back of the head down the neck with one snapped off, bright yellow "
+ "eyes, wearing the grey cloak and light armour of a coast watch, one callused hand on the "
+ "chain of a great polished bronze signal disc as tall as he is mounted on an iron swivel "
+ "frame, a signal tower parapet and an iron fire basin behind him",
+"scene|Gümrük Rıhtımı":
+ "A customs officer on a stone quay having a crate lid prised open and entering the contents "
+ "on a writing board, bolts of cloth and sacks of clove counted out, one sack split and "
+ "spilling dark spice across the wet stone, behind him a great wooden treadwheel crane of oak "
+ "beams and hemp rope swinging the next load overhead with two men walking inside its wheel, "
+ "a moored sailing ship and terraced warehouses beyond",
+"scene|Susan Kule":
+ "Night on a clifftop signal tower, an iron fire basin burning at the parapet with the next "
+ "tower's fire visible far down the coast, a dragonborn watchman standing beside a great "
+ "polished bronze signal disc as tall as he is mounted on an iron swivel frame, the watch "
+ "register open on a table, wind tearing at the flames, black sea and a chain of distant fires "
+ "along the shore",
 }
+
 
 # ---------------------------------------------------------------------------
 # Isik + atmosfer + renk: KART BASINA. Bu sozluk "butun arka planlar ayni"
