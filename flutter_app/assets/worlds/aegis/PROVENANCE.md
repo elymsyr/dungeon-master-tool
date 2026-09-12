@@ -4,8 +4,10 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
-**Sürüm 0.5.0 — 152 entity** (2026-09-11). 0.5.0'da iki **alt sınıf** eklendi ve
-onlara bağlı 25 kart geldi (`subclass` 2 · `animal` 1 · `trait` +10 · `creature-action` +8 ·
+**Sürüm 0.5.1 — 153 entity** (2026-09-12). 0.5.1'de iki alt sınıfın Aegis uyarlaması
+geri alındı: içerik ve isimlendirme **özgünüyle aynı** (*Clockwork Soul* · *Drakewarden*),
+kalan sapmalar uçuş ve ejderha ile sınırlı — `lore/canon/alt-siniflar.md` §4. 0.5.0'da bu
+iki **alt sınıf** eklenmiş ve onlara bağlı 25 kart gelmişti (`subclass` 2 · `animal` 1 · `trait` +10 · `creature-action` +8 ·
 `resource-pool` 6); tasarımı ve sapma defteri [lore/canon/alt-siniflar.md](lore/canon/alt-siniflar.md). Kartlar güncel kanondan (Hastalık Puanı
 revizyonu dahil) **sıfırdan** yazıldı; 0.2.0'ın metni kullanılmadı. 0.4.0'da bütün kartlar
 README §6.7 (WotC read-aloud / modül sesi) ile yeniden yazıldı ve kayıt vurgusu azaltıldı
@@ -147,27 +149,27 @@ sayıyor): içerik `Meclis Oturumu` beat 3'e ve Orvan Sancar'ın `secrets`'ına 
 
 ## subclass — 2 · animal — 1 · trait +10 · creature-action +8 · resource-pool — 6
 
-Bu paketin tek **dış kaynaklı** bloğu. İki alt sınıf WotC kitaplarından uyarlandı;
-`source` alanı her kartta bunu söylüyor. Uyarlamanın tamamı ve sapmaların satır satır
-defteri `alt` §1–4'te.
+Bu paketin tek **dış kaynaklı** bloğu. İki alt sınıf WotC kitaplarından **olduğu gibi
+alındı** — içerik ve isimlendirme özgünüyle aynı; `source` alanı her kartta bunu
+söylüyor. Sapmaların satır satır defteri `alt` §4'te.
 
 | Entity | Kaynak |
 |---|---|
-| **Kayıt Ruhu** (`subclass`) | *Clockwork Soul*, Tasha's Cauldron of Everything → `alt §1`. Aegis tarafı: `lonca §0, §9` (defter = gerçeklik), `mek §1–2` (lisans, Mühürsüz Kalem), `bolge §4.1` (Ravenhall istisnası) |
-| Kayıt Tezahürü · Dengeyi Geri Ver *(trait + creature-action)* · Mühür Kalkanı · Fihrist Hali *(trait + creature-action)* · Sayım *(trait + creature-action)* | `alt §1.3–1.4` |
-| **Pul Bağıtlısı** (`subclass`) | *Drakewarden*, Fizban's Treasury of Dragons → `alt §2`. Aegis tarafı: `bolge §4.2–4.4` (Kuzeyin Gözcüleri, rün bir dildir, Avlu), `lonca §9` (Yazısız) |
-| **Pullu** (`animal`) | `alt §2.5`. Ejderha değil **beast**; statblok özgün drake'in sayılarını taşır |
-| Bağıt Armağanı · Bağıt Yoldaşı · Salgı · Pul ve Diş · Tam Bağıt · Refleks Direnci *(trait + creature-action)* · Isırık · Salgılı Vuruş · Salgı Püskürtmesi | `alt §2.4–2.5` |
+| **Clockwork Soul** (`subclass`) | *Clockwork Soul*, Tasha's Cauldron of Everything → `alt §1` |
+| Manifestations of Order · Restore Balance *(trait + creature-action)* · Bastion of Law · Trance of Order *(trait + creature-action)* · Clockwork Cavalcade *(trait + creature-action)* | `alt §1.2–1.3` |
+| **Drakewarden** (`subclass`) | *Drakewarden*, Fizban's Treasury of Dragons → `alt §2` |
+| **Drake** (`animal`) | `alt §2.5`. Ejderha değil **beast**; statblok özgün drake'in sayılarını taşır |
+| Draconic Gift · Drake Companion · Draconic Essence · Bond of Fang and Scale · Perfected Bond · Reflexive Resistance *(trait + creature-action)* · Bite · Infusing Strike · Drake's Breath | `alt §2.4–2.5` |
 | Altı `resource-pool` satırı | `alt §3.3` — sayfadaki kullanım sayaçları |
 
-**Sapmalar (özet, tamamı `alt §4`):**
+**Sapmalar (tamamı `alt §4`):**
 
-- Kayıt Ruhu 1. değil **3. seviyede** açılır (SRD 5.2.1 düzeni); büyü kademeleri 3/5/7/9.
-- 7. kademedeki *Summon Construct* → **Death Ward** (SRD'de yok, ve bu evrende konstrükt yok).
-- Pul Bağıtlısı'nda **uçuş tamamen çıkarıldı** — 7. seviyedeki kanat ve 15. seviyedeki
-  uçan binek yok. Yerine tırmanma 40 ft, zorlu arazi bağışıklığı, 50 ft yürüme, bedava
-  biniş/iniş ve 30 → **60 ft**'e çıkan Refleks Direnci menzili geldi.
-- Salgı listesinden **ateş** çıkarıldı; dört tip kaldı. Draconic yerine **Primordial**.
+- Clockwork Soul'da 7. kademedeki *Summon Construct* → **Death Ward** (SRD 5.2.1'de yok).
+  Geri kalan her şey — 1. seviyede açılış dahil — özgünüyle aynı.
+- Drakewarden'da **uçuş tamamen çıkarıldı** — 7. seviyedeki kanat ve 15. seviyedeki uçan
+  binek yok, yerine bir şey konmadı.
+- **Ejderha yok:** öz listesinden **ateş** çıkarıldı (dört tip kaldı), drake bir `dragon`
+  değil `beast`, ve Draconic yerine **Primordial** verilir.
 
 **Görselleri var.** Bu kartların 21'i `tool/aegis_art` akışından geçti ve
 `imagePath` taşıyor. Görseli olmayan tek grup 6 `resource-pool` kaydı — soyut

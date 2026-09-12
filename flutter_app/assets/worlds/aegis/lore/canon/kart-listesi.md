@@ -351,14 +351,15 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 
 | Kart | Ana sınıf | Ne | Durum |
 |---|---|---|---|
-| **Kayıt Ruhu** | Sorcerer (3. sv) | Sancak Kaydı'nın bir insana geçmiş sayfası. Büyüsü düzeltmedir: fazlalığı siler, eksiği tamamlar. Lisansı yok — Lonca'nın deyimiyle **Mühürsüz Kalem** | ✅ |
-| **Pul Bağıtlısı** | Ranger (3. sv) | Ravenhall'da taşa kazınan bağıt ve ona giren pullu yırtıcı. Yoldaş **Yazısız**'dır; hiçbir seviyede **uçuş yok** | ✅ |
+| **Clockwork Soul** | Sorcerer (1. sv) | Mechanus'un düzeninden gelen büyü: fazlalığı siler, eksiği tamamlar, sapmayı hizaya çeker | ✅ |
+| **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
 
-Bağlı kartlar: `animal/Pullu` · 10 `trait` · 8 `creature-action` · 6 `resource-pool`
+Bağlı kartlar: `animal/Drake` · 10 `trait` · 8 `creature-action` · 6 `resource-pool`
 satırı — hepsi [`alt-siniflar.md` §3](alt-siniflar.md)'te adıyla sayılı.
 
-İkisi de WotC kaynaklarından **uyarlandı** ve her kartın `source` alanı bunu söylüyor
-(`Aegis — Tasha's Cauldron of Everything` · `Aegis — Fizban's Treasury of Dragons`).
+İkisi de WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
+aynı — ve her kartın `source` alanı bunu söylüyor (`Tasha's Cauldron of Everything` ·
+`Fizban's Treasury of Dragons`).
 Sapma defteri [`alt-siniflar.md` §4](alt-siniflar.md).
 
 ---
