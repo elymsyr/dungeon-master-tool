@@ -70,7 +70,7 @@ uygulamaya giren dünya
 | `aegis_missing.py` | `out_choosen/000art_jobs_chosen.jsonl` | `art_jobs_final_missing.jsonl` (yorumlu kartlar) |
 | `aegis_bg.py` | (elle yazılmış tablo) | `art_bg_jobs.jsonl` |
 | `aegis_bg_compare.py` | kart + BG görselleri | `compare_*.jpg` |
-| `aegis_integrate.py` | `out_choosen/` | `media/Artwork/` + blueprint + manifest |
+| `aegis_integrate.py` | `out_artwork_choosen/` | `media/Artwork/` + blueprint + manifest |
 
 > ⚠️ **`aegis_merge.py` çalıştırırsan `art_jobs_final.jsonl`'i ezer ve
 > `aegis_polish.py`'nin bütün elle düzeltmeleri gider.** Merge'den sonra sıra
@@ -260,7 +260,8 @@ ya da karşılığı olmayan bir anahtar — hata verir, sessizce yutulmaz.
 
 | Klasör / dosya | İçinde | Taşıyıcı mı |
 |---|---|---|
-| `out_choosen/` | **Seçilen 146 görsel** + `000art_jobs_chosen.jsonl` (prompt + seed + yorum) + `comments.jsonl` | **Evet** — `aegis_integrate.py` ve `aegis_missing.py` buradan okur |
+| `out_artwork_choosen/` | **Nihai 146 görsel** + `000out_choosen-art_jobs_chosen.jsonl` | **Evet** — `aegis_integrate.py` buradan okur |
+| `out_choosen/` | Seçim turlarının 146 görseli + `000art_jobs_chosen.jsonl` (prompt + seed + yorum) + `comments.jsonl` | **Evet** — `aegis_missing.py` buradan okur |
 | `out/` | Bir üretim turunun ham çıktısı; seçilmeyen alternatifler | Hayır |
 | `out_fix/` | Düzeltme turunun çıktısı (`art_jobs_final_missing.jsonl`) | Karşılaştırma bitene kadar |
 
@@ -353,16 +354,13 @@ python3 aegis_bg_compare.py --category location --out compare_location.jpg --col
 
 ## 6. `aegis_integrate.py` — uygulamaya alma
 
-`out/{uuid}.webp` dosyalarını `aegis-act1/media/Artwork/` altına okunur adlarla
+`out_artwork_choosen/{uuid}.webp` dosyalarını `aegis-act1/media/Artwork/` altına okunur adlarla
 kopyalar, `world-blueprint.json`'daki `imagePath` alanlarını ve `manifest.json`'u
 günceller.
 
-> ⚠️ **Kaynak klasör `out/` olarak sabit — `--out` bayrağı yok.** Görselleri
-> başka bir klasöre ürettiysen (`out_new/` gibi) entegrasyondan önce yerine koy:
->
-> ```bash
-> mv out out_eski && mv out_new out
-> ```
+> ⚠️ **Kaynak klasör `out_artwork_choosen/` olarak sabit — `--out` bayrağı yok.**
+> Ad/kategori eşleşmesi de o klasörün kendi
+> `000out_choosen-art_jobs_chosen.jsonl`'inden okunur.
 
 ```bash
 python3 aegis_integrate.py                 # kuru çalıştır — hiçbir şey yazmaz
