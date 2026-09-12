@@ -30,18 +30,19 @@ items that are still open on the release date; do not edit past releases afterwa
   `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
   clean apart from 27 pre-existing info-level lints.
 
-- **The SRD Barbarian class card has no artwork** — `dnd5e-srd` carries 1259 `dmt-art://` refs
-  and 1258 of the images exist; `eb131956-8e5f-5be1-ab00-a0ea8b3db774.webp` (Barbarian) is in
-  neither the app bundle nor `tool/art_gen/out/`, so the card renders art-less. Needs one
-  `tool/art_gen` run for that uuid. `pack_art_bundles.py` skips the pack rather than uploading
-  an empty zip, so nothing else is affected.
-
 - **Deleted marketplace listings leave their images in R2** — When the publisher deletes a
   world they shared on the marketplace, the listing goes away but the uploaded media under
   `pub/` in R2 is not removed, so the objects stay and keep costing storage. No user-visible
   effect; needs a cleanup pass (or delete-time media removal).
 
 ## Resolved
+
+- **The SRD Barbarian class card had no artwork** — Fixed: the missing
+  `eb131956-8e5f-5be1-ab00-a0ea8b3db774.webp` was generated from its existing `art_jobs.jsonl`
+  job (`generate.py --types class`) and encoded into the bundle with `bundle_srd_art.py`.
+  `dnd5e-srd` now has all 1259 `dmt-art://` refs backed by a file in `assets/art/srd/`. No R2
+  re-upload needed — SRD art ships in the app bundle, not in a catalog art zip.
+
 - **Downloaded card art was never cleaned up** — Fixed: deleting a package (or a world whose
   packages have no other home) now runs `FirstPartyArtService.sweepUnreferenced`, which drops
   every file under `cacheDir/art/` that nothing live still points at (`image_path` in
