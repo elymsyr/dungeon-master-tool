@@ -228,7 +228,9 @@ class _PackageAsCampaignRepo implements CampaignRepository {
   Future<void> purge(String name) async {}
 
   @override
-  Future<String> create(String name, {WorldSchema? template}) async => name;
+  Future<String> create(String name,
+          {WorldSchema? template, bool includeSrd = true}) async =>
+      name;
 
   @override
   Future<bool> restoreFromTrash(String trashId) async => false;

@@ -83,7 +83,12 @@ abstract class CampaignRepository {
   Future<void> purge(String campaignName);
 
   /// Yeni kampanya oluştur, template ile.
-  Future<String> create(String worldName, {WorldSchema? template});
+  ///
+  /// [includeSrd] false ise D&D 5e template'inde built-in SRD paketi
+  /// bağlanmaz ve dünya `_srdCoreOptOut` ile işaretlenir (load()'daki
+  /// self-heal de bu bayrağa saygı duyar).
+  Future<String> create(String worldName,
+      {WorldSchema? template, bool includeSrd = true});
 
   /// PR-D4: restore a soft-deleted world from `trash_items` by its trash
   /// row id. Returns false on conflict / corrupt payload.

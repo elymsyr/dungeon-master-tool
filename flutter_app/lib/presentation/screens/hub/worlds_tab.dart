@@ -17,6 +17,8 @@ import '../../../application/providers/world_membership_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
+import '../../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart'
+    show builtinDnd5eV2SchemaId;
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
@@ -43,6 +45,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
   WorldSchema? _selectedTemplate;
+  bool _includeSrd = true;
   bool _refreshing = false;
 
   @override
@@ -449,6 +452,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         .where((t) => t.schemaId == _selectedTemplate?.schemaId)
         .firstOrNull;
     _selectedTemplate = matched ?? uniqueTemplates.first;
+    _includeSrd = true;
     _nameController.clear();
     final nameFocus = FocusNode();
     // Dialog transition + IME açılışı aynı frame'e binince mobilde gecikme
@@ -504,6 +508,18 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     await _createCampaign();
                   },
                 ),
+                if (_selectedTemplate!.schemaId == builtinDnd5eV2SchemaId)
+                  CheckboxListTile(
+                    value: _includeSrd,
+                    onChanged: (v) =>
+                        setLocal(() => _includeSrd = v ?? false),
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      l10n.worldsIncludeSrd,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1045,7 +1061,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       l10n.worldsCreatingLoad(name),
       () => ref
           .read(activeCampaignProvider.notifier)
-          .create(name, template: templateFinal),
+          .create(name, template: templateFinal, includeSrd: _includeSrd),
     );
     if (success && mounted) {
       context.go('/main');
