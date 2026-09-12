@@ -250,6 +250,14 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),
       );
+      // Hub'daki ayar diyaloğu aktif OLMAYAN bir dünyayı da publish
+      // edebiliyor — tohum `data`'dan okumalı, provider'lardan değil.
+      await seedAndAnnounceWorldContent(
+        context,
+        ref,
+        widget.campaignId,
+        campaignData: data,
+      );
     } catch (e) {
       _showError(e);
     } finally {

@@ -1373,5 +1373,7 @@
   "lanSyncErrPairingClosed": "Diğer cihaz yeni eşleşme kabul etmiyor. Orada önce Yerel Eşleme'yi aç.",
   "lanSyncErrNotSignedIn": "Cihaz eşleştirmek için giriş yap.",
   "lanSyncErrFailed": "Eşleşme başarısız.",
-  "shareWithPlayers": "Oyuncularla paylaş"
+  "shareWithPlayers": "Oyuncularla paylaş",
+  "worldContentSharedTitle": "Dünya içeriği oyuncularla paylaşıldı",
+  "worldContentSharedBody": "Kendi yazdığın kural kartları — sınıflar, türler, geçmişler, feat'ler, büyüler, eşyalar ve bunların referans tabloları — oyuncularla paylaşıldı; karakterlerini doğru yaratabilmeleri için bunlara erişmeleri gerekiyor.\n\nCanavarlar, büyülü eşyalar, NPC'ler, sahneler ve görevler paylaşılmadı. İstediğin kartın paylaşımını kartın menüsünden tek tek geri alabilirsin."
 }

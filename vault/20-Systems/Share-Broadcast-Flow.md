@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-09-08
+updated: 2026-09-12
 tags: [system, sync, multiplayer]
 ---
 
@@ -65,11 +65,19 @@ DM "Paylaş" der
 
 ## Paylaşım ne zaman tetiklenir
 
-Üç giriş noktası, hepsi `entitySharerProvider` ([[entity_share_prepare]] içindeki `EntitySharer`) üzerinden — köprü, paylaşımın hem widget'lardan (`WidgetRef`) hem `EntityNotifier`'dan (`Ref`) çağrılabilmesi için var:
+Dört giriş noktası, hepsi `entitySharerProvider` ([[entity_share_prepare]] içindeki `EntitySharer`) üzerinden — köprü, paylaşımın hem widget'lardan (`WidgetRef`) hem `EntityNotifier`'dan (`Ref`) çağrılabilmesi için var:
 
 1. **Kart menüsü** — DM'in açık kartta "Paylaş" toggle'ı (`entity_card.dart`).
-2. **Oluşturma kutucuğu** — çok oyunculu dünyada (rol = DM) "Yeni kart" diyaloğundaki *Share with players* checkbox'ı. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) kapalı. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
+2. **Oluşturma kutucuğu** — çok oyunculu dünyada (rol = DM) "Yeni kart" diyaloğundaki *Share with players* checkbox'ı. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) kapalı. 2026-09-12'den beri `seedExcludedSlugs` de kapalı — canavar ve loot asla kendiliğinden gitmez, publish tohumuyla aynı kural. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
 3. **Otomatik güncelleme** — zaten paylaşılmış bir kart düzenlenince push kendiliğinden tekrarlanır: `EntityNotifier._pushIfShared`, `_writeEntityToCampaign`'in [[pending_write_buffer]] flush'ına asılıdır (750–2000 ms debounce), yani tuş başına değil satır diske yazıldığında bir kez. Kapılar: world online + rol DM + `entity_shares`'te world-wide satır. `shareWithAll` delete+insert olduğu için idempotent; hata yutulur (debugPrint).
+
+4. **Publish tohumu (2026-09-12)** — DM dünyayı online'a aldığında `seedAndAnnounceWorldContent` ([[online_world_widgets]]) → `seedTierContentToPlayers` ([[entity_share_prepare]]) tek seferde DM'in **kendi yazdığı** (`linked == false`) Tier 0 + Tier 1 kartlarını paylaşır. Gerekçe spoiler değil **karakter yaratılabilirlik**: oyuncu katıldığında yalnızca SRD bootstrap'ini alıyor, DM'in homebrew sınıf/tür/geçmişi olmadan karakterini yanlış yaratıyor (migration 088'in kendi yorumu da bu modeli bekliyor).
+   - Kapsam dışı: `linked == true` (oyuncunun kurulu paketinde zaten var, ayrıca 4000 satır/dünya tavanını yerdi), `seedExcludedSlugs` = `monster` / `animal` / `creature-action` / `magic-item`, ve tüm Tier 2.
+   - `shareEntityWithPlayers` artık `Set<String> entityIds` + opsiyonel `allowedSlugs` alıyor. Tohum yolu `allowedSlugs` doldurur, yoksa dışlanan kategoriler relation kapanışı üzerinden arka kapıdan girerdi. **Tekil paylaşım yolunun kapanış davranışı değişmedi** (`allowedSlugs = null`).
+   - Bayrak yok: `unpublishWorld` bulut satırlarını cascade siliyor, tekrar online olmak sıfırdan tohumlamalı. DM online'ken bir kartı unshare ederse hiçbir şey onu geri diriltmez.
+   - **Publish'in İKİ girişi var** ve ikisi de bu yardımcıdan geçmek zorunda: dünya ayarları toggle'ı (`online_world_section._publish`, hub'dan aktif OLMAYAN bir dünya için de açılabiliyor) ve dünya içindeki "Make Online" (`save_sync_indicator._makeOnline`). Hub yolu `campaignData`'yı geçirir — `entityProvider` / `worldSchemaProvider` her zaman AKTİF kampanyayı okur, yani oradan tohumlamak yanlış dünyanın kartlarını paylaşırdı.
+   - **Yazma toplu.** `EntityShareService.shareManyWithAll` tek `DELETE ... IN (...)` + 50'lik `INSERT` parçaları atar; eski kart-başına-iki-round-trip döngüsü yüzlerce homebrew kartta publish'i dakikalarca bekletiyordu. Bir parça düşerse (512KB/kart ya da 4000 satır tavanı) o parça satır satır tekrar denenir ve yazılamayan id'ler `debugPrint`'e düşer — publish hiçbir durumda düşmez.
+   - DM tek `AlertDialog` ile bilgilendirilir (`worldContentSharedTitle` / `...Body`). Tasarım: `docs/tier-content-auto-share.md`. Koruma: `test/application/services/entity_share_tier_seed_test.dart`.
 
 ## Yazma yolu — kuyruk yok, doğrudan yazma
 

@@ -36,6 +36,17 @@ const tier1Slugs = <String>[
   'starter-bundle',
 ];
 
+/// Dünya online'a alındığında oyunculara **otomatik gitmeyen** Tier-1
+/// kategorileri. Canavar ve loot DM'in elinde kalır — oyuncunun karakterini
+/// yaratmak için bunlara ihtiyacı yok. Aynı set yeni kart yaratma
+/// diyaloğunun "Share with players" varsayılanını da kapatır.
+const seedExcludedSlugs = <String>{
+  'monster',
+  'animal',
+  'creature-action',
+  'magic-item',
+};
+
 /// Equipment slugs an NPC / monster may carry. Used as the allowed-types
 /// list for `equipment_refs` relations.
 const equipmentSlugs = <String>[

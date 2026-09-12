@@ -15,7 +15,8 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/services/entity_share_prepare.dart';
 import '../../domain/entities/online/world_role.dart';
-import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
+import '../../domain/entities/schema/builtin/content.dart'
+    show seedExcludedSlugs, tier1Slugs;
 import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -1254,7 +1255,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
-            bool shareChecked() => shareOverride ?? _tierFor(selectedSlug) != 2;
+            // Varsayılan: Tier 0/1 açık, ama canavar ve loot asla
+            // kendiliğinden gitmez — publish tohumuyla aynı kural.
+            bool shareChecked() =>
+                shareOverride ??
+                (_tierFor(selectedSlug) != 2 &&
+                    !seedExcludedSlugs.contains(selectedSlug));
 
             void submit() {
               final name = nameController.text.trim();

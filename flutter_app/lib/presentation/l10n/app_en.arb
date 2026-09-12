@@ -1455,5 +1455,7 @@
   "lanSyncErrPairingClosed": "The other device isn’t accepting new pairings. Open Local Sync there first.",
   "lanSyncErrNotSignedIn": "Sign in to pair devices.",
   "lanSyncErrFailed": "Pairing failed.",
-  "shareWithPlayers": "Share with players"
+  "shareWithPlayers": "Share with players",
+  "worldContentSharedTitle": "World content shared with players",
+  "worldContentSharedBody": "Your own rule cards — classes, species, backgrounds, feats, spells, equipment and the lookup tables they reference — were shared with your players, so they can build their characters correctly.\n\nMonsters, magic items, NPCs, scenes and quests were not shared. You can stop sharing any single card from that card's menu."
 }
