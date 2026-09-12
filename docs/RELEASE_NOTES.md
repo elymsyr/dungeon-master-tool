@@ -1,5 +1,77 @@
 # Release Notes
 
+## Dungeon Master Tool v16.1.0 — Players Can Actually Build Your Characters (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+If you wrote your own classes, species or backgrounds and then took the world online, your players never saw any of it — they joined with the plain 5e library and built characters against rules that do not exist in your world. Taking a world online now hands them your rule cards automatically, and tells you exactly what went and what stayed behind. Monsters and magic items still stay yours until you share them yourself.
+
+---
+
+### Highlights
+
+- **Your homebrew rules reach your players the moment you go online** — classes, species, backgrounds, feats, spells and equipment are shared in one pass when you publish the world.
+- **Monsters and loot stay private by default** — new cards in those categories no longer arrive with "Share with players" pre-ticked.
+
+---
+
+### Online play
+
+#### Your rule content goes out with the world
+
+Publishing a world now shares every rule card you wrote yourself — classes, subclasses, species, subspecies, backgrounds, feats, spells, weapons, armour, tools, gear, packs, mounts, vehicles, trinkets, traits and starter bundles — along with the lookup tables those cards point at, so a player joining the world can build a character against your rules instead of the stock ones. A dialog explains what happened, once, right after the world goes online.
+
+- Both ways of going online do this: the toggle in world settings and **Make Online** from inside the world.
+- Cards that came from an installed package are not re-sent — your players already have them.
+- Monsters, animals, creature actions and magic items are deliberately left out. A rule card that references one of them will show that one reference as unresolved on the player's side; everything else about the card works.
+- You can stop sharing any single card afterwards from that card's menu.
+
+#### Share-with-players defaults match
+
+When you create a new card, the **Share with players** box is still pre-ticked for rule content, but no longer for monsters, animals, creature actions and magic items. Before this release a homebrew boss or a piece of loot made after publishing was quietly handed to the table. You can still tick the box yourself whenever you want to share one.
+
+---
+
+### Smaller improvements
+
+- **l10n** — two new keys for the sharing dialog, covered in English, Turkish, German and French.
+- **Aegis** — refreshed artwork and a banner image for the bundled Act 1 world.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.0.0` → `16.1.0`.
+- **Worlds already online:** nothing is shared retroactively. Toggle the world offline and online again to seed your rule content, or share the cards individually.
+- **Cards shared before this release:** untouched — the seed only adds, it never revokes.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1492 tests fail on `main` and no CI step blocks a red build.
+
+---
+
+### For developers
+
+- **`EntitySharer.seedTierContent`** — shares non-linked cards whose category is in `tier0Slugs ∪ seedTier1Slugs`; the same filter is applied to the transitive relation closure, so `seedExcludedSlugs` cannot leak in through a reference.
+- **`seedAndAnnounceWorldContent`** — the single entry point both publish paths must route through; pass `campaignData` when publishing a world that is not the active one.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.0.0 — Content That Arrives Complete (Beta)
 
 **Release date:** September 2026
