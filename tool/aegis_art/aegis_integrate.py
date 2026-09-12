@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""out/{uuid}.webp → aegis-act1/media/Artwork/ kopyala + blueprint + manifest güncelle.
+"""out_artwork_choosen/{uuid}.webp → aegis-act1/media/Artwork/ kopyala + blueprint + manifest güncelle.
 
 Kullanım:
     python3 aegis_integrate.py                # kuru çalıştır (değişiklik yok)
@@ -11,9 +11,9 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 REPO = BASE.parent.parent
-JOBS_FILE = BASE / "art_jobs_final.jsonl"
+JOBS_FILE = BASE / "out_artwork_choosen" / "000out_choosen-art_jobs_chosen.jsonl"
 # Secilen gorseller — art_jobs_final.jsonl'in ham ciktisi (out/) degil.
-OUT_DIR = BASE / "out_choosen"
+OUT_DIR = BASE / "out_artwork_choosen"
 BP_DIR = REPO / "flutter_app" / "assets" / "worlds" / "aegis" / "aegis-act1"
 BP_FILE = BP_DIR / "world-blueprint.json"
 MANIFEST_FILE = BP_DIR / "manifest.json"
