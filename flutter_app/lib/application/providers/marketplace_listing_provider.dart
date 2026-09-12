@@ -13,6 +13,7 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../services/asset_ref_resolver.dart';
 import '../services/cover_image_bundler.dart';
@@ -274,6 +275,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         payload,
         listing.coverImageB64,
       );
+      await _prefetchMedia(payload);
 
       await _ref.read(marketplaceLinksLocalDsProvider).setSource(
             itemType: listing.itemType,
@@ -306,6 +308,47 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       debugPrint('downloadAsNewCopy error: $e\n$st');
       state = AsyncValue.error(e, st);
       rethrow;
+    }
+  }
+
+  /// İndirilen payload'daki bütün uzak medyayı **kurulum anında** diske çeker.
+  ///
+  /// Öncesinde medya tembeldi: ref payload'da duruyordu, bayt ancak kart ilk
+  /// kez çizilirken iniyordu. Yani "indirdim" diyen kullanıcı uçağa bindiğinde
+  /// dünyasını görselsiz açıyordu. Resmî katalog bunu zaten kurulumda hallediyor
+  /// ([FirstPartyArtService.prefetchBundle]); community yolu etmiyordu.
+  ///
+  /// Kısmi başarı kasıtlı olarak zararsız: çözülemeyen ref eskisi gibi çizim
+  /// anında yeniden denenir, indirme başarısız sayılmaz.
+  Future<void> _prefetchMedia(Map<String, dynamic> payload) async {
+    final refs = remoteMediaRefs(payload);
+    if (refs.isEmpty) return;
+
+    final progress = _ref.read(marketplaceDownloadProgressProvider.notifier);
+    progress.state = (done: 0, total: refs.length);
+    final resolver = _ref.read(assetRefResolverProvider);
+    var done = 0, failed = 0;
+    // 4'erli: tek tek 75 dosya gereksiz yavaş, hepsini birden açmak worker'ın
+    // rate limit'ine koşar.
+    for (var i = 0; i < refs.length; i += 4) {
+      final slice = refs.sublist(i, (i + 4).clamp(0, refs.length));
+      final files = await Future.wait(
+        slice.map((r) async {
+          try {
+            return await resolver.resolve(AssetRef(r));
+          } catch (_) {
+            return null;
+          }
+        }),
+      );
+      failed += files.where((f) => f == null).length;
+      done += slice.length;
+      progress.state = (done: done, total: refs.length);
+    }
+    progress.state = null;
+    if (failed > 0) {
+      debugPrint('[marketplace] $failed/${refs.length} medya inmedi — '
+          'kart çizilirken tekrar denenecek');
     }
   }
 
@@ -491,6 +534,39 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     return '$desired (imported${n == 1 ? '' : ' $n'})';
   }
 }
+
+/// Payload'daki benzersiz **uzak** medya ref'leri. Anahtar adına değil değerin
+/// kendisine bakar — payload şekli world/package/character arasında değişiyor
+/// (aynı gerekçe: [PublishMediaPinner.isMediaRef]).
+///
+/// Sadece cloud + public: local path indirende zaten kırık, `dmt-art://` paket
+/// kurulumunda zip ile geliyor, transient yayına giremez.
+@visibleForTesting
+List<String> remoteMediaRefs(Object? payload) {
+  final out = <String>{};
+  void walk(Object? node) {
+    if (node is Map) {
+      for (final v in node.values) {
+        walk(v);
+      }
+    } else if (node is List) {
+      for (final v in node) {
+        walk(v);
+      }
+    } else if (node is String && node.isNotEmpty && node.length <= 1024) {
+      final ref = AssetRef(node);
+      if (ref.isCloud || ref.isPublic) out.add(node);
+    }
+  }
+
+  walk(payload);
+  return out.toList();
+}
+
+/// İndirme sırasındaki medya aşamasının ilerlemesi — `(done, total)`.
+/// Null: henüz medya çekilmiyor. Sadece UI etiketi için; iş akışını etkilemez.
+final marketplaceDownloadProgressProvider =
+    StateProvider<({int done, int total})?>((_) => null);
 
 final marketplaceListingNotifierProvider =
     StateNotifierProvider<MarketplaceListingNotifier, AsyncValue<void>>(

@@ -29,6 +29,9 @@ class MarketplacePreviewDialog extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final downloadState = ref.watch(marketplaceListingNotifierProvider);
     final downloading = downloadState is AsyncLoading;
+    // Medya aşaması uzun sürebilir (bir dünyada 30-75 dosya); spinner'ın yanına
+    // sayaç koymazsak donmuş görünüyor.
+    final mediaProgress = ref.watch(marketplaceDownloadProgressProvider);
 
     final typeLabel = switch (listing.itemType) {
       'world' => l10n.itemTypeWorld,
@@ -202,7 +205,14 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : const Icon(Icons.download),
-          label: Text(downloading ? l10n.marketplaceDownloading : l10n.marketplaceDownload),
+          label: Text(
+            !downloading
+                ? l10n.marketplaceDownload
+                : mediaProgress == null
+                    ? l10n.marketplaceDownloading
+                    : '${l10n.marketplaceDownloading} '
+                        '${mediaProgress.done}/${mediaProgress.total}',
+          ),
         ),
       ],
     );

@@ -55,6 +55,7 @@ tags: [system]
 - **Kullanıcı başına kalıcı depolama kotası yoktur** ve UI'da kota göstergesi yoktur (`storage_usage_provider`, kota snackbar'ları ve `AssetService.uploadAsset` Phase D'de silindi).
 - Transient: per-user cap **yok** (089); dosya başına 100 MB emniyet kapağı (`transient_max_file_bytes()`), global pool 5 GB LRU. Rate: 20 DL/h, 60 UL/h per user.
 - Pinned havuzu `transient`ten **ayrı bütçelidir** (5 GB / 5 GB): tek havuz olsaydı pinned büyüdükçe LRU'nun yiyebileceği alan sıfıra iner, paylaşımlar sessizce patlardı.
+- **İndirme eager'dır** (2026-09-12): `marketplace_listing_provider.downloadAsNewCopy` payload'ı kurduktan sonra `remoteMediaRefs` ile bütün cloud+public ref'leri gezip `AssetRefResolver` üzerinden 4'erli diske çeker (`marketplaceDownloadProgressProvider` ile `done/total`). Öncesi tembeldi — bayt ancak kart ilk çizilirken iniyordu, yani "indirdim" diyen kullanıcı çevrimdışına geçince dünyayı görselsiz açıyordu. Kısmi başarı kasıtlı olarak zararsız: düşen ref çizim anında yeniden denenir, indirme başarısız sayılmaz.
 - `pub/` DELETE Worker'da **yasak** — silimi refcount belirler, doğrudan DELETE başkasının listing'ini yok ederdi.
 - Paylaşım gövdeleri R2'de değil Postgres'te: `entity_shares.payload_json` ≤ **512 KB** (CHECK), dünya başına ≤ **4000** satır (`max_shares_per_world()` + trigger, 088). `worlds` silimi satırları CASCADE'le düşürür (026).
 
