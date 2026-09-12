@@ -28,10 +28,17 @@ class EquipmentStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final entities = ref.watch(wizardEntitiesProvider);
     final groups = <_GroupRow>[];
+    final defaults = <({String source, List<({String label, String? id})> items})>[];
     void collect(String? id, String sourceLabel) {
       if (id == null) return;
       final src = entities[id];
       if (src == null) return;
+      // Unconditional kit — no pick to make, but the resolver grants it, so
+      // it has to be visible here instead of reading as "nothing granted".
+      final kit = _resolveDefaults(src.fields['default_inventory_refs'], entities);
+      if (kit.isNotEmpty) {
+        defaults.add((source: sourceLabel, items: kit));
+      }
       final raw = src.fields['equipment_choice_groups'];
       if (raw is! List) return;
       for (final g in raw) {
@@ -57,7 +64,7 @@ class EquipmentStep extends ConsumerWidget {
     // it here so the player can add it by hand instead of losing it silently.
     final bgNote = _backgroundEquipmentNote(entities);
 
-    if (groups.isEmpty && bgNote == null) {
+    if (groups.isEmpty && defaults.isEmpty && bgNote == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text('No equipment choices required for this build.'),
@@ -66,6 +73,8 @@ class EquipmentStep extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        for (final d in defaults)
+          _DefaultsCard(source: d.source, items: d.items, ref: ref, entities: entities),
         for (final g in groups)
           _GroupCard(
             group: g,
@@ -88,6 +97,8 @@ class EquipmentStep extends ConsumerWidget {
     if (bg == null) return null;
     final raw = bg.fields['equipment_choice_groups'];
     if (raw is List && raw.isNotEmpty) return null; // structured path handles it
+    final kit = bg.fields['default_inventory_refs'];
+    if (kit is List && kit.isNotEmpty) return null; // granted kit card handles it
     final desc = bg.description.trim();
     if (desc.isEmpty) return null;
     final prose = _equipmentSection(desc) ?? desc;
@@ -158,6 +169,112 @@ class _EquipmentProseNote extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             ExpandableMarkdown(data: prose),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Resolves `default_inventory_refs` (a plain ref list, hard id or soft
+/// `{slug,name}`) into the same rows [_resolveItems] produces, so the granted
+/// kit renders with the identical chips as a pickable option.
+List<({String label, String? id})> _resolveDefaults(
+  Object? raw,
+  Map<String, Entity> entities,
+) {
+  if (raw is! List) return const [];
+  return _resolveItems({'items': [for (final r in raw) {'ref': r}]}, entities);
+}
+
+/// Chips for a resolved item list — tap opens the card, long-press previews.
+class _ItemChips extends StatelessWidget {
+  final List<({String label, String? id})> items;
+  final Map<String, Entity> entities;
+  final WidgetRef ref;
+
+  const _ItemChips({
+    required this.items,
+    required this.entities,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final item in items)
+          EntityLink(
+            targetId: item.id,
+            ref: item.id == null ? null : ref,
+            entities: entities,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: palette.featureCardBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                item.label,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The unconditional kit a source grants (`default_inventory_refs`). Nothing
+/// to pick — it lands on the sheet either way, so it is shown, not chosen.
+class _DefaultsCard extends StatelessWidget {
+  final String source;
+  final List<({String label, String? id})> items;
+  final Map<String, Entity> entities;
+  final WidgetRef ref;
+
+  const _DefaultsCard({
+    required this.source,
+    required this.items,
+    required this.entities,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline,
+                    size: 16, color: palette.featureCardAccent),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '$source: Granted Equipment',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Added to your inventory automatically — no choice needed.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: palette.sidebarLabelSecondary,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            _ItemChips(items: items, entities: entities, ref: ref),
           ],
         ),
       ),
@@ -349,32 +466,8 @@ class _OptionTile extends StatelessWidget {
                   if (items.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: [
-                          for (final item in items)
-                            EntityLink(
-                              targetId: item.id,
-                              ref: item.id == null ? null : ref,
-                              entities: entities,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: palette.featureCardBorder),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  item.label,
-                                  style:
-                                      Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      child: _ItemChips(
+                          items: items, entities: entities, ref: ref),
                     ),
                   if (goldGp is int && goldGp > 0)
                     Padding(
