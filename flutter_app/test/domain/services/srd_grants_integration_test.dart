@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dungeon_master_tool/application/services/builtin_srd_entities.dart';
 import 'package:dungeon_master_tool/domain/entities/character.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
@@ -189,6 +191,32 @@ void main() {
       );
       expect(drowEff.senseRanges[darkvision.id], 120,
           reason: 'Superior Darkvision overrides the base 60 ft');
+    });
+
+    test('Half-Elf (SRD 5.1) grants Darkvision 60, CHA +2 and Fey Ancestry only',
+        () {
+      final halfElf = find('species', 'Half-Elf');
+      final darkvision = find('sense', 'Darkvision');
+      final eff = CharacterResolver.resolve(
+        pc({'race_id': halfElf.id, 'base_abilities': abilities}),
+        entities,
+      );
+      expect(eff.senseRanges[darkvision.id], 60);
+      // ASI comes from the background, never the species card — a species
+      // `ability_bonuses` would stack on top of `background_asi`.
+      expect(eff.effectiveAbilities['CHA'], abilities['CHA']);
+      final traitNames = eff.autoGrantedTraitIds
+          .map((id) => entities[id]?.name)
+          .whereType<String>()
+          .toSet();
+      expect(traitNames, containsAll({'Fey Ancestry', 'Skill Versatility'}));
+      // The whole point of shipping it as its own species: no elven extras.
+      expect(traitNames.intersection({'Trance', 'Keen Senses (Elf)', 'Elven Lineage'}),
+          isEmpty);
+      // `species` is in srd_core_pack's `_artedSlugs`, so every row must ship
+      // bundled art or the card renders blank.
+      expect(File('assets/art/srd/${halfElf.id}.webp').existsSync(), isTrue,
+          reason: 'Half-Elf card art missing from assets/art/srd/');
     });
 
     test('Dwarf resists poison damage', () {

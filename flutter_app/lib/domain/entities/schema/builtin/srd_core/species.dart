@@ -1,5 +1,8 @@
 // SRD 5.2.1 Species (pp. 83–86): Dragonborn, Dwarf, Elf, Gnome, Goliath,
-// Halfling, Human, Orc, Tiefling. All Humanoid. Speed 30 ft. except Goliath
+// Halfling, Human, Orc, Tiefling — plus Half-Elf, an SRD 5.1 legacy species
+// (dropped in 5.2.1) kept here as its own row because a subspecies can only
+// ADD to its parent, and hanging it off Elf would wrongly grant Trance,
+// Keen Senses and Elven Lineage. All Humanoid. Speed 30 ft. except Goliath
 // (35 ft.). Lineages / ancestries (Drow, High Elf, Hill Dwarf, the Dragonborn
 // colors, …) ship as first-class `subspecies` entities in subspecies.dart,
 // each pointing back here via `parent_species_ref`.
@@ -103,6 +106,39 @@ List<Map<String, dynamic>> srdSpecies() => [
             ref('trait', 'Large Form'),
             ref('trait', 'Giant Ancestry'),
           ],
+        },
+      ),
+      packEntity(
+        slug: 'species',
+        name: 'Half-Elf',
+        source: 'SRD 5.1',
+        description:
+            'Human-elf heritage: Fey Ancestry and Darkvision from the elven side, '
+            'human adaptability as two free skill proficiencies. '
+            '(SRD 5.1 legacy species — dropped from SRD 5.2.1, kept here for 2014-era characters.)',
+        attributes: {
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'size_ref': lookup('size', 'Medium'),
+          'age': '180 years',
+          'speed_ft': 30,
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
+          'granted_languages': [
+            lookup('language', 'Common'),
+            lookup('language', 'Elvish'),
+          ],
+          'trait_refs': [
+            ref('trait', 'Fey Ancestry'),
+            ref('trait', 'Skill Versatility'),
+          ],
+          'mechanical_notes':
+              'Ability scores come from your background, as for every other species '
+              '(the 2024 rules moved the ASI off the species card). SRD 5.1 gave '
+              'Half-Elf Charisma +2 and +1 to two other scores — deliberately not '
+              'applied here, it would stack on top of the background ASI. '
+              'Skill Versatility: choose the two skill proficiencies yourself. '
+              'Languages: Common and Elvish (granted) plus one more of your choice.',
         },
       ),
       packEntity(
