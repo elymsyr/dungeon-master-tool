@@ -515,6 +515,38 @@ class UiStateNotifier extends StateNotifier<UiState> {
     _saveTimer = Timer(const Duration(seconds: 1), _save);
   }
 
+  /// Bir dünya silindiğinde ona ait bütün kalıcı görünüm izlerini düşürür:
+  /// açık kartlar, aktif sekmeler, panel filtreleri/sıralaması/araması,
+  /// [WorldViewState] anlık görüntüsü ve LWW zaman damgası.
+  ///
+  /// Bu mapler dünya **adıyla** anahtarlı ve `_purgeWorld` onlara dokunmuyor.
+  /// Temizlenmezse aynı adla oluşturulan/indirilen bir sonraki dünya silinenin
+  /// açık kartlarını, filtrelerini ve — artık var olmayan dosyaları gösteren —
+  /// PDF sekmelerini geri yüklüyordu.
+  ///
+  /// [update] yerine state'i doğrudan yazıyor: `_stampActiveWorld` sildiğimiz
+  /// anahtarı aynı çağrıda geri koyardı.
+  void forgetWorld(String worldKey) {
+    if (worldKey.isEmpty) return;
+    Map<String, V> drop<V>(Map<String, V> m) =>
+        m.containsKey(worldKey) ? ({...m}..remove(worldKey)) : m;
+    state = state.copyWith(
+      dbOpenLeftByWorld: drop(state.dbOpenLeftByWorld),
+      dbOpenRightByWorld: drop(state.dbOpenRightByWorld),
+      dbActiveLeftByWorld: drop(state.dbActiveLeftByWorld),
+      dbActiveRightByWorld: drop(state.dbActiveRightByWorld),
+      dbFilterSlugsByWorld: drop(state.dbFilterSlugsByWorld),
+      dbFilterSourcesByWorld: drop(state.dbFilterSourcesByWorld),
+      dbFilterShareModesByWorld: drop(state.dbFilterShareModesByWorld),
+      dbSortModeByWorld: drop(state.dbSortModeByWorld),
+      dbSearchByWorld: drop(state.dbSearchByWorld),
+      worldViewByWorld: drop(state.worldViewByWorld),
+      viewTouchedByWorld: drop(state.viewTouchedByWorld),
+    );
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 1), _save);
+  }
+
   /// Her guncellemede aktif dunyanin gorunum anlik goruntusunu ve — gercekten
   /// degistiyse — zaman damgasini tazeler. Tek cagri noktasi: her `update`
   /// buradan geciyor, dolayisiyla cagiran taraflarda bakim gerekmiyor.

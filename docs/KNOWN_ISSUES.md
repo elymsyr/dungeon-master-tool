@@ -32,6 +32,14 @@ items that are still open on the release date; do not edit past releases afterwa
   `content_store_test` (2) and `guest_promotion_service_test` (1). `flutter analyze` is
   clean apart from 27 pre-existing info-level lints.
 
+- **Official catalog packages ship without their card art** — Installing `cairn-2e-core` or
+  `cairn-community` from the store leaves every card image blank. The installer asks for
+  `catalog/art-bundle/{slug}@{version}.zip` in R2, but no tool in the repo builds or uploads
+  that zip (`publish_catalog.dart` sends payloads, world media and the manifest only), and
+  `FirstPartyArtService` has no per-file fallback. The SRD pack is unaffected because its
+  1247 images ship inside the app bundle; Cairn's 653 do not. The 404 is only `debugPrint`ed
+  and `prefetchBundle`'s return value is ignored, so the install still reports success.
+
 - **Downloaded card art is never cleaned up** — Card images downloaded with an official
   package stay in the app's cache after the package is removed, and there is no size cap on
   that cache. Deliberate for now: the images are small individually and re-downloading them

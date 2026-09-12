@@ -128,32 +128,37 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _rightSidebarCtrl = ValueNotifier(view.rightSidebar);
     _rightSidebarWidth = uiState.pdfSidebarWidth.clamp(_minRightSidebarWidth, _maxRightSidebarWidth);
     _rightSidebarWidthNotifier = ValueNotifier(_rightSidebarWidth);
-    // Optimistic: assume saved paths still exist; verify async so initState
-    // doesn't block first paint on a slow mobile filesystem.
-    _pdfOpenPaths = List<String>.from(view.pdfOpenPaths);
-    _pdfActiveIndexNotifier = ValueNotifier(
-      _pdfOpenPaths.isEmpty
-          ? -1
-          : view.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1),
-    );
-    unawaited(_pruneMissingPdfPaths());
+    // Kayıtlı PDF yolları DOĞRULANMADAN render edilmez. Eskiden iyimser
+    // yüklenip varlık kontrolü arkadan geliyordu; o arada pdfrx (native
+    // pdfium) artık var olmayan bir dosyayla kuruluyordu. Dünya silinip aynı
+    // adla yeniden indirildiğinde yollar tam olarak öyle oluyor — görünüm
+    // state'i dünya *adıyla* anahtarlı olduğu için silinen dünyanın PDF
+    // sekmeleri yeni dünyaya miras kalıyordu. Bedeli: sidebar bir frame geç.
+    _pdfOpenPaths = const [];
+    _pdfActiveIndexNotifier = ValueNotifier(-1);
+    unawaited(_restoreExistingPdfPaths(view));
   }
 
-  Future<void> _pruneMissingPdfPaths() async {
-    final pending = List<String>.from(_pdfOpenPaths);
+  /// PDF sekmeleri diskte doğrulanana kadar true. Bu sırada [_persistUiState]
+  /// pdf alanlarına dokunmaz: henüz boş olan listeyi yazmak, kullanıcının
+  /// kayıtlı açık sekmelerini silerdi.
+  bool _pdfRestorePending = true;
+
+  /// Kayıtlı PDF sekmelerinden diskte hâlâ var olanları geri yükler.
+  Future<void> _restoreExistingPdfPaths(WorldViewState view) async {
     final survivors = <String>[];
-    for (final path in pending) {
+    for (final path in view.pdfOpenPaths) {
       if (await File(path).exists()) survivors.add(path);
     }
-    if (!mounted || survivors.length == _pdfOpenPaths.length) return;
+    if (!mounted) return;
+    _pdfRestorePending = false;
+    // Kullanıcı bu kısa pencerede elle bir PDF açtıysa onun seçimi kazanır.
+    if (survivors.isEmpty || _pdfOpenPaths.isNotEmpty) return;
     setState(() {
       _pdfOpenPaths = survivors;
     });
-    if (_pdfOpenPaths.isEmpty) {
-      _pdfActiveIndexNotifier.value = -1;
-    } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
-      _pdfActiveIndexNotifier.value = _pdfOpenPaths.length - 1;
-    }
+    _pdfActiveIndexNotifier.value =
+        view.pdfActiveIndex.clamp(0, survivors.length - 1);
   }
 
   @override
@@ -236,8 +241,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
       sidebarWidth: _sidebarWidth,
       rightSidebar: _rightSidebar,
       pdfSidebarWidth: _rightSidebarWidth,
-      pdfOpenPaths: _pdfOpenPaths,
-      pdfActiveIndex: _pdfActiveIndex,
+      pdfOpenPaths: _pdfRestorePending ? null : _pdfOpenPaths,
+      pdfActiveIndex: _pdfRestorePending ? null : _pdfActiveIndex,
     ));
   }
 

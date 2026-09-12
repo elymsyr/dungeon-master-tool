@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/campaign_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-02
+updated: 2026-09-12
 tags: [file]
 ---
 
@@ -44,7 +44,8 @@ tags: [file]
 - **Row-level API**: `saveEntity`/`deleteEntity` (single `world_entities` row + touch), `saveSettingsPatch` (read-merge-write JSON + cloud enqueue), `saveSettingsPatchLocalOnly` (motion-class: viewport/pan/zoom — local Drift only, no outbox).
 - **Template hash bookkeeping** (`applyTemplateUpdate`): `template_hash` <- current content hash; `template_original_hash` backfilled to lineage hash; clears `template_dismissed_hash`/`template_updates_muted`. Hash gate skips the expensive `deepCopyJson(toJson())` on a no-op match.
 - **CDC removal**: `purgeWorldById`/`trashWorldById` resolve worldId->name then run `purge`/`delete`. Must route cache invalidation through `_worldCacheInvalidatorProvider` (a no-watch Provider) — invalidating role/list providers via the notifier's own ref throws `CircularDependencyError` because `currentWorldRoleProvider` transitively depends on `activeCampaignProvider`.
-- **delete vs purge**: `delete` snapshots to trash then cascades; `purge` is hard-delete bypassing trash (online leave/kick). Both orphan bound characters first (re-anchoring SRD refs to bundled stable UUIDs) via `orphanForWorld(data['world_id'], entities)` — **world id, ad değil**: ad geçilirse `c.worldId == worldId` hiçbir zaman tutmaz ve fonksiyon sessizce hiçbir şey yapmaz; 2026-09-02'ye kadar öyleydi ve silinen dünyanın karakterleri ölü bir `world_id` ile kilitli kalıyordu (`WorldRepositoryImpl.create` **ad** döndürdüğü için kolay bir tuzak), then cloud-delete (rethrows on failure so UI cancels the local delete), then best-effort cloud media + marketplace cleanup.
+- **delete vs purge**: `delete` snapshots to trash then cascades; `purge` is hard-delete bypassing trash (online leave/kick). Both orphan bound characters first (re-anchoring SRD refs to bundled stable UUIDs) via `orphanForWorld(data['world_id'], entities)` — **world id, ad değil**: ad geçilirse `c.worldId == worldId` hiçbir zaman tutmaz ve fonksiyon sessizce hiçbir şey yapmaz; 2026-09-02'ye kadar öyleydi ve silinen dünyanın karakterleri ölü bir `world_id` ile kilitli kalıyordu (`WorldRepositoryImpl.create` **ad** döndürdüğü için kolay bir tuzak), then cloud-delete (rethrows on failure so UI cancels the local delete), then best-effort cloud media + marketplace cleanup, and finally `UiStateNotifier.forgetWorld(campaignName)`.
+- **Görünüm izleri silinmeli** (2026-09-12): açık kartlar, panel filtreleri/sıralaması/araması ve `WorldViewState` (aktif sekme + **açık PDF yolları**) SharedPreferences'ta dünya **adıyla** anahtarlı duruyor; `_purgeWorld` onlara dokunmuyor. Temizlenmeden aynı adla oluşturulan/mağazadan indirilen bir sonraki dünya silinenin açık kartlarını ve artık var olmayan dosyaları gösteren PDF sekmelerini miras alıyordu. `delete` ve `purge` ikisi de `forgetWorld` çağırır.
 - **`handleExpectedUnpublish`**: "make offline" — keeps ALL local Drift data, only drops online artifacts (members, invites).
 
 ## Notes
