@@ -304,7 +304,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
   /// ad + kaynak, kategori etiketi.
   void _showCardHistory() {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final recent = ref.read(dbRecentEntitiesProvider);
+    final recent = ref.read(
+      dbRecentEntitiesProvider(ref.read(activeCampaignProvider) ?? ''),
+    );
     final entities = ref.read(visibleEntityProvider);
     final cats = {
       for (final c in ref.read(worldSchemaProvider).categories) c.slug: c,

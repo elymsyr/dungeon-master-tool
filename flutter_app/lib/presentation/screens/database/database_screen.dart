@@ -14,8 +14,11 @@ import 'entity_card.dart';
 
 /// Son açılan kartların id'leri, en yeni başta, en fazla 50 tane. Kart
 /// kapansa da listede kalır — mobil geçmiş FAB'i bunu gösterir. Oturumluk;
-/// diske yazılmıyor.
-final dbRecentEntitiesProvider = StateProvider<List<String>>((_) => const []);
+/// diske yazılmıyor. Family anahtarı [DatabaseScreen] ile aynı kapsam:
+/// dünya adı, paket ekranında ise paket adı (activeCampaignProvider
+/// override'ı yüzünden ikisi de aynı yerden gelir).
+final dbRecentEntitiesProvider =
+    StateProvider.family<List<String>, String>((_, __) => const []);
 
 /// Panel başına aynı anda açık tutulan kart sayısı; aşılınca en eski kapanır.
 const _phoneMaxOpenTabs = 5;
@@ -155,9 +158,10 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   }
 
   void _pushRecent(String entityId) {
-    final cur = ref.read(dbRecentEntitiesProvider);
+    final scope = _worldKey();
+    final cur = ref.read(dbRecentEntitiesProvider(scope));
     if (cur.firstOrNull == entityId) return;
-    ref.read(dbRecentEntitiesProvider.notifier).state = [
+    ref.read(dbRecentEntitiesProvider(scope).notifier).state = [
       entityId,
       ...cur.where((e) => e != entityId),
     ].take(50).toList();

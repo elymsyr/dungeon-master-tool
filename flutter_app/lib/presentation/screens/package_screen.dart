@@ -14,6 +14,7 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../application/providers/visible_entity_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../application/services/pending_write_buffer.dart';
@@ -530,16 +531,76 @@ class _PackageScreenContentState
       // FAB for mobile entity sidebar
       floatingActionButton: Builder(builder: (context) {
         final screen = getScreenType(context);
-        if (screen == ScreenType.phone) {
-          return FloatingActionButton.small(
-            heroTag: 'package_screen_entity_sidebar_fab',
-            onPressed: _showMobileSidebar,
-            child: const Icon(Icons.list),
-          );
-        }
-        return const SizedBox.shrink();
+        if (screen != ScreenType.phone) return const SizedBox.shrink();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'package_screen_card_history_fab',
+              shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+              onPressed: _showCardHistory,
+              child: const Icon(Icons.history),
+            ),
+            const SizedBox(height: 10),
+            FloatingActionButton.small(
+              heroTag: 'package_screen_entity_sidebar_fab',
+              shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+              onPressed: _showMobileSidebar,
+              child: const Icon(Icons.list),
+            ),
+          ],
+        );
       }),
     ),
+    );
+  }
+
+  /// Son 50 kartın listesi — MainScreen'deki geçmiş FAB'inin paket
+  /// karşılığı. Satırlar sidebar ile aynı [EntityRowTile]. Sağlayıcılar
+  /// sheet açılmadan okunuyor, o yüzden paket scope'una gerek yok.
+  void _showCardHistory() {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final recent = ref.read(
+      dbRecentEntitiesProvider(ref.read(activeCampaignProvider) ?? ''),
+    );
+    final entities = ref.read(visibleEntityProvider);
+    final cats = {for (final c in widget.schema.categories) c.slug: c};
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: palette.cbr.topLeft),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.7,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final id in recent)
+                if (entities[id] != null)
+                  Builder(builder: (_) {
+                    final e = entities[id]!;
+                    final cat = cats[e.categorySlug];
+                    return EntityRowTile(
+                      name: e.name,
+                      source: e.source,
+                      categoryLabel: cat?.name ?? e.categorySlug,
+                      color: cat != null
+                          ? parseHexColor(cat.color)
+                          : palette.tabText,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        setState(() => _selectedEntityId = id);
+                      },
+                    );
+                  }),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -552,8 +613,10 @@ class _PackageScreenContentState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Theme.of(context).extension<DmToolColors>()!.cbr.topLeft,
+        ),
       ),
       builder: (ctx) => UncontrolledProviderScope(
         container: container,
