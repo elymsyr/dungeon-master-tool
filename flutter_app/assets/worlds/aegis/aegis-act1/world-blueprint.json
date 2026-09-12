@@ -389,7 +389,8 @@
           "tags": [
             "dünya"
           ],
-          "imagePath": "media/Artwork/location-Aegis.webp"
+          "imagePath": "media/Artwork/location-Aegis.webp",
+          "map": "media/Maps/Aegis.webp"
         }
       },
       {

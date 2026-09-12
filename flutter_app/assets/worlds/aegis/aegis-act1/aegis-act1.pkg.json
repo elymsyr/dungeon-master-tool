@@ -495,7 +495,8 @@
       "attributes": {
         "environment": "Dünya",
         "description_long": "İki kıtası olan bir dünya: @[Meridia](entity:f12b0f9f-1948-51b3-ab1f-28d83c20f80f) ve @[Vorstrand](entity:c6c3921f-a75f-513c-a598-100ff34f9ffc). İki kıtanın arasında deniz var, ve denizde gemiler her mevsim işler. Limanlarda başka dillerden sözcükler duyulur, çarşılarda öteki kıtanın kumaşı ve baharatı satılır. Yabancı görmek kimseyi şaşırtmaz.\n\n## Bu dünyada yolculuk\n\nYollar açıktır. Bir köylü şehre yürüyebilir, bir tüccar öteki kıtaya mal gönderebilir. Kıtalar arasında gemiyle gidilir; kıta içinde haber atla gider.\n\n## Bilinmeyen\n\nAegis'in insanları üç yüz yıl önce ne olduğunu bilmez. Meydanlarda anlatılan bir kuruluş hikayesi vardır; o hikayenin arkasında ne olduğunu gösterecek belge ya yoktur ya da kimsenin ulaşamadığı bir yerde durur. Bkz. @[İrade Çağı](entity:7d9db976-399b-58c2-81c4-3235f93606d4).",
-        "secrets": "Kıtalar arasındaki gemi trafiği hiç kesilmedi. Blight da bu trafikle, Vorstrand'dan Meridia'ya gelen yolcuların bedeninde taşındı."
+        "secrets": "Kıtalar arasındaki gemi trafiği hiç kesilmedi. Blight da bu trafikle, Vorstrand'dan Meridia'ya gelen yolcuların bedeninde taşındı.",
+        "map": "media/Maps/Aegis.webp"
       }
     },
     "f12b0f9f-1948-51b3-ab1f-28d83c20f80f": {
