@@ -66,12 +66,17 @@ Asgari linkleme:
 |---|---|---|---|
 | **Duran** · **Umay** · **Corvin** · **Milo** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
 | **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
-| **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el — ⚠️ *işi yüzük kararına bağlı (§3.3, 4. tur); kişi durur, gizlediği değişebilir* |
+| **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el — ✅ *5. turda kapandı: damga vurmaz, çünkü damga bir imzadır ve klan adını geride bıraktı* |
 | **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
 
-**İki taşıyıcı açığı kapandı:** *kaydı kim sildirdi* artık iki yerde — **Sicim**
-(defter) ve **Mine** (tezgah). Kuyumcu bir `npc` kartı oldu: klan adını söylemeyen
-bir cüce, yani kayıtsız değil *kendini kayıttan düşürmüş* biri (act1.md §7.4).
+**İki taşıyıcı açığı kapandı:** *limanda bir silme oldu* artık iki yerde — **Sicim**
+(defterdeki boşluk) ve **Mine** (eğelenmiş yüzük). Kuyumcu bir `npc` kartı oldu: klan
+adını söylemeyen bir cüce, yani kayıtsız değil *kendini kayıttan düşürmüş* biri
+(act1.md §7.4).
+
+*5. tur notu:* **kimin ödediği** artık tek taşıyıcılı ve bu bilinçli — cevabı yalnız
+Sicim verir (***Kader*'in kaptanı**), ve cevap hiçbir kapı açmaz. Kaçıran masa bir hat
+kaybetmiyor, sadece bir cümle kaybediyor.
 
 *Yüzüğün kendisinin taşıyıcı açığı yok:* Investigation DC 15 · Jeweler's Tools ·
 mühür taşıyan herhangi bir PC — üç kapı (act1.md §3.3).
@@ -106,13 +111,13 @@ o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
 | Kart | Durum | Not |
 |---|---|---|
 | **Söylentinin peşinde** | ✅ | giriş kancası — §1 sözleşmesinin karşılığı |
-| **Nereden geldiler** | ✅ | ana hat: **yüzük** → kayıtsız giriş → kaydı kim sildirdi (act1.md §3.3 zinciri) |
+| **Nereden geldiler** | ✅ | ana hat: **yüzük** → kayıtsız giriş → limanda biter; *Kader* (act1.md §3.3, §7.5) |
 
 ## 7. Act 1'e özgü eşya / prop — 1
 
 | Kart | Kategori | Durum | Not |
 |---|---|---|---|
-| **Mühürsüz Yüzük** *(ad geçici)* | `trinket` | ⚠️ | act1.md §3.3 iz 3 — **gizli cepte**, Investigation DC 15. Nesnenin var olduğu ve saklandığı kanon; **ne olduğu askıda (4. tur).** Yedek içerik: mühür yüzü eğelenmiş, ayar damgası taze Meridia. Karar verilince kart adı da değişebilir |
+| **Mühürsüz Yüzük** | `trinket` | ✅ | act1.md §3.3 iz 3 — **gizli cepte**, Investigation DC 15. **KAPANDI (5. tur):** mühür yüzü eğelenmiş, **üstünde hiçbir damga yok**, yakın zamanda işlenmiş. Kart adı kesinleşti |
 
 Background eşyaları (13 kart) act'a özgü değil → [`genel-kartlar.md` §4](genel-kartlar.md).
 
@@ -171,9 +176,12 @@ Yazılmayacak, sadece unutulmasın diye duruyor. Sırası geldiğinde kart olur.
 **Lonca ve Lucid Triton** — artık plan değil, yazılmış kanon:
 [`lonca-sehir.md`](lonca-sehir.md). Yedi lonca (`lore`), Konsey/Meclis ayrımı,
 şehir tarifi, altı NPC ve 19 kartlık yazım listesi orada. Kalan engeller:
-şehir **Lucid Triton**, lonca ve hane adları onaylandı. *Kim ödedi* cevabı da
-oraya düştü — iki taşıyıcıyla (**Corin Sancar** + **Kildrak Ferrun**), yani zincir
-kilitlenmiyor.
+şehir **Lucid Triton**, lonca ve hane adları onaylandı.
+
+⚠️ *5. tur (2026-09-13):* eskiden burada *"kim ödedi cevabı da oraya düştü — Corin
+Sancar + Kildrak Ferrun"* yazıyordu. **O hat kaldırıldı.** Cevap şehre değil limana
+düştü (*Kader*'in kaptanı), Corin bir kanıt değil bir **kilit** oldu, ve Kildrak bir
+ad değil bir **yön** veriyor. Bkz. `act1.md` §9, 30–32.
 
 **Resmi liman / Elymsyr** — Gizli Liman'ın alternatif yolu. İki liman gerçekten
 gerekli mi, yoksa Gizli Liman tek mi kalsın → karar.

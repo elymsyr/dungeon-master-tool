@@ -165,7 +165,7 @@ güçlendirmesinden mi geliyor. Kapanmadan yazılan her ırk kartı yeniden yaz�
 kapanması gereken ilk kararlardan.
 
 **Alt sınıf bloke değil (2026-09-11):** 06 #11 *ırksal* özellikleri bekletiyor,
-**sınıfsal** olanları değil. İki `subclass` kartı yazıldı —
+**sınıfsal** olanları değil. Üç `subclass` kartı yazıldı —
 [`alt-siniflar.md`](alt-siniflar.md).
 
 **Ayrım (2026-09-09):** blok *yazmayı* engelliyor, *ref vermeyi* değil. SRD'de adı
@@ -241,7 +241,9 @@ yarı-varlık) · Occulus arşivcisi (belgesel kapının kurumsal yüzü).
 Blight bir iklim değil cephe; hastalık ikinci kıtadan taşındı (#14 kapandı, yukarıda).
 
 **Açık kalan kategori kararları** — ~~`class`/`subclass` kartı gerekiyor mu~~
-**kapandı (2026-09-11):** `subclass` **yazılıyor**, `class` yazılmıyor; iki alt sınıf
-[`alt-siniflar.md`](alt-siniflar.md)'de. `spell` kartı hâlâ açık — ilahi büyü sapması
-için `lore` notu yeter mi (README §6.5) · `service`/`hireling` gerekiyor mu (Gizli
-Liman'ın "iyi para" ekonomisi, act1.md §9 açık 4).
+**kapandı (2026-09-11):** `subclass` **yazılıyor**, `class` yazılmıyor; üç alt sınıf
+[`alt-siniflar.md`](alt-siniflar.md)'de. ~~`spell` kartı — ilahi büyü sapması için `lore`
+notu yeter mi~~ **kapandı (2026-09-13):** yeter. Çağrı zarı bir büyünün içine değil
+büyünün *üstüne* yazılan bir kural; `lore/Kural Sapmaları`'nın ilk sayfası oldu ve tek
+bir SRD büyüsü yeniden tanımlanmadı ([`mekanikler.md` §3.1](mekanikler.md)). Hâlâ açık:
+`service`/`hireling` gerekiyor mu (Gizli Liman'ın "iyi para" ekonomisi, act1.md §9 açık 4).

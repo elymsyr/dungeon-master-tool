@@ -93,25 +93,77 @@ alınamaz. Bilen biri bulunur, ve bulunduğu yer şehir değildir.
 
 ## 3. İlahi büyü — "Yankılanan Sessizlik"
 
-`lore/Tanrılar ve Fısıltı` kartının mekanik yüzü. Üç cümle, üçü de kanon:
+`lore/Tanrılar ve Fısıltı` kartının mekanik yüzü. Dört cümle, dördü de kanon:
 
-1. **Tanrılar pasif, ama sağır değil.** İlahi büyü yapılabiliyor ve **çok kişi
-   yapıyor**. Kural tek yönlü: *biri ilahi büyü yapabiliyorsa, tanrılar ona cevap
-   vermiş demektir.* Cevabın sebebi söylenmez, sorulmaz ve garanti edilmez.
-2. **Şifa huzurlu değil.** Şifa büyüsü hem yapana hem alana **fiziksel ağırlık ve
+1. **Tanrılar gitmedi, ama uzaktalar.** Fısıldıyorlar; duyan az. İlahi büyü
+   **çalışır** — ve bu kıtadaki insanların neredeyse tamamı **denemez bile.**
+   Deneyenlerin çoğu bir şey almaz. Yapanlar olduğu **söylenir**, ve söylenti
+   yalan değildir: gerçekten yapabilen vardır, çok nadir, ve **hiçbiri her
+   seferinde yapamaz.**
+2. **Her çağrı ayrı atılır.** Bir kez cevap almış olmak bir sonrakini garanti
+   etmez. Kural aşağıda (§3.1); bu belgedeki en sert sapma odur.
+3. **Şifa huzurlu değil.** Şifa büyüsü hem yapana hem alana **fiziksel ağırlık ve
    yorgunluk** hissettirir: kemikte bir basınç, sonrasında geçmeyen bir yorgunluk.
    Mekanik yükü yok — anlatı kuralı. Bu dünyada kimse iyileştirilmeyi "ferahlatıcı"
    diye tarif etmez.
-3. **Kutsal sembol bir anten.** Aksesuar değil; ilahi enerjiyi **odaklayan** bir
+4. **Kutsal sembol bir anten.** Aksesuar değil; ilahi enerjiyi **odaklayan** bir
    alet. Kaybedilen sembol, kaybedilen bir bileşen değil kaybedilen bir **hat**.
+   Antenin olması cevabı getirmez, yalnız çağrıyı iletir.
 
 **Toplumsal yüzü değişmedi** ([`lonca-sehir.md` §5](lonca-sehir.md)): ilahi büyü
-yapan biri mucize değil **usulsüzlük** olarak okunur. Bu ikisi çelişmiyor — tanrı
-cevap veriyor, ve şehir cevabı kayda geçirecek bir satır bulamıyor.
+yapan biri mucize değil **usulsüzlük** olarak okunur. Buna artık bir şey ekleniyor:
+şehirde kimse böyle bir şeyi **görmemiştir**. Duyanlar var, gören yok. Bir kez
+görüldüğünde konuşulur, ve konuşulması sahibinin işine gelmez.
 
-> **Paladin Askeri** ve **Paladin Rütbelisi** background'larının (`act1.md` §2)
-> sessiz avantajı burada: Kışla Künyesi bir *Emblem*'dir, yani düzenin verdiği
-> anten. Düzenden kopan paladin, antenini de bırakmak zorunda kalır.
+### 3.1 Çağrı zarı (SAPMA)
+
+> **Bir ilahi büyü yapılmak istendiğinde, büyü yapılmadan önce
+> `d20 + Religion` atılır.** Eşiği geçemezse büyü **olmaz**; slot yine harcanır.
+
+| Durum | Eşik |
+|---|---|
+| **Savaşta** — her deneme | **19** · başarısızlık **aksiyonu da** harcar |
+| **Savaş dışında** — o saatteki **1.** deneme | **18** |
+| o saatteki **2.** deneme | **20** |
+| o saatteki **3.** deneme | **çıplak d20, yalnız doğal 20** — Religion eklenmez |
+| o saatteki **4.** ve sonrası | **imkansız** — zar atılmaz |
+
+**Sayaç saatlik ve tek.** Savaşta atılan denemeler de aynı saatin sayacına yazılır:
+çatışmada iki kez denemiş biri, çatışmadan sonraki ilk çağrısını doğrudan üçüncü
+basamaktan (doğal 20) yapar. Saat, ilk denemeyle başlar.
+
+**Kapsam:** **Cleric** ve **Warlock**'un bütün büyüleri, **Paladin**'in ilahi
+büyüleri. Kapsam dışı: **Druid** ve **Ranger** (güçleri doğadan gelir, verilmiş
+değildir), büyüsel olmayan sınıf özellikleri, ve **verilmiş olan** — yani bir kez
+kazanılmış, geri alınmayan şeyler: warlock'un invocation'ları, paladin'in aurası,
+ve [`alt-siniflar.md`](alt-siniflar.md)'deki **İrade Yemini**'nin verdiği her şey.
+
+Ayrım tek cümlede: **her kullanımda yeniden istenen şey zar ister; bir kez verilmiş
+olan istemez.**
+
+**Masadaki karşılığı — açıkça söyle.** Bu kural Cleric ve Warlock'u bu kıtada
+oynanabilir bir sınıf olmaktan çıkarır, ve bu bilinçli bir tasarım kararıdır.
+Masaya **karakter yaratmadan önce** söylenir; oyun başladıktan sonra söylenen bir
+kural, oyuncunun kabul etmediği bir bedeldir. Paladin oynamak isteyen oyuncunun
+yolu açık ve ayrı: İrade Yemini (§3.2).
+
+**Neden bu kadar sert:** `lore/İrade Çağı` bu kıtanın tanrılardan koptuğunu
+anlatıyor. Kopuş bir metafor olarak kalırsa dünyanın omurgası yalan olur — bir
+rahip her gün mucize yapıyorsa tanrılar gitmemiş demektir. Kural, o kopuşu masanın
+zar torbasına koyuyor.
+
+### 3.2 Paladin — yemin tanrıdan gelmez
+
+Paladin'in gücü bu kıtada **yeminden ve düzenden** gelir, tanrıdan değil. Bunun
+mekanik karşılığı [`alt-siniflar.md`](alt-siniflar.md)'deki **İrade Yemini** alt
+sınıfıdır: yemin büyüleri ve yemin özellikleri **çağrı zarı istemez**, çünkü onlar
+için kimseye bir şey sorulmuyor. Paladin'in genel listesinden hazırladığı diğer
+ilahi büyüler §3.1'e tabidir.
+
+> **Kışla Künyesi artık anten değil, mühür.** Paladin Askeri ve Paladin Rütbelisi
+> background'larının (`act1.md` §2) künyesi bir hat değil bir **kayıt**: yeminin
+> tanık önünde edildiğini ve deftere geçtiğini söyler. Düzenden kopan paladin
+> antenini değil **tanığını** kaybeder — gücü durur, adı durmaz.
 
 ---
 
@@ -163,6 +215,11 @@ tanrıdan bir şey almadı.
 
 **Diriltme Sınavı:** kesin başarı garantisi **yok.** Bedel ödenmiş olması sonucu
 garanti etmiyor — bedel giriş ücretidir, bilet değil.
+
+**Çağrı zarı burada da atılır** (§3.1). Diriltme, bu dünyada yapılabilecek en büyük
+çağrıdır: bedel ödenir, sonra sorulur, ve çoğu zaman cevap gelmez. Zarın tutmaması
+bedeli geri getirmez — Can Zarı ya da stat gitmiştir. Bu yüzden kimse bunu iki kez
+denemez; deneyen de aynı saat içinde ikinci basamağa (20) çıkmış olur.
 
 **Başarısızlıkta ruh üç halden biriyle döner:**
 
@@ -293,7 +350,7 @@ Yeni kart açmak, kuralı dünyadan koparıyor.
 | Kart | Ne ekleniyor |
 |---|---|
 | `lore/Büyücü Loncası` | Lisans sistemi · yasaklı iki okul · lisansın iki loncaya borç yazması (§2) |
-| `lore/Tanrılar ve Fısıltı` | Yankılanan Sessizlik: pasif tanrılar · şifanın ağırlığı · sembol = anten (§3) |
+| `lore/Tanrılar ve Fısıltı` | Yankılanan Sessizlik: uzaktaki tanrılar · **çağrı zarı** · şifanın ağırlığı · sembol = anten (§3) |
 | `lore/Simya ve Şifacılar Loncası` | İksirin ruhsatlı kalem olması, kıtlığın sebebi (§7) |
 | `curse/Blight — Enfeksiyon` | **Yozlaşma Kontrolü** (§6) + şifa büyülerinin yapana bedeli (§7) |
 | `campaign/Aegis` → *Masa kuralları* sayfası | Büyünün üç katmanı (§1) + 1–2. seviyenin güvenli olduğu (§4.1) |
@@ -335,8 +392,13 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
 2. **Lisans sistemi kanon** (§2): şehirde zorunlu, taşrada anlamsız, limanda şaka.
    Lisansı Büyücü Loncası verir, suçu Askeri Hukuk yazar.
 3. **Necromancy ve zihin kontrolü Enchantment yasak** (§2), lisansla açılamaz.
-4. **İlahi büyü çalışıyor ve çok kişi yapıyor** (§3); şifa **ağırlık** hissettirir,
-   kutsal sembol bir **antendir.**
+4. **İlahi büyü çalışıyor ama neredeyse kimse yapamaz** (§3, 2026-09-13): her çağrı
+   `d20 + Religion` ister — savaşta 19, savaş dışında saat içinde 18 → 20 → doğal 20
+   → imkansız; başarısızlık slotu (savaşta aksiyonu da) harcar. Kapsam Cleric,
+   Warlock ve Paladin'in ilahi büyüleri; Druid/Ranger dışarıda. **Cleric ve Warlock
+   bu kıtada oynanamaz.** Paladin'in yolu **İrade Yemini** alt sınıfıdır (§3.2) ve
+   onun verdikleri zar istemez. Şifa **ağırlık** hissettirir, kutsal sembol bir
+   **antendir**, künye ise bir **mühür.**
 5. **1–2. seviye büyüler ek kural almaz** (§4.1) — Act 1 bu belgenin çoğunu görmez.
 6. **Işınlanma: 4+ seviye = 1 exhaustion; uzun mesafe yalnız loncalarda** (§4.2).
    Büyücü Loncası'nın "ışınlanma kaydı" tekeli böylece gerçek bir hizmete dayandı.

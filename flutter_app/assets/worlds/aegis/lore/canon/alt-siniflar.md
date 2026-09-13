@@ -2,13 +2,20 @@
 
 > **Durum: kanon.** README §0 hiyerarşisine bağlıdır.
 > [`mekanikler.md`](mekanikler.md) 5e'nin üstüne eklenen **kuralları** yazdı; bu belge
-> 5e'nin dışından alınan **iki alt sınıfı** kanona alıyor: bir Sorcerer, bir Ranger.
+> **üç alt sınıfı** kanona alıyor: 5e'nin dışından alınan bir Sorcerer ve bir Ranger,
+> ve Aegis'in kendi yazdığı bir Paladin yemini.
 >
-> **Karar (2026-09-12): içerik ve isimlendirme özgünüyle aynı.** Bu iki alt sınıf
-> Aegis'e *uyarlanmadı*, **olduğu gibi alındı** — kart adları WotC metnindeki İngilizce
-> adlardır, seviyeler ve sayılar birebir aynıdır. Sapmalar §4'te sayılı ve sayısı azdır.
+> **Karar (2026-09-12): ithal ikisinde içerik ve isimlendirme özgünüyle aynı.** Clockwork
+> Soul ve Drakewarden Aegis'e *uyarlanmadı*, **olduğu gibi alındı** — kart adları WotC
+> metnindeki İngilizce adlardır, seviyeler ve sayılar birebir aynıdır. Sapmalar §5'te
+> sayılı ve sayısı azdır.
+>
+> **Karar (2026-09-13): İrade Yemini yazıldı** (§3). Bu üçüncüsü ithal değil; ilahi
+> büyünün çağrı zarı ([`mekanikler.md` §3.1](mekanikler.md)) Cleric ve Warlock'u bu
+> kıtada oynanamaz hale getirdi, ve Paladin'in bu dünyada nasıl ayakta kaldığını
+> söyleyen kart budur.
 
-**Sapma işareti zorunlu** (README §6.5): iki alt sınıf da SRD'de yok.
+**Sapma işareti zorunlu** (README §6.5): üç alt sınıf da SRD'de yok.
 
 **Kaynak atfı.** Kartların `source` alanı:
 
@@ -16,11 +23,12 @@
 |---|---|
 | Clockwork Soul | `Tasha's Cauldron of Everything` |
 | Drakewarden | `Fizban's Treasury of Dragons` |
+| İrade Yemini | `Aegis` — özgün |
 
-**Neden bu ikisi.** [`genel-kartlar.md`](genel-kartlar.md) *"`class`/`subclass` kartı
+**Neden bunlar.** [`genel-kartlar.md`](genel-kartlar.md) *"`class`/`subclass` kartı
 gerekiyor mu"* sorusunu açık bırakmıştı. Cevap: **`class` kartı yazılmıyor** (SRD'nin on
-iki sınıfı olduğu gibi duruyor), ama **`subclass` yazılıyor** — masanın iki oyuncusu bu
-ikisini istedi ve ikisi de SRD'de yok.
+iki sınıfı olduğu gibi duruyor), ama **`subclass` yazılıyor**. İlk ikisini masanın iki
+oyuncusu istedi ve ikisi de SRD'de yok; üçüncüsünü **kuralın kendisi** istedi (§3.1).
 
 ---
 
@@ -58,7 +66,7 @@ Oyuncu bu altıdan birini seçer ve her büyüsünde aynısı olur (mekanik etki
 | **3** | **Clockwork Magic — 2. kademe** | **Aid · Lesser Restoration** eklenir. |
 | **5** | **Clockwork Magic — 3. kademe** | **Dispel Magic · Protection from Energy** eklenir. |
 | **6** | **Bastion of Law** | **Aksiyon.** 1–5 büyü puanı harca; kendine ya da 30 ft içinde bir yaratığa harcadığın puan kadar **d8 koruma zarı** ver. Korunan yaratık hasar alırken istediği kadar zarı harcayıp atar; toplam, hasardan düşülür. Uzun dinlenmeye ya da zarlar bitene kadar sürer. Aynı anda tek siper. |
-| **7** | **Clockwork Magic — 4. kademe** | **Freedom of Movement · Death Ward** eklenir *(özgünde Summon Construct — §4.1)*. |
+| **7** | **Clockwork Magic — 4. kademe** | **Freedom of Movement · Death Ward** eklenir *(özgünde Summon Construct — §5.1)*. |
 | **9** | **Clockwork Magic — 5. kademe** | **Greater Restoration · Wall of Force** eklenir. |
 | **14** | **Trance of Order** | **Bonus aksiyon**, 1 dakika: sana yapılan saldırı atışları **avantaj alamaz**, ve senin attığın her d20'de **9 ve altı 10 sayılır**. Uzun dinlenmede 1 kez bedava; ya da **5 büyü puanı**. |
 | **18** | **Clockwork Cavalcade** | **Aksiyon.** 30 ft'lik bir küpte düzen ruhları belirir: toplam **100 can**ı istediğin gibi bölüştürerek iyileştirir, hasarlı ama yok olmamış nesneleri onarır, ve küpteki **6. seviye ve altı** her büyüyü sonlandırır. Uzun dinlenmede 1 kez bedava; ya da **7 büyü puanı**. |
@@ -134,9 +142,78 @@ Drake ölürse ya da uzaklaşırsa geri çağrılabilir — çağırma kuralı a
 
 ---
 
-## 3. Yazılan kartlar
+## 3. İrade Yemini — `subclass`, Paladin
 
-### 3.1 Clockwork Soul — 8 kart
+**Kaynak:** Aegis. Bu alt sınıf **bu dünyanın kendi kartıdır** — SRD'de ya da bir
+WotC kitabında karşılığı yok.
+**Açıldığı seviye:** **1** (sapma — §5.3).
+
+### 3.1 Ne olduğu
+
+[`mekanikler.md` §3](mekanikler.md) bu kıtada ilahi büyüyü bir kumara çevirdi: her
+çağrı için zar atılır ve çoğu tutmaz. Paladin düzenleri bu gerçeği üç yüzyıl önce
+kabul etti ve tanrıya sormayı bıraktı.
+
+Bu yeminin gücü yukarıdan gelmiyor. **Verilmiş bir sözden** geliyor: tanık önünde
+edilmiş, deftere geçmiş, ve bozulmadığı sürece duran bir cümleden. Yeminli
+iyileştirmez, kutsamaz, mucize göstermez. **Bulur ve tutar.** Düzenin ona öğrettiği
+şey dua değil: bir defteri okumak, bir izi sürmek, ve bir hattı kimse gelene kadar
+bırakmamak.
+
+> **Kışla Künyesi bir anten değil, bir mühür.** Yeminlinin boynundaki künye bir hat
+> açmaz; yeminin **edildiğini** ve kimin tanık olduğunu söyler. Düzenden kopan
+> paladin gücünü kaybeder, adını değil.
+
+**Yemin bozulursa ne olur — DM'in düğmesi.** Kart bir "yemin maddeleri" listesi
+yazmıyor; düzenin metni her şatoda biraz farklı. Değişmeyen tek şart: **verilen söz
+tutulur.** Bir yeminli sözünü bilerek bozarsa aşağıdaki her şey **bir uzun dinlenme
+boyunca** çalışmaz. Kalıcı kaybın koşulu yok — düzenin kendisi de ne zaman geri
+alınacağını tartışıyor.
+
+### 3.2 Özellikler
+
+| Sv | Özellik | Mekanik |
+|---|---|---|
+| **1** | **Yeminin Ağırlığı** | **Güç** ve **Dayanıklılık** puanların **1'er artar** (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın. |
+| **1** | **Yemin Darbesi** | Yakın silahlı saldırın isabet ettiğinde, bir **büyü slotu** harcayarak fazladan **2d8 kuvvet** hasarı verirsin; 1. seviyenin üstündeki her slot kademesi için **+1d8**, en fazla **5d8**. Hedef **Blight'lı** bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır; bu yemini tutan paladin Divine Smite hazırlamaz.* |
+| **3** | **Yemin Büyüleri** | §3.3'ün listesi senin için **daima hazırdır**, hazırlanan büyü sayısına sayılmaz, ve **çağrı zarı istemez** ([`mekanikler.md` §3.1](mekanikler.md)). |
+| **3** | **Yemin Andı: Cepheyi Tut** | **Channel Divinity.** Aksiyon; bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların **Bulaştıran Yara** ve benzeri maruziyet zarlarını **avantajlı** atar. |
+| **7** | **Bozulmayan Söz** | **10 ft** içindeki dostların (sen dahil) **Hastalık Puanı** kazandıracak her kurtulma zarını **avantajlı** atar. 18. seviyede menzil **30 ft** olur. |
+| **15** | **Yemin Yorulmaz** | **Korkutulamazsın.** Ayrıca 0 cana düşüreceğin bir hasarda **1 canda** kalırsın — uzun dinlenmede bir kez. |
+| **20** | **Andın Hâli** | **Bonus aksiyon**, 10 dakika: auraların menzili **30 ft**'e çıkar, ve **Blight'lı** yaratıklara saldırı atışların **avantajlı** olur. Uzun dinlenmede bir kez. |
+
+**Çağrı zarı bu tablonun hiçbir satırını etkilemez** (§5.3). Paladin'in genel
+listesinden ayrıca hazırladığı ilahi büyüler ise [`mekanikler.md`
+§3.1](mekanikler.md)'e tabidir — yani bu yemini tutan oyuncunun eli **dar ama
+güvenilir**, ve bu bilerek böyle.
+
+### 3.3 Yemin büyüleri — bir soruşturma listesi
+
+| Karakter sv | Büyüler |
+|---|---|
+| **3** | Comprehend Languages · Shield of Faith |
+| **5** | Locate Object · See Invisibility |
+| **9** | Nondetection · Clairvoyance |
+| **13** | Locate Creature · Arcane Eye |
+| **17** | Legend Lore · Scrying |
+
+Hepsi SRD; yeni `spell` kartı gerekmez, `always_prepared_spell_refs` ile referans
+verilir.
+
+**Liste neden bu.** Standart bir paladin yemini kutsar, korur, yakar. Bu liste
+**okur, bulur ve görür** — çünkü bu düzenin işi bir cepheyi tutmak ve bir defteri
+kovalamak. Yeminin verdiği iki beceri (History, Investigation) ile aynı karakteri
+anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araştırılır" —
+[`act1.md` §3.2](act1.md)) aynı yöne bakıyor.
+
+> *Shield of Faith* masada **Tutulan Söz** diye anılır; kart adı SRD'deki hâliyle
+> kalır, çünkü bu dünyada bir büyünün adı bir kurumun verdiği addır, yapanın değil.
+
+---
+
+## 4. Yazılan kartlar
+
+### 4.1 Clockwork Soul — 8 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -147,7 +224,7 @@ Drake ölürse ya da uzaklaşırsa geri çağrılabilir — çağırma kuralı a
 | **Trance of Order** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + bonus aksiyon |
 | **Clockwork Cavalcade** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + aksiyon |
 
-### 3.2 Drakewarden — 12 kart
+### 4.2 Drakewarden — 12 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -163,19 +240,46 @@ Drake ölürse ya da uzaklaşırsa geri çağrılabilir — çağırma kuralı a
 | **Infusing Strike** | `creature-action` | Drake'in tepkisi |
 | **Drake's Breath** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + 11. seviye koni |
 
-### 3.3 Kaynak havuzları — 6 satır
+### 4.3 İrade Yemini — 7 kart
+
+| Kart | Kategori | Ne |
+|---|---|---|
+| **İrade Yemini** | `subclass` | Ana kart. `parent_class_ref` → SRD `Paladin`, `granted_at_level` **1**. `caster_kind` **yazılmadı** — boş bırakıldığında ana sınıf karar verir, yani Paladin'in `Half` ilerlemesi korunur |
+| **Yeminin Ağırlığı** | `trait` | +1 Güç, +1 Dayanıklılık · History + Investigation |
+| **Yemin Darbesi** | `trait` | Yuva harcayan 2d8 kuvvet, Blight'lıya +1d8 |
+| **Yemin Andı: Cepheyi Tut** | `trait` | Channel Divinity — maruziyet zarlarında avantaj |
+| **Bozulmayan Söz** | `trait` | 7. seviye aura |
+| **Yemin Yorulmaz** | `trait` | 15. seviye · `pool:yemin_yorulmaz` |
+| **Andın Hâli** | `trait` | 20. seviye · `pool:andin_hali` |
+
+**Yemin büyüleri ayrı kart değil:** §3.3'ün on büyüsü ana kartın `features` satırlarında
+`always_prepared_spell_refs` ile referans veriliyor (3/5/9/13/17 kademeleri), tıpkı
+Clockwork Magic gibi. Hepsi SRD'de var, yeni `spell` kartı yazılmadı.
+
+> **Şema notu — iki satır mekanik değil metin.** `subclass.features` satırları yetenek
+> puanı artışı ve sabit beceri yetkinliği taşıyamıyor (satırın verebildikleri: direnç,
+> bağışıklık, duyu, dil, daima hazır büyü, `trait`/`feat`/aksiyon referansı). Bu yüzden
+> **+1 Güç / +1 Dayanıklılık** ve **History + Investigation** kartta *yazılı* ama
+> uygulamada *otomatik uygulanmıyor* — oyuncu karakter sayfasında elle işler.
+> `bonus_skill_pick_count` bilerek kullanılmadı: o alan "iki beceri **seç**" demek,
+> yeminin verdiği ise iki **belirli** beceri.
+
+### 4.4 Kaynak havuzları — 8 satır
 
 `pool:clockwork_restore_balance` · `pool:clockwork_trance_of_order` ·
 `pool:clockwork_cavalcade` · `pool:drake_companion` · `pool:drakes_breath` ·
-`pool:reflexive_resistance`
+`pool:reflexive_resistance` · `pool:yemin_yorulmaz` · `pool:andin_hali`
+
+Uzun dinlenmede tek kullanım veren havuzlar `count: 1` yazar (`count_formula` değil —
+o alan yalnız `pb` gibi bilinen belirteçleri çözer, sayı yazılırsa havuz boş kalır).
 
 ---
 
-## 4. Sapma defteri
+## 5. Sapma defteri
 
 README §6.5: sapma işareti zorunlu. Liste kısa — geri kalan her şey özgünüyle aynıdır.
 
-### 4.1 Clockwork Soul
+### 5.1 Clockwork Soul
 
 | Özgün | Aegis | Neden | Denge etkisi |
 |---|---|---|---|
@@ -185,7 +289,7 @@ Geri kalan her şey — 1. seviyede açılış, büyü kademeleri (1/3/5/7/9), R
 YB kadar kullanımı, Bastion of Law'ın 1–5 puan / d8'i, Trance of Order'ın 1 dakikası,
 Clockwork Cavalcade'in 100 canı ve 6. seviye eşiği — özgünüyle aynıdır.
 
-### 4.2 Drakewarden
+### 5.2 Drakewarden
 
 | Özgün | Aegis | Neden | Denge etkisi |
 |---|---|---|---|
@@ -204,28 +308,56 @@ Reflexive Resistance, çağırma ekonomisi) özgünüyle aynıdır.
 > *Perfected Bond*'a **"drake devrilemez (Prone'a bağışık)"** satırını ekleyin. Uçuş geri
 > gelmez, ama binek güvenilir olur.
 
+### 5.3 İrade Yemini
+
+Bu alt sınıfın tamamı sapmadır — SRD'de karşılığı yok. Sayılan şey, **SRD
+Paladin'ine göre** neyin değiştiği:
+
+| SRD Paladin | İrade Yemini | Neden | Denge etkisi |
+|---|---|---|---|
+| Alt sınıf **3. seviyede** | **1. seviyede** | Bu düzende yemin ilk gün edilir ve o gün deftere geçer. Kural gereği de zorunlu: paladin 1. seviyeden itibaren ilahi büyüye güvenemez (§3.1), bu yüzden karşılığı 1. seviyede verilmeli | **Artı.** İki seviye erken açılan bir yemin |
+| **Divine Smite** (büyü) | **Yemin Darbesi** (özellik) | Smite bir ilahi büyüdür ve çağrı zarına girerdi; paladinin hasar motoru zara bağlanamaz | **Nötr.** Zarlar ve slot maliyeti aynı; hasar tipi **kuvvet**, ve Blight'lıya **+1d8** eklendi. Şeytan/ölümsüz bonusunun yerini bu kıtanın gerçek düşmanı aldı |
+| Paladin büyü listesi serbest | Liste duruyor, ama **yemin dışı her ilahi büyü çağrı zarına tabi** | [`mekanikler.md` §3.1](mekanikler.md) | **Ağır eksi.** Yardımcı büyü hattı (Bless, Cure Wounds, Shield of Faith dışı her şey) pratikte kapanır |
+| — | **+1 Güç, +1 Dayanıklılık** | Kaybedilen yardımcı hattın karşılığı | **Artı.** Yaklaşık yarım feat |
+| — | **History + Investigation** | Düzen bir hukuk ve kayıt kurumu; yemin büyüleri de aynı karakteri anlatıyor (§3.3) | **Hafif artı.** Savaşta karşılığı yok |
+| Yemin büyüleri kutsama/koruma ağırlıklı | **Soruşturma listesi** (§3.3) | Bu düzenin işi bulmak ve tutmak | **Nötr.** Savaş gücü düşük, perde gücü yüksek |
+
+**Net:** 1–5. seviyede SRD paladininden **bir tık güçlü** (erken yemin + iki puan),
+10. seviyeden sonra **belirgin zayıf** (yardımcı büyü hattı yok). Act 1 baştan sona
+1–2. seviye; masada ilk hissedilecek fark, paladinin ilk turda smite atabiliyor
+olması.
+
+> **DM için tek düğme:** masanız erken açılan yemini fazla bulursa **Yemin
+> Darbesi'ni 2. seviyeye** alın. Yeminin Ağırlığı 1'de kalsın — o, kaybedilen
+> hattın karşılığı, bir bonus değil.
+
 ---
 
-## 5. Bu belgeden çıkan yazım listesi
+## 6. Bu belgeden çıkan yazım listesi
 
 | Nereye | Ne |
 |---|---|
-| `world-blueprint.json` | §3'ün 20 kartı + 6 `resource-pool` satırı |
-| [`kart-listesi.md`](kart-listesi.md) | `subclass` başlığı — 2 kart |
+| `world-blueprint.json` | §4'ün 27 kartı + 8 `resource-pool` satırı |
+| [`kart-listesi.md`](kart-listesi.md) | `subclass` başlığı — 3 kart |
 | [`genel-kartlar.md`](genel-kartlar.md) | *Açık kalan kategori kararları*: `subclass` kısmen kapandı |
 | `PROVENANCE.md` | İki alt sınıfın atfı ve sapma defterine gönderme |
 
 ---
 
-## 6. Kararlar ve açık kalanlar
+## 7. Kararlar ve açık kalanlar
 
 **Kapandı:**
 
-1. **`subclass` kartı yazılıyor, `class` yazılmıyor.**
-2. **İçerik ve isimlendirme özgünüyle aynı** (2026-09-12). Önceki Aegis uyarlaması —
-   *Kayıt Ruhu* / *Pul Bağıtlısı*, defter-mühür ve bağıt-rün kurgusu, Yazısız yoldaş,
-   Mühürsüz Kalem lisans sorunu — **geri alındı**.
+1. **`subclass` kartı yazılıyor, `class` yazılmıyor.** İrade Yemini de bu kuralın
+   içinde kaldı: SRD Paladin'i olduğu gibi duruyor, değişen tek şey ona takılan yemin.
+2. **İthal ikisinde içerik ve isimlendirme özgünüyle aynı** (2026-09-12). Önceki Aegis
+   uyarlaması — *Kayıt Ruhu* / *Pul Bağıtlısı*, defter-mühür ve bağıt-rün kurgusu,
+   Yazısız yoldaş, Mühürsüz Kalem lisans sorunu — **geri alındı**.
 3. **Kanat yok** (§2.3) ve **ejderha yok** (§2.2). Bu iki sapma kalıcıdır.
+4. **İrade Yemini kanon** (2026-09-13, §3): 1. seviyede açılır, +1 Güç / +1 Dayanıklılık
+   ve History + Investigation verir, Divine Smite'ın yerini **Yemin Darbesi** alır, ve
+   verdiği hiçbir şey **çağrı zarı istemez.** Paladin'in bu kıtada oynanabilir tek
+   biçimi budur.
 
 **Açık:**
 
@@ -234,3 +366,9 @@ Reflexive Resistance, çağırma ekonomisi) özgünüyle aynıdır.
   yaratırsa çeviri adlar ayrı bir karar olarak açılır.
 - **A2 — Yeni alt sınıf gelecek mi?** Gelirse aynı yapıyla (ne olduğu · özellikler ·
   sapma defteri) buraya yazılır.
+- **A3 — Yemin maddeleri yazılmadı** (§3.1). "Verilen söz tutulur" dışında bir madde
+  listesi yok, ve bozulmanın bedeli bir uzun dinlenmeyle sınırlı tutuldu. Düzenin
+  metni yazılırsa bu bedel yeniden tartışılır.
+- **A4 — Cleric ve Warlock için karşılık yazılmadı.** İkisi de bu kıtada oynanamaz
+  ([`mekanikler.md` §3.1](mekanikler.md)) ve Paladin'inki gibi bir çıkış yolu
+  **bilerek** açılmadı. Açılacaksa ayrı bir karardır.

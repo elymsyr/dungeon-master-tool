@@ -345,9 +345,29 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.4.0)
+### 4.8 Yazılan kartlar (0.6.0)
 
-`aegis-act1/world-blueprint.json` — **125 entity**, 2026-09-11. Kapsam
+**0.6.0 (2026-09-13) — ilahi büyü turu.** `mekanikler.md` §3 yeniden yazıldı: her ilahi
+büyü bir **çağrı zarı** ister (`d20 + Religion`; çatışmada 19, çatışma dışında saat içinde
+18 → 20 → doğal 20 → imkansız), başarısızlık yuvayı ve çatışmada aksiyonu harcar. Kapsam
+**Cleric · Warlock · Paladin'in ilahi büyüleri**; Druid/Ranger dışarıda. İki sonuç kartlara
+girdi: **Cleric ve Warlock bu kıtada oynanmaz** (giriş kartının *Karakter yaratma* sayfası
+bunu söylüyor) ve Paladin için Aegis'in kendi alt sınıfı yazıldı —
+**İrade Yemini** ([`alt-siniflar.md` §3](lore/canon/alt-siniflar.md)), 1. seviyede açılan,
+gücü yeminden gelen, +1 Güç / +1 Dayanıklılık ve History + Investigation veren, Divine
+Smite yerine **Yemin Darbesi** koyan ve hiçbir kullanımı zar istemeyen bir yemin.
+
+Aynı turda: Gümüşsu'ya **Halim** eklendi (Sınır ve Ticaret koltuğunun duruma bakması için
+yolladığı adam — izci giyimli, savaşmaz, kaçar, ve her hâlde geri döner); ve
+[`act1.md` §5](lore/canon/act1.md) **akış olmaktan çıkıp dünyanın saati olarak** yeniden
+yazıldı: *"şafakta üçü döner, oyuncular orada olsun olmasın"*, sonrası iki **hâl** — köy
+ayakta ya da kırılmış. Oyuncunun ne yapacağını varsayan cümleler (*"doğal seçim"*,
+*"yolda karşılarına çıkar"*) kanondan ve iki sahne kartından çıkarıldı. **+10 kart:**
+`npc` +1 · `subclass` +1 · `trait` +6 · `resource-pool` +2.
+
+`aegis-act1/world-blueprint.json` — **163 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
+125 kartını sayıyor; 0.5.x alt sınıf turunu ve 0.6.0'ı eklemek için
+[`kart-listesi.md` §Sayım](lore/canon/kart-listesi.md)'a bak. Kapsam
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**; `🟡` olanlar
 dahil (bir kartı 🟡 yapan şey tek bir alan, ve o alan boş bırakıldı).
 
