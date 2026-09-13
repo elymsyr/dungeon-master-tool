@@ -2,20 +2,25 @@
 
 > **Durum: kanon.** README §0 hiyerarşisine bağlıdır.
 > [`mekanikler.md`](mekanikler.md) 5e'nin üstüne eklenen **kuralları** yazdı; bu belge
-> **üç alt sınıfı** kanona alıyor: 5e'nin dışından alınan bir Sorcerer ve bir Ranger,
-> ve Aegis'in kendi yazdığı bir Paladin yemini.
+> **dört alt sınıfı** kanona alıyor: 5e'nin dışından alınan bir Sorcerer ve bir Ranger,
+> ve Aegis'in kendi yazdığı bir Paladin yemini ile bir Wizard okulu.
 >
 > **Karar (2026-09-12): ithal ikisinde içerik ve isimlendirme özgünüyle aynı.** Clockwork
 > Soul ve Drakewarden Aegis'e *uyarlanmadı*, **olduğu gibi alındı** — kart adları WotC
-> metnindeki İngilizce adlardır, seviyeler ve sayılar birebir aynıdır. Sapmalar §5'te
+> metnindeki İngilizce adlardır, seviyeler ve sayılar birebir aynıdır. Sapmalar §6'da
 > sayılı ve sayısı azdır.
 >
 > **Karar (2026-09-13): İrade Yemini yazıldı** (§3). Bu üçüncüsü ithal değil; ilahi
 > büyünün çağrı zarı ([`mekanikler.md` §3.1](mekanikler.md)) Cleric ve Warlock'u bu
 > kıtada oynanamaz hale getirdi, ve Paladin'in bu dünyada nasıl ayakta kaldığını
 > söyleyen kart budur.
+>
+> **Karar (2026-09-13): Siper Okulu yazıldı** (§4). Dördüncüsü de ithal değil ve aynı
+> kuralın ikinci yarısını cevaplıyor: çağrı zarı ilahi **iyileştirmeyi** de güvenilmez
+> yaptı, ve bir grubun iyileştiricisi yoksa hasarın alınmaması gerekir. Bu kart o işi
+> arkana tarafa, Wizard'a veriyor. A2 (§8) bununla kapandı.
 
-**Sapma işareti zorunlu** (README §6.5): üç alt sınıf da SRD'de yok.
+**Sapma işareti zorunlu** (README §6.5): dört alt sınıf da SRD'de yok.
 
 **Kaynak atfı.** Kartların `source` alanı:
 
@@ -24,11 +29,13 @@
 | Clockwork Soul | `Tasha's Cauldron of Everything` |
 | Drakewarden | `Fizban's Treasury of Dragons` |
 | İrade Yemini | `Aegis` — özgün |
+| Siper Okulu | `Aegis` — özgün |
 
 **Neden bunlar.** [`genel-kartlar.md`](genel-kartlar.md) *"`class`/`subclass` kartı
 gerekiyor mu"* sorusunu açık bırakmıştı. Cevap: **`class` kartı yazılmıyor** (SRD'nin on
 iki sınıfı olduğu gibi duruyor), ama **`subclass` yazılıyor**. İlk ikisini masanın iki
-oyuncusu istedi ve ikisi de SRD'de yok; üçüncüsünü **kuralın kendisi** istedi (§3.1).
+oyuncusu istedi ve ikisi de SRD'de yok; son ikisini **kuralın kendisi** istedi
+(§3.1 · §4.1).
 
 ---
 
@@ -66,7 +73,7 @@ Oyuncu bu altıdan birini seçer ve her büyüsünde aynısı olur (mekanik etki
 | **3** | **Clockwork Magic — 2. kademe** | **Aid · Lesser Restoration** eklenir. |
 | **5** | **Clockwork Magic — 3. kademe** | **Dispel Magic · Protection from Energy** eklenir. |
 | **6** | **Bastion of Law** | **Aksiyon.** 1–5 büyü puanı harca; kendine ya da 30 ft içinde bir yaratığa harcadığın puan kadar **d8 koruma zarı** ver. Korunan yaratık hasar alırken istediği kadar zarı harcayıp atar; toplam, hasardan düşülür. Uzun dinlenmeye ya da zarlar bitene kadar sürer. Aynı anda tek siper. |
-| **7** | **Clockwork Magic — 4. kademe** | **Freedom of Movement · Death Ward** eklenir *(özgünde Summon Construct — §5.1)*. |
+| **7** | **Clockwork Magic — 4. kademe** | **Freedom of Movement · Death Ward** eklenir *(özgünde Summon Construct — §6.1)*. |
 | **9** | **Clockwork Magic — 5. kademe** | **Greater Restoration · Wall of Force** eklenir. |
 | **14** | **Trance of Order** | **Bonus aksiyon**, 1 dakika: sana yapılan saldırı atışları **avantaj alamaz**, ve senin attığın her d20'de **9 ve altı 10 sayılır**. Uzun dinlenmede 1 kez bedava; ya da **5 büyü puanı**. |
 | **18** | **Clockwork Cavalcade** | **Aksiyon.** 30 ft'lik bir küpte düzen ruhları belirir: toplam **100 can**ı istediğin gibi bölüştürerek iyileştirir, hasarlı ama yok olmamış nesneleri onarır, ve küpteki **6. seviye ve altı** her büyüyü sonlandırır. Uzun dinlenmede 1 kez bedava; ya da **7 büyü puanı**. |
@@ -146,7 +153,7 @@ Drake ölürse ya da uzaklaşırsa geri çağrılabilir — çağırma kuralı a
 
 **Kaynak:** Aegis. Bu alt sınıf **bu dünyanın kendi kartıdır** — SRD'de ya da bir
 WotC kitabında karşılığı yok.
-**Açıldığı seviye:** **1** (sapma — §5.3).
+**Açıldığı seviye:** **1** (sapma — §6.3).
 
 ### 3.1 Ne olduğu
 
@@ -182,7 +189,7 @@ alınacağını tartışıyor.
 | **15** | **Yemin Yorulmaz** | **Korkutulamazsın.** Ayrıca 0 cana düşüreceğin bir hasarda **1 canda** kalırsın — uzun dinlenmede bir kez. |
 | **20** | **Andın Hâli** | **Bonus aksiyon**, 10 dakika: auraların menzili **30 ft**'e çıkar, ve **Blight'lı** yaratıklara saldırı atışların **avantajlı** olur. Uzun dinlenmede bir kez. |
 
-**Çağrı zarı bu tablonun hiçbir satırını etkilemez** (§5.3). Paladin'in genel
+**Çağrı zarı bu tablonun hiçbir satırını etkilemez** (§6.3). Paladin'in genel
 listesinden ayrıca hazırladığı ilahi büyüler ise [`mekanikler.md`
 §3.1](mekanikler.md)'e tabidir — yani bu yemini tutan oyuncunun eli **dar ama
 güvenilir**, ve bu bilerek böyle.
@@ -211,9 +218,72 @@ anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araş
 
 ---
 
-## 4. Yazılan kartlar
+## 4. Siper Okulu — `subclass`, Wizard
 
-### 4.1 Clockwork Soul — 9 kart
+**Kaynak:** Aegis. Bu alt sınıf **bu dünyanın kendi kartıdır** — SRD'de ya da bir
+WotC kitabında karşılığı yok. Klasik *abjuration* geleneğinden **esinlenildi**, hiçbir
+üçüncü taraf metninden çevrilmedi.
+**Açıldığı seviye:** **3** (sapma yok — SRD 5.2.1 iskeletiyle aynı).
+
+### 4.1 Ne olduğu
+
+[`mekanikler.md` §3](mekanikler.md) ilahi büyüyü zara bağladığında iki şey birden
+gitti. Birincisi Paladin'di ve §3 onu kurtardı. İkincisi daha sessiz ve daha ölümcül:
+**iyileştirme.** Bu kıtada *Cure Wounds* her seferinde yeniden istenir, çatışmada eşik
+**19**'dur ve tutmadığında yuva da aksiyon da gider. Yani bu dünyada bir grubun
+güvenilir iyileştiricisi **yoktur**.
+
+**Büyücü Loncası** (`lore/Büyücü Loncası`) bunu üç yüzyıl önce fark etti
+ve sorunu tersinden çözdü: **yara kapatılamıyorsa, yaranın açılmasına izin verilmez.**
+
+Siper Okulu'nun mezunu ateş atmaz, ölüyü kaldırmaz, geleceği okumaz. Bir odaya girer,
+arkadaşlarının önüne görünmez bir duvar örer, ve o duvar dağılana kadar orada durur.
+Loncanın kendi deyişiyle: *"Biz iyileştirmeyiz. Biz gerekmemesini sağlarız."*
+
+> **Bu okulun verdiği hiçbir şey çağrı zarı istemez.** Siper de Karşı Büyücü de
+> **arkana** güçtür — her kullanımda yeniden istenen bir şey değil, bir kez öğrenilmiş
+> bir zanaat. [`mekanikler.md` §3.1](mekanikler.md)'in zarı Cleric'i, Warlock'u ve
+> Paladin'in ilahi büyülerini bağlar; büyücüyü bağlamaz. Ayrım zaten orada yazılı:
+> *her kullanımda yeniden istenen şey zar ister; bir kez verilmiş olan istemez.*
+
+**Lonca bunu bir erdem saymaz, bir sigorta sayar.** Siper Okulu mezunları kervanlara,
+madenlere ve cephe gerisine atanır — kahraman olsunlar diye değil, kimse ölmesin diye.
+Bu, okulun neden sevilmediğini de açıklar: geldiği yerde kötü bir şey bekleniyor
+demektir.
+
+### 4.2 Özellikler
+
+| Sv | Özellik | Mekanik |
+|---|---|---|
+| **3** | **Siper** | 1. kademe ya da üstü bir **abjuration** büyüsü yaptığında etrafına bir siper örülür. Kapasite: **`2 × büyücü seviyesi + Zeka modifiyeri`**. Sana gelen hasarı siper alır; aşan kısmı sen alırsın ama siper yok olmaz, **0 canda bekler**. Başka bir abjuration büyüsü **kademe × 2**, **bonus aksiyon**la yakılan bir yuva **yuva kademesi × 2** can doldurur. **Uzun dinlenmeye kadar** sürer ve ikinci bir siper kurulamaz. |
+| **3** | **Loncanın Defteri** | Büyü defterine **2. kademe ve altı iki abjuration büyüsü** bedava eklenir; sonra **her yeni yuva kademesinde** bir tane daha. Ayrıca **Shield** ve **Protection from Evil and Good** daima hazırdır ve hazırlanan büyü sayısına sayılmaz *(§6.4 — geleneğin vermediği ek)*. |
+| **6** | **Siperi Uzat** | **Tepki.** **30 ft** içinde gördüğün bir yaratığa gelen hasarı sipere yönlendirirsin. Aşan hasarı yaratık alır. **Sayı sınırı yok** — sınır siperin canı ve turda bir tepkin olması. |
+| **10** | **Karşı Büyücü** | **Counterspell** ve **Dispel Magic** daima hazır, sayıya girmez. *Counterspell* için yuva harcadığında hedef kurtarma zarını geçerse **yuva harcanmış sayılmaz**. *Dispel Magic* 4. kademe ve üstü bir etki için yetenek kontrolü istediğinde kontrole **yetkinlik bonusunu** eklersin. |
+| **14** | **Büyüye Direnç** | Büyülerden gelen **her hasara dirençlisin**, ve bir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın. |
+
+**Siper kendiliğinden kurulmaz.** Çatışmanın ilk turunda bir abjuration büyüsü
+yapılmazsa ortada siper yoktur ve alt sınıfın yarısı çalışmaz. Bu bilerek böyle: okul
+hazırlığı ödüllendirir, refleksi değil.
+
+### 4.3 Sayılar — siper ne kadar tutar
+
+| Büyücü sv | Zeka | Kapasite | Bonus aksiyonla tek doldurma |
+|---|---|---|---|
+| **3** | +3 | **9** | 2. kademe yuva → +4 |
+| **5** | +3 | **13** | 3. kademe yuva → +6 |
+| **10** | +4 | **24** | 5. kademe yuva → +10 |
+| **17** | +5 | **39** | 9. kademe yuva → +18 |
+
+Kapasite tavan değil **musluk ağzıdır**: bir uzun dinlenme boyunca emilen toplam hasar
+bundan çok daha yüksektir, çünkü yapılan her abjuration büyüsü sipere can yazar.
+Pratikte bu alt sınıf **büyü yuvasını parti canına çeviren bir pompa**dır, ve
+iyileştiricisi olmayan bir gruba bilerek verilmiştir.
+
+---
+
+## 5. Yazılan kartlar
+
+### 5.1 Clockwork Soul — 9 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -224,7 +294,7 @@ anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araş
 | **Trance of Order** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + bonus aksiyon |
 | **Clockwork Cavalcade** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + aksiyon |
 
-### 4.2 Drakewarden — 13 kart
+### 5.2 Drakewarden — 13 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -240,7 +310,7 @@ anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araş
 | **Infusing Strike** | `creature-action` | Drake'in tepkisi |
 | **Drake's Breath** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + 11. seviye koni |
 
-### 4.3 İrade Yemini — 7 kart
+### 5.3 İrade Yemini — 7 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -264,7 +334,27 @@ Clockwork Magic gibi. Hepsi SRD'de var, yeni `spell` kartı yazılmadı.
 > `bonus_skill_pick_count` bilerek kullanılmadı: o alan "iki beceri **seç**" demek,
 > yeminin verdiği ise iki **belirli** beceri.
 
-### 4.4 Kaynak havuzları — 8 satır
+### 5.4 Siper Okulu — 6 kart
+
+| Kart | Kategori | Ne |
+|---|---|---|
+| **Siper Okulu** | `subclass` | Ana kart. `parent_class_ref` → SRD `Wizard`, `granted_at_level` **3**. `caster_kind` **yazılmadı** — Wizard'ın `Full` ilerlemesi korunur |
+| **Siper** | `trait` | Kapasite formülü, besleme ve taşma kuralı |
+| **Siperi Uzat** | `trait` + `creature-action` | 6. seviye tepkisi. **Havuz yok** — kullanım sayısı sınırsız, sınır siperin canı |
+| **Karşı Büyücü** | `trait` | 10. seviye; iki daima hazır büyü ana kartın `features` satırında |
+| **Büyüye Direnç** | `trait` | 14. seviye |
+
+**Daima hazır dört büyü ayrı kart değil:** Shield · Protection from Evil and Good
+(3. sv) ve Counterspell · Dispel Magic (10. sv) ana kartın `features` satırlarında
+`always_prepared_spell_refs` ile bağlanıyor. Dördü de SRD'de var.
+
+> **Şema notu — siperin canı bir alan değil.** `subclass.features` satırı "seviyeye
+> bağlı bir can havuzu" taşıyamaz; `resource_pool_grants` sayaç verir, **can** değil.
+> Bu yüzden siper kartta *yazılı* ama uygulamada *takip edilmiyor* — oyuncu siperin
+> canını elle tutar. Bir havuz satırı uydurmak sayacı yanlış gösterirdi, o yüzden
+> bilerek yazılmadı.
+
+### 5.5 Kaynak havuzları — 8 satır
 
 `pool:clockwork_restore_balance` · `pool:clockwork_trance_of_order` ·
 `pool:clockwork_cavalcade` · `pool:drake_companion` · `pool:drakes_breath` ·
@@ -275,11 +365,11 @@ o alan yalnız `pb` gibi bilinen belirteçleri çözer, sayı yazılırsa havuz 
 
 ---
 
-## 5. Sapma defteri
+## 6. Sapma defteri
 
 README §6.5: sapma işareti zorunlu. Liste kısa — geri kalan her şey özgünüyle aynıdır.
 
-### 5.1 Clockwork Soul
+### 6.1 Clockwork Soul
 
 | Özgün | Aegis | Neden | Denge etkisi |
 |---|---|---|---|
@@ -289,7 +379,7 @@ Geri kalan her şey — 1. seviyede açılış, büyü kademeleri (1/3/5/7/9), R
 YB kadar kullanımı, Bastion of Law'ın 1–5 puan / d8'i, Trance of Order'ın 1 dakikası,
 Clockwork Cavalcade'in 100 canı ve 6. seviye eşiği — özgünüyle aynıdır.
 
-### 5.2 Drakewarden
+### 6.2 Drakewarden
 
 | Özgün | Aegis | Neden | Denge etkisi |
 |---|---|---|---|
@@ -308,7 +398,7 @@ Reflexive Resistance, çağırma ekonomisi) özgünüyle aynıdır.
 > *Perfected Bond*'a **"drake devrilemez (Prone'a bağışık)"** satırını ekleyin. Uçuş geri
 > gelmez, ama binek güvenilir olur.
 
-### 5.3 İrade Yemini
+### 6.3 İrade Yemini
 
 Bu alt sınıfın tamamı sapmadır — SRD'de karşılığı yok. Sayılan şey, **SRD
 Paladin'ine göre** neyin değiştiği:
@@ -331,20 +421,43 @@ olması.
 > Darbesi'ni 2. seviyeye** alın. Yeminin Ağırlığı 1'de kalsın — o, kaybedilen
 > hattın karşılığı, bir bonus değil.
 
+### 6.4 Siper Okulu
+
+Bu alt sınıfın tamamı sapmadır — SRD'de karşılığı yok. Sayılan şey, **SRD'nin tek
+wizard alt sınıfı olan Evoker'a göre** neyin değiştiği:
+
+| SRD Evoker | Siper Okulu | Neden | Denge etkisi |
+|---|---|---|---|
+| Açılış **3. seviye**, kademeler **3/6/10/14** | **Aynı** | SRD 5.2.1 iskeleti korundu; 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz | **Yok.** Tek uyumlu nokta ve bilerek öyle |
+| Rol: **alan hasarı** | Rol: **hasar emme** | İlahi iyileştirme çağrı zarına bağlı (§4.1); grubun güvenilir hattı arkana olmak zorunda | **Yan.** Hasar düşer, ayakta kalma yükselir |
+| *Sculpt Spells* — dostlar alan büyüsünden muaf | **Siper** — dostların hasarı büyücüye yazılır | Aynı fikrin daha pahalı hâli: muafiyet bedava, siper yuva yer | **Nötr.** Sculpt bedavaydı, bu değil |
+| — | **Siperi Uzat** sınırsız | Sayaç koymak kartı bir kaynak yönetimi bulmacasına çevirirdi; asıl sınır zaten **tepki** ve siperin canı | **Artı görünür, değil.** Turda bir kez kullanılabiliyor |
+| — | **Karşı Büyücü**: başarısız *Counterspell* yuvayı yakmaz | 2024'te *Counterspell* bir kurtarma zarına bağlandı, yani artık kaçırılabilir bir yatırım | **Artı.** Okulun en güçlü tek maddesi |
+| — | 3. sv **Shield / Protection from Evil and Good** daima hazır | Kartın uygulamada görünür bir şey vermesi, ve siperin ilk turda kurulabilmesi | **Hafif artı.** Kısılacak ilk madde budur |
+
+**Net:** 3–9. seviyede Evoker'dan **belirgin zayıf** (alan hasarı yok), 10. seviyeden
+sonra **grup bazında güçlü** — ama gücün tamamı partiye akıyor, büyücünün kendi
+sayfasında görünmüyor. İyileştiricisi olan bir masada bu alt sınıf **fazladır**;
+olmayan bir masada zorunludur.
+
+> **DM için tek düğme:** fazla bulursanız **Siperi Uzat'ı yetkinlik bonusu kadar
+> kullanımla** sınırlayın (uzun dinlenmede yenilenir). Siperin kendi kapasitesine
+> dokunmayın — kapasite düşerse kart 3. seviyede tamamen işlevsiz kalır.
+
 ---
 
-## 6. Bu belgeden çıkan yazım listesi
+## 7. Bu belgeden çıkan yazım listesi
 
 | Nereye | Ne |
 |---|---|
-| `world-blueprint.json` | §4'ün 27 kartı + 8 `resource-pool` satırı |
-| [`kart-listesi.md`](kart-listesi.md) | `subclass` başlığı — 3 kart |
+| `world-blueprint.json` | §5'in 33 kartı + 8 `resource-pool` satırı |
+| [`kart-listesi.md`](kart-listesi.md) | `subclass` başlığı — 4 kart |
 | [`genel-kartlar.md`](genel-kartlar.md) | *Açık kalan kategori kararları*: `subclass` kısmen kapandı |
-| `PROVENANCE.md` | İki alt sınıfın atfı ve sapma defterine gönderme |
+| `PROVENANCE.md` | İthal iki alt sınıfın atfı, özgün ikisinin beyanı, sapma defterine gönderme |
 
 ---
 
-## 7. Kararlar ve açık kalanlar
+## 8. Kararlar ve açık kalanlar
 
 **Kapandı:**
 
@@ -358,17 +471,24 @@ olması.
    ve History + Investigation verir, Divine Smite'ın yerini **Yemin Darbesi** alır, ve
    verdiği hiçbir şey **çağrı zarı istemez.** Paladin'in bu kıtada oynanabilir tek
    biçimi budur.
+5. **Siper Okulu kanon** (2026-09-13, §4): 3. seviyede açılır, kademeleri 3/6/10/14'tür
+   ve çağrı zarına girmez. Çağrı zarının açtığı ikinci boşluğu — **güvenilir iyileştirici
+   yokluğunu** — kapatır; kapatma biçimi iyileştirme değil, **hasarın alınmaması**.
 
 **Açık:**
 
 - **A1 — Kart adları İngilizce, kart metinleri Türkçe.** Dünyanın geri kalanı tamamen
   Türkçe; bu iki alt sınıfın adları özgün metindeki hâliyle duruyor. Masada karışıklık
   yaratırsa çeviri adlar ayrı bir karar olarak açılır.
-- **A2 — Yeni alt sınıf gelecek mi?** Gelirse aynı yapıyla (ne olduğu · özellikler ·
-  sapma defteri) buraya yazılır.
+- ~~**A2 — Yeni alt sınıf gelecek mi?**~~ **Kapandı (2026-09-13):** geldi — Siper
+  Okulu (§4), aynı yapıyla yazıldı. Soru açık kalmaya devam ediyor ama artık cevabı
+  belli: gelirse buraya, bu yapıyla.
 - **A3 — Yemin maddeleri yazılmadı** (§3.1). "Verilen söz tutulur" dışında bir madde
   listesi yok, ve bozulmanın bedeli bir uzun dinlenmeyle sınırlı tutuldu. Düzenin
   metni yazılırsa bu bedel yeniden tartışılır.
 - **A4 — Cleric ve Warlock için karşılık yazılmadı.** İkisi de bu kıtada oynanamaz
   ([`mekanikler.md` §3.1](mekanikler.md)) ve Paladin'inki gibi bir çıkış yolu
-  **bilerek** açılmadı. Açılacaksa ayrı bir karardır.
+  **bilerek** açılmadı. Açılacaksa ayrı bir karardır. Siper Okulu (§4) bu kararı
+  değiştirmez: iyileştiricinin **yerini** dolduruyor, Cleric'i geri getirmiyor.
+- **A5 — Siperin canı elle takip ediliyor** (§5.4). Şema seviyeye bağlı bir can havuzu
+  taşımıyor. Uygulama tarafında bir alan açılırsa kart güncellenir.

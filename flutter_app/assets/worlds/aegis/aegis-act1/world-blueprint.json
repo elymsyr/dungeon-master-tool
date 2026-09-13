@@ -2382,6 +2382,73 @@
             }
           ]
         }
+      },
+      {
+        "source_name": "Siper",
+        "mapping": {
+          "name": "Siper",
+          "source": "Siper Okulu",
+          "trait_kind": "Defensive",
+          "description": "**1. kademe ya da üstü bir abjuration büyüsü yaptığında**, büyünün bir kısmını ayırıp etrafına bir **Siper** örersin.\n\nSiper **uzun dinlenmene kadar** durur ve **sana yönelen hasarı** onun yerine alır.\n\n**Siperin can kapasitesi: `2 × büyücü seviyesi + Zeka modifiyeri`.**",
+          "benefits": "**Beslemek.** 1. kademe ya da üstü başka bir abjuration büyüsü yaptığında siper **büyü kademesi × 2** can geri kazanır. Ayrıca **bonus aksiyon** ile bir büyü yuvası harcayıp **yuva kademesi × 2** can doldurabilirsin. Kapasitenin üstüne çıkamaz.\n\n**Taştığında.** Gelen hasar siperin mevcut canını aşarsa aşan kısmı sen alırsın; siper yok olmaz, 0 canda bekler.\n\n**Bir kez kurulur.** Siper bir kere örüldükten sonra yenisini **uzun dinlenmeye kadar** kuramazsın — yalnızca mevcut olanı beslersin.\n\n**Örnek (5. seviye, Zeka 16):** kapasite `2×5 + 3 = 13`. *Shield* (1. kademe) yaptın, siper kuruldu. Bonus aksiyonla 2. kademe yuva yakarsan **+4** can gelir.",
+          "tags": [
+            "siper-okulu",
+            "wizard",
+            "abjuration"
+          ]
+        }
+      },
+      {
+        "source_name": "Siperi Uzat",
+        "mapping": {
+          "name": "Siperi Uzat",
+          "source": "Siper Okulu",
+          "trait_kind": "Defensive",
+          "description": "Siper artık yalnız seni değil, **gördüğün herkesi** tutar.",
+          "benefits": "**Tepki** ile, **30 ft** içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Aşan hasarı yaratık alır.\n\nSayı sınırı yok; sınır siperin canı. Bu, bu okulun ilahi iyileştirmenin yerine koyduğu şeydir: **alınmamış hasar.**",
+          "granted_reaction_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Siperi Uzat"
+            }
+          ],
+          "tags": [
+            "siper-okulu",
+            "wizard",
+            "abjuration"
+          ]
+        }
+      },
+      {
+        "source_name": "Karşı Büyücü",
+        "mapping": {
+          "name": "Karşı Büyücü",
+          "source": "Siper Okulu",
+          "trait_kind": "Other",
+          "description": "**Counterspell** ve **Dispel Magic** senin için daima hazırdır ve hazırladığın büyü sayısına **sayılmaz**.",
+          "benefits": "**Boşa gitmez.** *Counterspell* için bir yuva harcadığında hedef kurtarma zarını geçer ve büyü durdurulamazsa, **yuva harcanmış sayılmaz.**\n\n**Sökmekte ustasın.** *Dispel Magic* 4. kademe ve üstü bir etkiye karşı yetenek kontrolü gerektirdiğinde kontrole **yetkinlik bonusunu** eklersin.",
+          "tags": [
+            "siper-okulu",
+            "wizard",
+            "abjuration"
+          ]
+        }
+      },
+      {
+        "source_name": "Büyüye Direnç",
+        "mapping": {
+          "name": "Büyüye Direnç",
+          "source": "Siper Okulu",
+          "trait_kind": "Defensive",
+          "description": "Büyülerden gelen **her hasara dirençlisin**.\n\nBir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın.",
+          "benefits": "Siperin bir yerde durabilmesi için önce senin durman gerekir. Bu kademede okul, taşıyıcısını korumaya başlar.",
+          "tags": [
+            "siper-okulu",
+            "wizard",
+            "abjuration"
+          ]
+        }
       }
     ],
     "creature-action": [
@@ -2561,6 +2628,16 @@
           "damage_dice": "1d6",
           "description": "*Tetikleyici:* drake'in 30 ft'i içindeki bir yaratık bir silahlı saldırıyla vurur.\n\nDrake tepkisiyle o vuruşa özünü bulaştırır: saldırı **+1d6** öz hasarı verir.",
           "imagePath": "media/Artwork/Salgılı-Vuruş.webp"
+        }
+      },
+      {
+        "source_name": "Siperi Uzat",
+        "mapping": {
+          "name": "Siperi Uzat",
+          "source": "Siper Okulu",
+          "action_type": "Reaction",
+          "range_normal_ft": 30,
+          "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır.\n\nTepkinle o hasarı **Siper**ine yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa aşan kısmı yaratık alır, ama **siper yok olmaz** — 0 canda durur ve beslenmeyi bekler.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır."
         }
       }
     ],
@@ -5016,6 +5093,107 @@
                 }
               ]
             }
+          ]
+        }
+      },
+      {
+        "source_name": "Siper Okulu",
+        "mapping": {
+          "name": "Siper Okulu",
+          "parent_class_ref": {
+            "lookup": "class",
+            "match": "name",
+            "value": "Wizard"
+          },
+          "granted_at_level": 3,
+          "description": "Büyücü Loncası'nın en sevilmeyen ve en çok çağrılan kolu.\n\nBu kıtada bir tanrıdan yardım istemek bir kumardır (@[Kural Sapmaları](entity:lore/Kural Sapmaları)) — ilahi iyileştirme her seferinde yeniden istenir ve çoğu zaman gelmez. @[Büyücü Loncası](entity:lore/Büyücü Loncası) bu boşluğu üç yüzyıl önce fark etti ve sorunu tersinden çözdü: **yara kapatılamıyorsa, yaranın açılmasına izin verilmez.**\n\nSiper Okulu'nun mezunu ateş atmaz, ölüyü kaldırmaz, geleceği okumaz. Bir odaya girer, arkadaşlarının önüne görünmez bir duvar örer ve o duvar dağılana kadar orada durur. Loncanın kendi deyişiyle: *\"Biz iyileştirmeyiz. Biz gerekmemesini sağlarız.\"*",
+          "flavor_description": "**Bu okulun verdiği hiçbir şey çağrı zarı istemez.** Siper de, Karşı Büyücü de arkana (arcane) güçtür — her kullanımda yeniden istenen bir şey değil, bir kez öğrenilmiş bir zanaattır. @[Kural Sapmaları](entity:lore/Kural Sapmaları)'ndaki zar Cleric'i, Warlock'u ve Paladin'in ilahi büyülerini bağlar; büyücüyü bağlamaz.\n\nBu, masada çok somut bir şey demek: **ilahi iyileştiricisi olmayan bir grubun tek güvenilir hasar hattı sensin.** Cleric'in *Cure Wounds*'u 19 tutturamazsa hiçbir şey olmaz; senin siperin ise zar atmaz, sadece durur.\n\nLonca bunu bir erdem saymaz, bir sigorta sayar. Siper Okulu mezunları kervanlara, madenlere ve cephe gerisine atanır — kahraman olsunlar diye değil, **kimse ölmesin** diye.",
+          "features": [
+            {
+              "level": 3,
+              "name": "Siper",
+              "description": "1. kademe ya da üstü bir **abjuration** büyüsü yaptığında etrafına bir **Siper** örülür. Kapasitesi `2 × büyücü seviyesi + Zeka modifiyeri`; sana gelen hasarı o alır.\n\nBaşka bir abjuration büyüsü **kademe × 2**, bonus aksiyonla yakılan bir yuva **yuva kademesi × 2** can doldurur. **Uzun dinlenmeye kadar** sürer ve yenisi kurulamaz.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Siper"
+                }
+              ]
+            },
+            {
+              "level": 3,
+              "name": "Loncanın Defteri",
+              "description": "Bu okulu seçtiğinde büyü defterine **2. kademe ve altı iki abjuration büyüsü** bedavaya eklenir. Sonrasında **her yeni yuva kademesi açıldığında** bir abjuration büyüsü daha eklenir (yuvası olmayan kademeden seçemezsin).\n\nAyrıca **Shield** ve **Protection from Evil and Good** senin için daima hazırdır ve hazırladığın büyü sayısına sayılmaz.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Shield"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Protection from Evil and Good"
+                }
+              ]
+            },
+            {
+              "level": 6,
+              "name": "Siperi Uzat",
+              "description": "**Tepki.** 30 ft içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Aşan hasarı yaratık alır, siper 0 canda bekler.\n\nKullanım sınırı yok — sınır siperin canıdır.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Siperi Uzat"
+                }
+              ]
+            },
+            {
+              "level": 10,
+              "name": "Karşı Büyücü",
+              "description": "**Counterspell** ve **Dispel Magic** daima hazır; hazırladığın büyü sayısına sayılmaz.\n\n*Counterspell* hedefi kurtarma zarını geçerse **yuva harcanmaz**. *Dispel Magic* yetenek kontrolü gerektirdiğinde kontrole **yetkinlik bonusunu** eklersin.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Counterspell"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Dispel Magic"
+                }
+              ],
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Karşı Büyücü"
+                }
+              ]
+            },
+            {
+              "level": 14,
+              "name": "Büyüye Direnç",
+              "description": "Büyülerden gelen **her hasara dirençlisin** ve bir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Büyüye Direnç"
+                }
+              ]
+            }
+          ],
+          "dmNotes": "**Sapma işareti — bu alt sınıf SRD'de yoktur.** Aegis'e özgü, klasik *abjuration* geleneğinden esinlenerek **sıfırdan yazılmış** bir alt sınıftır; hiçbir üçüncü taraf metninden çeviri değildir. Gerekçesi dünyanın kendi kuralı: @[Kural Sapmaları](entity:lore/Kural Sapmaları) ilahi iyileştirmeyi zara bağladığı için grubun güvenilir bir hasar hattına ihtiyacı var, ve bu hat arkana olmak zorunda.\n\n**2024 uyumu.** Alt sınıf **3. seviyede** açılır, özellikler **3 / 6 / 10 / 14** kademelerinde gelir — SRD 5.2.1'in alt sınıf iskeletiyle birebir aynı. Eski 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz.\n\n**Denge notları.**\n- Siperin kapasitesi 5. seviyede ~13, 10. seviyede ~24, 17. seviyede ~38 can. Tek bir uzun dinlenme döngüsünde toplam emilen hasar bundan çok daha yüksektir çünkü her abjuration büyüsü besliyor; pratikte **büyü yuvası → parti canı** musluğudur. Grubun hiç iyileştiricisi yoksa bu kasıtlıdır.\n- *Siperi Uzat* sınırsızdır ama **tepki** harcar: turda bir kez. Asıl sınır budur, sayaç değil.\n- 10. kademedeki \"yuva harcanmaz\" maddesi yalnız *Counterspell* içindir, *Dispel Magic* için değil.\n- 3. kademedeki daima-hazır **Shield / Protection from Evil and Good** klasik geleneğin vermediği bir eklemedir; kartın uygulamada görünür bir şey vermesi ve siperin ilk turda kurulabilmesi için konuldu. Kısmak isterseniz ilk çıkarılacak madde budur.\n\n**Oyuncuya söyle:** siper **kendiliğinden kurulmaz**. Çatışmanın ilk turunda bir abjuration büyüsü yapılmazsa ortada siper yoktur ve alt sınıfın yarısı çalışmaz.",
+          "tags": [
+            "alt-sınıf",
+            "siper-okulu",
+            "wizard",
+            "abjuration",
+            "kural-sapması"
           ]
         }
       }

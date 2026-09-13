@@ -345,7 +345,18 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.6)
+### 4.8 Yazılan kartlar (0.6.7)
+
+**0.6.7 (2026-09-13) — Siper Okulu.** Wizard'a Aegis'in kendi alt sınıfı yazıldı:
+**`subclass/Siper Okulu`** ([`alt-siniflar.md` §4](lore/canon/alt-siniflar.md)),
+3. seviyede açılan, kademeleri **3/6/10/14** olan — yani SRD 5.2.1 iskeletiyle birebir
+uyumlu — bir abjuration okulu. Gerekçe çağrı zarının ikinci sonucu: kural Cleric'i
+oynanamaz yapınca masada **güvenilir iyileştirici** kalmadı, ve bu okul boşluğu
+iyileştirerek değil **hasarı aldırmayarak** kapatıyor. `2 × seviye + Zeka` canlık bir
+**Siper**, 6. seviyede o siperi 30 ft içindeki dostlara uzatan bir tepki, 10'da
+*Counterspell*/*Dispel Magic* hattı, 14'te büyü direnci. Verdiği hiçbir şey **çağrı zarı
+istemez** — arkana güç zara girmez. **+6 kart:** `subclass` +1 · `trait` +4 ·
+`creature-action` +1. Sapma defteri [`alt-siniflar.md` §6.4](lore/canon/alt-siniflar.md).
 
 **0.6.6 (2026-09-13).** Kart listesi görevin kendi kartına indi. Üç görevin de
 `objective` alanı **Bu görevde geçen kartlar** bölümüyle bitiyor: sahneler, mekanlar,

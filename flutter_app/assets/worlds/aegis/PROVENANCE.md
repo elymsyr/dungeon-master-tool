@@ -4,6 +4,29 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.7 — 170 entity** (2026-09-13). **Siper Okulu turu.** Çağrı zarının üçüncü
+ve son sonucu kartlara girdi: kural Cleric ve Warlock'u oynanamaz yapınca (`mek` §3.1)
+masada güvenilir bir iyileştirici kalmadı, ve bu boşluk için Wizard'a Aegis'in kendi alt
+sınıfı yazıldı — **`subclass/Siper Okulu`** (`alt` §4). Boşluğu iyileştirerek değil
+**hasarı aldırmayarak** kapatır: `2 × büyücü seviyesi + Zeka` kapasiteli bir **Siper**
+(3. sv), o siperi 30 ft içindeki bir dosta yönlendiren **tepki** (6. sv), daima hazır
+*Counterspell* / *Dispel Magic* ve boşa gitmeyen counterspell yuvası (10. sv), büyü
+direnci (14. sv).
+
+**Atıf — bu kart ithal değil.** Klasik *abjuration* geleneğinden **esinlenildi**; hiçbir
+üçüncü taraf metninden çeviri ya da uyarlama yapılmadı, kart metinlerinin tamamı bu tur
+için yazıldı. `source` alanı bu yüzden `Aegis` — *Clockwork Soul* ve *Drakewarden*'in
+aksine bir kitap adı taşımıyor (bkz. `alt` §Kaynak atfı). Seviye iskeleti **SRD 5.2.1**'e
+bakılarak seçildi (alt sınıf 3. seviyede, kademeler 3/6/10/14); 2014 şeklindeki 2. seviye
+gelenekler bu dünyada kullanılmıyor. Sapma defteri `alt` §6.4 — sapmalar SRD'nin tek
+wizard alt sınıfı **Evoker**'a göre sayıldı.
+
+**Şema sınırı, kayda geçti:** siperin canı `subclass.features` satırında taşınamıyor
+(`resource_pool_grants` sayaç verir, can değil), bu yüzden siper kartta yazılı ama
+uygulamada takip edilmiyor — oyuncu elle tutar. Yanlış gösterecek bir havuz satırı
+uydurulmadı (`alt` §5.4). **Toplam +6 kart:** `subclass` +1 · `trait` +4 ·
+`creature-action` +1.
+
 **Sürüm 0.6.4 — 163 entity** (2026-09-13). Yeni kart yok; **Halim bulunabilir
 oldu.** `npc/Halim` 0.6.0'da yazılmıştı ama hiçbir mekan kartında adı geçmiyordu —
 köyün kartı *"üç yabancı"* diyordu, han kartı üst kattaki iki odayı boş bırakıyordu,
@@ -81,7 +104,7 @@ cümleleri iki sahne kartından çıkarıldı. Toplam +10 kart: `npc` +1 · `sub
 
 **Sürüm 0.5.1 — 153 entity** (2026-09-12). 0.5.1'de iki alt sınıfın Aegis uyarlaması
 geri alındı: içerik ve isimlendirme **özgünüyle aynı** (*Clockwork Soul* · *Drakewarden*),
-kalan sapmalar uçuş ve ejderha ile sınırlı — `lore/canon/alt-siniflar.md` §4. 0.5.0'da bu
+kalan sapmalar uçuş ve ejderha ile sınırlı — `lore/canon/alt-siniflar.md` §6. 0.5.0'da bu
 iki **alt sınıf** eklenmiş ve onlara bağlı 25 kart gelmişti (`subclass` 2 · `animal` 1 · `trait` +10 · `creature-action` +8 ·
 `resource-pool` 6); tasarımı ve sapma defteri [lore/canon/alt-siniflar.md](lore/canon/alt-siniflar.md). Kartlar güncel kanondan (Hastalık Puanı
 revizyonu dahil) **sıfırdan** yazıldı; 0.2.0'ın metni kullanılmadı. 0.4.0'da bütün kartlar
