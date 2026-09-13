@@ -345,7 +345,23 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.0)
+### 4.8 Yazılan kartlar (0.6.2)
+
+**0.6.2 (2026-09-13) — denge turu.** Üç Dönüşmüş masada fazla güçlüydü. Jenerik
+**Dönüşmüş** ve **Dönüşmüş Kromanna** (tiefling) AC **11** / HP **16**'ya, **Dönüşmüş
+Alton** ve **Dönüşmüş Merla** (halfling) AC **9** / HP **12**'ye indi; CR'ler 1/2 · 1 →
+1/8 · 1/4. Dört ayrı pençe kartı **ikiye** indi — `Pençe Saldırısı` (+2, 1d4) ve
+`Güçlü Pençe Saldırısı` (+2, 1d8); isabet bonusu hepsinde **+2**, hasarda yetenek
+modifikatörü yok. **Pençe artık hastalık bulaştırmıyor:** `trait/Bulaştıran Yara`
+kaldırıldı, `curse/Blight — Enfeksiyon`'un maruziyet yolları dörtten üçe indi ve
+`encounter/Şafak Çatışması` `Low` / **100 XP** oldu.
+
+Aynı turda **Corvin** ([`act1.md` §3.6](lore/canon/act1.md)) ve **Fare**
+([`act1.md` §7.4](lore/canon/act1.md)) yazıldı: Corvin köyün *yabancısı ama sevilen*
+adamı, köyün dışarıyla alışverişi onun sırtından yürür ve köy Gizli Liman'ı bilmez;
+dönüşüm sabahı şafaktan **birkaç saat önce** köye döner ve **ölürse kıyı yolu kapanır**.
+Fare kendisine *Fare* denmesinden hoşlanmaz — ona **Sincap** diyen tek kişi Corvin.
+**−3 kart:** `creature-action` −2 · `trait` −1.
 
 **0.6.0 (2026-09-13) — ilahi büyü turu.** `mekanikler.md` §3 yeniden yazıldı: her ilahi
 büyü bir **çağrı zarı** ister (`d20 + Religion`; çatışmada 19, çatışma dışında saat içinde
@@ -365,7 +381,7 @@ ayakta ya da kırılmış. Oyuncunun ne yapacağını varsayan cümleler (*"doğ
 *"yolda karşılarına çıkar"*) kanondan ve iki sahne kartından çıkarıldı. **+10 kart:**
 `npc` +1 · `subclass` +1 · `trait` +6 · `resource-pool` +2.
 
-`aegis-act1/world-blueprint.json` — **163 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
+`aegis-act1/world-blueprint.json` — **162 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
 125 kartını sayıyor; 0.5.x alt sınıf turunu ve 0.6.0'ı eklemek için
 [`kart-listesi.md` §Sayım](lore/canon/kart-listesi.md)'a bak. Kapsam
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**; `🟡` olanlar

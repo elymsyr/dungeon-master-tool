@@ -225,25 +225,23 @@ Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Dönüşmüş** | Jenerik gövde: Blight'lı köylü. CR 1/2, AC 12, HP 22, Pençe +5 (1d8+3) | ✅ |
-| **Dönüşmüş Alton** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Merla** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Kromanna** | Tiefling, HP 30, ateşe direnç, CR 1 | ✅ |
+| **Dönüşmüş** | Jenerik gövde: Blight'lı köylü. CR 1/8, AC 11, HP 16, Güçlü Pençe Saldırısı +2 (1d8) | ✅ |
+| **Dönüşmüş Alton** | Halfling, Small, AC 9, HP 12, CR 1/8 | ✅ |
+| **Dönüşmüş Merla** | Halfling, Small, AC 9, HP 12, CR 1/8 | ✅ |
+| **Dönüşmüş Kromanna** | Tiefling, AC 11, HP 16, ateşe direnç, CR 1/4 | ✅ |
 
 Üçü de jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
 hiçbir yaratık tekrar yazılmaz, ref verilir.
 
-## 6. `creature-action` — 4 · `trait` — 5 (+ alt sınıf trait'leri §14)
+## 6. `creature-action` — 2 · `trait` — 4 (+ alt sınıf trait'leri §14)
 
 Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
 | Kart | Tip | Ait olduğu | Durum |
 |---|---|---|---|
-| **Pençe** | `creature-action` | Dönüşmüş — +5, 1d8+3 delici | ✅ |
-| **Pençe (Alton)** · **Pençe (Merla)** | `creature-action` | +4, 1d6+2 delici | ✅ |
-| **Pençe (Kromanna)** | `creature-action` | +6, 1d10+4 delici | ✅ |
+| **Pençe Saldırısı** | `creature-action` | Küçük bedenler — +2, 1d4 delici | ✅ |
+| **Güçlü Pençe Saldırısı** | `creature-action` | Orta/güçlü bedenler — +2, 1d8 delici | ✅ |
 | **Acıyı Tanımaz** | `trait` | 0 HP'de ölüm zarı atmaz, ölür | ✅ |
-| **Bulaştıran Yara** | `trait` | İsabette CON DC 12 → +1 Hastalık Puanı | ✅ |
 | **Durmayan Adım** | `trait` | Alton: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
 | **Kesik Kesik** | `trait` | Merla: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
 | **Erken Güçlenme** | `trait` | Kromanna: ilk turunda ek Pençe | ✅ |
@@ -282,7 +280,7 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
+| **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
 ## 10. `quest` — 3
 
@@ -398,9 +396,10 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 | `subclass` | 3 | — | — | 3 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 8 | — | — | 8 |
-| **Toplam** | **153** | **13** | **—** | **166** |
+| **Toplam** | **150** | **13** | **—** | **163** |
 
-**153/166 ✅, 13 🟡, 0 ⬜** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
+**150/163 ✅, 13 🟡, 0 ⬜** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**) ve `trait/Bulaştıran Yara` kaldırıldı — pençe hastalık bulaştırmıyor.)*
+Öncesi: **153/166 ✅** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
 Öncesi: **152/165 ✅** (2026-09-13, ilahi büyü turu — 154'ten 165'e: `npc/Halim`,
 `subclass/İrade Yemini`, altı yemin `trait`'i ve iki `resource-pool` satırı).
 

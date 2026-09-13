@@ -177,7 +177,7 @@ alınacağını tartışıyor.
 | **1** | **Yeminin Ağırlığı** | **Güç** ve **Dayanıklılık** puanların **1'er artar** (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın. |
 | **1** | **Yemin Darbesi** | Yakın silahlı saldırın isabet ettiğinde, bir **büyü slotu** harcayarak fazladan **2d8 kuvvet** hasarı verirsin; 1. seviyenin üstündeki her slot kademesi için **+1d8**, en fazla **5d8**. Hedef **Blight'lı** bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır; bu yemini tutan paladin Divine Smite hazırlamaz.* |
 | **3** | **Yemin Büyüleri** | §3.3'ün listesi senin için **daima hazırdır**, hazırlanan büyü sayısına sayılmaz, ve **çağrı zarı istemez** ([`mekanikler.md` §3.1](mekanikler.md)). |
-| **3** | **Yemin Andı: Cepheyi Tut** | **Channel Divinity.** Aksiyon; bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların **Bulaştıran Yara** ve benzeri maruziyet zarlarını **avantajlı** atar. |
+| **3** | **Yemin Andı: Cepheyi Tut** | **Channel Divinity.** Aksiyon; bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların **Blight — Enfeksiyon** maruziyet zarlarını **avantajlı** atar. |
 | **7** | **Bozulmayan Söz** | **10 ft** içindeki dostların (sen dahil) **Hastalık Puanı** kazandıracak her kurtulma zarını **avantajlı** atar. 18. seviyede menzil **30 ft** olur. |
 | **15** | **Yemin Yorulmaz** | **Korkutulamazsın.** Ayrıca 0 cana düşüreceğin bir hasarda **1 canda** kalırsın — uzun dinlenmede bir kez. |
 | **20** | **Andın Hâli** | **Bonus aksiyon**, 10 dakika: auraların menzili **30 ft**'e çıkar, ve **Blight'lı** yaratıklara saldırı atışların **avantajlı** olur. Uzun dinlenmede bir kez. |

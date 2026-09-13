@@ -104,7 +104,7 @@ o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Şafak çatışması** | ✅ | §5 — perdenin ilk savaşı; statblock'lar §5.1, toplam 400 XP |
+| **Şafak çatışması** | ✅ | §5 — perdenin ilk savaşı; statblock'lar §5.3, toplam 100 XP |
 
 ## 6. `quest` — 2
 
