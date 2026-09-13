@@ -4,6 +4,19 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.4 — 163 entity** (2026-09-13). Yeni kart yok; **Halim bulunabilir
+oldu.** `npc/Halim` 0.6.0'da yazılmıştı ama hiçbir mekan kartında adı geçmiyordu —
+köyün kartı *"üç yabancı"* diyordu, han kartı üst kattaki iki odayı boş bırakıyordu,
+ve karta yalnız `scene/Köye Varış` ile `scene/Şafak Dönüşümü` üzerinden ulaşılıyordu.
+`location/Gümüşsu` artık dördüncü yabancıyı hem açıklamasında hem *Köylüler ne
+anlatır* hem *Kim var* listesinde sayıyor; `location/Goodbarrel'ın Ocak Başı`'nda üst
+kattaki iki odadan birinin dolu olduğu ve Halim'in akşamları kapıya en yakın masada
+oturduğu yazıyor. Kanon zaten böyle diyordu (`act1 §3.5`); eksik olan kart tarafıydı.
+
+Görselsiz iki kart kaldı — `npc/Halim` ve `creature-action/Sıçrayıp Isırma`.
+Prompt'ları çevrimdışı üretilip `tool/aegis_art/art_jobs_063_missing.jsonl`'e yazıldı
+(ComfyUI bu makinede erişilebilir değil); akış `tool/aegis_art/README.md` §6.1'de.
+
 **Sürüm 0.6.3 — 163 entity** (2026-09-13). Denge turunun ikinci adımı, iki iş:
 
 **1. `creature-action/Sıçrayıp Isırma`** (yeni, dört Dönüşmüş'ün hepsinde). *Yeniden
