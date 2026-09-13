@@ -67,7 +67,7 @@ Asgari linkleme:
 | **Duran** · **Umay** · **Corvin** · **Milo** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
 | **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
 | **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el — ✅ *5. turda kapandı: damga vurmaz, çünkü damga bir imzadır ve klan adını geride bıraktı* |
-| **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
+| **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. **DM inisiyatifi:** o gelir ve karakterleri Meclis'e yollar (*"önce onlar duymalı"*). Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
 
 **İki taşıyıcı açığı kapandı:** *limanda bir silme oldu* artık iki yerde — **Sicim**
 (defterdeki boşluk) ve **Mine** (eğelenmiş yüzük). Kuyumcu bir `npc` kartı oldu: klan
@@ -104,7 +104,7 @@ o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Şafak çatışması** | ✅ | §5 — perdenin ilk savaşı; statblock'lar §5.1, toplam 400 XP |
+| **Şafak çatışması** | ✅ | §5 — perdenin ilk savaşı; statblock'lar §5.3, toplam 100 XP |
 
 ## 6. `quest` — 2
 

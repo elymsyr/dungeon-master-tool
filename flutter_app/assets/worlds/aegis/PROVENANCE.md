@@ -4,6 +4,59 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.4 — 163 entity** (2026-09-13). Yeni kart yok; **Halim bulunabilir
+oldu.** `npc/Halim` 0.6.0'da yazılmıştı ama hiçbir mekan kartında adı geçmiyordu —
+köyün kartı *"üç yabancı"* diyordu, han kartı üst kattaki iki odayı boş bırakıyordu,
+ve karta yalnız `scene/Köye Varış` ile `scene/Şafak Dönüşümü` üzerinden ulaşılıyordu.
+`location/Gümüşsu` artık dördüncü yabancıyı hem açıklamasında hem *Köylüler ne
+anlatır* hem *Kim var* listesinde sayıyor; `location/Goodbarrel'ın Ocak Başı`'nda üst
+kattaki iki odadan birinin dolu olduğu ve Halim'in akşamları kapıya en yakın masada
+oturduğu yazıyor. Kanon zaten böyle diyordu (`act1 §3.5`); eksik olan kart tarafıydı.
+
+Görselsiz iki kart kaldı — `npc/Halim` ve `creature-action/Sıçrayıp Isırma`.
+Prompt'ları çevrimdışı üretilip `tool/aegis_art/art_jobs_063_missing.jsonl`'e yazıldı
+(ComfyUI bu makinede erişilebilir değil); akış `tool/aegis_art/README.md` §6.1'de.
+
+**Sürüm 0.6.3 — 163 entity** (2026-09-13). Denge turunun ikinci adımı, iki iş:
+
+**1. `creature-action/Sıçrayıp Isırma`** (yeni, dört Dönüşmüş'ün hepsinde). *Yeniden
+şarj 5–6*, **15 ft** sıçrayış, **saldırı zarı yok**, 1d8 delici, ardından **CON DC 8**
+— başarısızlıkta +1 Hastalık Puanı. Bulaşma buraya taşındı: `curse/Blight —
+Enfeksiyon`'un maruziyet yolları yeniden **dört** (Dönüşmüş **ısırığı** girdi, pençe
+girmedi). Yeniden şarj ve 15 ft kaynakta yok — türetme, aşağıda.
+
+**2. `npc/Kadife` yeniden yazıldı** (`act1 §7.4`; `act1 §10` 34. maddesi **geri
+alındı**). Kadife artık "süs" değil bir **yön**: limanda bir lonca elinin olduğunu
+oyuncuya gösterir ve karakterleri Meclis'e yollar. Tetik **DM'de** — karakterler
+rıhtımda üç yabancıyı ya da *Kader*'i konuşmaya başlayınca o gelir: *"Bunu kime
+anlatacaksınız? … Burada anlatmayın. Lucid Triton'a gidin. Önce onlar duymalı."*
+Lonca adı hiç geçmediyse o adı masaya koyan sahne budur; geçtiyse acele ettiren
+sahne. Ad, kağıt, para ya da kefalet vermiyor; **iz uzamıyor** (`act1 §7.5` duruyor)
+ve **Custar katmanı Act 1'de hâlâ kapalı**. `scene/Limana Kabul`,
+`location/Gizli Liman` ve `lore/Konsey ve Lonca Meclisi` buna göre güncellendi.
+
+**Sürüm 0.6.2 — 162 entity** (2026-09-13). **Denge turu.** Üç Dönüşmüş kartı masada
+fazla güçlüydü; değerler düşürüldü ve pençe sadeleşti (kaynak: DM kararı, `act1 §4.1` ve
+`§5.3` bu turda yeniden yazıldı):
+
+- **Dönüşmüş** (jenerik) ve **Dönüşmüş Kromanna** (tiefling): AC 12→**11**, HP 22/30→**16**,
+  CR 1/2 · 1 → **1/8 · 1/4**.
+- **Dönüşmüş Alton** ve **Dönüşmüş Merla** (halfling): AC 13→**9**, HP 18→**12**, CR 1/2→**1/8**.
+- Dört ayrı pençe kartı **iki** karta indi: `creature-action/Pençe Saldırısı` (+2, 1d4) ve
+  `creature-action/Güçlü Pençe Saldırısı` (+2, 1d8). İsabet bonusu hepsinde **+2**; hasarda
+  yetenek modifikatörü yok.
+- **`trait/Bulaştıran Yara` kaldırıldı** — pençe hastalık bulaştırmıyor. `curse/Blight —
+  Enfeksiyon`'un maruziyet yolları dörtten **üçe** indi (Dönüşmüş yarası çıktı);
+  `trait/Yemin Andı: Cepheyi Tut` artık doğrudan `curse` kartına bağlanıyor.
+- `encounter/Şafak Çatışması`: `difficulty` High→**Low**, `xp_budget` 400→**100**.
+
+Aynı turda **Corvin** ve **Fare** yazıldı (`act1 §3.6` ve `§7.4` yeni): Corvin köyün
+yabancısı ama sevilen biri, köyün dışarıyla bütün alışverişi onun sırtından yürür, köy
+Gizli Liman'ı bilmez; dönüşüm sabahı şafaktan **birkaç saat önce** köye döner ve **ölürse
+kıyı yolu kapanır** (telafisi yok — limanı bazı Konsey rütbelileri, Lonca Meclisi üyeleri
+ve çok nadir paladin rütbelileri zaten biliyor). Fare kendisine *Fare* denmesinden
+hoşlanmıyor; ona **Sincap** diyen tek kişi Corvin, ve Fare Mine'ın ne iş yaptığını biliyor.
+
 **Sürüm 0.6.1 — 165 entity** (2026-09-13). Çağrı zarının **liste** tarafı: `lore/İlahi
 Büyü Listesi` kartı eklendi — SRD 5.2.1'in Cleric (105) · Warlock (68) · Paladin (34)
 büyü listeleri seviyeye göre dökülmüş, ilahi olmayan bir listede de geçen büyüler `°` ile
@@ -127,13 +180,13 @@ Kaynak kısaltmaları:
 | Votumar | Başkumandan · Kapı Komutanı · Şüpheci Rütbeli · Kule Nöbetçisi | `bolge §3.1, §3.6, §3.7, §10` + `09 §2` (gerçek Başkumandan tutuluyor) + `08 §1` (Lucian'ın eli) |
 | Ravenhall | En Yaşlı Druid · Patika Gözcüsü | `bolge §4.5–4.6, §10` |
 
-## monster — 4 · creature-action — 4 · trait — 5 · curse — 1
+## monster — 4 · creature-action — 3 · trait — 4 · curse — 1
 
 | Entity | Kaynak |
 |---|---|
-| Dönüşmüş · Dönüşmüş Alton · Dönüşmüş Merla · Dönüşmüş Kromanna | `act1 §5.1` |
-| Pençe · Pençe (Alton) · Pençe (Merla) · Pençe (Kromanna) | `act1 §5.1` |
-| Acıyı Tanımaz · Bulaştıran Yara · Durmayan Adım · Kesik Kesik · Erken Güçlenme | `act1 §5.1` |
+| Dönüşmüş · Dönüşmüş Alton · Dönüşmüş Merla · Dönüşmüş Kromanna | `act1 §5.3` |
+| Pençe Saldırısı · Güçlü Pençe Saldırısı · Sıçrayıp Isırma | `act1 §5.3` |
+| Acıyı Tanımaz · Durmayan Adım · Kesik Kesik · Erken Güçlenme | `act1 §5.3` |
 | Blight — Enfeksiyon | `act1 §4.1–4.6` + `mek §6` (Yozlaşma) + `mek §7` (yapanın bedeli, şerbet) + `mek §12` |
 
 ## scene — 11 · encounter — 1 · quest — 2
@@ -214,14 +267,16 @@ Kartların içinde işaret yok; kanon bir sayı ya da karar verdiğinde değişe
 **Kanon içi çelişkiler — `act1.md` izlendi:**
 
 - **Maruziyet DC'si 12.** `act1 §4.1` ve `mek §7` DC 12 diyor; `liste §7` curse satırı DC 8 diyor.
-- **Bulaştıran Yara DC'si 8.** `act1 §5.1` DC 8 diyor (revizyonda bilerek 12'den 8'e indi, `8a2b3f96`); `liste §6` ve `kartG §7` DC 12 diyor. `liste` iki sayıyı yer değiştirmiş görünüyor.
+- ~~**Bulaştıran Yara DC'si 8.**~~ **KAPANDI (0.6.2):** trait kaldırıldı, pençe hastalık bulaştırmıyor — ortada uzlaştırılacak iki sayı kalmadı.
 - **Sayım.** `liste §2` başlığı 22 `lore` diyor, tablosu 21 satır; `§3` başlığı 18 `location`, tablosu 17 satır (+ Meclis Salonu). Toplam 126; `Kayıt Nasıl İşler` `Sancak Kaydı`'na sayfa olarak girdiği için 125.
 - **`quest/Silinen Sayfa` yazılmadı** — `lonca §6.2, §8` hâlâ sayıyor ama `RM §4.8` geri aldı ve `liste §10` iki görev sayıyor. Teklifin kendisi `scene/Kapı Önündeki Teklif`'te.
 
 **Türetilmiş sayılar:**
 
-- **Statblock boşlukları.** `act1 §5.1` üç adlandırılmış Dönüşmüş için yalnız bazı değerleri veriyor; eksikler ortak gövdeden alındı (Alton/Merla: CON 13 · INT 4 · WIS 8 · CHA 5; Kromanna: DEX 12 · INT 4 · WIS 8 · CHA 5). Hepsinde karanlıkgörüş 60 ft, pasif Algı 9, üç durum bağışıklığı gövdeden. Initiative DEX'ten.
-- **`encounter.difficulty` = High, `xp_budget` = 400** — statblock'lardan hesap (2×100 + 200); 2024 bütçesinde dört 1. seviye karakter için High eşiği.
+- **Sıçrayıp Isırma'nın yeniden şarjı (5–6) ve 15 ft'i.** DM kaynağı eylemi "zıplayıp üstüne atlar ve ısırır · hasarı 1d8 · saldırı zarı yok · kurtarmak için CON 8 · mesafe birkaç uzun adım" olarak verdi. **Yeniden şarj türetmedir:** saldırı zarı olmayan, her tur tekrarlanabilen ve hastalık bulaştıran bir eylem pençeyi tamamen gereksiz kılıyordu. **15 ft** "birkaç uzun adım"ın 5e karşılığı.
+- **HP zarları.** 0.6.2'de can değerleri DM tarafından **sayı olarak** verildi (16 · 12); `hp_dice` bu sayılara en yakın ifadedir (3d8+3 = 16,5 → 16 · 3d6+2 = 12,5 → 12). Halfling'lerin +2'si CON modifikatörüyle birebir örtüşmez; otoriter olan `hp_average`.
+- **Statblock boşlukları.** `act1 §5.3` üç adlandırılmış Dönüşmüş için yalnız bazı değerleri veriyor; eksikler ortak gövdeden alındı (Alton/Merla: CON 13 · INT 4 · WIS 8 · CHA 5; Kromanna: DEX 12 · INT 4 · WIS 8 · CHA 5). Hepsinde karanlıkgörüş 60 ft, pasif Algı 9, üç durum bağışıklığı gövdeden. Initiative DEX'ten.
+- **`encounter.difficulty` = Low, `xp_budget` = 100** — statblock'lardan hesap (2×25 + 50); 0.6.2'de düşürülen değerlerle dört 1. seviye karakter için Low eşiği.
 - **Yozlaşma DC'si 13 ve günlük hastalık zarı DC 13** — `mek §11` açık 2, 2a (türetildi).
 - **Aşama 4'ün yozlaşma tablosu yok** — kartta yalnız "yozlaşma dalgası (Wild Magic benzeri)" (`mek §11` açık 2b).
 - **Kalıcı Yara bandları (1–5 / 6–14 / 15–20)** — `mek §8`, türetildi (`mek §11` açık 3).
