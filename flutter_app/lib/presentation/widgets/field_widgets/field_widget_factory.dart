@@ -1718,44 +1718,23 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
     super.dispose();
   }
 
-  /// Amber warning banner listing the SRD armor consequences in
+  /// Muted informational note listing the SRD armor consequences in
   /// [_CombatStatsFieldWidget.armorNotes] (untrained penalty, STR speed cut,
-  /// Stealth disadvantage).
+  /// Stealth disadvantage). Deliberately low-key: information, not an error.
   Widget _armorNotesBanner(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber_rounded,
-              size: 18, color: scheme.onErrorContainer),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final note in widget.armorNotes)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text(
-                      note,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: scheme.onErrorContainer,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline, size: 13, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            widget.armorNotes.join(' · '),
+            style: TextStyle(fontSize: 10, height: 1.3, color: color),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1778,10 +1757,6 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
-            if (widget.armorNotes.isNotEmpty) ...[
-              _armorNotesBanner(context),
-              const SizedBox(height: 8),
-            ],
             if (gridFields.isNotEmpty)
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -1855,6 +1830,10 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                   return Column(children: rows);
                 },
               ),
+            if (widget.armorNotes.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              _armorNotesBanner(context),
+            ],
             // Textarea sub-fields rendered full-width below the grid (markdown + @mention)
             ...textareaFields.map((f) {
               final ctrl = _controllers[f.$1];
