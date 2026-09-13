@@ -326,8 +326,9 @@ CI karşılığı: `test/domain/services/bundled_worlds_blueprint_test.dart`.
 
 `pubspec.yaml`'da `assets/worlds/` bloğu **yorumda** (~326 MB) —
 `assets/worlds/manifest.json`'a giriş eklemek dünyayı "bundled" yapar ve
-`BundledWorldsInstaller` görür. **Aegis oraya eklenmedi** (o ayrı bir karar,
-ayrıca CI'daki `bundled_worlds_blueprint_test` yalnız o listeyi gezer).
+`BundledWorldsInstaller` görür. **Aegis oraya eklenmedi** — o ayrı bir karar.
+CI'daki `bundled_worlds_blueprint_test` yine de aegis'i geziyor: manifest
+listesinin yanında `cairn/` ve `aegis/` paket köklerini de dolaşır.
 
 Kurulum yolu şimdilik **diskten içe aktarma**: Admin → *Import world folder* →
 `assets/worlds/aegis/aegis-act1` klasörünü seç. `BundledWorldsInstaller
@@ -338,8 +339,9 @@ bunu da temizler.
 
 Depoyu klonlamadan taşımak için aynı klasörün zip'i de burada duruyor:
 [`aegis-act1.zip`](aegis-act1.zip). Aç, çıkan `aegis-act1/` klasörünü seç —
-zip'in kökünde klasörün kendisi var, içeriği değil. `aegis-act1/` içindeki iki
-dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
+zip'in kökünde klasörün kendisi var, içeriği değil. `aegis-act1/` klasörünün
+birebir kopyasıdır (blueprint + `.pkg.json` + `manifest.json` + `media/`);
+blueprint ya da medya değişirse zip'i yeniden üret:
 
 ```bash
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
@@ -516,6 +518,59 @@ ad kararı verilince tek `name` değişikliği ve link grep'i yeter.
 
 ---
 
+### 4.9 `pinned` ve `shared` — blueprint'in iki ref listesi
+
+`world-blueprint.json`'ın kökünde iki liste var, ikisi de `kategori/isim`
+yazılıyor ve kurulumda entity id'lerine çözülüyor
+(`BundledWorldsInstaller`, `world_settings.settings_json` blob'una yazar):
+
+```json
+"pinned": ["campaign/Aegis", "lore/Fihrist", "..."],
+"shared": ["subclass/İrade Yemini", "background/Arşivci", "..."]
+```
+
+| Liste | Ne yapar |
+|---|---|
+| `pinned` | Kartı sidebar'ın üstüne sabitler. Sadece DM'i ilgilendirir. |
+| `shared` | Kartı **oyuncularla paylaşılmak üzere işaretler.** Dünya çevrimdışıyken de durur; dünya multiplayer yapıldığı anda tam olarak bu set oyunculara gider, kategoriye göre otomatik paylaşım **yok**. |
+
+Yazım hatası ikisini de sessizce düşürür — `bundled_worlds_blueprint_test`
+her iki listenin her ref'ini id'ye çözüp entity'de arar.
+
+**`shared` ölçüsü: Tier 0/1 oyuncu içeriği, başka hiçbir şey.** Listeye yalnız
+**oyuncunun karakterini kurmak için** gereken kartlar girer:
+
+| Girer | Girmez |
+|---|---|
+| `subclass` · `background` · `trait` · `resource-pool` · `adventuring-gear` · `trinket` | **Bütün Tier 2 kategorileri:** `campaign`, `lore`, `location`, `npc`, `scene`, `encounter`, `quest`, `curse` |
+| | `monster` · `animal` · `creature-action` · `magic-item` (motorun `seedExcludedSlugs` seti — canavar ve loot DM'de kalır) |
+
+**Tier 2 asla paylaşılmaz.** O kartlar DM odaklı yazılıyor ve oyuncunun henüz
+bilmediğini bildirirler: `lore/İlahi Büyü Listesi` ilahi büyünün mekaniğini,
+`lore/Blight — Bilinen Hali` hastalığın adını, `campaign/Aegis` perdenin
+kurgusunu açar. Kart "oyuncuya dönük" görünse bile Tier 2'yse girmez — DM
+masada, zamanı gelince, kartın menüsünden paylaşır.
+
+**Tier 1 içinde de sır taşıyan kart paylaşılmaz.** Kategori yeterli değil,
+karta bak:
+
+- `adventuring-gear/Direnç Şerbeti` — **dışarıda.** Var olduğunu bilmek
+  hastalığa karşı bir şeyin işe yaradığını bilmek demek.
+- `trinket/Sahte Mühür` · `Mühürsüz Yüzük` · `Emir Mührü` — **dışarıda.**
+  Sahtecilik, Kromanna'nın cebindeki ipucu ve makam emri; üçü de oyunda açılır.
+- Canavarların `trait`'leri (`Acıyı Tanımaz`, `Durmayan Adım`, `Kesik Kesik`,
+  `Erken Güçlenme`) — **dışarıda.** Kategorileri Tier 1 ama sahipleri
+  `monster`.
+
+Act 1'de bu ölçü **54 kart** veriyor: 4 subclass · 9 background · 21 trait ·
+9 resource-pool · 7 gear · 4 trinket.
+
+**Yeni kart eklerken bu kararı da ver.** Sırayla: Tier 2 mi → ekleme. Tier 1
+ama canavar/loot mu → ekleme. Kart oyunda açılacak bir şeyi ele veriyor mu →
+ekleme. Geriye kalan, oyuncunun karakter yaratırken önünde olması gereken
+şeydir → ekle. Kararsız kalırsan paylaşma: DM masada tek tıkla paylaşabilir,
+ama geri alınan bir sürpriz geri gelmez.
+
 ## 5. Faz planı
 
 | # | Faz | Çıktı | Bitti sayılma koşulu |
@@ -546,7 +601,14 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
    hiçbir kart kendi yazım sürecinden söz etmiyor.
 
 1. **DM Kitabı önce yazılır**, Oyuncu Kitabı ondan damıtılır → app'te bu
-   `secrets` alanı ayrımıdır.
+   `secrets` alanı ayrımıdır. Kartın **bütünü** oyuncuya açılacak mı sorusu ayrı
+   bir karar: her yeni kartta blueprint'in `shared` listesine girip girmeyeceğine
+   de karar ver (§4.9). Ölçü dar — yalnız **Tier 0/1 oyuncu içeriği** (subclass,
+   background, trait, havuz, sıradan eşya) girer; **Tier 2 asla** (campaign, lore,
+   location, npc, scene, encounter, quest, curse), canavar ve loot da asla.
+   Tier 1 bir kart oyunda açılacak bir şeyi ele veriyorsa yine girmez. Kararsız
+   kalırsan ekleme; DM masada tek tıkla paylaşır, ama paylaşılmış bir sürpriz
+   geri alınmaz.
 2. **Tarih bugüne varmak için kurgulanmaz.** Her büyük olayın en az bir
    istenmeyen sonucu var; boşa giden şeyler var; kimse "kötü olduğu için"
    hareket etmiyor.
