@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
@@ -923,7 +922,7 @@ class GuestPromotionService {
   /// `RawPathMigrator` exists to convert — so the sweep is over every TEXT
   /// column of every table.
   Future<int> rewriteGuestPaths(AppDatabase db, String userId) =>
-      _replaceInEveryTextColumn(db, _pathReplacements(userId));
+      replaceInEveryTextColumn(db, _pathReplacements(userId));
 
   /// [rewriteGuestPaths]'in tersi: hesap kökündeki medya yollarını misafir
   /// köküne çevirir. Demote dosyaları taşıyor ama gövdelerdeki mutlak yollar
@@ -932,68 +931,21 @@ class GuestPromotionService {
   ///
   /// DB **açıkken** ve [demoteAccountToGuest]'ten önce çağrılır.
   Future<int> restoreGuestPaths(AppDatabase db, String userId) =>
-      _replaceInEveryTextColumn(
+      replaceInEveryTextColumn(
         db,
         [for (final (from, to) in _pathReplacements(userId)) (to, from)],
       );
 
-  Future<int> _replaceInEveryTextColumn(
-    AppDatabase db,
-    List<(String, String)> replacements,
-  ) async {
-    if (replacements.isEmpty) return 0;
-
-    final tables = await db
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type = 'table' "
-          "AND name NOT LIKE 'sqlite_%'",
-        )
-        .get();
-
-    var changed = 0;
-    for (final row in tables) {
-      final table = row.read<String>('name');
-      final columns = await db.customSelect('PRAGMA table_info("$table")').get();
-      for (final column in columns) {
-        final type = (column.read<String?>('type') ?? '').toUpperCase();
-        final isText = type.isEmpty ||
-            type.contains('CHAR') ||
-            type.contains('TEXT') ||
-            type.contains('CLOB');
-        if (!isText) continue;
-        final name = column.read<String>('name');
-        for (final (from, to) in replacements) {
-          changed += await db.customUpdate(
-            'UPDATE "$table" SET "$name" = replace("$name", ?, ?) '
-            'WHERE instr("$name", ?) > 0',
-            variables: [Variable(from), Variable(to), Variable(from)],
-            updates: const {},
-          );
-        }
-      }
-    }
-    return changed;
-  }
-
-  /// Every spelling a stored guest path can have: the platform's own, POSIX
-  /// separators, and the doubled backslashes a Windows path picks up once it
-  /// has been through `jsonEncode` into a blob column.
-  List<(String, String)> _pathReplacements(String userId) {
-    final pairs = <(String, String)>[];
-    final seen = <String>{};
-    for (final subtree in mediaSubtrees) {
-      final from = p.join(dataRoot, subtree);
-      final to = p.join(accountRoot(userId), subtree);
-      for (final variant in <(String, String)>[
-        (from, to),
-        (from.replaceAll(r'\', '/'), to.replaceAll(r'\', '/')),
-        (from.replaceAll(r'\', r'\\'), to.replaceAll(r'\', r'\\')),
-      ]) {
-        if (seen.add(variant.$1)) pairs.add(variant);
-      }
-    }
-    return pairs;
-  }
+  /// Her spelling'i [pathSpellings] üretiyor; süpürmeyi
+  /// [replaceInEveryTextColumn] yapıyor (Windows'ta veri kökü Documents'tan
+  /// LOCALAPPDATA'ya taşınırken de aynı süpürme çalışıyor).
+  List<(String, String)> _pathReplacements(String userId) => [
+        for (final subtree in mediaSubtrees)
+          ...pathSpellings(
+            p.join(dataRoot, subtree),
+            p.join(accountRoot(userId), subtree),
+          ),
+      ];
 
   /// **Terfinin tersi — hesap silindiğinde ağacı misafire geri verir.**
   ///

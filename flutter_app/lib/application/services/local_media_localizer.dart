@@ -42,13 +42,28 @@ class LocalMediaLocalizer {
   static String packageDir(String packageName) =>
       p.join(AppPaths.packagesDir, dirSafe(packageName));
 
-  /// Ad → klasör adı. Windows'ta `\ / : * ? " < > |` yol adında yasak;
-  /// sanitize edilmezse `Directory.exists` bile ERROR_INVALID_NAME (123)
-  /// fırlatır ve o dünyada her medya işlemi hataya düşer.
-  static String dirSafe(String name) => name
-      .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-      .replaceAll(RegExp(r'[. ]+$'), '')
-      .trim();
+  /// Ad → klasör adı. Windows'ta `\ / : * ? " < > |`, kontrol karakterleri,
+  /// sondaki nokta/boşluk ve `CON`/`NUL`/`COM1`… aygıt adları yol adında
+  /// yasak; sanitize edilmezse `Directory.exists` bile ERROR_INVALID_NAME
+  /// (123) fırlatır ve o dünyada her medya işlemi hataya düşer. Linux ve
+  /// Android hepsini kabul ettiği için hata yalnız Windows'ta görünür —
+  /// ör. `Aegis — Meridia: Birinci Perde`.
+  ///
+  /// Temiz adlarda birim fonksiyon: var olan klasörler yerinde kalır.
+  static String dirSafe(String name) {
+    final cleaned = name
+        .replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '_')
+        .replaceAll(RegExp(r'[. ]+$'), '')
+        .trim();
+    if (cleaned.isEmpty) return '_';
+    return _winReserved.hasMatch(cleaned) ? '_$cleaned' : cleaned;
+  }
+
+  /// MS-DOS aygıt adları — uzantı eklense bile açılamıyorlar (`CON.txt`).
+  static final RegExp _winReserved = RegExp(
+    r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$',
+    caseSensitive: false,
+  );
 
   /// Tek bir yolu veri kökü altına alır; kopyalanamazsa [path] aynen döner.
   ///
