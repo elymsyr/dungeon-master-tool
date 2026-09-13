@@ -548,7 +548,7 @@ class WorldRepositoryImpl implements CampaignRepository {
     // Reconstruct WorldSchema map. Legacy world_schemas table is gone —
     // schema content rides in world_settings.settings_json under
     // `_world_schema`. Falls back to `'builtin-dnd5e-default'` when missing.
-    Map<String, dynamic>? worldSchemaMap;
+    Map<String, dynamic> worldSchemaMap;
     final templateId = world.templateId ?? 'builtin-dnd5e-default';
     final templateHash = world.templateHash;
     final templateOriginalHash = world.templateOriginalHash;
@@ -563,6 +563,17 @@ class WorldRepositoryImpl implements CampaignRepository {
       if (templateId == builtinDnd5eV2SchemaId) {
         worldSchemaMap = _overlayMissingBuiltinCategories(worldSchemaMap);
       }
+    } else {
+      // No snapshot at all = the world was joined, not created (`create`
+      // always writes one, and the schema is not a mirrored table, so nothing
+      // else fills the gap). Without a schema here the reader falls back to
+      // the legacy v1 default, whose 18 categories miss every Tier-1 slug a
+      // shared card uses (`weapon`, `species`, `subclass`, `creature-action`,
+      // …); an unknown slug means no category, so the card body is skipped
+      // and only name/description/image render.
+      worldSchemaMap =
+          deepCopyJson(generateBuiltinDnd5eV2Schema().schema.toJson())
+              as Map<String, dynamic>;
     }
 
     // Granular `world_map_data` Drift row — source-of-truth for map_data.
@@ -617,7 +628,7 @@ class WorldRepositoryImpl implements CampaignRepository {
       'world_name': world.worldName,
       'created_at': world.createdAt.toIso8601String(),
       'entities': entitiesMap,
-      'world_schema': ?worldSchemaMap,
+      'world_schema': worldSchemaMap,
       'template_id': templateId,
       'template_hash': ?templateHash,
       'template_original_hash': ?templateOriginalHash,

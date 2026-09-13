@@ -11,57 +11,6 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **A joined world has no schema, so shared cards render as name + description + image only**
-  — a player who joins with a code gets a world shell with no schema attached, falls back to
-  the *legacy v1* schema, and can therefore only read the handful of categories that schema
-  still knows. Three links in the chain, each fixable on its own:
-
-  1. [world_join_service.dart](../flutter_app/lib/application/services/world_join_service.dart)
-     inserts the local world row with `id`, `worldName` and timestamps only — no `templateId`,
-     no `_world_schema` snapshot. It does fetch `template_id` from the `worlds` row a few lines
-     earlier and then only uses it to decide whether to link the SRD pack. World *creation*
-     (`world_repository_impl.create`) always writes the snapshot into
-     `world_settings.settings_json` → `_world_schema`, so "no snapshot" is a reliable marker
-     for "this world was joined, not created". The schema is not one of the five mirrored
-     tables either, so nothing else fills the gap.
-  2. [world_repository_impl.dart](../flutter_app/lib/data/repositories/world_repository_impl.dart)
-     (~L555) builds `worldSchemaMap` inside `if (schemaSnapshot != null)`. With no snapshot the
-     map stays null, `'world_schema': ?worldSchemaMap` drops the key entirely, and
-     `_overlayMissingBuiltinCategories` — the self-heal that appends built-in categories a
-     stored snapshot predates — never runs, because it sits *inside* that same `if`. The
-     `templateId` local is `'builtin-dnd5e-default'` by default, so the v2 gate would fail
-     anyway.
-  3. [entity_provider.dart](../flutter_app/lib/application/providers/entity_provider.dart)
-     (~L103) closes the loop: no `world_schema` key → `generateDefaultDnd5eSchema()`, which is
-     the **v1** schema with 18 categories (`npc · monster · spell · equipment · class · race ·
-     location · quest · lore · status-effect · feat · background · plane · condition · trait ·
-     action · reaction · legendary-action`). Everything Tier-1 in v2 is absent — `subclass`,
-     `species`, `subspecies`, `weapon`, `armor`, `tool`, `adventuring-gear`, `ammunition`,
-     `pack`, `mount`, `vehicle`, `trinket`, `magic-item`, `creature-action`, `animal`,
-     `starter-bundle` — and several slugs disagree outright (`equipment` vs `weapon`/`armor`,
-     `race` vs `species`, `action` vs `creature-action`).
-
-  Two symptoms, one cause. The category filter offers only those 18. And
-  [entity_card.dart](../flutter_app/lib/presentation/screens/database/entity_card.dart) (L299)
-  resolves its category by slug; an unknown slug leaves `cat == null`, the field body is
-  skipped, and the only things left are the three columns that do not depend on a category —
-  `name`, `description`, `imagePath`.
-
-  **No data is lost.** `shareEntityWithPlayers` writes the full body via `entityToRaw` and
-  redacts only `dm_notes` plus schema-`dmOnly`/`private` fields, so every attribute is already
-  sitting in the player's local `entity_shares.payload_json`. It is unreadable, not missing:
-  fixing the schema fills the existing cards in place, with no re-share.
-
-  Fix is three small edits — seed `templateId` + the built-in v2 snapshot on join (root cause);
-  fall back to the v2 schema when no snapshot exists and lift the overlay out of the `if`
-  (self-heals worlds already joined, which otherwise need a re-join); make the last-resort
-  fallback in `entity_provider` v2 rather than v1. Not yet attempted.
-
-  **Out of scope for that fix:** a DM's own Tier-2 categories stay blank on the player side,
-  because they are not in the built-in schema either. Shipping them means sending the DM's
-  schema to players — a sharing decision, not a bug fix (see the `_mirrorTables` rule in
-  AGENTS.md: adding a table means sending players data the DM did not share).
-
 - **60 tests fail on `main`** — `flutter test` reports 1450 passing and 60 failing.
   Superseded in detail by the audit section below, which gives the root cause of each
   group: `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
@@ -166,6 +115,61 @@ causes, listed below worst first.
   all 18 pass. Worth checking before reporting a test count.
 
 ## Resolved
+
+- **A joined world had no schema, so shared cards rendered as name + description + image only**
+  — a player who joins with a code gets a world shell with no schema attached, falls back to
+  the *legacy v1* schema, and can therefore only read the handful of categories that schema
+  still knows. Three links in the chain, each fixable on its own:
+
+  1. [world_join_service.dart](../flutter_app/lib/application/services/world_join_service.dart)
+     inserts the local world row with `id`, `worldName` and timestamps only — no `templateId`,
+     no `_world_schema` snapshot. It does fetch `template_id` from the `worlds` row a few lines
+     earlier and then only uses it to decide whether to link the SRD pack. World *creation*
+     (`world_repository_impl.create`) always writes the snapshot into
+     `world_settings.settings_json` → `_world_schema`, so "no snapshot" is a reliable marker
+     for "this world was joined, not created". The schema is not one of the five mirrored
+     tables either, so nothing else fills the gap.
+  2. [world_repository_impl.dart](../flutter_app/lib/data/repositories/world_repository_impl.dart)
+     (~L555) builds `worldSchemaMap` inside `if (schemaSnapshot != null)`. With no snapshot the
+     map stays null, `'world_schema': ?worldSchemaMap` drops the key entirely, and
+     `_overlayMissingBuiltinCategories` — the self-heal that appends built-in categories a
+     stored snapshot predates — never runs, because it sits *inside* that same `if`. The
+     `templateId` local is `'builtin-dnd5e-default'` by default, so the v2 gate would fail
+     anyway.
+  3. [entity_provider.dart](../flutter_app/lib/application/providers/entity_provider.dart)
+     (~L103) closes the loop: no `world_schema` key → `generateDefaultDnd5eSchema()`, which is
+     the **v1** schema with 18 categories (`npc · monster · spell · equipment · class · race ·
+     location · quest · lore · status-effect · feat · background · plane · condition · trait ·
+     action · reaction · legendary-action`). Everything Tier-1 in v2 is absent — `subclass`,
+     `species`, `subspecies`, `weapon`, `armor`, `tool`, `adventuring-gear`, `ammunition`,
+     `pack`, `mount`, `vehicle`, `trinket`, `magic-item`, `creature-action`, `animal`,
+     `starter-bundle` — and several slugs disagree outright (`equipment` vs `weapon`/`armor`,
+     `race` vs `species`, `action` vs `creature-action`).
+
+  Two symptoms, one cause. The category filter offers only those 18. And
+  [entity_card.dart](../flutter_app/lib/presentation/screens/database/entity_card.dart) (L299)
+  resolves its category by slug; an unknown slug leaves `cat == null`, the field body is
+  skipped, and the only things left are the three columns that do not depend on a category —
+  `name`, `description`, `imagePath`.
+
+  **No data is lost.** `shareEntityWithPlayers` writes the full body via `entityToRaw` and
+  redacts only `dm_notes` plus schema-`dmOnly`/`private` fields, so every attribute is already
+  sitting in the player's local `entity_shares.payload_json`. It is unreadable, not missing:
+  fixing the schema fills the existing cards in place, with no re-share.
+
+  **Fixed.** Two edits: [world_repository_impl.dart](../flutter_app/lib/data/repositories/world_repository_impl.dart)
+  now falls back to the built-in v2 schema when there is no snapshot at all — which is exactly
+  the joined-world case, so worlds already joined self-heal on the next open, with no re-join;
+  [world_join_service.dart](../flutter_app/lib/application/services/world_join_service.dart)
+  writes `templateId` onto the local row so the SRD self-heal and the built-in category
+  overlay fire for joined worlds too. The `entity_provider` last-resort fallback was left on
+  v1: `load()` now always returns a schema, so it no longer fires on this path.
+  Covered by `test/data/repositories/world_joined_schema_fallback_test.dart`.
+
+  **Out of scope for that fix:** a DM's own Tier-2 categories stay blank on the player side,
+  because they are not in the built-in schema either. Shipping them means sending the DM's
+  schema to players — a sharing decision, not a bug fix (see the `_mirrorTables` rule in
+  AGENTS.md: adding a table means sending players data the DM did not share).
 
 - **Deleted marketplace listings left their images in R2** — Fixed: the release chain is
   complete end to end. The owner's delete calls `pub_asset_release(listingId)` right after
