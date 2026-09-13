@@ -10,6 +10,7 @@ import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_state.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import 'projection_output.dart';
+import 'shared_media_courier.dart';
 
 /// Online projection output — mirrors the projection manifest into the
 /// `world_projection` Supabase table. Remote players receive the row via the
@@ -24,10 +25,22 @@ import 'projection_output.dart';
 /// [pushBattleMapPatch] is a deliberate no-op here so manifest writes stay
 /// low-frequency (only "which item is active" changes the manifest).
 class ProjectionOutputOnline extends ProjectionOutput {
-  ProjectionOutputOnline({required this.client, required this.worldId});
+  ProjectionOutputOnline({
+    required this.client,
+    required this.worldId,
+    required this.courier,
+  });
 
   final SupabaseClient client;
   final String worldId;
+
+  /// Yerel medyayı transient havuza çıkarır — bkz. [_withPublishedMedia].
+  final SharedMediaCourier courier;
+
+  /// Yerel yol → transient ref (başarısızsa null). Instance ömrü boyunca
+  /// bellekte: `_upsert` token sürüklemesinde saniyede ~8 kez çağrılıyor,
+  /// aynı arka planı her turda yeniden hash'leyip yüklemek anlamsız.
+  final Map<String, Future<String?>> _publishCache = {};
 
   bool _active = false;
 
@@ -152,15 +165,10 @@ class ProjectionOutputOnline extends ProjectionOutput {
   Future<bool> _upsert(ProjectionState state) async {
     if (!_active) return false;
     try {
-      final json = _stripNavState(state).toJson();
-      // F7 debug guard: state_json'da AssetRef olmayan ham path varsa
-      // player çözemez. Caller (entity_share_prepare /
-      // prepareEntityImagesForProjection) bunu önceden upload etmiş
-      // olmalı. Sessiz fail yerine debug log → erken yakala.
-      assert(() {
-        _warnRawPaths(json);
-        return true;
-      }());
+      final json = await withPublishedMedia(
+        _stripNavState(state).toJson(),
+        _publishTransient,
+      );
       await client.from('world_projection').upsert({
         'world_id': worldId,
         'state_json': jsonEncode(json),
@@ -173,39 +181,18 @@ class ProjectionOutputOnline extends ProjectionOutput {
     return _active;
   }
 
-  /// Debug-only: state_json içinde ham filesystem path (AssetRef DEĞİL)
-  /// var mı? Varsa player tarafı çözemez (RLS yok, file sistem yok).
-  static void _warnRawPaths(Object? node) {
-    if (node is String) {
-      if (node.isEmpty) return;
-      if (node.startsWith(AssetRef.scheme) ||
-          node.startsWith(AssetRef.publicScheme) ||
-          node.startsWith(AssetRef.transientScheme)) {
-        return;
-      }
-      // Heuristic: path-like (slash + dot extension); base64 fog veya kısa
-      // string'leri eleme.
-      if (node.length > 8 &&
-          node.contains('/') &&
-          RegExp(r'\.(png|jpe?g|webp|gif)$', caseSensitive: false)
-              .hasMatch(node)) {
-        debugPrint('ProjectionOutputOnline: raw path in state_json → '
-            'player will not resolve: ${node.substring(0, node.length.clamp(0, 80))}');
-      }
-      return;
-    }
-    if (node is Map) {
-      for (final v in node.values) {
-        _warnRawPaths(v);
-      }
-      return;
-    }
-    if (node is List) {
-      for (final v in node) {
-        _warnRawPaths(v);
-      }
-    }
-  }
+  /// [withPublishedMedia] için yükleme adımı. Sonuç (başarısızlık dahil)
+  /// önbelleklenir: `_upsert` token sürüklemesinde saniyede ~8 kez
+  /// çağrılıyor, aynı arka planı her turda yeniden hash'leyip yüklemek
+  /// anlamsız.
+  Future<String?> _publishTransient(String localPath) =>
+      _publishCache[localPath] ??= courier.publish(worldId, localPath).then((r) {
+        if (r == null) {
+          debugPrint('ProjectionOutputOnline: yerel medya yayınlanamadı, '
+              'oyuncu çözemeyecek: $localPath');
+        }
+        return r;
+      });
 
   @override
   Stream<void> get onExternalClose => _externalCloseController.stream;
@@ -216,3 +203,57 @@ class ProjectionOutputOnline extends ProjectionOutput {
     _externalCloseController.close();
   }
 }
+
+/// [node] (bir `state_json` ağacı) içindeki her yerel medya yolunu
+/// [publish]'in döndürdüğü ref'le değiştirmiş kopyası.
+///
+/// Oyuncunun dosya sistemi yok: manifest'e sızan ham bir path
+/// (`C:\...\media\map.png`) karşı tarafta kırık resim demek. Dönüşüm
+/// [ProjectionOutputOnline._upsert]'te, yani buluta giden TEK çıkış
+/// noktasında yapılıyor — böylece battle map arka planı, token ve condition
+/// görselleri, entity kartı ve düz resim projeksiyonu aynı anda kapanıyor ve
+/// çağıranların ayrı ayrı "önce yükle" adımı eklemesi gerekmiyor. Eklemiş
+/// olanlar (`projectableMapImage`, `prepareEntityImagesForProjection`) zaten
+/// ref döndürdüğü için burada no-op'a düşer.
+///
+/// [publish] null dönerse yol olduğu gibi kalır — yarım bir manifest
+/// göndermektense o tek resmi eksik göndermek yeğ.
+///
+/// I/O'yu tamamen [publish] taşıyor; ağaç yürüyüşü saf.
+Future<Object?> withPublishedMedia(
+  Object? node,
+  Future<String?> Function(String localPath) publish,
+) async {
+  if (node is String) {
+    if (!isProjectableLocalMedia(node)) return node;
+    return await publish(node) ?? node;
+  }
+  if (node is Map) {
+    final out = <String, dynamic>{};
+    for (final e in node.entries) {
+      out['${e.key}'] = await withPublishedMedia(e.value, publish);
+    }
+    return out;
+  }
+  if (node is List) {
+    final out = <dynamic>[];
+    for (final v in node) {
+      out.add(await withPublishedMedia(v, publish));
+    }
+    return out;
+  }
+  return node;
+}
+
+/// Yüklenmesi gereken bir yerel medya yolu mu? Şema'lı ref'ler (`dmt-*://`),
+/// resim uzantısı taşımayan string'ler ve fog/base64 blob'ları elenir —
+/// uzunluk eşiği blob'ları regex'e hiç sokmamak için, dosya yolu bu kadar
+/// uzun olmuyor.
+bool isProjectableLocalMedia(String value) =>
+    value.isNotEmpty &&
+    value.length <= 1024 &&
+    _mediaPathRe.hasMatch(value) &&
+    AssetRef(value).isLocal;
+
+final RegExp _mediaPathRe =
+    RegExp(r'\.(png|jpe?g|webp|gif|bmp)$', caseSensitive: false);
