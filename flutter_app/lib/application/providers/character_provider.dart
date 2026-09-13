@@ -682,6 +682,24 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     _syncPush(bumped);
   }
 
+  /// Dünya bağlamında güncelle: karakter DM'in kendi hub listesindeyse
+  /// [update], değilse (başka bir oyuncunun PC'si — yalnız
+  /// `world_characters` mirror'unda) hub'a KOPYALAMADAN doğrudan mirror'a
+  /// yazar. DM'in `world_characters` UPDATE yetkisi RLS'te tanımlı
+  /// (`Chars: update` → `is_world_dm`), oyuncu satırı CDC ile alıp kendi
+  /// kartına uygular.
+  ///
+  /// Encounter → karakter HP/AC yazma yolu bunu kullanır: `update` tek
+  /// başına başka oyuncunun karakterini DM'in Drift'ine ve karakter
+  /// sekmesine kopyalardı.
+  Future<void> updateInWorld(Character character) async {
+    final own = state.valueOrNull ?? const <Character>[];
+    if (own.any((c) => c.id == character.id)) return update(character);
+    _mirrorPush(character.copyWith(
+      updatedAt: DateTime.now().toUtc().toIso8601String(),
+    ));
+  }
+
   /// Partial metadata update — name/description/tags/cover/rename combined.
   /// Tüm metadata entity alanlarına yazılır (entity_card ile ortak kaynak).
   Future<void> updateMetadata({

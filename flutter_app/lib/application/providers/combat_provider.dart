@@ -1029,7 +1029,10 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
-    () => ref.read(characterListProvider).valueOrNull ?? const <Character>[],
+    // Hub chars + aktif online dünyanın `world_characters` mirror'u.
+    // `characterListProvider` tek başına başka oyuncuların PC'lerini
+    // içermiyor → onların HP/AC yazma-geri yolu sessizce düşüyordu.
+    () => ref.read(combatCharactersProvider),
     () => ref.read(activeCampaignProvider.notifier).data,
     ref.read(eventBusProvider),
     (patch) async {
@@ -1048,7 +1051,8 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
                 .saveSettingsPatch(patch),
           );
     },
-    (character) => ref.read(characterListProvider.notifier).update(character),
+    (character) =>
+        ref.read(characterListProvider.notifier).updateInWorld(character),
     () {
       // _isLoadWithoutDataSafe: combat_state YOK ama _loaded güvenli mi?
       // - World offline → bulut yok, anında safe.
