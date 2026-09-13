@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/lan_sync/lan_sync_session.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-21
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -32,6 +32,7 @@ tags: [file]
 - System flow: [[LAN-Sync-Flow]]
 
 ## Key Logic / Variables
+- **Rename klasörü `LocalMediaLocalizer.worldDir` ile bulur** — ham ad Windows'ta yasak karakter taşıyan dünyalarda medya klasörüne denk gelmiyordu.
 - `userBase = dirname(AppPaths.worldsDir)` — `{dataRoot}` ya da `{dataRoot}/users/{uid}`. Medya yolları buna relatif taşınır, böylece iki cihazın profil klasörleri farklı olsa da eşleşir.
 - `buildManifest()` built-in SRD paketini atlar (`srdCorePackageName`); world/paket `updatedAt` Drift kolonundan, karakter `WorldCharacterRow.updatedAt`'ten.
 - **id-anahtarlı apply** — repository'ler ada göre arıyor (`_findByName`), LAN kimliği id. `getById` ile yerel ad bulunur; id yoksa ama aynı adda başka kayıt varsa `Ad (2)` ile ayrıştırılır.

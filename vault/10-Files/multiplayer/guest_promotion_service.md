@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/guest_promotion_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-02
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -37,6 +37,7 @@ tags: [file]
 - Spec / reference: `flutter_app/docs/open5e_content_audit.md` §6 Stage O · O3
 
 ## Key Logic / Variables
+- **Yol süpürmesi artık paylaşık.** `replaceInEveryTextColumn` + `pathSpellings` `app_database.dart`'ta top-level; terfi/demote onları çağırıyor, aynı süpürmeyi Windows'ta veri kökü Documents→LOCALAPPDATA taşındığında `AppDatabase.beforeOpen` de kullanıyor.
 - **Üç kural, önem sırasıyla:** (1) misafir ağacı burada **salt-okunur** — move/delete/rename yok, yalnız kopya; (2) DB **kapalıyken** kopyalanır (WAL modu, `app_database.dart:152`) ve `-wal`/`-shm` çifti de gider; (3) önce kopya, **en sonda sentinel** — `.incoming` geçici adları rename edildiği için hedefte yarım `dmt.sqlite` hiç oluşmaz.
 - İki faz olmasının sebebi tesadüfi değil: yol yeniden yazımı SQL ister, `sqlite3` burada **dev-only** bağımlılık, dolayısıyla rewrite ancak hesabın DB'si Drift ile açıldıktan sonra çalışabilir. Bu yüzden `activate` sırası: kapat → kopyala → `AppPaths.setUser` + `activeUserIdProvider` → aç → rewrite → sentinel.
 - **`asset_refs` yeniden yazılmaz ve bu bir eksik değil.** Fazın kendi premisi "asset_refs satırları ve medya yolları `dataRoot`-relative" diyordu; ölçüm tersini gösterdi — `uri` değerleri şema URI'si (`dmt-asset://`, `dmt-public://`, `dmt-transient://`) ve ham dosya yolları o grafa **kasıtlı** olarak sokulmuyor (`reference_indexer.dart:19`). Konumdan bağımsızlar. Mutlak yol taşıyan şey JSON blob'ları ve `world_entities.image_path` gibi kolonlar (F11 `RawPathMigrator`'ın varlık sebebi) — o yüzden süpürme **her tablonun her TEXT kolonu** üzerinde (25 Drift tablosunda 154 `TextColumn` + 4 raw-DDL yan tablo).

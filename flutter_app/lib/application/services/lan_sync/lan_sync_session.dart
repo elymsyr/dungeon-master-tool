@@ -274,8 +274,8 @@ class LanSyncSession {
       if (localRenamedAt == null ||
           ref.renamedAt!.isAfter(localRenamedAt)) {
         // Eski klasörü yeniden adlandır.
-        final oldDir = Directory(p.join(AppPaths.worldsDir, name));
-        final newDir = Directory(p.join(AppPaths.worldsDir, ref.name));
+        final oldDir = Directory(LocalMediaLocalizer.worldDir(name));
+        final newDir = Directory(LocalMediaLocalizer.worldDir(ref.name));
         if (await oldDir.exists() && !await newDir.exists()) {
           await oldDir.rename(newDir.path);
         }

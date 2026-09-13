@@ -5,7 +5,7 @@ path: flutter_app/lib/data/repositories/world_repository_impl.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-12
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -32,6 +32,7 @@ tags: [file]
 - Spec / reference: [[Data-Layer]]
 
 ## Key Logic / Variables
+- **Rename klasörü `LocalMediaLocalizer.worldDir` ile bulur.** Ham adla kurulan yol, adında Windows'ta yasak karakter olan dünyalarda medya klasörüyle eşleşmiyordu.
 - **Storage split** (PR-D3 v12): `worlds` row = id/name/template_*/timestamps. `world_entities` rows = entities. Everything else dynamic (combat_state, mind_maps, map_view, ...) packed into `world_settings.settings_json`. Schema content rides in `settings_json` under key `_world_schema` (`_schemaSettingsKey`) — the legacy `world_schemas` table is gone.
 - **`_typedTopKeys`**: `world_id, world_name, created_at, entities, world_schema, template_id, template_hash, template_original_hash` — excluded from the settings blob.
 - **`_findByName`** uses indexed `worldsDao.getByName` (SS-1/DB-3 — replaced `getAll()` + linear scan on every debounced write; 12 call sites).
