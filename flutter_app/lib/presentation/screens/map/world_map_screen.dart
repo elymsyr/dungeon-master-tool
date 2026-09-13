@@ -586,6 +586,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     supportedDevices: const {
                       PointerDeviceKind.mouse,
                       PointerDeviceKind.touch,
+                      PointerDeviceKind.stylus,
+                      PointerDeviceKind.invertedStylus,
                     },
                     onScaleStart: notifier.onScaleStart,
                     onScaleUpdate: notifier.onScaleUpdate,

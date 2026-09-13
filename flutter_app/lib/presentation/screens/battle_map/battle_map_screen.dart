@@ -100,12 +100,16 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 }
               },
               child: GestureDetector(
-              // Exclude trackpad so touchpad two-finger scroll falls through
-              // to the Listener's onPointerSignal for zoom instead of being
-              // consumed as a pan/tool-drag gesture (GitHub #90).
+              // Exclude ONLY trackpad so touchpad two-finger scroll falls
+              // through to the Listener's onPointerSignal for zoom instead of
+              // being consumed as a pan/tool-drag gesture (GitHub #90).
+              // Stylus stays in — an allow-list that forgot it silently killed
+              // tablet pen drawing on all three canvases.
               supportedDevices: const {
                 PointerDeviceKind.mouse,
                 PointerDeviceKind.touch,
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.invertedStylus,
               },
               // Navigate tool: scale gesture handles pan + pinch-zoom, and a
               // single-finger drag that starts on a text label moves it.
