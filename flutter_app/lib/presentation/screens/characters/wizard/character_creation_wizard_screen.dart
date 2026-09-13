@@ -760,6 +760,11 @@ Map<String, dynamic> buildSeedFields({
   writeRelation(out, const ['species_ref', 'race'], race?.id);
   writeRelation(out, const ['class_refs', 'class_'], characterClass?.id);
   writeRelation(out, const ['background_ref', 'background'], background?.id);
+  // Subclass, like the other origin relations, has to land on the schema's
+  // own relation field. Writing only the resolver-side `subclass_id` left
+  // `subclass_refs` at its `[]` default, so the sheet showed no subclass and
+  // the level-up planner re-asked for one at L3.
+  writeRelation(out, const ['subclass_refs'], draft.subclassId);
   writeScalar(out, const ['proficiency_bonus'], profBonus);
   // Species drives Walk speed & size — fall back to SRD medium humanoid
   // defaults when the species entity hasn't been populated yet.
