@@ -8,7 +8,6 @@
 //
 //   cd flutter_app && flutter test test/data/repositories/world_joined_schema_fallback_test.dart
 
-import 'package:drift/drift.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/repositories/world_repository_impl.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';

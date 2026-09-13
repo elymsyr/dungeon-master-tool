@@ -70,7 +70,7 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 - **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
 - **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
 - **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
-- **Tests are not gated** — 60 of 1510 tests fail on `main` and no CI step blocks a red build.
+- **Tests are not gated** — 60 of 1523 tests fail on `main` and no CI step blocks a red build.
 - **Banning is not possible** — you cannot hide SRD content from players ("there is no Fireball in this world"); marks only add, they do not take away.
 
 ---

@@ -11,7 +11,7 @@ items that are still open on the release date; do not edit past releases afterwa
 
 ## Open
 
-- **60 tests fail on `main`** — `flutter test` reports 1450 passing and 60 failing.
+- **60 tests fail on `main`** — `flutter test` reports 1463 passing and 60 failing.
   Superseded in detail by the audit section below, which gives the root cause of each
   group: `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
   `default_schema_test` (3), `content_store_test` (2), `guest_promotion_service_test` (1)
