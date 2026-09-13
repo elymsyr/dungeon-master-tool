@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-09-12
+updated: 2026-09-14
 tags: [system, sync, multiplayer]
 ---
 
@@ -9,6 +9,11 @@ tags: [system, sync, multiplayer]
 
 > [!summary] Bir cümlede
 > Oyuncunun cihazına giden **her satır, DM'in bilinçli bir paylaşım eylemidir.** Dünyanın tamamı hiçbir zaman replike edilmez.
+
+> [!warning] Kategoriye göre otomatik paylaşım kaldırıldı (2026-09-14)
+> Publish tohumu artık Tier 0 / Tier 1 kuralına bakmıyor. Paylaşımın tek kaynağı DM'in kart başına koyduğu işaret: `world_settings.settings_json` → `shared_entities` ([[shared_entity_provider]]).
+>
+> İşaret **dünya offline'ken de** konulabiliyor. Orada hiçbir şey yapmaz; amacı DM'in dünyayı kurarken ileride neyin oyuncuya gideceğini önden seçmesi. Dünya online'a alındığında tohum tam olarak o seti yükler.
 
 Bu not, kaldırılan `Share-Broadcast-Flow`'un yerine geçer. Eski model dünyanın tamamını (entity'ler, harita, oturumlar, ayarlar, mind-map) Postgres'e aynalıyor ve oyuncunun görmemesi gerekenleri yalnızca istemci tarafında, `visibleEntityProvider` ile gizliyordu — yani veri oyuncunun diskindeydi. Migration **077** o aynayı düşürdü.
 
@@ -67,17 +72,33 @@ DM "Paylaş" der
 
 Dört giriş noktası, hepsi `entitySharerProvider` ([[entity_share_prepare]] içindeki `EntitySharer`) üzerinden — köprü, paylaşımın hem widget'lardan (`WidgetRef`) hem `EntityNotifier`'dan (`Ref`) çağrılabilmesi için var:
 
-1. **Kart menüsü** — DM'in açık kartta "Paylaş" toggle'ı (`entity_card.dart`).
-2. **Oluşturma kutucuğu** — çok oyunculu dünyada (rol = DM) "Yeni kart" diyaloğundaki *Share with players* checkbox'ı. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) kapalı. 2026-09-12'den beri `seedExcludedSlugs` de kapalı — canavar ve loot asla kendiliğinden gitmez, publish tohumuyla aynı kural. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
-3. **Otomatik güncelleme** — zaten paylaşılmış bir kart düzenlenince push kendiliğinden tekrarlanır: `EntityNotifier._pushIfShared`, `_writeEntityToCampaign`'in [[pending_write_buffer]] flush'ına asılıdır (750–2000 ms debounce), yani tuş başına değil satır diske yazıldığında bir kez. Kapılar: world online + rol DM + `entity_shares`'te world-wide satır. `shareWithAll` delete+insert olduğu için idempotent; hata yutulur (debugPrint).
+Hepsi `EntitySharer.setShared(entityId:, shared:, worldId:)` üzerinden geçer — **işaret her zaman yerele yazılır**, bulut satırı yalnızca dünya gerçekten online ve rol DM ise gider. Fonksiyon buluta yazıp yazmadığını `bool` döndürür; UI mesajını ona göre kurar ("Shared with all players" / "Marked to share — goes out when the world goes online").
 
-4. **Publish tohumu (2026-09-12)** — DM dünyayı online'a aldığında `seedAndAnnounceWorldContent` ([[online_world_widgets]]) → `seedTierContentToPlayers` ([[entity_share_prepare]]) tek seferde DM'in **kendi yazdığı** (`linked == false`) Tier 0 + Tier 1 kartlarını paylaşır. Gerekçe spoiler değil **karakter yaratılabilirlik**: oyuncu katıldığında yalnızca SRD bootstrap'ini alıyor, DM'in homebrew sınıf/tür/geçmişi olmadan karakterini yanlış yaratıyor (migration 088'in kendi yorumu da bu modeli bekliyor).
-   - Kapsam dışı: `linked == true` (oyuncunun kurulu paketinde zaten var, ayrıca 4000 satır/dünya tavanını yerdi), `seedExcludedSlugs` = `monster` / `animal` / `creature-action` / `magic-item`, ve tüm Tier 2.
-   - `shareEntityWithPlayers` artık `Set<String> entityIds` + opsiyonel `allowedSlugs` alıyor. Tohum yolu `allowedSlugs` doldurur, yoksa dışlanan kategoriler relation kapanışı üzerinden arka kapıdan girerdi. **Tekil paylaşım yolunun kapanış davranışı değişmedi** (`allowedSlugs = null`).
-   - Bayrak yok: `unpublishWorld` bulut satırlarını cascade siliyor, tekrar online olmak sıfırdan tohumlamalı. DM online'ken bir kartı unshare ederse hiçbir şey onu geri diriltmez.
-   - **Publish'in İKİ girişi var** ve ikisi de bu yardımcıdan geçmek zorunda: dünya ayarları toggle'ı (`online_world_section._publish`, hub'dan aktif OLMAYAN bir dünya için de açılabiliyor) ve dünya içindeki "Make Online" (`save_sync_indicator._makeOnline`). Hub yolu `campaignData`'yı geçirir — `entityProvider` / `worldSchemaProvider` her zaman AKTİF kampanyayı okur, yani oradan tohumlamak yanlış dünyanın kartlarını paylaşırdı.
-   - **Yazma toplu.** `EntityShareService.shareManyWithAll` tek `DELETE ... IN (...)` + 50'lik `INSERT` parçaları atar; eski kart-başına-iki-round-trip döngüsü yüzlerce homebrew kartta publish'i dakikalarca bekletiyordu. Bir parça düşerse (512KB/kart ya da 4000 satır tavanı) o parça satır satır tekrar denenir ve yazılamayan id'ler `debugPrint`'e düşer — publish hiçbir durumda düşmez.
-   - DM tek `AlertDialog` ile bilgilendirilir (`worldContentSharedTitle` / `...Body`). Tasarım: `docs/tier-content-auto-share.md`. Koruma: `test/application/services/entity_share_tier_seed_test.dart`.
+1. **Kart menüsü** — açık karttaki "Share" toggle'ı (`entity_card.dart`). Artık DM + offline (rol `none`) için görünür; yalnız oyuncuda gizli — projeksiyon menüsüyle aynı kapı.
+2. **Oluşturma kutucuğu** — "Yeni kart" diyaloğundaki *Share with players* checkbox'ı, dünya offline olsa da. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) ve `seedExcludedSlugs` (canavar, loot) kapalı. Bu tier kuralı artık **yalnızca varsayılan kutucuk hâli**; paylaşımı kendisi yapmıyor. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
+3. **Otomatik güncelleme** — işaretli bir kart düzenlenince push kendiliğinden tekrarlanır: `EntityNotifier._pushIfShared`, `_writeEntityToCampaign`'in [[pending_write_buffer]] flush'ına asılıdır (750–2000 ms debounce), yani tuş başına değil satır diske yazıldığında bir kez. Kapılar: world online + rol DM + yerel `shared_entities` işareti (eskiden bulut satırı sorgulanıyordu — artık yerel set kaynak-doğru, ağ turu yok).
+
+4. **Publish tohumu** — DM dünyayı online'a aldığında `seedAndAnnounceWorldContent` ([[online_world_widgets]]) → `seedSharedContentToPlayers` ([[entity_share_prepare]]) `shared_entities` setindeki kartları tek seferde yükler.
+   - Seçim kuralı saf hâlde `seedShareIds(entities, markedIds)`: işaretler ∩ dünyada gerçekten duran kartlar. Silinmiş kartın artık işareti blob'da kalabiliyor; onu sokmak gövdesiz satır yazardı.
+   - `allowedSlugs` parametresi **kaldırıldı** (2026-09-14). Kategori filtresi kalmadığı için kapanış davranışı her iki yolda aynı: DM bir kartı paylaştığında relation kapanışı da gider, yoksa oyuncuda dangling satır kalır.
+   - `linked == true` kart da işaretliyse gider — DM bilinçli seçmiştir. Gövdesi yine `payload_json = NULL` ile boş kalır, oyuncunun kurulu paketinden gelir.
+   - Bayrak yok: `unpublishWorld` bulut satırlarını cascade siliyor, tekrar online olmak sıfırdan tohumlamalı. İşaret seti yerelde durduğu için tohum aynı listeyi tekrar yükler.
+   - **Publish'in İKİ girişi var** ve ikisi de bu yardımcıdan geçmek zorunda: dünya ayarları toggle'ı (`online_world_section._publish`, hub'dan aktif OLMAYAN bir dünya için de açılabiliyor) ve dünya içindeki "Make Online" (`save_sync_indicator._makeOnline`). Hub yolu `campaignData`'yı geçirir — kartlar, şema **ve işaret seti** o blob'dan okunur; provider'lar her zaman AKTİF kampanyayı okur, yani oradan tohumlamak yanlış dünyanın kartlarını paylaşırdı.
+   - **Yazma toplu.** `EntityShareService.shareManyWithAll` tek `DELETE ... IN (...)` + 50'lik `INSERT` parçaları atar. Bir parça düşerse (512KB/kart ya da 4000 satır tavanı) o parça satır satır tekrar denenir ve yazılamayan id'ler `debugPrint`'e düşer — publish hiçbir durumda düşmez.
+   - DM tek `AlertDialog` ile bilgilendirilir (`worldContentSharedTitle` / `...Body`). Koruma: `test/application/services/entity_share_seed_test.dart`.
+
+## Paketlenmiş dünya işaretle gelir
+
+`world-blueprint.json`'ın kökündeki **`shared`** listesi (`pinned` ile aynı `kategori/isim` biçimi) kurulumda entity id'lerine çözülüp `shared_entities` anahtarına yazılıyor — [[bundled_worlds_installer]] §5. Yani marketplace'ten indirilen ya da klasörden aktarılan dünyada DM hiçbir şey işaretlemeden doğru set hazır: yazarın "oyun başında oyuncunun bilmesi gereken" dediği kartlar. Ölçü dar tutuluyor: **yalnız Tier 0/1 oyuncu içeriği** — subclass, background, trait, resource-pool, sıradan eşya. **Tier 2 asla** (campaign, lore, location, npc, scene, encounter, quest, curse): o kartlar DM odaklı yazılıyor ve oyuncunun henüz bilmediğini bildiriyorlar. `seedExcludedSlugs`'ın canavar/loot seti de dışarıda, Tier 1 içinde sır taşıyan tekil kartlar da (Aegis'te `Direnç Şerbeti`, üç mühür, canavar trait'leri). Act 1'de 54 kart. Kural: `assets/worlds/aegis/README.md` §4.9.
+
+## Eski dünyalar — tek seferlik geçiş
+
+Tier tohumu kaldırılmadan önce online olmuş dünyalarda gerçek buluttaki `entity_shares` satırlarıydı, yerelde işaret yoktu. `SharedEntityNotifier._adoptCloudShares` ([[shared_entity_provider]]) anahtar yokken dünya online + rol DM ise o id'leri bir kez yerele alır. Olmasaydı DM o kartları "paylaşılmamış" görür, paylaşımı kapatamazdı. Offline dünyada hiçbir şey yazılmaz.
+
+## Nerede görünüyor
+
+- **Sidebar satırı** — kategori noktası paylaşıma işaretli kartlarda `Icons.public` (dünya) olur; pin varsa iğne kazanır, iki işaret birden gösterilmez ([[entity_sidebar]] `EntityRowTile`).
+- **Sharing filtresi** — "Marked shared / Not shared / Built-in" chip'i artık **dünya offline'ken de** açık; yalnız oyuncuda gizli. DM neyi önden işaretlediğini publish etmeden görebilmeli.
 
 ## Yazma yolu — kuyruk yok, doğrudan yazma
 

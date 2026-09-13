@@ -8,10 +8,10 @@ import '../../application/providers/character_provider.dart'
     show kPlayerCategorySlugs;
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/entity_provider.dart';
-import '../../application/providers/entity_share_provider.dart';
 import '../../application/providers/entity_sidebar_provider.dart';
 import '../../application/providers/pinned_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
+import '../../application/providers/shared_entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/services/entity_share_prepare.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -55,7 +55,9 @@ class EntitySidebar extends ConsumerStatefulWidget {
 
 enum _SortMode { name, category, source }
 
-/// DM-only sharing filter modes. Empty selection = show all.
+/// Sharing filter modes. Empty selection = show all. Dünya offline'ken de
+/// anlamlı: paylaşım işareti çevrimdışı konulabiliyor, DM neyi işaretlediğini
+/// görebilmeli.
 enum _ShareFilter { builtin, shared, notShared }
 
 // Row tuple type moved to `entity_sidebar_provider.dart` as `EntitySummary`
@@ -222,27 +224,23 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final pinned =
         widget.pinning ? ref.watch(pinnedEntityIdsProvider) : const <String>{};
 
-    // DM-only sharing filter context. Player için chip render edilmez ve
-    // filter aktif değilse pass-through.
+    // Sharing filter context. Player için chip render edilmez ve filter
+    // aktif değilse pass-through.
     final role = ref.watch(currentWorldRoleProvider).valueOrNull;
-    final isDm = role == WorldRole.dm;
     // Player rolü entity oluşturamaz — DM ve offline (none) oluşturabilir.
     final isPlayer = role == WorldRole.player;
     final worldIdForShares = ref.watch(activeCampaignIdProvider).valueOrNull;
     // Restore persisted per-world filters on first build / world switch.
     _loadFiltersForWorld(widget.filterScope ?? worldIdForShares ?? '');
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
-    final Set<String> sharedEntityIds;
-    if (isDm && worldIdForShares != null) {
-      final sharesAsync = ref.watch(
-        worldEntitySharesProvider(worldIdForShares),
-      );
-      sharedEntityIds = <String>{
-        for (final s in (sharesAsync.valueOrNull ?? const [])) s.entityId,
-      };
-    } else {
-      sharedEntityIds = const <String>{};
-    }
+    // Paylaşım işareti dünyanın settings blob'unda — bulut satırı değil.
+    // Dünya offline olsa da okunur; oyuncuda anlamsız (her gördüğü zaten
+    // paylaşılmış).
+    // `pinning` ile aynı kapı: bu sidebar bir paketin kartlarını listeliyorsa
+    // işaret seti yanlış dünyanın (aktif world'ün) blob'undan gelirdi.
+    final sharedEntityIds = (widget.pinning && !isPlayer)
+        ? ref.watch(sharedEntityIdsProvider)
+        : const <String>{};
     _ShareFilter classifyShareMode(
       String? pkgId,
       bool linked,
@@ -284,7 +282,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       Object.hashAll(_selectedShareModes),
       _searchQuery,
       _sortMode,
-      isDm,
       builtinPackId,
       // Value-based: sharedEntityIds is a fresh Set every build. identity hash
       // would always mismatch → cache miss → 7K filter+sort re-runs on every
@@ -328,7 +325,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
             !_selectedSources.contains(e.source)) {
           return false;
         }
-        if (isDm && _selectedShareModes.isNotEmpty) {
+        if (widget.pinning && !isPlayer && _selectedShareModes.isNotEmpty) {
           final mode = classifyShareMode(e.packageId, e.linked, e.id);
           if (!_selectedShareModes.contains(mode)) return false;
         }
@@ -359,7 +356,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               !_selectedSources.contains(e.source)) {
             return false;
           }
-          if (isDm && _selectedShareModes.isNotEmpty) {
+          if (widget.pinning && !isPlayer && _selectedShareModes.isNotEmpty) {
             final mode = classifyShareMode(e.packageId, e.linked, e.id);
             if (!_selectedShareModes.contains(mode)) return false;
           }
@@ -520,7 +517,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     ),
                   ),
                 ),
-                if (isDm) ...[
+                if (widget.pinning && !isPlayer) ...[
                   const SizedBox(width: 4),
                   Expanded(
                     child: OutlinedButton.icon(
@@ -722,6 +719,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           palette,
                           dimmed: isOther,
                           pinned: pinned.contains(entity.id),
+                          shared: sharedEntityIds.contains(entity.id),
                         );
                       },
                     );
@@ -932,7 +930,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
     const labels = <_ShareFilter, String>{
       _ShareFilter.builtin: 'Built-in (auto-shared)',
-      _ShareFilter.shared: 'Shared with players',
+      _ShareFilter.shared: 'Marked shared',
       _ShareFilter.notShared: 'Not shared',
     };
     const order = <_ShareFilter>[
@@ -1230,14 +1228,15 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final isPhone = getScreenType(context) == ScreenType.phone;
 
-    // Multiplayer dünyada yeni kart doğrudan paylaşılabilir. Varsayılan
-    // tier'a bağlı: Tier 0/1 (lookup + içerik) açık, Tier 2 (DM/kampanya
-    // içeriği — NPC, sahne, quest) kapalı. Kullanıcı kutuya dokunduysa
+    // Yeni kart doğrudan paylaşıma işaretlenebilir — dünya offline olsa da.
+    // Offline'da işaret sadece kaydedilir; dünya online'a alındığında publish
+    // tohumu onu taşır. Varsayılan tier'a bağlı: Tier 0/1 (lookup + içerik)
+    // açık, Tier 2 (DM/kampanya içeriği — NPC, sahne, quest) ve
+    // seedExcludedSlugs (canavar, loot) kapalı. Kullanıcı kutuya dokunduysa
     // seçimi kategori değişse de korunur.
     final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
     final canShare = widget.pinning &&
-        worldId != null &&
-        ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
+        ref.read(currentWorldRoleProvider).valueOrNull != WorldRole.player;
     bool? shareOverride;
 
     // Group by tier and sort alphabetically within each tier.
@@ -1259,7 +1258,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             // Varsayılan: Tier 0/1 açık, ama canavar ve loot asla
-            // kendiliğinden gitmez — publish tohumuyla aynı kural.
+            // kendiliğinden işaretlenmez.
             bool shareChecked() =>
                 shareOverride ??
                 (_tierFor(selectedSlug) != 2 &&
@@ -1272,14 +1271,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                   .read(entityProvider.notifier)
                   .create(selectedSlug, name: name);
               if (canShare && shareChecked()) {
-                ref
-                    .read(entitySharerProvider)
-                    .share(entityId: id, worldId: worldId)
-                    .whenComplete(() {
-                  if (mounted) {
-                    ref.invalidate(worldEntitySharesProvider(worldId));
-                  }
-                });
+                // ignore: discarded_futures
+                ref.read(entitySharerProvider).setShared(
+                      entityId: id,
+                      shared: true,
+                      worldId: worldId,
+                    );
               }
               Navigator.pop(ctx);
               widget.onEntitySelected?.call(id);
@@ -1515,6 +1512,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     DmToolColors palette, {
     required bool dimmed,
     required bool pinned,
+    required bool shared,
   }) {
     final cat = catMap[entity.categorySlug];
     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
@@ -1560,6 +1558,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       cat?.name ?? entity.categorySlug,
       palette,
       pinned,
+      shared,
     );
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
@@ -1589,6 +1588,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     String categoryLabel,
     DmToolColors palette,
     bool pinned,
+    bool shared,
   ) =>
       EntityRowTile(
         name: entity.name,
@@ -1596,19 +1596,25 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         categoryLabel: categoryLabel,
         color: color,
         pinned: pinned,
+        shared: shared,
         onTap: () => widget.onEntitySelected?.call(entity.id),
       );
 }
 
-/// Sidebar'daki entity satırı: renkli kategori noktası (pinliyse iğne),
-/// ad + kaynak, sağda kategori etiketi. Kart geçmişi sheet'i de bunu
-/// kullanıyor — iki liste görsel olarak aynı kalsın diye.
+/// Sidebar'daki entity satırı: renkli kategori noktası (pinliyse iğne,
+/// paylaşıma işaretliyse dünya), ad + kaynak, sağda kategori etiketi. Kart
+/// geçmişi sheet'i de bunu kullanıyor — iki liste görsel olarak aynı kalsın
+/// diye.
 class EntityRowTile extends StatelessWidget {
   final String name;
   final String source;
   final String categoryLabel;
   final Color color;
   final bool pinned;
+
+  /// DM'in paylaşıma işaretlediği kart. Dünya offline'ken de doğru olabilir —
+  /// işaret önden konulabiliyor.
+  final bool shared;
   final VoidCallback? onTap;
 
   const EntityRowTile({
@@ -1617,6 +1623,7 @@ class EntityRowTile extends StatelessWidget {
     required this.categoryLabel,
     required this.color,
     this.pinned = false,
+    this.shared = false,
     this.onTap,
     super.key,
   });
@@ -1630,13 +1637,16 @@ class EntityRowTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         child: Row(
           children: [
-            // Category dot — swapped for a pin glyph (same colour, same
-            // 8 px footprint) while the entity is pinned.
+            // Category dot — swapped for a pin glyph while pinned, or a
+            // globe while marked shared (same colour, same 11 px footprint).
+            // Pin kazanır: iki işaret birden varsa iğne daha güçlü sinyal.
             SizedBox(
               width: 11,
               height: 11,
               child: pinned
                   ? Icon(Icons.push_pin, size: 11, color: color)
+                  : shared
+                  ? Icon(Icons.public, size: 11, color: color)
                   : Center(
                       child: Container(
                         width: 8,

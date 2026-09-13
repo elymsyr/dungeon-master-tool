@@ -12,15 +12,16 @@ import '../../domain/entities/online/world_role.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Dünya online'a alındıktan sonra tek seferlik: DM'in **kendi yazdığı**
-/// Tier 0 / Tier 1 kural kartlarını oyunculara açar, sonra ne gidip ne
-/// gitmediğini bir kez anlatır.
+/// Dünya online'a alındıktan sonra: DM'in **paylaşıma işaretlediği**
+/// kartları oyunculara açar, sonra ne gidip ne gitmediğini bir kez anlatır.
+/// İşaret dünya offline'ken de konulabiliyor, yani burada genelde hazır bir
+/// liste bulunur.
 ///
 /// Publish'in İKİ girişi var — dünya ayarlarındaki toggle
 /// (`online_world_section._publish`) ve dünya içindeki "Make Online"
 /// (`save_sync_indicator._makeOnline`). İkisi de buradan geçmek zorunda;
-/// biri atlanırsa o yoldan online olan dünyada oyuncu homebrew sınıf/tür/
-/// geçmişi hiç görmez ve karakterini yanlış yaratır.
+/// biri atlanırsa o yoldan online olan dünyada DM'in işaretledikleri hiç
+/// gitmez.
 ///
 /// [campaignData] aktif olmayan bir dünya publish edildiğinde zorunlu —
 /// tohum o blob'dan okur, yoksa aktif kampanyanın kartlarını paylaşırdı.
@@ -31,12 +32,12 @@ Future<void> seedAndAnnounceWorldContent(
   Map<String, dynamic>? campaignData,
 }) async {
   try {
-    await ref.read(entitySharerProvider).seedTierContent(
+    await ref.read(entitySharerProvider).seedSharedContent(
           worldId: worldId,
           campaignData: campaignData,
         );
   } catch (e) {
-    debugPrint('seedTierContent failed for $worldId: $e');
+    debugPrint('seedSharedContent failed for $worldId: $e');
   }
   ref.invalidate(worldEntitySharesProvider(worldId));
   if (!context.mounted) return;

@@ -12,7 +12,9 @@ import 'campaign_provider.dart';
 /// that's the point: a downloaded world keeps the author's pins.
 const kPinnedEntitiesKey = 'pinned_entities';
 
-Set<String> parsePinnedEntities(dynamic raw) => {
+/// Blob'daki id listesini set'e çevirir — bozuk/eksik girdi sessizce düşer.
+/// [kSharedEntitiesKey] de aynı şekli kullanıyor.
+Set<String> parseEntityIdSet(dynamic raw) => {
       if (raw is List)
         for (final e in raw)
           if (e is String) e,
@@ -29,7 +31,7 @@ class PinnedEntityNotifier extends Notifier<Set<String>> {
     ref.watch(activeCampaignProvider);
     ref.watch(campaignRevisionProvider);
     final data = ref.read(activeCampaignProvider.notifier).data;
-    return parsePinnedEntities(data?[kPinnedEntitiesKey]);
+    return parseEntityIdSet(data?[kPinnedEntitiesKey]);
   }
 
   Future<void> toggle(String entityId) async {

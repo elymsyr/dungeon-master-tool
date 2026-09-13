@@ -1,6 +1,21 @@
 # Tier 0/1 içeriğinin otomatik paylaşımı
 
-`updated: 2026-09-12`
+`updated: 2026-09-12` — **GEÇERSİZ (2026-09-14)**
+
+> [!warning] Bu tasarım geri alındı
+> Kategoriye göre otomatik paylaşım kaldırıldı. Publish tohumu artık tier'a
+> bakmıyor; oyuncuya giden her satır DM'in kart başına koyduğu işaret
+> (`world_settings.settings_json` → `shared_entities`,
+> `lib/application/providers/shared_entity_provider.dart`). İşaret dünya
+> offline'ken de konulabiliyor — DM dünyayı kurarken ileride neyin
+> paylaşılacağını önden seçiyor.
+>
+> Bu dosyadan hayatta kalan tek şey **tier kuralının kendisi**: yaratma
+> diyaloğundaki *Share with players* kutucuğunun varsayılan hâli hâlâ Tier 0/1
+> açık, Tier 2 + `seedExcludedSlugs` kapalı. Paylaşımı artık o kural yapmıyor,
+> sadece kutucuğu önceden işaretliyor.
+>
+> Güncel akış: `vault/20-Systems/Share-Broadcast-Flow.md`.
 
 ## Problem
 

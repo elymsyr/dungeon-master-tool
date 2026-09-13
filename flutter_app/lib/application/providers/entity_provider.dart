@@ -25,13 +25,13 @@ import '../services/undo_redo_mixin.dart';
 import '../../domain/entities/online/world_role.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
-import 'entity_share_provider.dart';
 import 'online_worlds_provider.dart';
 import 'event_bus_provider.dart';
 import 'package_link_provider.dart' show packageReferenceOverlayProvider;
 import 'role_provider.dart';
 import 'auth_provider.dart';
 import 'save_state_provider.dart';
+import 'shared_entity_provider.dart';
 import 'ui_state_provider.dart';
 
 const _uuid = Uuid();
@@ -771,10 +771,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     );
   }
 
-  /// Zaten oyuncularla paylaşılmış bir kartın düzenlemesini otomatik iter.
+  /// Paylaşıma işaretli bir kartın düzenlemesini otomatik iter.
   /// Debounce'lu write flush'ına asılı, yani her tuş vuruşunda değil, satır
-  /// diske yazıldığında bir kez. Paylaşılmamış kart / offline world / DM
-  /// olmayan kullanıcı → no-op.
+  /// diske yazıldığında bir kez. İşaretsiz kart / offline world / DM olmayan
+  /// kullanıcı → no-op.
   Future<void> _pushIfShared(String entityId, String? worldId) async {
     if (worldId == null) return;
     if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
@@ -782,8 +782,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       if (await _ref.read(currentWorldRoleProvider.future) != WorldRole.dm) {
         return;
       }
-      final shares = await _ref.read(worldEntitySharesProvider(worldId).future);
-      if (!shares.any((s) => s.entityId == entityId && s.isWorldWide)) return;
+      if (!_ref.read(sharedEntityIdsProvider).contains(entityId)) return;
       await _ref
           .read(entitySharerProvider)
           .share(entityId: entityId, worldId: worldId);

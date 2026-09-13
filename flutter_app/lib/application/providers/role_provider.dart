@@ -107,3 +107,20 @@ final worldRoleProvider =
     return WorldRole.none;
   }
 });
+
+/// Oyuncu görünümü mü? Kart render'ının dmOnly alanları ve DM Notes'u
+/// kesmesi için tek kapı.
+///
+/// Rol çözülürken [worldRoleHintProvider]'a düşer: aksi hâlde
+/// `currentWorldRoleProvider` resolve olana dek oyuncuya bir frame boyunca
+/// DM içeriği çizilirdi. Belirsizlik oyuncu lehine yorumlanır — DM için
+/// yanlış bir gizleme geri dönüşü olan bir hata, tersi değil.
+final isPlayerViewProvider = Provider<bool>(
+  dependencies: [currentWorldRoleProvider, worldRoleHintProvider],
+  (ref) {
+    final role = ref.watch(currentWorldRoleProvider).valueOrNull;
+    if (role == WorldRole.player) return true;
+    if (role == WorldRole.dm) return false;
+    return ref.watch(worldRoleHintProvider) == WorldRole.player;
+  },
+);

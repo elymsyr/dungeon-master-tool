@@ -1375,5 +1375,5 @@
   "lanSyncErrFailed": "Eşleşme başarısız.",
   "shareWithPlayers": "Oyuncularla paylaş",
   "worldContentSharedTitle": "Dünya içeriği oyuncularla paylaşıldı",
-  "worldContentSharedBody": "Kendi yazdığın kural kartları — sınıflar, türler, geçmişler, feat'ler, büyüler, eşyalar ve bunların referans tabloları — oyuncularla paylaşıldı; karakterlerini doğru yaratabilmeleri için bunlara erişmeleri gerekiyor.\n\nCanavarlar, büyülü eşyalar, NPC'ler, sahneler ve görevler paylaşılmadı. İstediğin kartın paylaşımını kartın menüsünden tek tek geri alabilirsin."
+  "worldContentSharedBody": "Paylaşıma işaretlediğin kartlar oyuncularla paylaşıldı. Başka hiçbir şey cihazından çıkmadı — hiçbir kategori kendiliğinden paylaşılmıyor.\n\nİstediğin kartı menüsünden işaretleyip kaldırabilirsin; kenar çubuğundaki paylaşım filtresi neyin işaretli olduğunu gösterir. Dünya çevrimdışıyken koyduğun işaretler bir sonraki yayınlamada gider."
 }
