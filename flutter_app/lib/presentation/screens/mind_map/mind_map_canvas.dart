@@ -105,6 +105,8 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               supportedDevices: const {
                 PointerDeviceKind.mouse,
                 PointerDeviceKind.touch,
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.invertedStylus,
               },
               onScaleStart: notifier.onScaleStart,
               onScaleUpdate: (d) {
