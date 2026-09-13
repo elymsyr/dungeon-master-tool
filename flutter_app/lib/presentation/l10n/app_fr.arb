@@ -1375,5 +1375,5 @@
   "lanSyncErrFailed": "Échec de l'association.",
   "shareWithPlayers": "Partager avec les joueurs",
   "worldContentSharedTitle": "Contenu du monde partagé avec les joueurs",
-  "worldContentSharedBody": "Tes propres cartes de règles — classes, espèces, historiques, dons, sorts, équipement et les tables de référence qu'elles utilisent — ont été partagées avec tes joueurs, afin qu'ils puissent créer correctement leurs personnages.\n\nLes monstres, objets magiques, PNJ, scènes et quêtes n'ont pas été partagés. Tu peux annuler le partage de n'importe quelle carte depuis son menu."
+  "worldContentSharedBody": "Les cartes que tu as marquées pour le partage ont été partagées avec tes joueurs. Rien d'autre n'a quitté ton appareil — aucune catégorie n'est partagée automatiquement.\n\nTu peux marquer ou démarquer n'importe quelle carte depuis son menu ; le filtre de partage de la barre latérale montre ce qui est marqué. Les marques posées hors ligne partent à la prochaine publication."
 }

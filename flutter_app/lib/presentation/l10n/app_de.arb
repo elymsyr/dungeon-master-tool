@@ -1375,5 +1375,5 @@
   "lanSyncErrFailed": "Kopplung fehlgeschlagen.",
   "shareWithPlayers": "Mit Spielern teilen",
   "worldContentSharedTitle": "Weltinhalte mit Spielern geteilt",
-  "worldContentSharedBody": "Deine eigenen Regelkarten — Klassen, Spezies, Hintergründe, Talente, Zauber, Ausrüstung und die Nachschlagetabellen, auf die sie verweisen — wurden mit deinen Spielern geteilt, damit sie ihre Charaktere korrekt erstellen können.\n\nMonster, magische Gegenstände, NSCs, Szenen und Quests wurden nicht geteilt. Du kannst jede einzelne Karte über ihr Menü wieder zurückziehen."
+  "worldContentSharedBody": "Die von dir zum Teilen markierten Karten wurden mit deinen Spielern geteilt. Nichts anderes hat dein Gerät verlassen — keine Kategorie wird automatisch geteilt.\n\nDu kannst jede Karte über ihr Menü markieren oder die Markierung entfernen; der Freigabefilter in der Seitenleiste zeigt, was markiert ist. Markierungen, die du offline setzt, gehen beim nächsten Veröffentlichen raus."
 }

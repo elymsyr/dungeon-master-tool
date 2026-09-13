@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
+import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/asset_ref_image.dart';
@@ -68,9 +70,18 @@ class _PreviewBody extends StatelessWidget {
       if (entity.imagePath.isNotEmpty) entity.imagePath,
       ...entity.images,
     ];
+    // entity_card ile aynı kapı: private_ hiç kimseye, dmOnly oyuncuya
+    // çizilmez. Bu dialog ref link'ten açılıyor, yani oyuncunun eline geçen
+    // ikinci render yolu — filtreyi burada da uygulamak zorunlu.
+    final isPlayer = ref.watch(isPlayerViewProvider);
     final fields = [
-      for (final f in category?.fields ?? const [])
-        if (!_isEmpty(entity.fields[f.fieldKey])) f,
+      for (final f in fieldsVisibleToRole(
+        category?.fields ?? const [],
+        isPlayer: isPlayer,
+      ))
+        if (f.visibility != FieldVisibility.private_ &&
+            !_isEmpty(entity.fields[f.fieldKey]))
+          f,
     ];
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

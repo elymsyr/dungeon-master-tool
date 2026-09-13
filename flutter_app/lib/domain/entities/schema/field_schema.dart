@@ -113,3 +113,24 @@ abstract class FieldSchema with _$FieldSchema {
   factory FieldSchema.fromJson(Map<String, dynamic> json) =>
       _$FieldSchemaFromJson(json);
 }
+
+/// Bu rolde ÇİZİLEBİLECEK alanlar — oyuncu görünümünde [FieldVisibility.dmOnly]
+/// ("Secrets", "Tactics", …) hiç render edilmez.
+///
+/// Veri oyuncunun cihazında bulunabilir (kurulu paket kartları tam gövdeyle
+/// gelir, `entity_shares` payload'ı ise kırpılır) — burası **görüntülemeyi**
+/// kesen kapı. Kart render eden her yol buradan geçmeli.
+///
+/// Düşen alan yoksa liste aynen döner; çağıranların satır/grid cache'i
+/// identity karşılaştırmasına dayanıyor.
+List<FieldSchema> fieldsVisibleToRole(
+  List<FieldSchema> fields, {
+  required bool isPlayer,
+}) {
+  if (!isPlayer) return fields;
+  final out = [
+    for (final f in fields)
+      if (f.visibility != FieldVisibility.dmOnly) f,
+  ];
+  return out.length == fields.length ? fields : out;
+}

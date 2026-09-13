@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../application/providers/builtin_package_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/entity_share_provider.dart';
+import '../../../application/providers/shared_entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/pinned_entity_provider.dart';
@@ -291,6 +291,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     }
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    // Oyuncu görünümü: dmOnly alanlar ve DM Notes render EDİLMEZ. Veri
+    // cihaza gelmiş olabilir (paket kartları tam gövdeyle kurulu) — burası
+    // görüntülenmeyi kesen kapı.
+    final isPlayer = ref.watch(isPlayerViewProvider);
+
     // Re-resolve category from the live entity.categorySlug so a sync that
     // rewrites an entity's slug (e.g., package re-install with a renamed
     // category) doesn't strand the open card with a stale schema lookup
@@ -572,35 +578,37 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       const SizedBox(height: 16),
 
       // === SCHEMA-DRIVEN FIELDS ===
-      if (cat != null) ..._buildSchemaFields(entity, cat, palette),
+      if (cat != null) ..._buildSchemaFields(entity, cat, palette, isPlayer),
 
-      const SizedBox(height: 8),
-
-      // === DM NOTES — heading + rule, no boxed border ===
-      EntityCardSectionHeading(
-        title: 'DM Notes',
-        palette: palette,
-        leadingIcon: Icons.lock,
-      ),
-      const SizedBox(height: 6),
-      MarkdownTextArea(
-        controller: _dmNotesController,
-        focusNode: _dmNotesFocus,
-        readOnly: widget.readOnly,
-        maxLines: widget.readOnly ? null : 4,
-        textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
-        decoration: InputDecoration(
-          hintText: 'Private DM notes... (@ to mention)',
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-          filled: false,
-          hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+      // === DM NOTES — heading + rule, no boxed border. Oyuncuda yok. ===
+      if (!isPlayer) ...[
+        const SizedBox(height: 8),
+        EntityCardSectionHeading(
+          title: 'DM Notes',
+          palette: palette,
+          leadingIcon: Icons.lock,
         ),
-        onChanged: (v) => _debouncedProviderUpdate(
-          () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+        const SizedBox(height: 6),
+        MarkdownTextArea(
+          controller: _dmNotesController,
+          focusNode: _dmNotesFocus,
+          readOnly: widget.readOnly,
+          maxLines: widget.readOnly ? null : 4,
+          textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
+          decoration: InputDecoration(
+            hintText: 'Private DM notes... (@ to mention)',
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            filled: false,
+            hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+          ),
+          onChanged: (v) => _debouncedProviderUpdate(
+            () =>
+                ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+          ),
         ),
-      ),
+      ],
 
       // === DELETE BUTTON ===
       if (!widget.readOnly) ...[
@@ -849,6 +857,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     Entity entity,
     EntityCategorySchema cat,
     DmToolColors palette,
+    bool isPlayer,
   ) {
     final cache = _getSchemaCache(cat);
     final readOnly = widget.readOnly;
@@ -857,8 +866,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final sortedGroups = cache.sortedGroups;
 
     List<FieldSchema> filterVisible(List<FieldSchema> fields) {
-      if (!readOnly) return fields;
-      return fields
+      // dmOnly ("Secrets", "Tactics", …) oyuncuda hiç çizilmez — boşalan
+      // grup kartı da aşağıdaki `groupFields.isEmpty` ile tamamen düşer.
+      final base = fieldsVisibleToRole(fields, isPlayer: isPlayer);
+      if (!readOnly) return base;
+      return base
           .where((f) => _isFieldVisibleInReadOnly(f, entity.fields[f.fieldKey]))
           .toList();
     }
@@ -1516,26 +1528,20 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     final role = ref.watch(currentWorldRoleProvider).valueOrNull;
     final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
 
-    // Project: DM + offline (none); hidden for players. Share: DM only.
+    // Project ve Share: DM + offline (none); ikisi de oyuncuda gizli.
+    // Paylaşım işareti dünya offline'ken de konulabiliyor — orada hiçbir şey
+    // yapmaz, dünya online'a alındığında publish tohumu onu taşır.
     final canProject = role != WorldRole.player;
-    final isDm = role == WorldRole.dm;
-    final canShare = isDm && worldId != null;
-    if (!canProject && !canShare) return const SizedBox.shrink();
+    final canShare = canProject;
+    if (!canProject) return const SizedBox.shrink();
 
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
     final isBuiltin = builtinPackId != null &&
         widget.entity.linked &&
         widget.entity.packageId == builtinPackId;
 
-    var isShared = false;
-    if (worldId != null && isDm) {
-      final shares =
-          ref.watch(worldEntitySharesProvider(worldId)).valueOrNull ??
-              const [];
-      isShared = shares.any(
-        (s) => s.entityId == widget.entityId && s.isWorldWide,
-      );
-    }
+    final isShared =
+        ref.watch(sharedEntityIdsProvider).contains(widget.entityId);
 
     final hasImage = _images.isNotEmpty;
 
@@ -1606,7 +1612,6 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
       case _WorldMenuAction.projectCard:
         await _projectCard();
       case _WorldMenuAction.share:
-        if (worldId == null) return;
         await _toggleShare(worldId, isShared);
     }
   }
@@ -1664,28 +1669,30 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     }
   }
 
-  Future<void> _toggleShare(String worldId, bool isShared) async {
+  /// Paylaşım işaretini çevirir. İşaret her zaman yerele yazılır; bulut
+  /// satırı yalnızca dünya online + rol DM ise gider — kararı
+  /// `EntitySharer.setShared` verir ve mesaj ona göre kurulur.
+  Future<void> _toggleShare(String? worldId, bool isShared) async {
     setState(() => _busy = true);
     try {
-      final sharer = ref.read(entitySharerProvider);
-      if (isShared) {
-        await sharer.unshare(entityId: widget.entityId, worldId: worldId);
-      } else {
-        await sharer.share(entityId: widget.entityId, worldId: worldId);
-      }
-      ref.invalidate(worldEntitySharesProvider(worldId));
+      final pushed = await ref.read(entitySharerProvider).setShared(
+            entityId: widget.entityId,
+            shared: !isShared,
+            worldId: worldId,
+          );
       if (!mounted) return;
+      final String msg;
+      if (isShared) {
+        msg = pushed ? 'Stopped sharing with players' : 'Unmarked for sharing';
+      } else {
+        msg = pushed
+            ? 'Shared with all players'
+            : 'Marked to share — goes out when the world goes online';
+      }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 2),
-            content: Text(
-              isShared
-                  ? 'Stopped sharing with players'
-                  : 'Shared with all players',
-            ),
-          ),
+          SnackBar(duration: const Duration(seconds: 2), content: Text(msg)),
         );
     } catch (e) {
       if (!mounted) return;
