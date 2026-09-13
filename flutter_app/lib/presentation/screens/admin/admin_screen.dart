@@ -359,6 +359,12 @@ class _DashboardTab extends ConsumerWidget {
         },
       );
       ref.invalidate(campaignListProvider);
+      // Worlds sekmesi listeyi `campaignInfoListProvider`'dan, kartın
+      // banner/açıklamasını `campaignMetadataProvider`'dan okuyor. Yalnız
+      // campaignListProvider'ı tazelemek, üstüne kurulan dünyanın kartını
+      // eski (çoğu zaman boş) metadata'yla bırakıyordu.
+      ref.invalidate(campaignInfoListProvider);
+      ref.invalidate(campaignMetadataProvider);
       ref.invalidate(packageListProvider);
       ref.invalidate(characterListProvider);
       messenger.showSnackBar(SnackBar(content: Text(summary)));
