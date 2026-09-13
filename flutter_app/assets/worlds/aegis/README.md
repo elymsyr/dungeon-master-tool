@@ -345,7 +345,17 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.3)
+### 4.8 Yazılan kartlar (0.6.4)
+
+**0.6.4 (2026-09-13).** Yeni kart yok, bir bağ eksiği kapandı: **Halim** hiçbir
+mekan kartında geçmiyordu, yani kartı olan ama ulaşılamayan bir NPC'ydi.
+`location/Gümüşsu` artık dördüncü yabancıyı sayıyor (*"üç yabancı"* → üçü kulübede,
+dördüncüsü hanın üst katında ve hasta değil) ve *Kim var* listesinde Halim var;
+`location/Goodbarrel'ın Ocak Başı`'nda üst kattaki iki odadan birinin dolu olduğu
+yazıyor. Kanon ([`act1.md` §3.5](lore/canon/act1.md)) bunu zaten söylüyordu.
+
+Görseli olmayan iki kart kaldı — `npc/Halim` ve `creature-action/Sıçrayıp Isırma`;
+prompt'ları hazır, bkz. [`tool/aegis_art/README.md` §6.1](../../../../tool/aegis_art/README.md).
 
 **0.6.3 (2026-09-13).** Dönüşmüş'lere üçüncü bir eylem: **Sıçrayıp Isırma**
 (*yeniden şarj 5–6*, 15 ft sıçrayış, saldırı zarı yok, 1d8 delici, ardından **CON DC
