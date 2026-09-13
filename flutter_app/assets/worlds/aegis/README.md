@@ -345,7 +345,7 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.7)
+### 4.8 Yazılan kartlar (0.6.8)
 
 **0.6.7 (2026-09-13) — Siper Okulu.** Wizard'a Aegis'in kendi alt sınıfı yazıldı:
 **`subclass/Siper Okulu`** ([`alt-siniflar.md` §4](lore/canon/alt-siniflar.md)),
@@ -355,8 +355,21 @@ oynanamaz yapınca masada **güvenilir iyileştirici** kalmadı, ve bu okul boş
 iyileştirerek değil **hasarı aldırmayarak** kapatıyor. `2 × seviye + Zeka` canlık bir
 **Siper**, 6. seviyede o siperi 30 ft içindeki dostlara uzatan bir tepki, 10'da
 *Counterspell*/*Dispel Magic* hattı, 14'te büyü direnci. Verdiği hiçbir şey **çağrı zarı
-istemez** — arkana güç zara girmez. **+6 kart:** `subclass` +1 · `trait` +4 ·
-`creature-action` +1. Sapma defteri [`alt-siniflar.md` §6.4](lore/canon/alt-siniflar.md).
+istemez** — arkana güç zara girmez. Sapma defteri
+[`alt-siniflar.md` §6.4](lore/canon/alt-siniflar.md).
+
+**0.6.8 (2026-09-13) — siper dengelendi.** Siper ilk taslakta 0 canda *bekliyor* ve
+bonus aksiyonla yuva yakılarak *doldurulabiliyordu*; bu onu sınırsız bir yuva-can
+pompasına çeviriyordu. Yeni hâli: elle doldurma **kaldırıldı**, siper canı 0'a
+düştüğünde **kırılır**, ve **uzun dinlenmede bir kez** örülür. Buna karşılık *ne zaman*
+örüleceği artık oyuncunun kararı — `creature-action/Siperi Ör` (**Free** aksiyon,
+uzun dinlenmede yenilenir) ve `pool:siper` sayacı bunun için eklendi. Abjuration
+büyüsü şartı aynen duruyor: siper havadan örülmez, mutlaka bir yuva harcanmış
+1. kademe+ abjuration büyüsünün sırtında kurulur. Ayaktayken beslenmesi kendiliğinden
+sürüyor. **+2 kart:** `creature-action` +1 · `resource-pool` +1.
+
+**Toplam +8 kart:** `subclass` +1 · `trait` +4 · `creature-action` +2 ·
+`resource-pool` +1.
 
 **0.6.6 (2026-09-13).** Kart listesi görevin kendi kartına indi. Üç görevin de
 `objective` alanı **Bu görevde geçen kartlar** bölümüyle bitiyor: sahneler, mekanlar,

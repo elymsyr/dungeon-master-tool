@@ -2389,12 +2389,30 @@
           "name": "Siper",
           "source": "Siper Okulu",
           "trait_kind": "Defensive",
-          "description": "**1. kademe ya da üstü bir abjuration büyüsü yaptığında**, büyünün bir kısmını ayırıp etrafına bir **Siper** örersin.\n\nSiper **uzun dinlenmene kadar** durur ve **sana yönelen hasarı** onun yerine alır.\n\n**Siperin can kapasitesi: `2 × büyücü seviyesi + Zeka modifiyeri`.**",
-          "benefits": "**Beslemek.** 1. kademe ya da üstü başka bir abjuration büyüsü yaptığında siper **büyü kademesi × 2** can geri kazanır. Ayrıca **bonus aksiyon** ile bir büyü yuvası harcayıp **yuva kademesi × 2** can doldurabilirsin. Kapasitenin üstüne çıkamaz.\n\n**Taştığında.** Gelen hasar siperin mevcut canını aşarsa aşan kısmı sen alırsın; siper yok olmaz, 0 canda bekler.\n\n**Bir kez kurulur.** Siper bir kere örüldükten sonra yenisini **uzun dinlenmeye kadar** kuramazsın — yalnızca mevcut olanı beslersin.\n\n**Örnek (5. seviye, Zeka 16):** kapasite `2×5 + 3 = 13`. *Shield* (1. kademe) yaptın, siper kuruldu. Bonus aksiyonla 2. kademe yuva yakarsan **+4** can gelir.",
+          "description": "**Uzun dinlenmede bir kez.** 1. kademe ya da üstü bir **abjuration** büyüsünü bir yuva harcayarak yaptığında, o büyünün gücünün bir kısmını ayırıp etrafına bir **Siper** örebilirsin.\n\n**Örmek senin kararın.** Her abjuration büyüsü siperi zorla kurmaz — büyüyü yaparken *bu sefer örüyorum* dersin. Siper hep o büyünün sırtında kurulur; başka türlü kurulamaz.\n\n**Siperin can kapasitesi: `2 × büyücü seviyesi + Zeka modifiyeri`.**\n\nSiper örüldüğü andan **kırılana kadar** durur ve sana yönelen hasarı senin yerine alır.",
+          "benefits": "**Beslenmesi kendiliğinden olur.** Siper ayaktayken yaptığın 1. kademe ya da üstü her abjuration büyüsü, sipere **büyü kademesi × 2** can geri verir. Kapasitenin üstüne çıkmaz. Bunun için ayrı bir aksiyon ya da fazladan yuva harcamazsın — büyüyü yapman yeter.\n\n**Kırılma.** Siperin canı **0'a düştüğü anda siper kırılır**; o vuruştan artan hasarı sen alırsın ve siper **yok olur**. Kırılan siper beslenerek geri gelmez.\n\n**Uzun dinlenmeye kadar bir tane.** İster kırılsın ister ayakta kalsın, bir sonraki uzun dinlenmeye kadar ikinci bir siper öremezsin. Ne zaman öreceğine karar vermek bu yüzden bu kartın asıl oyunudur.\n\n**Örnek (5. seviye, Zeka 16):** kapasite `2×5 + 3 = 13`. İlk turda *Shield* atarken siperi ördün. Aynı çatışmada yaptığın 2. kademe bir abjuration büyüsü sipere **+4** can yazar. 13 canı aşan bir vuruş geldiğinde siper kırılır ve o çatışmanın geri kalanında sipersizsin.",
           "tags": [
             "siper-okulu",
             "wizard",
             "abjuration"
+          ],
+          "granted_action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Siperi Ör"
+            }
+          ],
+          "resource_pool_grants": [
+            {
+              "pool_ref": {
+                "lookup": "resource-pool",
+                "match": "name",
+                "value": "pool:siper"
+              },
+              "recharge": "long_rest",
+              "count": 1
+            }
           ]
         }
       },
@@ -2405,7 +2423,7 @@
           "source": "Siper Okulu",
           "trait_kind": "Defensive",
           "description": "Siper artık yalnız seni değil, **gördüğün herkesi** tutar.",
-          "benefits": "**Tepki** ile, **30 ft** içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Aşan hasarı yaratık alır.\n\nSayı sınırı yok; sınır siperin canı. Bu, bu okulun ilahi iyileştirmenin yerine koyduğu şeydir: **alınmamış hasar.**",
+          "benefits": "**Tepki** ile, **30 ft** içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Hasar siperin canını aşarsa **siper kırılır** ve artan hasarı yaratık alır.\n\nSayı sınırı yok; sınır siperin canı ve turda tek bir tepkin olması. Bu, bu okulun ilahi iyileştirmenin yerine koyduğu şeydir: **alınmamış hasar.**",
           "granted_reaction_refs": [
             {
               "lookup": "creature-action",
@@ -2637,7 +2655,17 @@
           "source": "Siper Okulu",
           "action_type": "Reaction",
           "range_normal_ft": 30,
-          "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır.\n\nTepkinle o hasarı **Siper**ine yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa aşan kısmı yaratık alır, ama **siper yok olmaz** — 0 canda durur ve beslenmeyi bekler.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır."
+          "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır ve senin ayakta bir **Siper**in vardır.\n\nTepkinle o hasarı sipere yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa **siper kırılır** ve aşan kısmı yaratık alır.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır."
+        }
+      },
+      {
+        "source_name": "Siperi Ör",
+        "mapping": {
+          "name": "Siperi Ör",
+          "source": "Siper Okulu",
+          "action_type": "Free",
+          "recharge_kind": "Long Rest",
+          "description": "*Tetikleyici:* bir yuva harcayarak **1. kademe ya da üstü bir abjuration büyüsü** yaparsın.\n\nO büyünün gücünden **Siper**ini örersin. Kapasite `2 × büyücü seviyesi + Zeka modifiyeri`.\n\nAksiyon, bonus aksiyon ya da tepki harcamaz — kararı büyüyü yaparken verirsin. **Uzun dinlenmede bir kez.**\n\nSiper, canı 0'a düştüğünde **kırılır** ve uzun dinlenmeye kadar geri gelmez; o yüzden hangi büyüde öreceğin bu okulun asıl kararıdır."
         }
       }
     ],
@@ -4667,6 +4695,14 @@
           "display_name": "Andın Hâli",
           "description": "İrade Yemini — Andın Hâli kullanımı."
         }
+      },
+      {
+        "source_name": "pool:siper",
+        "mapping": {
+          "name": "pool:siper",
+          "display_name": "Siper",
+          "description": "Siper Okulu — siper örme hakkı. Uzun dinlenmede bir."
+        }
       }
     ],
     "subclass": [
@@ -5112,12 +5148,19 @@
             {
               "level": 3,
               "name": "Siper",
-              "description": "1. kademe ya da üstü bir **abjuration** büyüsü yaptığında etrafına bir **Siper** örülür. Kapasitesi `2 × büyücü seviyesi + Zeka modifiyeri`; sana gelen hasarı o alır.\n\nBaşka bir abjuration büyüsü **kademe × 2**, bonus aksiyonla yakılan bir yuva **yuva kademesi × 2** can doldurur. **Uzun dinlenmeye kadar** sürer ve yenisi kurulamaz.",
+              "description": "**Uzun dinlenmede bir kez.** Bir yuva harcayarak 1. kademe ya da üstü bir **abjuration** büyüsü yaptığında, **istersen** o büyünün sırtında bir **Siper** örersin — aksiyon harcamaz, kararı sen verirsin.\n\nKapasite `2 × büyücü seviyesi + Zeka modifiyeri`; sana gelen hasarı siper alır. Siper ayaktayken yaptığın her abjuration büyüsü sipere **kademe × 2** can yazar (kendiliğinden, ek maliyet yok).\n\n**Canı 0'a düştüğünde siper kırılır**, artan hasarı sen alırsın ve **uzun dinlenmeye kadar** yenisi örülemez.",
               "granted_trait_refs": [
                 {
                   "lookup": "trait",
                   "match": "name",
                   "value": "Siper"
+                }
+              ],
+              "granted_action_refs": [
+                {
+                  "lookup": "creature-action",
+                  "match": "name",
+                  "value": "Siperi Ör"
                 }
               ]
             },
@@ -5187,7 +5230,7 @@
               ]
             }
           ],
-          "dmNotes": "**Sapma işareti — bu alt sınıf SRD'de yoktur.** Aegis'e özgü, klasik *abjuration* geleneğinden esinlenerek **sıfırdan yazılmış** bir alt sınıftır; hiçbir üçüncü taraf metninden çeviri değildir. Gerekçesi dünyanın kendi kuralı: @[Kural Sapmaları](entity:lore/Kural Sapmaları) ilahi iyileştirmeyi zara bağladığı için grubun güvenilir bir hasar hattına ihtiyacı var, ve bu hat arkana olmak zorunda.\n\n**2024 uyumu.** Alt sınıf **3. seviyede** açılır, özellikler **3 / 6 / 10 / 14** kademelerinde gelir — SRD 5.2.1'in alt sınıf iskeletiyle birebir aynı. Eski 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz.\n\n**Denge notları.**\n- Siperin kapasitesi 5. seviyede ~13, 10. seviyede ~24, 17. seviyede ~38 can. Tek bir uzun dinlenme döngüsünde toplam emilen hasar bundan çok daha yüksektir çünkü her abjuration büyüsü besliyor; pratikte **büyü yuvası → parti canı** musluğudur. Grubun hiç iyileştiricisi yoksa bu kasıtlıdır.\n- *Siperi Uzat* sınırsızdır ama **tepki** harcar: turda bir kez. Asıl sınır budur, sayaç değil.\n- 10. kademedeki \"yuva harcanmaz\" maddesi yalnız *Counterspell* içindir, *Dispel Magic* için değil.\n- 3. kademedeki daima-hazır **Shield / Protection from Evil and Good** klasik geleneğin vermediği bir eklemedir; kartın uygulamada görünür bir şey vermesi ve siperin ilk turda kurulabilmesi için konuldu. Kısmak isterseniz ilk çıkarılacak madde budur.\n\n**Oyuncuya söyle:** siper **kendiliğinden kurulmaz**. Çatışmanın ilk turunda bir abjuration büyüsü yapılmazsa ortada siper yoktur ve alt sınıfın yarısı çalışmaz.",
+          "dmNotes": "**Sapma işareti — bu alt sınıf SRD'de yoktur.** Aegis'e özgü, klasik *abjuration* geleneğinden esinlenerek **sıfırdan yazılmış** bir alt sınıftır; hiçbir üçüncü taraf metninden çeviri değildir. Gerekçesi dünyanın kendi kuralı: @[Kural Sapmaları](entity:lore/Kural Sapmaları) ilahi iyileştirmeyi zara bağladığı için grubun güvenilir bir hasar hattına ihtiyacı var, ve bu hat arkana olmak zorunda.\n\n**2024 uyumu.** Alt sınıf **3. seviyede** açılır, özellikler **3 / 6 / 10 / 14** kademelerinde gelir — SRD 5.2.1'in alt sınıf iskeletiyle birebir aynı. Eski 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz.\n\n**Denge notları.**\n- Siperin kapasitesi 5. seviyede ~13, 10. seviyede ~24, 17. seviyede ~38 can. Beslenme bunu bir miktar aşar ama **çatışma başına bir sipere** bakıyorsun: siper kırıldığında uzun dinlenmeye kadar geri gelmiyor. Yani bu bir musluk değil, **günde bir kez açılan bir sigorta**. Grubun iyileştiricisi yoksa bile tek başına yetmez, ve bu kasıtlıdır.\n- **Ne zaman öreceği** oyuncunun kararı: erken örülen siper küçük vuruşlarda erir, geç örülen siper hiç örülmemiş olabilir. Kartın oyunu budur.\n- *Siperi Uzat* sınırsızdır ama **tepki** harcar: turda bir kez. Asıl sınır budur, sayaç değil.\n- 10. kademedeki \"yuva harcanmaz\" maddesi yalnız *Counterspell* içindir, *Dispel Magic* için değil.\n- 3. kademedeki daima-hazır **Shield / Protection from Evil and Good** klasik geleneğin vermediği bir eklemedir; kartın uygulamada görünür bir şey vermesi ve siperin ilk turda kurulabilmesi için konuldu. Kısmak isterseniz ilk çıkarılacak madde budur.\n\n**Oyuncuya söyle:** siper **kendiliğinden kurulmaz** ve **günde bir tanedir**. Abjuration büyüsü yapılmazsa ortada siper yoktur; kırıldıktan sonra da uzun dinlenmeye kadar yoktur. *Siperi Uzat* dahil bu kartın yarısı sipere bağlı.",
           "tags": [
             "alt-sınıf",
             "siper-okulu",

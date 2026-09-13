@@ -368,9 +368,9 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 | **Clockwork Soul** | Sorcerer (1. sv) | Mechanus'un düzeninden gelen büyü: fazlalığı siler, eksiği tamamlar, sapmayı hizaya çeker | ✅ |
 | **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
 | **İrade Yemini** | Paladin (1. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. +1 Güç / +1 Dayanıklılık, History + Investigation, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
-| **Siper Okulu** | Wizard (3. sv) | Çağrı zarı güvenilir iyileştiriciyi ortadan kaldırdı; bu okul boşluğu **iyileştirerek değil, hasarı aldırmayarak** kapatır. `2 × sv + Zeka` canlık **Siper**, 6. seviyede dostlara uzatılan tepki, 10'da **Karşı Büyücü** | ✅ |
+| **Siper Okulu** | Wizard (3. sv) | Çağrı zarı güvenilir iyileştiriciyi ortadan kaldırdı; bu okul boşluğu **iyileştirerek değil, hasarı aldırmayarak** kapatır. Abjuration büyüsünün sırtında, oyuncunun seçtiği anda örülen ve 0 canda **kırılan** günlük bir **Siper** (`2 × sv + Zeka`), 6. seviyede dostlara uzatılan tepki, 10'da **Karşı Büyücü** | ✅ |
 
-Bağlı kartlar: `animal/Drake` · 21 `trait` · 9 `creature-action` · 8 `resource-pool`
+Bağlı kartlar: `animal/Drake` · 21 `trait` · 10 `creature-action` · 9 `resource-pool`
 satırı — hepsi [`alt-siniflar.md` §5](alt-siniflar.md)'te adıyla sayılı.
 
 İlk ikisi WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
@@ -392,7 +392,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `location` | 18 | — | — | 18 |
 | `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
-| `creature-action` | 12 | — | — | 12 |
+| `creature-action` | 13 | — | — | 13 |
 | `trait` | 25 | — | — | 25 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
@@ -404,12 +404,13 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `species` | — | — | 0 | 0 (bloke) |
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
-| `resource-pool` | 8 | — | — | 8 |
-| **Toplam** | **158** | **12** | **—** | **170** |
+| `resource-pool` | 9 | — | — | 9 |
+| **Toplam** | **160** | **12** | **—** | **172** |
 
-**158/170 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
-dört okul `trait`'i ve `creature-action/Siperi Uzat` — 164'ten 170'e. Wizard'a
-çağrı zarına girmeyen bir destek hattı yazıldı;
+**160/172 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
+dört okul `trait`'i, `creature-action/Siperi Uzat` + `Siperi Ör` ve `pool:siper` —
+164'ten 172'ye. Wizard'a çağrı zarına girmeyen bir destek hattı yazıldı, ve siper
+aynı turda **günde bir / kırılabilir** hâline çekildi;
 [`alt-siniflar.md` §4](alt-siniflar.md).)*
 
 Öncesi: **152/164 ✅** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
