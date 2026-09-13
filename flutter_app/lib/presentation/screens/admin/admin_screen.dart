@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,7 @@ import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/format_bytes.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../../application/services/bundled_worlds_installer.dart';
 import '../../../data/datasources/remote/admin_users_remote_ds.dart';
 import '../../dialogs/admin_compose_dm_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -210,6 +212,32 @@ class _DashboardTab extends ConsumerWidget {
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              title: Text('Import world zip',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              subtitle: Text(
+                  'Install a world from a .zip with the same layout — the only '
+                  'import path on phones, where folders cannot be picked.',
+                  style: TextStyle(
+                      fontSize: 11, color: palette.sidebarLabelSecondary)),
+              trailing: TextButton(
+                onPressed: () => _importWorldZip(context, ref),
+                child: const Text('Choose zip…'),
+              ),
+            ),
+          ),
+        ],
+        if (!kIsWeb &&
+            defaultTargetPlatform != TargetPlatform.android &&
+            defaultTargetPlatform != TargetPlatform.iOS) ...[
+          const SizedBox(height: 12),
+          _AdminCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
               title: Text('Import world folder',
                   style: TextStyle(
                       fontSize: 13,
@@ -286,10 +314,28 @@ class _DashboardTab extends ConsumerWidget {
     }
   }
 
+  Future<void> _importWorldZip(BuildContext context, WidgetRef ref) async {
+    final picked = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Select a world zip', type: FileType.any);
+    final path = picked?.files.single.path;
+    if (path == null || !context.mounted) return;
+    await _runWorldImport(
+        context, ref, (i) => i.installFromZip(path));
+  }
+
   Future<void> _importWorldFolder(BuildContext context, WidgetRef ref) async {
     final dir = await FilePicker.platform.getDirectoryPath(
         dialogTitle: 'Select a world folder');
     if (dir == null || !context.mounted) return;
+    await _runWorldImport(
+        context, ref, (i) => i.installFromDirectory(dir));
+  }
+
+  Future<void> _runWorldImport(
+    BuildContext context,
+    WidgetRef ref,
+    Future<InstallReport> Function(BundledWorldsInstaller) install,
+  ) async {
     final installer = ref.read(bundledWorldsInstallerProvider);
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -298,7 +344,7 @@ class _DashboardTab extends ConsumerWidget {
         'world-folder-import',
         'Importing world…',
         () async {
-          final report = await installer.installFromDirectory(dir);
+          final report = await install(installer);
           for (final issue in [...report.failures, ...report.issues]) {
             debugPrint('[world-import] $issue');
           }
