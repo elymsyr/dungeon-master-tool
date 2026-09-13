@@ -358,7 +358,7 @@ Yeni ırk kartı **yazılmaz**; ırksal özelliklerin kaynağı kararı açık. 
 engelliyor, **ref vermeyi değil**: SRD'de adı birebir olan bir ırka `species_ref`
 verilir (Halfling · Tiefling).
 
-## 14. `subclass` — 3 ✅
+## 14. `subclass` — 4 ✅
 
 Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılıyorlar.
 `class` kartı **yazılmıyor** — SRD'nin on iki sınıfı olduğu gibi duruyor.
@@ -368,16 +368,18 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 | **Clockwork Soul** | Sorcerer (1. sv) | Mechanus'un düzeninden gelen büyü: fazlalığı siler, eksiği tamamlar, sapmayı hizaya çeker | ✅ |
 | **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
 | **İrade Yemini** | Paladin (1. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. +1 Güç / +1 Dayanıklılık, History + Investigation, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
+| **Siper Okulu** | Wizard (3. sv) | Çağrı zarı güvenilir iyileştiriciyi ortadan kaldırdı; bu okul boşluğu **iyileştirerek değil, hasarı aldırmayarak** kapatır. `2 × sv + Zeka` canlık **Siper**, 6. seviyede dostlara uzatılan tepki, 10'da **Karşı Büyücü** | ✅ |
 
-Bağlı kartlar: `animal/Drake` · 17 `trait` · 8 `creature-action` · 8 `resource-pool`
-satırı — hepsi [`alt-siniflar.md` §4](alt-siniflar.md)'te adıyla sayılı.
+Bağlı kartlar: `animal/Drake` · 21 `trait` · 9 `creature-action` · 8 `resource-pool`
+satırı — hepsi [`alt-siniflar.md` §5](alt-siniflar.md)'te adıyla sayılı.
 
 İlk ikisi WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
 aynı — ve her kartın `source` alanı bunu söylüyor (`Tasha's Cauldron of Everything` ·
-`Fizban's Treasury of Dragons`). **İrade Yemini ithal değil:** çağrı zarı
-([`mekanikler.md` §3.1](mekanikler.md)) Cleric ve Warlock'u oynanamaz yaptı, ve bu kart
-Paladin'in bu kıtada nasıl ayakta kaldığını söylüyor.
-Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
+`Fizban's Treasury of Dragons`). **Son ikisi ithal değil:** çağrı zarı
+([`mekanikler.md` §3.1](mekanikler.md)) Cleric ve Warlock'u oynanamaz yaptı;
+**İrade Yemini** Paladin'in bu kıtada nasıl ayakta kaldığını, **Siper Okulu** da
+iyileştiricisi olmayan bir grubun nasıl ayakta kaldığını söylüyor.
+Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 
 ---
 
@@ -390,8 +392,8 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 | `location` | 18 | — | — | 18 |
 | `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
-| `creature-action` | 11 | — | — | 11 |
-| `trait` | 21 | — | — | 21 |
+| `creature-action` | 12 | — | — | 12 |
+| `trait` | 25 | — | — | 25 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
@@ -400,12 +402,17 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 | `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
-| `subclass` | 3 | — | — | 3 |
+| `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 8 | — | — | 8 |
-| **Toplam** | **152** | **12** | **—** | **164** |
+| **Toplam** | **158** | **12** | **—** | **170** |
 
-**152/164 ✅, 12 🟡, 0 ⬜** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
+**158/170 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
+dört okul `trait`'i ve `creature-action/Siperi Uzat` — 164'ten 170'e. Wizard'a
+çağrı zarına girmeyen bir destek hattı yazıldı;
+[`alt-siniflar.md` §4](alt-siniflar.md).)*
+
+Öncesi: **152/164 ✅** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
 
 > **Tablo hizalaması (2026-09-13).** Satırlar denge turundan sonra güncellenmemişti
 > ve 166 topluyordu; `creature-action` 12→11 ve `trait` 22→21 yazıldı. `location`
