@@ -1,5 +1,58 @@
 # Release Notes
 
+## Dungeon Master Tool v16.2.0 — Worlds Fit in a Zip (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Importing a world no longer needs a folder picker. A `.zip` with the same layout installs directly, which is the only way this was ever going to work on a phone — Android and iOS cannot pick a folder at all, so that option no longer sits in the list doing nothing there.
+
+---
+
+### Highlights
+
+- **Import a world from a zip** — pick a `.zip` instead of a folder; the only import path on phones.
+
+---
+
+### Worlds
+
+#### Import a world from a zip
+
+Admin takes a `.zip` laid out like a world folder and installs it in one pass, with the same result and the same status reporting as the folder import. On Android and iOS it is the only option offered, because those platforms have no folder picker; on desktop both are available side by side.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.1.0` → `16.2.0`.
+- **Nothing to migrate:** existing worlds, packages and characters are untouched.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1503 tests fail on `main` and no CI step blocks a red build.
+
+---
+
+### For developers
+
+- **`BundledWorldsInstaller.installFromZip`** — sibling of `installFromDirectory`; both admin entry points route through one shared runner.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.1.0 — Players Can Actually Build Your Characters (Beta)
 
 **Release date:** September 2026
