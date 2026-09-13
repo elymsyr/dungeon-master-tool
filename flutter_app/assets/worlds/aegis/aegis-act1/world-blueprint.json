@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1",
+  "version": "0.6.0",
   "source_system": "dnd5e",
   "app_schema": "builtin-dnd5e-default-v2",
   "pinned": [
@@ -22,12 +22,12 @@
           ],
           "pages": [
             "# Aegis'e hoş geldiniz\n\n@[Meridia](entity:location/Meridia) beyaz taş şehirlerin, işlek limanların ve açık yolların kıtası. Başkentte loncalar yönetir; limanlarda gemiler her mevsim yanaşır; ormandaki köylerde kereste kesilir, ekmek pişer, nöbet tutulur.\n\nGüney ormanındaki köylerde bir hastalıktan söz ediliyor. Kimse adını tam bilmiyor. Bazıları ona **Blight** diyor.\n\n## Dünyanın havası\n\nKarşınıza çıkacak kurumlar soğuk, geçmiş karanlık. Ama bugünkü hayat işliyor: kazanlar kaynıyor, bezler yıkanıp asılıyor, hancı borç yazıyor, bir çırak kimse ona soru sormadığı için her şeyi biliyor. Karşılaştığınız herkesin bir sırrı yok. İşini iyi yapan, cömert, sıradan insanlar da var.\n\nDünya yaşanabilir bir yer. Ama gidişat kötü.\n\n## Tanrısız kıta\n\nÜç yüz yıl önce Kral Lucian tanrılarla insanlar arasındaki bağı kesti. O günden beri Meridia'da tapınak yerine meydan, dua yerine iş vardır. Bir felaket karşısında dua etmek acizlik sayılır; çözüm üretmek erdemdir. Bkz. @[İrade Yolu](entity:lore/İrade Yolu).\n\nTanrılar ise tümden gitmedi: @[hâlâ fısıldıyorlar](entity:lore/Tanrılar ve Fısıltı).\n\n## Loncalar\n\nBaşkent @[Lucid Triton](entity:location/Lucid Triton)'da altı lonca Meclis'te oturur ve kıtanın işlerini yürütür. Bkz. @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).",
-            "# Oyun kuralları\n\n**Aegis D&D 5e kurallarıyla oynanır.** Bu dünyanın 5e'ye eklediği kurallar iki kartta yazılıdır: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) ve @[Kural Sapmaları](entity:lore/Kural Sapmaları). Geri kalan her şey kitaptaki gibi işler.\n\n## Hastalık\n\nHastalanmak rastgele olmaz. Bir hastaya dokunduğunuzda, bir cesedi taşıdığınızda ya da hastayla kapalı bir odada gece kaldığınızda zar atarsınız. Hastalığın puanı bir kez yükselince inmez.\n\n## Kalıcı Yaralar\n\n0 cana düşmek ya da tek bir saldırıda canınızın yarısını kaybetmek bir yara zarı ister. Yaralar kalıcı olabilir. DM bu kuralı ilk çatışmadan önce hatırlatır.\n\n## Büyü\n\n- **Şehirde** büyü yapmak lonca lisansı ister (@[Büyücü Loncası](entity:lore/Büyücü Loncası)). Köyde, yolda ve limanda kimse sormaz.\n- **Orduda** büyücü azdır ve korunur.\n- **Köyde** büyü bir tuhaflıktır; yardım etse bile yabancıdır.\n- **1. ve 2. seviye büyüler** hiçbir ek kural almaz. Ek kurallar 3. seviyede başlar.\n\n## Hikaye ve karakterler\n\nHikaye belirli bir karaktere bağlı değildir. Bir karakter bir ipucunu kaçırırsa aynı bilgi başka bir yerde, başka birinin ağzından da bulunur.",
-            "# Karakter yaratma\n\nKarakterinizi istediğiniz gibi yaratın. Tek bir şart var:\n\n> **Hastalık söylentileri karakterinizi bir şekilde @[Gümüşsu](entity:location/Gümüşsu) yoluna çıkardı.**\n\nKarakterlerin birbirini tanıması ya da aynı gün varması gerekmez. İlk karşılaşma Gümüşsu'da olur. Karakterinizin neden yolda olduğunu siz belirlersiniz; DM o sebebi dünyaya bağlar.\n\n## Bu dünyanın geçmişleri\n\nMeridia'da on sekiz yaşına giren herkes bir loncaya, orduya ya da bürokrasiye katılır. Bu dünyanın dokuz geçmişi bu kurumlardan gelir:\n\n@[Arşivci](entity:background/Arşivci) · @[Lonca Üyesi](entity:background/Lonca Üyesi) · @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) · @[Sihir Loncası Öğrencisi](entity:background/Sihir Loncası Öğrencisi) · @[Lonca Ajanı](entity:background/Lonca Ajanı) · @[Rıhtım İşçisi](entity:background/Rıhtım İşçisi) · @[Gemi Kaptanı](entity:background/Gemi Kaptanı) · @[Paladin Askeri](entity:background/Paladin Askeri) · @[Paladin Rütbelisi](entity:background/Paladin Rütbelisi)\n\nHer geçmiş standart 5e mekaniğini kullanır. İki şey ekler:\n\n- **Bir eşya.** Mühür, künye, kanca ya da defter. Eşya size belirli yerlerde belirli kapıları açar; geçmiş kartında hangileri olduğu yazar.\n- **Bir bedel.** Tanınmak, izlenmek, borçlu olmak, çağrıldığında gitmek. Bu bir zar değil; insanların size nasıl baktığıdır.",
-            "# Macerayı yönetmek\n\n## Macera nasıl başlar\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır (@[Köye Varış](entity:scene/Köye Varış)). Köyün dışındaki kulübede üç hasta yabancı yatıyor. Karakterler kulübeye girer (@[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)), geceyi köyde geçirir, ve şafakta üç yabancı dönüşüp köye saldırır (@[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü)).\n\nBundan sonra karakterler yabancıların nereden geldiğini araştırabilir (@[Nereden Geldiler](entity:quest/Nereden Geldiler)), ya da doğrudan başkente, Meclis'e gidebilir.\n\n## Söylentiler nerede nasıl\n\n| Yer | Hastalık hakkında ne duyulur |\n|---|---|\n| @[Rıhtım](entity:location/Rıhtım) | Çok şey; çoğu doğru ve bedava |\n| @[Elymsyr](entity:location/Elymsyr) | Gümrük defterlerinde izi var; okumayı bilen görür |\n| @[Cinervik](entity:location/Cinervik) | Çok şey; yarısı uydurma |\n| @[Argenfon](entity:location/Argenfon) | Kaygıyla konuşulur; her konuşma *\"Başkumandan halleder\"* diye biter |\n| @[Lucid Triton](entity:location/Lucid Triton) | Az; Meclis konuyu susturuyor |\n| @[Votumar](entity:location/Votumar) | Fısıltıyla; kimse yüksek sesle söylemiyor |\n| @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu) | Söylenti yok; orada herkes zaten biliyor |\n\nKarakterlere iki farklı yerden söylenti ver. Çelişkiyi kendileri görsün.\n\n## Sırlar nerede\n\nOyuncuların bilmemesi gereken her şey kartların DM alanlarındadır: mekan ve NPC kartlarında **secrets**, görevlerde **secrets**, çatışmalarda **tactics**.\n\nÜç soru bu macerada sorulur ama cevaplanmaz: hastalığın ne olduğu, silinen sayfanın parasını kimin aldığı, ve @[Başkumandan](entity:npc/Başkumandan)'ın kim olduğu. Cevaplar ilgili kartlarda yazılıdır. Karakterlere sezdir; açıkça söyleme.\n\n## Umut\n\nMeclis reddedecek, kapılar kapanacak. Buna karşılık bir hancı borç yazacak, yaşlı bir şifacı kırk yıllık bilgisini karşılıksız verecek, bir rıhtım çırağı her şeyi anlatacak. @[Gümüşsu](entity:location/Gümüşsu) kurtarılabilir.",
+            "# Oyun kuralları\n\n**Aegis D&D 5e kurallarıyla oynanır.** Bu dünyanın 5e'ye eklediği kurallar iki kartta yazılıdır: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) ve @[Kural Sapmaları](entity:lore/Kural Sapmaları). Geri kalan her şey kitaptaki gibi işler.\n\n## Hastalık\n\nHastalanmak rastgele olmaz. Bir hastaya dokunduğunuzda, bir cesedi taşıdığınızda ya da hastayla kapalı bir odada gece kaldığınızda zar atarsınız. Hastalığın puanı bir kez yükselince inmez.\n\n## Kalıcı Yaralar\n\n0 cana düşmek ya da tek bir saldırıda canınızın yarısını kaybetmek bir yara zarı ister. Yaralar kalıcı olabilir. DM bu kuralı ilk çatışmadan önce hatırlatır.\n\n## İlahi büyü — önce bunu okuyun\n\nBu dünyada tanrılar uzakta ve bir çağrının tutması **istisnadır.** Her ilahi büyü denemesi için `d20 + Religion` atılır: çatışmada **19**, çatışma dışında o saat içinde sırasıyla **18 → 20 → yalnız doğal 20 → imkansız.** Tutmayan deneme büyü yuvasını (çatışmada aksiyonu da) harcar. Sayılar ve kapsam: @[Kural Sapmaları](entity:lore/Kural Sapmaları).\n\n> **Bunun anlamı açık:** **Cleric ve Warlock bu kıtada oynanabilir sınıflar değil.** Paladin oynanabilir, ama tek bir yeminle: @[İrade Yemini](entity:subclass/İrade Yemini). Druid, Ranger ve bütün arkan büyücüler bu kuraldan etkilenmez.\n\n## Büyü\n\n- **Şehirde** büyü yapmak lonca lisansı ister (@[Büyücü Loncası](entity:lore/Büyücü Loncası)). Köyde, yolda ve limanda kimse sormaz.\n- **Orduda** büyücü azdır ve korunur.\n- **Köyde** büyü bir tuhaflıktır; yardım etse bile yabancıdır.\n- **1. ve 2. seviye büyüler** hiçbir ek kural almaz. Ek kurallar 3. seviyede başlar.\n\n## Hikaye ve karakterler\n\nHikaye belirli bir karaktere bağlı değildir. Bir karakter bir ipucunu kaçırırsa aynı bilgi başka bir yerde, başka birinin ağzından da bulunur.",
+            "# Karakter yaratma\n\nKarakterinizi istediğiniz gibi yaratın. Tek bir şart var:\n\n> **Hastalık söylentileri karakterinizi bir şekilde @[Gümüşsu](entity:location/Gümüşsu) yoluna çıkardı.**\n\n## Sınıflar\n\nSRD'nin bütün sınıfları açık, iki istisnayla:\n\n- **Cleric ve Warlock oynanmaz.** Bu kıtada bir tanrıdan ya da bir patrondan her istediğinde bir şey almak mümkün değil (@[Kural Sapmaları](entity:lore/Kural Sapmaları)), ve o zar üstüne bir karakter kurulamaz.\n- **Paladin tek bir yeminle oynanır:** @[İrade Yemini](entity:subclass/İrade Yemini). Gücü tanrıdan değil yeminden gelir, 1. seviyede açılır, ve verdiği hiçbir şey zar istemez.\n\nBu iki madde bir ceza değil, dünyanın kendisi. Masada kimse bir tanrıya güvenerek plan yapmıyor.\n\nKarakterlerin birbirini tanıması ya da aynı gün varması gerekmez. İlk karşılaşma Gümüşsu'da olur. Karakterinizin neden yolda olduğunu siz belirlersiniz; DM o sebebi dünyaya bağlar.\n\n## Bu dünyanın geçmişleri\n\nMeridia'da on sekiz yaşına giren herkes bir loncaya, orduya ya da bürokrasiye katılır. Bu dünyanın dokuz geçmişi bu kurumlardan gelir:\n\n@[Arşivci](entity:background/Arşivci) · @[Lonca Üyesi](entity:background/Lonca Üyesi) · @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) · @[Sihir Loncası Öğrencisi](entity:background/Sihir Loncası Öğrencisi) · @[Lonca Ajanı](entity:background/Lonca Ajanı) · @[Rıhtım İşçisi](entity:background/Rıhtım İşçisi) · @[Gemi Kaptanı](entity:background/Gemi Kaptanı) · @[Paladin Askeri](entity:background/Paladin Askeri) · @[Paladin Rütbelisi](entity:background/Paladin Rütbelisi)\n\nHer geçmiş standart 5e mekaniğini kullanır. İki şey ekler:\n\n- **Bir eşya.** Mühür, künye, kanca ya da defter. Eşya size belirli yerlerde belirli kapıları açar; geçmiş kartında hangileri olduğu yazar.\n- **Bir bedel.** Tanınmak, izlenmek, borçlu olmak, çağrıldığında gitmek. Bu bir zar değil; insanların size nasıl baktığıdır.",
+            "# Macerayı yönetmek\n\n## Macera nasıl başlar\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır (@[Köye Varış](entity:scene/Köye Varış)). Köyün dışındaki kulübede üç hasta yabancı yatıyor. Karakterler kulübeye girer (@[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)), geceyi köyde geçirir, ve şafakta üç yabancı dönüşüp köye saldırır (@[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü)).\n\nBundan sonra karakterler gördüklerini bir makama götürür: başkentte Meclis'e, ya da @[Votumar](entity:location/Votumar)'daki paladin şatosuna. İkisi de reddeder (@[Söylentinin Peşinde](entity:quest/Söylentinin Peşinde)). Ardından iki iş açılır: üç yabancının izini sürmek (@[Nereden Geldiler](entity:quest/Nereden Geldiler)) ve kıtadan çıkmanın yolunu bulmak (@[İyi Yazı](entity:quest/İyi Yazı)).\n\n## Söylentiler nerede nasıl\n\n| Yer | Hastalık hakkında ne duyulur |\n|---|---|\n| @[Rıhtım](entity:location/Rıhtım) | Çok şey; çoğu doğru ve bedava |\n| @[Elymsyr](entity:location/Elymsyr) | Gümrük defterlerinde izi var; okumayı bilen görür |\n| @[Cinervik](entity:location/Cinervik) | Çok şey; yarısı uydurma |\n| @[Argenfon](entity:location/Argenfon) | Kaygıyla konuşulur; her konuşma *\"Başkumandan halleder\"* diye biter |\n| @[Lucid Triton](entity:location/Lucid Triton) | Az; Meclis konuyu susturuyor |\n| @[Votumar](entity:location/Votumar) | Fısıltıyla; kimse yüksek sesle söylemiyor |\n| @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu) | Söylenti yok; orada herkes zaten biliyor |\n\nKarakterlere iki farklı yerden söylenti ver. Çelişkiyi kendileri görsün.\n\n## Sırlar nerede\n\nOyuncuların bilmemesi gereken her şey kartların DM alanlarındadır: mekan ve NPC kartlarında **secrets**, görevlerde **secrets**, çatışmalarda **tactics**.\n\nÜç soru bu macerada sorulur ama cevaplanmaz: hastalığın ne olduğu, *Kader*'in kaptanının kimin adına taşıdığı, ve @[Başkumandan](entity:npc/Başkumandan)'ın kim olduğu. Cevaplar ilgili kartlarda yazılıdır. Karakterlere sezdir; açıkça söyleme.\n\n## Umut\n\nMeclis reddedecek, kapılar kapanacak. Buna karşılık bir hancı borç yazacak, yaşlı bir şifacı kırk yıllık bilgisini karşılıksız verecek, bir rıhtım çırağı her şeyi anlatacak. @[Gümüşsu](entity:location/Gümüşsu) kurtarılabilir.",
             "# Sözlük\n\nİlk oyun gününde duyacağınız sözcükler.\n\n**Meridia** — üstünde durduğunuz kıta.\n\n**Öte** — denizin öbür yakasındaki kıta. Gerçek adı @[Vorstrand](entity:lore/Vorstrand — Bilinen Hali), ama Meridia'da bu adı kimse kullanmaz.\n\n**Lucid Triton** — kıtanın beyaz mermerden başkenti.\n\n**Konsey / Meclis** — halk ikisini de kullanır. Konsey kralın kurduğu yönetimdir; Meclis o yönetimin koltuklarında oturan altı lonca. Bkz. @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).\n\n**Lonca** — kıtanın bir işini yürüten kurum: ticaret, demircilik, şifa, hukuk, mimarlık, büyü. Altı lonca Meclis'te oturur.\n\n**Hane** — bir loncanın mührünü elinde tutan aile.\n\n**Mühürlü · Kayıtlı · Yazısız** — bir insanın loncalar karşısındaki yeri: deftere yazan, defterde yazılı olan, hiçbir defterde olmayan. Bkz. @[Sancak Kaydı](entity:lore/Sancak Kaydı).\n\n**Adlar** — iki isimli biri (ad ve hane) bir haneye ya da loncaya aittir. Tek isimli biri hizmet eder. Lakapla anılan birinin mührü yoktur.\n\n**Karşı-imza** — bir işin resmi olarak yapıldığını gösteren ikinci imza.\n\n**Blight** — köylülerin adını koyamadıkları hastalığa verdiği ad. Bkz. @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali)."
           ],
-          "dmNotes": "Bu kartı oyuncular ilk okur. Hastalığın kaynağı, silinen sayfanın arkasındaki el ve @[Başkumandan](entity:npc/Başkumandan)'ın kimliği burada yazmaz; hepsi ilgili kartların secrets alanındadır.\n\nMaceranın özü: karakterler bu sorunları yaratmadı, ama sorunlar artık onların.",
+          "dmNotes": "Bu kartı oyuncular ilk okur. Hastalığın kaynağı, *Kader*'in kaptanını tutan el ve @[Başkumandan](entity:npc/Başkumandan)'ın kimliği burada yazmaz; hepsi ilgili kartların secrets alanındadır.\n\nMaceranın özü: karakterler bu sorunları yaratmadı, ama sorunlar artık onların.",
           "imagePath": "media/Artwork/campaign-Aegis.webp"
         }
       }
@@ -54,16 +54,18 @@
         "source_name": "Tanrılar ve Fısıltı",
         "mapping": {
           "name": "Tanrılar ve Fısıltı",
-          "description": "Tanrılar gitmedi; var oluşlarından vazgeçtiler ve geriye yalnız fısıltıları kaldı. İlahi büyü çalışır, ama bedelsiz değildir.",
+          "description": "Tanrılar gitmedi; var oluşlarından vazgeçtiler ve geriye yalnız fısıltıları kaldı. İlahi büyü hâlâ mümkün — ama neredeyse kimse yapamaz, ve yapan da her seferinde yapamaz.",
           "tags": [
             "lore",
             "din",
             "ilahi-büyü"
           ],
           "pages": [
-            "# Tanrılar ve Fısıltı\n\nTanrılar insanları umursamayı bırakmadı. Tek bir şeyin mümkün olabilmesi için var oluşlarından vazgeçtiler, ve ellerinde kalan tek şey fısıldayabilmek.\n\nFısıltıyı duyanlar onu korkutucu bulmaz. Duyanlar onu, söyleyecek çok şeyi olup ancak birkaç kelimeye gücü yeten birinin sesi gibi anlatır: yorgun, sıcak, kısa.\n\n## İlahi büyü\n\n**İlahi büyü çalışır, ve pek çok kişi yapar.** Biri ilahi büyü yapabiliyorsa, tanrılar ona cevap vermiş demektir. Neden cevap verdikleri söylenmez, sorulmaz, garanti edilmez.\n\n**Şifa rahatlatmaz.** Şifa büyüsü yapanın ve alanın bedenine ağırlık verir: kemiklerde bir basınç, ardından geçmeyen bir yorgunluk. Meridia'da kimse iyileştirilmeyi ferahlatıcı bir şey olarak anlatmaz.\n\n**Kutsal sembol bir alettir.** Süs değil; ilahi olanı odaklayan bir araç. Sembolünü kaybeden bir rahip, bir bileşenden fazlasını kaybeder.\n\n## Şehirde\n\nLucid Triton'da ilahi büyü yapan biri mucize gösteren biri olarak değil, usulsüzlük yapan biri olarak görülür. Şehirde tanrılardan gelen bir cevabın yazılacağı bir yer yoktur.\n\nİnancın şehrin gözünden uzakta nerede yaşadığı: @[Sessiz Mabetler](entity:lore/Sessiz Mabetler)."
+            "# Tanrılar ve Fısıltı\n\nTanrılar insanları umursamayı bırakmadı. Tek bir şeyin mümkün olabilmesi için var oluşlarından vazgeçtiler, ve ellerinde kalan tek şey fısıldayabilmek.\n\nFısıltıyı duyanlar onu korkutucu bulmaz. Duyanlar onu, söyleyecek çok şeyi olup ancak birkaç kelimeye gücü yeten birinin sesi gibi anlatır: yorgun, sıcak, kısa.\n\nDuyan azdır. Meridia'da doğan on bin insandan kaçının o sesi duyduğunu kimse saymadı, çünkü sayacak kimse onu ciddiye almadı.",
+            "# İlahi büyü\n\n**Çalışır. Ve neredeyse kimse yapamaz.**\n\nBu kıtada yaşayan insanların ezici çoğunluğu bir tanrıdan bir şey istemeyi **denemez bile** — deneyenlerin de çoğu karşılığında hiçbir şey almaz. Buna rağmen yapanlar olduğu anlatılır: bir kuyunun başında suyu temizleyen bir kadın, bir kuşatmada yarayı kapatan bir rahip, bir yangında sesiyle ateşi durduran biri. Hikayeler yalan değil. Ama her hikaye **başka birinin başından** geçmiştir, ve anlatan onu bir tanıdığından duymuştur.\n\nGerçekten yapabilenler var. Çok az, ve hiçbiri sayılabilir bir düzen kuramadı — çünkü **bir kez cevap almış olmak bir sonrakini getirmiyor.** Aynı insan aynı duayı iki gün üst üste eder; biri tutar, öbürü tutmaz. Bir şey isteyip alan kişi bunu bir yetenek olarak değil, bir **talih** olarak anlatır.\n\nKuralı @[Kural Sapmaları](entity:lore/Kural Sapmaları) taşıyor.\n\n## Bunun iki sonucu\n\n**Kimse ilahi büyüye güvenerek plan yapmaz.** Bir ordu yarasını bir rahibe bırakmaz, bir lonca hasadını bir duaya bağlamaz. Meridia'nın bütün kurumları bu yokluğun üstüne kuruldu: burada bir sorunun çözümü her zaman bir insan, bir kayıt ya da bir paradır.\n\n**Paladin düzenleri sormayı bıraktı.** Votumar'ın şövalyeleri gücünü bir tanrıdan değil, ettikleri yeminden alır — ve o yemin tanık önünde edilip deftere geçtiği için her sabah aynı şekilde durur (@[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)).",
+            "# Şifa ve sembol\n\n**Şifa rahatlatmaz.** Şifa büyüsü yapanın ve alanın bedenine ağırlık verir: kemiklerde bir basınç, ardından geçmeyen bir yorgunluk. Meridia'da kimse iyileştirilmeyi ferahlatıcı bir şey olarak anlatmaz.\n\n**Kutsal sembol bir alettir.** Süs değil; ilahi olanı odaklayan bir araç. Sembolünü kaybeden bir rahip bir bileşenden fazlasını kaybeder. Ama sembolün olması cevabı getirmez — yalnız çağrıyı iletir.\n\n## Şehirde\n\nLucid Triton'da ilahi büyü yapan biri mucize gösteren biri olarak değil, usulsüzlük yapan biri olarak görülür. Şehirde tanrılardan gelen bir cevabın yazılacağı bir yer yoktur.\n\nAma şunu da ekle: bu şehirde kimse öyle bir şey **görmemiştir.** Duyan çoktur, gören yoktur. Bir kez görülürse o gün şehirde konuşulan tek şey o olur, ve konuşulması onu yapanın işine gelmez.\n\nİnancın şehrin gözünden uzakta nerede yaşadığı: @[Sessiz Mabetler](entity:lore/Sessiz Mabetler)."
           ],
-          "dmNotes": "Şifanın ağırlığı ve sembolün alet olması anlatıya dair kurallardır; zarları değiştirmez. Mekanik bedel yalnız iki büyüde vardır ve Blight kartında yazılıdır: *Lesser Restoration* yapan 1 seviye Exhaustion alır, *Greater Restoration* yapan kalıcı olarak bir Can Zarı kaybeder.\n\nBir karakter ilahi büyü yapıyorsa tanrıların ona neden cevap verdiğini açıklama.",
+          "dmNotes": "**Bu kart bir masa kuralı taşıyor, ve kural sert.** Her ilahi büyü denemesi için `d20 + Religion` atılır; sayılar @[Kural Sapmaları](entity:lore/Kural Sapmaları)'nda. Pratikte bu, **Cleric ve Warlock'u bu kıtada oynanamaz** hale getirir. Oyunculara bunu **karakter yaratmadan önce** söyle — oyun başladıktan sonra söylenen bir kural, oyuncunun kabul etmediği bir bedeldir.\n\nPaladin oynamak isteyen oyuncunun yolu ayrı ve açık: @[İrade Yemini](entity:subclass/İrade Yemini). O yeminin verdiği hiçbir şey zar istemez, çünkü hiçbiri bir tanrıdan istenmiyor.\n\nŞifanın ağırlığı ve sembolün alet olması anlatı kurallarıdır; zarları değiştirmez. Mekanik bedel yalnız iki büyüdedir ve Blight kartında yazılıdır: *Lesser Restoration* yapan 1 seviye Exhaustion alır, *Greater Restoration* yapan kalıcı olarak bir Can Zarı kaybeder.\n\nBir karakter ilahi büyü yapmayı başarırsa tanrıların ona neden cevap verdiğini açıklama. Sebep yok; bu turda tuttu.",
           "imagePath": "media/Artwork/Tanrılar-ve-Fısıltı.webp"
         }
       },
@@ -131,7 +133,7 @@
             "# Sancak Kaydı\n\nKonsey'in büyük defteri. Meridia'da bir insanın adı, hanesi, loncası ve mertebesi bu defterde yazılıdır. Defter Konsey'indir; kalemi loncalar tutar.\n\n## Üç sınıf\n\n| Sınıf | Ne demek | Sokakta nasıl anılır |\n|---|---|---|\n| **Mühürlü** | Bir hanenin ya da loncanın mührünü taşır; deftere kendi eliyle yazar | İki isimle: ad ve hane |\n| **Kayıtlı** | Defterde yazılıdır, ama yazan el değildir | Tek isimle |\n| **Yazısız** | Hiçbir defterde yoktur; ya hiç deftere girmedi ya da çıkarıldı | Lakapla |\n\nYazısız biri kaybolursa bunu kimse bir yere yazmaz.\n\n## Mühür\n\nMühür bir deftere yazma yetkisidir; mühür yüzüğü bu yetkinin taşınabilir hali. Mühürlü biri yüzüğünü açıkta taşır.\n\n## Soyadları\n\nHalfling ve cüce soyadları aile geleneğidir, hane değildir. Defter bu soyadlarını hane olarak yazmaz; bir halfling soyadının arkasında kontrol edilecek bir kayıt yoktur.\n\n## Defterin dışı\n\n@[Öte](entity:lore/Vorstrand — Bilinen Hali) defterde tek bir satırdır: *kıta dışı*. @[Ravenhall Avlusu](entity:location/Ravenhall Avlusu)'nun halkının hiçbiri defterde yazılı değildir, ve orada kimse bunun eksikliğini çekmez.",
             "# Defter nasıl işler\n\n## Kim yazar\n\nŞehirde her lonca kendi defterini kendi tutar. Taşrada tek bir kalem vardır: @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası). Bir köylünün adı da, sınırdan geçen bir yükün listesi de aynı loncanın memurunun elinden çıkar.\n\n## Bir satır\n\nBir satırda dört kutu vardır: **ad · hane · lonca ve mertebe · kefil.** Hane kutusu boşsa kişi mühürsüzdür. Kefil kutusu boşsa satır açılmaz.\n\n## Satır nasıl açılır\n\nBir insan deftere doğarak değil, kefaletle girer: on sekizinde bir loncaya çırak yazılır (@[Hizmet Basamakları](entity:lore/Hizmet Basamakları)), ya da defterde yazılı biri ona kefil olur. Kefil, kefil olduğu kişinin borcunu da üstlenir.\n\n## Nasıl yükselinir\n\nMertebe ustanın imzasıyla değişir, ve karşı-imzayla resmileşir. İki imza arasındaki bekleme rüşvetle kısalır. Bkz. @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).\n\n## Mühür nasıl alınır\n\nMührü Konsey vermez; hane devreder. Bu yüzden mühürlülerin sayısı artmaz, mühür yalnız el değiştirir.\n\n## Satır nasıl silinir\n\n1. **Defterden düşürme** — @[Onur Mahkemeleri](entity:lore/Onur Mahkemeleri)'nin ihanete verdiği ceza.\n2. **Kefaletin geri çekilmesi** — kefil elini çekerse satır düşer.\n3. **Parayla silme** — bir sayfanın hiç yazılmamış gibi çıkarılması. Bu bir suçtur.\n\nParayla silme iki iz bırakır. **Kefilin karşı-imzası defterde kalır**, çünkü imza sayfanın değil sütunun parçasıdır. **Satırın taşra kalemindeki nüshası kalır**: sayfa şehre gider, ikinci nüsha gitmez."
           ],
-          "dmNotes": "**Parayla silmenin bir fiyatı var.** @[Sicim](entity:npc/Sicim) de @[Vinç Ustası](entity:npc/Vinç Ustası) da aynı rakamı söyler.\n\nÜç yabancının geçişini gösteren sayfa bu yolla silindi. Kalan karşı-imza @[Corin Sancar](entity:npc/Corin Sancar)'ın; taşra nüshası @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın loncasının defterinde.\n\nKromanna'nın gizli cebindeki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük) bir mühür yüzüğüdür, ama açıkta değil saklı taşınıyordu ve mühür yüzü eğelenmişti.",
+          "dmNotes": "**Parayla silmenin bir fiyatı var.** @[Sicim](entity:npc/Sicim) de @[Vinç Ustası](entity:npc/Vinç Ustası) da aynı rakamı söyler.\n\n**Act 1'de parayla silme bir kez geçer, ama şehrin defterinde değil.** @[Gizli Liman](entity:location/Gizli Liman) kendi defterini tutar, ve üç yabancının satırı oradan çıkarıldı. Lucid Triton'un defterleri temiz: üç yabancı hiçbir şehir defterine hiç yazılmadı, çünkü gümrüğe hiç uğramadılar.\n\nKromanna'nın gizli cebindeki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük) bir mühür yüzüğüdür, ama açıkta değil saklı taşınıyordu, ve mühür yüzü eğelenmişti.",
           "imagePath": "media/Artwork/Sancak-Kaydı.webp"
         }
       },
@@ -165,7 +167,7 @@
           "pages": [
             "# Sınır ve Ticaret Loncası\n\n| | |\n|---|---|\n| **Yürüttüğü iş** | Geçiş, gümrük, tonaj, tahıl ve fiyat; taşrada bütün defterler |\n| **Hane** | Sancarlar |\n| **Koltukta** | @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) |\n| **Kiminle çatışır** | @[Demircilik ve İşçi Loncası](entity:lore/Demircilik ve İşçi Loncası) (ithal mal yerli tezgahı keser) ve @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) (sınırda kimin sözü geçer) |\n\nSınırdan geçen yükü de, taşrada doğan çocuğu da bu loncanın memuru yazar. Ekmeğin fiyatı da bu loncanın işidir: tahıl kıtaya ithal edilir.\n\n## En eski mühür, en boş kese\n\nSancarların mührü Meclis'in en eskisidir, ama paraları yoktur. Loncanın geliri mülkten değil ticaretten gelir: gemi gecikince, sınır kapıları yavaşlayınca, tahıl gelmeyince lonca fakirleşir. Öteki beş loncanın gelirleri şehrin kendi çarşısından ve bütçesinden gelir.\n\n## Taşrada\n\n@[Elymsyr](entity:location/Elymsyr)'in gümrüğü bu loncaya bağlıdır. Bu yüzden gümrük valisi, Meclis'in en fakir loncasının en zengin memurudur.\n\nArşivciler bu loncanın taşra memurlarıdır.\n\n## Geçiş kağıdı\n\nBir gemiye resmi olarak binmenin yolu @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası)'ndan çıkan karşı-imzalı geçiş kağıdıdır. Limanlarda buna **iyi yazı** denir."
           ],
-          "dmNotes": "Hastalık sınırdan girdi, ve sınırın defteri bu loncanın. Meclis'te hastalığa inanan tek koltuk bu yüzden bu koltuk, ve salonda sözü dinlenmeyen koltuk da bu.\n\nLoncanın defterinden bir sayfa silindi; silen Orvan'ın memurlarından biri. Sayfanın altındaki ikinci imza @[Corin Sancar](entity:npc/Corin Sancar)'ın.",
+          "dmNotes": "Hastalık sınırdan girdi, ve sınırın defteri bu loncanın. Meclis'te hastalığa inanan tek koltuk bu yüzden bu koltuk, ve salonda sözü dinlenmeyen koltuk da bu.\n\nLoncanın karşı-imza masası @[Corin Sancar](entity:npc/Corin Sancar)'ın elinde, ve o masaya onu @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) oturttu. Loncanın en çok rüşvet dönen noktası da orası. Orvan bunu biliyor; otuz yıldır böyle çalışıyor.",
           "imagePath": "media/Artwork/Sınır-ve-Ticaret-Loncası.webp"
         }
       },
@@ -368,6 +370,7 @@
             "mekanik"
           ],
           "pages": [
+            "# Çağrı Zarı\n\n*5e'ye eklenmiş kural.*\n\n> **Bir ilahi büyü yapılmak istendiğinde, büyü gerçekleşmeden önce `d20 + Religion` atılır.** Eşik geçilemezse büyü **olmaz** ve büyü yuvası yine harcanır.\n\n| Durum | Eşik |\n|---|---|\n| **Çatışmada** — her deneme | **19** · başarısızlık **aksiyonu da** harcar |\n| **Çatışma dışında** — o saatteki **1.** deneme | **18** |\n| o saatteki **2.** deneme | **20** |\n| o saatteki **3.** deneme | **çıplak d20, yalnız doğal 20** — Religion eklenmez |\n| o saatteki **4.** ve sonrası | **imkansız** — zar atılmaz |\n\nSayaç saatliktir ve tektir: çatışmada atılan denemeler de aynı saate yazılır. Saat ilk denemeyle başlar.\n\n## Kimi bağlar\n\n**Bağlar:** Cleric ve Warlock'un bütün büyüleri, Paladin'in ilahi büyüleri.\n\n**Bağlamaz:** Druid ve Ranger (güçleri doğadan gelir, verilmiş değildir), büyü olmayan sınıf özellikleri, ve bir kez verilmiş olan her şey — warlock invocation'ları, paladin aurası, @[İrade Yemini](entity:subclass/İrade Yemini)'nin verdiği her şey.\n\nAyrım tek cümle: **her kullanımda yeniden istenen şey zar ister; bir kez verilmiş olan istemez.**\n\nBunun neden böyle olduğu: @[Tanrılar ve Fısıltı](entity:lore/Tanrılar ve Fısıltı).",
             "# Ölümün Ağırlığı\n\n*5e'ye eklenmiş kural.*\n\n*Revivify* ve üstündeki diriltme büyüleri **yalnız bir büyü yuvası harcanarak yapılamaz.**\n\n> **Bir cana karşılık, bir can.** Diriltmeye başlamadan önce bedel seçilir:\n>\n> - **Büyüyü yapan** kalıcı olarak bir **Can Zarı** kaybeder, **ya da**\n> - **Dirilen kişi** kalıcı olarak bir **yetenek puanından** vazgeçer.\n\n## Diriltme Sınavı\n\nBedeli ödemek sonucu garanti etmez.\n\nDiriltme başarısız olursa ruh üç halden biriyle döner:\n\n| Hal | Ne demek |\n|---|---|\n| **Eksik** | Bir şey geri gelmedi: bir hatıra, bir yetenek, bir alışkanlık. Kişi neyin eksik olduğunu bilmez |\n| **Bozulmuş** | Geri geldi, ama aynı değil. Kendisi olduğunu söyler; yanındakiler emin olamaz |\n| **Ele geçirilmiş** | Dönen şey o değil. Bunu DM bilir, oyuncu bilmez |",
             "# Işınlanma ve Mesafe\n\n*5e'ye eklenmiş kural.*\n\n> **4. seviye ve üstü bir ışınlanma büyüsü, yapana 1 seviye Exhaustion verir.** Uzun mesafe ışınlanma **loncalar dışında mümkün değildir.**\n\n## Mesafe\n\nKıtada haber at sırtında gider. İki gün uzaktaki bir yer, siyasi olarak da iki gün uzaktadır.\n\n> **Lucid Triton → Votumar:** atlı bir kurye için **2 gün**.\n\nBu süreyi kısaltabilecek tek kurum @[Büyücü Loncası](entity:lore/Büyücü Loncası)'dır, ve o da kimin nereye gittiğini bilir.\n\n## Nadir malzeme\n\nYüksek seviye büyülerin nadir bileşenleri ya **lonca izniyle** ya **karaborsadan** bulunur. Karaborsanın adresi @[Gizli Liman](entity:location/Gizli Liman)'dır.",
             "# Kalıcı Yaralar\n\n*5e'ye eklenmiş kural.*\n\n> **Tetikleyici:** canın **0'a düşmesi**, ya da tek bir saldırıda **en yüksek canın yarısı** kadar hasar almak.\n>\n> **Zar:** d20. Düşük sonuç kötüdür.\n\n| d20 | Ağırlık | Örnek |\n|---|---|---|\n| **1–5** | **Kalıcı**; kendiliğinden iyileşmez, *Greater Restoration* ister | Topallama (hız −10 ft) · bir gözün kaybı · tutmayan bir el |\n| **6–14** | **Uzun süreli**; haftalar sürer, bakımla kısalır | Kaynamamış bir kemik · derin bir kesik · duymayan bir kulak |\n| **15–20** | **Geçici**; bir sonraki uzun dinlenmede geçer | Kaburga ağrısı · şişmiş bir göz · zonklayan bir el |"
@@ -506,7 +509,7 @@
             "match": "name",
             "value": "Meridia"
           },
-          "secrets": "**Konsey bu limanı biliyor ve kısmen kullanıyor.** Bazı lonca üyeleri buradan kaçak mal geçirir. Bu yüzden karakterler limanı Konsey'le tehdit ederse kimse korkmaz.\n\n**Üç yabancı buradan geçti.** Elymsyr'den geçselerdi adları gümrük defterinde olurdu. Burada geçişlerinin izi parayla silindi. Soru bir sonraki adıma, *kim ödedi?* sorusuna varır; cevabı limanda değil, @[Lucid Triton](entity:location/Lucid Triton)'dadır. @[Corvin](entity:npc/Corvin) limanın yolunu bilir, çünkü buradan mal taşıdı.\n\n@[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**. @[Mine](entity:npc/Mine), @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi arka odasında eğeledi.",
+          "secrets": "**Konsey bu limanı biliyor ve kısmen kullanıyor.** Bazı lonca üyeleri buradan kaçak mal geçirir. Bu yüzden karakterler limanı Konsey'le tehdit ederse kimse korkmaz.\n\n**Üç yabancı buradan geçti.** Elymsyr'den geçselerdi adları gümrük defterinde olurdu. Onları **Kader** adlı gemi getirdi, ve limandaki satırlarının silinmesinin parasını o geminin kaptanı verdi.\n\n**Kaptanın adını kimse bilmiyor.** Limanda kimse doğduğu adı söylemez; o adam gemisinin adıyla anılırdı. **Kader o geceden sonra bir daha yanaşmadı.** Üç yabancının nereden geldiğini bilen tek kişi denize açıldı, ve iz burada soğuyor.\n\n@[Corvin](entity:npc/Corvin) limanın yolunu bilir, çünkü buradan mal taşıdı.\n\n@[Mine](entity:npc/Mine), @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi arka odasında eğeledi, ve üstüne damga vurmadı — burada kimse imza atmaz.\n\n@[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**. Bu Act 1'de açılmaz.",
           "tags": [
             "gizli-liman",
             "liman"
@@ -540,13 +543,13 @@
           "name": "Lucid Triton",
           "environment": "Beyaz mermer şehir",
           "description": "Meridia'nın başkenti: beyaz mermer cepheler, renkli yapraklı ağaçlarla dizili caddeler, Lonca Meclisi.",
-          "description_long": "> Şehir uzaktan beyaz görünüyor, yaklaştıkça daha da beyaz. Mermer cepheler öğle güneşini geri yolluyor ve gözlerinizi kısıyorsunuz. Geniş caddelerin iki yanına kızıl, turuncu ve mor yapraklı ağaçlar dikilmiş; düşen yapraklar beyaz taşın üstünde renkli lekeler gibi duruyor. Meydanda taştan bir mimar heykeli yükseliyor, ve kaidesinde yalnız adı ve mesleği yazıyor.\n>\n> Kalabalık büyük, ama gürültü az. İnsanlar ellerinde kağıtlarla yürüyor ve kapıların önünde sıra bekliyor. Bir yerde bir mühür tok bir sesle tahtaya iniyor. Şehir kapısındaki görevli defterini açıyor ve size ne istediğinizi değil, kimin adına geldiğinizi soruyor.\n\nMeridia'nın başkenti, ve kıtanın en büyük şehri. Halkın çoğu insandır. Resmi adı **Lucidum Triton**'dur, ama kimse bu adı kullanmaz.\n\n## Şehir neyle geçinir\n\nLucid Triton pek az şey üretir. Kıtanın işleri burada onaylanır: geçiş kağıdı, ruhsat, ayar damgası, lonca izni. Şehrin zenginliği bu kağıtların ücretinden gelir. Mal @[Elymsyr](entity:location/Elymsyr)'den geçer; malın kağıdı buraya gelir.\n\n## Halk\n\nŞehirde iki isimli ve tek isimli insanlar vardır. İkinci isim bir haneye ya da loncaya aitliği gösterir; tek isimli olanlar hizmet eder. Kimse kimseyi açıkça aşağılamaz. Yükselmek mümkündür ve gerçekten olur. Bkz. @[Hizmet Basamakları](entity:lore/Hizmet Basamakları).\n\n## Şehrin görünüşü\n\n- **Mermer ve ağaç.** Binalar göğe tırmanmaz; iki üç kattır, ama taş işçiliği kusursuzdur. Her caddede renkli yapraklı ağaçlar vardır.\n- **Heykeller.** Meydanlarda tanrı heykeli yoktur. Mimarlar, mühendisler ve adı bilinmeyen askerler vardır.\n- **Fenerler.** Gece bütün caddeler fenerlerle aydınlatılır. Fenerciler her akşam aynı sırayla dolaşır; sönmüş bir fener kötü bir işaret sayılır ve sabaha kadar yeniden yakılır.\n- **Tören.** Şehirde tapınak yoktur, ama tören çoktur: ad koyma, çıraklığa yazılma, mühür devri.\n\n## Büyü\n\nŞehir sınırları içinde büyü yapmak **Lonca Lisansı** ister (@[Büyücü Loncası](entity:lore/Büyücü Loncası)). İlahi büyü yapan biri mucize gösteren biri değil, usulsüzlük yapan biri olarak görülür.\n\n## Şehrin önemli yerleri\n\n- @[Meclis Salonu](entity:location/Meclis Salonu) — Lonca Meclisi'nin altı koltuğunun oturduğu salon.\n- @[Mühür Salonu](entity:location/Mühür Salonu) — kararların mühürlendiği uzun oda.\n- @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası) — halkın Geçiş Divanı dediği, koridorun sonundaki masa.\n- **Demirci çarşısı** — örslerin hiç susmadığı sokak. Ayar ustası @[Kildrak Ferrun](entity:npc/Kildrak Ferrun)'un tezgahı burada.\n- **Şifacılar kışlası** — @[Simya ve Şifacılar Loncası](entity:lore/Simya ve Şifacılar Loncası)'nın çıraklarının yaşadığı taş bina. Çırak @[Sindri](entity:npc/Sindri) burada çalışır.\n- **Çarşı** — esnaf tezgahları. @[Kandil](entity:npc/Kandil)'in yarı boş tezgahı burada.\n- **Kapılar** — gündüz görevliler, gece kolluk devriyesi. @[Çavuş Krusk](entity:npc/Çavuş Krusk) burada nöbet tutar.\n\n## Siyaset\n\nŞehri Konsey adına **Lonca Meclisi** yönetir: altı koltuk, beş hane, bir atama. Kararlar oturumdan önce, kapalı kapılar ardında alınır; oturumda yalnız açıklanır. Bir koltuk sahibi karşı çıkmak istiyorsa oturuma gelmez. Bkz. @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).",
+          "description_long": "> Şehir uzaktan beyaz görünüyor, yaklaştıkça daha da beyaz. Mermer cepheler öğle güneşini geri yolluyor ve gözlerinizi kısıyorsunuz. Geniş caddelerin iki yanına kızıl, turuncu ve mor yapraklı ağaçlar dikilmiş; düşen yapraklar beyaz taşın üstünde renkli lekeler gibi duruyor. Meydanda taştan bir mimar heykeli yükseliyor, ve kaidesinde yalnız adı ve mesleği yazıyor.\n>\n> Kalabalık büyük, ama gürültü az. İnsanlar ellerinde kağıtlarla yürüyor ve kapıların önünde sıra bekliyor. Bir yerde bir mühür tok bir sesle tahtaya iniyor. Şehir kapısındaki görevli defterini açıyor ve size ne istediğinizi değil, kimin adına geldiğinizi soruyor.\n\nMeridia'nın başkenti, ve kıtanın en büyük şehri. Halkın çoğu insandır. Resmi adı **Lucidum Triton**'dur, ama kimse bu adı kullanmaz.\n\n## Şehir neyle geçinir\n\nLucid Triton pek az şey üretir. Kıtanın işleri burada onaylanır: geçiş kağıdı, ruhsat, ayar damgası, lonca izni. Şehrin zenginliği bu kağıtların ücretinden gelir. Mal @[Elymsyr](entity:location/Elymsyr)'den geçer; malın kağıdı buraya gelir.\n\n## Halk\n\nŞehirde iki isimli ve tek isimli insanlar vardır. İkinci isim bir haneye ya da loncaya aitliği gösterir; tek isimli olanlar hizmet eder. Kimse kimseyi açıkça aşağılamaz. Yükselmek mümkündür ve gerçekten olur. Bkz. @[Hizmet Basamakları](entity:lore/Hizmet Basamakları).\n\n## Şehrin görünüşü\n\n- **Mermer ve ağaç.** Binalar göğe tırmanmaz; iki üç kattır, ama taş işçiliği kusursuzdur. Her caddede renkli yapraklı ağaçlar vardır.\n- **Heykeller.** Meydanlarda tanrı heykeli yoktur. Mimarlar, mühendisler ve adı bilinmeyen askerler vardır.\n- **Fenerler.** Gece bütün caddeler fenerlerle aydınlatılır. Fenerciler her akşam aynı sırayla dolaşır; sönmüş bir fener kötü bir işaret sayılır ve sabaha kadar yeniden yakılır.\n- **Tören.** Şehirde tapınak yoktur, ama tören çoktur: ad koyma, çıraklığa yazılma, mühür devri.\n\n## Büyü\n\nŞehir sınırları içinde büyü yapmak **Lonca Lisansı** ister (@[Büyücü Loncası](entity:lore/Büyücü Loncası)). İlahi büyü yapan biri mucize gösteren biri değil, usulsüzlük yapan biri olarak görülür — ama bu şehirde kimse öyle bir şey görmemiştir. Duyan çoktur, gören yoktur (@[Tanrılar ve Fısıltı](entity:lore/Tanrılar ve Fısıltı)).\n\n## Şehrin önemli yerleri\n\n- @[Meclis Salonu](entity:location/Meclis Salonu) — Lonca Meclisi'nin altı koltuğunun oturduğu salon.\n- @[Mühür Salonu](entity:location/Mühür Salonu) — kararların mühürlendiği uzun oda.\n- @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası) — halkın Geçiş Divanı dediği, koridorun sonundaki masa.\n- **Demirci çarşısı** — örslerin hiç susmadığı sokak. Ayar ustası @[Kildrak Ferrun](entity:npc/Kildrak Ferrun)'un tezgahı burada.\n- **Şifacılar kışlası** — @[Simya ve Şifacılar Loncası](entity:lore/Simya ve Şifacılar Loncası)'nın çıraklarının yaşadığı taş bina. Çırak @[Sindri](entity:npc/Sindri) burada çalışır.\n- **Çarşı** — esnaf tezgahları. @[Kandil](entity:npc/Kandil)'in yarı boş tezgahı burada.\n- **Kapılar** — gündüz görevliler, gece kolluk devriyesi. @[Çavuş Krusk](entity:npc/Çavuş Krusk) burada nöbet tutar.\n\n## Siyaset\n\nŞehri Konsey adına **Lonca Meclisi** yönetir: altı koltuk, beş hane, bir atama. Kararlar oturumdan önce, kapalı kapılar ardında alınır; oturumda yalnız açıklanır. Bir koltuk sahibi karşı çıkmak istiyorsa oturuma gelmez. Bkz. @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).",
           "parent_location_ref": {
             "lookup": "location",
             "match": "name",
             "value": "Meridia"
           },
-          "secrets": "**Hastalık şehre henüz gelmedi; haberi geldi.** Meclis'in altı koltuğu haberi altı ayrı biçimde susturuyor. Sokakta hastalıktan söz eden az.\n\nŞehrin bildiğini gösteren bir belge var: hastalığın ilk beyanının kopyası @[Sindri](entity:npc/Sindri)'de. Beyanları @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender) değiştirtti.\n\nÜç yabancının geçişini gizleyen silmenin izi bu şehirde biter: silinen sayfanın altındaki ikinci imza @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası)'ndaki @[Corin Sancar](entity:npc/Corin Sancar)'ın.",
+          "secrets": "**Hastalık şehre henüz gelmedi; haberi geldi.** Meclis'in altı koltuğu haberi altı ayrı biçimde susturuyor. Sokakta hastalıktan söz eden az.\n\nŞehrin bildiğini gösteren bir belge var: hastalığın ilk beyanının kopyası @[Sindri](entity:npc/Sindri)'de. Beyanları @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender) değiştirtti.\n\n**Üç yabancının izi bu şehre hiç ulaşmadı.** Gümrüğe uğramadıkları için hiçbir şehir defterinde satırları yok. Karakterler burada arayacak olsa bir şey bulamaz, ve bulamamaları bilgidir: bu üç insan kıtaya kayıt dışı girdi.",
           "tags": [
             "şehir",
             "lucid-triton"
@@ -605,7 +608,7 @@
             "match": "name",
             "value": "Lucid Triton"
           },
-          "secrets": "**İki imza arasındaki bekleme rüşvetle kısalır.** Kıtada en çok rüşvet verilen yer burasıdır.\n\n**Silinen sayfanın altındaki ikinci imza bu masadan çıktı.** Parayla yaptırılan bir silme sayfayı götürür, ama kefilin karşı-imzasını götürmez: imza sütunun bir parçasıdır ve defterde kalır. O imza @[Corin Sancar](entity:npc/Corin Sancar)'ın. Bkz. @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).",
+          "secrets": "**İki imza arasındaki bekleme rüşvetle kısalır.** Kıtada en çok rüşvet verilen yer burasıdır. Memur kimseye *hayır* demez; imzalamak istemediği kağıt yığında bekler, ve yığın hiç azalmaz.\n\n**Masadaki memuru bu masaya kayıran adam @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar).** @[Corin Sancar](entity:npc/Corin Sancar) burada hak ettiği için değil, adı yüzünden oturuyor — ve bunu biliyor. Orvan'ın adını kullanan karakterler için bu hem anahtar, hem de Corin'i kıran bir şey.\n\nBkz. @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).",
           "tags": [
             "lucid-triton",
             "geçiş"
@@ -993,8 +996,8 @@
           "appearance": "Yaşını kestirmek zor bir gnome: yüzü buruşuk, gözleri genç. Sıska, uzun parmaklı. Kır saçlarını tepesinde bir sicimle bağlamış; lakabının oradan geldiği söylenir. Kalın camlı küçük bir gözlüğü burnunun ucunda taşıyor ve bir şeyi okurken gözlüğün üstünden bakıyor.\n\nKucağındaki defter kendisinden geniş; deri kapağı tuzdan beyazlamış. Parmak uçları mürekkepten mor. Ceketinin cepleri kalem, kurşun ve sicim parçalarıyla dolu. Üstünde mürekkep ve balmumu kokusu var.",
           "mannerisms": "Defterin sayfasını çevirmeden önce parmağını yalar. Bir fiyatı bir kez söyler; ikinci kez sorulursa sayfayı çevirir ve başka bir şey yazmaya başlar.\n\nBir insanın adına bakmadan önce kefiline bakar: *\"Kimin misafirisiniz?\"* Cevabı beğenmezse defterini kapatır.",
           "goals": "Limanın aksamadan işlemesi.",
-          "secrets": "**Üç yabancının geçişini kimin sildirdiğini biliyor.**\n\n**Gerçek adı Burgell.** Limanda bunu bilen yok denecek kadar az.\n\n**Parayla yaptırılan bir silmenin fiyatını biliyor.** Elymsyr'deki @[Vinç Ustası](entity:npc/Vinç Ustası) de aynı fiyatı söyler.",
-          "dmNotes": "**Karakterler sorarsa.** Sicim limana kabul, kefalet ve gemi ücretleri hakkında açıkça konuşur; bunlar onun işi.\n\nÜç yabancı hakkında kolay konuşmaz. Karakterler limanda kabul görmüşse ve Sicim'e bir iyilik yaptılarsa ya da ona iyi bir sebep verirlerse, üç yabancının limandan geçtiğini ve geçişlerinin parayla silindiğini doğrular. Kimin ödediğini söylemez: *\"Bu soru limanın sorusu değil. Cevabı şehirde.\"* Böylece karakterleri @[Lucid Triton](entity:location/Lucid Triton)'a yollar.\n\n**Gerçek adı** karakterlerin kendi çabasıyla öğrenebileceği bir şeydir. Sicim onu bir dost olarak gördüğü birine, ancak uzun bir güven kurulduktan sonra söyler.",
+          "secrets": "**Silmenin parasını kimin verdiğini biliyor: *Kader*'in kaptanı.** Üç yabancıyı getiren gemi. Kaptanın adını bilmiyor, limanda kimse bilmiyor; o adam gemisinin adıyla anılırdı.\n\n**Kader o geceden sonra bir daha yanaşmadı.**\n\n**Gerçek adı Burgell.** Limanda bunu bilen yok denecek kadar az.\n\n**Parayla yaptırılan bir silmenin fiyatını biliyor.** Elymsyr'deki @[Vinç Ustası](entity:npc/Vinç Ustası) de aynı fiyatı söyler.",
+          "dmNotes": "**Karakterler sorarsa.** Sicim limana kabul, kefalet ve gemi ücretleri hakkında açıkça konuşur; bunlar onun işi.\n\nÜç yabancı hakkında kolay konuşmaz. Karakterler limanda kabul görmüşse ve Sicim'e bir iyilik yaptılarsa ya da ona iyi bir sebep verirlerse defterini açar, satırın çıkarıldığı yeri gösterir, ve parayı kimin verdiğini de söyler — çünkü söylemesinin kimseye bir zararı yok:\n\n*\"Kader'in kaptanı verdi. Adını sormadım, burada kimse sormaz. Gemisi vardı; adı oydu.\"*\n\n*\"Kader o geceden sonra bir daha yanaşmadı. Ben bekliyorum. Siz de bekleyebilirsiniz.\"*\n\n**Burada biter.** Sicim karakterleri şehre yollamaz, çünkü yollayacak bir adres yok. Üç yabancının nereden geldiğini limanda kimse bilmiyor; bilen tek adam denize açıldı. @[Nereden Geldiler](entity:quest/Nereden Geldiler) bu cümleyle kapanır.\n\n**Gerçek adı** karakterlerin kendi çabasıyla öğrenebileceği bir şeydir. Sicim onu bir dost olarak gördüğü birine, ancak uzun bir güven kurulduktan sonra söyler.",
           "tags": [
             "npc",
             "gizli-liman"
@@ -1027,7 +1030,7 @@
           "mannerisms": "Bir fıçının üstüne oturur, bacaklarını sallar ve iskeledeki gemileri parmağıyla sayar.\n\nSoru sorulmadan cevap verir. Bir geminin adını söylerken hangi gece yanaştığını, kaç sandık indirdiğini ve kaptanının ne içtiğini de ekler: *\"O mavi olan, Kırlangıç. Üç gece önce geldi, gece yarısı. Sekiz sandık indirdi, ikisi ağırdı. Kaptanı elma şarabı içer.\"*\n\nBirisi onu dinlediğinde yüzü aydınlanır.",
           "goals": "Bir gün bir gemiye tayfa olarak alınmak.",
           "secrets": "Gerçek adı **Trym**.",
-          "dmNotes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Rıhtım onu sever ama dinlemez — herkes ona bir laf atıp geçer, kimse durup soru sormaz. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:lore/Liman Ahdi)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.",
+          "dmNotes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Rıhtım onu sever ama dinlemez — herkes ona bir laf atıp geçer, kimse durup soru sormaz. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:lore/Liman Ahdi)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.\n\n**Kader.** Karakterler bu adı duymuşsa Fare o gemiyi hatırlar, çünkü bütün gemileri hatırlar: hangi gece yanaştı, kimler indi, kimler bindi. Üç yolcunun indiği geceyi tarif eder, ve geminin bir daha gelmediğini söyler. Kaptanın adını o da bilmez.\n\n**Mine'in tezgahı.** Karakterler damgasız bir iş ya da bir kuyumcu soruyorsa Fare barakayı gösterir: *\"Arka oda. Kapıyı çalmayın, sevmez.\"*",
           "tags": [
             "npc",
             "gizli-liman",
@@ -1116,7 +1119,7 @@
           "mannerisms": "Kağıtlarını göğsüne yakın, bir deri dosyanın içinde taşır. Konuşmadan önce bekler, karşısındakinin önce konuşmasını.\n\nSesi yumuşak, cümleleri kısa: *\"Ne istediğinizi söyleyin. Sonra ne verebileceğinizi.\"*",
           "goals": "Limanın Konsey'e yararlı kalması.",
           "secrets": "Konsey'deki hangi koltukların limandan pay aldığını biliyor.\n\n**Gerçek adı Halet Custar.** Custarlar @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası)'nın hanesidir. Kadife limanda o koltuğun parasını yönetiyor. Bu adı limanda kimse bilmez; şehirde bir lonca defterinde yazılıdır.",
-          "dmNotes": "**Karakterler sorarsa.** Kadife iyi yazının nasıl alındığını bilir ve karşılığında bir şey isterse anlatır: Lucid Triton'daki @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası), doğru kişinin kefaleti, beklemenin nasıl kısaldığı.\n\n**Tanınması.** Bir loncadan ya da Nişan'ın rütbelilerinden gelen bir karakter (@[Lonca Üyesi](entity:background/Lonca Üyesi), @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu), @[Lonca Ajanı](entity:background/Lonca Ajanı), @[Paladin Rütbelisi](entity:background/Paladin Rütbelisi)) Kadife'yi zar atmadan tanır. Yüzünü değil, türünü tanır: duruşu, kağıt taşıma biçimi, konuşmadan önce beklemesi. *Bu adam büyük bir kurumun adamı, ve burada onun adına duruyor.*\n\nDiğer karakterler **Insight DC 13** ile onun rıhtımın insanı olmadığını anlar; kimin adamı olduğunu anlayamaz.",
+          "dmNotes": "**Karakterler sorarsa.** Kadife oralı olmaz. Kibar, kısa, ve hiçbir şey vermez: *\"Yanlış adama geldiniz.\"* Israr ederlerse kağıtlarını deri dosyasına koyar ve konuşmayı bitirir.\n\n**Bir görev zincirinde durmuyor.** Kadife'nin Act 1'deki tek işi, oyuncuda *\"bu adamın burada ne işi var\"* sorusunu bırakmak. Ondan bilgi almaya çalışan karakterleri boş çevir; kaybettikleri bir şey yok.\n\n**Tanınması.** Bir loncadan ya da Nişan'ın rütbelilerinden gelen bir karakter (@[Lonca Üyesi](entity:background/Lonca Üyesi), @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu), @[Lonca Ajanı](entity:background/Lonca Ajanı), @[Paladin Rütbelisi](entity:background/Paladin Rütbelisi)) Kadife'yi zar atmadan tanır. Yüzünü değil, türünü tanır: duruşu, kağıt taşıma biçimi, konuşmadan önce beklemesi. *Bu adam büyük bir kurumun adamı, ve burada onun adına duruyor.*\n\nDiğer karakterler **Insight DC 13** ile onun rıhtımın insanı olmadığını anlar; kimin adamı olduğunu anlayamaz.\n\n**Custar kimliği Act 1'de açılmaz.** Sırlar alanındaki her şey ileriye saklıdır.",
           "tags": [
             "npc",
             "gizli-liman",
@@ -1150,8 +1153,8 @@
           "appearance": "Yüz yaşın üstünde, kısa ve tıknaz bir cüce kadın. Kızıl saçını tek, kalın bir örgü halinde omzuna salmış; örgünün ucunda küçük bir demir halka var. Sakalı yok. Kaşları gür, gözleri küçük ve dikkatli. Burnunun üstünde gözlük izinden kalma iki kırmızı çukur var.\n\nDeri bir önlük giyer; önlüğün cepleri eğe, cımbız ve tel dolu. Parmak uçları metal tozundan gri, tırnakları kısacık kesilmiş. Tezgahında ince eğeler, küçük bir örs, bir mercek ve bir kavanoz dolusu küçük damga çekici dizili. Odası sıcak kömür ve pirinç tozu kokuyor.",
           "mannerisms": "Adı sorulunca *\"Mine\"* der ve susar. Klanını soran olursa bir sonraki işe geçer ve bir daha başını kaldırmaz.\n\nBir metali eline aldığında önce tartar, sonra ışığa tutar. İşini yaparken konuşmaz: *\"Bekleyin. Ya da gidin.\"*",
           "goals": "Tezgahının açık kalması, ve kimsenin klanını sormaması.",
-          "secrets": "**Yüzüğü eğeleyen o.** @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi tezgahında düzleştirdi ve iç kenarına taze bir ayar damgası vurdu.\n\n**Klan adını söylemiyor.** Bir cüce için bu, bir insanın *\"adım yok\"* demesinden ağırdır. Mine eski adını ve bağlarını kendi isteğiyle geride bıraktı.\n\nKuyumcu olarak kendi ayar damgası hâlâ Lucid Triton'daki damga fihristinde yazılı.",
-          "dmNotes": "**Karakterler sorarsa.** Mine müşterilerinin işini konuşmaz. Karakterler yüzüğü önüne koyarsa uzun uzun bakar ve *\"iyi iş\"* der, başka bir şey demez.\n\nKarakterler yüzüğü eğeleyenin kendisi olduğunu bildiklerini gösterirlerse (damganın izini sürerek ya da @[Sicim](entity:npc/Sicim)'den duyarak) inkâr etmez. Kimin için yaptığını söylemez.\n\nŞehirde @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) yüzüğün iç kenarındaki damgadan Mine'in tezgahını okuyabilir.",
+          "secrets": "**Yüzüğü eğeleyen o.** @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi tezgahında düzleştirdi.\n\n**Damga vurmaz.** Bir kuyumcu için damga bir imzadır, ve Mine adını geride bıraktı. Bu yüzden yaptığı hiçbir işin peşine düşülemez.\n\n**Eğelemeden önce eski yüzü gördü.** Bu kıtada karşılığı olmayan bir işaret: hiçbir haneye, hiçbir loncaya, hiçbir fihriste benzemiyordu. Ne olduğunu bilmiyor, ama tarif edebilir.\n\n**Klan adını söylemiyor.** Bir cüce için bu, bir insanın *\"adım yok\"* demesinden ağırdır. Mine eski adını ve bağlarını kendi isteğiyle geride bıraktı.",
+          "dmNotes": "**Karakterler sorarsa.** Mine müşterilerinin işini konuşmaz. Karakterler yüzüğü önüne koyarsa uzun uzun bakar ve *\"iyi iş\"* der, başka bir şey demez.\n\n**Onu bulmak.** Kimse onu adıyla gösteremez; tezgahını gösterebilir. @[Fare](entity:npc/Fare) barakayı bilir, @[Sicim](entity:npc/Sicim) de.\n\nKarakterler ona iyi bir sebep verirse eğelediğini inkâr etmez. Kimin için yaptığını söyleyemez, çünkü bilmiyor: parayı bir kaptan bıraktı ve adını vermedi.\n\n**Eski yüzü tarif ettirmek.** Karakterler ısrar ederse Mine hatırladığı işareti kağıda çizer. Çizim Act 1'de hiçbir kapı açmaz — kimse onu tanımaz. Oyuncuya ver, ve sakla.",
           "tags": [
             "npc",
             "gizli-liman",
@@ -1214,12 +1217,12 @@
             "value": "Friendly"
           },
           "faction": "Sınır ve Ticaret Loncası",
-          "description": "Sınır ve Ticaret Loncası'nın Meclis'teki koltuğu, ve Sancar hanesinin başı. Meclis'in en eski mührünü taşıyor ve Meclis'in en fakir üyesi. Hastalığı inkâr etmeyen tek koltuk sahibi.",
+          "description": "Sınır ve Ticaret Loncası'nın Meclis'teki koltuğu, ve Sancar hanesinin başı. Meclis'in en eski mührünü taşıyor, ve Meclis'in en fakir üyesi.\n\nHastalığı inkâr etmeyen tek koltuk sahibi — ve salonda kimsenin sözüne güvenmediği adam.",
           "appearance": "Altmışlarında, uzun ve kemikli bir adam. Yüzü uzun, yanakları çökük; kır sakalı kısa ve düzgün. Gözlerinin altında torbalar var. Başının tepesi açılmış; kalan saçlarını geriye taramış.\n\nSalondaki en eski paltoyu o giyer: koyu kahverengi, iyi bir yünden, ama dirsekleri parlamış. Yakası özenle yeniden dikilmiş ve dikiş yeri belli. Sağ elinin işaret parmağında, taşı aşınmış ağır bir mühür yüzüğü var. Konuşurken sesi yorgun ama sakin.",
           "mannerisms": "Konuşur, ve konuşurken salonda kimse dönüp ona bakmaz. Bunu bilir, ve yine de cümlesini sonuna kadar götürür.\n\nBirini dinlerken öne eğilir ve dirseklerini dizlerine dayar. Söz verirken yüzüğünü çevirir: *\"Param yok. Verebileceğim şey imza.\"*",
           "goals": "Sınır kapılarının ve ticaretin yeniden açılması, ve hanesinin ayakta kalması.",
-          "secrets": "**Loncasının defterinden bir sayfa silindi, ve silen kendi memurlarından biri.** Orvan bu silmenin ortağı değil, kurbanı. Saklayacak bir şeyi yok.\n\n**Gerçek adları tanır.** Karakterler *Cortia* ve *Portia Greenbottle* adlarını söylerse Orvan üç cümle söyler, ve dördüncüsünü söylemez:\n\n1. *\"Bu iki ad bana yabancı değil. Serbest ticaretçiler; öteki kıtada adları yazılı.\"*\n2. *\"Adı yazılı biri gümrükten gelir: kapıdan girer, adını verir, vergisini öder.\"*\n3. *\"Bunlar öyle gelmediyse, hele gizli bir yoldan geldilerse, ortada bir sorun var. Ve sorun onlar değil. Onları geçiren.\"*\n\nÜç yabancının nasıl hastalandığını bilmez.",
-          "dmNotes": "**Neden inanıyor.** Hastalık sınırdan girdi, ve sınırın defteri onun loncasında. Hastalığı ilk gören o. Meclis'te haklı, ama salonda sözünün hiçbir ağırlığı yok.\n\n**Oturumdan sonra** karakterleri salonun kapısında bekler, kendisi ya da çırağı: @[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif).\n\nSilinen sayfanın taşra kalemindeki ikinci nüshası onun loncasının defterinde duruyor.",
+          "secrets": "**Sicili kirli, bu meselesi temiz.** Orvan otuz yıl kayırdı, iş çevirdi, imza karşılığı imza aldı. Şehirde bunu bilmeyen yok. Hastalık hakkında söyledikleri doğru, ve tam da bu yüzden kimse dinlemiyor.\n\n**Kendi memurunu kendi kayırdı.** @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası)'ndaki @[Corin Sancar](entity:npc/Corin Sancar) o masada Orvan sayesinde oturuyor. Karakterler Orvan'ın adını kullanırsa o kapı açılır.\n\n**Gerçek adları tanır.** Karakterler *Cortia* ve *Portia Greenbottle* adlarını söylerse Orvan üç cümle söyler, ve dördüncüsünü söylemez:\n\n1. *\"Bu iki ad bana yabancı değil. Serbest ticaretçiler; öteki kıtada adları yazılı.\"*\n2. *\"Adı yazılı biri gümrükten gelir: kapıdan girer, adını verir, vergisini öder.\"*\n3. *\"Bunlar öyle gelmediyse, hele gizli bir yoldan geldilerse, ortada bir sorun var. Ve sorun onlar değil. Onları geçiren.\"*\n\nÜç yabancının nasıl hastalandığını bilmez.",
+          "dmNotes": "**Neden inanıyor.** Hastalık sınırdan girdi, ve sınırın defteri onun loncasında. Hastalığı ilk gören o. Meclis'te haklı, ama salonda sözünün hiçbir ağırlığı yok.\n\n**Neden kimse ona güvenmiyor.** Yalan söylediği için değil; her şeyin bir karşılığını istediği için. Otuz yıl böyle çalıştı, ve artık verecek bir şeyi kalmadı. Karakterler ona güvenmemekte haklı — ve bu sefer haksız.\n\n**Rol yapma.** Yalvarmaz. Bir tüccar gibi pazarlık eder, çünkü elinde pazarlıktan başka bir şey yok. Karakterler sicilini yüzüne vurursa inkâr etmez: *\"Hepsi doğru. Bugün söylediğim de doğru.\"*\n\n**Oyuncular Meclis'e hiç gitmezse.** Teklif yine ulaşır: çırağı karakterleri şehirde bulur, ya da Votumar dönüşü yolda bir mektup yetişir. @[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif) salonun kapısında oynanmak zorunda değil.",
           "tags": [
             "npc",
             "meclis",
@@ -1388,8 +1391,8 @@
           "appearance": "Yirmilerinin sonunda, zayıf, solgun bir adam. Kara saçları erkenden seyrelmeye başlamış ve özenle bir yana taranmış. Yüzü tıraşlı, dudakları ince. Gözleri yorgun ama çabuk.\n\nKoyu mavi bir memur cübbesi giyer; kol ağızları masaya sürtünmekten parlamış. Sağ elinin yan tarafında hiç çıkmayan mavi bir mürekkep lekesi var. Masasındaki imza yığını hiç azalmıyor. Üstünde mürekkep ve kum kokusu.",
           "mannerisms": "Bir kağıdı okumadan önce altındaki imzalara bakar. İmzaları beğenmezse kağıdı okumadan yığının altına kaydırır.\n\nKimseye *hayır* demez: *\"Beklemede. İmzası gelecek.\"*",
           "goals": "Terfi: kendi karşı-imza yetkisi olan, kendi adıyla bir masa.",
-          "secrets": "**Silinen sayfanın altındaki ikinci imza onun.** Sayfa gitti; imzası defterin sütununda kaldı.\n\nSoyadı Sancar: @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın hanesi. Orvan Sancar'ın loncasında çalışıyor.",
-          "dmNotes": "**Karakterler sorarsa.** Corin silinen sayfa hakkında hiçbir şey bilmediğini söyler. İmzasını gösteren biri karşısında önce imzanın kendisine ait olmadığını söyler, sonra imzaladığı her kağıdı okumadığını.\n\nTerfi etmek istiyor. Karakterler ona terfisini tehlikeye atacak bir şey gösterirse (imzasını, taşra nüshasını) ya da terfisine yardım edecek bir şey önerirse konuşmaya daha yatkın olur.\n\nSahne: @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).",
+          "secrets": "**O masada @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın kayırmasıyla oturuyor.** Hanenin bir üyesi, ama hanenin başı değil. Masayı hak ettiği için değil, adı yüzünden aldı. Bunu biliyor, ve bundan hoşlanmıyor.\n\n**Orvan'ın adı onun üstünde hem bir borç, hem bir yük.** O adı duyduğunda imzalar, ve imzalarken kızar.",
+          "dmNotes": "**Kimseye hayır demez.** İmzalamak istemediği kağıdı okumadan yığının altına kaydırır ve *\"beklemede\"* der. Karakterlerin karşısındaki engel bir ret değil, bir süre. Yığın hiç azalmaz.\n\n**Üç kaldıraç:**\n\n- **Rüşvet.** En kolayı, ve kıtada en çok rüşvet verilen masa burası. İz bırakmaz, kimse şaşırmaz.\n- **Orvan'ın adı.** İşe yarar, ama Corin'i küçültür: imzalar, ve bunu karakterlere unutturmaz.\n- **Terfi.** Kendi adıyla, kendi karşı-imza yetkisi olan bir masa istiyor. Terfisine yardım edecek bir şey öneren karakterlerle gönüllü konuşur — üçü içinde tek dostça biten yol.\n\nSahne: @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra).",
           "tags": [
             "npc",
             "lucid-triton",
@@ -1422,8 +1425,8 @@
           "appearance": "Üç yüz yaşına yaklaşan, sırtı hafif bükülmüş bir cüce. Beyaz sakalı dizlerine kadar uzun ve belinden bir kez kıvrılıp kemerine sıkıştırılmış. Kaşları gözlerinin üstüne düşüyor. Burnunun üstünde kalın bir mercek gözlüğü.\n\nDeri önlüğünün cebinde bir büyüteç, tezgahında damga çekiçleri boy sırasına dizilmiş. Elleri yaşına göre şaşırtıcı derecede sakin. Demirci çarşısının gürültüsü tezgahına kadar ulaşıyor, ama o başını kaldırmıyor. Üstünde yağ ve pirinç kokusu var.",
           "mannerisms": "Bir metali eline almadan önce ışığa tutar ve çevirir. Bir damgayı gördüğünde sahibinin adını değil, tezgahını söyler: *\"Liman işi. Taze. Sol elle vurulmuş.\"*\n\nSabırsız müşterileri beklemeye bırakır ve bunu bilerek yapar.",
           "goals": "Mesleğinin temiz kalması.",
-          "secrets": "**Eğelenmiş bir mühür yüzüğünü daha önce de gördü**, ve bir kez değil.",
-          "dmNotes": "**Karakterler yüzüğü getirirse.** Kildrak iç kenardaki ayar damgasına bakar ve fihristi açar. Damganın @[Gizli Liman](entity:location/Gizli Liman)'daki bir kuyumcu tezgahına ait olduğunu okur: @[Mine](entity:npc/Mine)'in tezgahı. Mühür yüzünün eğelendiğini de görür ve bunun ne demek olduğunu söyler: *\"Birisi bu yüzüğün kime ait olduğunu silmek istemiş.\"*",
+          "secrets": "**Eğelenmiş bir mühür yüzüğünü daha önce de gördü**, ve bir kez değil. Hiçbirinde damga yoktu.",
+          "dmNotes": "**Karakterler yüzüğü getirirse.** Kildrak yüzüğü ışığa tutar, çevirir, merceğini indirir. Sonra fihristi açmaz — açacak bir şey yoktur:\n\n*\"Bunda ayar damgası yok. Hiç vurulmamış. İşçilik iyi, ama uğraşılmamış: adam işini biliyormuş, ama acele etmiş ve imzasını atmamış.\"*\n\n*\"Bu kıtada damgasız iş yapan bir kuyumcu bir lonca tezgahında oturmaz. Güneye gidin. Bir liman arayın. Bulabilirseniz demirciniz orada.\"*\n\nBir ad veremez, çünkü bilmiyor. Verdiği şey bir yön, ve o yön @[Gizli Liman](entity:location/Gizli Liman)'a çıkar.\n\n**Eğelenmiş yüzü de görür** ve ne demek olduğunu söyler: *\"Birisi bu yüzüğün kime ait olduğunu silmek istemiş.\"*",
           "tags": [
             "npc",
             "lucid-triton",
@@ -1675,7 +1678,7 @@
           "mannerisms": "Emirlerini sözlü verir ve tekrar etmez. Bir kağıt uzatıldığında okumaz; kağıdı getirenin anlatmasını ister.\n\nSesi sakin, cümleleri kısa: *\"Körfez güvende. Halk güvende. Görevinize dönün.\"*",
           "goals": "İtaat, ve zaman kazanmak.",
           "secrets": "**Başkumandan bir Suretsiz.** Kral Lucian'ın eli; arkasındaki irade kendisinin değil.\n\nHalk ve askerler ona korktukları için değil, **gerçekten güvendikleri için** itaat ediyor. Bu koltukta oturan bir Suretsiz'in kimseyi ikna etmesi gerekmiyor; oturması yetiyor.\n\n**Gerçek Başkumandan bir yerde tutuluyor.**\n\n**Son iki aydır tek bir yazılı emir vermedi.**\n\nOnu bu koltuğa Konsey atadı; yani bir lonca, farkında olmadan, bu koltuğa kendi eliyle oturttu.\n\nMesafe onu korur: Lucid Triton iki gün uzakta.",
-          "dmNotes": "**Rol yapma.** Başkumandan'ı bir kötü adam gibi oynatma. Kibar, sakin ve etkili bir komutandır. Karakterlere yardım bile edebilir, ama hiçbir şeyi yazılı vermez.\n\nBaşkumandan'da bir terslik olduğunu iki kişi ayrı ayrı biliyor: @[Şüpheci Rütbeli](entity:npc/Şüpheci Rütbeli) ve @[Kule Nöbetçisi](entity:npc/Kule Nöbetçisi).",
+          "dmNotes": "**Rol yapma.** Başkumandan'ı bir kötü adam gibi oynatma. Kibar, sakin ve etkili bir komutandır. Karakterlere yardım bile edebilir, ama hiçbir şeyi yazılı vermez.\n\nBaşkumandan'da bir terslik olduğunu iki kişi ayrı ayrı biliyor: @[Şüpheci Rütbeli](entity:npc/Şüpheci Rütbeli) ve @[Kule Nöbetçisi](entity:npc/Kule Nöbetçisi).\n\n**Hastalık açılırsa.** Aşağıdakiler bir konuşmanın akışına göre sıralı. Sırayla in, hepsini kullanma. Yüzü hiçbirinde değişmez.\n\n*Önce reddeder:*\n\n- *\"Anlattığınızı dinledim. Bu bir hastalık değil, bir korku. İkisi aynı hızla yayılır, ama yalnızca biri insan öldürür.\"*\n- *\"Bu körfezde on bir yıldır komutanım. On bir yılda dört kez veba duydum. Dördü de gelmedi.\"*\n\n*Sonra açıklar:*\n\n- *\"Bu kıtada her sonbahar bir hastalık söylentisi çıkar. Sebebi hastalık değildir; hasattır. Karnı doymayan adam bir sebep arar, ve en kolay sebep görünmeyen bir şeydir.\"*\n- *\"Taşrada bir humma her zaman bir lanettir. Şehirde her zaman bir komplodur. İkisi de aynı hummadır.\"*\n- *\"Bir söylentiye karantinayla cevap verirseniz onu doğrulamış olursunuz. Sonra liman kapanır, sonra ekmek biter, sonra gerçekten insanlar ölür. Ben o zinciri baştan sona gördüm.\"*\n\n*Kanıt isterlerse — çıta ulaşılamaz, ama makul görünür:*\n\n- *\"Kaç ölü? ... Üç. Ve üçü de oraya zaten hasta gelmiş, kendiniz söylediniz. Bana bir salgın tarif etmediniz. Bana üç ölü tarif ettiniz.\"*\n- *\"Gördüklerinizi sorgulamıyorum. Gördüğünüz şeyin adını sorguluyorum.\"*\n- *\"Mühürlü bir tabip raporu getirin. O zaman konuşuruz.\"* — O mührü verecek adam @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender), yani ilk beyanları değiştirten kişi.\n\n*Kağıt uzatılırsa:*\n\n- *\"Okumayacağım. Siz anlatın. Bir adamın sesi kağıdından çok şey söyler.\"*\n\n*Israr ederlerse:*\n\n- *\"Sesinizi yükseltmeniz anlattığınızı doğrulamıyor.\"*\n- *\"Karantina yetkisi bu şatoda değil. @[Lucid Triton](entity:location/Lucid Triton)'da. İki gün uzakta. Atınız var mı?\"*\n\n*Kapatır — konuşmanın yardım gibi görünen kısmı:*\n\n- *\"Bana getirdiğiniz için teşekkür ederim. Gereğini yapacağım.\"* Ve hiçbir yere yazılmaz.\n- *\"Yolunuz uzun olmuş. Mutfakta sıcak bir şey vardır. @[Kapı Komutanı](entity:npc/Kapı Komutanı) size yer gösterir.\"*\n\n*Yazılı bir emir ya da belge isterlerse:*\n\n- *\"Yazılı istemeyin. Yazılan şey çoğalır.\"*\n- *\"Sözümü verdim. Kağıda ne gerek var?\"* — Nişan'dan bir karakter bunun usulsüz olduğunu bilir: emir her zaman yazılır.\n\n**Sahne notu.** Bunları söylerken yüzünde hiçbir şey değişmez, ve göz kırpmaz. Oyunculara söyleme; konuşma boyunca iki üç kez betimle. Fark eden fark eder, etmeyen @[Şüpheci Rütbeli](entity:npc/Şüpheci Rütbeli)'den duyar.\n\n**Refakatçi teklifi.** Karakterler ısrarcıysa ya da konuşma çıkmaza girmişse Başkumandan bir çözüm önerir, ve öneri makul gelir:\n\n> *\"Size bir şey vereyim: bir refakatçi. Gümüşsu'ya kadar gitsin, gördüğünü bana anlatsın. Bir adamın gözü sizin sözünüzden ağırdır — bu sizin aleyhinize değil, usul böyle.\"*\n\nGenç bir asker verir. Adını söyler, ve o ad hiçbir yere yazılmaz.\n\n**Sonu.** Asker ya hiç dönmez, ya da döner ve raporu şatoda kaybolur — @[Susan Kule](entity:scene/Susan Kule)'deki gece raporuyla aynı biçimde. Hangisi olduğunu sen seç; ikisi de aynı yere çıkar. Karakterler bunu fark ederse ellerinde ikinci bir kayıp rapor olur, ve bu sefer kaybolan şey kendi tanıklarıdır.\n\n**Tuzak değil.** Asker karakterlere karşı dürüsttür ve işini yapar. Kaybolan o değil, kağıdı.",
           "tags": [
             "npc",
             "votumar"
@@ -1835,6 +1838,39 @@
             "ravenhall"
           ],
           "imagePath": "media/Artwork/Patika-Gözcüsü.webp"
+        }
+      },
+      {
+        "source_name": "Halim",
+        "mapping": {
+          "name": "Halim",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Gümüşsu"
+          },
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Indifferent"
+          },
+          "faction": "Sınır ve Ticaret Loncası",
+          "description": "Gümüşsu'daki dördüncü yabancı, ve tek ayakta olanı. Karakterlerden önce geldi ve @[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı)'nın üst katındaki iki odadan birinde kalıyor.\n\n@[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası) onu buraya **duruma bakması** için yolladı. Bir şey çözmesi, bir şey düzeltmesi, birini bulması istenmedi; bakacak, dönecek, anlatacak, parasını alacak. Kendisi de işi tam olarak böyle anlatır.\n\nAjan değil. Bir kere kabul edilmiş bir iş, ve aldığı paraya değmediğini çoktan anlamış bir adam.",
+          "appearance": "Kırkını geçmiş, ince, uzun boyunlu bir adam. Saçı seyrelmiş, sakalı düzensiz kesilmiş. Elleri temiz ama tırnakları kırık.\n\nGiysisi mesleğini söylüyor: dizlerinde çalı sürtmesi olan yamalı bir yün pelerin, ayağına oturmuş eski bir çift çizme, kemerinde bir bıçak ve küçük bir halat çıkrığı. Yay yok, kalkan yok, zırh yok. Ormanda yürümeyi bilen biri; dövüşmeyi bilen biri değil.\n\nÜstünde ıslak yün ve soğuk kül kokusu var. Sesi alçak ve hızlı.",
+          "mannerisms": "Bir odaya girdiğinde kapıya en yakın yere oturur ve orada kalır.\n\nNot almaz. Anlatılanı tekrar tekrar sorar, sonra ezberler — kağıt taşıyan adamın bulunması kolaydır.\n\nDışarıda bir ses yükseldiğinde konuşmayı yarıda keser ve dinler. Tartışma sesine aldırmaz, kavga sesinde ayağa kalkar.\n\n*\"Bana bakın dediler. Bakıyorum.\"*",
+          "goals": "İşi bitirip sağ salim dönmek, parasını almak, ve bir daha bu tür bir iş kabul etmemek.\n\nKöyü kurtarmak, hastalığı çözmek ya da kimseye yardım etmek amacı yok — ve bunu saklamıyor.",
+          "secrets": "**Kimin yolladığını ilk sorulduğunda söylemez.** *\"Yol üstündeyim\"* der, ve bunu kötü söyler.\n\nBildiği tek isim @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar); onunla yüz yüze görüşmedi, işi koltuğun çırağından aldı. Sancarların düşmüş bir hane olduğunu ve bu işin parasının geç ödeneceğini biliyor.",
+          "dmNotes": "**Nasıl tanınır — zar yok.** Lonca hattından gelen bir karakter (@[Lonca Üyesi](entity:background/Lonca Üyesi) · @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) · @[Lonca Ajanı](entity:background/Lonca Ajanı)) onu **görür görmez** bir kurumun adamı olarak tanır: duruşundan, dinleme biçiminden, konuşmadan önce beklemesinden. Diğer karakterler için **Insight DC 12** — köylü olmadığını görür, kimin adamı olduğunu göremez.\n\n**Konuşturmak kolay.** Tehdit gerekmiyor; iki soru ve biraz sabır yetiyor. Kimin yolladığını söylediği an @[Lucid Triton](entity:location/Lucid Triton) yolu ve Orvan Sancar'ın adı masaya düşer.\n\n**Savaşmaz.** @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü)'nde koşar ve durmaz. Ona sıra verme, statblok arama: bir hamlesi yok, bir yönü var. Kalıp dövüşmesi için ikna edilemez — korkusu bir tutum değil, adamın kendisi.\n\n**Her hâlde geri döner.** Gümüşsu'da ne olursa olsun Halim yolu bulur ve anlattıklarını koltuğa götürür. Köyün ayakta kaldığı sabahta karakterlerin adı da o anlatının içindedir.\n\n**Kimseyi kilitlemiyor.** Meclis'e giden yol ondan da açılır, üçlünün izinden de, doğrudan loncaya gitmekten de. Halim bir kapı değil, bir kısayol.",
+          "tags": [
+            "npc",
+            "gümüşsu",
+            "lonca"
+          ]
         }
       }
     ],
@@ -2192,6 +2228,112 @@
           "benefits": "Drake **Large** boyuta çıkar ve seni **karada** taşımaya devam eder.\n\nDrake'in ısırığı **bir 1d6 daha** ekler (toplam +2d6 öz hasarı).\n\n**Drake's Breath** artık **10d6** hasar verir.",
           "mechanical_notes": "**Sapma:** özgün metnin bu seviyede verdiği **\"binildiğinde uçabilir\"** maddesi çıkarıldı; yerine bir şey konmadı.\n\nMasanız kaybı fazla ağır buluyorsa tek düğme: **\"drake devrilemez (Prone'a bağışık)\"** satırını ekleyin.",
           "imagePath": "media/Artwork/Tam-Bağıt.webp"
+        }
+      },
+      {
+        "source_name": "Yeminin Ağırlığı",
+        "mapping": {
+          "name": "Yeminin Ağırlığı",
+          "source": "İrade Yemini",
+          "trait_kind": "Other",
+          "description": "**Güç** ve **Dayanıklılık** yetenek puanların **1'er artar** (en fazla 20).\n\n**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+          "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Kaybedilen ilahi hattın karşılığı budur; bir bonus değil, bir takas.",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ]
+        }
+      },
+      {
+        "source_name": "Yemin Darbesi",
+        "mapping": {
+          "name": "Yemin Darbesi",
+          "source": "İrade Yemini",
+          "trait_kind": "Other",
+          "description": "Yakın silahlı saldırın bir yaratığa isabet ettiğinde, bir **büyü yuvası** harcayarak fazladan **2d8 kuvvet** hasarı verirsin. 1. seviyenin üstündeki her yuva kademesi için **+1d8**, en fazla **5d8**.\n\nHedef **Blight'lı** bir yaratıksa fazladan **+1d8**.\n\nTurda bir kez kullanılır.",
+          "benefits": "*Divine Smite*'ın yerini alır; bu yemini tutan paladin Divine Smite hazırlamaz. Işık değil ağırlık: vurduğun şeyi yakan bir kutsallık yok, tutulan bir sözün bedeni var.",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ]
+        }
+      },
+      {
+        "source_name": "Yemin Andı: Cepheyi Tut",
+        "mapping": {
+          "name": "Yemin Andı: Cepheyi Tut",
+          "source": "İrade Yemini",
+          "trait_kind": "Defensive",
+          "description": "**Channel Divinity.** Aksiyonunla yeminini yüksek sesle tekrarlarsın. Bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların, @[Bulaştıran Yara](entity:trait/Bulaştıran Yara) ve benzeri maruziyet zarlarını **avantajlı** atar.",
+          "benefits": "Düzenin üç yüzyıldır yaptığı tek iş: bir hattı, kimse gelene kadar bırakmamak.",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ]
+        }
+      },
+      {
+        "source_name": "Bozulmayan Söz",
+        "mapping": {
+          "name": "Bozulmayan Söz",
+          "source": "İrade Yemini",
+          "trait_kind": "Defensive",
+          "description": "Senden **10 ft** içindeki dostların (sen dahil), **Hastalık Puanı** kazandıracak her kurtarma zarını **avantajlı** atar (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).\n\n18. seviyede menzil **30 ft** olur.",
+          "benefits": "Yanında duranın hasta olmaması, bu düzende bir dua konusu değil bir görev tanımıdır.",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ]
+        }
+      },
+      {
+        "source_name": "Yemin Yorulmaz",
+        "mapping": {
+          "name": "Yemin Yorulmaz",
+          "source": "İrade Yemini",
+          "trait_kind": "Defensive",
+          "description": "**Korkutulamazsın.**\n\nAyrıca seni 0 cana düşürecek bir hasar aldığında **1 canda** kalırsın.",
+          "benefits": "1 canda kalma **uzun dinlenmede bir kez** kullanılır.",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ],
+          "resource_pool_grants": [
+            {
+              "pool_ref": {
+                "lookup": "resource-pool",
+                "match": "name",
+                "value": "pool:yemin_yorulmaz"
+              },
+              "recharge": "long_rest",
+              "count": 1
+            }
+          ]
+        }
+      },
+      {
+        "source_name": "Andın Hâli",
+        "mapping": {
+          "name": "Andın Hâli",
+          "source": "İrade Yemini",
+          "trait_kind": "Other",
+          "description": "**Bonus aksiyon**, 10 dakika sürer. Bu süre boyunca auraların menzili **30 ft**'e çıkar ve **Blight'lı** yaratıklara yaptığın saldırı atışları **avantajlı** olur.",
+          "benefits": "**Uzun dinlenmede bir kez.**",
+          "tags": [
+            "irade-yemini",
+            "paladin"
+          ],
+          "resource_pool_grants": [
+            {
+              "pool_ref": {
+                "lookup": "resource-pool",
+                "match": "name",
+                "value": "pool:andin_hali"
+              },
+              "recharge": "long_rest",
+              "count": 1
+            }
+          ]
         }
       }
     ],
@@ -2836,7 +2978,7 @@
           },
           "status": "Planned",
           "description": "> Kuyu başında kova sırası var. Kovasını dolduran yaşlı bir adam, zincirin gıcırtısını bastırmak için sesini yükseltiyor ve yanındaki kadına dün akşam kulübeye kimin yemek götürdüğünü soruyor. Kadın omuz silkiyor: *\"Kapıya bıraktılar yine. Kimse girmedi.\"* Yolun karşısındaki hanın kapısı açık; içeriden ocak dumanı, kızarmış soğan kokusu ve bir halflingin sesi taşıyor. Halfling aynı cümleyi bir kez daha, daha yüksek sesle tekrarlıyor.\n>\n> Yaşlı adam kovasını bileziğin üstüne koyuyor, size dönüyor ve sizi baştan aşağı süzüyor. *\"Siz de onun için mi geldiniz?\"*",
-          "beats": "## Sahneyi oynatmak\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır. Hepsi aynı gün gelmek zorunda değildir; sonra gelen, öncekileri @[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı)'nda bulur.\n\n1. **Köy işliyor.** Kazan kaynıyor, kapılar tebeşirle işaretli, bezler ipte, biri ekmek pişiriyor. Karakterlerin ilk gördüğü şey çürüme değil, işini yapan bir köy olmalı.\n2. **Hastalık açıkça konuşuluyor.** Kuyu başında, handa, ekmek sırasında herkes hastalıktan söz ediyor. Kimse fısıldamıyor.\n3. **Kulübe.** Köylüler, köyün dışındaki @[Kulübe](entity:location/Kulübe)'de üç yabancının yattığını söyler. Yemek kapıya bırakılıyor, kimse içeri girmiyor. Bunu köyün kendisi kararlaştırdı.\n4. **\"Kimse ölmedi.\"** Bunu söyleyen köylü rahatlamış görünür. Aynı cümleyi @[Umay](entity:npc/Umay) duyarsa başını çevirir ve bir şey söylemez. Karakterlerden biri sorarsa Umay kırk yıldır bu köyde her yıl birilerinin öldüğünü söyler.\n5. **Köylülerle konuşmak.**\n   - @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) yabancıların ilk iki gecesini, giysilerini ve nasıl ödediklerini anlatır.\n   - @[Corvin](entity:npc/Corvin) yabancıların kumaşından söz eder ve kıyıya giden yolları bildiğini ima eder.\n   - @[Duran](entity:npc/Duran) az konuşur; bir şey bildiği belli olur.\n6. **Akşam.** Karakterler hemen kulübeye gitmek isterse köylüler aynı şeyi söyler: *\"Sabah gidin. Gece yol karanlık.\"* Geceyi handa geçirmek doğal seçimdir.",
+          "beats": "## Köy — ne durumda\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır; hepsinin aynı gün gelmesi gerekmez. Sonra gelen, öncekileri @[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı)'nda bulur.\n\n- **Köy işliyor.** Kazan kaynıyor, kapılar tebeşirle işaretli, bezler ipte, biri ekmek pişiriyor. İlk görülen şey çürüme değil, işini yapan bir köy.\n- **Hastalık açıkça konuşuluyor.** Kuyu başında, handa, ekmek sırasında. Kimse fısıldamıyor.\n- **Kulübe.** Köyün dışındaki @[Kulübe](entity:location/Kulübe)'de üç yabancı yatıyor. Yemek kapıya bırakılıyor, kimse içeri girmiyor. Bunu köyün kendisi kararlaştırdı.\n- **\"Kimse ölmedi.\"** Bunu söyleyen köylü rahatlamış görünür. Aynı cümleyi @[Umay](entity:npc/Umay) duyarsa başını çevirir ve bir şey söylemez; sorulursa kırk yıldır bu köyde her yıl birilerinin öldüğünü söyler.\n\n## Köyde kim var, ne biliyor\n\n| Kim | Sorulmadan verdiği | Sorulursa |\n|---|---|---|\n| @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) | Salonda konuşulan her şey | Yabancıların ilk iki gecesi, giysileri, nasıl ödedikleri — peşin, tartışmasız, fazla |\n| @[Corvin](entity:npc/Corvin) | Yabancıların kumaşının pahalı ve yabancı olduğu | Kıyıya giden yolları bildiği; ücreti konuşulursa daha fazlası |\n| @[Duran](entity:npc/Duran) | Az konuşur, bir şey bildiği belli olur | *\"Yoldan geldiler, herkes gibi.\"* Köyün iyiliği için sorulduğuna inanırsa: *\"Limandan geldiler.\"* |\n| @[Umay](entity:npc/Umay) | Hastaların hâli | Bedenin söylediği şey — hastalık köyün sandığından eski |\n| @[Halim](entity:npc/Halim) | Köylü olmadığı (Insight DC 12; lonca hattından gelen karakter zarsız görür) | Kimin yolladığı, ve @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın adı |\n\n## Saat\n\nÜç hasta **8 Hastalık Puanında** ve şafağa kadar 9'a çıkacaklar. Bunu kimse bilmiyor; köylüler de, Umay da, karakterler de.\n\nKöylüler geceyi köyde geçirmeyi önerir — *\"Sabah gidin. Gece yol karanlık.\"* — çünkü yol karanlıkta tehlikeli ve konuk göndermek ayıp. Bu bir yönlendirme değil, köyün alışkanlığı. Ne olursa olsun şafakta @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) olur.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -2857,6 +2999,11 @@
               "lookup": "npc",
               "match": "name",
               "value": "Milo Goodbarrel"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Halim"
             }
           ],
           "quest_refs": [
@@ -2866,7 +3013,7 @@
               "value": "Söylentinin Peşinde"
             }
           ],
-          "dmNotes": "**Karakterleri oyuna katmak.** Karakterlerin geçmişi şu dört rolden birine uyuyorsa bu sahnede kullan:\n\n- **Uyarıcı** — çürümenin doğal olmadığını söyleyen karakter.\n- **Şüphelenen** — hastalığın göründüğünden eski olduğunu sezen karakter.\n- **Kaçan** — kimin nereye götürüldüğünü soran karakter.\n- **İşaretlenen** — bedeni hastalığa tepki veren karakter.\n\nHiçbir karakter bir role uymuyorsa o rolün söyleyeceğini @[Umay](entity:npc/Umay) söyler.",
+          "dmNotes": "**Karakterleri oyuna katmak.** Karakterlerin geçmişi şu dört rolden birine uyuyorsa bu sahnede kullan:\n\n- **Uyarıcı** — çürümenin doğal olmadığını söyleyen karakter.\n- **Şüphelenen** — hastalığın göründüğünden eski olduğunu sezen karakter.\n- **Kaçan** — kimin nereye götürüldüğünü soran karakter.\n- **İşaretlenen** — bedeni hastalığa tepki veren karakter.\n\nHiçbir karakter bir role uymuyorsa o rolün söyleyeceğini @[Umay](entity:npc/Umay) söyler.\n\n**Bu sahnenin bir doğru gidişatı yok.** Kulübeye hemen gitmek, sabahı beklemek, köyde hiç durmayıp yola çıkmak — üçü de oynanır. Köy, NPC'ler ve saat yukarıda yazılı; sırayı masa kurar.",
           "tags": [
             "sahne",
             "gümüşsu",
@@ -2942,7 +3089,7 @@
           },
           "status": "Planned",
           "description": "> Şafak ormanın üstünde gri bir çizgi. Köyde ilk horoz ötüyor. Horozun sesinin hemen ardından, kulübenin olduğu yönden bir çatırtı geliyor: zorlanan, sonra yarılan bir tahtanın sesi. Bir köpek havlamaya başlıyor, ve bir anda susuyor. Serin sabah havasında odun dumanına başka bir koku karışıyor, ekşi ve metalik.\n>\n> Köyün girişindeki nöbetçi genç mızrağını iki eliyle kavramış. Kulübenin yoluna değil, size bakıyor.",
-          "beats": "## Ne oldu\n\nKulübede geçen gecenin günlük hastalık zarı üç yabancıyı 9 Hastalık Puanına taşıdı. Üçü de döndü. Karakterlerin gece ne yaptığı bunu değiştirmez.\n\n## Sahneyi oynatmak\n\n1. **Karakterler köydeyse** çatırtıyı duyar ve kulübe yönünden gelen üç şekli görür. Çatışma: @[Şafak Çatışması](entity:encounter/Şafak Çatışması).\n2. **Karakterler geceyi köyde geçirmediyse** dönüşüm yine olur. Köylüler arkalarından bir çocuk koşturur, ya da Dönüşmüş'ler köyden çıkan yolda karşılarına çıkar.\n3. **Köylüler.** Kapılar kapanır; bir kadın bir çocuğu kolundan tutup içeri çeker. Köyün gönüllü milislerinden ikisi mızraklarıyla kulübeyle köy arasında durur ve ne yapacaklarını bilmez.\n4. **Sonrası.** Cesetler, dün gece konuşan insanların cesetleridir. Üzerlerindeki her şey yerinde: kumaş, kese, boş parşömenler. Yüzük hâlâ Kromanna'nın gizli cebinde.\n5. **Köy.** Gümüşsu ayakta kalır. Köylüler kapılarını açar ve sokağa çıkar.\n\n## Karakterlerin elindekiler\n\nÇatışmadan sonra karakterler şunları bilebilir:\n\n- Hastalığın bir adı var: köylüler *hastalık* ya da *Blight* der.\n- Üç yabancı bir limandan geldi (@[Duran](entity:npc/Duran)).\n- @[Corvin](entity:npc/Corvin) kıyıdaki @[Gizli Liman](entity:location/Gizli Liman)'a giden yolu biliyor.\n- Kromanna'nın gizli cebinde bir yüzük vardı.\n- Üç yabancı köye hasta geldi.\n- Büyü bilen bir karakter varsa: üstlerinde bir hastalıktan fazlası var.",
+          "beats": "## Ne oldu\n\nKulübede geçen gecenin günlük hastalık zarı üç yabancıyı 9 Hastalık Puanına taşıdı. **Üçü de döndü, ve karakterlerin gece ne yaptığı bunu değiştirmez.** Dönüşüm bir seçimin cezası değil, hastalığın takvimi.\n\n## Köyde\n\nKapılar kapanır; bir kadın bir çocuğu kolundan tutup içeri çeker. Köyün gönüllü milislerinden ikisi mızraklarıyla kulübeyle köy arasında durur ve ne yapacaklarını bilmez.\n\n@[Halim](entity:npc/Halim) hanın arka kapısından çıkar ve koşar. Durmaz, dönüp bakmaz, kimseye seslenmez.\n\nKarakterler oradaysa çatışma: @[Şafak Çatışması](entity:encounter/Şafak Çatışması).\n\n## Şafaktan sonra köy — iki hâl\n\nİkisini ayıran tek şey, o sabah kulübeyle köy arasında kimin durduğu.\n\n**Ayakta.** Ölen var, köy yaşıyor. Öğleye kadar kapılar yeniden açılır, ocak yanar, biri ekmek çıkarır. Erzak ve yatak karakterlerden para istemez ve bu teklif geri alınmaz. @[Duran](entity:npc/Duran) borçludur ve borcunu bilir: konuşmadığı şeyleri konuşur. Üç ceset ortadadır; üstlerindeki her şey yerinde — kumaş, kese, boş parşömenler, ve @[Kromanna](entity:npc/Kromanna)'nın gizli cebindeki yüzük.\n\n**Kırılmış.** Köyün çoğu ölü. Şansa sağ kalanlar var ve çoğu o gün yola çıkar; kalanlar ölülerini gömmekle uğraşır ve kimseyle konuşmaz. Üç Dönüşmüş **serbest** — nereye gittiklerine DM karar verir; köye geri dönmezler. Ocak sönük, kazan devrilmiş, kapılar açık kalmış.\n\n## İki hâlde de doğru olanlar\n\n- Halim yolu bulur ve anlattıklarını @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'na götürür. Söylenti artar; ne kadar sürdüğü DM'in — günlerle bir hafta arası.\n- Köyden sağ çıkan kim varsa iki cümle taşır: *\"hastaydılar\"* ve *\"buralı değillerdi.\"*\n- Hastalığın bir adı var: köylüler *hastalık* ya da *Blight* der.\n- Üç yabancı bir limandan geldi (@[Duran](entity:npc/Duran)).\n- @[Corvin](entity:npc/Corvin) kıyıdaki @[Gizli Liman](entity:location/Gizli Liman)'a giden yolu biliyor.\n- Üç yabancı köye **hasta geldi** (Medicine DC 12, ya da @[Umay](entity:npc/Umay)'dan zarsız).\n- Büyü bilen bir karakter varsa: üstlerinde bir hastalıktan fazlası var (Arcana DC 13).",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -2968,6 +3115,11 @@
               "lookup": "npc",
               "match": "name",
               "value": "Umay"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Halim"
             }
           ],
           "quest_refs": [
@@ -2982,7 +3134,7 @@
               "value": "Nereden Geldiler"
             }
           ],
-          "dmNotes": "Dün NPC olan üç yabancının her birinin şimdi bir de @[Dönüşmüş](entity:monster/Dönüşmüş) kartı var. Çatışmayı anlatırken onları adlarıyla an; karakterler kime karşı dövüştüklerini bilsin.",
+          "dmNotes": "Dün NPC olan üç yabancının her birinin şimdi bir de @[Dönüşmüş](entity:monster/Dönüşmüş) kartı var. Çatışmayı anlatırken onları adlarıyla an; karakterler kime karşı dövüştüklerini bilsin.\n\n**Dönüşmüşleri karakterlerin peşine takma.** Karakterler köyde değilse çatışma da olmaz — köy ödemiş olur. Yolda karşılarına çıkarmak, atlanan bir sahneyi geri zorlamaktır: burada zorunlu olan şey sahne değil **sabah**.\n\n**Halim'e sıra verme.** Statblok aramaya gerek yok: bir hamlesi yok, bir yönü var. Kalıp dövüşmesi için ikna edilemez.\n\n**Kırılmış hâlde üç Dönüşmüş serbest kalır** ve bu bir borç değil, bir malzeme: ormanda bir iz, bir sonraki köyde bir söylenti, ya da hiç. Karar senin.",
           "tags": [
             "sahne",
             "gümüşsu",
@@ -3053,7 +3205,7 @@
           },
           "status": "Planned",
           "description": "> İki gemi yan yana bağlı. Birinin halatları yeni, güvertesi sabah yıkanmış ve hâlâ ıslak; iskelenin başında yarı-elf bir kaptan yük listesini satır satır okuyor ve her satırda başını kaldırıp sandıklara bakıyor. Ötekinin küpeştesi iki yerden yamalı; güvertede tayfa zar atıyor, ve bir şişe elden ele dolaşıyor. Yarı-orc kaptanı, siz daha iskeleye varmadan, rom kokulu bir nefesle bir fiyat bağırıyor.\n>\n> İki kaptan da aynı yöne gidiyor. İkisi de size önce aynı şeyi soruyor: neyle ödeyeceğinizi.",
-          "beats": "## Bir gemiye binmek\n\nLimandan bir gemiye binmenin iki yolu var: **iyi yazı** ya da **iyi para**. Karakterlerin kesesinde ikisi de yoktur.\n\n- **İyi para.** Yolcunun taşıdığı paranın çok üstündedir. Kazanılması gerekir: @[Rıhtım](entity:location/Rıhtım)'da gündelik iş, satılacak bir mal, ya da birinin borcunu devralmak.\n- **İyi yazı.** @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın karşı-imzalı geçiş kağıdı. Limanda bulunmaz; @[Lucid Triton](entity:location/Lucid Triton)'dan getirilir. Bkz. @[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif).\n\n## Kaptanlar\n\n- **@[Kaptan Caelynn](entity:npc/Kaptan Caelynn)** temiz bir yolculuk sunar: iyi yazı ya da yüksek bir ücret. Yükü görmeden kimseyi gemisine almaz.\n- **@[Kaptan Holg](entity:npc/Kaptan Holg)** ucuz ve kötü bir yolculuk sunar. Karakterler kabul ederse Holg sözünü tutar, ama yolculuk zor geçer.\n\n## Yardımcı olabilecekler\n\n- @[Kadife](entity:npc/Kadife) iyi yazının nasıl alındığını bilir.\n- @[Sicim](entity:npc/Sicim) ücretleri ve kefaleti bilir.\n- @[Fare](entity:npc/Fare) hangi kaptanın ne zaman kalkacağını bilir.",
+          "beats": "## Bir gemiye binmek\n\nLimandan bir gemiye binmenin iki yolu var: **iyi yazı** ya da **iyi para**. Karakterlerin kesesinde ikisi de yoktur.\n\n- **İyi para.** Yolcunun taşıdığı paranın çok üstündedir. Kazanılması gerekir: @[Rıhtım](entity:location/Rıhtım)'da gündelik iş, satılacak bir mal, ya da birinin borcunu devralmak.\n- **İyi yazı.** @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın karşı-imzalı geçiş kağıdı. Limanda bulunmaz; @[Lucid Triton](entity:location/Lucid Triton)'dan getirilir. Bkz. @[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif).\n\n## Kaptanlar\n\n- **@[Kaptan Caelynn](entity:npc/Kaptan Caelynn)** temiz bir yolculuk sunar: iyi yazı ya da yüksek bir ücret. Yükü görmeden kimseyi gemisine almaz.\n- **@[Kaptan Holg](entity:npc/Kaptan Holg)** ucuz ve kötü bir yolculuk sunar. Karakterler kabul ederse Holg sözünü tutar, ama yolculuk zor geçer.\n\n## Yardımcı olabilecekler\n\n- @[Sicim](entity:npc/Sicim) ücretleri ve kefaleti bilir.\n- @[Fare](entity:npc/Fare) hangi kaptanın ne zaman kalkacağını bilir.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3088,7 +3240,14 @@
             "rıhtım",
             "pazarlık"
           ],
-          "imagePath": "media/Artwork/Geçiş-Pazarlığı.webp"
+          "imagePath": "media/Artwork/Geçiş-Pazarlığı.webp",
+          "quest_refs": [
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "İyi Yazı"
+            }
+          ]
         }
       },
       {
@@ -3139,10 +3298,10 @@
             {
               "lookup": "quest",
               "match": "name",
-              "value": "Nereden Geldiler"
+              "value": "Söylentinin Peşinde"
             }
           ],
-          "dmNotes": "Karakterler bu oturumu kazanamaz. Oturumdan çıkardıkları şey, altı koltuğun her birinin neden hayır dediğini dinlemek.\n\nHiçbir koltuk sahibi kötü niyetli değildir. Her birinin susması kendi loncasının çıkarından gelir. Konuşan tek kişi, kaybedecek bir şeyi kalmamış olan Orvan Sancar'dır, ve onun sesi salonda hiçbir şey değiştirmez.",
+          "dmNotes": "Karakterler bu oturumu kazanamaz. Oturumdan çıkardıkları şey, altı koltuğun her birinin neden hayır dediğini dinlemek.\n\nHiçbir koltuk sahibi kötü niyetli değildir. Her birinin susması kendi loncasının çıkarından gelir.\n\nKonuşan tek kişi @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'dır, ve salonun ona dönüp bakmamasının sebebi kayıtsızlık değil: **Orvan'ın sözü ucuz.** Otuz yıl herkesten bir şey istedi, herkese bir iş çevirdi. Doğruyu söylediği tek gün, kimsenin inanmadığı gün.",
           "tags": [
             "sahne",
             "lucid-triton",
@@ -3162,7 +3321,7 @@
           },
           "status": "Planned",
           "description": "> Salonun ağır kapısı arkanızdan kapanıyor. Koridorun serin taşı adımlarınızın sesini geri yolluyor, ve bir yerde bir fenerci merdiven taşıyor. Merdivenin başında biri bekliyor: salonun en eski paltosunu giyen adam. Etrafına bakmıyor. Doğrudan size yürüyor, mühür yüzüğünü parmağında bir kez çeviriyor, ve sesini alçaltmadan konuşuyor.\n>\n> *\"Söyledikleriniz doğru.\"*",
-          "beats": "## Kim bekliyor\n\n@[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar), ya da onun çırağı. Oturumdan hemen sonra, aynı gün.\n\n## Teklif\n\nOrvan üç cümle söyler:\n\n1. *\"Söyledikleriniz doğru. O salonda kimse buna bakmayacak, ben dahil. Benim sözümün orada ağırlığı yok.\"*\n2. *\"Benim defterimden bir sayfa silindi, ve silen benim memurlarımdan biri. Bana kimin ödediğini getirin.\"*\n3. *\"Param yok. Verebileceğim şey imza.\"*\n\n## Ödül\n\n- **Ücretsiz yolculuk.** Orvan'ın loncasının karşı-imzalı geçiş kağıdı; limanlardaki adıyla *iyi yazı*. Karakterler gemi parası bulamasa bile bir gemiye binebilir.\n- **Hanesinin mirasına ortaklık.** Orvan'ın verecek parası yok, ama bir hanesi var: Sancarlar, Meclis'in en eski mührü.\n\n## Eriyen miras\n\nOrvan'ın loncası gelirini ticaret gemilerinden kazanır, ve hastalık söylentisi gemileri azaltıyor. Orvan'ın teklif ettiği pay, çözülmesini istediği sorun yüzünden her gün küçülüyor. Karakterler bunu fark eder ve sorarsa Orvan inkâr etmez: *\"Doğru. Bekleyemem. O yüzden buradayım.\"*\n\n## İşin iki yüzü\n\nOrvan'ın istediği, silmenin parasını kimin verdiği. Karakterler işi daha geniş de anlayabilir: bu hastalığın ne olduğunu bulmak. Silinen sayfanın peşine düşen karakterler @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra)'na, hastalığın peşine düşenler kulübeye ve kaynağa döner.",
+          "beats": "## Kim bekliyor\n\n@[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar), ya da onun çırağı. Oturumdan hemen sonra, aynı gün.\n\nKarakterler Meclis'e hiç gitmediyse aynı teklif başka bir yerde ulaşır: çırağı onları şehirde bulur, ya da @[Votumar](entity:location/Votumar) dönüşü yolda bir mektup yetişir. Sahne salonun kapısında oynanmak zorunda değil.\n\n## Teklif\n\nOrvan üç cümle söyler:\n\n1. *\"Söyledikleriniz doğru. O salonda kimse buna bakmayacak, ben dahil. Benim sözümün orada ağırlığı yok.\"*\n2. *\"Üç hasta insanı bu kıtaya biri soktu, ve kimsenin soru sormadığı bir köye yolladı. Bana onu getirin.\"*\n3. *\"Param yok. Verebileceğim şey imza.\"*\n\n## Ödül\n\n- **Bir geçiş kağıdı.** Orvan'ın imzası; limanlardaki adıyla *iyi yazı*'nın yarısı. Öteki yarısı @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası)'nda atılır (@[İyi Yazı](entity:quest/İyi Yazı)).\n- **Hanesinin mirasına ortaklık.** Orvan'ın verecek parası yok, ama bir hanesi var: Sancarlar, Meclis'in en eski mührü.\n\n## Güvenilmez adam\n\nKarakterler Orvan'ı sorarsa şehirde duyacakları iyi değil: kayıran, iş çeviren, her iyiliğin karşılığını isteyen bir adam. Hepsi doğru, ve Orvan inkâr etmez:\n\n*\"Hepsi doğru. Bugün söylediğim de doğru. İkisini birden taşımak zorundasınız.\"*\n\nKimse bir söylenti uğruna onunla çalışmaz. Karakterler çalışacaksa sebebi Orvan olmayacak; Gümüşsu olacak.\n\n## Eriyen miras\n\nOrvan'ın loncası gelirini ticaret gemilerinden kazanır, ve hastalık söylentisi gemileri azaltıyor. Orvan'ın teklif ettiği pay, çözülmesini istediği sorun yüzünden her gün küçülüyor. Karakterler bunu fark eder ve sorarsa Orvan inkâr etmez: *\"Doğru. Bekleyemem. O yüzden buradayım.\"*\n\n## İşin iki yüzü\n\nOrvan'ın istediği tek şey: üç yabancıyı kim geçirdi. Karakterler işi daha geniş de anlayabilir — bu hastalığın ne olduğunu bulmak. İzin peşine düşenler @[Gizli Liman](entity:location/Gizli Liman)'a, hastalığın peşine düşenler kulübeye ve kaynağa döner.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3177,7 +3336,7 @@
               "value": "Nereden Geldiler"
             }
           ],
-          "dmNotes": "**Teklifi aynı oturumda ver.** Bir sonraki oyun gününe bırakırsan oyuncular Meclis'e gitmenin boşa gittiğini düşünerek masadan kalkar.\n\n**Eriyen mirası bir sürpriz gibi açıklama.** Karakterler görürse görür. Orvan'ın bunu inkâr etmemesi ona güven kazandırır.\n\n**Geçiş kağıdı iz bırakır.** Karşı-imza bir deftere yazılır; karakterlerin nereye gittiği bilinir.\n\n**Başka yollar da var.** Aynı geçişi para da sağlar (@[Geçiş Pazarlığı](entity:scene/Geçiş Pazarlığı)); aynı bilgiye @[Sicim](entity:npc/Sicim) ve @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) üzerinden de ulaşılır.",
+          "dmNotes": "**Teklifi aynı oturumda ver.** Bir sonraki oyun gününe bırakırsan oyuncular Meclis'e gitmenin boşa gittiğini düşünerek masadan kalkar.\n\n**Eriyen mirası bir sürpriz gibi açıklama.** Karakterler görürse görür. Orvan'ın bunu inkâr etmemesi ona güven kazandırır.\n\n**Geçiş kağıdı iz bırakır.** Karşı-imza bir deftere yazılır; karakterlerin nereye gittiği bilinir.\n\n**Başka yollar da var.** Aynı yolculuğu para da sağlar (@[Geçiş Pazarlığı](entity:scene/Geçiş Pazarlığı)); limana da iki kapıdan girilir (@[Duran](entity:npc/Duran)/@[Corvin](entity:npc/Corvin), ya da yüzük üzerinden @[Kildrak Ferrun](entity:npc/Kildrak Ferrun)).\n\n**Reddedilirse.** Karakterler teklifi almazsa @[Nereden Geldiler](entity:quest/Nereden Geldiler) yine oynanabilir, ama kıtadan çıkmak için gemi parası bulmaları gerekir.",
           "tags": [
             "sahne",
             "lucid-triton",
@@ -3198,7 +3357,7 @@
           },
           "status": "Planned",
           "description": "> Sıra ilerlemiyor. Önünüzdeki kadın aynı kağıdı masaya üçüncü kez uzatıyor, ve memur üçüncü kez başını kaldırmadan aynı cümleyi söylüyor: *\"İmzası gelmedi.\"* Kadın hangi imza olduğunu sormuyor. Kağıdını geri alıyor, katlamadan göğsüne bastırıyor ve sıranın sonuna yürüyor; ayakkabılarının taşta çıkardığı ses koridor boyunca uzuyor. Duvar lambalarından biri cızırdıyor.\n>\n> Memur başını kaldırıyor ve mürekkepli elini masanın üstüne koyuyor. Sıra sizde.",
-          "beats": "## Masa\n\nBir işin yapılabilmesi için bir imza yeter; resmi olarak yapılmış sayılması için ikinci bir imza gerekir. İkinci imza bu masada atılır. Memur @[Corin Sancar](entity:npc/Corin Sancar)'dır. Kimseye *hayır* demez; imzalamak istemediği kağıt yığında bekler. Bekleme rüşvetle kısalır.\n\nİyi yazı, @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın karşı-imzalı geçiş kağıdı, bu masadan çıkar.\n\n## Silinen sayfa\n\nKarakterler karşı-imza defterini görebilirse (Corin'i ikna ederek, rüşvetle, ya da Orvan Sancar'ın bir yazısıyla), üç yabancının geçişinin yazılı olduğu sayfanın defterden çıkarıldığını görebilir.\n\n- **Satır gitmiş, imza kalmış.** Sayfa çıkarılmış, ama kefilin karşı-imzası sütunda duruyor; imza sayfanın değil sütunun parçasıdır. İmza Corin'in.\n- **Boşluğu görmek.** Defter işaretlerini okuyabilen bir karakter (@[Arşivci](entity:background/Arşivci), ya da @[Kayıt Elifbası](entity:adventuring-gear/Kayıt Elifbası) taşıyan biri) sütundaki boşluğu zar atmadan görür.\n- **İkinci nüsha.** Sayfa şehre geldi; taşra kaleminin nüshası gelmedi. O nüsha @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın loncasının defterinde.\n\n## Corin\n\nCorin terfi etmek istiyor: kendi karşı-imza yetkisi olan bir masa. İmzasını gösteren karakterler karşısında önce inkâr eder. Karakterler terfisini tehlikeye atacak bir şey gösterirse ya da terfisine yardım edecek bir şey önerirse konuşmaya daha yatkın olur.",
+          "beats": "## Neden buradalar\n\nKarakterlerin elinde @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın imzaladığı bir geçiş kağıdı var. Bir imza bir işi yaptırır; **resmi olarak yapılmış saymak için ikinci bir imza gerekir.** İkinci imza bu masada atılır. Karşı-imzasız kağıt kimseyi bir gemiye bindirmez.\n\n## Engel\n\nMasadaki memur @[Corin Sancar](entity:npc/Corin Sancar). Kağıdı alır, önce altındaki imzalara bakar, sonra yığının altına kaydırır:\n\n*\"Beklemede. İmzası gelecek.\"*\n\nNe zaman diye sorulursa tarih vermez. Sırada bekleyen kadın aynı cevabı üçüncü kez aldı. **Bu bir ret değil, bir süre** — ve süre karakterlerde yok.\n\n## Üç yol\n\n- **Rüşvet.** Bekleme kısalır, kimse şaşırmaz, kimse kızmaz; kıtada en çok rüşvet verilen masa burası. Fiyatı @[Sicim](entity:npc/Sicim) bilir, bilmiyorlarsa sıradaki biri söyler.\n- **Orvan'ın adı.** Corin o masada Orvan'ın kayırmasıyla oturuyor. Adı duyunca imzalar — ve imzalarken yüzü değişir. Karakterler ucuza bir kapı açar, karşılığında Corin'in husumetini alır.\n- **Terfi.** Corin kendi adıyla, kendi karşı-imza yetkisi olan bir masa istiyor. Ona bunun yolunu açacak bir şey öneren karakterler (bir tanıklık, bir ad, bir iyilik) tek dostça kapıyı bulur: kağıt aynı gün imzalanır, ve Corin sonradan da işe yarar.\n\n## Zorlamak\n\nKarakterler tehdit eder ya da sıranın önüne geçmeye kalkarsa Corin sesini yükseltmez. Kağıdı yığının en altına koyar ve bir sonraki adı çağırır. Koridorun ucunda kolluk var; @[Çavuş Krusk](entity:npc/Çavuş Krusk)'un adamları iki adımda içeride.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3210,10 +3369,10 @@
             {
               "lookup": "quest",
               "match": "name",
-              "value": "Nereden Geldiler"
+              "value": "İyi Yazı"
             }
           ],
-          "dmNotes": "Kimin ödediği sorusu bu masada biter, ama cevaplanmaz. Aynı soruya @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) (yüzüğün damgası) ve @[Sicim](entity:npc/Sicim) (limanın defteri) üzerinden de varılır; karakterler bu sahneyi kaçırırsa oradan ilerleyebilir.",
+          "dmNotes": "**Bu bir soruşturma sahnesi değil, bir kilit.** Oyuncunun elinde kağıt var ve kapı kapalı. Sahnenin bütün ağırlığı şurada: bu kıtada kimse *hayır* demek zorunda değil. Yığın hep orada duruyor, ve sıra hiç ilerlemiyor.\n\n**Çabuk oynat.** Üç yoldan biri seçilir seçilmez kağıt imzalanır. Bunu bir bulmacaya çevirme.\n\n**Karşı-imza iz bırakır.** Deftere yazılır: karakterlerin hangi adla, hangi gemiyle, nereye gittiği şehirde bilinir.\n\n**Kaçırılırsa.** Karşı-imza hiç alınmazsa kıtadan çıkmanın öteki yolu duruyor: para ve @[Gizli Liman](entity:location/Gizli Liman) (@[Geçiş Pazarlığı](entity:scene/Geçiş Pazarlığı)). İki yol da @[İyi Yazı](entity:quest/İyi Yazı)'yı kapatır.",
           "tags": [
             "sahne",
             "lucid-triton",
@@ -3233,7 +3392,7 @@
           },
           "status": "Planned",
           "description": "> Gümrük memuru bir sandığın kapağını açtırıyor ve içindekileri tek tek yazı tahtasına geçiriyor: kaç top kumaş, kaç çuval karanfil, hangi gemiden. Çuvallardan biri yırtılmış; baharatın keskin kokusu ıslak taşın kokusuna karışıyor. Arkasında bir vinç bir sonraki yükü havaya kaldırıyor, zinciri şakırdıyor, ve tepedeki gnome aşağıya bir şey bağırıyor. Memur yazdığı listeyi iki kez kopyalıyor ve kopyalardan birini, üstünde *Lucid Triton* yazan mühürlü bir torbaya atıyor.\n>\n> Öteki kopyayı size uzatıyor ve kalemi hazır bekletiyor. *\"Adınız?\"*",
-          "beats": "## Gümrük\n\nElymsyr'e gemiyle giren her yük gümrükten geçer. Sandıklar açılır, mal sayılır, liste çıkarılır; bir kopya Lucid Triton'a yollanır. Karakterler bir gemiden iniyorsa adlarını ve yüklerini söylemeleri istenir.\n\n**Kaçakçılığın cezası** nehir işlerinde ömür boyu ağır işçiliktir.\n\n## Rıhtımda kim var\n\n- **@[Gümrük Valisi](entity:npc/Gümrük Valisi)** en yüksek terastaki odasında. Karakterler resmi bir geçiş için onunla konuşabilir. Eksik boşaltılan yükleri defterde tam gösteriyor; defterlerde bir hata bulunmaz.\n- **@[Vinç Ustası](entity:npc/Vinç Ustası)** rıhtımın vinçlerinde. Bazı gece boşaltmalarına vinç veriyor; bu yükler gümrük defterine yazılmıyor.\n- **@[Çevirmen](entity:npc/Çevirmen)** iskelelerin başında iş bekliyor. Öte'den gelen gemilerin taze haberlerini bilir.\n- **@[Nehir Muhafızı Çavuşu](entity:npc/Nehir Muhafızı Çavuşu)** boğazın kulelerinde. Boğazdan geçen gemileri ve zinciri bilir.\n\n## Burada ne öğrenilir\n\n- **Gemilerin kaydı.** Hangi gemi gelmedi, hangi yük eksik boşaltıldı, hangi tayfa karaya çıkmadı: gümrük defterlerinde izi var. Defterleri okumayı bilen bir karakter (@[Arşivci](entity:background/Arşivci)) bunları görebilir.\n- **Gümrüksüz geçiş.** Vinç Ustası'nın gece işleri, gümrüğe uğramadan kıtaya girmenin burada da mümkün olduğunu gösterir.\n\n## Gelenekler\n\nDenizciler yola çıkmadan suya bir parça gümüş atar.",
+          "beats": "## Gümrük\n\nElymsyr'e gemiyle giren her yük gümrükten geçer. Sandıklar açılır, mal sayılır, liste çıkarılır; bir kopya Lucid Triton'a yollanır. Karakterler bir gemiden iniyorsa adlarını ve yüklerini söylemeleri istenir.\n\n**Kaçakçılığın cezası** nehir işlerinde ömür boyu ağır işçiliktir.\n\n## Rıhtımda kim var\n\n- **@[Gümrük Valisi](entity:npc/Gümrük Valisi)** en yüksek terastaki odasında. Karakterler resmi bir geçiş için onunla konuşabilir. Eksik boşaltılan yükleri defterde tam gösteriyor; defterlerde bir hata bulunmaz.\n- **@[Vinç Ustası](entity:npc/Vinç Ustası)** rıhtımın vinçlerinde. Bazı gece boşaltmalarına vinç veriyor; bu yükler gümrük defterine yazılmıyor.\n- **@[Çevirmen](entity:npc/Çevirmen)** iskelelerin başında iş bekliyor. Öte'den gelen gemilerin taze haberlerini bilir.\n- **@[Nehir Muhafızı Çavuşu](entity:npc/Nehir Muhafızı Çavuşu)** boğazın kulelerinde. Boğazdan geçen gemileri ve zinciri bilir.\n\n## Burada ne öğrenilir\n\n- **Gemilerin kaydı.** Hangi gemi gelmedi, hangi yük eksik boşaltıldı, hangi tayfa karaya çıkmadı: gümrük defterlerinde izi var. Defterleri okumayı bilen bir karakter (@[Arşivci](entity:background/Arşivci)) bunları görebilir.\n- **Gümrüksüz geçiş.** Vinç Ustası'nın gece işleri, gümrüğe uğramadan kıtaya girmenin burada da mümkün olduğunu gösterir.\n\n## Tayfa olarak binmek\n\nKarşı-imzalı geçiş kağıdı karakterleri bir ticaret gemisinde **tayfa** gösterir: yolcu değil, işçi. Bu yüzden ücret ödemezler, ve bu yüzden gümrükte yükle birlikte sayılırlar. Memur adlarını deftere yazar, listeyi iki kez kopyalar, ve bir kopyayı Lucid Triton'a yollar.\n\n**Sahte kimlik.** Karakterler arasında @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) varsa @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) ona ayrıca başka bir ad ayarlar. Hanesinin adıyla o listeye yazılan biri rıhtımda tanınır, ve tanınmak istemedikleri tek yer burası.\n\nO sahte ad Orvan'ın kendi loncasının defterine uydurduğu bir satırdır. Karakterler bunu fark ederse Orvan'ın nasıl bir adam olduğunu anlatmaya gerek kalmaz; iş üstünde görürler.\n\n**Bedeli.** Tayfa yazılan tayfa gibi çalışır. Yolculuk boyunca vardiya tutarlar.\n\n## Gelenekler\n\nDenizciler yola çıkmadan suya bir parça gümüş atar.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3262,7 +3421,14 @@
             "elymsyr",
             "gümrük"
           ],
-          "imagePath": "media/Artwork/Gümrük-Rıhtımı.webp"
+          "imagePath": "media/Artwork/Gümrük-Rıhtımı.webp",
+          "quest_refs": [
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "İyi Yazı"
+            }
+          ]
         }
       },
       {
@@ -3301,7 +3467,14 @@
             "kule",
             "işaret"
           ],
-          "imagePath": "media/Artwork/Susan-Kule.webp"
+          "imagePath": "media/Artwork/Susan-Kule.webp",
+          "quest_refs": [
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "Söylentinin Peşinde"
+            }
+          ]
         }
       },
       {
@@ -3388,9 +3561,9 @@
           "name": "Söylentinin Peşinde",
           "status": "Not Started",
           "description": "Hastalık söylentileri karakterleri Gümüşsu yoluna çıkardı.",
-          "objective": "@[Gümüşsu](entity:location/Gümüşsu)'ya varın ve söylentinin arkasında ne olduğunu görün: köyü, kulübeyi, ve kulübedeki üç yabancıyı.\n\n1. @[Köye Varış](entity:scene/Köye Varış)\n2. @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)\n3. @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) ve @[Şafak Çatışması](entity:encounter/Şafak Çatışması)",
-          "reward": "**Gümüşsu ayakta kalır.**\n\nKarakterler köyden ayrılırken yanlarında şunlar olabilir: hastalığın adı; üç yabancının bir limandan geldiği; limanın yolunu bilen bir adam; Kromanna'nın gizli cebindeki yüzük; üç yabancının köye hasta geldiği; ve büyü bilen biri varsa, üstlerinde bir hastalıktan fazlası olduğu.",
-          "secrets": "**Kulübedeki üç yabancı köye hasta geldi.** @[Öte](entity:location/Vorstrand)'den yola çıktılar ve gümrüğe uğramadan @[Gizli Liman](entity:location/Gizli Liman) üzerinden kıtaya girdiler. Hastalığın kaynağı Gümüşsu değil.\n\nÜçü kulübeye 8 Hastalık Puanıyla alındı. Kulübedeki gecenin zarı onları 9'a taşır ve şafakta dönerler. Karakterlerin ne yaptığı bunu değiştirmez.\n\nBu görev belirli bir karaktere bağlı değildir; her karakter hastalık söylentisini duyarak yola çıkmıştır.\n\nBuradan sonra karakterler iki yöne gidebilir: üç yabancının izini sürmek (@[Nereden Geldiler](entity:quest/Nereden Geldiler)), ya da doğrudan @[Lucid Triton](entity:location/Lucid Triton)'a, Meclis'e gitmek.",
+          "objective": "@[Gümüşsu](entity:location/Gümüşsu)'ya varın, söylentinin arkasında ne olduğunu görün, ve gördüğünüzü bir makama götürün.\n\n1. @[Köye Varış](entity:scene/Köye Varış)\n2. @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)\n3. @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) ve @[Şafak Çatışması](entity:encounter/Şafak Çatışması)\n4. **Bir makama götürün.** Başkentte Lonca Meclisi (@[Meclis Oturumu](entity:scene/Meclis Oturumu)), ya da @[Votumar](entity:location/Votumar)'da @[Başkumandan](entity:npc/Başkumandan). İkisine de gidilebilir; biri yeter.\n\n**Görev, gidilen makam reddettiğinde kapanır.**",
+          "reward": "**Gümüşsu ayakta kalır.**\n\nKarakterler köyden ayrılırken yanlarında şunlar olabilir: hastalığın adı; üç yabancının bir limandan geldiği; limanın yolunu bilen bir adam; Kromanna'nın gizli cebindeki yüzük; ve büyü bilen biri varsa, üstlerinde bir hastalıktan fazlası olduğu.\n\n**Makamdan dönerken elde kalan bir ret, ve iki ad:** hastalığa inanan tek koltuk (@[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)), ve hiç göz kırpmayan bir komutan.",
+          "secrets": "**Kulübedeki üç yabancı köye hasta geldi.** @[Öte](entity:location/Vorstrand)'den yola çıktılar ve gümrüğe uğramadan @[Gizli Liman](entity:location/Gizli Liman) üzerinden kıtaya girdiler. Hastalığın kaynağı Gümüşsu değil.\n\nÜçü kulübeye 8 Hastalık Puanıyla alındı. Kulübedeki gecenin zarı onları 9'a taşır ve şafakta dönerler. Karakterlerin ne yaptığı bunu değiştirmez.\n\nBu görev belirli bir karaktere bağlı değildir; her karakter hastalık söylentisini duyarak yola çıkmıştır.\n\n**İki makam da reddeder, ama aynı sebeple değil.** Meclis'in altı koltuğu samimi olarak reddeder; her biri hastalığı kendi mesleğinin gözünden görmez. @[Başkumandan](entity:npc/Başkumandan) inanmadığı için değil, **zaman kazanmak için** reddeder. Oyuncu farkı sezmeyebilir; sen bil.\n\n**Votumar'ın ödülü hastalık değil, Başkumandan'ın kendisi:** @[Susan Kule](entity:scene/Susan Kule)'deki kaybolan rapor, @[Kapı Komutanı](entity:npc/Kapı Komutanı)'nın iki aydır boş emir sütunu, ve @[Şüpheci Rütbeli](entity:npc/Şüpheci Rütbeli).\n\nBuradan sonra iki iş açılır: @[Nereden Geldiler](entity:quest/Nereden Geldiler) ve @[İyi Yazı](entity:quest/İyi Yazı).",
           "tags": [
             "görev",
             "giriş",
@@ -3404,15 +3577,31 @@
         "mapping": {
           "name": "Nereden Geldiler",
           "status": "Not Started",
-          "description": "Kulübedeki üç yabancı kıtaya gümrüğe uğramadan girdi. Birisi geçişlerinin izini sildirdi, ve birisi bunun parasını aldı.",
-          "objective": "Üç yabancının Gümüşsu'ya nasıl geldiğini ve geçişlerinin izini kimin sildirdiğini bulun.\n\n1. **Kulübedeki izler.** @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu): kumaş, dolu kese ve boş parşömenler, gizli cepteki yüzük, beden, büyü izi.\n2. **Liman.** Elymsyr'den geçselerdi gümrük defterinde adları olurdu. @[Duran](entity:npc/Duran) *\"limandan geldiler\"* der; @[Corvin](entity:npc/Corvin) yolu bilir. Hedef: @[Gizli Liman](entity:location/Gizli Liman) (@[Limana Kabul](entity:scene/Limana Kabul)).\n3. **İzi kim sildirdi.** @[Sicim](entity:npc/Sicim)'in defteri; @[Mine](entity:npc/Mine)'in tezgahı.\n4. **Kim ödedi.** @[Corin Sancar](entity:npc/Corin Sancar)'ın imzası (@[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra)); @[Kildrak Ferrun](entity:npc/Kildrak Ferrun)'un damga fihristi; ve yine Sicim.\n\n**Başka bir yol: gerçek adlar.** Üç yabancının gerçek adları Gümüşsu'da hiçbir şey ifade etmez. Meclis'te @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) tanır (@[Meclis Oturumu](entity:scene/Meclis Oturumu)).\n\n**Aynı işi isteyen biri.** Orvan Sancar, Meclis salonunun kapısında: *\"Bana kimin ödediğini getirin.\"* (@[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif)).",
-          "reward": "Bir eşya değil, bilgi ve müttefikler: kim doğruyu söylüyor, kim susuyor, kim satıyor.\n\nOrvan Sancar'ın teklifini kabul eden karakterler için: karşı-imzalı bir geçiş kağıdı, ve Sancar hanesinin mirasına ortaklık.",
-          "secrets": "**Suç hastalığı yaymak değil, gizlemek.** Birileri üç hasta insanı kıtaya soktu, geçişlerinin izini sildi, ve onları kimsenin sormadığı bir köye yolladı. Onları buraya getiren kişi Gümüşsu'yu tehlikeye attı.\n\n**Karakterlerin kanıtlayabileceği en uç nokta @[Karşı-İmza Masası](entity:location/Karşı-İmza Masası):** silinen sayfanın altındaki ikinci imza Corin Sancar'ın. Parayı kimin verdiği ve kimin aldığı, üç yabancının yolculuklarını kendilerinin mi ödediği yoksa birinin onları mı taşıdığı, ve nasıl hastalandıkları kanıtlanamaz.\n\n**Yüzük.** Mühür yüzü eğelenerek düzleştirilmiş; iç kenarındaki ayar damgası taze bir Meridia damgası. Yüzük bu kıtaya geldikten sonra işlendi. Damga Mine'in tezgahını gösterir.\n\n**Kilitlenme yok.** Her adıma en az iki yoldan ulaşılır. Gerçek adlar Meclis'e, liman ise Karşı-İmza Masası'na çıkar; biri ötekinin ön koşulu değil.",
+          "description": "Kulübedeki üç yabancı kıtaya gümrüğe uğramadan girdi. Onları bir gemi getirdi, ve o gemi bir daha yanaşmadı.",
+          "objective": "Üç yabancının Gümüşsu'ya nasıl geldiğini bulun. İşi veren @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar): *\"Bana onları geçireni getirin.\"*\n\n1. **Kulübedeki izler.** @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu): kumaş, dolu kese ve boş parşömenler, gizli cepteki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük), beden, büyü izi.\n2. **Limanın yolu — iki kapı.** @[Duran](entity:npc/Duran) *\"limandan geldiler\"* der ve @[Corvin](entity:npc/Corvin) yolu bilir; ya da yüzük konuşur — @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) damgasız işi okur ve güneyi gösterir. Hedef: @[Gizli Liman](entity:location/Gizli Liman) (@[Limana Kabul](entity:scene/Limana Kabul)).\n3. **Limanda.** @[Sicim](entity:npc/Sicim)'in defteri: satır parayla silinmiş. @[Fare](entity:npc/Fare): geminin geldiği gece, kimlerin indiği. @[Mine](entity:npc/Mine): yüzüğü eğeleyen el, ve hatırladığı eski yüz.\n4. **Ve orada biter.** Silmenin parasını **Kader**'in kaptanı verdi. Adını kimse bilmiyor, ve gemi o geceden sonra bir daha yanaşmadı.\n\n**Başka bir yol: gerçek adlar.** Üç yabancının gerçek adları Gümüşsu'da hiçbir şey ifade etmez. Meclis'te @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) tanır (@[Meclis Oturumu](entity:scene/Meclis Oturumu)).",
+          "reward": "Bir eşya değil: bir gemi adı ve bir çizim. **Kader**, ve @[Mine](entity:npc/Mine)'in kağıda çizdiği, kimsenin tanımadığı işaret. İkisi de Act 1'de hiçbir kapı açmaz.\n\nOrvan Sancar'a dönen karakterler için: **imzalı bir geçiş kağıdı** (@[İyi Yazı](entity:quest/İyi Yazı)) ve Sancar hanesinin mirasına ortaklık. Orvan aldığı cevaptan memnun değil, ama ödemeyi yapar — eline geçen, elindekinden fazla.",
+          "secrets": "**Suç hastalığı yaymak değil, gizlemek.** Birileri üç hasta insanı kıtaya soktu, limandaki izlerini sildirdi, ve onları kimsenin soru sormadığı bir köye yolladı. Onları buraya getiren kişi Gümüşsu'yu tehlikeye attı.\n\n**Karakterlerin varabileceği en uç nokta @[Gizli Liman](entity:location/Gizli Liman).** Silmenin parasını *Kader*'in kaptanı verdi, ve o adam denizde. Kimin adına taşıdığı, üç yabancının yolculuğunu kendilerinin mi ödediği, ve nasıl hastalandıkları Act 1'de kanıtlanamaz.\n\n**Yüzük.** Mühür yüzü eğelenerek düzleştirilmiş, ve üstünde hiçbir damga yok — bu kıtada bir kuyumcu işine damgasını vurur. Damgasızlık lonca dışı bir tezgahı, yani limanı işaret eder. Eski yüzü @[Mine](entity:npc/Mine) hatırlıyor: bu kıtada karşılığı olmayan bir işaret.\n\n**Kısa görev.** Bu bir soruşturma zinciri değil, soğuyan bir iz. Üç dört sahnede biter. Uzatmaya çalışma — oyuncunun eli boş çıkmıyor, sadece cevap çıkmıyor.\n\n**Kilitlenme yok.** Limana iki yoldan gidilir, ve Orvan'ın teklifi Meclis'e hiç gitmemiş karakterlere de ulaşır.",
           "tags": [
             "görev",
             "soruşturma"
           ],
           "imagePath": "media/Artwork/Nereden-Geldiler.webp"
+        }
+      },
+      {
+        "source_name": "İyi Yazı",
+        "mapping": {
+          "name": "İyi Yazı",
+          "status": "Not Started",
+          "description": "Meridia'da yollar serbesttir; para isteyen tek şey bir gemiye binmektir. Kıtadan çıkmanın iki yolu var: iyi yazı ya da iyi para.",
+          "objective": "Bir gemiye binin. İki yol var, biri yeter.\n\n**Yasal yol — iyi yazı**\n\n1. **Birinci imza.** @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın geçiş kağıdı (@[Kapı Önündeki Teklif](entity:scene/Kapı Önündeki Teklif)).\n2. **Karşı-imza.** @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra): rüşvet, Orvan'ın adı, ya da @[Corin Sancar](entity:npc/Corin Sancar)'ın terfisi.\n3. **Gemiye binmek.** @[Elymsyr](entity:location/Elymsyr)'de @[Gümrük Rıhtımı](entity:scene/Gümrük Rıhtımı). Kağıt karakterleri bir ticaret gemisinde tayfa gösterir.\n\n**Kaçak yol — iyi para**\n\n1. **Kabul.** @[Gizli Liman](entity:location/Gizli Liman)'a kefilsiz girilmez (@[Limana Kabul](entity:scene/Limana Kabul)).\n2. **Para.** @[Rıhtım](entity:location/Rıhtım)'da gündelik iş, satılacak bir mal, ya da birinin borcunu devralmak.\n3. **Pazarlık.** @[Geçiş Pazarlığı](entity:scene/Geçiş Pazarlığı): @[Kaptan Caelynn](entity:npc/Kaptan Caelynn) temiz ve pahalı, @[Kaptan Holg](entity:npc/Kaptan Holg) ucuz ve kötü.",
+          "reward": "Kıtadan çıkış.\n\nYasal yolda ayrıca: karakterlerin bir gemide işi, ve @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'a bir borcu olur. Kaçak yolda: bir kefil, ve limanda bir borç.",
+          "secrets": "**İki yolun bedeli farklı, ve fark iz.** Yasal yol iz bırakır: karşı-imza deftere yazılır, gümrük listesinin bir kopyası @[Lucid Triton](entity:location/Lucid Triton)'a gider, ve karakterlerin hangi adla, hangi gemiyle, nereye gittiği şehirde bilinir. Kaçak yol izsizdir, ama kefil ister ve limanda bir borç bırakır.\n\n**Sahte kimlik.** @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) geçmişi olan bir karakter kendi adıyla tayfa listesine yazılırsa rıhtımda tanınır. Orvan ona başka bir ad ayarlar — ve o ad, kendi loncasının defterine uydurduğu bir satırdır. Orvan'ın nasıl çalıştığını karakterler burada iş üstünde görür.\n\n**Kilitlenme yok.** Karşı-imzayı alamayan karakterler para yoluna döner; parayı bulamayanlar Orvan'a. Üçüncü bir yol gerekmez.",
+          "tags": [
+            "görev",
+            "geçiş",
+            "liman"
+          ]
         }
       }
     ],
@@ -3605,7 +3794,7 @@
         "mapping": {
           "name": "Kışla Künyesi",
           "roll_d100": 5,
-          "description": "İnce bir zincirle boyna asılan, avuç içi büyüklüğünde gümüş bir künye. Bir yüzünde @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)'nın kalkan işareti, öbür yüzünde askerin adı ve birliği kazılı. Tende taşınmaktan ılık.\n\n**Kullanımı:** Nişan'ın kışlalarında yemek, yatak ve geçiş. Künye gösteren bir asker Nişan'ın hiçbir kışlasında aç kalmaz.\n\nKünye bir kutsal sembol olarak da kullanılır. Nişan'dan ayrılan bir paladin künyesini geride bırakır.\n\n*SRD muadili: `Emblem (Holy Symbol)`.*",
+          "description": "İnce bir zincirle boyna asılan, avuç içi büyüklüğünde gümüş bir künye. Bir yüzünde @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)'nın kalkan işareti, öbür yüzünde askerin adı ve birliği kazılı. Tende taşınmaktan ılık.\n\n**Kullanımı:** Nişan'ın kışlalarında yemek, yatak ve geçiş. Künye gösteren bir asker Nişan'ın hiçbir kışlasında aç kalmaz.\n\nKünye bir kutsal sembol olarak da kullanılır, ama taşıdığı şey bir hat değil bir **kayıt**: yeminin tanık önünde edildiğini ve deftere geçtiğini söyler. Nişan'dan ayrılan bir paladin künyesini geride bırakır — gücünü kaybeder, adını değil.\n\n*SRD muadili: `Emblem (Holy Symbol)`.*",
           "tags": [
             "eşya",
             "paladin",
@@ -3634,14 +3823,14 @@
         "mapping": {
           "name": "Mühürsüz Yüzük",
           "roll_d100": 7,
-          "description": "Kromanna'nın giysisinin gizli cebinde taşınan, altından kalın bir yüzük. Bir mühür yüzüğü biçiminde dövülmüş, ama yüzü düz: bir zamanlar oyulu olan işaret eğelenerek silinmiş. Eğe izleri hâlâ parlak.\n\nBulmak için üstünü aramak ve **Investigation DC 15** gerekir. Kromanna kendiliğinden göstermez.\n\n**Yakından bakınca:** mühür yüzü kırılmamış, eğelenerek düzleştirilmiş. İç kenardaki ayar damgası **taze bir Meridia damgası**; yüzük bu kıtaya geldikten sonra işlenmiş.\n\nMeridia'da mühür yüzüğü açıkta taşınır. Bu yüzük saklanıyordu.",
+          "description": "Kromanna'nın giysisinin gizli cebinde taşınan, altından kalın bir yüzük. Bir mühür yüzüğü biçiminde dövülmüş, ama yüzü düz: bir zamanlar oyulu olan işaret eğelenerek silinmiş. Eğe izleri hâlâ parlak.\n\nBulmak için üstünü aramak ve **Investigation DC 15** gerekir. Kromanna kendiliğinden göstermez.\n\n**Yakından bakınca:** mühür yüzü kırılmamış, eğelenerek düzleştirilmiş. Eğelenen yüzeydeki altın hâlâ parlak sarı; yüzüğün geri kalanı yılların donuk rengini almış. Bu iş yakın zamanda yapıldı.\n\n**Üstünde hiçbir damga yok.** Ne ayar damgası, ne usta işareti, ne hane mührü. Meridia'da bir kuyumcu işine damgasını vurur: damga bir imzadır. Vurmayan biri ya lonca dışındadır, ya da adını geride bırakmıştır.\n\nMeridia'da mühür yüzüğü açıkta taşınır. Bu yüzük saklanıyordu.",
           "tags": [
             "eşya",
             "mühür",
             "kulübe",
             "ipucu"
           ],
-          "dmNotes": "Bu yüzüğü bulmak zorunlu değil; karakterler kaçırırsa hikaye yine ilerler.\n\nYüzüğü eğeleyen @[Mine](entity:npc/Mine). Damganın hangi tezgahtan çıktığını @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) fihristten okur. İkisi de @[Nereden Geldiler](entity:quest/Nereden Geldiler) görevinde yer alır.",
+          "dmNotes": "Bu yüzüğü bulmak zorunlu değil; karakterler kaçırırsa hikaye yine ilerler.\n\nYüzüğü eğeleyen @[Mine](entity:npc/Mine). Ama onu şehirde kimse gösteremez, çünkü takip edilecek bir damga yok. @[Kildrak Ferrun](entity:npc/Kildrak Ferrun)'un verebileceği tek şey bir yön: damgasız ve iyi bir iş, yani lonca dışı bir tezgah, yani bir liman.\n\n@[Nereden Geldiler](entity:quest/Nereden Geldiler).",
           "imagePath": "media/Artwork/Mühürsüz-Yüzük.webp"
         }
       }
@@ -3725,7 +3914,7 @@
             "background",
             "lonca"
           ],
-          "dmNotes": "Arşivciler @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın taşra memurlarıdır.\n\n**Bu karakterin öne çıktığı yerler:** @[Elymsyr](entity:location/Elymsyr)'in gümrük defterleri; @[Geçiş Divanı'nda Sıra](entity:scene/Geçiş Divanı'nda Sıra)'nda silinen sayfanın bıraktığı boşluk (zar gerekmez).",
+          "dmNotes": "Arşivciler @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'nın taşra memurlarıdır.\n\n**Bu karakterin öne çıktığı yerler (hiçbiri zar istemez):**\n\n- @[Elymsyr](entity:location/Elymsyr)'in gümrük defterleri: hangi gemi gelmedi, hangi yük eksik boşaltıldı.\n- @[Gizli Liman](entity:location/Gizli Liman)'da @[Sicim](entity:npc/Sicim)'in defteri: çıkarılan satırın sütunda bıraktığı boşluk.\n- @[Votumar](entity:location/Votumar)'da @[Kapı Komutanı](entity:npc/Kapı Komutanı)'nın nöbet defteri: bir *emir* sütununun iki ay boş kalması imkansızdır, ve bunu bir arşivci tek bakışta görür.",
           "imagePath": "media/Artwork/Arşivci.webp"
         }
       },
@@ -4351,6 +4540,22 @@
           "display_name": "Reflexive Resistance",
           "description": "Drakewarden — Reflexive Resistance kullanımları."
         }
+      },
+      {
+        "source_name": "pool:yemin_yorulmaz",
+        "mapping": {
+          "name": "pool:yemin_yorulmaz",
+          "display_name": "Yemin Yorulmaz",
+          "description": "İrade Yemini — 1 canda kalma kullanımı."
+        }
+      },
+      {
+        "source_name": "pool:andin_hali",
+        "mapping": {
+          "name": "pool:andin_hali",
+          "display_name": "Andın Hâli",
+          "description": "İrade Yemini — Andın Hâli kullanımı."
+        }
       }
     ],
     "subclass": [
@@ -4605,6 +4810,179 @@
             "drake"
           ],
           "imagePath": "media/Artwork/Pul-Bağıtlısı.webp"
+        }
+      },
+      {
+        "source_name": "İrade Yemini",
+        "mapping": {
+          "name": "İrade Yemini",
+          "parent_class_ref": {
+            "lookup": "class",
+            "match": "name",
+            "value": "Paladin"
+          },
+          "granted_at_level": 1,
+          "description": "Yeminin bir tanrıya edilmedi. Tanık önünde edildi, deftere geçti, ve bozulmadığı sürece duruyor.\n\nBu kıtada bir tanrıdan bir şey istemek bir kumardır (@[Kural Sapmaları](entity:lore/Kural Sapmaları)) ve paladin düzenleri bunu üç yüzyıl önce kabul edip sormayı bıraktı. Geriye kalan şey daha küçük ve daha güvenilir: verilmiş bir söz, ve onu tutan bir beden.\n\nYeminli iyileştirmez, kutsamaz, mucize göstermez. **Bulur ve tutar.** Düzenin ona öğrettiği şey dua değil: bir defteri okumak, bir izi sürmek, ve bir hattı kimse gelene kadar bırakmamak.",
+          "flavor_description": "**Bu yeminin verdiği hiçbir şey çağrı zarı istemez.** Aşağıdaki özellikler ve yemin büyüleri bir tanrıdan istenmiyor; yeminin kendisinden geliyor. Buna karşılık paladin listesinden ayrıca hazırladığın her ilahi büyü @[Kural Sapmaları](entity:lore/Kural Sapmaları)'ndaki zara tabidir. Elin **dar ama güvenilir**.\n\n**Yemin bozulursa.** Düzenin metni her şatoda biraz farklı; değişmeyen tek şart *verilen söz tutulur*. Yeminini bilerek bozan bir yeminlinin bu sayfadaki her şeyi **bir uzun dinlenme boyunca** çalışmaz. Kalıcı kayıp yok — düzenin kendisi de bunu tartışıyor.\n\n**Kışla Künyesi bir anten değil, bir mühür** (@[Kışla Künyesi](entity:trinket/Kışla Künyesi)): yeminin edildiğini ve kimin tanık olduğunu söyler. Düzenden kopan paladin gücünü kaybeder, adını değil.",
+          "features": [
+            {
+              "level": 1,
+              "name": "Yeminin Ağırlığı",
+              "description": "**Güç** ve **Dayanıklılık** puanların 1'er artar (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Yeminin Ağırlığı"
+                }
+              ]
+            },
+            {
+              "level": 1,
+              "name": "Yemin Darbesi",
+              "description": "Yakın silahlı saldırın isabet ettiğinde bir büyü yuvası harcayarak fazladan **2d8 kuvvet** hasarı verirsin; üst kademe yuva başına **+1d8**, en fazla **5d8**. Hedef Blight'lı bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır.*",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Yemin Darbesi"
+                }
+              ]
+            },
+            {
+              "level": 3,
+              "name": "Yemin Büyüleri",
+              "description": "Bu büyüler senin için **daima hazırdır**, hazırladığın büyü sayısına sayılmaz ve **çağrı zarı istemez**: **Comprehend Languages · Shield of Faith.**\n\n*Shield of Faith* bu düzende **Tutulan Söz** diye anılır.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Comprehend Languages"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Shield of Faith"
+                }
+              ]
+            },
+            {
+              "level": 3,
+              "name": "Yemin Andı: Cepheyi Tut",
+              "description": "**Channel Divinity.** Aksiyon; bir sonraki sıranın sonuna kadar sen ve 10 ft içindeki dostların maruziyet zarlarını avantajlı atar.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Yemin Andı: Cepheyi Tut"
+                }
+              ]
+            },
+            {
+              "level": 5,
+              "name": "Yemin Büyüleri — 2. kademe",
+              "description": "**Locate Object · See Invisibility** eklenir.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Locate Object"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "See Invisibility"
+                }
+              ]
+            },
+            {
+              "level": 7,
+              "name": "Bozulmayan Söz",
+              "description": "10 ft içindeki dostların (sen dahil) Hastalık Puanı kazandıracak her kurtarma zarını avantajlı atar. 18. seviyede menzil 30 ft olur.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Bozulmayan Söz"
+                }
+              ]
+            },
+            {
+              "level": 9,
+              "name": "Yemin Büyüleri — 3. kademe",
+              "description": "**Nondetection · Clairvoyance** eklenir.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Nondetection"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Clairvoyance"
+                }
+              ]
+            },
+            {
+              "level": 13,
+              "name": "Yemin Büyüleri — 4. kademe",
+              "description": "**Locate Creature · Arcane Eye** eklenir.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Locate Creature"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Arcane Eye"
+                }
+              ]
+            },
+            {
+              "level": 15,
+              "name": "Yemin Yorulmaz",
+              "description": "Korkutulamazsın. Ayrıca 0 cana düşüreceğin bir hasarda 1 canda kalırsın — uzun dinlenmede bir kez.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Yemin Yorulmaz"
+                }
+              ]
+            },
+            {
+              "level": 17,
+              "name": "Yemin Büyüleri — 5. kademe",
+              "description": "**Legend Lore · Scrying** eklenir.",
+              "always_prepared_spell_refs": [
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Legend Lore"
+                },
+                {
+                  "lookup": "spell",
+                  "match": "name",
+                  "value": "Scrying"
+                }
+              ]
+            },
+            {
+              "level": 20,
+              "name": "Andın Hâli",
+              "description": "Bonus aksiyon, 10 dakika: auraların 30 ft'e çıkar ve Blight'lı yaratıklara saldırıların avantajlı olur. Uzun dinlenmede bir kez.",
+              "granted_trait_refs": [
+                {
+                  "lookup": "trait",
+                  "match": "name",
+                  "value": "Andın Hâli"
+                }
+              ]
+            }
+          ]
         }
       }
     ],

@@ -99,6 +99,13 @@ deftere yazılmayan şey resmi olarak yoktur ([`lonca-sehir.md` §2](lonca-sehir
 > **Masadaki karşılığı:** ilahi büyü yapan bir PC yasadışı değil, **usulsüz**
 > ([`mekanikler.md` §3](mekanikler.md)). Sessiz Mabetler o PC'nin nerede nefes
 > alabileceğini söylüyor — ve listenin tamamı kayıt sisteminin dışında.
+>
+> Ama bu listenin hiçbir yerinde bir mucize **görülmüyor.** Sunaklar var, tütsü
+> var, gümüş suya atılıyor; karşılığında bir şey geldiğini gören yok. Tanrılar
+> gitmedi — fısıldıyorlar, ve duyan neredeyse hiç kimse. Bir çağrının tutması
+> `d20 + Religion` ister ve çoğu zaman tutmaz ([`mekanikler.md` §3.1](mekanikler.md)).
+> Bu yüzden ilahi büyü yapabilen biri bu kıtada bir kurum değil, bir **söylenti**:
+> yapanlar olduğu duyulmuştur, ve duyulan her hikaye başka birinin başından geçmiştir.
 
 ### 1.3 Işık ve beyaz taş — mimarinin söylediği
 
@@ -622,7 +629,7 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 | `location` | **Cinervik** *(üst: Meridia)* — yol köyü (§5.1) | ✅ |
 | `location` | **Argenfon** *(üst: Meridia)* — kıyı köyü (§5.2) | ✅ |
 | `npc` | Elymsyr'in dördü (§2.7) · Votumar'ın dördü (§3.7) · Ravenhall'ın ikisi (§4.6) — **10 kart** | 🟡 ad |
-| `scene` | **Gümrükte Kayıt** (§2.2) · **Susan Kule** (§3.3, §3.7) · **Avluda Karşılanma** (§4.5) | ✅ |
+| `scene` | **Gümrük Rıhtımı** (§2.2) · **Susan Kule** (§3.3, §3.7) · **Avluda Karşılanma** (§4.5) | ✅ |
 
 **Toplam 24 kart** — 7 `lore` · 7 `location` · 10 `npc` (adları bekliyor) · 3 `scene`.
 

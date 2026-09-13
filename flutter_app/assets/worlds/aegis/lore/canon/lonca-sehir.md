@@ -32,9 +32,10 @@ Bu, üç şeyi bedavaya veriyor:
 - **Mühür** (act1.md §2) neden bu evrenin merkezî nesnesi belli oluyor: mühür, bir
   deftere yazma yetkisidir. On üç background eşyasının dördünün mühür olması
   tesadüf değil.
-- **Act 1'in kanıt hattı** (act1.md §3.3) doğrudan buraya bağlanıyor: bir sayfanın
-  silinmesi, bir loncanın hizmetidir. Ücreti vardır. *(Yüzüğün içeriği act1.md 4.
-  turda askıya alındı; bağ nesneye değil **kayıt sistemine** dayandığı için ayakta.)*
+- **Act 1'in kanıt hattı** (act1.md §3.3) buraya *sistem olarak* bağlanıyor: bir
+  satırın silinmesi bir hizmettir ve ücreti vardır. *(5. tur: Act 1'de silinen defter
+  şehrin değil **limanın** kendi defteri — üçlü hiçbir şehir defterine yazılmadı.
+  Kural ayakta, olay şehirde değil.)*
 
 ---
 
@@ -167,8 +168,12 @@ açıkça aşağılamıyor — gerek yok, çünkü kimin hangi işi yaptığı z
 
 **Kültürel.** Tanrı yok, tören var (10 M4). Doğum bir kayıt işlemidir: çocuğa ad
 konması ile kayda geçmesi aynı gün, aynı salonda olur, ve halk ikisini ayırt
-etmez. Bir insanın "adı var" demek, "defterde var" demektir. İlahi büyü yapan biri
-mucize değil **usulsüzlük** olarak okunur.
+etmez. Bir insanın "adı var" demek, "defterde var" demektir.
+
+İlahi büyü yapan biri mucize değil **usulsüzlük** olarak okunur — ama şunu ekle:
+bu şehirde kimse öyle bir şey **görmemiştir.** Duyan çoktur, gören yoktur
+([`mekanikler.md` §3](mekanikler.md)). Bir kez görülürse, o gün şehirde konuşulan
+tek şey o olur; ve konuşulması onu yapanın işine gelmez.
 
 **Siyasal.** Altı koltuk, beş hane, bir atama. Kararlar oturumda değil oturumdan
 önce alınır; oturum, alınmış kararın **kayda geçtiği** yerdir. Muhalefet, koltuğu
@@ -193,7 +198,7 @@ masadaki herkesin **iki adı var** — odanın asıl ayrımı ırk değil kayıt
 | Koltuk | Ne istiyor | İnkârı | Ne gizliyor |
 |---|---|---|---|
 | **Büyücü Loncası koltuğu** — Rektör **Quarion** *(elf, hanesiz → tek isim)* | Loncanın Meclis'e bağımlılığının görünmemesi | *"Sınadık. Hiçbir tespit büyüsü bir şey göstermedi. Görülmeyen şey yoktur."* | Sınama yapıldı ve **sonuç okunamadı** — bu, "yok" değil "bilmiyoruz" demek |
-| **Sınır ve Ticaret koltuğu** — **Orvan Sancar** *(insan)*, bkz. §6.1 | Sınırın yeniden açılması | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini |
+| **Sınır ve Ticaret koltuğu** — **Orvan Sancar** *(insan)*, bkz. §6.1 | Sınırın yeniden açılması | *(tek inkâr etmeyen)* | Sicilinin kirli olduğunu — ve bu sefer doğru söylediğini |
 | **Demircilik ve İşçi koltuğu** — Kalfa Başı **Adrik Ferrun** *(cüce)* | Yevmiyenin kesilmemesi | *"Tezgahlar dönüyor, üretim düşmedi. Hasta adam çekiç sallayamaz."* | Rakamlar düşmedi çünkü **aynı adamlar iki vardiya** çalışıyor; eksilenler yerine yenisi yazıldı |
 | **Simya ve Şifacılar koltuğu** — Baş Otacı **Caramip Kalender** *(gnome)* | Loncasının aciz görünmemesi | *"Bu bilinmeyen bir şey değil, ilerlemiş bir humma. Adı var, tedavisi var."* | Beyanları kendisi değiştirtti. Bilmediğini kabul etmek ruhsat sisteminin sonu olur |
 | **Askeri Hukuk koltuğu** — Sicil Ağası **Valen Custar** *(insan)* | Yetkisini kullanmak zorunda kalmamak | *"Hastalık hukuki bir kategori değil. Karantina savaş hukuku ister, ilan edilmiş savaş yok."* | Yetkisi **var.** İki mevsimdir kullanmıyor, çünkü kullandığı gün sorumluluk da onun olur |
@@ -210,7 +215,9 @@ Aynı yapı, onu **inanan tek üye** yapıyor:
 
 - Hastalık sınırdan geliyor, ve sınır defteri onun. **İlk gören o.**
 - Kaybedecek malı yok; koruyacak bir örtbası da yok.
-- Kendi defterinden sayfa silindi — yani örtbasın **kurbanı**, ortağı değil.
+- Sicili kirli (5. tur): otuz yıl kayırdı, iş çevirdi, her iyiliğin karşılığını
+  aldı. Şehirde bunu bilmeyen yok. **Yalan söylemiyor, ama sözü ucuz** — ve salonun
+  ona dönüp bakmamasının sebebi kayıtsızlık değil, bu.
 
 > **Meclisteki yeri:** konuşur, kimse dönüp bakmaz. Oyuncular oturumda bunu görür:
 > adam haklıdır ve odada hiçbir ağırlığı yoktur. Odanın ders verdiği şey budur —
@@ -229,7 +236,7 @@ geçiş memuru değil; onun kendi çırağı). Oturumda konuşmadığı şeyi bu
 
 1. *"Söyledikleriniz doğru. Odada kimse buna bakmayacak, ben dahil — çünkü benim
    sözümün orada ağırlığı yok."*
-2. *"Ağırlığı olan tek şey kayıt. Benim defterimden bir sayfa silindi ve silen
+2. *"Üç hasta insanı bu kıtaya biri soktu ve kimsenin soru sormadığı bir köye
    benim memurlarımdan biri. Bana **kimin ödediğini** getirin."*
 3. *"Param yok. Verebileceğim şey imza."*
 
@@ -250,11 +257,12 @@ geçiş memuru değil; onun kendi çırağı). Oturumda konuşmadığı şeyi bu
 > taşıyor. Insight istemez; §6.1'i dinleyen ya da limanda gemi sayan masa kendiliğinden
 > görür. Sorulursa adam inkâr etmez: *"Doğru. Bekleyemem, o yüzden buradayım."*
 
-**Görevin iki yüzü var (4. tur).** Koltuğun kendi istediği *kim ödedi.* Ama oyunculara
-verdiği iş bundan geniş de yazılabilir — **"bu şeyin ne olduğunu bulun."** İkisi aynı
-işin iki ucudur; DM masayı hangisi çekiyorsa onu öne alır: kayıt peşindeki masa silinen
-sayfayı kovalar, hastalık peşindeki masa kulübeye ve kaynağa döner (act1.md §4.6).
-Aynı `quest` kartı (*Silinen sayfa*) ikisini de taşır.
+**Görevin iki yüzü var (4. tur, 5. turda güncellendi).** Koltuğun kendi istediği
+*üçlüyü kim geçirdi.* Ama oyunculara verdiği iş bundan geniş de yazılabilir —
+**"bu şeyin ne olduğunu bulun."** İkisi aynı işin iki ucudur; DM masayı hangisi
+çekiyorsa onu öne alır: izin peşindeki masa limana gider (act1.md §7.5), hastalık
+peşindeki masa kulübeye ve kaynağa döner (act1.md §4.6). Aynı `quest` kartı
+(*Nereden Geldiler*) ikisini de taşır.
 
 **Kurum bastırır, üye görevlendirir.** Bu çelişki tasarımın kendisi: Meclis'in
 hastalığı susturması altı ayrı çıkarın toplamı (§6), tek üyenin konuşması ise tek bir
@@ -264,7 +272,7 @@ hastalığı susturması altı ayrı çıkarın toplamı (§6), tek üyenin konu
 (act1.md §7.2), aynı bilgiyi liman hattı da taşır (Sicim + ayar ustası, §7). Meclis
 yolu **en ucuz** yol, tek yol değil.
 
-**Bunun `quest` kartı var:** *Silinen sayfa* (§8).
+**Bunun `quest` kartı var:** *Nereden Geldiler* (§8).
 
 ### 6.3 Gerçek adı tanıyan üye (KARAR, 2026-09-09 4. tur)
 
@@ -280,7 +288,7 @@ ticaretçileri o defter tanır. Üç cümle söyler, dördüncüyü söylemez:
 3. *"Bunlar öyle gelmediyse — hele gizli bir yoldan geldilerse — ortada bir sorun var,
    ve sorun onlar değil. **Onları geçiren.**"*
 
-**Ne açar:** üçlünün geçmişi hattını doğrudan *kim ödedi* sorusuna bağlar; yani liman
+**Ne açar:** üçlünün geçmişi hattını *onları kim geçirdi* sorusuna bağlar; yani liman
 hattıyla (act1.md §7.5) **aynı kapıya** varır, başka yönden. Ad bir cevap değil,
 soruyu kuruma taşıyan **bilet**.
 
@@ -298,15 +306,23 @@ adlardan bağımsız gelir. İki hat birbirinin ön koşulu değil, aynı odaya 
 
 | NPC | Nerede | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|---|
-| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | Terfi. Karşı-imza yetkisi olan bir masa | Silinen sayfanın altındaki ikinci imza onun | ***Kim ödedi*** — act1.md §3.3 zincirinin ucu |
-| **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Damgasının temiz kalması | Eğelenmiş mührü daha önce de gördü, bir kez değil | Yüzüğün **tezgahı**: fihristten hangi kuyumcunun vurduğu okunur (kuyumcu **Mine**'nin tezgahı — act1.md §7.4) |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | Terfi. Kendi adıyla, karşı-imza yetkisi olan bir masa | O masada **Orvan'ın kayırmasıyla** oturuyor, ve bundan hoşlanmıyor | **Kilit** — karşı-imzayı verir ya da yığının altına kaydırır (5. tur) |
+| **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Damgasının temiz kalması | Eğelenmiş mührü daha önce de gördü, bir kez değil — hiçbirinde damga yoktu | Bir ad değil bir **yön** (5. tur): *"Bunda ayar damgası yok. Güneye gidin, bir liman arayın."* |
 | **Sindri** — simyacı çırağı *(gnome, bastırılan tanık)* | Şifacılar kışlası | Yazdığının doğru kalması | İlk beyanın kopyası onda | Hastalığın şehirde **bilindiğinin** belgesi |
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Borcunun ertelenmesi | Kolluğun kimi dövdüğünü ve kimin emrettiğini | Sokak hattı, lonca kolluğu, "iyi para"nın şehirdeki karşılığı |
 | **Çavuş Krusk** — kolluk çavuşu *(yarı-orc)* | Kapılar / gece devriyesi | Nöbetinde sorun çıkmaması | Emirlerin Askeri Hukuk'tan değil tek bir haneden geldiğini | Kapılar, gece hareketi, kimin şehre girdiği |
 
-**İki taşıyıcı kuralı sağlandı** (09 §7): *kim ödedi* artık iki yerde — **geçiş
-memuru** (imza) ve **ayar ustası** (damga fihristi). Act 1'in Sicim'i üçüncü
-taşıyıcı, yani hat kilitlenmiyor.
+⚠️ **5. tur (2026-09-13) düzeltmesi.** Eskiden burada *"kim ödedi iki yerde — geçiş
+memuru (imza) + ayar ustası (damga fihristi)"* yazıyordu. **O hat kaldırıldı:** üçlü
+hiçbir şehir defterine yazılmadı, ve silinen sayfa kurgusu bununla çelişiyordu.
+
+Yerine geçen iki taşıyıcı, **limana giden yol** için: @[Duran](entity:npc/Duran)/
+@[Corvin](entity:npc/Corvin) (köyden) ve **Kildrak** (yüzükten). *Kim ödedi* sorusunun
+cevabı ise tek taşıyıcılı ve bilinçli öyle — Sicim söyler, ve cevap (***Kader*'in
+kaptanı**) hiçbir kapı açmaz.
+
+**Corin Sancar'ın yeni işi:** kanıt değil **kilit.** @[İyi Yazı](entity:quest/İyi Yazı)
+görevinde karşı-imzayı verir ya da yığının altına kaydırır.
 
 ---
 
@@ -322,7 +338,7 @@ taşıyıcı, yani hat kilitlenmiyor.
 | `npc` | Meclis'in altı koltuğu (§6) | ✅ |
 | `npc` | Sokağın beşi (§7) | ✅ |
 | `scene` | **Meclis oturumu** (altı inkâr, tek sessiz üye) · **Kapı önündeki teklif** (§6.2) · **Geçiş Divanı'nda sıra** | ✅ |
-| `quest` | **Silinen sayfa** — kim ödedi / bu şey ne; ödülü **"iyi yazı" + mirasa ortaklık** (§6.2) | ✅ |
+| `quest` | **Nereden Geldiler** (limanda biter) · **İyi Yazı** (kıtadan çıkış); Orvan'ın ödülü **imza + mirasa ortaklık** (§6.2) | ✅ |
 | `scene` | **Adı tanıyan üye** (§6.3) — gerçek adlar Meclis'e taşınırsa | ✅ |
 
 Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.

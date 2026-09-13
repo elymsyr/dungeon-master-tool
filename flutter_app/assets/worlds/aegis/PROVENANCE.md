@@ -4,6 +4,18 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.0 — 163 entity** (2026-09-13). 0.6.0 **ilahi büyü turu**: `mek` §3 yeniden
+yazıldı ve her ilahi büyü artık bir **çağrı zarı** istiyor (çatışmada 19; çatışma dışında
+saat içinde 18 → 20 → doğal 20 → imkansız), kapsam Cleric · Warlock · Paladin'in ilahi
+büyüleri. Bunun iki sonucu kartlara girdi: **Cleric ve Warlock oynanamaz** (giriş kartının
+*Karakter yaratma* sayfası bunu karakter yaratmadan önce söylüyor), ve Paladin için
+Aegis'in kendi alt sınıfı yazıldı — **İrade Yemini**, 1. seviyede açılan, gücünü yeminden
+alan ve hiçbir kullanımı zar istemeyen bir yemin (`alt` §3). Aynı turda Gümüşsu'ya
+**Halim** eklendi (Sınır ve Ticaret'in duruma bakmaya yolladığı adam) ve şafak sonrası iki
+**hâl** olarak yazıldı — köy ayakta ya da kırılmış; oyuncunun ne yapacağını varsayan akış
+cümleleri iki sahne kartından çıkarıldı. Toplam +10 kart: `npc` +1 · `subclass` +1 ·
+`trait` +6 · `resource-pool` +2.
+
 **Sürüm 0.5.1 — 153 entity** (2026-09-12). 0.5.1'de iki alt sınıfın Aegis uyarlaması
 geri alındı: içerik ve isimlendirme **özgünüyle aynı** (*Clockwork Soul* · *Drakewarden*),
 kalan sapmalar uçuş ve ejderha ile sınırlı — `lore/canon/alt-siniflar.md` §4. 0.5.0'da bu
@@ -91,11 +103,12 @@ Kaynak kısaltmaları:
 | Cinervik | Meridia | `bolge §5.1` |
 | Argenfon | Meridia | `bolge §5.2` |
 
-## npc — 34
+## npc — 35
 
 | Grup | Entity | Kaynak |
 |---|---|---|
 | Gümüşsu | Duran · Umay · Corvin · Milo Goodbarrel | `act1 §3` kadro + `act1 §3.3–3.4` + `bolge §6.1` + `mek §12` (Umay'ın ağzından) |
+| Gümüşsu | **Halim** | `act1 §3.5` — Sınır ve Ticaret'in duruma bakmaya yolladığı adam; Orvan Sancar bağı `lonca §6.2` |
 | Kulübe | Alton Leagallow · Merla Tealeaf · Kromanna | `act1 §3.1, §3.3, §4.3, §4.5, §5` |
 | Gizli Liman | Sicim · Fare · Kaptan Caelynn · Kaptan Holg · Kadife · Mine | `act1 §7.3–7.5` (gerçek adlar Burgell · Trym · Halet Custar) + `liste §2` (fiyat cümlesi) + `bolge §1.5` |
 | Meclis | Rektör — Quarion · Sınır ve Ticaret — Orvan Sancar · Kalfa Başı — Adrik Ferrun · Baş Otacı — Caramip Kalender · Sicil Ağası — Valen Custar · Levha Sahibi — Perhun Mizan | `lonca §6, §6.1–6.3, §10` (kırılma noktaları) |
@@ -147,11 +160,13 @@ sayıyor): içerik `Meclis Oturumu` beat 3'e ve Orvan Sancar'ın `secrets`'ına 
 
 ---
 
-## subclass — 2 · animal — 1 · trait +10 · creature-action +8 · resource-pool — 6
+## subclass — 3 · animal — 1 · trait +16 · creature-action +8 · resource-pool — 8
 
-Bu paketin tek **dış kaynaklı** bloğu. İki alt sınıf WotC kitaplarından **olduğu gibi
-alındı** — içerik ve isimlendirme özgünüyle aynı; `source` alanı her kartta bunu
-söylüyor. Sapmaların satır satır defteri `alt` §4'te.
+İlk iki alt sınıf bu paketin tek **dış kaynaklı** bloğu; WotC kitaplarından **olduğu gibi
+alındı** — içerik ve isimlendirme özgünüyle aynı, `source` alanı her kartta bunu
+söylüyor. Üçüncüsü (**İrade Yemini**) ithal değil, Aegis'in kendi kartı: çağrı zarı
+(`mek` §3.1) Cleric ve Warlock'u oynanamaz yaptı ve bu kart Paladin'in karşılığı.
+Sapmaların satır satır defteri `alt` §5'te.
 
 | Entity | Kaynak |
 |---|---|
@@ -160,7 +175,11 @@ söylüyor. Sapmaların satır satır defteri `alt` §4'te.
 | **Drakewarden** (`subclass`) | *Drakewarden*, Fizban's Treasury of Dragons → `alt §2` |
 | **Drake** (`animal`) | `alt §2.5`. Ejderha değil **beast**; statblok özgün drake'in sayılarını taşır |
 | Draconic Gift · Drake Companion · Draconic Essence · Bond of Fang and Scale · Perfected Bond · Reflexive Resistance *(trait + creature-action)* · Bite · Infusing Strike · Drake's Breath | `alt §2.4–2.5` |
-| Altı `resource-pool` satırı | `alt §3.3` — sayfadaki kullanım sayaçları |
+| Altı `resource-pool` satırı | `alt §4.4` — sayfadaki kullanım sayaçları |
+| **İrade Yemini** (`subclass`, Paladin 1. sv) | `alt §3` — Aegis özgün; gerekçesi `mek §3` |
+| Yeminin Ağırlığı · Yemin Darbesi · Yemin Andı: Cepheyi Tut · Bozulmayan Söz · Yemin Yorulmaz · Andın Hâli *(trait)* | `alt §3.2` |
+| Yemin büyüleri (on SRD büyüsü, `always_prepared_spell_refs`) | `alt §3.3` |
+| `pool:yemin_yorulmaz` · `pool:andin_hali` | `alt §3.2` — uzun dinlenmede birer kullanım |
 
 **Sapmalar (tamamı `alt §4`):**
 

@@ -90,11 +90,14 @@ anlatır. Altı sayfa, hepsi masada sorulan bir soruya karşılık gelir:
    odur (`lonca-sehir.md` §3). Bu yüzden mühürlü sayısı yükselmez, el değiştirir.
 6. **Nasıl silinir** — üç yol: Onur Mahkemesi'nin **kayıttan düşürmesi** (`lore/Onur
    Mahkemeleri`), kefilin kefaletini geri çekmesi, ve **ödenmiş silme** — bir
-   sayfanın hiç yazılmamış gibi çıkarılması. Üçüncüsü suçtur ve Act 1'in bütün
-   soruşturması odur: silinen sayfa arkasında iki iz bırakır — **kefilin karşı-imzası
-   defterde kalır** (Corin Sancar) ve satırın kopyası taşra kaleminde durur (Orvan
-   Sancar'ın "kendi defterinden sayfa silindi" dediği şey). Kağıt şehre gider, ama
-   ikinci nüsha gitmez.
+   sayfanın hiç yazılmamış gibi çıkarılması. Üçüncüsü suçtur, ve kartta bir **dünya
+   kuralı** olarak durur: silinen sayfa arkasında iki iz bırakır — kefilin
+   karşı-imzası sütunda kalır, ve satırın kopyası taşra kaleminde durur.
+
+   ⚠️ **5. tur düzeltmesi:** bu kural Act 1'in soruşturmasına **bağlanmıyor.** Üçlü
+   gümrüğe hiç uğramadı, yani hiçbir şehir defterine hiç yazılmadılar — hiç yazılmamış
+   bir satır silinemez. Act 1'de silinen tek defter **Gizli Liman'ın kendi defteri**
+   (`act1.md` §7.5). Şehir defterleri temiz.
 
 Kartın `secrets` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir** —
 Sicim de Vinç Ustası da aynı rakamı söyler, çünkü rakamı koyan yer aynıdır.
@@ -128,7 +131,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Cinervik** | Meridia | Yol köyü. Han, at kiralama, nalbant. Söylenti bol **ve yanlış** | ✅ |
 | **Argenfon** | Meridia | Kıyı köyü. Balıkçılık, Deniz Festivali, paladin dostluğu | ✅ |
 
-## 4. `npc` — 34
+## 4. `npc` — 35
 
 **Gümüşsu**
 
@@ -138,6 +141,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti | Belirtilerin seyri (zarsız) | ✅ |
 | **Corvin** — yolu bilen *(insan)* | Para | Gizli Liman'ı biliyor, oradan mal taşıdı | Gizli Liman'a rehberlik | ✅ |
 | **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarasız NPC) | Söylenti, yabancı kaydı, kumaş | ✅ |
+| **Halim** — lonca adamı *(insan)* | İşi bitirip dönmek | Kimin yolladığını | Orvan Sancar'ın adı, Meclis'e kısa yol | ✅ |
 
 **Kulübe** — üçü de 1. gün hali; her birinin `monster` ikizi var, `species_ref` SRD'ye
 
@@ -151,19 +155,19 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **Sicim** — defter tutan | Limanın işlemesi | Üçlünün geçişini kimin sildirdiğini | Ücret · kefalet · üçlünün izi | ✅ |
+| **Sicim** — defter tutan | Limanın işlemesi | Silmenin parasını ***Kader*'in kaptanı** verdi · gerçek adı Burgell | Ücret · kefalet · üçlünün izi **ve izin bittiği yer** | ✅ |
 | **Fare** — rıhtım çırağı | Bir gemiye alınmak | — (yarasız NPC) | Her şey: kim ne zaman yanaştı | ✅ |
 | **Kaptan Caelynn** *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
 | **Kaptan Holg** *(yarı-orc)* | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
 | **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | "İyi yazı"nın nasıl alındığı | ✅ |
-| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **klan adını söylemiyor** | *Kaydı kim sildirdi*'nin ikinci taşıyıcısı ⚠️ *(yüzük kararına bağlı, 4. tur)* | ✅ |
+| **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **damga vurmaz**; klan adını söylemiyor | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret | ✅ |
 
 **Meclis — altı koltuk, altı inkâr.** Kartlar koltuk adıyla yazılır.
 
 | Kart | İnkârı | Ne gizliyor | Durum |
 |---|---|---|---|
 | **Rektör — Quarion** (Büyücü, *elf*, hanesiz) | "Sınadık, hiçbir tespit büyüsü bir şey göstermedi" | Sonuç **okunamadı** — "yok" değil "bilmiyoruz" | ✅ |
-| **Sınır ve Ticaret — Orvan Sancar** *(insan)* | *(tek inkâr etmeyen)* | Kendi defterinden sayfa silindiğini | ✅ |
+| **Sınır ve Ticaret — Orvan Sancar** *(insan)* | *(tek inkâr etmeyen)* | Sicilinin kirli olduğunu; Corin'i o masaya kendisinin oturttuğunu | ✅ |
 | **Kalfa Başı — Adrik Ferrun** (Demirci-İşçi, *cüce*) | "Tezgahlar dönüyor, üretim düşmedi" | Aynı adamlar iki vardiya çalışıyor | ✅ |
 | **Baş Otacı — Caramip Kalender** (Simya, *gnome*) | "İlerlemiş bir humma. Adı var, tedavisi var" | Beyanları kendisi değiştirtti | ✅ |
 | **Sicil Ağası — Valen Custar** (Askeri Hukuk, *insan*) | "Hastalık hukuki bir kategori değil" | Yetkisi var, kullanmıyor | ✅ |
@@ -173,7 +177,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Nerede | Hangi kapıyı açar | Durum |
 |---|---|---|---|
-| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | ***Kim ödedi*** — silinen sayfanın ikinci imzası onun | ✅ |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | **Kilit** — karşı-imzayı verir ya da yığının altına kaydırır; masada Orvan'ın kayırmasıyla oturuyor | ✅ |
 | **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Yüzüğün tezgahı: fihristten hangi kuyumcunun vurduğu | ✅ |
 | **Sindri** — simyacı çırağı *(gnome)* | Şifacılar kışlası | Hastalığın şehirde **bilindiğinin** belgesi | ✅ |
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | ✅ |
@@ -204,7 +208,11 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **En Yaşlı Druid** *(insan / elf)* | Platonun kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladı, hangi yöne yürüyor | 🟡 ad |
 | **Patika Gözcüsü** *(yarı-elf)* | Kimsenin yukarı çıkmaması | Son aylarda çıkmayı deneyen ilk kişilerin kim olduğunu | Kimin Ravenhall'ı aradığı — ve neden | 🟡 ad |
 
-> **İki taşıyıcı kuralı:** *kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
+> **İki taşıyıcı kuralı (5. tur güncellemesi):** *limana nasıl gidilir* iki yerde
+> (Duran/Corvin · yüzük→Kildrak). *Silme oldu mu* iki yerde (Sicim · Mine).
+> Eski hali aşağıdaydı ve *kim ödedi* hattı 5. turda kaldırıldı:
+>
+> ~~*kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
 > Ustası). *Kaydı kim sildirdi* iki yerde (Sicim · Mine). *Kayıtsız geçiş nasıl
 > satın alınır* iki limanda birden (Sicim · Vinç Ustası). *Başkumandan'da bir
 > terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi).
@@ -225,7 +233,7 @@ Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'
 Üçü de jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
 hiçbir yaratık tekrar yazılmaz, ref verilir.
 
-## 6. `creature-action` — 4 · `trait` — 5
+## 6. `creature-action` — 4 · `trait` — 5 (+ alt sınıf trait'leri §14)
 
 Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
@@ -264,9 +272,9 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Limana Kabul** | Gizli Liman | Birinci kapı: kefil, iş veya yük | ✅ |
 | **Geçiş Pazarlığı** | Rıhtım | İkinci kapı: iyi yazı ya da iyi para | ✅ |
 | **Meclis Oturumu** | Meclis Salonu | Altı inkâr, tek sessiz üye; masa reddedilir | ✅ |
-| **Kapı Önündeki Teklif** | Meclis Salonu | Oturumun **hemen ardından**: "bana kimin ödediğini getirin" | ✅ |
-| **Geçiş Divanı'nda Sıra** | Geçiş Divanı | Karşı-imza nasıl alınır, kim bekletir | ✅ |
-| **Gümrükte Kayıt** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi | ✅ |
+| **Kapı Önündeki Teklif** | Meclis Salonu | Oturumun **hemen ardından**: "onları geçireni bana getirin" | ✅ |
+| **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur): Orvan'ın imzası elde, Corin ikinciyi vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
+| **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. **Karakterler buradan tayfa olarak biner** (5. tur) | ✅ |
 | **Susan Kule** | Gözcü Kuleleri Hattı | Bir kulenin raporu şatoya ulaşmadı. Sessizlik, yalandan yüksek sesle konuşur | ✅ |
 | **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor** | ✅ |
 
@@ -276,12 +284,13 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 2
+## 10. `quest` — 3
 
 | Kart | Zincir | Durum |
 |---|---|---|
-| **Söylentinin Peşinde** | Giriş kancası: hastalık söylentileri seni Gümüşsu yoluna çıkardı | ✅ |
-| **Nereden Geldiler** | Yüzük → kayıtsız giriş → kaydı kim sildirdi | ✅ |
+| **Söylentinin Peşinde** | Giriş kancası: köy → kulübe → şafak → **bir makama götür** (Meclis ve/veya Votumar); gidilen makam reddedince kapanır | ✅ |
+| **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda biter (*Kader*) | ✅ |
+| **İyi Yazı** | Kıtadan çıkış: karşı-imza yolu ya da para yolu | ✅ |
 
 ## 11. `background` — 9
 
@@ -322,7 +331,7 @@ ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
 | **Sahte Mühür** | `trinket` | Signet Ring | Çalışan bir yalan. Yakalanırsa suç | ✅ |
 | **Kışla Künyesi** | `trinket` | Emblem (Holy Symbol) | Düzenin lojistiği: yemek, yatak, geçiş | ✅ |
 | **Emir Mührü** | `trinket` | Signet Ring + Sealing Wax | Sorgusuz geçiş ve düzen içi bilgi | ✅ |
-| **Mühürsüz Yüzük** *(ad geçici)* | `trinket` | — (yeni nesne) | **Gizli cepte** taşınan tek nesne (act1.md §3.3 iz 3). Saklanmış olması kanon; **ne olduğu askıda.** Yedek içerik: mühür yüzü eğelenmiş, ayar damgası taze Meridia | ⚠️ |
+| **Mühürsüz Yüzük** | `trinket` | — (yeni nesne) | **Gizli cepte** taşınan tek nesne (act1.md §3.3 iz 3). **KAPANDI (5. tur):** mühür yüzü eğelenmiş, **damgasız**, yakın zamanda işlenmiş | ✅ |
 
 Mühür bu evrenin merkezî nesnesi: Sancak Kaydı'nda mühür bir deftere yazma
 yetkisidir. On dört kartın **beşi** mühür, ve **Mühürsüz Yüzük** diğer dördünün karşı
@@ -344,7 +353,7 @@ Yeni ırk kartı **yazılmaz**; ırksal özelliklerin kaynağı kararı açık. 
 engelliyor, **ref vermeyi değil**: SRD'de adı birebir olan bir ırka `species_ref`
 verilir (Halfling · Tiefling).
 
-## 14. `subclass` — 2 ✅
+## 14. `subclass` — 3 ✅
 
 Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılıyorlar.
 `class` kartı **yazılmıyor** — SRD'nin on iki sınıfı olduğu gibi duruyor.
@@ -353,14 +362,17 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 |---|---|---|---|
 | **Clockwork Soul** | Sorcerer (1. sv) | Mechanus'un düzeninden gelen büyü: fazlalığı siler, eksiği tamamlar, sapmayı hizaya çeker | ✅ |
 | **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
+| **İrade Yemini** | Paladin (1. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. +1 Güç / +1 Dayanıklılık, History + Investigation, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
 
-Bağlı kartlar: `animal/Drake` · 10 `trait` · 8 `creature-action` · 6 `resource-pool`
-satırı — hepsi [`alt-siniflar.md` §3](alt-siniflar.md)'te adıyla sayılı.
+Bağlı kartlar: `animal/Drake` · 16 `trait` · 8 `creature-action` · 8 `resource-pool`
+satırı — hepsi [`alt-siniflar.md` §4](alt-siniflar.md)'te adıyla sayılı.
 
-İkisi de WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
+İlk ikisi WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
 aynı — ve her kartın `source` alanı bunu söylüyor (`Tasha's Cauldron of Everything` ·
-`Fizban's Treasury of Dragons`).
-Sapma defteri [`alt-siniflar.md` §4](alt-siniflar.md).
+`Fizban's Treasury of Dragons`). **İrade Yemini ithal değil:** çağrı zarı
+([`mekanikler.md` §3.1](mekanikler.md)) Cleric ve Warlock'u oynanamaz yaptı, ve bu kart
+Paladin'in bu kıtada nasıl ayakta kaldığını söylüyor.
+Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 
 ---
 
@@ -371,25 +383,29 @@ Sapma defteri [`alt-siniflar.md` §4](alt-siniflar.md).
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 21 | 1 | — | 22 |
 | `location` | 17 | 1 | — | 18 |
-| `npc` | 24 | 10 | — | 34 |
+| `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
 | `creature-action` | 12 | — | — | 12 |
-| `trait` | 15 | — | — | 15 |
+| `trait` | 22 | — | — | 22 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
-| `quest` | 2 | — | — | 2 |
+| `quest` | 3 | — | — | 3 |
 | `background` | 9 | — | — | 9 |
 | `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
-| `subclass` | 2 | — | — | 2 |
+| `subclass` | 3 | — | — | 3 |
 | `animal` | 1 | — | — | 1 |
-| `resource-pool` | 6 | — | — | 6 |
-| **Toplam** | **141** | **13** | **—** | **154** |
+| `resource-pool` | 8 | — | — | 8 |
+| **Toplam** | **153** | **13** | **—** | **166** |
 
-**141/154 ✅, 13 🟡, 0 ⬜** (2026-09-11, alt sınıf turu — 127'den 154'e;
-[`alt-siniflar.md`](alt-siniflar.md) 27 kart ekledi).
+**153/166 ✅, 13 🟡, 0 ⬜** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
+Öncesi: **152/165 ✅** (2026-09-13, ilahi büyü turu — 154'ten 165'e: `npc/Halim`,
+`subclass/İrade Yemini`, altı yemin `trait`'i ve iki `resource-pool` satırı).
+
+**Öncesi (alt sınıf turu):** 141/154 ✅, 13 🟡, 0 ⬜ (2026-09-11) — 127'den 154'e;
+[`alt-siniflar.md`](alt-siniflar.md) 27 kart ekledi.
 
 **Öncesi (kayıt turu):** 114/127 ✅, 13 🟡, 0 ⬜ (2026-09-10). Liste 97'den 127'ye çıktı:
 [`bolgeler.md`](bolgeler.md) 24 kart (7 `lore` · 7 `location` · 10 `npc` · 3 `scene`),
