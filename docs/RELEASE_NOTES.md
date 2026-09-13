@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v16.3.1 — Where Your Data Lives (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.3.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A repair release. On Windows the app kept its database and media inside Documents, which on most machines is a OneDrive folder — every write queued for sync and every read waited on a download, so importing a world could lock up the machine. That moves once, automatically, on first launch. The rest is drawing with a stylus, pinch-zoom landing where you pinched, pictures reaching the player screen, and a heavily rebalanced Aegis.
+
+> **Heads-up for Windows users:** on first launch the app moves its data folder from Documents to `%LOCALAPPDATA%\DungeonMasterTool`. It is automatic and takes a moment; do not close the app mid-move.
+
+---
+
+### Bug fixes
+
+- **Windows performance** — the app stored its database and media in Documents, which OneDrive syncs; a world import with 150 files could hang the machine. Data now lives outside the synced folder and is moved there once, automatically, on first launch.
+- **Windows worlds with punctuation in the title** — a world whose name contained `:` (like "Aegis — Meridia: Birinci Perde") failed on Windows the moment the app touched its folder. Reserved names and characters are now handled everywhere a world, PDF library or synced folder is created or renamed.
+- **Player screen showed broken images** — the battle map background, token portraits and condition icons were sent to players as file paths from your machine, so they arrived blank. They are uploaded with the scene now, and the path is kept as a fallback if the upload fails.
+- **Stylus drawing on tablets** — drawing with a pen stopped working on all three canvases in the previous release. Fixed.
+- **Pinch zoom drifted** — zooming on a canvas zoomed a spot offset from your fingers by the height of the app bar and toolbar.
+- **Battle map with no background image** — a mapless canvas sized itself to the window, so fog and what players saw did not line up with what you drew. It now uses the same fixed canvas as fog and the player view, and *Reset view* fits to it.
+- **Editing another player's character in combat** — changing HP or AC on a character you do not own was not saved back. Encounter edits now reach the shared copy of that character.
+
+---
+
+### Worlds
+
+#### Aegis Act 1 — 0.6.6
+
+Re-download from **Marketplace → Official**. 163 entities, mostly a balance pass on the Transformed:
+
+- **The Transformed hit softer and die faster** — AC 11 / HP 16 for the generic and Kromanna, AC 9 / HP 12 for Alton and Merla; CR drops from 1/2 and 1 to 1/8 and 1/4, and the Dawn Clash encounter is now Low / 100 XP.
+- **Four claw cards became two** — a plain Claw Attack (+2, 1d4) and a Strong Claw Attack (+2, 1d8). Claws no longer spread the disease.
+- **Leaping Bite (new)** — recharge 5–6, a 15 ft leap, no attack roll, 1d8 piercing and a CON DC 8 save; failing adds a Disease Point. This is now the only way the blight spreads.
+- **Kadife is the DM's lever, not scenery** — she shows up once the characters start asking about the three strangers or Fate at the docks, names a guild hand in the harbour and sends them to the Council.
+- **Halim is findable** — the village and inn cards now mention him where the canon always said he was; six cards link to him instead of two.
+- **Corvin and Fare** — the village's outsider who carries all its trade, and a scout with opinions about her nickname.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.3.0` → `16.3.1`.
+- **Windows data move:** on first launch the data root moves from Documents to `%LOCALAPPDATA%\DungeonMasterTool` in one step, and absolute media paths stored inside your data are rewritten once afterwards. Both are idempotent and safe to interrupt — if the old folder is locked, the app stays there and retries next launch. Other platforms are unaffected.
+- **Aegis:** re-download the world from **Marketplace → Official** for 0.6.6. Existing worlds, packages and characters are untouched, but Transformed statblocks already placed in a saved encounter keep their old numbers.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1510 tests fail on `main` and no CI step blocks a red build.
+- **Two Aegis cards have no artwork** — Halim and Leaping Bite ship without images; the prompts are prepared but the art was not generated for this release.
+
+---
+
+### For developers
+
+- **`AppPaths`** — the Windows root is `%LOCALAPPDATA%\DungeonMasterTool`, moved with a single same-volume `Directory.rename` and a `.root_moved_from` marker; `AppDatabase.beforeOpen` consumes the marker behind the `migration_progress` gate, so a crash before the DB opens loses nothing.
+- **`replaceInEveryTextColumn` / `pathSpellings`** — lifted out of `guest_promotion_service` into `app_database.dart`; promotion and demotion call the shared versions.
+- **`dirSafe`** — now rejects control characters, empty names and MS-DOS device names; `PdfLibraryService`, world rename and LAN sync rename all route through `LocalMediaLocalizer.worldDir` instead of bypassing it.
+- **`withPublishedMedia`** — `_upsert` converts every local path to a `dmt-transient://` ref via `SharedMediaCourier` while the manifest is written, replacing the old warn-only `_warnRawPaths`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.3.0 — Getting Around the Character Sheet (Beta)
 
 **Release date:** September 2026
