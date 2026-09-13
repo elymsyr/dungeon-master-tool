@@ -377,6 +377,33 @@ dart run tool/content/convert_blueprint.dart --dir flutter_app/assets/worlds/aeg
 
 ---
 
+## 6.1 Görselsiz kalan kartlar
+
+0.6.3 itibarıyla iki kartın görseli yok — ikisi de bu makinede üretilemedi
+(ComfyUI ağda değildi). Prompt'ları `aegis_prompts.py` ile **çevrimdışı** üretilip
+hazır bekliyor:
+
+| Kart | Neden yok |
+|---|---|
+| `npc/Halim` | 0.6.0'da eklendi, o turun görsel akışı çalıştırılmadı |
+| `creature-action/Sıçrayıp Isırma` | 0.6.3'te eklendi |
+
+```bash
+cd tool/aegis_art
+python3 aegis_generate.py --jobs art_jobs_063_missing.jsonl --out out_fix
+# beğenilenleri out_artwork_choosen/ altına al, sonra:
+python3 aegis_integrate.py --apply
+```
+
+`aegis_integrate.py` `imagePath` ve `manifest.json` satırlarını kendi yazar;
+sonrasında `.pkg.json` ve zip'i yeniden üretmeyi unutma.
+
+Prompt'u beğenmezsen `art_jobs_063_missing.jsonl`'i elle düzenle — dosya iki
+satır, seed'ler sabit (`35135083` · `3033273147`), yani aynı kompozisyonun
+düzeltilmiş hâli gelir (§3.1).
+
+---
+
 ## 7. Kategoriler
 
 | Kategori | Adet | Kartın konusu nereden çıkar |

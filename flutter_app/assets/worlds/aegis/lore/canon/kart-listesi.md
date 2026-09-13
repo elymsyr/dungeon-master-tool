@@ -159,7 +159,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Fare** — rıhtım çırağı | Bir gemiye alınmak | — (yarasız NPC) | Her şey: kim ne zaman yanaştı | ✅ |
 | **Kaptan Caelynn** *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
 | **Kaptan Holg** *(yarı-orc)* | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
-| **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | "İyi yazı"nın nasıl alındığı | ✅ |
+| **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması; haberin Meclis'e önce ondan gitmesi | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | **Meclis'e giden yol** (DM inisiyatifi) · "İyi yazı"nın nasıl alındığı | ✅ |
 | **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **damga vurmaz**; klan adını söylemiyor | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret | ✅ |
 
 **Meclis — altı koltuk, altı inkâr.** Kartlar koltuk adıyla yazılır.
@@ -225,25 +225,24 @@ Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Dönüşmüş** | Jenerik gövde: Blight'lı köylü. CR 1/2, AC 12, HP 22, Pençe +5 (1d8+3) | ✅ |
-| **Dönüşmüş Alton** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Merla** | Halfling, Small, HP 18, CR 1/2 | ✅ |
-| **Dönüşmüş Kromanna** | Tiefling, HP 30, ateşe direnç, CR 1 | ✅ |
+| **Dönüşmüş** | Jenerik gövde: Blight'lı köylü. CR 1/8, AC 11, HP 16, Güçlü Pençe Saldırısı +2 (1d8) | ✅ |
+| **Dönüşmüş Alton** | Halfling, Small, AC 9, HP 12, CR 1/8 | ✅ |
+| **Dönüşmüş Merla** | Halfling, Small, AC 9, HP 12, CR 1/8 | ✅ |
+| **Dönüşmüş Kromanna** | Tiefling, AC 11, HP 16, ateşe direnç, CR 1/4 | ✅ |
 
 Üçü de jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
 hiçbir yaratık tekrar yazılmaz, ref verilir.
 
-## 6. `creature-action` — 4 · `trait` — 5 (+ alt sınıf trait'leri §14)
+## 6. `creature-action` — 3 · `trait` — 4 (+ alt sınıf trait'leri §14)
 
 Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
 | Kart | Tip | Ait olduğu | Durum |
 |---|---|---|---|
-| **Pençe** | `creature-action` | Dönüşmüş — +5, 1d8+3 delici | ✅ |
-| **Pençe (Alton)** · **Pençe (Merla)** | `creature-action` | +4, 1d6+2 delici | ✅ |
-| **Pençe (Kromanna)** | `creature-action` | +6, 1d10+4 delici | ✅ |
+| **Pençe Saldırısı** | `creature-action` | Küçük bedenler — +2, 1d4 delici | ✅ |
+| **Güçlü Pençe Saldırısı** | `creature-action` | Orta/güçlü bedenler — +2, 1d8 delici | ✅ |
+| **Sıçrayıp Isırma** | `creature-action` | Dördü de — şarj 5–6, 15 ft sıçrayış, saldırı zarı yok, 1d8 + CON DC 8 → +1 Hastalık Puanı | ✅ |
 | **Acıyı Tanımaz** | `trait` | 0 HP'de ölüm zarı atmaz, ölür | ✅ |
-| **Bulaştıran Yara** | `trait` | İsabette CON DC 12 → +1 Hastalık Puanı | ✅ |
 | **Durmayan Adım** | `trait` | Alton: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
 | **Kesik Kesik** | `trait` | Merla: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
 | **Erken Güçlenme** | `trait` | Kromanna: ilk turunda ek Pençe | ✅ |
@@ -252,7 +251,7 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Blight — Enfeksiyon** | Maruziyet CON DC 8 → +1 Hastalık Puanı · günlük CON DC 13 → +1 (güvenli bölgede uzun dinlenme alınmayan her gün; alınsa bile her 3 günde bir) · beş aşama: Kuluçka 1–2 · Sistemik Yayılma 3–4 · Ağır Bozulma 5–6 · Morfolojik Çözülme 7–8 · Tam Çöküş 9+ (dönüşüm, geri dönüş yok) · puan silinmez; vahşide Medicine DC 15 o günün zarını atlatır · tedavi: *Lesser Restoration* sonraki zara +2, *Greater Restoration* +4 | ✅ |
+| **Blight — Enfeksiyon** | Maruziyet CON DC 12 → +1 Hastalık Puanı (Dönüşmüş ısırığı CON DC 8) · günlük CON DC 13 → +1 (güvenli bölgede uzun dinlenme alınmayan her gün; alınsa bile her 3 günde bir) · beş aşama: Kuluçka 1–2 · Sistemik Yayılma 3–4 · Ağır Bozulma 5–6 · Morfolojik Çözülme 7–8 · Tam Çöküş 9+ (dönüşüm, geri dönüş yok) · puan silinmez; vahşide Medicine DC 15 o günün zarını atlatır · tedavi: *Lesser Restoration* sonraki zara +2, *Greater Restoration* +4 | ✅ |
 
 Act 1'de **fiilen işleyen** kural sapması; kartta sapma işareti zorunlu. Halkın
 bildiği yüzü ayrı kart: `lore/Blight — Bilinen Hali`.
@@ -282,7 +281,7 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 
 | Kart | Ne | Durum |
 |---|---|---|
-| **Şafak Çatışması** | Üç Dönüşmüş, toplam 400 XP. Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
+| **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
 ## 10. `quest` — 3
 
@@ -398,9 +397,10 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 | `subclass` | 3 | — | — | 3 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 8 | — | — | 8 |
-| **Toplam** | **153** | **13** | **—** | **166** |
+| **Toplam** | **151** | **13** | **—** | **164** |
 
-**153/166 ✅, 13 🟡, 0 ⬜** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
+**151/164 ✅, 13 🟡, 0 ⬜** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
+Öncesi: **153/166 ✅** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
 Öncesi: **152/165 ✅** (2026-09-13, ilahi büyü turu — 154'ten 165'e: `npc/Halim`,
 `subclass/İrade Yemini`, altı yemin `trait`'i ve iki `resource-pool` satırı).
 

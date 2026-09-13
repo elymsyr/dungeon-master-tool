@@ -170,7 +170,7 @@ Bu, aşağıdaki dört adı ve Gümüşsu'nun adını değiştirmez; sadece onla
 |---|---|---|---|
 | **Duran** — köy başkanı *(insan)* | Köyün dağılmaması, dışarıdan müdahale gelmemesi | Üçlünün nereden geldiğini biliyor, söylemek istemiyor | "Limandan geldiler" |
 | **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti, saklıyor | Belirtilerin seyri (§4) |
-| **Corvin** — yolu bilen *(insan)* | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik |
+| **Corvin** — yolu bilen *(insan)* · **köyün yabancısı, §3.6** | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik; **ölürse kapanır (§3.6)** |
 | **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarası olmayan NPC, 02 §4 kotası) | Söylenti, yabancı kaydı |
 | **Halim** — lonca adamı *(insan)* · **köylü değil, §3.5** | İşi bitirip dönmek | Kimin yolladığını | Orvan Sancar'ın adı, Meclis'e kısa yol |
 
@@ -413,6 +413,39 @@ Lucid Triton'da bir kere daha geçecek.
 
 ---
 
+### 3.6 Corvin — köyün dışarıyla bağı
+
+Köyde oturur, köylü değildir. Gümüşsu için **bir yabancı** — ve sevilen bir
+yabancı: kimse ondan çekinmez, çocuklar peşine takılır, hancı ona borç yazar.
+
+**Ne yapar.** Köyün dışarıyla bütün alışverişi onun sırtından yürür: tuz, iplik,
+çivi, iyi bıçak, ilaç şişesi. Köy @[Gizli Liman](entity:location/Gizli Liman)'ı
+**bilmez** ve malın nereden geldiğini sormaz; bildiği tek şey Corvin'in gidip
+döndüğüdür. Limanı bilen tek köylü odur, ve bunu anlatmaz.
+
+**Ne zaman köyde.** Sürekli değil; kıyıyla köy arasında gider gelir. Dönüşüm
+sabahı **köydedir**: yükü sırtında, şafaktan **birkaç saat önce** döner. Yani
+[§5](act1.md)'in şafağı, Corvin'in dönüşünden birkaç saat sonradır. Karakterler
+gündüz geldiyse onu ilk kez o gece handa ya da sabaha karşı kuyu başında görür.
+DM onu daha erken köyde tutmak isterse tutabilir; **zorunlu olan tek şey, dönüşüm
+olduğunda köyde olması.**
+
+**Ölürse.** Şafakta ölmesi mümkündür: kaçmaz, öne de atılmaz, kendi kapısının
+önünde bıçağıyla durur. Öldüğünde kıyıya giden yol karakterlere **kapanır** ve
+köyde o yolu açacak kimse yoktur. Bunun telafisi yok; yerine bir rehber çıkarma.
+
+Dünya yine de kapanmaz. Limanın yerini kıtada bilenler var — bazı Konsey
+rütbelileri, Lonca Meclisi'nin bazı üyeleri, ve çok nadiren Nişan'ın paladin
+rütbelileri ([§7](act1.md)). Corvin'le kapanan kapı **Lucid Triton'dan** yeniden
+açılabilir: daha uzun, daha pahalı ve daha çok iz bırakan bir yoldan.
+
+**Fare.** Rıhtımın çırağını ([§7](act1.md)) tanır ve çok sever; ona *Fare* demez,
+**Sincap** der — rıhtımda bunu yapan tek kişi odur. Corvin pazarlıkçı ve paracı
+bir adamdır, ama **özünde kötü biri değil**; bunu en net Fare'ye davranışında
+görürsün. Karakterler Fare'ye kötü davranırsa Corvin'in tavrı döner.
+
+---
+
 ## 4. Blight — hastalık ve kural kartı
 
 Bu, 5e'nin üstüne eklenen kurallardan **Act 1'de fiilen işleyen** olanıdır. Sapma
@@ -442,8 +475,17 @@ yüzü ayrı kalır: `lore` kartı *Blight — Bilinen Hali*.
 ### 4.1 Bulaşma
 
 Temasla. Dört yol: hastanın ya da cesedin sıvılarıyla temas · bir gece aynı kapalı
-mekanda kalmak · bir Dönüşmüş'ün açtığı yara · **Hastalık Sisi**'nde (cephenin
+mekanda kalmak · **bir Dönüşmüş'ün ısırığı** · **Hastalık Sisi**'nde (cephenin
 ötesindeki Blight zemini) geçirilen her gün.
+
+**Pençe bulaştırmaz, ısırık bulaştırır** (2026-09-13 kararı). Pençe yara açar,
+Blight taşımaz; vuruşun kendi kurtulma zarı yoktur. Ağız başka: *Sıçrayıp Isırma*
+([§5.3](act1.md)) isabet eden yaratık **CON DC 8** atar — maruziyetin normal DC
+12'si değil, daha kolay bir zar. Bir Dönüşmüş'ün Blight'ı geçirebildiği **tek**
+saldırı budur.
+
+Dövüşün dışında da bulaşır, birinci yoldan: yere düşen bedenin sıvılarına dokunan,
+cesedi karıştıran ya da yaralıyı taşıyan zarını atar.
 
 > Her maruziyet: **CON kurtulma zarı DC 12.** Başarısızlık = **+1 Hastalık Puanı.**
 
@@ -599,9 +641,9 @@ genel-kartlar §7) bu gövdenin kendisidir ve Blight'lı herhangi bir köylü i�
 kullanılır. Aşağıdaki üçü onun adlandırılmış hâlidir — ırkları ve §4.3'teki
 belirti hattı statblock'a yansır.
 
-**Ortak gövde — Dönüşmüş** · Humanoid (Blight'lı), Unaligned · **CR 1/2 (100 XP)**
+**Ortak gövde — Dönüşmüş** · Humanoid (Blight'lı), Unaligned · **CR 1/8 (25 XP)**
 
-> **AC** 12 (sertleşmiş deri) · **HP** 22 (4d8 + 4) · **Hız** 30 ft
+> **AC** 11 (zırh yok) · **HP** 16 (3d8 + 3) · **Hız** 30 ft
 > **STR** 16 (+3) · **DEX** 12 (+1) · **CON** 13 (+1) · **INT** 4 (−3) · **WIS** 8 (−1) · **CHA** 5 (−2)
 > **Duyular** karanlıkgörüş 60 ft, pasif Algı 9 · **Diller** bildiği dilleri anlar, konuşamaz
 > **Bağışıklık (durum)** charmed · frightened · exhaustion
@@ -610,40 +652,49 @@ belirti hattı statblock'a yansır.
 > zaten Aşama 5'te bitmişti (§4.2) — bu kural masaya "kurtarma şansı yok" demenin
 > mekanik hâli.
 >
-> ***Bulaştıran Yara.*** Pençesinin isabet ettiği yaratık **CON DC 8** atar;
-> başarısızlık = +1 Hastalık Puanı (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).
-> Zar savaşın sonunda bir kez atılır, her isabette değil.
+> **Eylem — Güçlü Pençe Saldırısı.** Yakın silahlı saldırı: **+2** isabet,
+> erişim 5 ft, tek hedef. **Vuruş:** 1d8 delici (ort. 4).
 >
-> **Eylem — Pençe.** Yakın silahlı saldırı: **+5** isabet, erişim 5 ft, tek hedef.
-> **Vuruş:** 1d8 + 3 delici (ort. 7).
+> **Eylem — Sıçrayıp Isırma** *(yeniden şarj 5–6).* Dizlerini kırar ve **15 ft**'e
+> kadar — üç dört uzun adım — sıçrayıp bir yaratığın üstüne iner. **Saldırı zarı
+> atılmaz;** sıçrayış tutar. **Vuruş:** 1d8 delici (ort. 4). Hedef ardından
+> **CON DC 8** atar; başarısızlık = +1 Hastalık Puanı.
+>
+> **Pençe bulaştırmaz, ısırık bulaştırır** ([§4.1](act1.md)). *Bulaştıran Yara*
+> trait'i kaldırıldı; bulaşma artık tek bir eylemin üstünde duruyor, ve o eylem
+> yeniden şarj istiyor. Dördü de bu eylemi taşır.
+>
+> **Sıçrayış zorlu araziyi atlar** — Şafak Çatışması'nda patikanın iki yanındaki
+> çalı Dönüşmüş'ü yavaşlatmaz.
 
-**Dönüşmüş Alton** — halfling, *yorgunluk hattı* (§4.3) · **CR 1/2**
+**Dönüşmüş Alton** — halfling, *yorgunluk hattı* (§4.3) · **CR 1/8 (25 XP)**
 
-> Small. **AC** 13 · **HP** 18 (4d6 + 4) · **Hız** 25 ft · **STR** 14 (+2) · **DEX** 14 (+2)
-> **Pençe** +4, 1d6 + 2 delici (ort. 5).
+> Small. **AC** 9 · **HP** 12 (3d6 + 2) · **Hız** 25 ft · **STR** 14 (+2) · **DEX** 14 (+2)
+> **Pençe Saldırısı** +2, 1d4 delici (ort. 2).
 > ***Durmayan Adım.*** HP'sinin yarısının altına düştüğünde hızı 40 ft olur ve
 > fırsat saldırılarına maruz kalmaz. Yorgunluk hattı böyle biter: beden yorulmayı
 > unutur.
 
-**Dönüşmüş Merla** — halfling, *değişkenlik hattı* (§4.3) · **CR 1/2**
+**Dönüşmüş Merla** — halfling, *değişkenlik hattı* (§4.3) · **CR 1/8 (25 XP)**
 
-> Small. **AC** 13 · **HP** 18 (4d6 + 4) · **Hız** 30 ft · **STR** 14 (+2) · **DEX** 14 (+2)
-> **Pençe** +4, 1d6 + 2 delici (ort. 5).
+> Small. **AC** 9 · **HP** 12 (3d6 + 2) · **Hız** 30 ft · **STR** 14 (+2) · **DEX** 14 (+2)
+> **Pençe Saldırısı** +2, 1d4 delici (ort. 2).
 > ***Kesik Kesik.*** Sırasının başında 1d6 at. **1–2:** bir yere bakakalır, eylemini
 > kaybeder. **5–6:** fazladan bir Pençe saldırısı yapar. Masaya "iki hasta aynı
 > seyri izlemez" kuralını gösteren tek mekanik budur; DM zarı **açıkta** atar.
 
-**Dönüşmüş Kromanna** — tiefling, *beden hattı* (§4.3) · **CR 1 (200 XP)**
+**Dönüşmüş Kromanna** — tiefling, *beden hattı* (§4.3) · **CR 1/4 (50 XP)**
 
-> Medium. **AC** 13 · **HP** 30 (4d8 + 12) · **Hız** 30 ft
+> Medium. **AC** 11 · **HP** 16 (3d8 + 3) · **Hız** 30 ft
 > **STR** 18 (+4) · **CON** 16 (+3) · **Direnç** ateş (tiefling kalıntısı)
-> **Pençe** +6, 1d10 + 4 delici (ort. 9).
+> **Güçlü Pençe Saldırısı** +2, 1d8 delici (ort. 4).
 > ***Erken Güçlenme.*** İlk turunda ek bir Pençe saldırısı yapar. Üçünün içinde
 > hastalığın en çok "ödüllendirdiği" beden odur — ve masanın önce onu hedeflemesi
 > doğru karardır.
 
-**Tempo notu (DM).** Üçü birlikte 400 XP; 4 kişilik 1. seviye bir masa için
-**zorlu-üstü.** Bilerek: köy tehlikede olmalı. Yumuşatma kolu üçü aynı anda
+**Tempo notu (DM).** Üçü birlikte 100 XP; 4 kişilik 1. seviye bir masa bunu
+kaldırır. Tehdit sayıda değil **yönde**: Dönüşmüş'ler durmaz, geri çekilmez ve
+köye yürür — korunmayan köylü ölür. Yumuşatma kolu üçü aynı anda
 saldırmasın — Alton önce, diğer ikisi bir tur sonra kulübeden çıksın. Sertleştirme
 kolu tersi. Masa 2. seviyeyse üçü birlikte gelir.
 
@@ -737,6 +788,11 @@ bir yerden gelmiş, kimse doğduğu adı vermiyor. (Dil ayrımı kanon değil, �
 
 ### 7.1 İçeri girmek — birinci kapı
 
+**Yeri kimler biliyor.** Halkın bilgisi değil, ama bir sır da değil: bazı Konsey
+rütbelileri, Lonca Meclisi'nin bazı üyeleri ve çok nadiren Nişan'ın paladin
+rütbelileri yolu bilir. **Gümüşsu bilmez** — köyün dışarıyla alışverişi Corvin
+üzerinden yürür ([§3.6](act1.md)) ve köylüler malın nereden geldiğini sormaz.
+
 Corvin yolu bilir ama **yol son kapı değil.** Yolun sonunda kayıt yok, kapı yok,
 sadece insan var: kimse kefilsiz içeri alınmaz.
 
@@ -796,10 +852,10 @@ sözlerinin bozulması herkese pahalıya patlar.
 | NPC | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|
 | **Sicim** — defter tutan, düzenleyici *(gnome)* | Limanın işlemeye devam etmesi | Silmenin parasını ***Kader*'in kaptanı** verdi · gerçek adı **Burgell** | Ücret · kefalet · **üçlünün izi — ve izin bittiği yer** |
-| **Fare** — rıhtım çırağı *(halfling)* | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) · gerçek adı **Trym** | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
+| **Fare** — rıhtım çırağı *(halfling)* | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) · gerçek adı **Trym** · *Fare* denmesinden hoşlanmıyor | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
 | **Kaptan Caelynn** — iyi kaptan *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi; sonra başka gemiyle gittiklerini duydu | Temiz yolculuk — **yazı ya da yüksek fiyat** |
 | **Kaptan Holg** — ucuz kaptan *(yarı-orc)* | Para, hızlı sefer | Gemisi ve mürettebatı güvenilmez | Ucuz ve kötü yolculuk (gerçek bir seçenek) |
-| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** | — **hiçbirini** (5. tur: süs, zincirde değil) |
+| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması · haberin Meclis'e **onun yolundan** gitmesi | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** · karakterleri iyilik olsun diye yollamadığı | **Meclis'e giden yol** — kapı değil, itiş (§7.4, 2026-09-13) |
 | **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki · **damga vurmaz** · **klan adını söylemiyor** | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret |
 
 **Adlandırma kuralı — limanın tamamı lakapla konuşur.** *Sicim · Fare · Kadife ·
@@ -828,6 +884,47 @@ limanın konseyce bilindiği zaten kabul edilmiş bir gerçek (§7.3).
 > Diğer PC'ler için **Insight DC 13**: adamın rıhtıma ait olmadığını görür, kime
 > ait olduğunu göremez.
 
+**Kadife ne işe yarar (KARAR, 2026-09-13 — 34. maddeyi geri alır).** Önceki hali
+onu süse indirmişti: zincirde durmuyor, tek işi oyuncuda *"bu adamın burada ne işi
+var"* sorusunu bırakmak. O soru kalıyor, ama artık bir cevabı da var. Kadife'nin iki
+işi var ve ikisini aynı anda yapar:
+
+1. **Limanda bir lonca elinin olduğunu gösterir.** Konsey adına konuşan herkes bir
+   loncanın adına konuşur (§7.3 · `lonca §1`) — Kadife bu cümlenin rıhtımdaki
+   görünür karşılığıdır.
+2. **Oyuncuyu Meclis'e yollar.** Bir bilgi kaynağı değil, bir **yön.**
+
+**DM inisiyatifi — o gelir.** Bu sahnenin tetiği oyuncuda değil, **DM'de.**
+Karakterler rıhtımda üç yabancıyı, *Kader*'i ya da silinmiş satırı konuşmaya
+başladığı an Kadife kağıtlarını kapatır ve yanlarına gelir:
+
+> *"Bunu kime anlatacaksınız?"*
+
+Cevabı beklemez:
+
+> *"Burada anlatmayın. Rıhtımda anlatılan her şeyin bir fiyatı olur, ve o fiyatı siz
+> ödemezsiniz. Lucid Triton'a gidin, Meclis'e söyleyin. **Önce onlar duymalı.**"*
+
+**İki masada da çalışır.** Lonca adı perdede **hiç geçmediyse** burası o adın masaya
+ilk kez konduğu yerdir — Kadife *lonca* demez, **Meclis** der, ve iyi giyimli bir
+adamın limanda Meclis adına konuşması sorunun kendisini kurar. Lonca adı **zaten
+geçtiyse** (Halim · Duran · Orvan Sancar) Kadife onaylar ve **acele ettirir:** yol
+doğru, eksik olan hız.
+
+**Ne verir, ne vermez.** Ad yok, kağıt yok, para yok, kefalet yok. Verdiği tek şey
+yön ve bir uyarı: *"Adımı vermeyin. Adımı verirseniz o kapı açılmaz, kapanır."*
+Kimin adına konuştuğu sorulursa cevap vermez — **Custar katmanı Act 1'de hâlâ
+açılmıyor.** Karakterlerin öğrendiği tek şey, limanda *bir* koltuğun eli olduğudur.
+
+**İzi uzatmıyor.** §7.5 duruyor: üçlünün izi limanda bitiyor. Kadife yeni bir kanıt
+vermiyor, elde olanı **nereye götüreceğini** söylüyor. Gitmeyen masa bir şey
+kaybetmez; Meclis yolu Halim'den de, Duran'ın izinden de, doğrudan loncaya
+gitmekten de açılır. Kadife bir kapı değil, **bir itiş.**
+
+**Neden yapıyor.** Yardım etmiyor. Haber Meclis'e onun yolladığı insanlarla giderse
+koltuk ona borçlanır; kıymetli olan haber değil, **kimin getirdiği.** Karakterler
+bunu fark ederse inkâr etmez, omuz silker.
+
 Kart **Konsey Aracısı** başlığıyla yazılır; rıhtımda **Kadife** diye çağrılır,
 defterdeki adı **Halet Custar**'dır (KARAR, 2026-09-09 3. tur). İki adı birleştiren
 oyuncu "konsey aracısı"nı soyut bir rolden bir haneye çevirir: **Askeri Hukuk
@@ -836,6 +933,20 @@ koltuğunun limanda parası var** demektir. İkinci ad şehirde bulunur, limanda
 **Fare, bilgi eğiminin taşıyıcısı (09 §4):** limanda söylenti boldur, ve Fare
 söylentinin haritasıdır. Oyuncular tıkanırsa açılan kapı odur — bedeli para değil,
 ilgi: kimse ona bir şey sormaz.
+
+**Adından hoşlanmıyor (2026-09-13).** Rıhtımda ona herkes *Fare* der ve o
+düzeltmez; sadece her seferinde bir an duraklar. Bunu kimseye söylemedi —
+söylemenin bir faydası olmadığını erken öğrendi. Bunu fark eden, gerçek adını
+soran ya da ona başka bir adla seslenen bir karakter onu paradan da yemekten de
+hızlı açar.
+
+Tek istisna **Corvin** ([§3.6](act1.md)): ona *Fare* demez, **Sincap** der.
+Rıhtımda bunu yapan tek kişi odur, ikisi birbirini sever, ve Corvin'in "özünde
+kötü biri değil" olduğu en net orada görünür. **Sincap adı Corvin'indir:** başka
+biri kullanırsa Fare'nin yüzü kapanır ve o gün bir daha açılmaz.
+
+**Mine'ı tanır ve ne iş yaptığını bilir** — takı, yüzük, zincir. Sorulmadan
+anlatır ve barakayı gösterir; kuyumcuya giden yol §7.4'te onun üstünden geçer.
 
 ### 7.5 Buranın Act 1'e verdiği
 
@@ -1025,8 +1136,11 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     her iyiliğin karşılığını isteyen bir adam — ve hastalık konusunda doğruyu söyleyen
     tek koltuk. Salonun ona bakmamasının sebebi artık kayıtsızlık değil: **sözü ucuz.**
     Corin'i o masaya oturtan da odur.
-34. **Kadife süse indi** (§7.4). Zincirde durmuyor; tek işi oyuncuda *"bu adamın
-    burada ne işi var"* sorusunu bırakmak. Custar katmanı Act 1'de açılmıyor.
+34. ~~**Kadife süse indi** (§7.4).~~ **GERİ ALINDI (2026-09-13, denge turu).**
+    Soru kalıyor (*"bu adamın burada ne işi var"*), ama Kadife artık bir **yön:**
+    limanda bir lonca eli olduğunu gösterir ve karakterleri Meclis'e yollar —
+    DM inisiyatifiyle, o gelerek. İz uzamıyor (§7.5 duruyor), yalnız yön veriliyor.
+    Custar katmanı Act 1'de hâlâ açılmıyor. Gerekçe ve replikler §7.4'te.
 35. **Görev sayısı 2 → 3.** *Söylentinin Peşinde* artık **Votumar'ı da kapsıyor** ve
     gidilen makam reddettiğinde kapanır. *Nereden Geldiler* limanda biter. Yeni
     üçüncü görev **İyi Yazı**: kıtadan çıkmak, iki yolla (karşı-imza ya da para).
@@ -1124,8 +1238,8 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
   kenti (§6) yazılmadı. Riski yok: Act 1'in kapsamı Gümüşsu → liman → (Lonca/Şehir) →
   ufukta ikinci kıta ile kapanıyor. Tek dikkat edilecek şey, §6 tablosundaki o üç
   satırın **taslak** olduğunu unutmamak — masaya söz verme.
-- **Statblock'lar "1–2. seviye" dedin, ben 1. seviyeye ayarladım.** Üçü birlikte
-  400 XP; 4 kişilik 1. seviye masa için zorlu-üstü, 2. seviye için tam yerinde.
+- **Statblock'lar "1–2. seviye" dedin, ben 1. seviyeye ayarladım.** *(2026-09-13'te
+  düşürüldü: üçü birlikte 400 değil **100 XP**; §5.3.)*
   §5.3'ün sonundaki tempo notu iki yönde de kolu veriyor. Masan 2. seviyede
   başlıyorsa hiçbir şey değiştirme, üçünü aynı anda gönder.
 - **Adlandırma Doktrini askıya alındı, ama boşluk bıraktı.** Dil kuralı gitti; onun

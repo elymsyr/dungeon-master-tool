@@ -345,7 +345,45 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.0)
+### 4.8 Yazılan kartlar (0.6.4)
+
+**0.6.4 (2026-09-13).** Yeni kart yok, bir bağ eksiği kapandı: **Halim** hiçbir
+mekan kartında geçmiyordu, yani kartı olan ama ulaşılamayan bir NPC'ydi.
+`location/Gümüşsu` artık dördüncü yabancıyı sayıyor (*"üç yabancı"* → üçü kulübede,
+dördüncüsü hanın üst katında ve hasta değil) ve *Kim var* listesinde Halim var;
+`location/Goodbarrel'ın Ocak Başı`'nda üst kattaki iki odadan birinin dolu olduğu
+yazıyor. Kanon ([`act1.md` §3.5](lore/canon/act1.md)) bunu zaten söylüyordu.
+
+Görseli olmayan iki kart kaldı — `npc/Halim` ve `creature-action/Sıçrayıp Isırma`;
+prompt'ları hazır, bkz. [`tool/aegis_art/README.md` §6.1](../../../../tool/aegis_art/README.md).
+
+**0.6.3 (2026-09-13).** Dönüşmüş'lere üçüncü bir eylem: **Sıçrayıp Isırma**
+(*yeniden şarj 5–6*, 15 ft sıçrayış, saldırı zarı yok, 1d8 delici, ardından **CON DC
+8** → +1 Hastalık Puanı). Bulaşma buraya taşındı — pençe hâlâ bulaştırmıyor, ısırık
+bulaştırıyor, ve `curse/Blight — Enfeksiyon`'un maruziyet yolları yeniden dört.
+
+Aynı turda **Kadife** yeniden yazıldı ([`act1.md` §7.4](lore/canon/act1.md)): artık
+zincirde durmayan bir süs değil, **DM'in kolu.** Karakterler rıhtımda üç yabancıyı ya
+da *Kader*'i konuşmaya başlayınca o gelir, *"bunu kime anlatacaksınız"* diye sorar ve
+onları Meclis'e yollar — *"önce onlar duymalı."* Lonca adı masada hiç geçmediyse o adı
+ilk koyan sahne budur; geçtiyse acele ettiren sahne. İz uzamıyor, Custar katmanı hâlâ
+kapalı. **+1 kart:** `creature-action` +1.
+
+**0.6.2 (2026-09-13) — denge turu.** Üç Dönüşmüş masada fazla güçlüydü. Jenerik
+**Dönüşmüş** ve **Dönüşmüş Kromanna** (tiefling) AC **11** / HP **16**'ya, **Dönüşmüş
+Alton** ve **Dönüşmüş Merla** (halfling) AC **9** / HP **12**'ye indi; CR'ler 1/2 · 1 →
+1/8 · 1/4. Dört ayrı pençe kartı **ikiye** indi — `Pençe Saldırısı` (+2, 1d4) ve
+`Güçlü Pençe Saldırısı` (+2, 1d8); isabet bonusu hepsinde **+2**, hasarda yetenek
+modifikatörü yok. **Pençe artık hastalık bulaştırmıyor:** `trait/Bulaştıran Yara`
+kaldırıldı, `curse/Blight — Enfeksiyon`'un maruziyet yolları dörtten üçe indi ve
+`encounter/Şafak Çatışması` `Low` / **100 XP** oldu.
+
+Aynı turda **Corvin** ([`act1.md` §3.6](lore/canon/act1.md)) ve **Fare**
+([`act1.md` §7.4](lore/canon/act1.md)) yazıldı: Corvin köyün *yabancısı ama sevilen*
+adamı, köyün dışarıyla alışverişi onun sırtından yürür ve köy Gizli Liman'ı bilmez;
+dönüşüm sabahı şafaktan **birkaç saat önce** köye döner ve **ölürse kıyı yolu kapanır**.
+Fare kendisine *Fare* denmesinden hoşlanmaz — ona **Sincap** diyen tek kişi Corvin.
+**−3 kart:** `creature-action` −2 · `trait` −1.
 
 **0.6.0 (2026-09-13) — ilahi büyü turu.** `mekanikler.md` §3 yeniden yazıldı: her ilahi
 büyü bir **çağrı zarı** ister (`d20 + Religion`; çatışmada 19, çatışma dışında saat içinde
