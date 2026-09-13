@@ -152,6 +152,36 @@ class AppDatabase extends _$AppDatabase {
           for (final stmt in _sideTablesDDL) {
             await customStatement(stmt);
           }
+          // Veri kökü taşındıysa (Windows'ta Documents/OneDrive →
+          // LOCALAPPDATA) gövdelerdeki **mutlak** medya yolları hâlâ eski kökü
+          // gösterir: portreler, battle map arka planları, kapaklar kırılırdı.
+          // Marker'ı `AppPaths` taşıma anında yazıyor; guest ve hesap DB'leri
+          // ayrı dosyalar olduğu için gate her DB'nin kendi
+          // `migration_progress` satırında.
+          try {
+            final marker =
+                File(p.join(AppPaths.dataRoot, AppPaths.rootMovedMarker));
+            final from =
+                marker.existsSync() ? marker.readAsStringSync().trim() : '';
+            if (from.isNotEmpty && from != AppPaths.dataRoot) {
+              final tag = 'data_root_move:$from';
+              final done = await customSelect(
+                "SELECT 1 FROM migration_progress WHERE "
+                "migration_name = ? AND completed = 1",
+                variables: [Variable(tag)],
+              ).get();
+              if (done.isEmpty) {
+                await replaceInEveryTextColumn(
+                    this, pathSpellings(from, AppPaths.dataRoot));
+                await customStatement(
+                  "INSERT OR REPLACE INTO migration_progress "
+                  "(migration_name, world_id, completed, updated_at) "
+                  "VALUES (?, '', 1, ?)",
+                  [tag, DateTime.now().millisecondsSinceEpoch],
+                );
+              }
+            }
+          } catch (_) {}
           // LAN sync: yeniden adlandırma zamanı — tablolara kolon ekle.
           // ALTER TABLE IF NOT EXISTS SQLite'da desteklenmiyor; hata yutulur.
           for (final stmt in _renamedAtColumnsDDL) {
@@ -536,4 +566,66 @@ LazyDatabase _openConnectionForUser(String? userId) {
 
     return NativeDatabase.createInBackground(newFile);
   });
+}
+
+/// Bir veri kökü taşındığında gövdelerde aranacak yol yazımları.
+///
+/// Aynı yol DB'de üç farklı şekilde duruyor olabilir: platformun kendi ayıracı,
+/// POSIX ayıracı ve `jsonEncode`'dan geçmiş bir Windows yolunun çift ters
+/// bölüsü. Üçünü de çevirmezsek kırık kalan bir avuç resim geri gelmez.
+List<(String, String)> pathSpellings(String from, String to) {
+  final out = <(String, String)>[];
+  final seen = <String>{};
+  for (final variant in <(String, String)>[
+    (from, to),
+    (from.replaceAll(r'\', '/'), to.replaceAll(r'\', '/')),
+    (from.replaceAll(r'\', r'\\'), to.replaceAll(r'\', r'\\')),
+  ]) {
+    if (seen.add(variant.$1)) out.add(variant);
+  }
+  return out;
+}
+
+/// Her tablonun her TEXT kolonunda [replacements] çiftlerini uygular; değişen
+/// satır sayısını döndürür.
+///
+/// Süpürme neden kolon kolon değil de "her TEXT kolon": mutlak yollar tek bir
+/// yerde durmuyor — `world_entities.image_path` gibi kolonlarda da, JSON
+/// blob'larının (settings, mind map, combat state) içinde de geçiyorlar.
+Future<int> replaceInEveryTextColumn(
+  GeneratedDatabase db,
+  List<(String, String)> replacements,
+) async {
+  if (replacements.isEmpty) return 0;
+
+  final tables = await db
+      .customSelect(
+        "SELECT name FROM sqlite_master WHERE type = 'table' "
+        "AND name NOT LIKE 'sqlite_%'",
+      )
+      .get();
+
+  var changed = 0;
+  for (final row in tables) {
+    final table = row.read<String>('name');
+    final columns = await db.customSelect('PRAGMA table_info("$table")').get();
+    for (final column in columns) {
+      final type = (column.read<String?>('type') ?? '').toUpperCase();
+      final isText = type.isEmpty ||
+          type.contains('CHAR') ||
+          type.contains('TEXT') ||
+          type.contains('CLOB');
+      if (!isText) continue;
+      final name = column.read<String>('name');
+      for (final (from, to) in replacements) {
+        changed += await db.customUpdate(
+          'UPDATE "$table" SET "$name" = replace("$name", ?, ?) '
+          'WHERE instr("$name", ?) > 0',
+          variables: [Variable(from), Variable(to), Variable(from)],
+          updates: const {},
+        );
+      }
+    }
+  }
+  return changed;
 }

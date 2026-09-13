@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/local_media_localizer.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-21
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -31,6 +31,7 @@ tags: [file]
 - System flow: [[LAN-Sync-Flow]], [[Media-Storage-Tiers]]
 
 ## Key Logic / Variables
+- **`dirSafe` Windows'ta tek kapı.** Yasak karakter sınıfı (`\ / : * ? " < > |`), kontrol karakterleri, sondaki nokta/boşluk, boş ad ve MS-DOS aygıt adları (`CON`, `NUL`, `COM1`…, uzantılıları dahil) `_` ile karşılanır. Linux/Android bunları kabul ettiği için hata yalnız Windows'ta çıkıyordu: `Aegis — Meridia: Birinci Perde` gibi bir başlıkta `Directory.exists` bile `ERROR_INVALID_NAME (123)` fırlatıyor. Temiz adlarda birim fonksiyon — var olan klasörler yerinde kalır. `worldDir`/`packageDir` dışında [[pdf_library_service]], [[world_repository_impl]] rename ve [[lan_sync_session]] rename de artık buradan geçiyor.
 - **Kural: seçilen her dosya kopyalanır.** Bulut yüklemesi başarılı olsun ya da olmasın; yükleme de kopyadan yapılır. Eskiden kopya yalnız yükleme atlandığında/başarısız olduğunda alınıyordu, bu da ham yolun sızabildiği bir sürü yol bırakıyordu.
 - **`_isLocalizable` süzgeci** (hepsi geçmeli): boş değil, `AssetRef.isLocal` (şema'lı ref değil), `imagesOnly` ise `png|jpe?g|webp|gif|bmp` uzantısı, mutlak yol, `ownerDir` altında **değil**, `AppPaths.cacheDir` altında **değil**, dosya diskte var.
   - "Veri kökünün altında olmak" **yetmez** — `cache/tmp/` gibi bir klasör hiçbir item taramasına girmiyor. Ölçüt `ownerDir`.

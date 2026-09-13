@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -23,6 +24,15 @@ class AppPaths {
 
   /// Aktif kullanıcı ID'si. null = offline / guest mode.
   static String? currentUserId;
+
+  static const String _appDirName = 'DungeonMasterTool';
+
+  /// Kök taşındığında yeni kökün içine bırakılan işaret dosyası; içeriği eski
+  /// köktür. Gövdelerde duran **mutlak** medya yolları taşımadan sonra hâlâ
+  /// eski kökü gösterir; `AppDatabase.beforeOpen` bu dosyayı görüp her DB'yi
+  /// bir kez süpürüyor. Süreç içi bir bayrak yetmez — taşımadan sonra DB hiç
+  /// açılmadan çökersek yollar kalıcı olarak ölü kalırdı.
+  static const String rootMovedMarker = '.root_moved_from';
 
   static Future<void> initialize() async {
     dataRoot = await _resolveDataRoot();
@@ -72,9 +82,37 @@ class AppPaths {
       return exeDir;
     }
 
-    // 3) Platform-specific user data
+    // 3) Windows: Documents çoğu makinede OneDrive'a yönlendirilmiş durumda.
+    //    SQLite'ın WAL'ı ve medya ağacı orada dururken her yazma senkron
+    //    kuyruğuna, her okuma Files-On-Demand hydration'ına takılıyor — 150
+    //    dosyalık bir dünya importu makineyi kilitliyordu. LOCALAPPDATA hiç
+    //    senkronlanmıyor; veri oraya alınır.
+    if (Platform.isWindows) {
+      final local = Platform.environment['LOCALAPPDATA']?.trim();
+      if (local != null && local.isNotEmpty) {
+        final target = p.join(local, _appDirName);
+        final legacy =
+            p.join((await getApplicationDocumentsDirectory()).path, _appDirName);
+        if (!await Directory(target).exists() &&
+            await Directory(legacy).exists()) {
+          try {
+            // Aynı volume → rename anlık ve atomik: yarım kopyalanmış ağaç yok.
+            await Directory(legacy).rename(target);
+            await File(p.join(target, rootMovedMarker)).writeAsString(legacy);
+          } catch (e) {
+            // OneDrive ya da bir antivirüs dosyayı kilitli tutuyor olabilir.
+            // Eski kökte kal — bölünmüş veriden iyidir.
+            debugPrint('AppPaths: data root move failed, staying put: $e');
+            return legacy;
+          }
+        }
+        if (await _isWritable(Directory(target))) return target;
+      }
+    }
+
+    // 4) Platform-specific user data
     final appDocDir = await getApplicationDocumentsDirectory();
-    final userDataDir = p.join(appDocDir.path, 'DungeonMasterTool');
+    final userDataDir = p.join(appDocDir.path, _appDirName);
     return userDataDir;
   }
 

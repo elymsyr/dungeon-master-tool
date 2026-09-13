@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../application/services/srd_core_bootstrap.dart';
+import '../../application/services/local_media_localizer.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
-import '../../core/config/app_paths.dart';
 import '../database/util/builtin_synth.dart';
 import '../schema/auto_grant_inversion.dart';
 import '../schema/rule_effects_migration.dart';
@@ -452,8 +451,8 @@ class WorldRepositoryImpl implements CampaignRepository {
       renamedAt: Value(now),
     ));
     // Dünya klasörünü de yeniden adlandır.
-    final oldDir = Directory(p.join(AppPaths.worldsDir, oldName));
-    final newDir = Directory(p.join(AppPaths.worldsDir, newName));
+    final oldDir = Directory(LocalMediaLocalizer.worldDir(oldName));
+    final newDir = Directory(LocalMediaLocalizer.worldDir(newName));
     if (await oldDir.exists() && !await newDir.exists()) {
       await oldDir.rename(newDir.path);
     }
