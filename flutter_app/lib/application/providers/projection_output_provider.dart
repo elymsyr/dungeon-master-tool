@@ -9,6 +9,7 @@ import '../services/projection_output.dart';
 import '../services/projection_output_online.dart';
 import '../services/projection_output_screencast.dart';
 import '../services/projection_output_window.dart';
+import '../services/shared_media_courier.dart';
 import 'online_worlds_provider.dart';
 import 'role_provider.dart';
 
@@ -63,6 +64,7 @@ final projectionOutputFactoryProvider =
         return ProjectionOutputOnline(
           client: Supabase.instance.client,
           worldId: worldId,
+          courier: ref.read(sharedMediaCourierProvider),
         );
       case ProjectionOutputMode.none:
         return null;
