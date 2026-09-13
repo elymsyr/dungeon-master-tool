@@ -10,6 +10,7 @@
 import 'dart:io';
 
 import 'package:dungeon_master_tool/application/services/local_media_localizer.dart';
+import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/core/config/app_paths.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -188,5 +189,31 @@ void main() {
       await LocalMediaLocalizer.localizeWorldPayload(payload, 'Barovia'),
       isFalse,
     );
+  });
+
+  // Windows'ta yasak olan her şey klasör adından düşmeli: bunlar Linux'ta
+  // geçerli ad olduğu için hata yalnız Windows'ta ortaya çıkıyordu.
+  test('dirSafe strips everything Windows refuses in a path segment', () {
+    expect(LocalMediaLocalizer.dirSafe('Aegis — Meridia: Birinci Perde'),
+        'Aegis — Meridia_ Birinci Perde');
+    expect(LocalMediaLocalizer.dirSafe('a\\b/c*d?e"f<g>h|i'), 'a_b_c_d_e_f_g_h_i');
+    expect(LocalMediaLocalizer.dirSafe('bell\u0007'), 'bell_');
+    expect(LocalMediaLocalizer.dirSafe('World. '), 'World');
+    // MS-DOS aygıt adları uzantıyla bile açılamıyor.
+    expect(LocalMediaLocalizer.dirSafe('CON'), '_CON');
+    expect(LocalMediaLocalizer.dirSafe('com1.txt'), '_com1.txt');
+    expect(LocalMediaLocalizer.dirSafe(' . '), '_');
+    // Temiz ad: birim fonksiyon — var olan klasörler yerinde kalmalı.
+    expect(LocalMediaLocalizer.dirSafe('Barovia'), 'Barovia');
+  });
+
+  // Kök taşındığında gövdedeki mutlak yolun üç yazımı da çevrilmeli.
+  test('pathSpellings covers platform, posix and json-escaped forms', () {
+    final pairs = pathSpellings(r'C:\old\root', r'C:\new\root');
+    expect(pairs, contains((r'C:\old\root', r'C:\new\root')));
+    expect(pairs, contains(('C:/old/root', 'C:/new/root')));
+    expect(pairs, contains((r'C:\\old\\root', r'C:\\new\\root')));
+    // POSIX kökte üç yazım aynı — tekrar eklenmemeli.
+    expect(pathSpellings('/a/b', '/c/d'), hasLength(1));
   });
 }

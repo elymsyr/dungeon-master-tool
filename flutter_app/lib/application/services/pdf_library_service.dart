@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-import '../../core/config/app_paths.dart';
 import '../../data/services/asset_importer.dart';
+import 'local_media_localizer.dart';
 
 /// World'ün PDF kütüphanesi: `{worldsDir}/{worldName}/pdfs/` klasörü.
 ///
@@ -16,7 +16,7 @@ class PdfLibraryService {
   const PdfLibraryService();
 
   static String libraryDir(String worldName) =>
-      p.join(AppPaths.worldsDir, worldName, AssetImporter.pdfSubDir);
+      p.join(LocalMediaLocalizer.worldDir(worldName), AssetImporter.pdfSubDir);
 
   /// Klasördeki PDF'ler, en son değiştirilen başta.
   static Future<List<File>> localFiles(String worldName) async {
@@ -38,7 +38,7 @@ class PdfLibraryService {
   /// Bir PDF'i kütüphaneye kopyalar (idempotent) ve kopyanın yolunu döndürür.
   Future<String?> import(String worldName, String sourcePath) =>
       AssetImporter.importOne(
-        p.join(AppPaths.worldsDir, worldName),
+        LocalMediaLocalizer.worldDir(worldName),
         AssetImporter.pdfSubDir,
         sourcePath,
       );

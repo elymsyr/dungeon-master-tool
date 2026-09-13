@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/pdf_library_service.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-08
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -31,6 +31,7 @@ tags: [file]
 - System flow: `docs/media-storage-redesign.md` (Phase D — "Göç"), [[LAN-Sync-Flow]]
 
 ## Key Logic / Variables
+- **Klasör adı [[local_media_localizer]]'ın `worldDir`'ünden geliyor.** Önce `p.join(worldsDir, worldName, 'pdfs')` ham adla kuruluyordu: adında `:` olan bir dünyada Windows'ta liste okuması patlıyor, medya ise sanitize edilmiş klasöre yazıldığı için iki taraf ayrışıyordu.
 - `localFiles()` klasörü tarar, `.pdf` uzantılıları son değişme tarihine göre sıralar.
 - `import()` → `AssetImporter.importOne`; idempotent (aynı ad + aynı boyut = aynı dosya, yeniden kullanılır).
 - `remove()` yalnızca yerel dosyayı siler.
