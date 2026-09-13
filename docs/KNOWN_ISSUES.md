@@ -5,13 +5,13 @@ Living list of what is deferred, broken-on-purpose, or a real bug still being tr
 in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (copy the
 items that are still open on the release date; do not edit past releases afterwards).
 
-**Last reviewed:** September 2026 (v16.2.0)
+**Last reviewed:** September 2026 (v16.3.0)
 
 ---
 
 ## Open
 
-- **60 tests fail on `main`** — `flutter test` reports 1432 passing and 60 failing.
+- **60 tests fail on `main`** — `flutter test` reports 1450 passing and 60 failing.
   Superseded in detail by the audit section below, which gives the root cause of each
   group: `combat_provider_test` (42), `account_gate_test` (6), `srd_core/species_test` (5),
   `default_schema_test` (3), `content_store_test` (2), `guest_promotion_service_test` (1)

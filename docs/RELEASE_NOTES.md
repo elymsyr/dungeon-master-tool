@@ -1,5 +1,84 @@
 # Release Notes
 
+## Dungeon Master Tool v16.3.0 — Getting Around the Character Sheet (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.3.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A long character sheet is a lot of scrolling, so there is now a jump pad that takes you straight to any section. The other half of this release is the subclass you picked in the creation wizard finally showing up on the sheet — before, the page looked like you had never chosen one and the level-up planner asked again at level 3.
+
+---
+
+### Characters
+
+#### Jump to any section of the sheet
+
+The square in the top right of a character page opens a list of every section heading and collapsible group on that sheet; tapping one scrolls straight to it. It works on sections far below the fold that have not been built yet, and remembers where each one landed so the second jump is instant.
+
+#### The subclass you chose in the wizard is on the sheet
+
+Finishing the creation wizard with a subclass now writes it to the character in the place the sheet and the level-up planner actually read. Characters made before this release still show nothing — re-pick the subclass on the sheet once and it sticks.
+
+---
+
+### Worlds
+
+#### Aegis Act 1 — divine spell list and a heavier Oath
+
+The bundled Aegis world moves to 0.6.1, downloadable from **Marketplace → Official**:
+
+- A **Divine Spell List** lore card spelling out which spells call for the invocation die — Cleric (105), Warlock (68) and Paladin (34), with the 38 that appear on no other list given their own page and shared entries marked.
+- **The Weight of the Oath** is no longer flavour text: it now grants +1 Strength and +1 Constitution along with History and Investigation proficiency.
+
+---
+
+### Smaller improvements
+
+- **Sidebar** — the create button uses the palette's own accent and corner radius instead of a standalone green.
+- **Armour** — notes about armour restrictions sit as a single line under the grid instead of a red warning banner; they are how the SRD reads, not errors.
+
+---
+
+### Bug fixes
+
+- **Admin** — a world imported from a zip showed the previous (usually empty) banner and description on its card until the screen was reopened. It is refreshed immediately now.
+- **Characters** — the wizard's subclass choice was not visible on the character page and the level-up planner asked for it a second time at level 3.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.2.0` → `16.3.0`.
+- **Characters created before this release:** a subclass picked in the wizard is not backfilled — set it once on the character page.
+- **Aegis:** re-download the world from **Marketplace → Official** to get 0.6.1; existing worlds, packages and characters are untouched.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1510 tests fail on `main` and no CI step blocks a red build.
+
+---
+
+### For developers
+
+- **`SectionJumpPad`** — target offsets are found by bisection on the scroll offset, then corrected with `ensureVisible` once the row mounts; the result is cached per row.
+- **`subclass_refs`** — the wizard seed now writes the relation, not only the resolver-side `subclass_id`; an empty list is checked explicitly rather than relying on a `?? ` fallback that never fired.
+- **`bundled_world_subclass_resolve_test`** — every subclass in every `world-blueprint.json` is resolved at its granting level and at 20, asserting the trait, always-prepared-spell and resource-pool refs land on the page.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.2.0 — Worlds Fit in a Zip (Beta)
 
 **Release date:** September 2026
