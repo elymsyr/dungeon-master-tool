@@ -345,7 +345,28 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.4)
+### 4.8 Yazılan kartlar (0.6.6)
+
+**0.6.6 (2026-09-13).** Kart listesi görevin kendi kartına indi. Üç görevin de
+`objective` alanı **Bu görevde geçen kartlar** bölümüyle bitiyor: sahneler, mekanlar,
+NPC'ler rolüne göre öbeklenmiş, çatışma ve yaratıkları, eşyalar, kural ve kurum kartları,
+ve zincirin komşu görevleri — hepsi masada görevi açan DM'in gözünün önünde, ayrı bir
+karta gitmeden. `lore/Fihrist` yerinde duruyor ve bölümlerin sonundan link alıyor; artık
+görevler arası dolaşmak için, zincirin kendi kartları için değil. Görev `dmNotes`'ları
+buna göre kısaldı. **Kart sayısı değişmedi.**
+
+**0.6.5 (2026-09-13).** Kart aramayı bitiren tek kart: **`lore/Fihrist`**, yedi sayfa.
+2–4. sayfalar üç zinciri (`Söylentinin Peşinde` · `Nereden Geldiler` · `İyi Yazı`) sahne
+sırasıyla açar ve her zincirde geçmesi muhtemel bütün kartları — mekan, NPC, sahne, çatışma,
+eşya, kural — kategori kategori sayar; 5. sayfa 18 mekanın dünya → kıta → yer ağacı ve
+sahneleri, 6. sayfa dokuz background ile üç alt sınıf ve eşyaları, 7. sayfa kural ve kurum
+kartları. Sayfalarda sır yok, hepsi kartların açık alanlarından; sırlar kendi kartlarının
+`secrets` alanında kaldı.
+
+Kart üç yerden bulunur: `pinned`'in ikinci sırası, giriş kartının *Macerayı yönetmek*
+sayfasındaki **Kartlar nerede** bölümü, ve üç görev kartının `dmNotes`'u. Fihrist aynı
+zamanda hiçbir kartın link vermediği dört kartı zincire bağlar — `subclass/Clockwork Soul`,
+`subclass/Drakewarden`, `animal/Drake`, `lore/İlahi Büyü Listesi`. **+1 kart:** `lore` +1.
 
 **0.6.4 (2026-09-13).** Yeni kart yok, bir bağ eksiği kapandı: **Halim** hiçbir
 mekan kartında geçmiyordu, yani kartı olan ama ulaşılamayan bir NPC'ydi.
@@ -403,7 +424,7 @@ ayakta ya da kırılmış. Oyuncunun ne yapacağını varsayan cümleler (*"doğ
 *"yolda karşılarına çıkar"*) kanondan ve iki sahne kartından çıkarıldı. **+10 kart:**
 `npc` +1 · `subclass` +1 · `trait` +6 · `resource-pool` +2.
 
-`aegis-act1/world-blueprint.json` — **163 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
+`aegis-act1/world-blueprint.json` — **164 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
 125 kartını sayıyor; 0.5.x alt sınıf turunu ve 0.6.0'ı eklemek için
 [`kart-listesi.md` §Sayım](lore/canon/kart-listesi.md)'a bak. Kapsam
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**; `🟡` olanlar
