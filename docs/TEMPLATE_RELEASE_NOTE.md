@@ -57,7 +57,7 @@ Copy everything between the `<!-- BEGIN -->` and `<!-- END -->` markers into `RE
 
 ---
 
-### Highlights
+### Highlights (Write this title only if XYZ version bump is X+1)
 
 Only new content, new features and major capability changes — the things a user would
 notice and care about. Bug fixes, polish and internals go in their own sections below.
