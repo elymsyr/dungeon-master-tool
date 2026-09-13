@@ -255,29 +255,36 @@ demektir.
 
 | Sv | Özellik | Mekanik |
 |---|---|---|
-| **3** | **Siper** | 1. kademe ya da üstü bir **abjuration** büyüsü yaptığında etrafına bir siper örülür. Kapasite: **`2 × büyücü seviyesi + Zeka modifiyeri`**. Sana gelen hasarı siper alır; aşan kısmı sen alırsın ama siper yok olmaz, **0 canda bekler**. Başka bir abjuration büyüsü **kademe × 2**, **bonus aksiyon**la yakılan bir yuva **yuva kademesi × 2** can doldurur. **Uzun dinlenmeye kadar** sürer ve ikinci bir siper kurulamaz. |
+| **3** | **Siper** | **Uzun dinlenmede bir kez.** Bir yuva harcayarak 1. kademe ya da üstü bir **abjuration** büyüsü yaptığında, **istersen** o büyünün sırtında bir siper örersin — aksiyon harcamaz, kararı sen verirsin. Kapasite: **`2 × büyücü seviyesi + Zeka modifiyeri`**. Siper ayaktayken yaptığın her abjuration büyüsü sipere **kademe × 2** can yazar (kendiliğinden, ek maliyet yok). Canı **0'a düştüğünde siper kırılır**, artan hasarı sen alırsın, ve **uzun dinlenmeye kadar** yenisi örülemez. |
 | **3** | **Loncanın Defteri** | Büyü defterine **2. kademe ve altı iki abjuration büyüsü** bedava eklenir; sonra **her yeni yuva kademesinde** bir tane daha. Ayrıca **Shield** ve **Protection from Evil and Good** daima hazırdır ve hazırlanan büyü sayısına sayılmaz *(§6.4 — geleneğin vermediği ek)*. |
-| **6** | **Siperi Uzat** | **Tepki.** **30 ft** içinde gördüğün bir yaratığa gelen hasarı sipere yönlendirirsin. Aşan hasarı yaratık alır. **Sayı sınırı yok** — sınır siperin canı ve turda bir tepkin olması. |
+| **6** | **Siperi Uzat** | **Tepki.** **30 ft** içinde gördüğün bir yaratığa gelen hasarı sipere yönlendirirsin. Hasar siperin canını aşarsa **siper kırılır** ve artan hasarı yaratık alır. **Sayı sınırı yok** — sınır siperin canı ve turda bir tepkin olması. |
 | **10** | **Karşı Büyücü** | **Counterspell** ve **Dispel Magic** daima hazır, sayıya girmez. *Counterspell* için yuva harcadığında hedef kurtarma zarını geçerse **yuva harcanmış sayılmaz**. *Dispel Magic* 4. kademe ve üstü bir etki için yetenek kontrolü istediğinde kontrole **yetkinlik bonusunu** eklersin. |
 | **14** | **Büyüye Direnç** | Büyülerden gelen **her hasara dirençlisin**, ve bir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın. |
 
-**Siper kendiliğinden kurulmaz.** Çatışmanın ilk turunda bir abjuration büyüsü
-yapılmazsa ortada siper yoktur ve alt sınıfın yarısı çalışmaz. Bu bilerek böyle: okul
-hazırlığı ödüllendirir, refleksi değil.
+**Siper kendiliğinden kurulmaz, ve günde bir tanedir.** Abjuration büyüsü yapılmazsa
+ortada siper yoktur; kırıldıktan sonra da uzun dinlenmeye kadar yoktur. Bu bilerek
+böyle — kartın oyunu **ne zaman öreceğin**: erken örülen siper küçük vuruşlarda erir,
+geç örülen siper hiç örülmemiş olabilir.
+
+> **Zorunlu olan tek şey büyünün kendisi.** Siper havadan örülmez: mutlaka bir yuva
+> harcanmış, 1. kademe ya da üstü bir **abjuration** büyüsünün sırtında kurulur.
+> Seçebildiğin şey *hangi* büyüde öreceğin, örüp örmeyeceğin değil bir bedava aksiyon.
 
 ### 4.3 Sayılar — siper ne kadar tutar
 
-| Büyücü sv | Zeka | Kapasite | Bonus aksiyonla tek doldurma |
+| Büyücü sv | Zeka | Kapasite | Ayaktayken bir abjuration büyüsü yazar |
 |---|---|---|---|
-| **3** | +3 | **9** | 2. kademe yuva → +4 |
-| **5** | +3 | **13** | 3. kademe yuva → +6 |
-| **10** | +4 | **24** | 5. kademe yuva → +10 |
-| **17** | +5 | **39** | 9. kademe yuva → +18 |
+| **3** | +3 | **9** | 2. kademe → +4 |
+| **5** | +3 | **13** | 3. kademe → +6 |
+| **10** | +4 | **24** | 5. kademe → +10 |
+| **17** | +5 | **39** | 9. kademe → +18 |
 
-Kapasite tavan değil **musluk ağzıdır**: bir uzun dinlenme boyunca emilen toplam hasar
-bundan çok daha yüksektir, çünkü yapılan her abjuration büyüsü sipere can yazar.
-Pratikte bu alt sınıf **büyü yuvasını parti canına çeviren bir pompa**dır, ve
-iyileştiricisi olmayan bir gruba bilerek verilmiştir.
+Kapasite bir musluk ağzı değil, **günde bir kez açılan bir sigortadır.** Beslenme toplamı
+kapasitenin biraz üstüne çıkarır, ama siper kırıldığında uzun dinlenmeye kadar geri
+gelmez — yani gerçek ölçü *bir çatışmada emilen hasar*, günlük toplam değil.
+
+Bu, iyileştiricisi olmayan bir grubu **kurtarmaz**; bir çatışmayı kurtarır. Fark bilerek
+korundu: kart çağrı zarının açtığı boşluğu kapatıyor, o boşluğu yok saymıyor.
 
 ---
 
@@ -334,12 +341,13 @@ Clockwork Magic gibi. Hepsi SRD'de var, yeni `spell` kartı yazılmadı.
 > `bonus_skill_pick_count` bilerek kullanılmadı: o alan "iki beceri **seç**" demek,
 > yeminin verdiği ise iki **belirli** beceri.
 
-### 5.4 Siper Okulu — 6 kart
+### 5.4 Siper Okulu — 8 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
 | **Siper Okulu** | `subclass` | Ana kart. `parent_class_ref` → SRD `Wizard`, `granted_at_level` **3**. `caster_kind` **yazılmadı** — Wizard'ın `Full` ilerlemesi korunur |
-| **Siper** | `trait` | Kapasite formülü, besleme ve taşma kuralı |
+| **Siper** | `trait` | Kapasite formülü, besleme ve kırılma kuralı + `pool:siper` |
+| **Siperi Ör** | `creature-action` | **Free** aksiyon, `recharge_kind: Long Rest`. Siperin *ne zaman* örüleceği seçimi; abjuration büyüsü şartı burada da yazılı |
 | **Siperi Uzat** | `trait` + `creature-action` | 6. seviye tepkisi. **Havuz yok** — kullanım sayısı sınırsız, sınır siperin canı |
 | **Karşı Büyücü** | `trait` | 10. seviye; iki daima hazır büyü ana kartın `features` satırında |
 | **Büyüye Direnç** | `trait` | 14. seviye |
@@ -348,17 +356,19 @@ Clockwork Magic gibi. Hepsi SRD'de var, yeni `spell` kartı yazılmadı.
 (3. sv) ve Counterspell · Dispel Magic (10. sv) ana kartın `features` satırlarında
 `always_prepared_spell_refs` ile bağlanıyor. Dördü de SRD'de var.
 
-> **Şema notu — siperin canı bir alan değil.** `subclass.features` satırı "seviyeye
-> bağlı bir can havuzu" taşıyamaz; `resource_pool_grants` sayaç verir, **can** değil.
-> Bu yüzden siper kartta *yazılı* ama uygulamada *takip edilmiyor* — oyuncu siperin
-> canını elle tutar. Bir havuz satırı uydurmak sayacı yanlış gösterirdi, o yüzden
-> bilerek yazılmadı.
+> **Şema notu — sayaç var, can yok.** Siperin *örme hakkı* bir sayaçtır ve
+> `pool:siper` (1 / uzun dinlenme) onu doğru gösterir. Siperin **canı** ise bir alan
+> değil: `resource_pool_grants` sayaç verir, seviyeye bağlı bir can havuzu değil. Bu
+> yüzden uygulamada görünen şey *"siperi ördün mü"*; *"siperde kaç can kaldı"* oyuncunun
+> elle tuttuğu şey. Sayacın kırılmayı da temsil etmesi bu tasarımda işe yaradı — siper
+> kırılınca hak da bitmiş oluyor, yani tek bir sayaç ikisini birden anlatıyor.
 
-### 5.5 Kaynak havuzları — 8 satır
+### 5.5 Kaynak havuzları — 9 satır
 
 `pool:clockwork_restore_balance` · `pool:clockwork_trance_of_order` ·
 `pool:clockwork_cavalcade` · `pool:drake_companion` · `pool:drakes_breath` ·
-`pool:reflexive_resistance` · `pool:yemin_yorulmaz` · `pool:andin_hali`
+`pool:reflexive_resistance` · `pool:yemin_yorulmaz` · `pool:andin_hali` ·
+`pool:siper`
 
 Uzun dinlenmede tek kullanım veren havuzlar `count: 1` yazar (`count_formula` değil —
 o alan yalnız `pb` gibi bilinen belirteçleri çözer, sayı yazılırsa havuz boş kalır).
@@ -431,18 +441,19 @@ wizard alt sınıfı olan Evoker'a göre** neyin değiştiği:
 | Açılış **3. seviye**, kademeler **3/6/10/14** | **Aynı** | SRD 5.2.1 iskeleti korundu; 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz | **Yok.** Tek uyumlu nokta ve bilerek öyle |
 | Rol: **alan hasarı** | Rol: **hasar emme** | İlahi iyileştirme çağrı zarına bağlı (§4.1); grubun güvenilir hattı arkana olmak zorunda | **Yan.** Hasar düşer, ayakta kalma yükselir |
 | *Sculpt Spells* — dostlar alan büyüsünden muaf | **Siper** — dostların hasarı büyücüye yazılır | Aynı fikrin daha pahalı hâli: muafiyet bedava, siper yuva yer | **Nötr.** Sculpt bedavaydı, bu değil |
-| — | **Siperi Uzat** sınırsız | Sayaç koymak kartı bir kaynak yönetimi bulmacasına çevirirdi; asıl sınır zaten **tepki** ve siperin canı | **Artı görünür, değil.** Turda bir kez kullanılabiliyor |
+| — | **Siperi Uzat** sınırsız | Sayaç koymak kartı bir kaynak yönetimi bulmacasına çevirirdi; asıl sınır zaten **tepki**, siperin canı ve siperin günde bir olması | **Artı görünür, değil.** Turda bir kez kullanılabiliyor, ve siper kırılınca biter |
+| — | Siper **günde bir**, kırılınca geri gelmez, **elle doldurulamaz** | İlk taslakta siper 0 canda bekliyor ve bonus aksiyonla yuva yakılarak doldurulabiliyordu; bu onu sınırsız bir "yuva → can" pompasına çeviriyordu (2026-09-13 kararı) | **Ağır eksi — kasıtlı.** Kart artık bir günlük sigorta; ne zaman örüleceği asıl karar |
 | — | **Karşı Büyücü**: başarısız *Counterspell* yuvayı yakmaz | 2024'te *Counterspell* bir kurtarma zarına bağlandı, yani artık kaçırılabilir bir yatırım | **Artı.** Okulun en güçlü tek maddesi |
 | — | 3. sv **Shield / Protection from Evil and Good** daima hazır | Kartın uygulamada görünür bir şey vermesi, ve siperin ilk turda kurulabilmesi | **Hafif artı.** Kısılacak ilk madde budur |
 
-**Net:** 3–9. seviyede Evoker'dan **belirgin zayıf** (alan hasarı yok), 10. seviyeden
-sonra **grup bazında güçlü** — ama gücün tamamı partiye akıyor, büyücünün kendi
-sayfasında görünmüyor. İyileştiricisi olan bir masada bu alt sınıf **fazladır**;
-olmayan bir masada zorunludur.
+**Net:** 3–9. seviyede Evoker'dan **belirgin zayıf** (alan hasarı yok, ve günde tek
+siper), 10. seviyeden sonra **grup bazında güçlü** — ama gücün tamamı partiye akıyor,
+büyücünün kendi sayfasında görünmüyor. İyileştiricisi olan bir masada bu alt sınıf
+**fazladır**; olmayan bir masada bile bir günü değil bir çatışmayı kurtarır.
 
-> **DM için tek düğme:** fazla bulursanız **Siperi Uzat'ı yetkinlik bonusu kadar
-> kullanımla** sınırlayın (uzun dinlenmede yenilenir). Siperin kendi kapasitesine
-> dokunmayın — kapasite düşerse kart 3. seviyede tamamen işlevsiz kalır.
+> **DM için tek düğme:** zayıf bulursanız siperi **kısa dinlenmede** yenileyin. İlk
+> akla gelen düğme olan "kırılmasın, 0 canda beklesin" **kullanılmasın** — o, kartı
+> bilerek geri alınan sınırsız pompa tasarımına geri götürür.
 
 ---
 
@@ -474,6 +485,11 @@ olmayan bir masada zorunludur.
 5. **Siper Okulu kanon** (2026-09-13, §4): 3. seviyede açılır, kademeleri 3/6/10/14'tür
    ve çağrı zarına girmez. Çağrı zarının açtığı ikinci boşluğu — **güvenilir iyileştirici
    yokluğunu** — kapatır; kapatma biçimi iyileştirme değil, **hasarın alınmaması**.
+6. **Siper günde birdir ve kırılır** (2026-09-13, §4.2 · §6.4). İlk taslaktaki "0 canda
+   bekler + bonus aksiyonla doldurulur" hâli **geri alındı**: sınırsız bir yuva-can
+   pompasıydı. Şimdiki hâlinde siper bir abjuration büyüsünün sırtında, **oyuncunun
+   seçtiği anda** örülür, kendiliğinden beslenir, 0 canda **kırılır** ve uzun dinlenmeye
+   kadar geri gelmez.
 
 **Açık:**
 
@@ -491,4 +507,5 @@ olmayan bir masada zorunludur.
   **bilerek** açılmadı. Açılacaksa ayrı bir karardır. Siper Okulu (§4) bu kararı
   değiştirmez: iyileştiricinin **yerini** dolduruyor, Cleric'i geri getirmiyor.
 - **A5 — Siperin canı elle takip ediliyor** (§5.4). Şema seviyeye bağlı bir can havuzu
-  taşımıyor. Uygulama tarafında bir alan açılırsa kart güncellenir.
+  taşımıyor; `pool:siper` yalnız **örme hakkını** (1 / uzun dinlenme) gösteriyor.
+  Uygulama tarafında bir can alanı açılırsa kart güncellenir.

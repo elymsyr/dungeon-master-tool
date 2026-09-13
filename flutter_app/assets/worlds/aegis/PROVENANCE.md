@@ -4,7 +4,7 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
-**Sürüm 0.6.7 — 170 entity** (2026-09-13). **Siper Okulu turu.** Çağrı zarının üçüncü
+**Sürüm 0.6.8 — 172 entity** (2026-09-13). **Siper Okulu turu.** Çağrı zarının üçüncü
 ve son sonucu kartlara girdi: kural Cleric ve Warlock'u oynanamaz yapınca (`mek` §3.1)
 masada güvenilir bir iyileştirici kalmadı, ve bu boşluk için Wizard'a Aegis'in kendi alt
 sınıfı yazıldı — **`subclass/Siper Okulu`** (`alt` §4). Boşluğu iyileştirerek değil
@@ -12,6 +12,17 @@ sınıfı yazıldı — **`subclass/Siper Okulu`** (`alt` §4). Boşluğu iyile�
 (3. sv), o siperi 30 ft içindeki bir dosta yönlendiren **tepki** (6. sv), daima hazır
 *Counterspell* / *Dispel Magic* ve boşa gitmeyen counterspell yuvası (10. sv), büyü
 direnci (14. sv).
+
+**Siper aynı turda bir kez yeniden dengelendi.** İlk taslakta siper 0 canda *bekliyor*
+ve **bonus aksiyonla yuva yakılarak doldurulabiliyordu** — bu, kartı sınırsız bir
+"yuva → can" pompasına çeviriyordu. Yürürlükteki hâli: elle doldurma **yok**, siper 0
+canda **kırılır** ve **uzun dinlenmeye kadar** geri gelmez, yani **günde bir sigorta**.
+Karşılığında *ne zaman* örüleceği oyuncunun kararı oldu: `creature-action/Siperi Ör`
+(**Free** aksiyon, `recharge_kind: Long Rest`) ve `pool:siper` (1 / uzun dinlenme)
+bunun için eklendi. **Abjuration büyüsü şartı değişmedi** — siper havadan örülmez,
+mutlaka bir yuva harcanmış 1. kademe ya da üstü bir abjuration büyüsünün sırtında
+kurulur; ayaktayken beslenmesi kendiliğinden sürer. Karar `alt` §8 madde 6, sapma
+tablosu `alt` §6.4.
 
 **Atıf — bu kart ithal değil.** Klasik *abjuration* geleneğinden **esinlenildi**; hiçbir
 üçüncü taraf metninden çeviri ya da uyarlama yapılmadı, kart metinlerinin tamamı bu tur
@@ -24,8 +35,9 @@ wizard alt sınıfı **Evoker**'a göre sayıldı.
 **Şema sınırı, kayda geçti:** siperin canı `subclass.features` satırında taşınamıyor
 (`resource_pool_grants` sayaç verir, can değil), bu yüzden siper kartta yazılı ama
 uygulamada takip edilmiyor — oyuncu elle tutar. Yanlış gösterecek bir havuz satırı
-uydurulmadı (`alt` §5.4). **Toplam +6 kart:** `subclass` +1 · `trait` +4 ·
-`creature-action` +1.
+uydurulmadı (`alt` §5.4) — `pool:siper` yalnız **örme hakkını** sayar, siperin canını
+değil. **Toplam +8 kart:** `subclass` +1 · `trait` +4 · `creature-action` +2 ·
+`resource-pool` +1.
 
 **Sürüm 0.6.4 — 163 entity** (2026-09-13). Yeni kart yok; **Halim bulunabilir
 oldu.** `npc/Halim` 0.6.0'da yazılmıştı ama hiçbir mekan kartında adı geçmiyordu —
