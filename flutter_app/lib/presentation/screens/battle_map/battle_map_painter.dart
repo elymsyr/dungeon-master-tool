@@ -62,7 +62,7 @@ class BattleMapPainter extends CustomPainter {
     canvas.scale(vt.scale);
 
     // Layer 1: Background
-    _paintBackground(canvas, size, vt);
+    _paintBackground(canvas);
 
     // Layer 2: Grid (viewport-clipped)
     if (mapState.gridVisible) _paintGrid(canvas, size, vt);
@@ -72,7 +72,7 @@ class BattleMapPainter extends CustomPainter {
     _paintBackgroundShapes(canvas);
 
     // Layer 3: Annotation
-    _paintAnnotation(canvas, size, vt);
+    _paintAnnotation(canvas);
 
     // Layer 4: Fog
     _paintFog(canvas);
@@ -90,16 +90,30 @@ class BattleMapPainter extends CustomPainter {
   // Layer 1 — Background
   // ---------------------------------------------------------------------------
 
-  void _paintBackground(Canvas canvas, Size screenSize, ViewTransform vt) {
+  /// Canvas extent in canvas-space. With no background image this is the
+  /// 2048×2048 virtual map from [BattleMapState.canvasWidth] — the same extent
+  /// the fog, the marks, `resetView` and the player's snapshot already use.
+  ///
+  /// It used to be `screenSize / vt.scale`: a rect pinned to canvas origin but
+  /// *sized in screen pixels*, so on a mapless encounter the dark area and the
+  /// grid kept their on-screen size while the tokens scaled with the zoom —
+  /// the map appeared to grow and shrink independently of its contents, and
+  /// panning slid the dark patch away from under them.
+  Rect get _canvasRect => Rect.fromLTWH(
+        0,
+        0,
+        mapState.canvasWidth.toDouble(),
+        mapState.canvasHeight.toDouble(),
+      );
+
+  void _paintBackground(Canvas canvas) {
     final img = mapState.backgroundImage;
     if (img != null) {
       canvas.drawImage(img, Offset.zero, Paint()..filterQuality = FilterQuality.medium);
     } else {
-      // Dark fallback covering the visible viewport
-      final viewW = screenSize.width / vt.scale;
-      final viewH = screenSize.height / vt.scale;
+      // Dark fallback over the whole virtual canvas — a stand-in "map".
       canvas.drawRect(
-        Rect.fromLTWH(0, 0, viewW, viewH),
+        _canvasRect,
         Paint()..color = const Color(0xFF111111),
       );
     }
@@ -117,9 +131,8 @@ class BattleMapPainter extends CustomPainter {
       ..strokeWidth = 1.0 / vt.scale
       ..style = PaintingStyle.stroke;
 
-    final img = mapState.backgroundImage;
-    final canvasW = img != null ? img.width.toDouble() : screenSize.width / vt.scale;
-    final canvasH = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
+    final canvasW = _canvasRect.width;
+    final canvasH = _canvasRect.height;
 
     // Visible viewport in canvas-space
     final visibleLeft = -vt.panOffset.dx / vt.scale;
@@ -150,11 +163,8 @@ class BattleMapPainter extends CustomPainter {
   // Layer 3 — Annotation
   // ---------------------------------------------------------------------------
 
-  void _paintAnnotation(Canvas canvas, Size screenSize, ViewTransform vt) {
-    final img = mapState.backgroundImage;
-    final w = img != null ? img.width.toDouble() : screenSize.width / vt.scale;
-    final h = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
-    final bounds = Rect.fromLTWH(0, 0, w, h);
+  void _paintAnnotation(Canvas canvas) {
+    final bounds = _canvasRect;
 
     // Read in-progress stroke state from the notifier at paint-time so a
     // mouseDown that doesn't trigger a Riverpod rebuild still becomes
