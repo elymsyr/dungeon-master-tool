@@ -876,10 +876,16 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // View transform (updates viewTransform ValueNotifier — no Riverpod state)
   // -------------------------------------------------------------------------
 
+  // NOTE: focal points are the widget's LOCAL coordinates, matching
+  // `panOffset` / `screenToCanvas` / `zoomAtPoint`. Using the GLOBAL
+  // `focalPoint` here cancelled out of the single-finger pan delta but threw
+  // pinch-zoom off by the app-bar + toolbar + sidebar offset — the map zoomed
+  // toward a point above and left of the fingers. Only mobile felt it; desktop
+  // zooms through the wheel path instead.
   void onScaleStart(ScaleStartDetails details) {
     final vt = viewTransform.value;
     _scaleBase = vt.scale;
-    _focalBase = details.focalPoint;
+    _focalBase = details.localFocalPoint;
     _panBase = vt.panOffset;
   }
 
@@ -888,8 +894,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     // Pan delta from focal point movement
     // Zoom around focal point
     final focalCanvas = (_focalBase - _panBase) / _scaleBase;
-    final newPan = details.focalPoint - focalCanvas * scaleFactor;
-    final panDelta = details.focalPoint - _focalBase;
+    final newPan = details.localFocalPoint - focalCanvas * scaleFactor;
+    final panDelta = details.localFocalPoint - _focalBase;
 
     viewTransform.value = ViewTransform(
       scale: scaleFactor,
@@ -921,19 +927,23 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _debouncedAutoSave();
   }
 
-  /// Fit the background image (or reset to 1× if none) inside the viewport.
+  /// Fit the canvas inside the viewport. With no background image the canvas
+  /// is the 2048×2048 virtual map ([_canvasWidth]) — same as the fog, the
+  /// marks and the player's snapshot — so "no map" still fits to something
+  /// concrete instead of dropping to an unanchored 1×.
   void resetView() {
-    final img = state.backgroundImage;
-    if (img == null || _viewportSize == Size.zero) {
+    if (_viewportSize == Size.zero) {
       viewTransform.value = const ViewTransform();
       return;
     }
-    final scale = ((_viewportSize.width / img.width) < (_viewportSize.height / img.height)
-            ? _viewportSize.width / img.width
-            : _viewportSize.height / img.height)
+    final w = _canvasWidth.toDouble();
+    final h = _canvasHeight.toDouble();
+    final scale = ((_viewportSize.width / w) < (_viewportSize.height / h)
+            ? _viewportSize.width / w
+            : _viewportSize.height / h)
         .clamp(0.08, 10.0);
-    final panX = (_viewportSize.width - img.width * scale) / 2;
-    final panY = (_viewportSize.height - img.height * scale) / 2;
+    final panX = (_viewportSize.width - w * scale) / 2;
+    final panY = (_viewportSize.height - h * scale) / 2;
     viewTransform.value = ViewTransform(scale: scale, panOffset: Offset(panX, panY));
   }
 

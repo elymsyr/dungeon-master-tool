@@ -1086,15 +1086,18 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // Pan / Zoom (manual GestureDetector — same pattern as BattleMap)
   // -------------------------------------------------------------------------
 
+  // Local (not global) focal points — `panOffset` and `zoomAtPoint` both work
+  // in the canvas widget's own space; the global point threw pinch-zoom off by
+  // the chrome offset. See the same note in `battle_map_notifier.dart`.
   void onScaleStart(ScaleStartDetails d) {
     _scaleBase = viewTransform.value.scale;
-    _focalBase = d.focalPoint;
+    _focalBase = d.localFocalPoint;
     _panBase = viewTransform.value.panOffset;
   }
 
   void onScaleUpdate(ScaleUpdateDetails d) {
     final newScale = (_scaleBase * d.scale).clamp(0.05, 10.0);
-    final focalDelta = d.focalPoint - _focalBase;
+    final focalDelta = d.localFocalPoint - _focalBase;
     final scaleRatio = newScale / _scaleBase;
     final newPan = _focalBase - (_focalBase - _panBase) * scaleRatio + focalDelta;
     viewTransform.value = WorldMapViewTransform(scale: newScale, panOffset: newPan);
