@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/battle_map/battle_map_painter.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -33,6 +33,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
+- **`_canvasRect` — the canvas has a size even with no background image (fixed 2026-09-13).** `_paintBackground` / `_paintGrid` / `_paintAnnotation` each fell back to `screenSize / vt.scale` when `backgroundImage` was null: a rect pinned to canvas origin but *sized in screen pixels*. On a mapless encounter the dark fill and the grid therefore kept a constant on-screen size while the tokens scaled with the zoom — the "map" appeared to grow and shrink independently of what was standing on it, and panning slid the dark patch out from under the tokens. All three now read `mapState.canvasWidth/Height`, the 2048×2048 virtual canvas that the fog (`BattleMapNotifier._canvasWidth`), the mark protocol and the player's [[battle_map_snapshot]] were already using — so the DM sees the same extent the player does. `_paintBackground` and `_paintAnnotation` lost their now-unused `screenSize`/`vt` params.
 - Layer order in `BattleMapPainter.paint` (all inside `save`/`translate(pan)`/`scale` except measurements): 1 background → 2 grid (if `gridVisible`) → 2.5 background-layer vector shapes → 3 annotation → 4 fog → 5 fog draft; `restore()`; then 6 measurements drawn in SCREEN-space.
 - Grid: viewport-clipped for performance — only draws lines within the visible viewport (canvas-space) clamped to canvas bounds + one-cell margin. Cosmetic 1px pen: `strokeWidth = 1.0 / vt.scale`, color `0x37FFFFFF` (55/255 alpha, matches the legacy Python tool). Step = `mapState.gridSize`.
 - In-progress strokes are read from `notifier.currentPath/currentColor/currentWidth/currentIsErase` AT PAINT-TIME, not captured at construction — otherwise the first stroke after a Consumer rebuild would be invisible (mouseDown doesn't trigger a Riverpod state change). Same pattern for `notifier.currentShapeDraft` in the foreground painter.
