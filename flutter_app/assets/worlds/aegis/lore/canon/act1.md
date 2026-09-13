@@ -474,14 +474,18 @@ yüzü ayrı kalır: `lore` kartı *Blight — Bilinen Hali*.
 
 ### 4.1 Bulaşma
 
-Temasla. Üç yol: hastanın ya da cesedin sıvılarıyla temas · bir gece aynı kapalı
-mekanda kalmak · **Hastalık Sisi**'nde (cephenin ötesindeki Blight zemini)
-geçirilen her gün.
+Temasla. Dört yol: hastanın ya da cesedin sıvılarıyla temas · bir gece aynı kapalı
+mekanda kalmak · **bir Dönüşmüş'ün ısırığı** · **Hastalık Sisi**'nde (cephenin
+ötesindeki Blight zemini) geçirilen her gün.
 
-**Bir Dönüşmüş'ün pençesi hastalık bulaştırmaz** (2026-09-13 kararı). Pençe yara
-açar, Blight taşımaz; vuruşun kendi kurtulma zarı yoktur. Dövüşen karakter yine de
-risk alır, ama birinci yoldan: yere düşen bedenin sıvılarına dokunan, cesedi
-karıştıran ya da yaralıyı taşıyan zarını atar.
+**Pençe bulaştırmaz, ısırık bulaştırır** (2026-09-13 kararı). Pençe yara açar,
+Blight taşımaz; vuruşun kendi kurtulma zarı yoktur. Ağız başka: *Sıçrayıp Isırma*
+([§5.3](act1.md)) isabet eden yaratık **CON DC 8** atar — maruziyetin normal DC
+12'si değil, daha kolay bir zar. Bir Dönüşmüş'ün Blight'ı geçirebildiği **tek**
+saldırı budur.
+
+Dövüşün dışında da bulaşır, birinci yoldan: yere düşen bedenin sıvılarına dokunan,
+cesedi karıştıran ya da yaralıyı taşıyan zarını atar.
 
 > Her maruziyet: **CON kurtulma zarı DC 12.** Başarısızlık = **+1 Hastalık Puanı.**
 
@@ -651,8 +655,17 @@ belirti hattı statblock'a yansır.
 > **Eylem — Güçlü Pençe Saldırısı.** Yakın silahlı saldırı: **+2** isabet,
 > erişim 5 ft, tek hedef. **Vuruş:** 1d8 delici (ort. 4).
 >
-> **Pençe hastalık bulaştırmaz** ([§4.1](act1.md)); vuruş için kurtulma zarı
-> atılmaz. *Bulaştıran Yara* trait'i kaldırıldı.
+> **Eylem — Sıçrayıp Isırma** *(yeniden şarj 5–6).* Dizlerini kırar ve **15 ft**'e
+> kadar — üç dört uzun adım — sıçrayıp bir yaratığın üstüne iner. **Saldırı zarı
+> atılmaz;** sıçrayış tutar. **Vuruş:** 1d8 delici (ort. 4). Hedef ardından
+> **CON DC 8** atar; başarısızlık = +1 Hastalık Puanı.
+>
+> **Pençe bulaştırmaz, ısırık bulaştırır** ([§4.1](act1.md)). *Bulaştıran Yara*
+> trait'i kaldırıldı; bulaşma artık tek bir eylemin üstünde duruyor, ve o eylem
+> yeniden şarj istiyor. Dördü de bu eylemi taşır.
+>
+> **Sıçrayış zorlu araziyi atlar** — Şafak Çatışması'nda patikanın iki yanındaki
+> çalı Dönüşmüş'ü yavaşlatmaz.
 
 **Dönüşmüş Alton** — halfling, *yorgunluk hattı* (§4.3) · **CR 1/8 (25 XP)**
 
@@ -842,7 +855,7 @@ sözlerinin bozulması herkese pahalıya patlar.
 | **Fare** — rıhtım çırağı *(halfling)* | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) · gerçek adı **Trym** · *Fare* denmesinden hoşlanmıyor | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
 | **Kaptan Caelynn** — iyi kaptan *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi; sonra başka gemiyle gittiklerini duydu | Temiz yolculuk — **yazı ya da yüksek fiyat** |
 | **Kaptan Holg** — ucuz kaptan *(yarı-orc)* | Para, hızlı sefer | Gemisi ve mürettebatı güvenilmez | Ucuz ve kötü yolculuk (gerçek bir seçenek) |
-| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** | — **hiçbirini** (5. tur: süs, zincirde değil) |
+| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması · haberin Meclis'e **onun yolundan** gitmesi | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** · karakterleri iyilik olsun diye yollamadığı | **Meclis'e giden yol** — kapı değil, itiş (§7.4, 2026-09-13) |
 | **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki · **damga vurmaz** · **klan adını söylemiyor** | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret |
 
 **Adlandırma kuralı — limanın tamamı lakapla konuşur.** *Sicim · Fare · Kadife ·
@@ -870,6 +883,47 @@ limanın konseyce bilindiği zaten kabul edilmiş bir gerçek (§7.3).
 >
 > Diğer PC'ler için **Insight DC 13**: adamın rıhtıma ait olmadığını görür, kime
 > ait olduğunu göremez.
+
+**Kadife ne işe yarar (KARAR, 2026-09-13 — 34. maddeyi geri alır).** Önceki hali
+onu süse indirmişti: zincirde durmuyor, tek işi oyuncuda *"bu adamın burada ne işi
+var"* sorusunu bırakmak. O soru kalıyor, ama artık bir cevabı da var. Kadife'nin iki
+işi var ve ikisini aynı anda yapar:
+
+1. **Limanda bir lonca elinin olduğunu gösterir.** Konsey adına konuşan herkes bir
+   loncanın adına konuşur (§7.3 · `lonca §1`) — Kadife bu cümlenin rıhtımdaki
+   görünür karşılığıdır.
+2. **Oyuncuyu Meclis'e yollar.** Bir bilgi kaynağı değil, bir **yön.**
+
+**DM inisiyatifi — o gelir.** Bu sahnenin tetiği oyuncuda değil, **DM'de.**
+Karakterler rıhtımda üç yabancıyı, *Kader*'i ya da silinmiş satırı konuşmaya
+başladığı an Kadife kağıtlarını kapatır ve yanlarına gelir:
+
+> *"Bunu kime anlatacaksınız?"*
+
+Cevabı beklemez:
+
+> *"Burada anlatmayın. Rıhtımda anlatılan her şeyin bir fiyatı olur, ve o fiyatı siz
+> ödemezsiniz. Lucid Triton'a gidin, Meclis'e söyleyin. **Önce onlar duymalı.**"*
+
+**İki masada da çalışır.** Lonca adı perdede **hiç geçmediyse** burası o adın masaya
+ilk kez konduğu yerdir — Kadife *lonca* demez, **Meclis** der, ve iyi giyimli bir
+adamın limanda Meclis adına konuşması sorunun kendisini kurar. Lonca adı **zaten
+geçtiyse** (Halim · Duran · Orvan Sancar) Kadife onaylar ve **acele ettirir:** yol
+doğru, eksik olan hız.
+
+**Ne verir, ne vermez.** Ad yok, kağıt yok, para yok, kefalet yok. Verdiği tek şey
+yön ve bir uyarı: *"Adımı vermeyin. Adımı verirseniz o kapı açılmaz, kapanır."*
+Kimin adına konuştuğu sorulursa cevap vermez — **Custar katmanı Act 1'de hâlâ
+açılmıyor.** Karakterlerin öğrendiği tek şey, limanda *bir* koltuğun eli olduğudur.
+
+**İzi uzatmıyor.** §7.5 duruyor: üçlünün izi limanda bitiyor. Kadife yeni bir kanıt
+vermiyor, elde olanı **nereye götüreceğini** söylüyor. Gitmeyen masa bir şey
+kaybetmez; Meclis yolu Halim'den de, Duran'ın izinden de, doğrudan loncaya
+gitmekten de açılır. Kadife bir kapı değil, **bir itiş.**
+
+**Neden yapıyor.** Yardım etmiyor. Haber Meclis'e onun yolladığı insanlarla giderse
+koltuk ona borçlanır; kıymetli olan haber değil, **kimin getirdiği.** Karakterler
+bunu fark ederse inkâr etmez, omuz silker.
 
 Kart **Konsey Aracısı** başlığıyla yazılır; rıhtımda **Kadife** diye çağrılır,
 defterdeki adı **Halet Custar**'dır (KARAR, 2026-09-09 3. tur). İki adı birleştiren
@@ -1082,8 +1136,11 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     her iyiliğin karşılığını isteyen bir adam — ve hastalık konusunda doğruyu söyleyen
     tek koltuk. Salonun ona bakmamasının sebebi artık kayıtsızlık değil: **sözü ucuz.**
     Corin'i o masaya oturtan da odur.
-34. **Kadife süse indi** (§7.4). Zincirde durmuyor; tek işi oyuncuda *"bu adamın
-    burada ne işi var"* sorusunu bırakmak. Custar katmanı Act 1'de açılmıyor.
+34. ~~**Kadife süse indi** (§7.4).~~ **GERİ ALINDI (2026-09-13, denge turu).**
+    Soru kalıyor (*"bu adamın burada ne işi var"*), ama Kadife artık bir **yön:**
+    limanda bir lonca eli olduğunu gösterir ve karakterleri Meclis'e yollar —
+    DM inisiyatifiyle, o gelerek. İz uzamıyor (§7.5 duruyor), yalnız yön veriliyor.
+    Custar katmanı Act 1'de hâlâ açılmıyor. Gerekçe ve replikler §7.4'te.
 35. **Görev sayısı 2 → 3.** *Söylentinin Peşinde* artık **Votumar'ı da kapsıyor** ve
     gidilen makam reddettiğinde kapanır. *Nereden Geldiler* limanda biter. Yeni
     üçüncü görev **İyi Yazı**: kıtadan çıkmak, iki yolla (karşı-imza ya da para).

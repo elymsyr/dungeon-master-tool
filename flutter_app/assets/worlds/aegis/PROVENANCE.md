@@ -4,6 +4,24 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.3 — 163 entity** (2026-09-13). Denge turunun ikinci adımı, iki iş:
+
+**1. `creature-action/Sıçrayıp Isırma`** (yeni, dört Dönüşmüş'ün hepsinde). *Yeniden
+şarj 5–6*, **15 ft** sıçrayış, **saldırı zarı yok**, 1d8 delici, ardından **CON DC 8**
+— başarısızlıkta +1 Hastalık Puanı. Bulaşma buraya taşındı: `curse/Blight —
+Enfeksiyon`'un maruziyet yolları yeniden **dört** (Dönüşmüş **ısırığı** girdi, pençe
+girmedi). Yeniden şarj ve 15 ft kaynakta yok — türetme, aşağıda.
+
+**2. `npc/Kadife` yeniden yazıldı** (`act1 §7.4`; `act1 §10` 34. maddesi **geri
+alındı**). Kadife artık "süs" değil bir **yön**: limanda bir lonca elinin olduğunu
+oyuncuya gösterir ve karakterleri Meclis'e yollar. Tetik **DM'de** — karakterler
+rıhtımda üç yabancıyı ya da *Kader*'i konuşmaya başlayınca o gelir: *"Bunu kime
+anlatacaksınız? … Burada anlatmayın. Lucid Triton'a gidin. Önce onlar duymalı."*
+Lonca adı hiç geçmediyse o adı masaya koyan sahne budur; geçtiyse acele ettiren
+sahne. Ad, kağıt, para ya da kefalet vermiyor; **iz uzamıyor** (`act1 §7.5` duruyor)
+ve **Custar katmanı Act 1'de hâlâ kapalı**. `scene/Limana Kabul`,
+`location/Gizli Liman` ve `lore/Konsey ve Lonca Meclisi` buna göre güncellendi.
+
 **Sürüm 0.6.2 — 162 entity** (2026-09-13). **Denge turu.** Üç Dönüşmüş kartı masada
 fazla güçlüydü; değerler düşürüldü ve pençe sadeleşti (kaynak: DM kararı, `act1 §4.1` ve
 `§5.3` bu turda yeniden yazıldı):
@@ -149,12 +167,12 @@ Kaynak kısaltmaları:
 | Votumar | Başkumandan · Kapı Komutanı · Şüpheci Rütbeli · Kule Nöbetçisi | `bolge §3.1, §3.6, §3.7, §10` + `09 §2` (gerçek Başkumandan tutuluyor) + `08 §1` (Lucian'ın eli) |
 | Ravenhall | En Yaşlı Druid · Patika Gözcüsü | `bolge §4.5–4.6, §10` |
 
-## monster — 4 · creature-action — 2 · trait — 4 · curse — 1
+## monster — 4 · creature-action — 3 · trait — 4 · curse — 1
 
 | Entity | Kaynak |
 |---|---|
 | Dönüşmüş · Dönüşmüş Alton · Dönüşmüş Merla · Dönüşmüş Kromanna | `act1 §5.3` |
-| Pençe Saldırısı · Güçlü Pençe Saldırısı | `act1 §5.3` |
+| Pençe Saldırısı · Güçlü Pençe Saldırısı · Sıçrayıp Isırma | `act1 §5.3` |
 | Acıyı Tanımaz · Durmayan Adım · Kesik Kesik · Erken Güçlenme | `act1 §5.3` |
 | Blight — Enfeksiyon | `act1 §4.1–4.6` + `mek §6` (Yozlaşma) + `mek §7` (yapanın bedeli, şerbet) + `mek §12` |
 
@@ -242,6 +260,7 @@ Kartların içinde işaret yok; kanon bir sayı ya da karar verdiğinde değişe
 
 **Türetilmiş sayılar:**
 
+- **Sıçrayıp Isırma'nın yeniden şarjı (5–6) ve 15 ft'i.** DM kaynağı eylemi "zıplayıp üstüne atlar ve ısırır · hasarı 1d8 · saldırı zarı yok · kurtarmak için CON 8 · mesafe birkaç uzun adım" olarak verdi. **Yeniden şarj türetmedir:** saldırı zarı olmayan, her tur tekrarlanabilen ve hastalık bulaştıran bir eylem pençeyi tamamen gereksiz kılıyordu. **15 ft** "birkaç uzun adım"ın 5e karşılığı.
 - **HP zarları.** 0.6.2'de can değerleri DM tarafından **sayı olarak** verildi (16 · 12); `hp_dice` bu sayılara en yakın ifadedir (3d8+3 = 16,5 → 16 · 3d6+2 = 12,5 → 12). Halfling'lerin +2'si CON modifikatörüyle birebir örtüşmez; otoriter olan `hp_average`.
 - **Statblock boşlukları.** `act1 §5.3` üç adlandırılmış Dönüşmüş için yalnız bazı değerleri veriyor; eksikler ortak gövdeden alındı (Alton/Merla: CON 13 · INT 4 · WIS 8 · CHA 5; Kromanna: DEX 12 · INT 4 · WIS 8 · CHA 5). Hepsinde karanlıkgörüş 60 ft, pasif Algı 9, üç durum bağışıklığı gövdeden. Initiative DEX'ten.
 - **`encounter.difficulty` = Low, `xp_budget` = 100** — statblock'lardan hesap (2×25 + 50); 0.6.2'de düşürülen değerlerle dört 1. seviye karakter için Low eşiği.
