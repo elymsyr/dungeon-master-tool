@@ -461,7 +461,7 @@
           "name": "Gümüşsu",
           "environment": "Orman köyü",
           "description": "Güney ormanında kereste ve şifalı otla geçinen küçük bir köy. Üç yabancı köyün dışındaki kulübede yatıyor.",
-          "description_long": "> Orman yolu son ağaçların arasından çıkıp bir açıklığa iniyor ve ahşap evlerin arasında bitiyor. Çatıların çoğu yosun tutmuş; bacalardan ince bir odun dumanı yükseliyor. Bir avluda bakır bir kazan kaynıyor, ve dumana kül suyunun keskin kokusu karışıyor. İplerde yeni yıkanmış bezler sallanıyor. Birkaç kapıda taze tebeşir çizgileri var, ve her çizginin yanına avuç içi büyüklüğünde, tahtadan oyulmuş bir tılsım çakılmış.\n>\n> Kuyu başındaki iki kadın hastalığı konuşuyor. Seslerini alçaltmıyorlar; ekmeğin fiyatını konuşur gibi konuşuyorlar. Köyün girişinde bir kütüğün üstüne oturmuş mızraklı bir genç sizi görünce ayağa kalkıyor. Mızrağını kaldırmıyor. *\"Kimi arıyorsunuz?\"*\n\nGüney ormanının içinde, kereste, şifalı ot ve av etiyle geçinen küçük bir köy. Hastalık köyde herkesin ağzında, ama köy işini bırakmadı: ekmek pişiyor, çamaşır yıkanıyor, nöbet tutuluyor. Şimdiye kadar kimse ölmedi.\n\n## Köyün düzeni\n\nGümüşsu kimseye bağlı değildir; krallığa yılda bir kez, göstermelik bir vergi yollar. Köyün sorunlarına en yaşlılardan oluşan **İhtiyar Heyeti** bakar. Heyetin başı @[Duran](entity:npc/Duran)'dır, ama tek başına karar vermez.\n\nKöyde asker yoktur. Gönüllü köylüler ellerinde mızrakla sırayla nöbet tutar; nöbet yeri köyün girişindeki kütüktür.\n\nPara az dolaşır. Köylüler çoğunlukla takas yapar: bir sırt kereste bir çuval una, bir demet kurutulmuş ot bir tas yağa gider.\n\n## Köyün yerleri\n\n- **Kuyu.** Köyün ortasında, taş bilezikli bir kuyu. Sabah ve akşam kova sırası olur. Köyde konuşulan her şey önce burada konuşulur.\n- **@[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı).** Köyün tek hanı; akşamları köyün yarısı ocağın başında oturur.\n- **Evler.** Kalın tahtadan, yosun çatılı evler. Kapıların çoğunda tebeşir işaretleri ve oyma tılsımlar var; pencere pervazlarına bereket işaretleri kazınmış.\n- **@[Kulübe](entity:location/Kulübe).** Köyün son evinden sonra, çalılığın içinde. Hasta sanılan üç yabancı orada yatıyor.\n\n## İnanç\n\nKöylüler **Koca Orman**'ın sesine ve doğanın ruhlarına inanır. Şehrin öğretisi burada pek konuşulmaz. Kapılardaki tılsımları köyün yaşlıları oyar.\n\n## Köylüler ne anlatır\n\nKarakterler kuyu başında, handa ya da ekmek sırasında köylülerle konuşursa şunları duyar:\n\n- Köyün dışındaki kulübede üç yabancı yatıyor: iki halfling ve bir tiefling. Köy onları oraya kendi karar vererek aldı; kimse emretmedi.\n- Yemek kulübenin kapısına bırakılıyor. Kimse içeri girmiyor.\n- Yabancılar köye geldiklerinde önce Milo'nun hanında kaldılar.\n- *\"Kimse ölmedi.\"* Bunu söyleyen köylü rahatlamış görünür.\n\n## Kim var\n\n- @[Duran](entity:npc/Duran) — İhtiyar Heyeti'nin başı. Nasırlı elleriyle köyün yoluna bakarak konuşan yaşlı bir adam.\n- @[Umay](entity:npc/Umay) — kırk yıldır köyün hastalarına bakan yarı-elf kadın. Üstünden sirke kokusu eksik olmaz.\n- @[Corvin](entity:npc/Corvin) — köyde oturan, sırtında yük taşıyarak kıyıya inen ve yolları bilen bir adam. Ücretini peşin ister.\n- @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) — hancı. Salonda duyduğu her cümleyi yüksek sesle tekrarlar.",
+          "description_long": "> Orman yolu son ağaçların arasından çıkıp bir açıklığa iniyor ve ahşap evlerin arasında bitiyor. Çatıların çoğu yosun tutmuş; bacalardan ince bir odun dumanı yükseliyor. Bir avluda bakır bir kazan kaynıyor, ve dumana kül suyunun keskin kokusu karışıyor. İplerde yeni yıkanmış bezler sallanıyor. Birkaç kapıda taze tebeşir çizgileri var, ve her çizginin yanına avuç içi büyüklüğünde, tahtadan oyulmuş bir tılsım çakılmış.\n>\n> Kuyu başındaki iki kadın hastalığı konuşuyor. Seslerini alçaltmıyorlar; ekmeğin fiyatını konuşur gibi konuşuyorlar. Köyün girişinde bir kütüğün üstüne oturmuş mızraklı bir genç sizi görünce ayağa kalkıyor. Mızrağını kaldırmıyor. *\"Kimi arıyorsunuz?\"*\n\nGüney ormanının içinde, kereste, şifalı ot ve av etiyle geçinen küçük bir köy. Hastalık köyde herkesin ağzında, ama köy işini bırakmadı: ekmek pişiyor, çamaşır yıkanıyor, nöbet tutuluyor. Şimdiye kadar kimse ölmedi.\n\n## Köyün düzeni\n\nGümüşsu kimseye bağlı değildir; krallığa yılda bir kez, göstermelik bir vergi yollar. Köyün sorunlarına en yaşlılardan oluşan **İhtiyar Heyeti** bakar. Heyetin başı @[Duran](entity:npc/Duran)'dır, ama tek başına karar vermez.\n\nKöyde asker yoktur. Gönüllü köylüler ellerinde mızrakla sırayla nöbet tutar; nöbet yeri köyün girişindeki kütüktür.\n\nPara az dolaşır. Köylüler çoğunlukla takas yapar: bir sırt kereste bir çuval una, bir demet kurutulmuş ot bir tas yağa gider.\n\nDışarıdan gelen ne varsa — tuz, iplik, çivi, iyi bıçak, ilaç şişesi — köye @[Corvin](entity:npc/Corvin)'in sırtında girer. Köy @[Gizli Liman](entity:location/Gizli Liman)'ı bilmez ve malın nereden geldiğini sormaz; bildiği tek şey Corvin'in gidip döndüğüdür. Corvin köyde doğmadı, köylü de sayılmaz — ama sevilir.\n\n## Köyün yerleri\n\n- **Kuyu.** Köyün ortasında, taş bilezikli bir kuyu. Sabah ve akşam kova sırası olur. Köyde konuşulan her şey önce burada konuşulur.\n- **@[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı).** Köyün tek hanı; akşamları köyün yarısı ocağın başında oturur.\n- **Evler.** Kalın tahtadan, yosun çatılı evler. Kapıların çoğunda tebeşir işaretleri ve oyma tılsımlar var; pencere pervazlarına bereket işaretleri kazınmış.\n- **@[Kulübe](entity:location/Kulübe).** Köyün son evinden sonra, çalılığın içinde. Hasta sanılan üç yabancı orada yatıyor.\n\n## İnanç\n\nKöylüler **Koca Orman**'ın sesine ve doğanın ruhlarına inanır. Şehrin öğretisi burada pek konuşulmaz. Kapılardaki tılsımları köyün yaşlıları oyar.\n\n## Köylüler ne anlatır\n\nKarakterler kuyu başında, handa ya da ekmek sırasında köylülerle konuşursa şunları duyar:\n\n- Köyün dışındaki kulübede üç yabancı yatıyor: iki halfling ve bir tiefling. Köy onları oraya kendi karar vererek aldı; kimse emretmedi.\n- Yemek kulübenin kapısına bırakılıyor. Kimse içeri girmiyor.\n- Yabancılar köye geldiklerinde önce Milo'nun hanında kaldılar.\n- *\"Kimse ölmedi.\"* Bunu söyleyen köylü rahatlamış görünür.\n\n## Kim var\n\n- @[Duran](entity:npc/Duran) — İhtiyar Heyeti'nin başı. Nasırlı elleriyle köyün yoluna bakarak konuşan yaşlı bir adam.\n- @[Umay](entity:npc/Umay) — kırk yıldır köyün hastalarına bakan yarı-elf kadın. Üstünden sirke kokusu eksik olmaz.\n- @[Corvin](entity:npc/Corvin) — köyde oturan, sırtında yük taşıyarak kıyıya inen ve yolları bilen bir adam. Ücretini peşin ister. Köyde her zaman bulunmaz; dönüşüm sabahı şafaktan birkaç saat önce döner.\n- @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) — hancı. Salonda duyduğu her cümleyi yüksek sesle tekrarlar.",
           "parent_location_ref": {
             "lookup": "location",
             "match": "name",
@@ -528,7 +528,7 @@
             "match": "name",
             "value": "Meridia"
           },
-          "secrets": "**Konsey bu limanı biliyor ve kısmen kullanıyor.** Bazı lonca üyeleri buradan kaçak mal geçirir. Bu yüzden karakterler limanı Konsey'le tehdit ederse kimse korkmaz.\n\n**Üç yabancı buradan geçti.** Elymsyr'den geçselerdi adları gümrük defterinde olurdu. Onları **Kader** adlı gemi getirdi, ve limandaki satırlarının silinmesinin parasını o geminin kaptanı verdi.\n\n**Kaptanın adını kimse bilmiyor.** Limanda kimse doğduğu adı söylemez; o adam gemisinin adıyla anılırdı. **Kader o geceden sonra bir daha yanaşmadı.** Üç yabancının nereden geldiğini bilen tek kişi denize açıldı, ve iz burada soğuyor.\n\n@[Corvin](entity:npc/Corvin) limanın yolunu bilir, çünkü buradan mal taşıdı.\n\n@[Mine](entity:npc/Mine), @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi arka odasında eğeledi, ve üstüne damga vurmadı — burada kimse imza atmaz.\n\n@[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**. Bu Act 1'de açılmaz.",
+          "secrets": "**Konsey bu limanı biliyor ve kısmen kullanıyor.** Bazı lonca üyeleri buradan kaçak mal geçirir. Bu yüzden karakterler limanı Konsey'le tehdit ederse kimse korkmaz.\n\n**Üç yabancı buradan geçti.** Elymsyr'den geçselerdi adları gümrük defterinde olurdu. Onları **Kader** adlı gemi getirdi, ve limandaki satırlarının silinmesinin parasını o geminin kaptanı verdi.\n\n**Kaptanın adını kimse bilmiyor.** Limanda kimse doğduğu adı söylemez; o adam gemisinin adıyla anılırdı. **Kader o geceden sonra bir daha yanaşmadı.** Üç yabancının nereden geldiğini bilen tek kişi denize açıldı, ve iz burada soğuyor.\n\n**Kimler biliyor.** Limanın yeri halkın bilgisi değil, ama bir sır da değil: bazı Konsey rütbelileri, @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi)'nin bazı üyeleri, ve çok nadiren @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)'nın paladin rütbelileri yolu bilir. @[Gümüşsu](entity:location/Gümüşsu) bilmez — köyün dışarıyla alışverişi @[Corvin](entity:npc/Corvin) üzerinden yürür ve köylüler malın nereden geldiğini sormaz.\n\nCorvin limanın yolunu bilir, çünkü buradan mal taşıdı ve hâlâ taşıyor. **Öldüğünde köyde o yolu bilen kimse kalmaz**; liman yine bulunabilir, ama yolu artık Lucid Triton'dan geçer.\n\n@[Mine](entity:npc/Mine), @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi arka odasında eğeledi, ve üstüne damga vurmadı — burada kimse imza atmaz.\n\n@[Kadife](entity:npc/Kadife)'nin gerçek adı **Halet Custar**. Bu Act 1'de açılmaz.",
           "tags": [
             "gizli-liman",
             "liman"
@@ -843,12 +843,12 @@
             "match": "name",
             "value": "Indifferent"
           },
-          "description": "Gümüşsu'da oturan, ama köyde az bulunan bir adam. Sırtında yük taşıyarak kıyıya iner, kıyıdan köye mal getirir. Köylüler onun nereden ne getirdiğini sormaz; o da anlatmaz.\n\n@[Gizli Liman](entity:location/Gizli Liman)'a giden yolu bilir, ve rehberlik etmek için ücretini peşin ister.",
+          "description": "Gümüşsu'da oturan, ama köyde az bulunan bir adam. Sırtında yük taşıyarak kıyıya iner, kıyıdan köye mal getirir. Köylüler onun nereden ne getirdiğini sormaz; o da anlatmaz.\n\n@[Gizli Liman](entity:location/Gizli Liman)'a giden yolu bilir, ve rehberlik etmek için ücretini peşin ister.\n\nKöyün dışarıyla alışverişi onun sırtından yürür: tuz, iplik, çivi, iyi bıçak, ilaç şişesi. Köy limanı bilmez ve malın nereden geldiğini sormaz; bildiği tek şey Corvin'in gidip döndüğüdür.\n\nGümüşsu'da doğmadı ve köylü sayılmaz — köy için bir yabancıdır. Yine de sevilir: kimse ondan çekinmez, çocuklar peşine takılır, hancı ona borç yazar.",
           "appearance": "Kırk yaşlarında, kısa boylu, kuvvetli bir adam. Omuzlarında yük halatının yıllarca bıraktığı parlak, sertleşmiş iz var; avuçları nasır. Yüzü sert rüzgar görmüş, kaşının üstünde eski bir yara izi duruyor. Kara saçları tuzdan kurumuş.\n\nUzun, yol tozu yemiş kahverengi bir palto giyer; paltonun iç cebinden bir sicim yumağı ve bir bıçak sapı görünür. Çizmeleri iyi, ve yeni pençelenmiş. Üstünde ter, tuz ve katran kokusu var.",
-          "mannerisms": "Fiyatı konuşmadan yolu konuşmaz. Parayı eline aldığında sayar, iki kez.\n\nİyi bir kumaş gördüğünde gözü parlar ve dayanamayıp parmaklarının arasında ovalar. Kulübedeki yabancıların kumaşından, kimse sormadan söz eder: *\"O kumaş buralı değil. O boya da. Öyle bir şeyi ben taşısam ayda bir kese altın ederdi.\"*",
+          "mannerisms": "Fiyatı konuşmadan yolu konuşmaz. Parayı eline aldığında sayar, iki kez. Tek istisnası @[Fare](entity:npc/Fare): ona *Fare* demez, **Sincap** der, ve ondan bir kuruş istemez.\n\nİyi bir kumaş gördüğünde gözü parlar ve dayanamayıp parmaklarının arasında ovalar. Kulübedeki yabancıların kumaşından, kimse sormadan söz eder: *\"O kumaş buralı değil. O boya da. Öyle bir şeyi ben taşısam ayda bir kese altın ederdi.\"*",
           "goals": "Para.",
           "secrets": "@[Gizli Liman](entity:location/Gizli Liman)'ı biliyor, çünkü oradan mal taşıdı ve hâlâ taşıyor.",
-          "dmNotes": "**Rehberlik.** Karakterleri limana götürmeyi kabul eder; ücreti peşin ister. Pazarlığa açıktır ama ücretin yarısından aşağı inmez.\n\n**Limanda.** Corvin limanda misafirdir; oranın insanı sayılmaz. Karakterlere kefil olursa sözü dinlenir, ama tek başına yetmez. Bkz. @[Limana Kabul](entity:scene/Limana Kabul).\n\n**Kumaş.** Kulübedekilerin giysilerinin başka bir kıtadan, pahalı bir kumaştan olduğunu kimse sormadan söyler.",
+          "dmNotes": "**Rehberlik.** Karakterleri limana götürmeyi kabul eder; ücreti peşin ister. Pazarlığa açıktır ama ücretin yarısından aşağı inmez.\n\n**Limanda.** Corvin limanda misafirdir; oranın insanı sayılmaz. Karakterlere kefil olursa sözü dinlenir, ama tek başına yetmez. Bkz. @[Limana Kabul](entity:scene/Limana Kabul).\n\n**Kumaş.** Kulübedekilerin giysilerinin başka bir kıtadan, pahalı bir kumaştan olduğunu kimse sormadan söyler.\n\n**Ne zaman köyde.** Corvin köyde sürekli değildir; kıyıyla köy arasında gider gelir. Dönüşüm sabahı **köydedir**: yükü sırtında, şafaktan **birkaç saat önce** döner. @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) onun dönüşünden birkaç saat sonradır. Karakterler gündüz geldiyse onu ilk kez o gece handa ya da sabaha karşı kuyu başında görür.\n\n**Corvin ölürse.** Şafakta ölürse kıyıya giden yol karakterlere kapanır ve köyde o yolu açacak kimse yoktur. Bunun telafisi yok; yerine bir rehber çıkarma. Ama dünya kapanmaz: @[Gizli Liman](entity:location/Gizli Liman)'ın yerini kıtada bilenler var — bazı Konsey rütbelileri, @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi)'nin bazı üyeleri, ve çok nadiren @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)'nın paladin rütbelileri. Corvin'le kapanan kapı Lucid Triton'dan yeniden açılabilir: daha uzun, daha pahalı, ve daha çok iz bırakan bir yoldan.\n\n**Köyle ilişkisi.** Köy için bir yabancıdır, ama sevilen bir yabancı. Köyün dışarıyla alışverişi ondan yürür ve köy limanı bilmez — karakterler köylülere kıyıyı sorarsa kimse bir şey bilmez, Corvin'i gösterirler.\n\n**Sincap.** Rıhtımın çırağını (@[Fare](entity:npc/Fare)) tanır ve çok sever; ona **Sincap** der. Rıhtımda bunu yapan tek kişi odur. Corvin pazarlıkçı ve paracı bir adamdır, ama özünde kötü biri değil — bunu en net Fare'ye davranışında görürsün. Karakterler Fare'ye kötü davranırsa Corvin'in tavrı döner.\n\n**Mine.** @[Mine](entity:npc/Mine)'in arka odasını da bilir; yıllardır aynı rıhtıma mal indiren biri kuyumcunun kapısını bilir. Sorulursa yolu tarif eder, işini anlatmaz.",
           "tags": [
             "npc",
             "gümüşsu",
@@ -1044,12 +1044,12 @@
             "value": "Friendly"
           },
           "faction": "Gizli Liman",
-          "description": "@[Rıhtım](entity:location/Rıhtım)'ın çırağı: halat taşır, mesaj götürür, fıçı sayar. Kimse ona bir şey sormadığı için rıhtımda olan her şeyi görür ve hatırlar. Kimse ona güzel demez; yine de rıhtımın tamamı onu sever, geçen herkes ona bir laf atar.",
+          "description": "@[Rıhtım](entity:location/Rıhtım)'ın çırağı: halat taşır, mesaj götürür, fıçı sayar. Kimse ona bir şey sormadığı için rıhtımda olan her şeyi görür ve hatırlar. Kimse ona güzel demez; yine de rıhtımın tamamı onu sever, geçen herkes ona bir laf atar. Rıhtımda ona herkes *Fare* der — ve bundan hoşlanmaz.",
           "appearance": "On dört on beş yaşlarında, çıplak ayaklı bir halfling kızı. Güneşten kararmış, is ve liman kiriyle lekeli bir yüz; kapkara saçları kendi eliyle, bıçakla kesilmiş, tutam tutam duruyor. Burnu eğri, ön dişlerinden biri kırık. Ayak tabanları iskelenin kalaslarından sertleşmiş.\n\nKendisine üç beden büyük bir denizci gömleği giyer, kolları defalarca kıvrılmış. Belinde bir sicimle bağlı bir kese ve bir tahta düdük var. Üstünden tuz ve balık kokusu hiç çıkmaz.",
-          "mannerisms": "Bir fıçının üstüne oturur, bacaklarını sallar ve iskeledeki gemileri parmağıyla sayar.\n\nSoru sorulmadan cevap verir. Bir geminin adını söylerken hangi gece yanaştığını, kaç sandık indirdiğini ve kaptanının ne içtiğini de ekler: *\"O mavi olan, Kırlangıç. Üç gece önce geldi, gece yarısı. Sekiz sandık indirdi, ikisi ağırdı. Kaptanı elma şarabı içer.\"*\n\nBirisi onu dinlediğinde yüzü aydınlanır.",
+          "mannerisms": "Bir fıçının üstüne oturur, bacaklarını sallar ve iskeledeki gemileri parmağıyla sayar.\n\nSoru sorulmadan cevap verir. Bir geminin adını söylerken hangi gece yanaştığını, kaç sandık indirdiğini ve kaptanının ne içtiğini de ekler: *\"O mavi olan, Kırlangıç. Üç gece önce geldi, gece yarısı. Sekiz sandık indirdi, ikisi ağırdı. Kaptanı elma şarabı içer.\"*\n\nBirisi onu dinlediğinde yüzü aydınlanır.\n\nOna *Fare* diye seslenildiğinde bir an duraklar, sonra cevap verir; yıllardır aynı duraklama. Tek istisna @[Corvin](entity:npc/Corvin): o ona **Sincap** der, ve Fare o adı duyduğunda başını kaldırıp güler.",
           "goals": "Bir gün bir gemiye tayfa olarak alınmak.",
-          "secrets": "Gerçek adı **Trym**.",
-          "dmNotes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Rıhtım onu sever ama dinlemez — herkes ona bir laf atıp geçer, kimse durup soru sormaz. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:lore/Liman Ahdi)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.\n\n**Kader.** Karakterler bu adı duymuşsa Fare o gemiyi hatırlar, çünkü bütün gemileri hatırlar: hangi gece yanaştı, kimler indi, kimler bindi. Üç yolcunun indiği geceyi tarif eder, ve geminin bir daha gelmediğini söyler. Kaptanın adını o da bilmez.\n\n**Mine'in tezgahı.** Karakterler damgasız bir iş ya da bir kuyumcu soruyorsa Fare barakayı gösterir: *\"Arka oda. Kapıyı çalmayın, sevmez.\"*",
+          "secrets": "Gerçek adı **Trym**.\n\n*Fare* adını sevmiyor. Bunu kimseye söylemedi; söylemenin bir faydası olmadığını erken öğrendi.",
+          "dmNotes": "**Karakterler sorarsa.** Fare para istemez; tek istediği birinin onu dinlemesi. Rıhtım onu sever ama dinlemez — herkes ona bir laf atıp geçer, kimse durup soru sormaz. Karakterler onunla sohbet eder, ona bir yemek ısmarlar ya da sorularını ciddiye alırsa, rıhtım hakkında bildiği her şeyi anlatır: hangi gemi ne zaman geldi, hangi kaptan kimi alır, kim kime borçlu.\n\n**Ahdin doğruları.** Karakterlerin limana geldiği ilk gün Fare, sorulmadan, @[Liman Ahdi](entity:lore/Liman Ahdi)'nin üç sabit doğrusunu söyler. Üçüncüsünü özellikle vurgular: *\"Burada birini öldürürsen bir daha bu limana giremezsin. Kimse seninle iş yapmaz.\"*\n\nKarakterler ne yapacaklarını bilemezse Fare'ye dönmeleri yeterli.\n\n**Kader.** Karakterler bu adı duymuşsa Fare o gemiyi hatırlar, çünkü bütün gemileri hatırlar: hangi gece yanaştı, kimler indi, kimler bindi. Üç yolcunun indiği geceyi tarif eder, ve geminin bir daha gelmediğini söyler. Kaptanın adını o da bilmez.\n\n**Mine'in tezgahı.** Fare @[Mine](entity:npc/Mine)'i tanır ve ne iş yaptığını bilir; sorulmadan anlatır: *\"Takılarla uğraşır. Yüzük daraltır, zincir onarır.\"* Karakterler damgasız bir iş ya da bir kuyumcu soruyorsa barakayı gösterir: *\"Arka oda. Kapıyı çalmayın, sevmez.\"*\n\n**Adı.** Kendisine *Fare* denmesinden hoşlanmaz, ama düzeltmez. Bir karakter bunu fark eder, gerçek adını sorar ya da ona başka bir adla seslenirse, bu onu paradan da yemekten de hızlı açar. **Sincap** adı @[Corvin](entity:npc/Corvin)'indir; başka biri kullanırsa Fare'nin yüzü kapanır ve o gün bir daha açılmaz.\n\n**Corvin.** Gümüşsu'dan rıhtıma mal indiren adamı tanır ve sever; o da onu sever ve ona iyi davranır. Corvin limana geldiğinde Fare işini bırakıp yanına gider. Karakterler Corvin'le gelmişse Fare onlara ilk günden konuşur.",
           "tags": [
             "npc",
             "gizli-liman",
@@ -1173,7 +1173,7 @@
           "mannerisms": "Adı sorulunca *\"Mine\"* der ve susar. Klanını soran olursa bir sonraki işe geçer ve bir daha başını kaldırmaz.\n\nBir metali eline aldığında önce tartar, sonra ışığa tutar. İşini yaparken konuşmaz: *\"Bekleyin. Ya da gidin.\"*",
           "goals": "Tezgahının açık kalması, ve kimsenin klanını sormaması.",
           "secrets": "**Yüzüğü eğeleyen o.** @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük)'ün mühür yüzünü kendi tezgahında düzleştirdi.\n\n**Damga vurmaz.** Bir kuyumcu için damga bir imzadır, ve Mine adını geride bıraktı. Bu yüzden yaptığı hiçbir işin peşine düşülemez.\n\n**Eğelemeden önce eski yüzü gördü.** Bu kıtada karşılığı olmayan bir işaret: hiçbir haneye, hiçbir loncaya, hiçbir fihriste benzemiyordu. Ne olduğunu bilmiyor, ama tarif edebilir.\n\n**Klan adını söylemiyor.** Bir cüce için bu, bir insanın *\"adım yok\"* demesinden ağırdır. Mine eski adını ve bağlarını kendi isteğiyle geride bıraktı.",
-          "dmNotes": "**Karakterler sorarsa.** Mine müşterilerinin işini konuşmaz. Karakterler yüzüğü önüne koyarsa uzun uzun bakar ve *\"iyi iş\"* der, başka bir şey demez.\n\n**Onu bulmak.** Kimse onu adıyla gösteremez; tezgahını gösterebilir. @[Fare](entity:npc/Fare) barakayı bilir, @[Sicim](entity:npc/Sicim) de.\n\nKarakterler ona iyi bir sebep verirse eğelediğini inkâr etmez. Kimin için yaptığını söyleyemez, çünkü bilmiyor: parayı bir kaptan bıraktı ve adını vermedi.\n\n**Eski yüzü tarif ettirmek.** Karakterler ısrar ederse Mine hatırladığı işareti kağıda çizer. Çizim Act 1'de hiçbir kapı açmaz — kimse onu tanımaz. Oyuncuya ver, ve sakla.",
+          "dmNotes": "**Karakterler sorarsa.** Mine müşterilerinin işini konuşmaz. Karakterler yüzüğü önüne koyarsa uzun uzun bakar ve *\"iyi iş\"* der, başka bir şey demez.\n\n**Onu bulmak.** Kimse onu adıyla gösteremez; tezgahını gösterebilir. @[Fare](entity:npc/Fare) hem barakayı hem ne iş yaptığını bilir — takı, yüzük, zincir; @[Sicim](entity:npc/Sicim) de bilir. Rıhtıma yıllardır mal indiren @[Corvin](entity:npc/Corvin) de kapıyı bilir.\n\nKarakterler ona iyi bir sebep verirse eğelediğini inkâr etmez. Kimin için yaptığını söyleyemez, çünkü bilmiyor: parayı bir kaptan bıraktı ve adını vermedi.\n\n**Eski yüzü tarif ettirmek.** Karakterler ısrar ederse Mine hatırladığı işareti kağıda çizer. Çizim Act 1'de hiçbir kapı açmaz — kimse onu tanımaz. Oyuncuya ver, ve sakla.",
           "tags": [
             "npc",
             "gizli-liman",
@@ -1910,21 +1910,6 @@
         }
       },
       {
-        "source_name": "Bulaştıran Yara",
-        "mapping": {
-          "name": "Bulaştıran Yara",
-          "source": "Dönüşmüş",
-          "trait_kind": "Other",
-          "description": "Pençesinin isabet ettiği yaratık **CON DC 8** kurtarma zarı atar; başarısızlıkta **+1 Hastalık Puanı** (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).\n\nZar her isabette değil, **çatışmanın sonunda bir kez** atılır.",
-          "benefits": "Dönüşmüş'le dövüşen herkes hastalığı taşıma riskini de alır.",
-          "tags": [
-            "blight",
-            "dönüşmüş"
-          ],
-          "imagePath": "media/Artwork/Bulaştıran-Yara.webp"
-        }
-      },
-      {
         "source_name": "Durmayan Adım",
         "mapping": {
           "name": "Durmayan Adım",
@@ -2303,7 +2288,7 @@
           "name": "Yemin Andı: Cepheyi Tut",
           "source": "İrade Yemini",
           "trait_kind": "Defensive",
-          "description": "**Channel Divinity.** Aksiyonunla yeminini yüksek sesle tekrarlarsın. Bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların, @[Bulaştıran Yara](entity:trait/Bulaştıran Yara) ve benzeri maruziyet zarlarını **avantajlı** atar.",
+          "description": "**Channel Divinity.** Aksiyonunla yeminini yüksek sesle tekrarlarsın. Bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların, @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) maruziyet zarlarını **avantajlı** atar.",
           "benefits": "Düzenin üç yüzyıldır yaptığı tek iş: bir hattı, kimse gelene kadar bırakmamak.",
           "tags": [
             "irade-yemini",
@@ -2378,82 +2363,42 @@
     ],
     "creature-action": [
       {
-        "source_name": "Pençe",
+        "source_name": "Pençe Saldırısı",
         "mapping": {
-          "name": "Pençe",
+          "name": "Pençe Saldırısı",
           "source": "Dönüşmüş",
           "action_type": "Action",
           "is_attack": true,
           "attack_kind": "Melee Weapon",
-          "attack_bonus": 5,
+          "attack_bonus": 2,
           "reach_ft": 5,
-          "damage_dice": "1d8+3",
+          "damage_dice": "1d4",
           "damage_type_ref": {
             "lookup": "damage-type",
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+5** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d8 + 3 delici hasar (ort. 7).\n\nSilah yok: sertleşmiş tırnaklar, dişler, omuz. Nişan almıyor; yürüyerek geliyor ve vuruyor.",
+          "description": "*Yakın dövüş saldırısı:* **+2** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d4 delici hasar (ort. 2).\n\nSilah yok: sertleşmiş tırnaklar, dişler, omuz. Nişan almıyor; yürüyerek geliyor ve vuruyor. Küçük bedenlerin pençesi budur — alçaktan, dizlere ve kalçaya.\n\n**Hastalık bulaştırmaz.** Bir Dönüşmüş'ün pençesi yara açar, Blight taşımaz — pençeden dolayı kurtarma zarı atılmaz (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).",
           "imagePath": "media/Artwork/Pençe.webp"
         }
       },
       {
-        "source_name": "Pençe (Alton)",
+        "source_name": "Güçlü Pençe Saldırısı",
         "mapping": {
-          "name": "Pençe (Alton)",
-          "source": "Dönüşmüş Alton",
+          "name": "Güçlü Pençe Saldırısı",
+          "source": "Dönüşmüş",
           "action_type": "Action",
           "is_attack": true,
           "attack_kind": "Melee Weapon",
-          "attack_bonus": 4,
+          "attack_bonus": 2,
           "reach_ft": 5,
-          "damage_dice": "1d6+2",
+          "damage_dice": "1d8",
           "damage_type_ref": {
             "lookup": "damage-type",
             "match": "name",
             "value": "Piercing"
           },
-          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nKüçük, pul pul olmuş eller ve taş gibi sertleşmiş tırnaklar. Alçaktan vurur: dizlere ve kalçaya.",
-          "imagePath": "media/Artwork/Pençe-Alton.webp"
-        }
-      },
-      {
-        "source_name": "Pençe (Merla)",
-        "mapping": {
-          "name": "Pençe (Merla)",
-          "source": "Dönüşmüş Merla",
-          "action_type": "Action",
-          "is_attack": true,
-          "attack_kind": "Melee Weapon",
-          "attack_bonus": 4,
-          "reach_ft": 5,
-          "damage_dice": "1d6+2",
-          "damage_type_ref": {
-            "lookup": "damage-type",
-            "match": "name",
-            "value": "Piercing"
-          },
-          "description": "*Yakın dövüş saldırısı:* **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 + 2 delici hasar (ort. 5).\n\nBir an kıpırdamıyor, bir sonraki an iki kez üst üste tırmalıyor.",
-          "imagePath": "media/Artwork/Pençe-Merla.webp"
-        }
-      },
-      {
-        "source_name": "Pençe (Kromanna)",
-        "mapping": {
-          "name": "Pençe (Kromanna)",
-          "source": "Dönüşmüş Kromanna",
-          "action_type": "Action",
-          "is_attack": true,
-          "attack_kind": "Melee Weapon",
-          "attack_bonus": 6,
-          "reach_ft": 5,
-          "damage_dice": "1d10+4",
-          "damage_type_ref": {
-            "lookup": "damage-type",
-            "match": "name",
-            "value": "Piercing"
-          },
-          "description": "*Yakın dövüş saldırısı:* **+6** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d10 + 4 delici hasar (ort. 9).\n\nBütün gövdesinin ağırlığını verdiği bir darbe; kalkanı iter, zırhı ezer.",
+          "description": "*Yakın dövüş saldırısı:* **+2** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d8 delici hasar (ort. 4).\n\nAynı pençe, daha ağır bir gövde. Bütün ağırlığını verdiği bir darbe; kalkanı iter, zırhı ezer. Orta boy ve daha güçlü bedenler bunu kullanır.\n\n**Hastalık bulaştırmaz.** Bir Dönüşmüş'ün pençesi yara açar, Blight taşımaz — pençeden dolayı kurtarma zarı atılmaz (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).",
           "imagePath": "media/Artwork/Pençe-Kromanna.webp"
         }
       },
@@ -2594,12 +2539,12 @@
             "value": "Unaligned"
           },
           "alignment_note": "İradesi yok.",
-          "ac": 12,
-          "ac_note": "sertleşmiş deri",
+          "ac": 11,
+          "ac_note": "zırh yok; sertleşmiş deri kaçınmayı kolaylaştırmıyor",
           "initiative_modifier": 1,
           "initiative_score": 11,
-          "hp_average": 22,
-          "hp_dice": "4d8+4",
+          "hp_average": 16,
+          "hp_dice": "3d8+3",
           "speed_walk_ft": 30,
           "stat_block": {
             "STR": 16,
@@ -2638,30 +2583,25 @@
             }
           ],
           "language_note": "Bildiği dilleri anlar, konuşamaz.",
-          "cr": "1/2",
-          "xp": 100,
+          "cr": "1/8",
+          "xp": 25,
           "proficiency_bonus": 2,
           "trait_refs": [
             {
               "lookup": "trait",
               "match": "name",
               "value": "Acıyı Tanımaz"
-            },
-            {
-              "lookup": "trait",
-              "match": "name",
-              "value": "Bulaştıran Yara"
             }
           ],
           "action_refs": [
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Pençe"
+              "value": "Güçlü Pençe Saldırısı"
             }
           ],
           "description": "> Tanıdık bir yüz, tanıdık bir giysi. Derisi gri ve pul pul; boynunda ve bileklerinde sertleşmiş deri, kabuk gibi çatlamış. Gözlerinin ve kulaklarının kenarında kurumuş siyah izler var. Nefesi hırıltılı ve ekşi kokulu, metal gibi. Adını seslendiğinizde durmuyor; başını sesin geldiği yöne çeviriyor ve size doğru yürümeye başlıyor.",
-          "traits_md": "Blight'ın son aşamasına ulaşan bir insanın bedeni. @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) kuralına göre Hastalık Puanı 9'a ulaşan her köylü, asker ya da yolcu bu hale gelir. Bilinç kapanır; beden güçlenir.\n\nAcı hissetmez, geri çekilmez, teslim olmaz. Konuşulana cevap vermez, ama sese döner.\n\nÖldürüldüğünde geriye tanıdık birinin cesedi kalır; üzerindeki her şey yerindedir.",
+          "traits_md": "Blight'ın son aşamasına ulaşan bir insanın bedeni. @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) kuralına göre Hastalık Puanı 9'a ulaşan her köylü, asker ya da yolcu bu hale gelir. Bilinç kapanır; beden güçlenir.\n\nAcı hissetmez, geri çekilmez, teslim olmaz. Konuşulana cevap vermez, ama sese döner.\n\nPençesi hastalık **bulaştırmaz**: Blight bedeni zaten bitirdi, pençe yalnız yara açıyor.\n\nÖldürüldüğünde geriye tanıdık birinin cesedi kalır; üzerindeki her şey yerindedir.",
           "dmNotes": "**Taktik.** Dönüşmüş taktik kullanmaz. En yakındaki sese ve harekete yürür ve saldırır.\n\nDönüşen bir oyuncu karakteri artık o oyuncunun değildir: karakteri DM yönetir ve bu değerleri kullanır. Geri dönüş yoktur.",
           "tags": [
             "blight",
@@ -2691,12 +2631,12 @@
             "value": "Unaligned"
           },
           "alignment_note": "İradesi yok.",
-          "ac": 13,
-          "ac_note": "sertleşmiş deri",
+          "ac": 9,
+          "ac_note": "hantal beden; sertleşen eklemler kaçınmayı bozuyor",
           "initiative_modifier": 2,
           "initiative_score": 12,
-          "hp_average": 18,
-          "hp_dice": "4d6+4",
+          "hp_average": 12,
+          "hp_dice": "3d6+2",
           "speed_walk_ft": 25,
           "stat_block": {
             "STR": 14,
@@ -2735,19 +2675,14 @@
             }
           ],
           "language_note": "Bildiği dilleri anlar, konuşamaz.",
-          "cr": "1/2",
-          "xp": 100,
+          "cr": "1/8",
+          "xp": 25,
           "proficiency_bonus": 2,
           "trait_refs": [
             {
               "lookup": "trait",
               "match": "name",
               "value": "Acıyı Tanımaz"
-            },
-            {
-              "lookup": "trait",
-              "match": "name",
-              "value": "Bulaştıran Yara"
             },
             {
               "lookup": "trait",
@@ -2759,7 +2694,7 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Pençe (Alton)"
+              "value": "Pençe Saldırısı"
             }
           ],
           "description": "> Dün gece bir cümlenin ortasında uyuyakalan halfling kulübenin kapısında duruyor. Gözleri açık, ve kırpılmıyor. Pahalı yeşil giysisi yırtılmış; yırtıklardan görünen derisi gri ve kabuk bağlamış. Nefesi hırıltılı ama düzenli. Çıplak ayakları ıslak otu ezerken hiç ses çıkarmıyor. Parmağındaki altın alyans hâlâ yerinde.",
@@ -2793,12 +2728,12 @@
             "value": "Unaligned"
           },
           "alignment_note": "İradesi yok.",
-          "ac": 13,
-          "ac_note": "sertleşmiş deri",
+          "ac": 9,
+          "ac_note": "hantal beden; sertleşen eklemler kaçınmayı bozuyor",
           "initiative_modifier": 2,
           "initiative_score": 12,
-          "hp_average": 18,
-          "hp_dice": "4d6+4",
+          "hp_average": 12,
+          "hp_dice": "3d6+2",
           "speed_walk_ft": 30,
           "stat_block": {
             "STR": 14,
@@ -2837,19 +2772,14 @@
             }
           ],
           "language_note": "Bildiği dilleri anlar, konuşamaz.",
-          "cr": "1/2",
-          "xp": 100,
+          "cr": "1/8",
+          "xp": 25,
           "proficiency_bonus": 2,
           "trait_refs": [
             {
               "lookup": "trait",
               "match": "name",
               "value": "Acıyı Tanımaz"
-            },
-            {
-              "lookup": "trait",
-              "match": "name",
-              "value": "Bulaştıran Yara"
             },
             {
               "lookup": "trait",
@@ -2861,7 +2791,7 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Pençe (Merla)"
+              "value": "Pençe Saldırısı"
             }
           ],
           "description": "> Halfling kadın kapının eşiğinde duruyor ve boşluğa bakıyor. Çözülmüş örgüsü yüzüne dağılmış; gözlerinden yanaklarına taze, siyah bir sıvı süzülüyor. Dudakları kıpırdıyor, ama boğazından çıkan tek ses kuru bir tıkırtı, bir böceğin kanat sesi gibi. Sonra, hiçbir uyarı olmadan, üzerinize atılıyor.",
@@ -2895,12 +2825,12 @@
             "value": "Unaligned"
           },
           "alignment_note": "İradesi yok.",
-          "ac": 13,
-          "ac_note": "sertleşmiş deri",
+          "ac": 11,
+          "ac_note": "zırh yok; sertleşmiş deri kaçınmayı kolaylaştırmıyor",
           "initiative_modifier": 1,
           "initiative_score": 11,
-          "hp_average": 30,
-          "hp_dice": "4d8+12",
+          "hp_average": 16,
+          "hp_dice": "3d8+3",
           "speed_walk_ft": 30,
           "stat_block": {
             "STR": 18,
@@ -2939,19 +2869,14 @@
             }
           ],
           "language_note": "Bildiği dilleri anlar, konuşamaz.",
-          "cr": "1",
-          "xp": 200,
+          "cr": "1/4",
+          "xp": 50,
           "proficiency_bonus": 2,
           "trait_refs": [
             {
               "lookup": "trait",
               "match": "name",
               "value": "Acıyı Tanımaz"
-            },
-            {
-              "lookup": "trait",
-              "match": "name",
-              "value": "Bulaştıran Yara"
             },
             {
               "lookup": "trait",
@@ -2963,7 +2888,7 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Pençe (Kromanna)"
+              "value": "Güçlü Pençe Saldırısı"
             }
           ],
           "description": "> Tiefling kadın kulübenin alçak kapısından eğilerek çıkıyor. Doğrulduğunda kapının pervazı omzuna sürtünüyor ve çatırdayarak kırılıyor. Omuzları dün gecekinden geniş; sökülmüş kollarının altında kaslar derisini germiş, ve derisi yer yer gri kabuklar halinde çatlamış. Sarı gözleri şafağın gri ışığında parlıyor. Dün gece iki halflingin önüne geçmeye çalışan kadın, bu sabah onlara bakmıyor.",
@@ -2996,9 +2921,9 @@
             "kural-sapması",
             "hastalık"
           ],
-          "trigger": "*5e'nin üstüne eklenmiş kural.*\n\n**Temas.** Dört yol var:\n\n- hastanın ya da cesedin sıvılarına dokunmak,\n- bir hastayla aynı kapalı mekanda bir gece kalmak,\n- bir @[Dönüşmüş](entity:monster/Dönüşmüş)'ün açtığı yara,\n- cephenin ötesindeki Blight zemininde, **Hastalık Sisi**'nde geçirilen her gün.\n\n> Her maruziyet: **CON kurtarma zarı, DC 12.** Başarısızlık: **+1 Hastalık Puanı.**\n\nBir Dönüşmüş'ün yarası kendi zarını taşır: @[Bulaştıran Yara](entity:trait/Bulaştıran Yara), CON DC 8, çatışmanın sonunda bir kez.\n\n**Maruziyet olmadan zar atılmaz.** Bir karakter hastalanıyorsa bir şey yapmıştır: bir cesede dokunmuş, bir hastayı taşımış, bir kulübeye girmiştir.",
+          "trigger": "*5e'nin üstüne eklenmiş kural.*\n\n**Temas.** Üç yol var:\n\n- hastanın ya da cesedin sıvılarına dokunmak,\n- bir hastayla aynı kapalı mekanda bir gece kalmak,\n- cephenin ötesindeki Blight zemininde, **Hastalık Sisi**'nde geçirilen her gün.\n\n> Her maruziyet: **CON kurtarma zarı, DC 12.** Başarısızlık: **+1 Hastalık Puanı.**\n\n**Bir @[Dönüşmüş](entity:monster/Dönüşmüş)'ün pençesi hastalık bulaştırmaz.** Pençe yara açar, Blight taşımaz; vuruşun kendi kurtarma zarı yoktur. Bulaşma yine de mümkündür — yere düşen bir Dönüşmüş'ün sıvılarına dokunan ya da cesedini karıştıran karakter yukarıdaki ilk yoldan zarını atar.\n\n**Maruziyet olmadan zar atılmaz.** Bir karakter hastalanıyorsa bir şey yapmıştır: bir cesede dokunmuş, bir hastayı taşımış, bir kulübeye girmiştir.",
           "effect": "## Hastalık Puanı\n\nBlight bir anda bulaşan bir şey değil, bedende **yavaş yavaş biriken bir zehirdir.** Tek sayacı **Hastalık Puanı**dır. *(Can puanıyla karışmasın.)*\n\n**1 puanı olan herkes taşıyıcıdır ve bulaştırır.**\n\n**Puan nasıl artar.** Her maruziyet başarısızlığı +1. Ayrıca hastalığı taşıyan biri (1+ puan) **CON DC 13** kurtarma zarı atar, başarısızlıkta +1:\n\n- güvenli bir bölgede uzun dinlenme alınmayan **her gün**;\n- her gün güvenli bir bölgede uzun dinlenme alınsa bile **her 3 günde bir**.\n\n**Puan inmez.** Güvenli bölge (maruziyet kaynağı olmayan korunaklı bir yerleşim: şehir, lonca binası) zarı seyrekleştirir, puanı silmez. Vahşi doğada başarılı bir **Medicine DC 15** müdahalesi o günün zarını atlatır.\n\n## Beş aşama\n\n| Aşama | Puan | Belirtiler | Etki |\n|---|---|---|---|\n| **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince siyah damarlar, ağızda geçmeyen metal tadı | CON'a dayanan **yetenek kontrollerinde** dezavantaj. Büyülerde görsel bozulmalar başlar; mekanik engel yok |\n| **2 — Sistemik Yayılma** | 3–4 | Yüksek ateş, geç kapanan yaralar, grileşen ten | Hız **−10 ft** · uzun dinlenmede harcanan Can Zarlarının iyileştirdiği can **yarıya** iner · 3. ve üstü seviye büyüde **Yozlaşma Kontrolü** zorunlu |\n| **3 — Ağır Bozulma** | 5–6 | Göz ve kulaklardan siyah sıvı, nefes darlığı, tanrıların fısıltılarını duymak | **Bütün** yetenek kontrollerinde dezavantaj |\n| **4 — Morfolojik Çözülme** | 7–8 | Sertleşip pul pul olan deri, irade dışı kasılmalar, dağılan konuşma | **Bütün** kurtarma zarlarında dezavantaj · seviyesi ne olursa olsun her büyü bir **yozlaşma dalgası** tetikler (Wild Magic benzeri) · sürekli 3. seviye Exhaustion etkisindeymiş gibi |\n| **5 — Tam Çöküş** | 9+ | Bilinç kapanır | Karakter ölür ya da @[Dönüşmüş](entity:monster/Dönüşmüş) olur |\n\n**Aşama 5.** Bilinç gider, beden güçlenir. Karakter artık karakter değildir: kağıt DM'e geçer ve Dönüşmüş statblock'unu alır. **Geri dönüş yoktur.**\n\n## İki hasta aynı yolu yürümez\n\nBu kural zarları değil, anlatımı etkiler. Her yeni aşamada DM belirtilerin görünüşünü değiştirir: bir hastada yorgunluk öne geçer, bir başkası kesik kesik gidip gelir, bir başkasının bedeni erken güçlenir. Puanlar aynıdır; görüntü aynı değildir.\n\n## Yalnız biyolojik değil\n\nBlight bir hastalık gibi bulaşır ve bir hastalık gibi ilerler, ama **büyüseldir** ve **bir kaynağa bağlıdır.**\n\n> **Arcana DC 13** — büyü yapan ya da bilen bir karakter bir hastanın yanında durduğunda bunun kendiliğinden olmuş bir şey olmadığını **hisseder.** Sönmeyen, dağılmayan, bir yere **bağlı duran** bir iz. Yön yok, mesafe yok, ad yok.\n\n*Detect Magic* ve benzeri tespit büyüleri aynı yere varır: bir şey **var**, ne olduğu **okunmuyor.** Büyülü olması biyolojik olmadığı anlamına gelmez.\n\n## Yozlaşma Kontrolü\n\n> **Tetikleyici:** ağır Blight altındaki bir zeminde **3. seviye ya da üstü** bir büyü yapmak. Aşama 2 ve üstündeki bir taşıyıcı için zemin fark etmez: her 3.+ seviye büyüde kontrol zorunludur.\n>\n> **Zar:** Constitution **ya da** büyü yeteneği kurtarma zarı, büyücü seçer. **DC 13.**\n>\n> **Başarısızlık:** büyü **gerçekleşir**, ama bozulur: büyücü **+1 Hastalık Puanı** alır. Aşama 2 ve üstündeki bir taşıyıcı ayrıca büyünün seviyesi kadar can kaybeder.\n\n- **Druid** bu zara **+2** alır.\n- **Paladin** bozulmanın fiziksel etkilerini daha kolay savuşturur: Aşama 1'in belirtileri onda görünmez. Puanı ve mekaniği değişmez.",
-          "mechanical_notes": "Maruziyet: CON kurtarma zarı DC 12; başarısızlık +1 Hastalık Puanı.\nMaruziyet yolları: hastanın ya da cesedin sıvılarına dokunmak, aynı kapalı mekanda bir gece, Dönüşmüş yarası, Hastalık Sisi'nde geçen her gün.\nDönüşmüş yarası (Bulaştıran Yara): CON DC 8, çatışmanın sonunda bir kez.\n1 veya daha fazla puanı olan taşıyıcıdır ve bulaştırır.\nGünlük zar: CON DC 13, başarısızlık +1; güvenli bölgede uzun dinlenme alınmayan her gün.\nGüvenli bölgede her gün uzun dinlenme alınsa bile günlük zar her 3 günde bir atılır.\nPuan silinmez.\nVahşi doğada Medicine DC 15 o günün zarını atlatır.\nAşama 1 (1-2 puan): CON yetenek kontrollerinde dezavantaj.\nAşama 2 (3-4 puan): hız -10 ft; uzun dinlenmede Can Zarı iyileştirmesi yarıya iner; 3.+ seviye büyüde Yozlaşma Kontrolü.\nAşama 3 (5-6 puan): bütün yetenek kontrollerinde dezavantaj.\nAşama 4 (7-8 puan): bütün kurtarma zarlarında dezavantaj; her büyü bir yozlaşma dalgası tetikler; 3. seviye Exhaustion etkisindeymiş gibi.\nAşama 5 (9+ puan): ölüm ya da Dönüşmüş; geri dönüş yok.\nArcana DC 13: hastanın üzerindeki büyülü ve bir yere bağlı iz hissedilir.\nYozlaşma Kontrolü: ağır Blight zemininde 3.+ seviye büyü; CON ya da büyü yeteneği kurtarma zarı DC 13.\nYozlaşma Kontrolü başarısız: büyü gerçekleşir, +1 Hastalık Puanı; Aşama 2+ taşıyıcı ayrıca büyü seviyesi kadar can kaybeder.\nAşama 2+ taşıyıcı: zemin fark etmeksizin her 3.+ seviye büyüde Yozlaşma Kontrolü.\nDruid: Yozlaşma Kontrolü'ne +2.\nPaladin: Aşama 1 belirtileri görünmez; puan ve mekanik değişmez.\nLesser Restoration: bir sonraki hastalık zarına +2; puan silmez; yapan 1 seviye Exhaustion alır.\nGreater Restoration: bir sonraki hastalık zarına +4; puan silmez; yapan kalıcı olarak bir Can Zarı kaybeder.\nDirenç Şerbeti: 24 saat boyunca maruziyet ve günlük hastalık zarlarına +8.",
+          "mechanical_notes": "Maruziyet: CON kurtarma zarı DC 12; başarısızlık +1 Hastalık Puanı.\nMaruziyet yolları: hastanın ya da cesedin sıvılarına dokunmak, aynı kapalı mekanda bir gece, Hastalık Sisi'nde geçen her gün.\nDönüşmüş'ün pençesi hastalık bulaştırmaz; vuruş için kurtarma zarı atılmaz.\n1 veya daha fazla puanı olan taşıyıcıdır ve bulaştırır.\nGünlük zar: CON DC 13, başarısızlık +1; güvenli bölgede uzun dinlenme alınmayan her gün.\nGüvenli bölgede her gün uzun dinlenme alınsa bile günlük zar her 3 günde bir atılır.\nPuan silinmez.\nVahşi doğada Medicine DC 15 o günün zarını atlatır.\nAşama 1 (1-2 puan): CON yetenek kontrollerinde dezavantaj.\nAşama 2 (3-4 puan): hız -10 ft; uzun dinlenmede Can Zarı iyileştirmesi yarıya iner; 3.+ seviye büyüde Yozlaşma Kontrolü.\nAşama 3 (5-6 puan): bütün yetenek kontrollerinde dezavantaj.\nAşama 4 (7-8 puan): bütün kurtarma zarlarında dezavantaj; her büyü bir yozlaşma dalgası tetikler; 3. seviye Exhaustion etkisindeymiş gibi.\nAşama 5 (9+ puan): ölüm ya da Dönüşmüş; geri dönüş yok.\nArcana DC 13: hastanın üzerindeki büyülü ve bir yere bağlı iz hissedilir.\nYozlaşma Kontrolü: ağır Blight zemininde 3.+ seviye büyü; CON ya da büyü yeteneği kurtarma zarı DC 13.\nYozlaşma Kontrolü başarısız: büyü gerçekleşir, +1 Hastalık Puanı; Aşama 2+ taşıyıcı ayrıca büyü seviyesi kadar can kaybeder.\nAşama 2+ taşıyıcı: zemin fark etmeksizin her 3.+ seviye büyüde Yozlaşma Kontrolü.\nDruid: Yozlaşma Kontrolü'ne +2.\nPaladin: Aşama 1 belirtileri görünmez; puan ve mekanik değişmez.\nLesser Restoration: bir sonraki hastalık zarına +2; puan silmez; yapan 1 seviye Exhaustion alır.\nGreater Restoration: bir sonraki hastalık zarına +4; puan silmez; yapan kalıcı olarak bir Can Zarı kaybeder.\nDirenç Şerbeti: 24 saat boyunca maruziyet ve günlük hastalık zarlarına +8.",
           "removed_by": "**Bilinen bir tedavi yok.** Puan silinmez; ancak artışı yavaşlatılabilir.\n\n- *Lesser Restoration* — bir sonraki hastalık zarına **+2**. **Yapan 1 seviye Exhaustion alır.**\n- *Greater Restoration* — bir sonraki hastalık zarına **+4**. **Yapan kalıcı olarak bir Can Zarı kaybeder.**\n- @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti) hastalığı geriletmez, **girmesini** zorlaştırır: 24 saat boyunca maruziyet ve günlük hastalık zarlarına **+8**.\n- **Aşama 5'te hiçbir şey işe yaramaz.** Bir Dönüşmüş öldürülür, iyileştirilmez.\n\nBu büyüleri yapabilen az kişi vardır, ve yapan her seferinde bedeninden bir şey kaybeder. Şehirde bu büyüleri kimin yapabileceğine loncalar karar verir.",
           "dmNotes": "Halkın bildiği hali ayrı kartta: @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali). Dünyada kimsenin elinde bir teşhis yok; bu kart hastalık **gibi** işler.\n\n**Kaynak.** Blight doğanın değil, birinin eseri. Kaynağı adlandırma, gösterme ya da işaret etme. Karakterlerin bunu sezebileceği tek yol yukarıdaki Arcana DC 13'tür; o da bir yön göstermez, yalnız bunun bir sahibi olduğunu hissettirir.\n\n**Kulübedeki üç kişi 8 puanla** gelir; kulübedeki gecenin günlük zarı onları 9'a taşır.\n\nKulübeye giren her karakter bir maruziyet zarı atar ve aldığı puanı köyden çıkınca da taşır. Puanın **hiç inmediğini** oyunculara önceden söyle.",
           "imagePath": "media/Artwork/Blight-Enfeksiyon.webp"
@@ -3017,7 +2942,7 @@
           },
           "status": "Planned",
           "description": "> Kuyu başında kova sırası var. Kovasını dolduran yaşlı bir adam, zincirin gıcırtısını bastırmak için sesini yükseltiyor ve yanındaki kadına dün akşam kulübeye kimin yemek götürdüğünü soruyor. Kadın omuz silkiyor: *\"Kapıya bıraktılar yine. Kimse girmedi.\"* Yolun karşısındaki hanın kapısı açık; içeriden ocak dumanı, kızarmış soğan kokusu ve bir halflingin sesi taşıyor. Halfling aynı cümleyi bir kez daha, daha yüksek sesle tekrarlıyor.\n>\n> Yaşlı adam kovasını bileziğin üstüne koyuyor, size dönüyor ve sizi baştan aşağı süzüyor. *\"Siz de onun için mi geldiniz?\"*",
-          "beats": "## Köy — ne durumda\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır; hepsinin aynı gün gelmesi gerekmez. Sonra gelen, öncekileri @[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı)'nda bulur.\n\n- **Köy işliyor.** Kazan kaynıyor, kapılar tebeşirle işaretli, bezler ipte, biri ekmek pişiriyor. İlk görülen şey çürüme değil, işini yapan bir köy.\n- **Hastalık açıkça konuşuluyor.** Kuyu başında, handa, ekmek sırasında. Kimse fısıldamıyor.\n- **Kulübe.** Köyün dışındaki @[Kulübe](entity:location/Kulübe)'de üç yabancı yatıyor. Yemek kapıya bırakılıyor, kimse içeri girmiyor. Bunu köyün kendisi kararlaştırdı.\n- **\"Kimse ölmedi.\"** Bunu söyleyen köylü rahatlamış görünür. Aynı cümleyi @[Umay](entity:npc/Umay) duyarsa başını çevirir ve bir şey söylemez; sorulursa kırk yıldır bu köyde her yıl birilerinin öldüğünü söyler.\n\n## Köyde kim var, ne biliyor\n\n| Kim | Sorulmadan verdiği | Sorulursa |\n|---|---|---|\n| @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) | Salonda konuşulan her şey | Yabancıların ilk iki gecesi, giysileri, nasıl ödedikleri — peşin, tartışmasız, fazla |\n| @[Corvin](entity:npc/Corvin) | Yabancıların kumaşının pahalı ve yabancı olduğu | Kıyıya giden yolları bildiği; ücreti konuşulursa daha fazlası |\n| @[Duran](entity:npc/Duran) | Az konuşur, bir şey bildiği belli olur | *\"Yoldan geldiler, herkes gibi.\"* Köyün iyiliği için sorulduğuna inanırsa: *\"Limandan geldiler.\"* |\n| @[Umay](entity:npc/Umay) | Hastaların hâli | Bedenin söylediği şey — hastalık köyün sandığından eski |\n| @[Halim](entity:npc/Halim) | Köylü olmadığı (Insight DC 12; lonca hattından gelen karakter zarsız görür) | Kimin yolladığı, ve @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın adı |\n\n## Saat\n\nÜç hasta **8 Hastalık Puanında** ve şafağa kadar 9'a çıkacaklar. Bunu kimse bilmiyor; köylüler de, Umay da, karakterler de.\n\nKöylüler geceyi köyde geçirmeyi önerir — *\"Sabah gidin. Gece yol karanlık.\"* — çünkü yol karanlıkta tehlikeli ve konuk göndermek ayıp. Bu bir yönlendirme değil, köyün alışkanlığı. Ne olursa olsun şafakta @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) olur.",
+          "beats": "## Köy — ne durumda\n\nKarakterler @[Gümüşsu](entity:location/Gümüşsu)'ya varır; hepsinin aynı gün gelmesi gerekmez. Sonra gelen, öncekileri @[Goodbarrel'ın Ocak Başı](entity:location/Goodbarrel'ın Ocak Başı)'nda bulur.\n\n- **Köy işliyor.** Kazan kaynıyor, kapılar tebeşirle işaretli, bezler ipte, biri ekmek pişiriyor. İlk görülen şey çürüme değil, işini yapan bir köy.\n- **Hastalık açıkça konuşuluyor.** Kuyu başında, handa, ekmek sırasında. Kimse fısıldamıyor.\n- **Kulübe.** Köyün dışındaki @[Kulübe](entity:location/Kulübe)'de üç yabancı yatıyor. Yemek kapıya bırakılıyor, kimse içeri girmiyor. Bunu köyün kendisi kararlaştırdı.\n- **\"Kimse ölmedi.\"** Bunu söyleyen köylü rahatlamış görünür. Aynı cümleyi @[Umay](entity:npc/Umay) duyarsa başını çevirir ve bir şey söylemez; sorulursa kırk yıldır bu köyde her yıl birilerinin öldüğünü söyler.\n\n## Köyde kim var, ne biliyor\n\n| Kim | Sorulmadan verdiği | Sorulursa |\n|---|---|---|\n| @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) | Salonda konuşulan her şey | Yabancıların ilk iki gecesi, giysileri, nasıl ödedikleri — peşin, tartışmasız, fazla |\n| @[Corvin](entity:npc/Corvin) *(köyde her zaman yok — bkz. Saat)* | Yabancıların kumaşının pahalı ve yabancı olduğu | Kıyıya giden yolları bildiği; ücreti konuşulursa daha fazlası |\n| @[Duran](entity:npc/Duran) | Az konuşur, bir şey bildiği belli olur | *\"Yoldan geldiler, herkes gibi.\"* Köyün iyiliği için sorulduğuna inanırsa: *\"Limandan geldiler.\"* |\n| @[Umay](entity:npc/Umay) | Hastaların hâli | Bedenin söylediği şey — hastalık köyün sandığından eski |\n| @[Halim](entity:npc/Halim) | Köylü olmadığı (Insight DC 12; lonca hattından gelen karakter zarsız görür) | Kimin yolladığı, ve @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)'ın adı |\n\n## Saat\n\nÜç hasta **8 Hastalık Puanında** ve şafağa kadar 9'a çıkacaklar. Bunu kimse bilmiyor; köylüler de, Umay da, karakterler de.\n\nKöylüler geceyi köyde geçirmeyi önerir — *\"Sabah gidin. Gece yol karanlık.\"* — çünkü yol karanlıkta tehlikeli ve konuk göndermek ayıp. Bu bir yönlendirme değil, köyün alışkanlığı. Ne olursa olsun şafakta @[Şafak Dönüşümü](entity:scene/Şafak Dönüşümü) olur.\n\n**Corvin.** @[Corvin](entity:npc/Corvin) karakterler köye vardığında köyde olmayabilir; kıyıdadır. Dönüşüm sabahı köye **şafaktan birkaç saat önce** döner, yükü sırtında — yani dönüşüm onun dönüşünden birkaç saat sonradır. Karakterler onu o gece handa ya da sabaha karşı kuyu başında bulur. DM Corvin'i daha erken köyde tutmak isterse tutabilir; zorunlu olan tek şey, dönüşüm olduğunda köyde olması.",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3128,7 +3053,7 @@
           },
           "status": "Planned",
           "description": "> Şafak ormanın üstünde gri bir çizgi. Köyde ilk horoz ötüyor. Horozun sesinin hemen ardından, kulübenin olduğu yönden bir çatırtı geliyor: zorlanan, sonra yarılan bir tahtanın sesi. Bir köpek havlamaya başlıyor, ve bir anda susuyor. Serin sabah havasında odun dumanına başka bir koku karışıyor, ekşi ve metalik.\n>\n> Köyün girişindeki nöbetçi genç mızrağını iki eliyle kavramış. Kulübenin yoluna değil, size bakıyor.",
-          "beats": "## Ne oldu\n\nKulübede geçen gecenin günlük hastalık zarı üç yabancıyı 9 Hastalık Puanına taşıdı. **Üçü de döndü, ve karakterlerin gece ne yaptığı bunu değiştirmez.** Dönüşüm bir seçimin cezası değil, hastalığın takvimi.\n\n## Köyde\n\nKapılar kapanır; bir kadın bir çocuğu kolundan tutup içeri çeker. Köyün gönüllü milislerinden ikisi mızraklarıyla kulübeyle köy arasında durur ve ne yapacaklarını bilmez.\n\n@[Halim](entity:npc/Halim) hanın arka kapısından çıkar ve koşar. Durmaz, dönüp bakmaz, kimseye seslenmez.\n\nKarakterler oradaysa çatışma: @[Şafak Çatışması](entity:encounter/Şafak Çatışması).\n\n## Şafaktan sonra köy — iki hâl\n\nİkisini ayıran tek şey, o sabah kulübeyle köy arasında kimin durduğu.\n\n**Ayakta.** Ölen var, köy yaşıyor. Öğleye kadar kapılar yeniden açılır, ocak yanar, biri ekmek çıkarır. Erzak ve yatak karakterlerden para istemez ve bu teklif geri alınmaz. @[Duran](entity:npc/Duran) borçludur ve borcunu bilir: konuşmadığı şeyleri konuşur. Üç ceset ortadadır; üstlerindeki her şey yerinde — kumaş, kese, boş parşömenler, ve @[Kromanna](entity:npc/Kromanna)'nın gizli cebindeki yüzük.\n\n**Kırılmış.** Köyün çoğu ölü. Şansa sağ kalanlar var ve çoğu o gün yola çıkar; kalanlar ölülerini gömmekle uğraşır ve kimseyle konuşmaz. Üç Dönüşmüş **serbest** — nereye gittiklerine DM karar verir; köye geri dönmezler. Ocak sönük, kazan devrilmiş, kapılar açık kalmış.\n\n## İki hâlde de doğru olanlar\n\n- Halim yolu bulur ve anlattıklarını @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'na götürür. Söylenti artar; ne kadar sürdüğü DM'in — günlerle bir hafta arası.\n- Köyden sağ çıkan kim varsa iki cümle taşır: *\"hastaydılar\"* ve *\"buralı değillerdi.\"*\n- Hastalığın bir adı var: köylüler *hastalık* ya da *Blight* der.\n- Üç yabancı bir limandan geldi (@[Duran](entity:npc/Duran)).\n- @[Corvin](entity:npc/Corvin) kıyıdaki @[Gizli Liman](entity:location/Gizli Liman)'a giden yolu biliyor.\n- Üç yabancı köye **hasta geldi** (Medicine DC 12, ya da @[Umay](entity:npc/Umay)'dan zarsız).\n- Büyü bilen bir karakter varsa: üstlerinde bir hastalıktan fazlası var (Arcana DC 13).",
+          "beats": "## Ne oldu\n\nKulübede geçen gecenin günlük hastalık zarı üç yabancıyı 9 Hastalık Puanına taşıdı. **Üçü de döndü, ve karakterlerin gece ne yaptığı bunu değiştirmez.** Dönüşüm bir seçimin cezası değil, hastalığın takvimi.\n\n## Köyde\n\nKapılar kapanır; bir kadın bir çocuğu kolundan tutup içeri çeker. Köyün gönüllü milislerinden ikisi mızraklarıyla kulübeyle köy arasında durur ve ne yapacaklarını bilmez.\n\n@[Halim](entity:npc/Halim) hanın arka kapısından çıkar ve koşar. Durmaz, dönüp bakmaz, kimseye seslenmez.\n\n@[Corvin](entity:npc/Corvin) o sabah köydedir: birkaç saat önce kıyıdan, yükü sırtında dönmüştü. Kaçmaz, öne de atılmaz; kendi kapısının önünde, elinde bıçağıyla durur. Karakterler onu korumazsa ölmesi mümkündür.\n\nKarakterler oradaysa çatışma: @[Şafak Çatışması](entity:encounter/Şafak Çatışması).\n\n## Şafaktan sonra köy — iki hâl\n\nİkisini ayıran tek şey, o sabah kulübeyle köy arasında kimin durduğu.\n\n**Ayakta.** Ölen var, köy yaşıyor. Öğleye kadar kapılar yeniden açılır, ocak yanar, biri ekmek çıkarır. Erzak ve yatak karakterlerden para istemez ve bu teklif geri alınmaz. @[Duran](entity:npc/Duran) borçludur ve borcunu bilir: konuşmadığı şeyleri konuşur. Üç ceset ortadadır; üstlerindeki her şey yerinde — kumaş, kese, boş parşömenler, ve @[Kromanna](entity:npc/Kromanna)'nın gizli cebindeki yüzük.\n\n**Kırılmış.** Köyün çoğu ölü. Şansa sağ kalanlar var ve çoğu o gün yola çıkar; kalanlar ölülerini gömmekle uğraşır ve kimseyle konuşmaz. Üç Dönüşmüş **serbest** — nereye gittiklerine DM karar verir; köye geri dönmezler. Ocak sönük, kazan devrilmiş, kapılar açık kalmış.\n\n## İki hâlde de doğru olanlar\n\n- Halim yolu bulur ve anlattıklarını @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası)'na götürür. Söylenti artar; ne kadar sürdüğü DM'in — günlerle bir hafta arası.\n- Köyden sağ çıkan kim varsa iki cümle taşır: *\"hastaydılar\"* ve *\"buralı değillerdi.\"*\n- Hastalığın bir adı var: köylüler *hastalık* ya da *Blight* der.\n- Üç yabancı bir limandan geldi (@[Duran](entity:npc/Duran)).\n- @[Corvin](entity:npc/Corvin) kıyıdaki @[Gizli Liman](entity:location/Gizli Liman)'a giden yolu biliyor. **O sabah ölürse bu satır düşer:** köyde kıyı yolunu bilen başka kimse yoktur ve yerine bir rehber çıkmaz. Liman yine bulunabilir — bazı Konsey rütbelileri, @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi)'nin bazı üyeleri, ve çok nadiren @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı)'nın paladin rütbelileri yolu bilir — ama o kapı artık Lucid Triton'dan geçer.\n- Üç yabancı köye **hasta geldi** (Medicine DC 12, ya da @[Umay](entity:npc/Umay)'dan zarsız).\n- Büyü bilen bir karakter varsa: üstlerinde bir hastalıktan fazlası var (Arcana DC 13).",
           "npc_refs": [
             {
               "lookup": "npc",
@@ -3560,8 +3485,8 @@
             "match": "name",
             "value": "Kulübe"
           },
-          "difficulty": "High",
-          "xp_budget": 400,
+          "difficulty": "Low",
+          "xp_budget": 100,
           "monsters_refs": [
             {
               "lookup": "monster",
@@ -3581,8 +3506,8 @@
           ],
           "description": "Dün gece kulübede konuşan üç yabancı, şafakta köye yürüyor.",
           "setup": "> Kulübenin kapısı dışarı doğru savruluyor ve tek menteşesinden sarkıyor. İlk çıkan halfling: dün gece bir cümlenin ortasında uyuyakalan adam, bu sabah koşuyor. Çıplak ayakları ıslak otu ezerken ses çıkarmıyor. Arkasındaki karanlıkta iki gövde daha kıpırdıyor, ve kulübeden ekşi, metalik bir koku yayılıyor. Köy yolunda bir kazan devriliyor, bir kapı çarpıyor. Mızraklı iki genç kulübeyle köyün arasında durmuş, neye baktıklarını anlamaya çalışıyor.\n>\n> Halfling sesinizin geldiği yöne dönüyor.\n\n## Alan\n\nKulübe, çalılık patika ve köyün son evleri. Patika iki kişinin yan yana yürüyebileceği genişlikte; iki yanı bele kadar çalı (zorlu arazi). Köyün son evine altmış adım var.\n\n## Düzen\n\n**Sıralı çıkış.** Önce @[Dönüşmüş Alton](entity:monster/Dönüşmüş Alton) çıkar. Bir tur sonra @[Dönüşmüş Merla](entity:monster/Dönüşmüş Merla) ve @[Dönüşmüş Kromanna](entity:monster/Dönüşmüş Kromanna) çıkar.\n\n**Milisler.** Köyün iki gönüllü milisi patikada. Ellerinde mızrak var ve ne yapacaklarını bilmiyorlar. Karakterler onlara bir şey söylemezse ilk turda yerlerinden kıpırdamazlar.",
-          "tactics": "**Dönüşmüş'ler taktik kullanmaz.** Nişan almazlar, geri çekilmezler, teslim olmazlar. En yakındaki sese ve harekete yürürler.\n\n**Dönüşmüş Merla'nın Kesik Kesik zarını açıkta at.** Oyuncular üç Dönüşmüş'ün birbirine benzemediğini görsün.\n\n**Dönüşmüş Kromanna en tehlikelisi.** İlk turunda iki kez saldırır.\n\n**Bulaştıran Yara.** Dönüşmüş'lerin pençesi isabet eden her karakter için, çatışmanın sonunda bir kez **CON DC 8** kurtarma zarı atılır; başarısızlıkta +1 Hastalık Puanı.\n\n**Kalıcı Yaralar.** Bir karakterin 0 cana düşmesi olasıdır, ve 1–5 zarı bir karakteri kalıcı olarak topal bırakabilir. Kuralı oyunculara çatışmadan **önce** söyle. Bkz. @[Kural Sapmaları](entity:lore/Kural Sapmaları).\n\n**Köylüler.** Köylüler kapıları kapatır. Milisler karakterlerin yanında dövüşürse Dönüşmüş'lerin saldırılarını üzerlerine çekebilir; korunmazlarsa ölebilirler.\n\n## Sonrası\n\nCesetler, dün gece kulübede konuşan insanların cesetleridir. Üzerlerindeki her şey yerinde: yabancı kumaştan giysiler, dolu kese, boş parşömenler, ve @[Kromanna](entity:npc/Kromanna)'nın gizli cebinde @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük).",
-          "dmNotes": "**Zorluk.** Üç Dönüşmüş birlikte 400 XP eder; dört kişilik 1. seviye bir grup için zorludur. Köy gerçekten tehlikede hissettirilmeli.\n\n- **Kolaylaştırmak:** yukarıdaki sıralı çıkışı kullan.\n- **Zorlaştırmak:** üçü aynı anda çıkar.\n- **Karakterler 2. seviyeyse** üçü aynı anda çıkar.",
+          "tactics": "**Dönüşmüş'ler taktik kullanmaz.** Nişan almazlar, geri çekilmezler, teslim olmazlar. En yakındaki sese ve harekete yürürler.\n\n**Dönüşmüş Merla'nın Kesik Kesik zarını açıkta at.** Oyuncular üç Dönüşmüş'ün birbirine benzemediğini görsün.\n\n**Dönüşmüş Kromanna en tehlikelisi.** İlk turunda iki kez saldırır.\n\n**Pençe hastalık bulaştırmaz.** Dönüşmüş'ün vuruşu için kurtarma zarı atılmaz. Çatışmadan sonra cesetleri karıştıran ya da yaralıları taşıyan karakterler için normal maruziyet zarı işler (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)).\n\n**Kalıcı Yaralar.** Bir karakterin 0 cana düşmesi olasıdır, ve 1–5 zarı bir karakteri kalıcı olarak topal bırakabilir. Kuralı oyunculara çatışmadan **önce** söyle. Bkz. @[Kural Sapmaları](entity:lore/Kural Sapmaları).\n\n**Köylüler.** Köylüler kapıları kapatır. Milisler karakterlerin yanında dövüşürse Dönüşmüş'lerin saldırılarını üzerlerine çekebilir; korunmazlarsa ölebilirler.\n\n## Sonrası\n\nCesetler, dün gece kulübede konuşan insanların cesetleridir. Üzerlerindeki her şey yerinde: yabancı kumaştan giysiler, dolu kese, boş parşömenler, ve @[Kromanna](entity:npc/Kromanna)'nın gizli cebinde @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük).",
+          "dmNotes": "**Zorluk.** Üç Dönüşmüş birlikte 100 XP eder; dört kişilik 1. seviye bir grup bunu kaldırır. Tehdit sayıda değil yönde: Dönüşmüş'ler durmaz, geri çekilmez ve köye yürür. Korunmayan köylü ölür.\n\n- **Kolaylaştırmak:** yukarıdaki sıralı çıkışı kullan.\n- **Zorlaştırmak:** üçü aynı anda çıkar.\n- **Karakterler 2. seviyeyse** üçü aynı anda çıkar.",
           "tags": [
             "gümüşsu",
             "kulübe",
@@ -3617,7 +3542,7 @@
           "name": "Nereden Geldiler",
           "status": "Not Started",
           "description": "Kulübedeki üç yabancı kıtaya gümrüğe uğramadan girdi. Onları bir gemi getirdi, ve o gemi bir daha yanaşmadı.",
-          "objective": "Üç yabancının Gümüşsu'ya nasıl geldiğini bulun. İşi veren @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar): *\"Bana onları geçireni getirin.\"*\n\n1. **Kulübedeki izler.** @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu): kumaş, dolu kese ve boş parşömenler, gizli cepteki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük), beden, büyü izi.\n2. **Limanın yolu — iki kapı.** @[Duran](entity:npc/Duran) *\"limandan geldiler\"* der ve @[Corvin](entity:npc/Corvin) yolu bilir; ya da yüzük konuşur — @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) damgasız işi okur ve güneyi gösterir. Hedef: @[Gizli Liman](entity:location/Gizli Liman) (@[Limana Kabul](entity:scene/Limana Kabul)).\n3. **Limanda.** @[Sicim](entity:npc/Sicim)'in defteri: satır parayla silinmiş. @[Fare](entity:npc/Fare): geminin geldiği gece, kimlerin indiği. @[Mine](entity:npc/Mine): yüzüğü eğeleyen el, ve hatırladığı eski yüz.\n4. **Ve orada biter.** Silmenin parasını **Kader**'in kaptanı verdi. Adını kimse bilmiyor, ve gemi o geceden sonra bir daha yanaşmadı.\n\n**Başka bir yol: gerçek adlar.** Üç yabancının gerçek adları Gümüşsu'da hiçbir şey ifade etmez. Meclis'te @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) tanır (@[Meclis Oturumu](entity:scene/Meclis Oturumu)).",
+          "objective": "Üç yabancının Gümüşsu'ya nasıl geldiğini bulun. İşi veren @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar): *\"Bana onları geçireni getirin.\"*\n\n1. **Kulübedeki izler.** @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu): kumaş, dolu kese ve boş parşömenler, gizli cepteki @[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük), beden, büyü izi.\n2. **Limanın yolu — iki kapı.** @[Duran](entity:npc/Duran) *\"limandan geldiler\"* der ve @[Corvin](entity:npc/Corvin) yolu bilir; ya da yüzük konuşur — @[Kildrak Ferrun](entity:npc/Kildrak Ferrun) damgasız işi okur ve güneyi gösterir. Hedef: @[Gizli Liman](entity:location/Gizli Liman) (@[Limana Kabul](entity:scene/Limana Kabul)). **Corvin şafakta öldüyse** bu kapının köy tarafı kapanır; kalan yol yüzüktür, ya da Lucid Triton'da limanı bilen bir rütbelidir.\n3. **Limanda.** @[Sicim](entity:npc/Sicim)'in defteri: satır parayla silinmiş. @[Fare](entity:npc/Fare): geminin geldiği gece, kimlerin indiği. @[Mine](entity:npc/Mine): yüzüğü eğeleyen el, ve hatırladığı eski yüz.\n4. **Ve orada biter.** Silmenin parasını **Kader**'in kaptanı verdi. Adını kimse bilmiyor, ve gemi o geceden sonra bir daha yanaşmadı.\n\n**Başka bir yol: gerçek adlar.** Üç yabancının gerçek adları Gümüşsu'da hiçbir şey ifade etmez. Meclis'te @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar) tanır (@[Meclis Oturumu](entity:scene/Meclis Oturumu)).",
           "reward": "Bir eşya değil: bir gemi adı ve bir çizim. **Kader**, ve @[Mine](entity:npc/Mine)'in kağıda çizdiği, kimsenin tanımadığı işaret. İkisi de Act 1'de hiçbir kapı açmaz.\n\nOrvan Sancar'a dönen karakterler için: **imzalı bir geçiş kağıdı** (@[İyi Yazı](entity:quest/İyi Yazı)) ve Sancar hanesinin mirasına ortaklık. Orvan aldığı cevaptan memnun değil, ama ödemeyi yapar — eline geçen, elindekinden fazla.",
           "secrets": "**Suç hastalığı yaymak değil, gizlemek.** Birileri üç hasta insanı kıtaya soktu, limandaki izlerini sildirdi, ve onları kimsenin soru sormadığı bir köye yolladı. Onları buraya getiren kişi Gümüşsu'yu tehlikeye attı.\n\n**Karakterlerin varabileceği en uç nokta @[Gizli Liman](entity:location/Gizli Liman).** Silmenin parasını *Kader*'in kaptanı verdi, ve o adam denizde. Kimin adına taşıdığı, üç yabancının yolculuğunu kendilerinin mi ödediği, ve nasıl hastalandıkları Act 1'de kanıtlanamaz.\n\n**Yüzük.** Mühür yüzü eğelenerek düzleştirilmiş, ve üstünde hiçbir damga yok — bu kıtada bir kuyumcu işine damgasını vurur. Damgasızlık lonca dışı bir tezgahı, yani limanı işaret eder. Eski yüzü @[Mine](entity:npc/Mine) hatırlıyor: bu kıtada karşılığı olmayan bir işaret.\n\n**Kısa görev.** Bu bir soruşturma zinciri değil, soğuyan bir iz. Üç dört sahnede biter. Uzatmaya çalışma — oyuncunun eli boş çıkmıyor, sadece cevap çıkmıyor.\n\n**Kilitlenme yok.** Limana iki yoldan gidilir, ve Orvan'ın teklifi Meclis'e hiç gitmemiş karakterlere de ulaşır.",
           "tags": [
