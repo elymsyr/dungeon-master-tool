@@ -1,11 +1,11 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql
+path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql, 093_world_card_meta.sql
 layer: backend
 language: sql
 status: stable
-updated: 2026-06-09
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -38,6 +38,7 @@ tags: [file]
 - **034_open_world_chars** — SELECT policy → "members read all" (was owner-only). `claim_character` RPC becomes pool-free: canon is `world_characters.owner_id IS NULL` = claimable; pool table kept best-effort-synced for old clients, slated for drop.
 - **051_world_members_replica_full** — `ALTER TABLE world_members REPLICA IDENTITY FULL`. Default identity only carries PK in UPDATE/DELETE CDC; PK is `(world_id,user_id)` so role-change/kick events reached the DM with truncated records. Metadata-only fix.
 - **052_entity_shares_replica_full** — `ALTER TABLE entity_shares REPLICA IDENTITY FULL`. The realtime subscription filters `entity_shares` by `world_id`, but `entity_shares` PK is `id` only → un-share DELETE `oldRecord` lacked `world_id` and was silently dropped (player never saw the un-share). Same class of bug as 051.
+- **093_world_card_meta** — `worlds.meta_json TEXT` (nullable). 077 kaldırdığı `state_json` ile birlikte dünya metadata'sı da gitmişti; katılan oyuncunun hub kartında açıklama ve banner yoktu. Taşınan şey `world_settings.settings_json`'daki `metadata` map'inin whitelist'i: `description`, `tags`, `cover_image_path` — sonuncusu DM'in yerel yolu değil, free-media'ya yüklenmiş bir `dmt-public://` ref'i. Yeni policy yok: yazan `Worlds: dm update`, okuyan `Worlds: members read` (ikisi de 026'dan). İstemci ucu [[world_meta_sync]].
 
 ## Notes
 - `transient_shares` (054) follows the same REPLICA IDENTITY FULL pattern so un-share/projection-drop DELETEs propagate.

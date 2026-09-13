@@ -25,6 +25,7 @@ import 'missing_media_reporter.dart';
 import 'package_sync_service.dart';
 import 'pending_write_buffer.dart';
 import 'shared_media_courier.dart';
+import 'world_meta_sync.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -55,26 +56,6 @@ const Duration _kBatchWindow = Duration(milliseconds: 16);
 /// reopen'larda yeniden ödenmeye gerek yok.
 final worldInitialSyncSettledProvider =
     StateProvider<Set<String>>((_) => const <String>{});
-
-/// `world_settings.settings_json` decode edilip top-level `data`'ya yayılırken
-/// atlanan anahtarlar. Identity / template alanları + granular tablo sahipleri
-/// (`entities`, `sessions`, `map_data`): `world_settings` legacy mirror olarak
-/// bu alanları taşıyabilir ama dedicated row/table source-of-truth.
-/// `_world_schema`: yerelde repo katmanı `world_schema`'ya çeviriyor;
-/// snapshot'ı top-level'a koymak yanıltıcı olur.
-const Set<String> _settingsApplyBlocklist = {
-  'world_id',
-  'world_name',
-  'created_at',
-  'entities',
-  'sessions',
-  'map_data',
-  'world_schema',
-  'template_id',
-  'template_hash',
-  'template_original_hash',
-  '_world_schema',
-};
 
 /// CDC event'lerini local state'e uygular.
 ///
@@ -171,6 +152,8 @@ class WorldMirrorApplier {
   Future<void> applyInitialState(String worldId) async {
     if (_disposed) return;
     ref.invalidate(worldEntitySharesProvider(worldId));
+    await _applyWorldMeta(worldId);
+    if (_disposed) return;
     final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
     if (snapshot.characters.isEmpty &&
@@ -586,6 +569,17 @@ class WorldMirrorApplier {
   Future<void> purgeLocalWorld(String worldId) =>
       _campaign.purgeWorldById(worldId);
 
+  /// Oyuncu tarafı: dünyanın kart kimliğini (açıklama/etiket/kapak) buluttan
+  /// tazeler. CDC yalnızca abonelikten sonraki değişimi taşır — DM dünya
+  /// kapalıyken açıklamayı değiştirdiyse bu seed olmadan hiç görünmezdi.
+  Future<void> _applyWorldMeta(String worldId) async {
+    if (_isDm(worldId)) return;
+    final meta = await mirror.fetchWorldMeta(worldId);
+    if (meta == null || _disposed) return;
+    ref.read(activeCampaignProvider.notifier).data?['metadata'] = meta;
+    await _persistSettingsToDrift(worldId, {'metadata': meta});
+  }
+
   Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
     if (e.eventType == PostgresChangeEvent.delete) {
       final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
@@ -612,68 +606,23 @@ class WorldMirrorApplier {
         e.eventType != PostgresChangeEvent.insert) {
       return;
     }
-    final activeCampaign = ref.read(activeCampaignProvider.notifier);
-    final data = activeCampaign.data;
-    if (data == null) return;
-    final newState = e.newRecord['state_json'];
-    if (newState is! String) return;
-    try {
-      final decoded = await _decodeJsonMaybeOffload(newState);
-      if (decoded is! Map<String, dynamic>) return;
-      // entities alt-map'i normalde world_entities'ten patch'leniyor;
-      // worlds.state_json sadece üst-düzey alanları taşır. PR-SYNC-3:
-      // map_data + sessions + settings ayrı tablolardan geliyor, bu yüzden
-      // worlds event'inden gelen bu alanları da strip ediyoruz — aksi halde
-      // race olabilir (granular row henüz gelmemişken state_json daha yeni
-      // ama eksik veriyle local'i ezerdi). entities'i de koru.
-      final entities = data['entities'];
-      final mapData = data['map_data'];
-      final sessions = data['sessions'];
-      // PRESERVE: settings subkey'leri artık top-level'da yaşıyor
-      // (`_applySettingsRow` spread eder). Granular `world_settings`
-      // event'i bu anahtarları ayrıca taze tutuyor. Worlds payload'undan
-      // gelen stale değerler bunları ezmesin diye `decoded`'dan strip et.
-      final preservedSettingsKeys = <String, dynamic>{};
-      for (final entry in data.entries) {
-        if (_settingsApplyBlocklist.contains(entry.key)) continue;
-        preservedSettingsKeys[entry.key] = entry.value;
-      }
-      // PRESERVE: local-only sibling keys (saveSettingsPatchLocalOnly yazıyor,
-      // cloud state_json'a hiç gitmez). clear+addAll'dan sonra geri konmazsa
-      // in-memory'den silinir → ekran reload'da viewport defaulta düşer.
-      // Yeni motion-class key eklenince buraya da ekle.
-      final mapView = data['map_view'];
-      final mindMapViews = data['mind_map_views'];
-      decoded.remove('map_data');
-      decoded.remove('sessions');
-      // Worlds payload'undaki settings subkey'leri kullanılmaz — preserve
-      // edilmiş top-level değerler `_applySettingsRow` ile yeniden yazılacak.
-      for (final key in preservedSettingsKeys.keys) {
-        decoded.remove(key);
-      }
-      decoded.remove('settings'); // legacy nested kopyayı da düşür
-      data
-        ..clear()
-        ..addAll(decoded);
-      if (entities is Map<String, dynamic>) {
-        data['entities'] = entities;
-      }
-      if (mapData != null) data['map_data'] = mapData;
-      if (sessions != null) data['sessions'] = sessions;
-      data.addAll(preservedSettingsKeys);
-      if (mapView != null) data['map_view'] = mapView;
-      if (mindMapViews != null) data['mind_map_views'] = mindMapViews;
+    // Buluttan gelen tek dünya-düzeyi veri kartın görünen yüzü: açıklama,
+    // etiketler, kapak (`worlds.meta_json`, migration 093). İçerik hâlâ
+    // yalnızca DM'in paylaşımlarından akıyor.
+    //
+    // DM'de uygulanmaz: kendi push'unun echo'su, kapağı yerel yoldan
+    // `dmt-public://` ref'e çevirip DM'i kendi dosyasından koparırdı.
+    if (_isDm(e.worldId)) return;
+    final meta = decodeWorldMeta(e.newRecord['meta_json']);
+    if (meta == null) return;
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data != null) {
+      data['metadata'] = meta;
       _bumpRevision();
-      // Cover/metadata `worlds.state_json` içinde de taşınır. Granular
-      // `world_settings` event'i bu update'e eşlik etmese bile hub liste
-      // refresh'inin cover'ı görmesi için metadata alt-kümesini Drift'e yaz.
-      final meta = decoded['metadata'];
-      if (meta is Map<String, dynamic>) {
-        await _persistSettingsToDrift(e.worldId, {'metadata': meta});
-      }
-    } catch (err) {
-      debugPrint('_applyWorldsEvent decode error: $err');
     }
+    // Hub listesi (campaignInfoListProvider / campaignMetadataProvider)
+    // Drift'ten okuyor — dünya açık olmasa da oraya yaz.
+    await _persistSettingsToDrift(e.worldId, {'metadata': meta});
   }
 
   // ── PR-SYNC-3 granular world state appliers ─────────────────────────

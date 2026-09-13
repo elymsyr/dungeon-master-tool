@@ -7,8 +7,8 @@ import 'campaign_provider.dart';
 /// Lives in the settings blob (not a typed column) so it rides along for
 /// free everywhere a world payload travels: marketplace publish →
 /// download (`load()` spreads unknown top-level keys, `save()` folds them
-/// back into the blob) and cloud/LAN world sync (the key is not in
-/// `_settingsApplyBlocklist`). Pins are world-wide, not per-device —
+/// back into the blob) and LAN world sync. Pins are world-wide, not
+/// per-device —
 /// that's the point: a downloaded world keeps the author's pins.
 const kPinnedEntitiesKey = 'pinned_entities';
 

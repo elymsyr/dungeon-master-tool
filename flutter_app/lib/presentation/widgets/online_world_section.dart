@@ -11,6 +11,7 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
+import '../../application/services/world_meta_sync.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -237,6 +238,15 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             templateId: templateId,
             templateHash: templateHash,
           );
+      // Kart kimliği (açıklama/etiket/kapak) da çıksın — oyuncu dünyaya
+      // katıldığında hub kartı boş görünmesin.
+      final meta = data['metadata'];
+      if (meta is Map) {
+        await ref.read(worldMetaSyncProvider)?.push(
+              worldId: widget.campaignId,
+              metadata: Map<String, dynamic>.from(meta),
+            );
+      }
       ref.read(onlineWorldIdsProvider.notifier).add(widget.campaignId);
       // Bu dünyanın yerel karakterlerini aynaya taşı — aksi halde sidebar
       // bulut listesine döndüğünde boş görünür.
