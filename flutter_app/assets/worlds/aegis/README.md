@@ -350,8 +350,9 @@ cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis
 **0.6.9 (2026-09-13) — İrade Yemini sadeleştirildi.** Üç madde, üçü de yemini SRD
 paladininin önüne geçiren şeyleri geri alıyor: alt sınıf **1. seviyeden 3'e** taşındı
 (artık SRD 5.2.1 iskeletiyle uyumlu ve dünyadaki tek 2014-şekilli özgün seviye kapandı),
-`trait/Yeminin Ağırlığı`'nın **+1 Güç / +1 Dayanıklılık** bonusu **kaldırıldı** (geriye
-History + Investigation yetkinliği kalıyor), ve 3. kademe yemin büyülerinden
+`trait/Yeminin Ağırlığı`'nın **+1 Dayanıklılık** bonusu **kaldırıldı** (**+1 Güç** ve
+History + Investigation yetkinliği kalıyor — iki puan birden yarım feat ediyordu), ve
+3. kademe yemin büyülerinden
 ***Shield of Faith* çıkarıldı** — o seviye zaten Yeminin Ağırlığı, Yemin Darbesi ve
 Channel Divinity taşıyor. Yemin Darbesi de 1'den 3'e taşındı, yani yeminin verdiği her
 şey tek bir seviyede açılıyor. **Act 1 sonucu:** perde 1–2. seviye olduğu için yemin

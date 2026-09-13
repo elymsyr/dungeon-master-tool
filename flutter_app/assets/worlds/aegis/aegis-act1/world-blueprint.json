@@ -2263,8 +2263,8 @@
           "name": "Yeminin Ağırlığı",
           "source": "İrade Yemini",
           "trait_kind": "Other",
-          "description": "**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
-          "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Yeminin ilk verdiği şey bir güç değil, bir **eğitim**dir: yeminli sahaya bir savaşçı olarak değil, bir kayıt tutucu olarak çıkar.",
+          "description": "**Güç** puanın **1 artar** (en fazla 20).\n\n**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+          "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Tek puanlık güç bir bonus değil bir **takas**: kaybedilen ilahi hattın karşılığı budur, ve yeminlinin sahada durabilmesinin tek sebebi.",
           "tags": [
             "irade-yemini",
             "paladin"
@@ -2280,7 +2280,15 @@
               "match": "name",
               "value": "Investigation"
             }
-          ]
+          ],
+          "ability_bonuses": {
+            "STR": 1,
+            "DEX": 0,
+            "CON": 0,
+            "INT": 0,
+            "WIS": 0,
+            "CHA": 0
+          }
         }
       },
       {
@@ -4967,7 +4975,7 @@
             {
               "level": 3,
               "name": "Yeminin Ağırlığı",
-              "description": "**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+              "description": "**Güç** puanın **1 artar** (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
               "granted_trait_refs": [
                 {
                   "lookup": "trait",
