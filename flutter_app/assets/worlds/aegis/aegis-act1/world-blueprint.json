@@ -378,6 +378,25 @@
           "dmNotes": "**Diriltme kuralını bir tehdit olarak kullan.** Bir NPC'nin *\"onu geri getirebilirim, ama bir Can Zarım gider\"* demesi, hiç diriltme yapılmadan bu dünyanın nasıl bir yer olduğunu gösterir.\n\n**Kalıcı Yaraları oyunculara ilk çatışmadan önce söyle.** 1–5 sonucu bir karakteri kalıcı olarak topal bırakabilir; oyuncular bunu önceden bilmeli. İlk kez büyük olasılıkla @[Şafak Çatışması](entity:encounter/Şafak Çatışması)'nda gerekecek.\n\nBlight'ın büyüye etkisi ayrı bir kartta: @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) (Yozlaşma Kontrolü).",
           "imagePath": "media/Artwork/Kural-Sapmaları.webp"
         }
+      },
+      {
+        "mapping": {
+          "name": "İlahi Büyü Listesi",
+          "description": "Çağrı zarı hangi büyülerde isteniyor: Cleric, Warlock ve Paladin listelerinin SRD dökümü, ve zarsız yapılamayan büyüler.",
+          "tags": [
+            "lore",
+            "kural-sapması",
+            "ilahi-büyü",
+            "büyü-listesi"
+          ],
+          "pages": [
+            "# Zarı kim tetikler\n\nKuralın kendisi @[Kural Sapmaları](entity:lore/Kural Sapmaları) sayfa 1'de; bu kart yalnız **hangi büyü** sorusunu cevaplıyor.\n\n> **Zarı büyü değil, onu yapan tetikler.** *Cure Wounds* bir Cleric'in ağzından çıkınca çağrı zarı ister, bir Bard'ın ağzından çıkınca istemez. Aynı satır, aynı slot, aynı hasar — fark, birinin istenmiş öbürünün öğrenilmiş olması.\n\nBu yüzden aşağıdaki listeler **sınıfa göre** çıkarıldı, okula göre değil. Okul işe yaramıyor: SRD'deki 168 ilahi büyü sekiz okulun **hepsine** dağılmış durumda (en kalabalığı Abjuration 35, en azı Illusion 11), yani \"şu okul ilahidir\" diye bir çizgi yok.\n\n| Sınıf | SRD büyüsü | Zar |\n|---|---|---|\n| **Cleric** | 105 | hepsi |\n| **Warlock** | 68 | hepsi |\n| **Paladin** | 34 | hepsi — @[İrade Yemini](entity:subclass/İrade Yemini)'nin verdikleri hariç |\n| **Druid · Ranger** | — | **yok** (güç doğadan gelir, verilmiş değildir) |\n| Bard · Sorcerer · Wizard | — | **yok** |\n\n**°** işaretli büyüler ilahi olmayan bir listede de var: o sınıftan gelirse zar yok.\n\n**Warlock neden burada.** Listesinin yarısı arcane görünüyor (*Mage Hand*, *Counterspell*, *Fly*) ve bu bir hata değil: warlock'un zarı büyünün ilahi olmasından değil, gücün **verilmiş** olmasından geliyor. Patron da her seferinde cevap vermek zorunda değil.\n\n**Verilmiş olan zar istemez.** Warlock invocation'ı, paladin aurası, bir kez kazanılmış her özellik kapsam dışı. Ayrım tek cümle: *her kullanımda yeniden istenen şey zar ister.*",
+            "# Paladin — 34 büyü\n\n| Seviye | Büyü |\n|---|---|\n| **1. seviye** | Bless · Command° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Divine Favor · Divine Smite · Heroism° · Protection from Evil and Good° · Purify Food and Drink° · Searing Smite° · Shield of Faith |\n| **2. seviye** | Aid° · Find Steed · Lesser Restoration° · Magic Weapon° · Protection from Poison° · Shining Smite · Zone of Truth° |\n| **3. seviye** | Create Food and Water · Daylight° · Dispel Magic° · Magic Circle° · Remove Curse° · Revivify |\n| **4. seviye** | Aura of Life · Banishment° · Death Ward · Locate Creature° |\n| **5. seviye** | Dispel Evil and Good · Geas° · Hallow · Raise Dead° |\n\n## @[İrade Yemini](entity:subclass/İrade Yemini) muafiyeti\n\nYeminin **daima hazır** büyüleri hiçbir seviyede zar istemez — kimseye sorulmuyor, yeminin kendisinden geliyorlar:\n\n*Comprehend Languages · Shield of Faith · Locate Object · See Invisibility · Nondetection · Clairvoyance · Locate Creature · Arcane Eye · Legend Lore · Scrying*\n\nPaladin listesinden **ayrıca hazırladığı** her büyü üstteki tabloya tabidir. *Shield of Faith* iki kez geçiyor ve çelişki değil: yeminden gelen bedava, listeden hazırlanan zarlı.\n\n**Divine Smite bu kıtada yok.** SRD 5.2.1'de 1. seviye bir büyü olarak duruyor; İrade Yemini onu @[Yemin Darbesi](entity:trait/Yemin Darbesi) ile değiştiriyor — o bir büyü değil, bir trait, ve zar istemez.",
+            "# Cleric — 105 büyü\n\n**Hepsi zar ister.** Bu kart listeyi kısaltmıyor; kısaltılmadığını görmek kuralın ağırlığını anlatan şeyin kendisi.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Guidance° · Light° · Mending° · Resistance° · Sacred Flame · Spare the Dying° · Thaumaturgy |\n| **1. seviye** | Bane° · Bless · Command° · Create or Destroy Water° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Guiding Bolt · Healing Word° · Inflict Wounds · Protection from Evil and Good° · Purify Food and Drink° · Sanctuary · Shield of Faith |\n| **2. seviye** | Aid° · Augury · Blindness/Deafness° · Calm Emotions° · Continual Flame° · Enhance Ability° · Find Traps° · Gentle Repose° · Hold Person° · Lesser Restoration° · Locate Object° · Prayer of Healing · Protection from Poison° · Silence° · Spiritual Weapon · Warding Bond · Zone of Truth° |\n| **3. seviye** | Animate Dead° · Beacon of Hope · Bestow Curse° · Clairvoyance° · Create Food and Water · Daylight° · Dispel Magic° · Glyph of Warding° · Magic Circle° · Mass Healing Word° · Meld into Stone° · Protection from Energy° · Remove Curse° · Revivify · Sending° · Speak with Dead° · Spirit Guardians · Tongues° · Water Walk° |\n| **4. seviye** | Banishment° · Control Water° · Death Ward · Divination° · Freedom of Movement° · Guardian of Faith · Locate Creature° · Stone Shape° |\n| **5. seviye** | Blade Barrier° · Commune · Contagion° · Dispel Evil and Good · Flame Strike · Geas° · Greater Restoration° · Hallow · Insect Plague° · Legend Lore° · Mass Cure Wounds° · Planar Binding° · Raise Dead° · Scrying° |\n| **6. seviye** | Create Undead° · Find the Path° · Forbiddance · Harm · Heal° · Heroes' Feast° · Planar Ally · True Seeing° · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word · Etherealness° · Fire Storm° · Plane Shift° · Regenerate° · Resurrection° · Symbol° |\n| **8. seviye** | Antimagic Field° · Control Weather° · Earthquake° · Holy Aura |\n| **9. seviye** | Astral Projection° · Gate° · Mass Heal · True Resurrection° |",
+            "# Warlock — 68 büyü\n\n**Hepsi zar ister.** Sebebi ilahilik değil, verilmiş olmak — patron her çağrıda cevap vermez.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Chill Touch° · Eldritch Blast · Mage Hand° · Minor Illusion° · Poison Spray° · Prestidigitation° · True Strike° |\n| **1. seviye** | Charm Person° · Comprehend Languages° · Disguise Self° · Expeditious Retreat° · Hellish Rebuke · Hex · Illusory Script° · Protection from Evil and Good° · Unseen Servant° |\n| **2. seviye** | Darkness° · Enthrall° · Hold Person° · Invisibility° · Mind Spike° · Mirror Image° · Misty Step° · Ray of Enfeeblement° · Shatter° · Spider Climb° · Suggestion° |\n| **3. seviye** | Counterspell° · Dispel Magic° · Fear° · Fly° · Gaseous Form° · Hypnotic Pattern° · Magic Circle° · Major Image° · Remove Curse° · Tongues° · Vampiric Touch° |\n| **4. seviye** | Banishment° · Blight° · Charm Monster° · Dimension Door° · Hallucinatory Terrain° |\n| **5. seviye** | Contact Other Plane° · Dream° · Hold Monster° · Scrying° |\n| **6. seviye** | Circle of Death° · Conjure Fey° · Create Undead° · Eyebite° · Flesh to Stone° · Mass Suggestion° · True Seeing° |\n| **7. seviye** | Etherealness° · Finger of Death° · Forcecage° · Plane Shift° |\n| **8. seviye** | Befuddlement° · Demiplane° · Dominate Monster° · Glibness° · Power Word Stun° |\n| **9. seviye** | Astral Projection° · Foresight° · Imprisonment° · Power Word Kill° · True Polymorph° |",
+            "# Bu kıtada neredeyse hiç görülmeyen 38 büyü\n\nAşağıdakiler **yalnız** Cleric, Paladin ve Warlock listelerinde var: başka hiçbir sınıf bunları yapamaz, yani bu kıtada bu büyüler zarsız **hiç** yapılamaz.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Eldritch Blast · Sacred Flame · Thaumaturgy |\n| **1. seviye** | Bless · Detect Evil and Good · Divine Favor · Divine Smite · Guiding Bolt · Hellish Rebuke · Hex · Inflict Wounds · Sanctuary · Shield of Faith |\n| **2. seviye** | Augury · Find Steed · Prayer of Healing · Shining Smite · Spiritual Weapon · Warding Bond |\n| **3. seviye** | Beacon of Hope · Create Food and Water · Revivify · Spirit Guardians |\n| **4. seviye** | Aura of Life · Death Ward · Guardian of Faith |\n| **5. seviye** | Commune · Dispel Evil and Good · Flame Strike · Hallow |\n| **6. seviye** | Forbiddance · Harm · Planar Ally · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word |\n| **8. seviye** | Holy Aura |\n| **9. seviye** | Mass Heal |\n\n**DM için:** bu tablo bir yasak listesi değil, bir **nadirlik** listesi. Bir oyuncu 3. seviye bir *Revivify* denediğinde masada olan şey budur: eşik, saatlik sayaç, ve harcanan slot. Bir NPC bunlardan birini gözle görülür şekilde yaptığında ise şehirde konuşulan tek şey o olur (@[Tanrılar ve Fısıltı](entity:lore/Tanrılar ve Fısıltı))."
+          ]
+        }
       }
     ],
     "location": [
@@ -2241,6 +2260,26 @@
           "tags": [
             "irade-yemini",
             "paladin"
+          ],
+          "ability_bonuses": {
+            "STR": 1,
+            "DEX": 0,
+            "CON": 1,
+            "INT": 0,
+            "WIS": 0,
+            "CHA": 0
+          },
+          "granted_skill_proficiencies": [
+            {
+              "lookup": "skill",
+              "match": "name",
+              "value": "History"
+            },
+            {
+              "lookup": "skill",
+              "match": "name",
+              "value": "Investigation"
+            }
           ]
         }
       },

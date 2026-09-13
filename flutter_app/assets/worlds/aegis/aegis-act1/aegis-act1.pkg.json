@@ -7,10 +7,10 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.6.0",
+    "pack_version": "0.6.1",
     "counts": {
       "campaign": 1,
-      "lore": 20,
+      "lore": 21,
       "location": 18,
       "npc": 35,
       "trait": 22,
@@ -479,6 +479,32 @@
           "# Ölümün Ağırlığı\n\n*5e'ye eklenmiş kural.*\n\n*Revivify* ve üstündeki diriltme büyüleri **yalnız bir büyü yuvası harcanarak yapılamaz.**\n\n> **Bir cana karşılık, bir can.** Diriltmeye başlamadan önce bedel seçilir:\n>\n> - **Büyüyü yapan** kalıcı olarak bir **Can Zarı** kaybeder, **ya da**\n> - **Dirilen kişi** kalıcı olarak bir **yetenek puanından** vazgeçer.\n\n## Diriltme Sınavı\n\nBedeli ödemek sonucu garanti etmez.\n\nDiriltme başarısız olursa ruh üç halden biriyle döner:\n\n| Hal | Ne demek |\n|---|---|\n| **Eksik** | Bir şey geri gelmedi: bir hatıra, bir yetenek, bir alışkanlık. Kişi neyin eksik olduğunu bilmez |\n| **Bozulmuş** | Geri geldi, ama aynı değil. Kendisi olduğunu söyler; yanındakiler emin olamaz |\n| **Ele geçirilmiş** | Dönen şey o değil. Bunu DM bilir, oyuncu bilmez |",
           "# Işınlanma ve Mesafe\n\n*5e'ye eklenmiş kural.*\n\n> **4. seviye ve üstü bir ışınlanma büyüsü, yapana 1 seviye Exhaustion verir.** Uzun mesafe ışınlanma **loncalar dışında mümkün değildir.**\n\n## Mesafe\n\nKıtada haber at sırtında gider. İki gün uzaktaki bir yer, siyasi olarak da iki gün uzaktadır.\n\n> **Lucid Triton → Votumar:** atlı bir kurye için **2 gün**.\n\nBu süreyi kısaltabilecek tek kurum @[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c)'dır, ve o da kimin nereye gittiğini bilir.\n\n## Nadir malzeme\n\nYüksek seviye büyülerin nadir bileşenleri ya **lonca izniyle** ya **karaborsadan** bulunur. Karaborsanın adresi @[Gizli Liman](entity:6dc53369-23d2-564f-97a8-ea6ceaa075c7)'dır.",
           "# Kalıcı Yaralar\n\n*5e'ye eklenmiş kural.*\n\n> **Tetikleyici:** canın **0'a düşmesi**, ya da tek bir saldırıda **en yüksek canın yarısı** kadar hasar almak.\n>\n> **Zar:** d20. Düşük sonuç kötüdür.\n\n| d20 | Ağırlık | Örnek |\n|---|---|---|\n| **1–5** | **Kalıcı**; kendiliğinden iyileşmez, *Greater Restoration* ister | Topallama (hız −10 ft) · bir gözün kaybı · tutmayan bir el |\n| **6–14** | **Uzun süreli**; haftalar sürer, bakımla kısalır | Kaynamamış bir kemik · derin bir kesik · duymayan bir kulak |\n| **15–20** | **Geçici**; bir sonraki uzun dinlenmede geçer | Kaburga ağrısı · şişmiş bir göz · zonklayan bir el |"
+        ]
+      }
+    },
+    "e753666c-ec97-59ee-b270-49352d5dbbfc": {
+      "name": "İlahi Büyü Listesi",
+      "type": "lore",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Çağrı zarı hangi büyülerde isteniyor: Cleric, Warlock ve Paladin listelerinin SRD dökümü, ve zarsız yapılamayan büyüler.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "lore",
+        "kural-sapması",
+        "ilahi-büyü",
+        "büyü-listesi"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "pages": [
+          "# Zarı kim tetikler\n\nKuralın kendisi @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c) sayfa 1'de; bu kart yalnız **hangi büyü** sorusunu cevaplıyor.\n\n> **Zarı büyü değil, onu yapan tetikler.** *Cure Wounds* bir Cleric'in ağzından çıkınca çağrı zarı ister, bir Bard'ın ağzından çıkınca istemez. Aynı satır, aynı slot, aynı hasar — fark, birinin istenmiş öbürünün öğrenilmiş olması.\n\nBu yüzden aşağıdaki listeler **sınıfa göre** çıkarıldı, okula göre değil. Okul işe yaramıyor: SRD'deki 168 ilahi büyü sekiz okulun **hepsine** dağılmış durumda (en kalabalığı Abjuration 35, en azı Illusion 11), yani \"şu okul ilahidir\" diye bir çizgi yok.\n\n| Sınıf | SRD büyüsü | Zar |\n|---|---|---|\n| **Cleric** | 105 | hepsi |\n| **Warlock** | 68 | hepsi |\n| **Paladin** | 34 | hepsi — @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616)'nin verdikleri hariç |\n| **Druid · Ranger** | — | **yok** (güç doğadan gelir, verilmiş değildir) |\n| Bard · Sorcerer · Wizard | — | **yok** |\n\n**°** işaretli büyüler ilahi olmayan bir listede de var: o sınıftan gelirse zar yok.\n\n**Warlock neden burada.** Listesinin yarısı arcane görünüyor (*Mage Hand*, *Counterspell*, *Fly*) ve bu bir hata değil: warlock'un zarı büyünün ilahi olmasından değil, gücün **verilmiş** olmasından geliyor. Patron da her seferinde cevap vermek zorunda değil.\n\n**Verilmiş olan zar istemez.** Warlock invocation'ı, paladin aurası, bir kez kazanılmış her özellik kapsam dışı. Ayrım tek cümle: *her kullanımda yeniden istenen şey zar ister.*",
+          "# Paladin — 34 büyü\n\n| Seviye | Büyü |\n|---|---|\n| **1. seviye** | Bless · Command° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Divine Favor · Divine Smite · Heroism° · Protection from Evil and Good° · Purify Food and Drink° · Searing Smite° · Shield of Faith |\n| **2. seviye** | Aid° · Find Steed · Lesser Restoration° · Magic Weapon° · Protection from Poison° · Shining Smite · Zone of Truth° |\n| **3. seviye** | Create Food and Water · Daylight° · Dispel Magic° · Magic Circle° · Remove Curse° · Revivify |\n| **4. seviye** | Aura of Life · Banishment° · Death Ward · Locate Creature° |\n| **5. seviye** | Dispel Evil and Good · Geas° · Hallow · Raise Dead° |\n\n## @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616) muafiyeti\n\nYeminin **daima hazır** büyüleri hiçbir seviyede zar istemez — kimseye sorulmuyor, yeminin kendisinden geliyorlar:\n\n*Comprehend Languages · Shield of Faith · Locate Object · See Invisibility · Nondetection · Clairvoyance · Locate Creature · Arcane Eye · Legend Lore · Scrying*\n\nPaladin listesinden **ayrıca hazırladığı** her büyü üstteki tabloya tabidir. *Shield of Faith* iki kez geçiyor ve çelişki değil: yeminden gelen bedava, listeden hazırlanan zarlı.\n\n**Divine Smite bu kıtada yok.** SRD 5.2.1'de 1. seviye bir büyü olarak duruyor; İrade Yemini onu @[Yemin Darbesi](entity:ac360ec5-13a9-56f7-b3df-463b1cf3c03a) ile değiştiriyor — o bir büyü değil, bir trait, ve zar istemez.",
+          "# Cleric — 105 büyü\n\n**Hepsi zar ister.** Bu kart listeyi kısaltmıyor; kısaltılmadığını görmek kuralın ağırlığını anlatan şeyin kendisi.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Guidance° · Light° · Mending° · Resistance° · Sacred Flame · Spare the Dying° · Thaumaturgy |\n| **1. seviye** | Bane° · Bless · Command° · Create or Destroy Water° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Guiding Bolt · Healing Word° · Inflict Wounds · Protection from Evil and Good° · Purify Food and Drink° · Sanctuary · Shield of Faith |\n| **2. seviye** | Aid° · Augury · Blindness/Deafness° · Calm Emotions° · Continual Flame° · Enhance Ability° · Find Traps° · Gentle Repose° · Hold Person° · Lesser Restoration° · Locate Object° · Prayer of Healing · Protection from Poison° · Silence° · Spiritual Weapon · Warding Bond · Zone of Truth° |\n| **3. seviye** | Animate Dead° · Beacon of Hope · Bestow Curse° · Clairvoyance° · Create Food and Water · Daylight° · Dispel Magic° · Glyph of Warding° · Magic Circle° · Mass Healing Word° · Meld into Stone° · Protection from Energy° · Remove Curse° · Revivify · Sending° · Speak with Dead° · Spirit Guardians · Tongues° · Water Walk° |\n| **4. seviye** | Banishment° · Control Water° · Death Ward · Divination° · Freedom of Movement° · Guardian of Faith · Locate Creature° · Stone Shape° |\n| **5. seviye** | Blade Barrier° · Commune · Contagion° · Dispel Evil and Good · Flame Strike · Geas° · Greater Restoration° · Hallow · Insect Plague° · Legend Lore° · Mass Cure Wounds° · Planar Binding° · Raise Dead° · Scrying° |\n| **6. seviye** | Create Undead° · Find the Path° · Forbiddance · Harm · Heal° · Heroes' Feast° · Planar Ally · True Seeing° · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word · Etherealness° · Fire Storm° · Plane Shift° · Regenerate° · Resurrection° · Symbol° |\n| **8. seviye** | Antimagic Field° · Control Weather° · Earthquake° · Holy Aura |\n| **9. seviye** | Astral Projection° · Gate° · Mass Heal · True Resurrection° |",
+          "# Warlock — 68 büyü\n\n**Hepsi zar ister.** Sebebi ilahilik değil, verilmiş olmak — patron her çağrıda cevap vermez.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Chill Touch° · Eldritch Blast · Mage Hand° · Minor Illusion° · Poison Spray° · Prestidigitation° · True Strike° |\n| **1. seviye** | Charm Person° · Comprehend Languages° · Disguise Self° · Expeditious Retreat° · Hellish Rebuke · Hex · Illusory Script° · Protection from Evil and Good° · Unseen Servant° |\n| **2. seviye** | Darkness° · Enthrall° · Hold Person° · Invisibility° · Mind Spike° · Mirror Image° · Misty Step° · Ray of Enfeeblement° · Shatter° · Spider Climb° · Suggestion° |\n| **3. seviye** | Counterspell° · Dispel Magic° · Fear° · Fly° · Gaseous Form° · Hypnotic Pattern° · Magic Circle° · Major Image° · Remove Curse° · Tongues° · Vampiric Touch° |\n| **4. seviye** | Banishment° · Blight° · Charm Monster° · Dimension Door° · Hallucinatory Terrain° |\n| **5. seviye** | Contact Other Plane° · Dream° · Hold Monster° · Scrying° |\n| **6. seviye** | Circle of Death° · Conjure Fey° · Create Undead° · Eyebite° · Flesh to Stone° · Mass Suggestion° · True Seeing° |\n| **7. seviye** | Etherealness° · Finger of Death° · Forcecage° · Plane Shift° |\n| **8. seviye** | Befuddlement° · Demiplane° · Dominate Monster° · Glibness° · Power Word Stun° |\n| **9. seviye** | Astral Projection° · Foresight° · Imprisonment° · Power Word Kill° · True Polymorph° |",
+          "# Bu kıtada neredeyse hiç görülmeyen 38 büyü\n\nAşağıdakiler **yalnız** Cleric, Paladin ve Warlock listelerinde var: başka hiçbir sınıf bunları yapamaz, yani bu kıtada bu büyüler zarsız **hiç** yapılamaz.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Eldritch Blast · Sacred Flame · Thaumaturgy |\n| **1. seviye** | Bless · Detect Evil and Good · Divine Favor · Divine Smite · Guiding Bolt · Hellish Rebuke · Hex · Inflict Wounds · Sanctuary · Shield of Faith |\n| **2. seviye** | Augury · Find Steed · Prayer of Healing · Shining Smite · Spiritual Weapon · Warding Bond |\n| **3. seviye** | Beacon of Hope · Create Food and Water · Revivify · Spirit Guardians |\n| **4. seviye** | Aura of Life · Death Ward · Guardian of Faith |\n| **5. seviye** | Commune · Dispel Evil and Good · Flame Strike · Hallow |\n| **6. seviye** | Forbiddance · Harm · Planar Ally · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word |\n| **8. seviye** | Holy Aura |\n| **9. seviye** | Mass Heal |\n\n**DM için:** bu tablo bir yasak listesi değil, bir **nadirlik** listesi. Bir oyuncu 3. seviye bir *Revivify* denediğinde masada olan şey budur: eşik, saatlik sayaç, ve harcanan slot. Bir NPC bunlardan birini gözle görülür şekilde yaptığında ise şehirde konuşulan tek şey o olur (@[Tanrılar ve Fısıltı](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b))."
         ]
       }
     },
@@ -2529,7 +2555,25 @@
       "attributes": {
         "source": "İrade Yemini",
         "trait_kind": "Other",
-        "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Kaybedilen ilahi hattın karşılığı budur; bir bonus değil, bir takas."
+        "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Kaybedilen ilahi hattın karşılığı budur; bir bonus değil, bir takas.",
+        "ability_bonuses": {
+          "STR": 1,
+          "DEX": 0,
+          "CON": 1,
+          "INT": 0,
+          "WIS": 0,
+          "CHA": 0
+        },
+        "granted_skill_proficiencies": [
+          {
+            "_lookup": "skill",
+            "name": "History"
+          },
+          {
+            "_lookup": "skill",
+            "name": "Investigation"
+          }
+        ]
       }
     },
     "ac360ec5-13a9-56f7-b3df-463b1cf3c03a": {

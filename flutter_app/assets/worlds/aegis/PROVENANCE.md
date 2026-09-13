@@ -4,7 +4,17 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
-**Sürüm 0.6.0 — 163 entity** (2026-09-13). 0.6.0 **ilahi büyü turu**: `mek` §3 yeniden
+**Sürüm 0.6.1 — 165 entity** (2026-09-13). Çağrı zarının **liste** tarafı: `lore/İlahi
+Büyü Listesi` kartı eklendi — SRD 5.2.1'in Cleric (105) · Warlock (68) · Paladin (34)
+büyü listeleri seviyeye göre dökülmüş, ilahi olmayan bir listede de geçen büyüler `°` ile
+işaretli, ve yalnız bu üç listede olan **38 büyü** ayrı bir sayfada (bu kıtada zarsız hiç
+yapılamayanlar). Listeler `assets/open5e_packs/dnd5e-srd.pkg.json`'daki `class_refs`
+alanından çıkarıldı, elle yazılmadı. Kartın kural tarafı yok — o @[Kural Sapmaları] sayfa
+1'de duruyor. Aynı turda `trait/Yeminin Ağırlığı` mekaniğine kavuştu: STR +1 · CON +1
+(`ability_bonuses`) ve History · Investigation yetkinliği (`granted_skill_proficiencies`)
+artık kartın üstünde, yalnız metinde değil.
+
+**Sürüm 0.6.0 — 164 entity** (2026-09-13). 0.6.0 **ilahi büyü turu**: `mek` §3 yeniden
 yazıldı ve her ilahi büyü artık bir **çağrı zarı** istiyor (çatışmada 19; çatışma dışında
 saat içinde 18 → 20 → doğal 20 → imkansız), kapsam Cleric · Warlock · Paladin'in ilahi
 büyüleri. Bunun iki sonucu kartlara girdi: **Cleric ve Warlock oynanamaz** (giriş kartının
