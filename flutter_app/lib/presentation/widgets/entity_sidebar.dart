@@ -745,9 +745,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                         icon: const Icon(Icons.add, size: 18),
                         label: Text(l10n.btnCreate),
                         style: FilledButton.styleFrom(
-                          backgroundColor: palette.successBtnBg,
-                          foregroundColor: palette.successBtnText,
+                          backgroundColor: palette.primaryBtnBg,
+                          foregroundColor: palette.primaryBtnText,
                           minimumSize: const Size(0, 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: palette.br,
+                          ),
                         ),
                       ),
                     ),
