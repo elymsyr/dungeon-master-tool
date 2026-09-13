@@ -15,6 +15,11 @@
 > kıtada oynanamaz hale getirdi, ve Paladin'in bu dünyada nasıl ayakta kaldığını
 > söyleyen kart budur.
 >
+> **Karar (2026-09-13): dört alt sınıfın ikisi artık SRD 5.2.1 iskeletinde.** İrade
+> Yemini 1. seviyeden **3**'e alındı (§6.3) ve Siper Okulu zaten 3'te açılıyor. Geriye
+> 2014 şeklinde açılan yalnız iki **ithal** kart kalıyor (Clockwork Soul 1, Drakewarden
+> 3) — onlar özgünüyle aynı kalmaya devam ediyor.
+>
 > **Karar (2026-09-13): Siper Okulu yazıldı** (§4). Dördüncüsü de ithal değil ve aynı
 > kuralın ikinci yarısını cevaplıyor: çağrı zarı ilahi **iyileştirmeyi** de güvenilmez
 > yaptı, ve bir grubun iyileştiricisi yoksa hasarın alınmaması gerekir. Bu kart o işi
@@ -153,7 +158,7 @@ Drake ölürse ya da uzaklaşırsa geri çağrılabilir — çağırma kuralı a
 
 **Kaynak:** Aegis. Bu alt sınıf **bu dünyanın kendi kartıdır** — SRD'de ya da bir
 WotC kitabında karşılığı yok.
-**Açıldığı seviye:** **1** (sapma — §6.3).
+**Açıldığı seviye:** **3** (SRD 5.2.1 ile aynı — sapma yok).
 
 ### 3.1 Ne olduğu
 
@@ -181,8 +186,8 @@ alınacağını tartışıyor.
 
 | Sv | Özellik | Mekanik |
 |---|---|---|
-| **1** | **Yeminin Ağırlığı** | **Güç** ve **Dayanıklılık** puanların **1'er artar** (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın. |
-| **1** | **Yemin Darbesi** | Yakın silahlı saldırın isabet ettiğinde, bir **büyü slotu** harcayarak fazladan **2d8 kuvvet** hasarı verirsin; 1. seviyenin üstündeki her slot kademesi için **+1d8**, en fazla **5d8**. Hedef **Blight'lı** bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır; bu yemini tutan paladin Divine Smite hazırlamaz.* |
+| **3** | **Yeminin Ağırlığı** | **History** ve **Investigation** becerilerinde yetkinlik kazanırsın. |
+| **3** | **Yemin Darbesi** | Yakın silahlı saldırın isabet ettiğinde, bir **büyü slotu** harcayarak fazladan **2d8 kuvvet** hasarı verirsin; 1. seviyenin üstündeki her slot kademesi için **+1d8**, en fazla **5d8**. Hedef **Blight'lı** bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır; bu yemini tutan paladin Divine Smite hazırlamaz.* |
 | **3** | **Yemin Büyüleri** | §3.3'ün listesi senin için **daima hazırdır**, hazırlanan büyü sayısına sayılmaz, ve **çağrı zarı istemez** ([`mekanikler.md` §3.1](mekanikler.md)). |
 | **3** | **Yemin Andı: Cepheyi Tut** | **Channel Divinity.** Aksiyon; bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların **Blight — Enfeksiyon** maruziyet zarlarını **avantajlı** atar. |
 | **7** | **Bozulmayan Söz** | **10 ft** içindeki dostların (sen dahil) **Hastalık Puanı** kazandıracak her kurtulma zarını **avantajlı** atar. 18. seviyede menzil **30 ft** olur. |
@@ -198,7 +203,7 @@ güvenilir**, ve bu bilerek böyle.
 
 | Karakter sv | Büyüler |
 |---|---|
-| **3** | Comprehend Languages · Shield of Faith |
+| **3** | Comprehend Languages |
 | **5** | Locate Object · See Invisibility |
 | **9** | Nondetection · Clairvoyance |
 | **13** | Locate Creature · Arcane Eye |
@@ -213,8 +218,10 @@ kovalamak. Yeminin verdiği iki beceri (History, Investigation) ile aynı karakt
 anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araştırılır" —
 [`act1.md` §3.2](act1.md)) aynı yöne bakıyor.
 
-> *Shield of Faith* masada **Tutulan Söz** diye anılır; kart adı SRD'deki hâliyle
-> kalır, çünkü bu dünyada bir büyünün adı bir kurumun verdiği addır, yapanın değil.
+> **3. kademe tek büyü taşır.** *Shield of Faith* bu listeden **çıkarıldı**
+> (2026-09-13): yeminin 3. seviyede verdiği şey zaten dolu — Yeminin Ağırlığı, Yemin
+> Darbesi ve Channel Divinity aynı seviyede geliyor. Kalkanı da eklemek yemini açıldığı
+> ilk turda SRD paladininin önüne geçiriyordu.
 
 ---
 
@@ -321,25 +328,29 @@ korundu: kart çağrı zarının açtığı boşluğu kapatıyor, o boşluğu yo
 
 | Kart | Kategori | Ne |
 |---|---|---|
-| **İrade Yemini** | `subclass` | Ana kart. `parent_class_ref` → SRD `Paladin`, `granted_at_level` **1**. `caster_kind` **yazılmadı** — boş bırakıldığında ana sınıf karar verir, yani Paladin'in `Half` ilerlemesi korunur |
-| **Yeminin Ağırlığı** | `trait` | +1 Güç, +1 Dayanıklılık · History + Investigation |
+| **İrade Yemini** | `subclass` | Ana kart. `parent_class_ref` → SRD `Paladin`, `granted_at_level` **3**. `caster_kind` **yazılmadı** — boş bırakıldığında ana sınıf karar verir, yani Paladin'in `Half` ilerlemesi korunur |
+| **Yeminin Ağırlığı** | `trait` | History + Investigation yetkinliği |
 | **Yemin Darbesi** | `trait` | Yuva harcayan 2d8 kuvvet, Blight'lıya +1d8 |
 | **Yemin Andı: Cepheyi Tut** | `trait` | Channel Divinity — maruziyet zarlarında avantaj |
 | **Bozulmayan Söz** | `trait` | 7. seviye aura |
 | **Yemin Yorulmaz** | `trait` | 15. seviye · `pool:yemin_yorulmaz` |
 | **Andın Hâli** | `trait` | 20. seviye · `pool:andin_hali` |
 
-**Yemin büyüleri ayrı kart değil:** §3.3'ün on büyüsü ana kartın `features` satırlarında
+**Yemin büyüleri ayrı kart değil:** §3.3'ün dokuz büyüsü ana kartın `features` satırlarında
 `always_prepared_spell_refs` ile referans veriliyor (3/5/9/13/17 kademeleri), tıpkı
 Clockwork Magic gibi. Hepsi SRD'de var, yeni `spell` kartı yazılmadı.
 
-> **Şema notu — iki satır mekanik değil metin.** `subclass.features` satırları yetenek
-> puanı artışı ve sabit beceri yetkinliği taşıyamıyor (satırın verebildikleri: direnç,
-> bağışıklık, duyu, dil, daima hazır büyü, `trait`/`feat`/aksiyon referansı). Bu yüzden
-> **+1 Güç / +1 Dayanıklılık** ve **History + Investigation** kartta *yazılı* ama
-> uygulamada *otomatik uygulanmıyor* — oyuncu karakter sayfasında elle işler.
+> **Şema notu — beceri satırı mekanik değil metin.** `subclass.features` satırı sabit
+> beceri yetkinliği taşıyamıyor (satırın verebildikleri: direnç, bağışıklık, duyu, dil,
+> daima hazır büyü, `trait`/`feat`/aksiyon referansı). Bu yüzden **History +
+> Investigation** ana kartta *yazılı* ama uygulamada *otomatik uygulanmıyor* — bağlı
+> `trait/Yeminin Ağırlığı` onu `granted_skill_proficiencies` ile veriyor, yani karakter
+> sayfasında doğru görünüyor; ana kartın kendi satırı sadece metin.
 > `bonus_skill_pick_count` bilerek kullanılmadı: o alan "iki beceri **seç**" demek,
 > yeminin verdiği ise iki **belirli** beceri.
+>
+> **Yetenek puanı bonusu (2026-09-13) kaldırıldı** — `trait/Yeminin Ağırlığı` artık
+> `ability_bonuses` taşımıyor. Gerekçe §6.3'te.
 
 ### 5.4 Siper Okulu — 8 kart
 
@@ -415,21 +426,28 @@ Paladin'ine göre** neyin değiştiği:
 
 | SRD Paladin | İrade Yemini | Neden | Denge etkisi |
 |---|---|---|---|
-| Alt sınıf **3. seviyede** | **1. seviyede** | Bu düzende yemin ilk gün edilir ve o gün deftere geçer. Kural gereği de zorunlu: paladin 1. seviyeden itibaren ilahi büyüye güvenemez (§3.1), bu yüzden karşılığı 1. seviyede verilmeli | **Artı.** İki seviye erken açılan bir yemin |
+| Alt sınıf **3. seviyede** | **Aynı** | 2026-09-13'te 1. seviyeden 3'e alındı. Erken açılış yemini SRD paladininin önüne geçiriyordu ve dünyadaki tek 2014-şekilli seviye buydu; artık dört alt sınıfın ikisi (bu ve Siper Okulu) SRD 5.2.1 iskeletinde | **Yok.** Tek uyumlu nokta, ve bilerek öyle |
 | **Divine Smite** (büyü) | **Yemin Darbesi** (özellik) | Smite bir ilahi büyüdür ve çağrı zarına girerdi; paladinin hasar motoru zara bağlanamaz | **Nötr.** Zarlar ve slot maliyeti aynı; hasar tipi **kuvvet**, ve Blight'lıya **+1d8** eklendi. Şeytan/ölümsüz bonusunun yerini bu kıtanın gerçek düşmanı aldı |
 | Paladin büyü listesi serbest | Liste duruyor, ama **yemin dışı her ilahi büyü çağrı zarına tabi** | [`mekanikler.md` §3.1](mekanikler.md) | **Ağır eksi.** Yardımcı büyü hattı (Bless, Cure Wounds, Shield of Faith dışı her şey) pratikte kapanır |
-| — | **+1 Güç, +1 Dayanıklılık** | Kaybedilen yardımcı hattın karşılığı | **Artı.** Yaklaşık yarım feat |
+| — | ~~**+1 Güç, +1 Dayanıklılık**~~ | **Kaldırıldı (2026-09-13).** Yeminin Ağırlığı bir yetenek puanı paketi değil, bir eğitim: düzen dua değil kayıt öğretiyor. Yarım feat'lik bedava bonus da alt sınıfı SRD yeminlerinin üstüne çıkarıyordu | **Eksi.** Yemin artık yalnız beceri veriyor |
 | — | **History + Investigation** | Düzen bir hukuk ve kayıt kurumu; yemin büyüleri de aynı karakteri anlatıyor (§3.3) | **Hafif artı.** Savaşta karşılığı yok |
+| 3. sv yemin büyüleri **iki** tane | **Bir** tane (Comprehend Languages) | *Shield of Faith* çıkarıldı (2026-09-13): 3. seviye zaten Yeminin Ağırlığı + Yemin Darbesi + Channel Divinity taşıyor | **Eksi.** Açılış turu bir kalkan büyüsü kaybetti |
 | Yemin büyüleri kutsama/koruma ağırlıklı | **Soruşturma listesi** (§3.3) | Bu düzenin işi bulmak ve tutmak | **Nötr.** Savaş gücü düşük, perde gücü yüksek |
 
-**Net:** 1–5. seviyede SRD paladininden **bir tık güçlü** (erken yemin + iki puan),
-10. seviyeden sonra **belirgin zayıf** (yardımcı büyü hattı yok). Act 1 baştan sona
-1–2. seviye; masada ilk hissedilecek fark, paladinin ilk turda smite atabiliyor
-olması.
+**Net (2026-09-13 sadeleştirmesinden sonra):** yemin artık SRD paladininin **üstünde
+değil, altında** duruyor. 1–2. seviyede hiçbir farkı yok — alt sınıf 3'te açılıyor.
+3. seviyeden sonra Divine Smite'ın yerini eşdeğer bir özellik alıyor (nötr), iki beceri
+geliyor (hafif artı), ve yardımcı ilahi büyü hattının tamamı çağrı zarına takılıyor
+(ağır eksi). Act 1 baştan sona 1–2. seviye olduğu için **masada Act 1 boyunca fark
+hissedilmeyecek**: paladin perdenin sonuna kadar yeminsiz oynar.
 
-> **DM için tek düğme:** masanız erken açılan yemini fazla bulursa **Yemin
-> Darbesi'ni 2. seviyeye** alın. Yeminin Ağırlığı 1'de kalsın — o, kaybedilen
-> hattın karşılığı, bir bonus değil.
+> **Act 1 uyarısı.** Yemin 3. seviyeye taşındığı için Act 1'de açılmıyor. Bu bir hata
+> değil ama masaya söylenmeli: perde boyunca paladin sadece SRD Paladin'i, ve
+> `mekanikler.md` §3.1 gereği ilahi büyüleri zara tabi. Yemin, perdenin ödülü.
+
+> **DM için tek düğme:** yemini fazla zayıf bulursanız 3. kademeye *Shield of Faith*'i
+> geri koyun — çıkarılan tek şey odur ve geri koymak başka hiçbir satırı bozmaz.
+> Yetenek puanlarını geri koymayın; onlar bilerek terk edildi.
 
 ### 6.4 Siper Okulu
 
@@ -478,10 +496,12 @@ büyücünün kendi sayfasında görünmüyor. İyileştiricisi olan bir masada 
    uyarlaması — *Kayıt Ruhu* / *Pul Bağıtlısı*, defter-mühür ve bağıt-rün kurgusu,
    Yazısız yoldaş, Mühürsüz Kalem lisans sorunu — **geri alındı**.
 3. **Kanat yok** (§2.3) ve **ejderha yok** (§2.2). Bu iki sapma kalıcıdır.
-4. **İrade Yemini kanon** (2026-09-13, §3): 1. seviyede açılır, +1 Güç / +1 Dayanıklılık
-   ve History + Investigation verir, Divine Smite'ın yerini **Yemin Darbesi** alır, ve
-   verdiği hiçbir şey **çağrı zarı istemez.** Paladin'in bu kıtada oynanabilir tek
-   biçimi budur.
+4. **İrade Yemini kanon** (2026-09-13, §3): **3. seviyede** açılır, History +
+   Investigation verir, Divine Smite'ın yerini **Yemin Darbesi** alır, ve verdiği hiçbir
+   şey **çağrı zarı istemez.** Paladin'in bu kıtada oynanabilir tek biçimi budur.
+   *Sadeleştirme (2026-09-13, aynı gün):* açılış 1 → **3**, `+1 Güç / +1 Dayanıklılık`
+   **kaldırıldı**, ve 3. kademe yemin büyülerinden *Shield of Faith* **çıkarıldı**. Üçü
+   birden yemini SRD paladininin önüne geçiren ne varsa geri alıyor; gerekçeler §6.3.
 5. **Siper Okulu kanon** (2026-09-13, §4): 3. seviyede açılır, kademeleri 3/6/10/14'tür
    ve çağrı zarına girmez. Çağrı zarının açtığı ikinci boşluğu — **güvenilir iyileştirici
    yokluğunu** — kapatır; kapatma biçimi iyileştirme değil, **hasarın alınmaması**.

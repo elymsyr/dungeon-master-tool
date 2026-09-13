@@ -367,7 +367,7 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 |---|---|---|---|
 | **Clockwork Soul** | Sorcerer (1. sv) | Mechanus'un düzeninden gelen büyü: fazlalığı siler, eksiği tamamlar, sapmayı hizaya çeker | ✅ |
 | **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
-| **İrade Yemini** | Paladin (1. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. +1 Güç / +1 Dayanıklılık, History + Investigation, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
+| **İrade Yemini** | Paladin (3. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. History + Investigation yetkinliği, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
 | **Siper Okulu** | Wizard (3. sv) | Çağrı zarı güvenilir iyileştiriciyi ortadan kaldırdı; bu okul boşluğu **iyileştirerek değil, hasarı aldırmayarak** kapatır. Abjuration büyüsünün sırtında, oyuncunun seçtiği anda örülen ve 0 canda **kırılan** günlük bir **Siper** (`2 × sv + Zeka`), 6. seviyede dostlara uzatılan tepki, 10'da **Karşı Büyücü** | ✅ |
 
 Bağlı kartlar: `animal/Drake` · 21 `trait` · 10 `creature-action` · 9 `resource-pool`

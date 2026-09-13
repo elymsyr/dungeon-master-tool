@@ -4,6 +4,23 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.6.9 — 172 entity** (2026-09-13). **İrade Yemini sadeleştirmesi.** Yeni kart
+yok; üç mekanik geri alındı. (1) Alt sınıf **1. seviyeden 3'e** taşındı — `granted_at_level`
+**3**, ve 1. seviyedeki iki özellik (Yeminin Ağırlığı · Yemin Darbesi) 3'e indi. Bu, dünyanın
+özgün kartlarındaki son 2014-şekilli açılış seviyesini kapatıyor; Siper Okulu zaten 3'tü.
+(2) `trait/Yeminin Ağırlığı`'nın `ability_bonuses` alanı (**STR +1 · CON +1**) **silindi** —
+0.6.1'de eklenmişti; geriye `granted_skill_proficiencies` (History · Investigation) kalıyor.
+(3) 3. kademe yemin büyülerinden ***Shield of Faith* çıkarıldı**; o kademe artık tek büyü
+taşıyor (*Comprehend Languages*). Üç maddenin ortak gerekçesi `alt` §6.3'te: yemin SRD
+paladininin önüne geçiyordu ve sapma defterindeki "artı" satırlarının hepsi buradan
+geliyordu.
+
+Metin eşleştirmesi: `campaign/Aegis` giriş kartının *Karakter yaratma* sayfası "1. seviyede
+açılır" diyordu → **3**; `lore/İlahi Büyü Listesi`'ndeki daima-hazır yemin büyüsü listesinden
+*Shield of Faith* çıkarıldı. **Act 1 etkisi kayda geçti:** perde 1–2. seviye olduğu için yemin
+Act 1 boyunca açılmıyor — paladin perde boyunca SRD Paladin'i, ve `mek` §3.1 gereği ilahi
+büyüleri zara tabi.
+
 **Sürüm 0.6.8 — 172 entity** (2026-09-13). **Siper Okulu turu.** Çağrı zarının üçüncü
 ve son sonucu kartlara girdi: kural Cleric ve Warlock'u oynanamaz yapınca (`mek` §3.1)
 masada güvenilir bir iyileştirici kalmadı, ve bu boşluk için Wizard'a Aegis'in kendi alt
