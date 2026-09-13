@@ -8,8 +8,11 @@ denetiminin yerini bu dosya tutar.
 yok; üç mekanik geri alındı. (1) Alt sınıf **1. seviyeden 3'e** taşındı — `granted_at_level`
 **3**, ve 1. seviyedeki iki özellik (Yeminin Ağırlığı · Yemin Darbesi) 3'e indi. Bu, dünyanın
 özgün kartlarındaki son 2014-şekilli açılış seviyesini kapatıyor; Siper Okulu zaten 3'tü.
-(2) `trait/Yeminin Ağırlığı`'nın `ability_bonuses` alanı (**STR +1 · CON +1**) **silindi** —
-0.6.1'de eklenmişti; geriye `granted_skill_proficiencies` (History · Investigation) kalıyor.
+(2) `trait/Yeminin Ağırlığı`'nın `ability_bonuses` alanı **STR +1 · CON +1**'den
+**yalnız STR +1**'e indirildi (alan 0.6.1'de eklenmişti); `granted_skill_proficiencies`
+(History · Investigation) olduğu gibi duruyor. İki puan birden yarım feat ediyordu ve
+sapma defterinin en büyük "artı" satırıydı; tek puan yeminlinin sahada durabilmesinin
+karşılığı olarak bırakıldı.
 (3) 3. kademe yemin büyülerinden ***Shield of Faith* çıkarıldı**; o kademe artık tek büyü
 taşıyor (*Comprehend Languages*). Üç maddenin ortak gerekçesi `alt` §6.3'te: yemin SRD
 paladininin önüne geçiyordu ve sapma defterindeki "artı" satırlarının hepsi buradan
