@@ -213,7 +213,7 @@ anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araş
 
 ## 4. Yazılan kartlar
 
-### 4.1 Clockwork Soul — 8 kart
+### 4.1 Clockwork Soul — 9 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|
@@ -224,7 +224,7 @@ anlatıyor, ve perdenin kurucu cümlesiyle ("salgın araştırılmaz, suç araş
 | **Trance of Order** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + bonus aksiyon |
 | **Clockwork Cavalcade** | `trait` + `creature-action` | Havuz (1 / uzun dinlenme) + aksiyon |
 
-### 4.2 Drakewarden — 12 kart
+### 4.2 Drakewarden — 13 kart
 
 | Kart | Kategori | Ne |
 |---|---|---|

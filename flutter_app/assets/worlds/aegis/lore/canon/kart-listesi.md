@@ -44,13 +44,13 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 
 | Kart | Ne | Durum |
 |---|---|---|
+| **Fihrist** | Kart aramayı bitiren kart: üç zincirin, 18 mekanın, dokuz background'ın ve kural kartlarının fihristi. 7 sayfa | ✅ |
 | **İrade Çağı** | Tanrıların kesilmesi, özgürlüğün bedeli | ✅ |
 | **Tanrılar ve Fısıltı** | Bant genişliği kalmamış sevgi; ilahi büyünün bugünkü durumu | ✅ |
 | **Blight — Bilinen Hali** | Halkın bildiği yüz. Yön değil **taşıyıcı** anlatılır | ✅ |
 | **Vorstrand — Bilinen Hali** | Hastalığın geldiği, üçlünün kaçtığı yer. Halk ağzında sadece **"Öte"** | ✅ |
 | **Konsey ve Lonca Meclisi** | Konsey çerçeve, Meclis içerik; altı koltuğu loncalar doldurur | ✅ |
 | **Sancak Kaydı** | Mühür = hukuki kimlik; kayıtsızın kaybolması kayda geçmez. Üç sınıf: **Mühürlü · Kayıtlı · Yazısız** | ✅ |
-| **Kayıt Nasıl İşler** | Defterin işleyişi: kim yazar, ne yazılır, nasıl yükselinir, nasıl silinir. Sancak Kaydı'nın prosedür yüzü | ✅ |
 | **Büyücü Loncası** | İzinli büyü, akademi, ışınlanma kaydı. Hanesiz koltuk | ✅ |
 | **Sınır ve Ticaret Loncası** | Geçiş, gümrük, tonaj, tahıl; taşrada Sancak Kaydı'nın kalemi. Hane: Sancarlar | ✅ |
 | **Demircilik ve İşçi Loncası** | Metal, sikke, **ayar damgası**, yevmiye. Hane: Ferrunlar | ✅ |
@@ -64,10 +64,12 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **Gümüş Kalkan Nişanı** | Votumar'ın paladin düzeni: ağır zırh, kule kalkanı, kusursuz nizam | ✅ |
 | **Kuzeyin Gözcüleri** | Ravenhall'ın druid kabilesi; kararı döngü ve rün verir, oylama değil | ✅ |
 | **Liman Ahdi** | Gizli Liman'ın sözlü kanunu. İki ağır ihlal: **yeri ifşa etmek** · **izinsiz gemiye girmek** | ✅ |
-| **Kural Sapmaları** | 3 sayfa: *Ölümün Ağırlığı* (diriltmenin bedeli) · *Işınlanma ve Mesafe* · *Kalıcı Yaralar* | 🟡 |
+| **Kural Sapmaları** | 4 sayfa: *Çağrı Zarı* · *Ölümün Ağırlığı* (diriltmenin bedeli) · *Işınlanma ve Mesafe* · *Kalıcı Yaralar* | 🟡 |
+| **İlahi Büyü Listesi** | Çağrı zarını hangi büyüler istiyor: Paladin (34) · Cleric (105) · Warlock (68) dökümü, ve bu kıtada neredeyse hiç görülmeyen 38 büyü | ✅ |
 
-`lore/Kayıt Nasıl İşler` — `Sancak Kaydı` sınıfları anlatır, bu kart **işlemi**
-anlatır. Altı sayfa, hepsi masada sorulan bir soruya karşılık gelir:
+`lore/Sancak Kaydı` s.2 — *Defter nasıl işler*. **Ayrı kart değil** (0.4.0'da
+birleşti): kartın 1. sayfası sınıfları anlatır, 2. sayfası **işlemi**. Altı bölüm,
+hepsi masada sorulan bir soruya karşılık gelir:
 
 1. **Kim yazar** — defter Konsey'in, kalem loncanın: şehirde her lonca kendi
    sicilini kendi tutar, taşrada tek kalem **Sınır ve Ticaret**'tir
@@ -99,7 +101,7 @@ anlatır. Altı sayfa, hepsi masada sorulan bir soruya karşılık gelir:
    bir satır silinemez. Act 1'de silinen tek defter **Gizli Liman'ın kendi defteri**
    (`act1.md` §7.5). Şehir defterleri temiz.
 
-Kartın `secrets` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir** —
+Kartın `dmNotes` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir** —
 Sicim de Vinç Ustası da aynı rakamı söyler, çünkü rakamı koyan yer aynıdır.
 
 `lore/Kural Sapmaları` 🟡: üç sayfanın da **sayıları** karar bekliyor (Diriltme
@@ -123,6 +125,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Rıhtım** | Gizli Liman | Limanın çalışan yüzü; üç iskele, tebeşir işareti, bayraksız tekneler | ✅ |
 | **Lucid Triton** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir. Resmi kayıtta *Lucidum Triton* | ✅ |
 | **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
+| **Meclis Salonu** | Lucid Triton | Altı koltuğun toplandığı oda; §8'in iki sahnesinin yeri | ✅ |
 | **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
 | **Elymsyr** | Meridia | Resmi kapı; ikinci adı **Claport**. Teraslı taş kent, gnome vinçleri, gümrük. Mal buradan geçer, **kağıt şehre gider** | ✅ |
 | **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
@@ -339,8 +342,11 @@ ima eder.
 
 ⚠️ **4. tur (2026-09-09):** yüzük artık Kromanna'nın parmağında değil, **gizli bir
 cepte**; bulunması **Investigation DC 15** ister ve mühür taşıyan PC'nin zarsız okuma
-imtiyazı kalktı. İçeriği karar bekliyor (act1.md §3.3, §9 açık 5) — kart yazılabilir
-ama `description` alanı o karar verilmeden kilitlenmemeli.
+imtiyazı kalktı.
+
+✅ **5. tur (2026-09-13): içerik kapandı** (act1.md §3.3, §9 açık 5 kapalı). Mühür
+yüzü eğelenerek düzleştirilmiş, **üstünde hiçbir damga yok** — ne ayar damgası, ne
+usta işareti, ne hane mührü. Kartın `description`'ı bunu yazıyor.
 
 **SRD'de kalanlar** (kart açılmaz, ref verilir): Cartographer's Tools ·
 Calligrapher's Supplies · Gaming Set · Alchemist's Supplies · Forgery Kit ·
@@ -363,7 +369,7 @@ Tasarımın tamamı [`alt-siniflar.md`](alt-siniflar.md); burada sadece sayılı
 | **Drakewarden** | Ranger (3. sv) | Bir drake ile kurulan bağ; yoldaş, binek ve silah. Ejderha değil `beast`, ve hiçbir seviyede **uçuş yok** | ✅ |
 | **İrade Yemini** | Paladin (1. sv) | Gücü tanrıdan değil **yeminden** gelen paladin. +1 Güç / +1 Dayanıklılık, History + Investigation, Divine Smite yerine **Yemin Darbesi**, ve bir soruşturma büyü listesi | ✅ |
 
-Bağlı kartlar: `animal/Drake` · 16 `trait` · 8 `creature-action` · 8 `resource-pool`
+Bağlı kartlar: `animal/Drake` · 17 `trait` · 8 `creature-action` · 8 `resource-pool`
 satırı — hepsi [`alt-siniflar.md` §4](alt-siniflar.md)'te adıyla sayılı.
 
 İlk ikisi WotC kaynaklarından **olduğu gibi alındı** — içerik ve isimlendirme özgünüyle
@@ -381,11 +387,11 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 21 | 1 | — | 22 |
-| `location` | 17 | 1 | — | 18 |
+| `location` | 18 | — | — | 18 |
 | `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
-| `creature-action` | 12 | — | — | 12 |
-| `trait` | 22 | — | — | 22 |
+| `creature-action` | 11 | — | — | 11 |
+| `trait` | 21 | — | — | 21 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 11 | — | — | 11 |
 | `encounter` | 1 | — | — | 1 |
@@ -397,9 +403,15 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 | `subclass` | 3 | — | — | 3 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 8 | — | — | 8 |
-| **Toplam** | **151** | **13** | **—** | **164** |
+| **Toplam** | **152** | **12** | **—** | **164** |
 
-**151/164 ✅, 13 🟡, 0 ⬜** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
+**152/164 ✅, 12 🟡, 0 ⬜** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
+
+> **Tablo hizalaması (2026-09-13).** Satırlar denge turundan sonra güncellenmemişti
+> ve 166 topluyordu; `creature-action` 12→11 ve `trait` 22→21 yazıldı. `location`
+> 17✅/1🟡 → 18✅: §3 tablosu 17 satır sayıyor ama 18. mekan **Meclis Salonu** yazıldı
+> ve hiçbir alanı boş değil, yani 🟡 değildi. Toplam **164** baştan doğruydu.
+
 Öncesi: **153/166 ✅** *(2026-09-13, çelişki turu: +1 `quest` — **İyi Yazı**.)*
 Öncesi: **152/165 ✅** (2026-09-13, ilahi büyü turu — 154'ten 165'e: `npc/Halim`,
 `subclass/İrade Yemini`, altı yemin `trait`'i ve iki `resource-pool` satırı).
@@ -410,12 +422,12 @@ Sapma defteri [`alt-siniflar.md` §5](alt-siniflar.md).
 **Öncesi (kayıt turu):** 114/127 ✅, 13 🟡, 0 ⬜ (2026-09-10). Liste 97'den 127'ye çıktı:
 [`bolgeler.md`](bolgeler.md) 24 kart (7 `lore` · 7 `location` · 10 `npc` · 3 `scene`),
 [`mekanikler.md`](mekanikler.md) 2 kart (`lore/Kural Sapmaları` · `Direnç Şerbeti`),
-kayıt turu 1 kart (`lore/Kayıt Nasıl İşler`) ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
+kayıt turu 1 kart (`lore/Kayıt Nasıl İşler`, 0.4.0'da `Sancak Kaydı` s.2'ye taşındı) ekledi. **⬜ hâlâ yok** — yazılamayacak kart kalmadı.
 
-13 🟡'nin **onu tek bir iş:** üç bölgenin NPC adları. Kalan üçü sayı ya da karar
-bekliyor: (Diriltme Sınavı'nın
-zarı, Kalıcı Yara bandları), `Direnç Şerbeti` (fiyat ve üretim süresi). Hiçbiri kartın
-yazılmasını engellemiyor — hepsi tek bir alanı boş bırakıyor.
+12 🟡'nin **onu tek bir iş:** üç bölgenin NPC adları. Kalan ikisi sayı bekliyor:
+`lore/Kural Sapmaları` (Diriltme Sınavı'nın zarı, Kalıcı Yara bandları) ve
+`Direnç Şerbeti` (fiyat ve üretim süresi). Hiçbiri kartın yazılmasını engellemiyor —
+hepsi tek bir alanı boş bırakıyor.
 
 **Öncesi (adlandırma turu):** 97/97 ✅ — bekleyen tek şey olan adlar kondu, 16 🟡 ve
 1 ⬜ kapandı. ⬜ olan **Kuyumcu** artık **Mine**, ve *kaydı kim sildirdi*'nin ikinci

@@ -284,7 +284,7 @@ yok, ensede iğne yok. Liste bu kadar — DM buraya kendiliğinden bir şey ekle
 
 | # | İz | Nasıl bulunur | Ne söyler |
 |---|---|---|---|
-| 1 | **Kumaş** | Zar yok. Bakan görür; @[Milo](entity:npc/Milo) (hancı, kumaş görmüş adam) ya da @[Corvin](entity:npc/Corvin) (mal taşır) sorulmadan söyler | Yabancılar, ve zengindiler |
+| 1 | **Kumaş** | Zar yok. Bakan görür; @[Milo Goodbarrel](entity:npc/Milo Goodbarrel) (hancı, kumaş görmüş adam) ya da @[Corvin](entity:npc/Corvin) (mal taşır) sorulmadan söyler | Yabancılar, ve zengindiler |
 | 2 | **Altın kesesi + boş parşömenler** | Zar yok, üstlerinde duruyor | Kese **dolu**: parası bitmiş insanlar değil, **yolu** bitmiş insanlar. Parşömenler **boş**: yazılı bir şey taşıyorlardı ya da taşıyacaklardı, ve şimdi ellerinde tek bir kayıt yok. Kayıtsızlık bir kaza değil, bir **hâl** |
 | 3 | **Gizli cepteki yüzük** | **Investigation DC 15** — üstlerini arama beyanı ister; kimse göstermez, kimse söylemez | Saklanan tek nesne, ve saklanmış olması tek başına bir cümle: bu üçünün gizleyecek bir **kaydı** var. *(Yüzüğün ne olduğu askıda — aşağı bak)* |
 | 4 | **Beden** | **Medicine DC 12** (Umay'a sorulursa zarsız: kendisi zaten fark etti ama adını koyamıyor) | Hastalık köyün sandığından **eski**. Bu üçü hasta *geldi*. Gümüşsu bu hastalığı üretmedi, **teslim aldı** |
@@ -361,7 +361,7 @@ Pazarlık yok; Milo fiyat düşürmez ama borç yazar.
   konuşulanı zaten tekrarlar. Bilgi eğiminin (09 §4) köydeki ucu burasıdır.
 - **Yabancı kaydı.** Milo resmi bir kayıt tutmaz — tuttuğu şey alışkanlık: kim
   geldi, kaç gece kaldı, kim ödedi. Sorulursa söyler, saklamaz.
-- **Üçlünün ilk iki gecesi.** @[Alton](entity:npc/Alton), @[Merla](entity:npc/Merla)
+- **Üçlünün ilk iki gecesi.** @[Alton Leagallow](entity:npc/Alton Leagallow), @[Merla Tealeaf](entity:npc/Merla Tealeaf)
   ve @[Kromanna](entity:npc/Kromanna) köye geldiklerinde iki gece burada kaldılar;
   kulübeye sonra alındılar. Kumaşı gören adam bu yüzden Milo'dur (§3.3, iz 1) —
   ve parayı da o gördü: peşin, tartışmasız, **fazla**.
@@ -1068,8 +1068,10 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     satırında yazmıyor.
 11. **Goodbarrel'ın Ocak Başı** (§3.4) ve **Rıhtım** (§7.6) yer olarak yazıldı; ikisi de
     ayrı `location` kartı.
-12. **Dönüşmüş üçlünün statblock'ları** (§5.3): ortak CR 1/2 gövde + iki halfling
-    (CR 1/2) + bir tiefling (CR 1). Jenerik *Blight'lı köylü* kartı bu gövdedir.
+12. **Dönüşmüş üçlünün statblock'ları** (§5.3): ortak gövde + iki halfling + bir
+    tiefling. Jenerik *Blight'lı köylü* kartı bu gövdedir. *(CR'ler sonradan
+    düşürüldü — geçerli değerler §5.3'te: gövde ve iki halfling **CR 1/8**,
+    Kromanna **CR 1/4**.)*
 13. **Konsey aracısı tanımlandı** (§7.4): rıhtımın en iyi giyimlisi, saklanmıyor;
     lonca hattından bir PC onu **zarsız** tanır, diğerleri Insight DC 13.
 14. **"Liman kaçışı" `encounter` kartı yazılmıyor** (§7.3) — doğaçlama, üç sabit

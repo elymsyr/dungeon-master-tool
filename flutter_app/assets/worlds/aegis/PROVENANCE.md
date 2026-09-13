@@ -286,7 +286,7 @@ Kartların içinde işaret yok; kanon bir sayı ya da karar verdiğinde değişe
 
 **Yorumlar:**
 
-- **Mühürsüz Yüzük'ün yedek içeriği** (eğelenmiş mühür yüzü, taze Meridia ayar damgası) kartta içerik olarak yazıldı: `trinket/Mühürsüz Yüzük` açıklamasının son paragrafı, `npc/Mine` `secrets`, `quest/Nereden Geldiler` `secrets`. Kanon bunu *askıda* tutuyor (`act1 §9` açık 5); ama `liste §4` Mine'ın ve `lonca §7` Kildrak'ın satırları ona yaslanıyor. Karar değişirse bu üç alan + `npc/Kildrak Ferrun` birlikte değişir.
+- **Mühürsüz Yüzük'ün içeriği kanon** (`act1 §3.3`, 5. tur; `act1 §9` açık 5 **kapalı**): mühür yüzü eğelenerek düzleştirilmiş ve **üstünde hiçbir damga yok** — 4. turun yedek okumasındaki *"taze Meridia ayar damgası"* çıkarıldı, çünkü Gizli Liman'da kimse imza atmaz ve damga bir imzadır. Kartlar bunu yazıyor: `trinket/Mühürsüz Yüzük` açıklamasının son paragrafı, `npc/Mine` `secrets`, `quest/Nereden Geldiler` `secrets`, `npc/Kildrak Ferrun` (ad değil **yön** verir).
 - **Kulübeye girmek bir maruziyet zarı** — `mek §12`'nin DM notu ("kulübeye giren her PC bir maruziyet zarı atar"); `act1 §4.1`'in dört yolu ayrıca duruyor.
 - **`attitude_ref`** şema zorunlu, kanon söylemiyor: Umay · Milo Goodbarrel · Fare · Orvan Sancar · Sindri `Friendly`, kalanı `Indifferent`. `Hostile` yok.
 - **`species_ref`** yalnız SRD'de birebir adı olan ırklarda. Yarı-elf / yarı-orc (Umay · Caelynn · Holg · Krusk · Çevirmen · Patika Gözcüsü) ve kanonun iki ırk verdiği iki NPC (Şüpheci Rütbeli: insan/ejderdoğan · En Yaşlı Druid: insan/elf) ile Başkumandan'da ref yok; ırk `appearance` ya da `dmNotes`'ta.

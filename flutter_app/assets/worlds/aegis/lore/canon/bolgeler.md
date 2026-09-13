@@ -583,7 +583,7 @@ ekliyor.
   köylüler sağlıyor. Şafak Çatışması'nda (`act1.md` §5) köyün elinde olan şey budur:
   milis, ve az sayıda mızrak.
 - **Ekonomi ormana dayanıyor:** kereste, şifalı ot, av eti. Para az kullanılıyor,
-  ticaret çoğunlukla takas — @[Milo](entity:npc/Milo)'nun borç yazması bu yüzden
+  ticaret çoğunlukla takas — @[Milo Goodbarrel](entity:npc/Milo Goodbarrel)'ın borç yazması bu yüzden
   olağan bir işlem, bir iyilik değil.
 - **Ahşap işçiliği ve orman folkloru.** Köyün her köşesinde tahtadan oyulmuş tılsımlar
   ve bereket sembolleri var.
