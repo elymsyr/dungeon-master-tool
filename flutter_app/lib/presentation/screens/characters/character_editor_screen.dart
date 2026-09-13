@@ -63,6 +63,7 @@ import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/class_resources_card.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/section_jump_pad.dart';
 
 import '../database/entity_card.dart';
 
@@ -111,6 +112,14 @@ class _CharacterEditorScreenState
   // Parsed pending choices for the current build — avoids re-parsing the
   // same raw list inside every _pendingChoicesForField call (~20×/build).
   List<PendingChoice> _buildPendingChoices = const [];
+
+  // ── Bölüm atlama (sağ üstteki kare) ──────────────────────────────
+  // Sayfa satırları her build'de yeniden kuruluyor; key'ler state'te
+  // tutuluyor ki bölüm satırının context'i build'ler arası stabil kalsın.
+  final ScrollController _sheetScroll = ScrollController();
+  final List<GlobalKey> _rowKeys = [];
+  List<({String label, int row})> _navTargets = const [];
+  final Map<int, double> _rowOffsetCache = {};
 
   // Markdown controllers — kept in sync with `_working.entity` so user input
   // doesn't fight the rebuild loop. Initialized lazily on first build.
@@ -161,6 +170,7 @@ class _CharacterEditorScreenState
     _descFocus.dispose();
     _dmNotesController.dispose();
     _dmNotesFocus.dispose();
+    _sheetScroll.dispose();
     super.dispose();
   }
 
@@ -608,6 +618,59 @@ class _CharacterEditorScreenState
     );
   }
 
+  /// Verilen satır indeksine kaydırır. ListView lazy olduğu için hedef
+  /// satırın offset'i önceden bilinmiyor; scroll offset'i üzerinde ikili
+  /// arama yapıp satır mount olunca `ensureVisible` ile hizalıyoruz.
+  /// ponytail: tek buton için `scrollable_positioned_list` bağımlılığı
+  /// eklemek yerine ~15 kare sürebilen bisection; darlarsa paket eklenir.
+  Future<void> _jumpToRow(int index, int rowCount) async {
+    if (!_sheetScroll.hasClients || index >= _rowKeys.length) return;
+    var lo = _sheetScroll.position.minScrollExtent;
+    var hi = _sheetScroll.position.maxScrollExtent;
+    // Aynı bölüme ikinci gidiş bedava: bulunan offset'i sakla, sonraki
+    // seferde oradan başla. Kart açılıp kapanınca kayarsa alttaki döngü
+    // zaten düzeltiyor — cache sadece tahmin.
+    final seed = _rowOffsetCache[index] ??
+        (rowCount == 0 ? 0.0 : hi * index / rowCount);
+    if ((seed - _sheetScroll.position.pixels).abs() > 8) {
+      _sheetScroll.jumpTo(seed.clamp(lo, hi));
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !_sheetScroll.hasClients) return;
+    }
+    for (var attempt = 0; attempt < 16; attempt++) {
+      // Rebuild sırasında ScrollPosition değişebilir — her turda tazele.
+      final pos = _sheetScroll.position;
+      final ctx = _rowKeys[index].currentContext;
+      if (ctx != null && ctx.mounted) {
+        await Scrollable.ensureVisible(ctx, alignment: 0.02);
+        if (_sheetScroll.hasClients) {
+          _rowOffsetCache[index] = _sheetScroll.position.pixels;
+        }
+        return;
+      }
+      // Ekranda duran ilk satırı bul: hedef ondan ileride mi geride mi?
+      int? mountedRow;
+      for (var j = 0; j < rowCount && j < _rowKeys.length; j++) {
+        if (_rowKeys[j].currentContext != null) {
+          mountedRow = j;
+          break;
+        }
+      }
+      if (mountedRow == null) return;
+      if (index > mountedRow) {
+        lo = pos.pixels;
+        if (pos.maxScrollExtent > hi) hi = pos.maxScrollExtent;
+      } else {
+        hi = pos.pixels;
+      }
+      final next = ((lo + hi) / 2).clamp(pos.minScrollExtent, hi);
+      if ((next - pos.pixels).abs() < 1) return;
+      _sheetScroll.jumpTo(next);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+    }
+  }
+
   Widget _buildCardBody(
     BuildContext context,
     DmToolColors palette,
@@ -707,6 +770,17 @@ class _CharacterEditorScreenState
     ),
     ];
 
+    while (_rowKeys.length < rows.length) {
+      _rowKeys.add(GlobalKey());
+    }
+    _navTargets = [
+      for (var i = 0; i < rows.length; i++)
+        if (rows[i] case EntityCardSectionHeading(:final title))
+          (label: title, row: i)
+        else if (rows[i] case EntityCardCollapsibleGroupCard(:final group))
+          (label: group.name, row: i),
+    ];
+
     return Theme(
       data: cardTheme,
       child: Container(
@@ -714,10 +788,26 @@ class _CharacterEditorScreenState
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-              itemCount: rows.length,
-              itemBuilder: (_, i) => rows[i],
+            child: Stack(
+              children: [
+                ListView.builder(
+                  controller: _sheetScroll,
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+                  itemCount: rows.length,
+                  itemBuilder: (_, i) =>
+                      KeyedSubtree(key: _rowKeys[i], child: rows[i]),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 16,
+                  child: SectionJumpPad(
+                    palette: palette,
+                    sections: [for (final t in _navTargets) t.label],
+                    onSelect: (i) =>
+                        _jumpToRow(_navTargets[i].row, rows.length),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
