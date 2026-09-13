@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io' show File, Platform, gzip;
 import 'dart:typed_data' show Uint8List;
 
+import 'package:archive/archive_io.dart'
+    show ArchiveFile, InputFileStream, ZipDecoder;
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
@@ -141,6 +143,60 @@ class BundledWorldsInstaller {
       );
     } catch (e, st) {
       report.failures.add('$dir: $e\n$st');
+    }
+    return report;
+  }
+
+  /// Aynı düzendeki bir `.zip`i kurar — mobilde klasör seçilemiyor, tek dosya
+  /// seçilebiliyor. Arşiv tek bir kök klasöre sarılmış olabilir: `manifest.json`
+  /// nerede duruyorsa orası dünya kökü sayılır.
+  Future<InstallReport> installFromZip(String zipPath) async {
+    final report = InstallReport();
+    final dir = p.basenameWithoutExtension(zipPath);
+    final input = InputFileStream(zipPath);
+    try {
+      final archive = ZipDecoder().decodeStream(input);
+      final manifestEntry = archive.files
+          .where((f) => f.isFile && p.posix.basename(f.name) == 'manifest.json')
+          .fold<ArchiveFile?>(
+              null,
+              (best, f) => best == null || f.name.length < best.name.length
+                  ? f
+                  : best);
+      if (manifestEntry == null) {
+        report.failures.add('$dir: manifest.json not found');
+        return report;
+      }
+      final root = p.posix.dirname(manifestEntry.name);
+      final byRel = {
+        for (final f in archive.files.where((f) => f.isFile))
+          root == '.' ? f.name : p.posix.relative(f.name, from: root): f,
+      };
+      Future<Uint8List?> load(String rel) async {
+        final f = byRel[rel];
+        return f == null ? null : Uint8List.fromList(f.readBytes() ?? const []);
+      }
+
+      Future<Map<String, dynamic>?> loadJson(String rel) async {
+        final bytes = await load(rel);
+        if (bytes == null) return null;
+        final decoded = jsonDecode(utf8.decode(bytes));
+        return decoded is Map ? decoded.cast<String, dynamic>() : null;
+      }
+
+      await _installWorld(
+        dir: dir,
+        manifest: (await loadJson('manifest.json'))!,
+        worldBlueprint: await loadJson('world-blueprint.json'),
+        characterBlueprint: await loadJson('blueprint.json'),
+        loadMedia: load,
+        report: report,
+        installedFrom: 'assets',
+      );
+    } catch (e, st) {
+      report.failures.add('$dir: $e\n$st');
+    } finally {
+      await input.close();
     }
     return report;
   }
