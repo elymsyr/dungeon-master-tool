@@ -12,6 +12,7 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
+import '../../application/services/world_meta_sync.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
 import '../../application/providers/lan_sync_provider.dart';
@@ -473,6 +474,15 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
             templateId: templateId,
             templateHash: templateHash,
           );
+      // Kart kimliği (açıklama/etiket/kapak) da çıksın — oyuncu dünyaya
+      // katıldığında hub kartı boş görünmesin.
+      final meta = data['metadata'];
+      if (meta is Map) {
+        await ref.read(worldMetaSyncProvider)?.push(
+              worldId: worldId,
+              metadata: Map<String, dynamic>.from(meta),
+            );
+      }
       ref.read(onlineWorldIdsProvider.notifier).add(worldId);
       ref.invalidate(worldOnlineStatusProvider(worldId));
       // First-publish path: the invite-code FutureProvider had already

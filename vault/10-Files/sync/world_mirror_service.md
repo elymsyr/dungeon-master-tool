@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-24
+updated: 2026-09-13
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Constructor: `SupabaseClient client`.
-- `fetchInitialState(worldId)` / `fetchEntity(worldId, entityId)` reads.
+- `fetchInitialState(worldId)` / `fetchEntity(worldId, entityId)` / `fetchWorldMeta(worldId)` reads.
 - Echo/guard queries called by the applier: `isEchoOf(event)`, `isEchoOfId/MapData/Session/Settings/Package/WorldPackage/PersonalPackageEntity`, `isExpectedUnpublish`, `isExpectedCharDelete`.
 
 **Outputs**
@@ -42,6 +42,7 @@ tags: [file]
 - **`_entityRow`:** maps a blob entity to the wide `world_entities` columns (`category_slug` via `_categoryFor` = lowercased hyphenated `type`, defaults `npc`; jsonEncodes images/tags/pdfs/attributes; preserves `package_id`/`package_entity_id`/`linked`).
 - **`pushWorldState`** goes through the `publish_world` RPC (SECURITY DEFINER, owner_id from `auth.uid()`) — avoids RLS/upsert noise; player blocked by RLS.
 - **`fetchInitialState`** returns a record of `entities`, `characters`, `mapData`, `sessions`, `settings`, `worldRow` (worlds.state_json), `mindMapNodes`, `mindMapEdges` — pulls all tables in one go to seed Drift on world open (cross-device empty-snapshot fix).
+- **`fetchWorldMeta`** reads `worlds.meta_json` and hands it to `decodeWorldMeta` ([[world_meta_sync]]) — dünya kartının açıklaması/etiketleri/kapağı. Çözülemezse null; çağıran (`WorldMirrorApplier._applyWorldMeta`) yamasız devam eder.
 - **`fetchEntity`** single row — used after an `entity_shares` INSERT CDC (the share doesn't mutate `world_entities`, so no CDC fires for the now-visible row).
 
 ## Notes

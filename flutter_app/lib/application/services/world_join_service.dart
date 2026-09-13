@@ -9,6 +9,7 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import 'srd_core_bootstrap.dart';
 import 'srd_core_package_bootstrap.dart';
+import 'world_meta_sync.dart';
 
 /// "Join with code" akışını koordine eder:
 ///   1. RPC redeem_world_invite → (worldId, worldName)
@@ -37,13 +38,15 @@ class WorldJoinService {
 
     // Şablon id'si gerekli — SRD bootstrap'ı ona bakıyor. İçerik çekilmez.
     String? templateId;
+    Map<String, dynamic>? meta;
     try {
       final row = await supabase
           .from('worlds')
-          .select('template_id')
+          .select('template_id, meta_json')
           .eq('id', res.worldId)
           .maybeSingle();
       templateId = row?['template_id'] as String?;
+      meta = decodeWorldMeta(row?['meta_json']);
     } catch (e, st) {
       debugPrint('joinWithCode template fetch error: $e\n$st');
     }
@@ -87,6 +90,14 @@ class WorldJoinService {
           updatedAt: Value(now),
         ),
       );
+    }
+
+    if (meta != null) {
+      try {
+        await repository.saveSettingsPatch(localName, {'metadata': meta});
+      } catch (e, st) {
+        debugPrint('joinWithCode meta apply error: $e\n$st');
+      }
     }
 
     // Link built-in SRD pack into the joined world so synth resolves

@@ -18,6 +18,7 @@ import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/unused_media_sweeper.dart';
+import '../services/world_meta_sync.dart';
 import '../services/prewarm_orchestrator.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -168,8 +169,11 @@ Future<void> updateCampaignMetadata(
   // Kapak değiştirildiyse eski cloud resmini silmek için eski ref'i
   // patch'ten ÖNCE yakala.
   String? oldCover;
+  String? worldId;
   try {
-    final prevMeta = (await repo.load(campaignName))['metadata'];
+    final prev = await repo.load(campaignName);
+    worldId = prev['world_id'] as String?;
+    final prevMeta = prev['metadata'];
     if (prevMeta is Map) oldCover = prevMeta['cover_image_path'] as String?;
   } catch (_) {/* ignore */}
   // Row-level: yalnızca `world_settings.settings_json` içindeki `metadata`
@@ -220,6 +224,15 @@ Future<void> updateCampaignMetadata(
   // Dünya ayarları artık buluta aynalanmıyor: oyuncuya giden tek şey DM'in
   // bilinçli paylaşımları (projeksiyon manifesti + entity_shares). Cihazdan
   // cihaza taşıma LAN sync'in işi.
+  //
+  // Tek istisna kartın görünen yüzü: dünya online ise açıklama/etiket/kapak
+  // `worlds.meta_json`'a gider, yoksa katılan oyuncunun hub'ında isimden
+  // ibaret boş bir kart kalırdı. Non-DM'de RLS reddeder, push sessizce yutar.
+  if (worldId != null && ref.read(onlineWorldIdsProvider).contains(worldId)) {
+    await ref
+        .read(worldMetaSyncProvider)
+        ?.push(worldId: worldId, metadata: newMetadata);
+  }
 }
 
 /// Aktif kampanya adı. null = henüz seçilmedi.

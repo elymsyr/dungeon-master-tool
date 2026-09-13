@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/character.dart';
+import 'world_meta_sync.dart';
 import 'world_sync_service.dart';
 
 /// Lokal yazıları Supabase mirror tablolarına push eder ve CDC event'lerinden
@@ -207,6 +208,22 @@ class WorldMirrorService {
         shares: const <Map<String, dynamic>>[],
         projection: null,
       );
+    }
+  }
+
+  /// `worlds.meta_json` — dünya kartının açıklaması/etiketleri/kapağı.
+  /// Çözülemezse null (offline, satır yok, bozuk blob).
+  Future<Map<String, dynamic>?> fetchWorldMeta(String worldId) async {
+    try {
+      final row = await client
+          .from('worlds')
+          .select('meta_json')
+          .eq('id', worldId)
+          .maybeSingle();
+      return decodeWorldMeta(row?['meta_json']);
+    } catch (e) {
+      _logMirrorError('fetchWorldMeta', e);
+      return null;
     }
   }
 
