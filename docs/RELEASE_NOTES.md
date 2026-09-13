@@ -1,5 +1,92 @@
 # Release Notes
 
+## Dungeon Master Tool v16.4.0 — You Decide What Players See (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v16.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+The previous release shared whole categories with your players the moment you published a world: every homebrew class, species, background, feat, spell and piece of equipment went out at once, and you took cards back one by one afterwards. That rule is gone. Nothing reaches a player unless you mark that card yourself, and you can mark cards long before the world ever goes online. Alongside it, a player who joins with a code now gets your world's schema, so shared cards finally render with all of their fields.
+
+> **Heads-up for DMs who published before this release:** category-based sharing no longer runs on publish. Cards shared by the old rule stay shared, but anything you create from now on goes out only if you mark it.
+
+---
+
+### Highlights
+
+- **Per-card sharing marks** — every card a player sees is one you marked; no category is shared automatically.
+- **Mark cards while the world is offline** — decide now what will go out, and it goes out the next time you publish.
+- **A "Marked shared" filter in the sidebar** — see at a glance what is set to reach your players.
+- **DM-only fields stay with the DM** — Secrets, Tactics and DM Notes are no longer drawn in the player view.
+- **Bundled worlds arrive with their sharing marks** — a downloaded world already knows which of its cards belong to the players.
+
+---
+
+### Sharing
+
+#### Marks replace category rules
+
+**Before (v16.3.1):** publishing a world shared every homebrew Tier 0 and Tier 1 card in one sweep, and you unshared what you did not want.
+**After (v16.4.0):** each card carries a mark you set from its menu. Publishing sends the marked cards and nothing else.
+
+The mark lives with the world, not with the cloud copy, so you can plan a world's player-facing content before you ever take it online — the marks go out on your first publish. The *Share with players* checkbox in the create dialog still starts checked for player-facing categories and unchecked for monsters, magic items, NPCs, scenes and quests, but now it only pre-sets the mark rather than deciding anything on its own.
+
+- The globe on a card shows whether it is marked; the sidebar's **Sharing** filter narrows the list to **Marked shared**.
+- Unmarking a card while the world is online stops sharing it, as before.
+- Sharing a card still pulls in the cards it references, so a shared NPC does not arrive with dangling links.
+
+#### DM-only fields are cut from the player view
+
+Fields marked DM-only in the schema — Secrets, Tactics and the like — plus DM Notes are no longer rendered on a player's screen. While a player's role is still being resolved, the app assumes player and hides them, so nothing flashes on screen for a frame.
+
+---
+
+### Bug fixes
+
+- **A joined world had no schema** — a player who joined with a code fell back to the old legacy schema, so shared cards showed only name, description and image and the category filter offered the wrong 18 categories. Joining now carries the world's schema across; no data was ever lost, it simply was not being drawn.
+
+---
+
+### Deprecations & removals
+
+- **Automatic sharing by category** — removed. The tier rule survives only as the default state of the *Share with players* checkbox in the create dialog.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.3.1` → `16.4.0`.
+- **No migration.** Marks are stored with the world's settings; existing worlds start with whatever is already shared and nothing is recomputed.
+- **Worlds published under the old rule:** cards shared by the category sweep stay shared. Re-publishing does not re-run the sweep, so after this release your published set only ever changes when you change a mark.
+- **Joined worlds:** re-join or re-sync to pick up the world schema if your cards still look bare.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Combat is frozen in a world with no campaign data** — in a world that has never saved campaign data, creating an encounter or adding a row is accepted by the UI and then silently does nothing.
+- **Homebrew can be lost on sign-in** — a package you made while signed out is dropped from the merge if the account already has a package with the same name, even when the two share no content.
+- **Deleting a world can report an error after succeeding** — the world is gone, but the image cleanup that runs afterwards can surface its own failure as a delete failure.
+- **The bundled catalog manifest is stale** — art counts and sizes listed for the bundled packs do not match what is actually shipped. Cosmetic.
+- **About 188 UI strings are untranslated** — mostly in less-travelled screens; they show in English regardless of the chosen language.
+- **Tests are not gated** — 60 of 1510 tests fail on `main` and no CI step blocks a red build.
+- **Banning is not possible** — you cannot hide SRD content from players ("there is no Fireball in this world"); marks only add, they do not take away.
+
+---
+
+### For developers
+
+- **`shared_entity_provider.dart`** — marks live in `world_settings.settings_json` → `shared_entities`, the same shape as `pinned_entities`; `EntitySharer.setShared` is the single gate.
+- **`fieldsVisibleToRole` / `isPlayerViewProvider`** — every card render path filters `FieldVisibility.dmOnly` through these; the role provider falls back to the role hint so an unresolved role reads as player.
+- **`world-blueprint.json`** — a new top-level `shared` list (`category/name` refs, same format as `pinned`); `BundledWorldsInstaller` resolves both through one `refIds()` helper. No migration.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.3.1 — Where Your Data Lives (Beta)
 
 **Release date:** September 2026
