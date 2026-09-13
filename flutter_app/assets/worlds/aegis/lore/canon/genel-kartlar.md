@@ -194,7 +194,7 @@ Sapma işareti zorunlu (README §6.5): bu, 5e'nin üstüne eklenen bir kural.
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Dönüşmüş** (jenerik Blight'lı köylü) | ✅ | act1.md **§5.3'te statblock yazıldı**: CR 1/8, AC 11, HP 16, Güçlü Pençe Saldırısı +2 (1d8), *Acıyı Tanımaz*. Pençe hastalık bulaştırmaz. Act 1'in üç Dönüşmüş kartı bunun adlandırılmış hâli |
+| **Dönüşmüş** (jenerik Blight'lı köylü) | ✅ | act1.md **§5.3'te statblock yazıldı**: CR 1/8, AC 11, HP 16, Güçlü Pençe Saldırısı +2 (1d8) + Sıçrayıp Isırma (şarj 5–6, 15 ft, 1d8, CON DC 8 → +1 Hastalık Puanı), *Acıyı Tanımaz*. Pençe bulaştırmaz, ısırık bulaştırır. Act 1'in üç Dönüşmüş kartı bunun adlandırılmış hâli |
 
 Act 1'in üçü ırkıyla türetilir: iki halfling (Small, HP 18, CR 1/2) ve bir tiefling
 (HP 30, ateşe direnç, CR 1) — [`act1-kartlar.md` §3](act1-kartlar.md).

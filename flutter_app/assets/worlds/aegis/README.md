@@ -345,7 +345,19 @@ dosyanın birebir kopyasıdır; blueprint değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.2)
+### 4.8 Yazılan kartlar (0.6.3)
+
+**0.6.3 (2026-09-13).** Dönüşmüş'lere üçüncü bir eylem: **Sıçrayıp Isırma**
+(*yeniden şarj 5–6*, 15 ft sıçrayış, saldırı zarı yok, 1d8 delici, ardından **CON DC
+8** → +1 Hastalık Puanı). Bulaşma buraya taşındı — pençe hâlâ bulaştırmıyor, ısırık
+bulaştırıyor, ve `curse/Blight — Enfeksiyon`'un maruziyet yolları yeniden dört.
+
+Aynı turda **Kadife** yeniden yazıldı ([`act1.md` §7.4](lore/canon/act1.md)): artık
+zincirde durmayan bir süs değil, **DM'in kolu.** Karakterler rıhtımda üç yabancıyı ya
+da *Kader*'i konuşmaya başlayınca o gelir, *"bunu kime anlatacaksınız"* diye sorar ve
+onları Meclis'e yollar — *"önce onlar duymalı."* Lonca adı masada hiç geçmediyse o adı
+ilk koyan sahne budur; geçtiyse acele ettiren sahne. İz uzamıyor, Custar katmanı hâlâ
+kapalı. **+1 kart:** `creature-action` +1.
 
 **0.6.2 (2026-09-13) — denge turu.** Üç Dönüşmüş masada fazla güçlüydü. Jenerik
 **Dönüşmüş** ve **Dönüşmüş Kromanna** (tiefling) AC **11** / HP **16**'ya, **Dönüşmüş
@@ -381,7 +393,7 @@ ayakta ya da kırılmış. Oyuncunun ne yapacağını varsayan cümleler (*"doğ
 *"yolda karşılarına çıkar"*) kanondan ve iki sahne kartından çıkarıldı. **+10 kart:**
 `npc` +1 · `subclass` +1 · `trait` +6 · `resource-pool` +2.
 
-`aegis-act1/world-blueprint.json` — **162 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
+`aegis-act1/world-blueprint.json` — **163 entity**, 2026-09-13. Aşağıdaki tablo 0.4.0'ın
 125 kartını sayıyor; 0.5.x alt sınıf turunu ve 0.6.0'ı eklemek için
 [`kart-listesi.md` §Sayım](lore/canon/kart-listesi.md)'a bak. Kapsam
 [`lore/canon/kart-listesi.md`](lore/canon/kart-listesi.md)'nin **tamamı**; `🟡` olanlar
