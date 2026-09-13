@@ -38,17 +38,29 @@ class WorldJoinService {
 
     // Şablon id'si gerekli — SRD bootstrap'ı ona bakıyor. İçerik çekilmez.
     String? templateId;
+    try {
+      final row = await supabase
+          .from('worlds')
+          .select('template_id')
+          .eq('id', res.worldId)
+          .maybeSingle();
+      templateId = row?['template_id'] as String?;
+    } catch (e, st) {
+      debugPrint('joinWithCode template fetch error: $e\n$st');
+    }
+    // Ayrı select: `meta_json` migration 093 ile geldi. Aynı select'te
+    // olsaydı kolon yoksa/erişilemezse template_id de kaybolur, dünya
+    // şemasız + SRD linki olmadan kalırdı.
     Map<String, dynamic>? meta;
     try {
       final row = await supabase
           .from('worlds')
-          .select('template_id, meta_json')
+          .select('meta_json')
           .eq('id', res.worldId)
           .maybeSingle();
-      templateId = row?['template_id'] as String?;
       meta = decodeWorldMeta(row?['meta_json']);
     } catch (e, st) {
-      debugPrint('joinWithCode template fetch error: $e\n$st');
+      debugPrint('joinWithCode meta fetch error: $e\n$st');
     }
 
     final now = DateTime.now().toUtc();
@@ -86,6 +98,9 @@ class WorldJoinService {
         WorldsCompanion.insert(
           id: res.worldId,
           worldName: localName,
+          // Şablon id'si yerel satıra da yazılır: `load()` SRD self-heal'i ve
+          // built-in kategori overlay'i buna bakıyor.
+          templateId: Value(templateId),
           createdAt: Value(now),
           updatedAt: Value(now),
         ),
