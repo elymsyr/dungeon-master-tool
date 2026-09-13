@@ -7,14 +7,14 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.6.6",
+    "pack_version": "0.6.9",
     "counts": {
       "campaign": 1,
       "lore": 22,
       "location": 18,
       "npc": 35,
-      "trait": 21,
-      "creature-action": 11,
+      "trait": 25,
+      "creature-action": 13,
       "monster": 4,
       "curse": 1,
       "scene": 11,
@@ -23,8 +23,8 @@
       "adventuring-gear": 8,
       "trinket": 7,
       "background": 9,
-      "resource-pool": 8,
-      "subclass": 3,
+      "resource-pool": 9,
+      "subclass": 4,
       "animal": 1,
       "player-character": 0
     }
@@ -49,7 +49,7 @@
         "pages": [
           "# Aegis'e hoş geldiniz\n\n@[Meridia](entity:f12b0f9f-1948-51b3-ab1f-28d83c20f80f) beyaz taş şehirlerin, işlek limanların ve açık yolların kıtası. Başkentte loncalar yönetir; limanlarda gemiler her mevsim yanaşır; ormandaki köylerde kereste kesilir, ekmek pişer, nöbet tutulur.\n\nGüney ormanındaki köylerde bir hastalıktan söz ediliyor. Kimse adını tam bilmiyor. Bazıları ona **Blight** diyor.\n\n## Dünyanın havası\n\nKarşınıza çıkacak kurumlar soğuk, geçmiş karanlık. Ama bugünkü hayat işliyor: kazanlar kaynıyor, bezler yıkanıp asılıyor, hancı borç yazıyor, bir çırak kimse ona soru sormadığı için her şeyi biliyor. Karşılaştığınız herkesin bir sırrı yok. İşini iyi yapan, cömert, sıradan insanlar da var.\n\nDünya yaşanabilir bir yer. Ama gidişat kötü.\n\n## Tanrısız kıta\n\nÜç yüz yıl önce Kral Lucian tanrılarla insanlar arasındaki bağı kesti. O günden beri Meridia'da tapınak yerine meydan, dua yerine iş vardır. Bir felaket karşısında dua etmek acizlik sayılır; çözüm üretmek erdemdir. Bkz. @[İrade Yolu](entity:8a1d5228-1010-575e-8c19-ac200740625f).\n\nTanrılar ise tümden gitmedi: @[hâlâ fısıldıyorlar](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b).\n\n## Loncalar\n\nBaşkent @[Lucid Triton](entity:928d42d1-2247-52ee-a0fa-916cefb4aba8)'da altı lonca Meclis'te oturur ve kıtanın işlerini yürütür. Bkz. @[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88).",
           "# Oyun kuralları\n\n**Aegis D&D 5e kurallarıyla oynanır.** Bu dünyanın 5e'ye eklediği kurallar iki kartta yazılıdır: @[Blight — Enfeksiyon](entity:8d891cfd-1411-5a83-af13-5ca63dd1e862) ve @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c). Geri kalan her şey kitaptaki gibi işler.\n\n## Hastalık\n\nHastalanmak rastgele olmaz. Bir hastaya dokunduğunuzda, bir cesedi taşıdığınızda ya da hastayla kapalı bir odada gece kaldığınızda zar atarsınız. Hastalığın puanı bir kez yükselince inmez.\n\n## Kalıcı Yaralar\n\n0 cana düşmek ya da tek bir saldırıda canınızın yarısını kaybetmek bir yara zarı ister. Yaralar kalıcı olabilir. DM bu kuralı ilk çatışmadan önce hatırlatır.\n\n## İlahi büyü — önce bunu okuyun\n\nBu dünyada tanrılar uzakta ve bir çağrının tutması **istisnadır.** Her ilahi büyü denemesi için `d20 + Religion` atılır: çatışmada **19**, çatışma dışında o saat içinde sırasıyla **18 → 20 → yalnız doğal 20 → imkansız.** Tutmayan deneme büyü yuvasını (çatışmada aksiyonu da) harcar. Sayılar ve kapsam: @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c).\n\n> **Bunun anlamı açık:** **Cleric ve Warlock bu kıtada oynanabilir sınıflar değil.** Paladin oynanabilir, ama tek bir yeminle: @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616). Druid, Ranger ve bütün arkan büyücüler bu kuraldan etkilenmez.\n\n## Büyü\n\n- **Şehirde** büyü yapmak lonca lisansı ister (@[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c)). Köyde, yolda ve limanda kimse sormaz.\n- **Orduda** büyücü azdır ve korunur.\n- **Köyde** büyü bir tuhaflıktır; yardım etse bile yabancıdır.\n- **1. ve 2. seviye büyüler** hiçbir ek kural almaz. Ek kurallar 3. seviyede başlar.\n\n## Hikaye ve karakterler\n\nHikaye belirli bir karaktere bağlı değildir. Bir karakter bir ipucunu kaçırırsa aynı bilgi başka bir yerde, başka birinin ağzından da bulunur.",
-          "# Karakter yaratma\n\nKarakterinizi istediğiniz gibi yaratın. Tek bir şart var:\n\n> **Hastalık söylentileri karakterinizi bir şekilde @[Gümüşsu](entity:1bd8df9f-03c4-5b06-ad51-5e5c6b680154) yoluna çıkardı.**\n\n## Sınıflar\n\nSRD'nin bütün sınıfları açık, iki istisnayla:\n\n- **Cleric ve Warlock oynanmaz.** Bu kıtada bir tanrıdan ya da bir patrondan her istediğinde bir şey almak mümkün değil (@[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)), ve o zar üstüne bir karakter kurulamaz.\n- **Paladin tek bir yeminle oynanır:** @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616). Gücü tanrıdan değil yeminden gelir, 1. seviyede açılır, ve verdiği hiçbir şey zar istemez.\n\nBu iki madde bir ceza değil, dünyanın kendisi. Masada kimse bir tanrıya güvenerek plan yapmıyor.\n\nKarakterlerin birbirini tanıması ya da aynı gün varması gerekmez. İlk karşılaşma Gümüşsu'da olur. Karakterinizin neden yolda olduğunu siz belirlersiniz; DM o sebebi dünyaya bağlar.\n\n## Bu dünyanın geçmişleri\n\nMeridia'da on sekiz yaşına giren herkes bir loncaya, orduya ya da bürokrasiye katılır. Bu dünyanın dokuz geçmişi bu kurumlardan gelir:\n\n@[Arşivci](entity:a62099dd-e7e9-5dca-9ebe-9485bcbc07e6) · @[Lonca Üyesi](entity:52f2f0d6-3209-58aa-bc72-c018165528a9) · @[Mertebeli Lonca Çocuğu](entity:4f245f5e-6297-58c3-a4c2-341f6a3e40d0) · @[Sihir Loncası Öğrencisi](entity:f2ecab69-bab6-5074-8a52-2e29baa7460d) · @[Lonca Ajanı](entity:1e2bf8b9-3ae2-566c-a122-d66fda78970b) · @[Rıhtım İşçisi](entity:9d35d999-5284-593f-bd6b-df79be38f784) · @[Gemi Kaptanı](entity:9a99bc60-6b72-5c11-b274-3ea810941768) · @[Paladin Askeri](entity:e2370c3d-0fa5-5c07-8cd1-eb644f4592f0) · @[Paladin Rütbelisi](entity:b8bba4a3-3d8e-5abd-bab7-4faad601eeb9)\n\nHer geçmiş standart 5e mekaniğini kullanır. İki şey ekler:\n\n- **Bir eşya.** Mühür, künye, kanca ya da defter. Eşya size belirli yerlerde belirli kapıları açar; geçmiş kartında hangileri olduğu yazar.\n- **Bir bedel.** Tanınmak, izlenmek, borçlu olmak, çağrıldığında gitmek. Bu bir zar değil; insanların size nasıl baktığıdır.",
+          "# Karakter yaratma\n\nKarakterinizi istediğiniz gibi yaratın. Tek bir şart var:\n\n> **Hastalık söylentileri karakterinizi bir şekilde @[Gümüşsu](entity:1bd8df9f-03c4-5b06-ad51-5e5c6b680154) yoluna çıkardı.**\n\n## Sınıflar\n\nSRD'nin bütün sınıfları açık, iki istisnayla:\n\n- **Cleric ve Warlock oynanmaz.** Bu kıtada bir tanrıdan ya da bir patrondan her istediğinde bir şey almak mümkün değil (@[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)), ve o zar üstüne bir karakter kurulamaz.\n- **Paladin tek bir yeminle oynanır:** @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616). Gücü tanrıdan değil yeminden gelir, 3. seviyede açılır, ve verdiği hiçbir şey zar istemez.\n\nBu iki madde bir ceza değil, dünyanın kendisi. Masada kimse bir tanrıya güvenerek plan yapmıyor.\n\nKarakterlerin birbirini tanıması ya da aynı gün varması gerekmez. İlk karşılaşma Gümüşsu'da olur. Karakterinizin neden yolda olduğunu siz belirlersiniz; DM o sebebi dünyaya bağlar.\n\n## Bu dünyanın geçmişleri\n\nMeridia'da on sekiz yaşına giren herkes bir loncaya, orduya ya da bürokrasiye katılır. Bu dünyanın dokuz geçmişi bu kurumlardan gelir:\n\n@[Arşivci](entity:a62099dd-e7e9-5dca-9ebe-9485bcbc07e6) · @[Lonca Üyesi](entity:52f2f0d6-3209-58aa-bc72-c018165528a9) · @[Mertebeli Lonca Çocuğu](entity:4f245f5e-6297-58c3-a4c2-341f6a3e40d0) · @[Sihir Loncası Öğrencisi](entity:f2ecab69-bab6-5074-8a52-2e29baa7460d) · @[Lonca Ajanı](entity:1e2bf8b9-3ae2-566c-a122-d66fda78970b) · @[Rıhtım İşçisi](entity:9d35d999-5284-593f-bd6b-df79be38f784) · @[Gemi Kaptanı](entity:9a99bc60-6b72-5c11-b274-3ea810941768) · @[Paladin Askeri](entity:e2370c3d-0fa5-5c07-8cd1-eb644f4592f0) · @[Paladin Rütbelisi](entity:b8bba4a3-3d8e-5abd-bab7-4faad601eeb9)\n\nHer geçmiş standart 5e mekaniğini kullanır. İki şey ekler:\n\n- **Bir eşya.** Mühür, künye, kanca ya da defter. Eşya size belirli yerlerde belirli kapıları açar; geçmiş kartında hangileri olduğu yazar.\n- **Bir bedel.** Tanınmak, izlenmek, borçlu olmak, çağrıldığında gitmek. Bu bir zar değil; insanların size nasıl baktığıdır.",
           "# Macerayı yönetmek\n\n## Macera nasıl başlar\n\nKarakterler @[Gümüşsu](entity:1bd8df9f-03c4-5b06-ad51-5e5c6b680154)'ya varır (@[Köye Varış](entity:35043e4a-d660-5741-a49e-bee746f61603)). Köyün dışındaki kulübede üç hasta yabancı yatıyor. Karakterler kulübeye girer (@[Kulübe Sorgusu](entity:a83d8cfe-cdf6-5698-a772-ccb691504a02)), geceyi köyde geçirir, ve şafakta üç yabancı dönüşüp köye saldırır (@[Şafak Dönüşümü](entity:dfe67be9-b370-5acd-858b-a49f47ed425e)).\n\nBundan sonra karakterler gördüklerini bir makama götürür: başkentte Meclis'e, ya da @[Votumar](entity:8bfa834e-fd45-5e48-aade-d7daad8b4d8b)'daki paladin şatosuna. İkisi de reddeder (@[Söylentinin Peşinde](entity:164323ef-d6fb-57be-9a46-54aba3c4bdcf)). Ardından iki iş açılır: üç yabancının izini sürmek (@[Nereden Geldiler](entity:e4350906-a611-555d-86c3-8486d22f3d7a)) ve kıtadan çıkmanın yolunu bulmak (@[İyi Yazı](entity:3cd57df3-1a5c-5d09-bde6-8f10fe75e9d6)).\n\n## Kartlar nerede\n\nBir zincirde geçmesi muhtemel bütün kartlar — mekanlar, NPC'ler, sahneler, eşyalar, kurallar — zincir zincir @[Fihrist](entity:658b51db-bace-54e4-bb21-101bbd634709)'te toplu.\n\n## Söylentiler nerede nasıl\n\n| Yer | Hastalık hakkında ne duyulur |\n|---|---|\n| @[Rıhtım](entity:7ec7fb05-5dce-5142-a8fc-a03278ea8730) | Çok şey; çoğu doğru ve bedava |\n| @[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e) | Gümrük defterlerinde izi var; okumayı bilen görür |\n| @[Cinervik](entity:ec6a9012-9b32-5533-81e6-693b1bb9db77) | Çok şey; yarısı uydurma |\n| @[Argenfon](entity:640bb90b-45e1-5eda-9f57-2104b0ef91ac) | Kaygıyla konuşulur; her konuşma *\"Başkumandan halleder\"* diye biter |\n| @[Lucid Triton](entity:928d42d1-2247-52ee-a0fa-916cefb4aba8) | Az; Meclis konuyu susturuyor |\n| @[Votumar](entity:8bfa834e-fd45-5e48-aade-d7daad8b4d8b) | Fısıltıyla; kimse yüksek sesle söylemiyor |\n| @[Ravenhall Avlusu](entity:cc1e4be2-64dc-54d7-b7d2-bba46a907caa) | Söylenti yok; orada herkes zaten biliyor |\n\nKarakterlere iki farklı yerden söylenti ver. Çelişkiyi kendileri görsün.\n\n## Sırlar nerede\n\nOyuncuların bilmemesi gereken her şey kartların DM alanlarındadır: mekan ve NPC kartlarında **secrets**, görevlerde **secrets**, çatışmalarda **tactics**.\n\nÜç soru bu macerada sorulur ama cevaplanmaz: hastalığın ne olduğu, *Kader*'in kaptanının kimin adına taşıdığı, ve @[Başkumandan](entity:0ad235a6-bee9-5a23-abb8-09e87b1815d9)'ın kim olduğu. Cevaplar ilgili kartlarda yazılıdır. Karakterlere sezdir; açıkça söyleme.\n\n## Umut\n\nMeclis reddedecek, kapılar kapanacak. Buna karşılık bir hancı borç yazacak, yaşlı bir şifacı kırk yıllık bilgisini karşılıksız verecek, bir rıhtım çırağı her şeyi anlatacak. @[Gümüşsu](entity:1bd8df9f-03c4-5b06-ad51-5e5c6b680154) kurtarılabilir.",
           "# Sözlük\n\nİlk oyun gününde duyacağınız sözcükler.\n\n**Meridia** — üstünde durduğunuz kıta.\n\n**Öte** — denizin öbür yakasındaki kıta. Gerçek adı @[Vorstrand](entity:df4460dd-3597-5ce2-9659-f3bea720238a), ama Meridia'da bu adı kimse kullanmaz.\n\n**Lucid Triton** — kıtanın beyaz mermerden başkenti.\n\n**Konsey / Meclis** — halk ikisini de kullanır. Konsey kralın kurduğu yönetimdir; Meclis o yönetimin koltuklarında oturan altı lonca. Bkz. @[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88).\n\n**Lonca** — kıtanın bir işini yürüten kurum: ticaret, demircilik, şifa, hukuk, mimarlık, büyü. Altı lonca Meclis'te oturur.\n\n**Hane** — bir loncanın mührünü elinde tutan aile.\n\n**Mühürlü · Kayıtlı · Yazısız** — bir insanın loncalar karşısındaki yeri: deftere yazan, defterde yazılı olan, hiçbir defterde olmayan. Bkz. @[Sancak Kaydı](entity:f8e345a5-4d56-59a3-9265-1189e858ec7b).\n\n**Adlar** — iki isimli biri (ad ve hane) bir haneye ya da loncaya aittir. Tek isimli biri hizmet eder. Lakapla anılan birinin mührü yoktur.\n\n**Karşı-imza** — bir işin resmi olarak yapıldığını gösteren ikinci imza.\n\n**Blight** — köylülerin adını koyamadıkları hastalığa verdiği ad. Bkz. @[Blight — Bilinen Hali](entity:c8b60ccb-3804-589f-9c00-8417019e6e67)."
         ]
@@ -528,7 +528,7 @@
       "attributes": {
         "pages": [
           "# Zarı kim tetikler\n\nKuralın kendisi @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c) sayfa 1'de; bu kart yalnız **hangi büyü** sorusunu cevaplıyor.\n\n> **Zarı büyü değil, onu yapan tetikler.** *Cure Wounds* bir Cleric'in ağzından çıkınca çağrı zarı ister, bir Bard'ın ağzından çıkınca istemez. Aynı satır, aynı slot, aynı hasar — fark, birinin istenmiş öbürünün öğrenilmiş olması.\n\nBu yüzden aşağıdaki listeler **sınıfa göre** çıkarıldı, okula göre değil. Okul işe yaramıyor: SRD'deki 168 ilahi büyü sekiz okulun **hepsine** dağılmış durumda (en kalabalığı Abjuration 35, en azı Illusion 11), yani \"şu okul ilahidir\" diye bir çizgi yok.\n\n| Sınıf | SRD büyüsü | Zar |\n|---|---|---|\n| **Cleric** | 105 | hepsi |\n| **Warlock** | 68 | hepsi |\n| **Paladin** | 34 | hepsi — @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616)'nin verdikleri hariç |\n| **Druid · Ranger** | — | **yok** (güç doğadan gelir, verilmiş değildir) |\n| Bard · Sorcerer · Wizard | — | **yok** |\n\n**°** işaretli büyüler ilahi olmayan bir listede de var: o sınıftan gelirse zar yok.\n\n**Warlock neden burada.** Listesinin yarısı arcane görünüyor (*Mage Hand*, *Counterspell*, *Fly*) ve bu bir hata değil: warlock'un zarı büyünün ilahi olmasından değil, gücün **verilmiş** olmasından geliyor. Patron da her seferinde cevap vermek zorunda değil.\n\n**Verilmiş olan zar istemez.** Warlock invocation'ı, paladin aurası, bir kez kazanılmış her özellik kapsam dışı. Ayrım tek cümle: *her kullanımda yeniden istenen şey zar ister.*",
-          "# Paladin — 34 büyü\n\n| Seviye | Büyü |\n|---|---|\n| **1. seviye** | Bless · Command° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Divine Favor · Divine Smite · Heroism° · Protection from Evil and Good° · Purify Food and Drink° · Searing Smite° · Shield of Faith |\n| **2. seviye** | Aid° · Find Steed · Lesser Restoration° · Magic Weapon° · Protection from Poison° · Shining Smite · Zone of Truth° |\n| **3. seviye** | Create Food and Water · Daylight° · Dispel Magic° · Magic Circle° · Remove Curse° · Revivify |\n| **4. seviye** | Aura of Life · Banishment° · Death Ward · Locate Creature° |\n| **5. seviye** | Dispel Evil and Good · Geas° · Hallow · Raise Dead° |\n\n## @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616) muafiyeti\n\nYeminin **daima hazır** büyüleri hiçbir seviyede zar istemez — kimseye sorulmuyor, yeminin kendisinden geliyorlar:\n\n*Comprehend Languages · Shield of Faith · Locate Object · See Invisibility · Nondetection · Clairvoyance · Locate Creature · Arcane Eye · Legend Lore · Scrying*\n\nPaladin listesinden **ayrıca hazırladığı** her büyü üstteki tabloya tabidir. *Shield of Faith* iki kez geçiyor ve çelişki değil: yeminden gelen bedava, listeden hazırlanan zarlı.\n\n**Divine Smite bu kıtada yok.** SRD 5.2.1'de 1. seviye bir büyü olarak duruyor; İrade Yemini onu @[Yemin Darbesi](entity:ac360ec5-13a9-56f7-b3df-463b1cf3c03a) ile değiştiriyor — o bir büyü değil, bir trait, ve zar istemez.",
+          "# Paladin — 34 büyü\n\n| Seviye | Büyü |\n|---|---|\n| **1. seviye** | Bless · Command° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Divine Favor · Divine Smite · Heroism° · Protection from Evil and Good° · Purify Food and Drink° · Searing Smite° · Shield of Faith |\n| **2. seviye** | Aid° · Find Steed · Lesser Restoration° · Magic Weapon° · Protection from Poison° · Shining Smite · Zone of Truth° |\n| **3. seviye** | Create Food and Water · Daylight° · Dispel Magic° · Magic Circle° · Remove Curse° · Revivify |\n| **4. seviye** | Aura of Life · Banishment° · Death Ward · Locate Creature° |\n| **5. seviye** | Dispel Evil and Good · Geas° · Hallow · Raise Dead° |\n\n## @[İrade Yemini](entity:3bb54833-2312-54b7-aec9-8b7114ff6616) muafiyeti\n\nYeminin **daima hazır** büyüleri hiçbir seviyede zar istemez — kimseye sorulmuyor, yeminin kendisinden geliyorlar:\n\n*Comprehend Languages · Locate Object · See Invisibility · Nondetection · Clairvoyance · Locate Creature · Arcane Eye · Legend Lore · Scrying*\n\nPaladin listesinden **ayrıca hazırladığı** her büyü üstteki tabloya tabidir. *Shield of Faith* iki kez geçiyor ve çelişki değil: yeminden gelen bedava, listeden hazırlanan zarlı.\n\n**Divine Smite bu kıtada yok.** SRD 5.2.1'de 1. seviye bir büyü olarak duruyor; İrade Yemini onu @[Yemin Darbesi](entity:ac360ec5-13a9-56f7-b3df-463b1cf3c03a) ile değiştiriyor — o bir büyü değil, bir trait, ve zar istemez.",
           "# Cleric — 105 büyü\n\n**Hepsi zar ister.** Bu kart listeyi kısaltmıyor; kısaltılmadığını görmek kuralın ağırlığını anlatan şeyin kendisi.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Guidance° · Light° · Mending° · Resistance° · Sacred Flame · Spare the Dying° · Thaumaturgy |\n| **1. seviye** | Bane° · Bless · Command° · Create or Destroy Water° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Guiding Bolt · Healing Word° · Inflict Wounds · Protection from Evil and Good° · Purify Food and Drink° · Sanctuary · Shield of Faith |\n| **2. seviye** | Aid° · Augury · Blindness/Deafness° · Calm Emotions° · Continual Flame° · Enhance Ability° · Find Traps° · Gentle Repose° · Hold Person° · Lesser Restoration° · Locate Object° · Prayer of Healing · Protection from Poison° · Silence° · Spiritual Weapon · Warding Bond · Zone of Truth° |\n| **3. seviye** | Animate Dead° · Beacon of Hope · Bestow Curse° · Clairvoyance° · Create Food and Water · Daylight° · Dispel Magic° · Glyph of Warding° · Magic Circle° · Mass Healing Word° · Meld into Stone° · Protection from Energy° · Remove Curse° · Revivify · Sending° · Speak with Dead° · Spirit Guardians · Tongues° · Water Walk° |\n| **4. seviye** | Banishment° · Control Water° · Death Ward · Divination° · Freedom of Movement° · Guardian of Faith · Locate Creature° · Stone Shape° |\n| **5. seviye** | Blade Barrier° · Commune · Contagion° · Dispel Evil and Good · Flame Strike · Geas° · Greater Restoration° · Hallow · Insect Plague° · Legend Lore° · Mass Cure Wounds° · Planar Binding° · Raise Dead° · Scrying° |\n| **6. seviye** | Create Undead° · Find the Path° · Forbiddance · Harm · Heal° · Heroes' Feast° · Planar Ally · True Seeing° · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word · Etherealness° · Fire Storm° · Plane Shift° · Regenerate° · Resurrection° · Symbol° |\n| **8. seviye** | Antimagic Field° · Control Weather° · Earthquake° · Holy Aura |\n| **9. seviye** | Astral Projection° · Gate° · Mass Heal · True Resurrection° |",
           "# Warlock — 68 büyü\n\n**Hepsi zar ister.** Sebebi ilahilik değil, verilmiş olmak — patron her çağrıda cevap vermez.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Chill Touch° · Eldritch Blast · Mage Hand° · Minor Illusion° · Poison Spray° · Prestidigitation° · True Strike° |\n| **1. seviye** | Charm Person° · Comprehend Languages° · Disguise Self° · Expeditious Retreat° · Hellish Rebuke · Hex · Illusory Script° · Protection from Evil and Good° · Unseen Servant° |\n| **2. seviye** | Darkness° · Enthrall° · Hold Person° · Invisibility° · Mind Spike° · Mirror Image° · Misty Step° · Ray of Enfeeblement° · Shatter° · Spider Climb° · Suggestion° |\n| **3. seviye** | Counterspell° · Dispel Magic° · Fear° · Fly° · Gaseous Form° · Hypnotic Pattern° · Magic Circle° · Major Image° · Remove Curse° · Tongues° · Vampiric Touch° |\n| **4. seviye** | Banishment° · Blight° · Charm Monster° · Dimension Door° · Hallucinatory Terrain° |\n| **5. seviye** | Contact Other Plane° · Dream° · Hold Monster° · Scrying° |\n| **6. seviye** | Circle of Death° · Conjure Fey° · Create Undead° · Eyebite° · Flesh to Stone° · Mass Suggestion° · True Seeing° |\n| **7. seviye** | Etherealness° · Finger of Death° · Forcecage° · Plane Shift° |\n| **8. seviye** | Befuddlement° · Demiplane° · Dominate Monster° · Glibness° · Power Word Stun° |\n| **9. seviye** | Astral Projection° · Foresight° · Imprisonment° · Power Word Kill° · True Polymorph° |",
           "# Bu kıtada neredeyse hiç görülmeyen 38 büyü\n\nAşağıdakiler **yalnız** Cleric, Paladin ve Warlock listelerinde var: başka hiçbir sınıf bunları yapamaz, yani bu kıtada bu büyüler zarsız **hiç** yapılamaz.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Eldritch Blast · Sacred Flame · Thaumaturgy |\n| **1. seviye** | Bless · Detect Evil and Good · Divine Favor · Divine Smite · Guiding Bolt · Hellish Rebuke · Hex · Inflict Wounds · Sanctuary · Shield of Faith |\n| **2. seviye** | Augury · Find Steed · Prayer of Healing · Shining Smite · Spiritual Weapon · Warding Bond |\n| **3. seviye** | Beacon of Hope · Create Food and Water · Revivify · Spirit Guardians |\n| **4. seviye** | Aura of Life · Death Ward · Guardian of Faith |\n| **5. seviye** | Commune · Dispel Evil and Good · Flame Strike · Hallow |\n| **6. seviye** | Forbiddance · Harm · Planar Ally · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word |\n| **8. seviye** | Holy Aura |\n| **9. seviye** | Mass Heal |\n\n**DM için:** bu tablo bir yasak listesi değil, bir **nadirlik** listesi. Bir oyuncu 3. seviye bir *Revivify* denediğinde masada olan şey budur: eşik, saatlik sayaç, ve harcanan slot. Bir NPC bunlardan birini gözle görülür şekilde yaptığında ise şehirde konuşulan tek şey o olur (@[Tanrılar ve Fısıltı](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b))."
@@ -2549,7 +2549,7 @@
       "name": "Yeminin Ağırlığı",
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
-      "description": "**Güç** ve **Dayanıklılık** yetenek puanların **1'er artar** (en fazla 20).\n\n**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+      "description": "**Güç** puanın **1 artar** (en fazla 20).\n\n**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
       "image_path": "",
       "images": [],
       "tags": [
@@ -2562,15 +2562,7 @@
       "attributes": {
         "source": "İrade Yemini",
         "trait_kind": "Other",
-        "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Kaybedilen ilahi hattın karşılığı budur; bir bonus değil, bir takas.",
-        "ability_bonuses": {
-          "STR": 1,
-          "DEX": 0,
-          "CON": 1,
-          "INT": 0,
-          "WIS": 0,
-          "CHA": 0
-        },
+        "benefits": "Düzen sana dua etmeyi değil, bir defteri okumayı ve bir kalkan duvarında ayakta kalmayı öğretti. Tek puanlık güç bir bonus değil bir **takas**: kaybedilen ilahi hattın karşılığı budur, ve yeminlinin sahada durabilmesinin tek sebebi.",
         "granted_skill_proficiencies": [
           {
             "_lookup": "skill",
@@ -2580,7 +2572,15 @@
             "_lookup": "skill",
             "name": "Investigation"
           }
-        ]
+        ],
+        "ability_bonuses": {
+          "STR": 1,
+          "DEX": 0,
+          "CON": 0,
+          "INT": 0,
+          "WIS": 0,
+          "CHA": 0
+        }
       }
     },
     "ac360ec5-13a9-56f7-b3df-463b1cf3c03a": {
@@ -2701,6 +2701,112 @@
             "count": 1
           }
         ]
+      }
+    },
+    "24822dcd-2c83-5c3a-836a-f22be23b1f67": {
+      "name": "Siper",
+      "type": "trait",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "**Uzun dinlenmede bir kez.** 1. kademe ya da üstü bir **abjuration** büyüsünü bir yuva harcayarak yaptığında, o büyünün gücünün bir kısmını ayırıp etrafına bir **Siper** örebilirsin.\n\n**Örmek senin kararın.** Her abjuration büyüsü siperi zorla kurmaz — büyüyü yaparken *bu sefer örüyorum* dersin. Siper hep o büyünün sırtında kurulur; başka türlü kurulamaz.\n\n**Siperin can kapasitesi: `2 × büyücü seviyesi + Zeka modifiyeri`.**\n\nSiper örüldüğü andan **kırılana kadar** durur ve sana yönelen hasarı senin yerine alır.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "siper-okulu",
+        "wizard",
+        "abjuration"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "trait_kind": "Defensive",
+        "benefits": "**Beslenmesi kendiliğinden olur.** Siper ayaktayken yaptığın 1. kademe ya da üstü her abjuration büyüsü, sipere **büyü kademesi × 2** can geri verir. Kapasitenin üstüne çıkmaz. Bunun için ayrı bir aksiyon ya da fazladan yuva harcamazsın — büyüyü yapman yeter.\n\n**Kırılma.** Siperin canı **0'a düştüğü anda siper kırılır**; o vuruştan artan hasarı sen alırsın ve siper **yok olur**. Kırılan siper beslenerek geri gelmez.\n\n**Uzun dinlenmeye kadar bir tane.** İster kırılsın ister ayakta kalsın, bir sonraki uzun dinlenmeye kadar ikinci bir siper öremezsin. Ne zaman öreceğine karar vermek bu yüzden bu kartın asıl oyunudur.\n\n**Örnek (5. seviye, Zeka 16):** kapasite `2×5 + 3 = 13`. İlk turda *Shield* atarken siperi ördün. Aynı çatışmada yaptığın 2. kademe bir abjuration büyüsü sipere **+4** can yazar. 13 canı aşan bir vuruş geldiğinde siper kırılır ve o çatışmanın geri kalanında sipersizsin.",
+        "granted_action_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Siperi Ör"
+          }
+        ],
+        "resource_pool_grants": [
+          {
+            "pool_ref": {
+              "_lookup": "resource-pool",
+              "name": "pool:siper"
+            },
+            "recharge": "long_rest",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "6e0b4628-6f35-5084-b976-c45cbc92b9f9": {
+      "name": "Siperi Uzat",
+      "type": "trait",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Siper artık yalnız seni değil, **gördüğün herkesi** tutar.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "siper-okulu",
+        "wizard",
+        "abjuration"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "trait_kind": "Defensive",
+        "benefits": "**Tepki** ile, **30 ft** içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Hasar siperin canını aşarsa **siper kırılır** ve artan hasarı yaratık alır.\n\nSayı sınırı yok; sınır siperin canı ve turda tek bir tepkin olması. Bu, bu okulun ilahi iyileştirmenin yerine koyduğu şeydir: **alınmamış hasar.**",
+        "granted_reaction_refs": [
+          {
+            "_ref": "creature-action",
+            "name": "Siperi Uzat"
+          }
+        ]
+      }
+    },
+    "da5e9b32-1eb1-5842-a9f0-b3b9b9d14210": {
+      "name": "Karşı Büyücü",
+      "type": "trait",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "**Counterspell** ve **Dispel Magic** senin için daima hazırdır ve hazırladığın büyü sayısına **sayılmaz**.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "siper-okulu",
+        "wizard",
+        "abjuration"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "trait_kind": "Other",
+        "benefits": "**Boşa gitmez.** *Counterspell* için bir yuva harcadığında hedef kurtarma zarını geçer ve büyü durdurulamazsa, **yuva harcanmış sayılmaz.**\n\n**Sökmekte ustasın.** *Dispel Magic* 4. kademe ve üstü bir etkiye karşı yetenek kontrolü gerektirdiğinde kontrole **yetkinlik bonusunu** eklersin."
+      }
+    },
+    "bc269ca7-be88-574f-901c-1296b2468bc6": {
+      "name": "Büyüye Direnç",
+      "type": "trait",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Büyülerden gelen **her hasara dirençlisin**.\n\nBir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın.",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "siper-okulu",
+        "wizard",
+        "abjuration"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "trait_kind": "Defensive",
+        "benefits": "Siperin bir yerde durabilmesi için önce senin durman gerekir. Bu kademede okul, taşıyıcısını korumaya başlar."
       }
     },
     "d8d6d3db-2ff3-5b83-b27a-a75245fe6398": {
@@ -2932,6 +3038,40 @@
         "source": "Drake",
         "action_type": "Reaction",
         "damage_dice": "1d6"
+      }
+    },
+    "3cd8fd23-083f-53b0-96ca-9603347d6000": {
+      "name": "Siperi Uzat",
+      "type": "creature-action",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır ve senin ayakta bir **Siper**in vardır.\n\nTepkinle o hasarı sipere yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa **siper kırılır** ve aşan kısmı yaratık alır.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "action_type": "Reaction",
+        "range_normal_ft": 30
+      }
+    },
+    "6a4cea1a-5570-578f-b8d6-eed39faa4723": {
+      "name": "Siperi Ör",
+      "type": "creature-action",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "*Tetikleyici:* bir yuva harcayarak **1. kademe ya da üstü bir abjuration büyüsü** yaparsın.\n\nO büyünün gücünden **Siper**ini örersin. Kapasite `2 × büyücü seviyesi + Zeka modifiyeri`.\n\nAksiyon, bonus aksiyon ya da tepki harcamaz — kararı büyüyü yaparken verirsin. **Uzun dinlenmede bir kez.**\n\nSiper, canı 0'a düştüğünde **kırılır** ve uzun dinlenmeye kadar geri gelmez; o yüzden hangi büyüde öreceğin bu okulun asıl kararıdır.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "source": "Siper Okulu",
+        "action_type": "Free",
+        "recharge_kind": "Long Rest"
       }
     },
     "92b47bc4-2ece-59a2-b4eb-6bbe1d9bc28a": {
@@ -4997,6 +5137,21 @@
         "display_name": "Andın Hâli"
       }
     },
+    "d537b794-8c87-5a47-97ef-f74974eb95c3": {
+      "name": "pool:siper",
+      "type": "resource-pool",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Siper Okulu — siper örme hakkı. Uzun dinlenmede bir.",
+      "image_path": "",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "display_name": "Siper"
+      }
+    },
     "c615771b-2703-576c-8635-c566cba3b0fd": {
       "name": "Clockwork Soul",
       "type": "subclass",
@@ -5249,13 +5404,13 @@
           "slug": "class",
           "name": "Paladin"
         },
-        "granted_at_level": 1,
+        "granted_at_level": 3,
         "flavor_description": "**Bu yeminin verdiği hiçbir şey çağrı zarı istemez.** Aşağıdaki özellikler ve yemin büyüleri bir tanrıdan istenmiyor; yeminin kendisinden geliyor. Buna karşılık paladin listesinden ayrıca hazırladığın her ilahi büyü @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)'ndaki zara tabidir. Elin **dar ama güvenilir**.\n\n**Yemin bozulursa.** Düzenin metni her şatoda biraz farklı; değişmeyen tek şart *verilen söz tutulur*. Yeminini bilerek bozan bir yeminlinin bu sayfadaki her şeyi **bir uzun dinlenme boyunca** çalışmaz. Kalıcı kayıp yok — düzenin kendisi de bunu tartışıyor.\n\n**Kışla Künyesi bir anten değil, bir mühür** (@[Kışla Künyesi](entity:605b716f-19f5-590f-82cb-b650833d985e)): yeminin edildiğini ve kimin tanık olduğunu söyler. Düzenden kopan paladin gücünü kaybeder, adını değil.",
         "features": [
           {
-            "level": 1,
+            "level": 3,
             "name": "Yeminin Ağırlığı",
-            "description": "**Güç** ve **Dayanıklılık** puanların 1'er artar (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
+            "description": "**Güç** puanın **1 artar** (en fazla 20). **History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
             "granted_trait_refs": [
               {
                 "_ref": "trait",
@@ -5264,7 +5419,7 @@
             ]
           },
           {
-            "level": 1,
+            "level": 3,
             "name": "Yemin Darbesi",
             "description": "Yakın silahlı saldırın isabet ettiğinde bir büyü yuvası harcayarak fazladan **2d8 kuvvet** hasarı verirsin; üst kademe yuva başına **+1d8**, en fazla **5d8**. Hedef Blight'lı bir yaratıksa **+1d8**. Turda bir kez. *Divine Smite'ın yerini alır.*",
             "granted_trait_refs": [
@@ -5277,15 +5432,11 @@
           {
             "level": 3,
             "name": "Yemin Büyüleri",
-            "description": "Bu büyüler senin için **daima hazırdır**, hazırladığın büyü sayısına sayılmaz ve **çağrı zarı istemez**: **Comprehend Languages · Shield of Faith.**\n\n*Shield of Faith* bu düzende **Tutulan Söz** diye anılır.",
+            "description": "Bu büyü senin için **daima hazırdır**, hazırladığın büyü sayısına sayılmaz ve **çağrı zarı istemez**: **Comprehend Languages.**",
             "always_prepared_spell_refs": [
               {
                 "slug": "spell",
                 "name": "Comprehend Languages"
-              },
-              {
-                "slug": "spell",
-                "name": "Shield of Faith"
               }
             ]
           },
@@ -5390,6 +5541,109 @@
               {
                 "_ref": "trait",
                 "name": "Andın Hâli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "e7bec5f7-8d4b-581e-b6e9-3ff995d3084e": {
+      "name": "Siper Okulu",
+      "type": "subclass",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Büyücü Loncası'nın en sevilmeyen ve en çok çağrılan kolu.\n\nBu kıtada bir tanrıdan yardım istemek bir kumardır (@[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)) — ilahi iyileştirme her seferinde yeniden istenir ve çoğu zaman gelmez. @[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c) bu boşluğu üç yüzyıl önce fark etti ve sorunu tersinden çözdü: **yara kapatılamıyorsa, yaranın açılmasına izin verilmez.**\n\nSiper Okulu'nun mezunu ateş atmaz, ölüyü kaldırmaz, geleceği okumaz. Bir odaya girer, arkadaşlarının önüne görünmez bir duvar örer ve o duvar dağılana kadar orada durur. Loncanın kendi deyişiyle: *\"Biz iyileştirmeyiz. Biz gerekmemesini sağlarız.\"*",
+      "image_path": "",
+      "images": [],
+      "tags": [
+        "alt-sınıf",
+        "siper-okulu",
+        "wizard",
+        "abjuration",
+        "kural-sapması"
+      ],
+      "dm_notes": "**Sapma işareti — bu alt sınıf SRD'de yoktur.** Aegis'e özgü, klasik *abjuration* geleneğinden esinlenerek **sıfırdan yazılmış** bir alt sınıftır; hiçbir üçüncü taraf metninden çeviri değildir. Gerekçesi dünyanın kendi kuralı: @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c) ilahi iyileştirmeyi zara bağladığı için grubun güvenilir bir hasar hattına ihtiyacı var, ve bu hat arkana olmak zorunda.\n\n**2024 uyumu.** Alt sınıf **3. seviyede** açılır, özellikler **3 / 6 / 10 / 14** kademelerinde gelir — SRD 5.2.1'in alt sınıf iskeletiyle birebir aynı. Eski 2014 şeklindeki (2. seviye) abjuration gelenekleri bu dünyada kullanılmaz.\n\n**Denge notları.**\n- Siperin kapasitesi 5. seviyede ~13, 10. seviyede ~24, 17. seviyede ~38 can. Beslenme bunu bir miktar aşar ama **çatışma başına bir sipere** bakıyorsun: siper kırıldığında uzun dinlenmeye kadar geri gelmiyor. Yani bu bir musluk değil, **günde bir kez açılan bir sigorta**. Grubun iyileştiricisi yoksa bile tek başına yetmez, ve bu kasıtlıdır.\n- **Ne zaman öreceği** oyuncunun kararı: erken örülen siper küçük vuruşlarda erir, geç örülen siper hiç örülmemiş olabilir. Kartın oyunu budur.\n- *Siperi Uzat* sınırsızdır ama **tepki** harcar: turda bir kez. Asıl sınır budur, sayaç değil.\n- 10. kademedeki \"yuva harcanmaz\" maddesi yalnız *Counterspell* içindir, *Dispel Magic* için değil.\n- 3. kademedeki daima-hazır **Shield / Protection from Evil and Good** klasik geleneğin vermediği bir eklemedir; kartın uygulamada görünür bir şey vermesi ve siperin ilk turda kurulabilmesi için konuldu. Kısmak isterseniz ilk çıkarılacak madde budur.\n\n**Oyuncuya söyle:** siper **kendiliğinden kurulmaz** ve **günde bir tanedir**. Abjuration büyüsü yapılmazsa ortada siper yoktur; kırıldıktan sonra da uzun dinlenmeye kadar yoktur. *Siperi Uzat* dahil bu kartın yarısı sipere bağlı.",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "parent_class_ref": {
+          "slug": "class",
+          "name": "Wizard"
+        },
+        "granted_at_level": 3,
+        "flavor_description": "**Bu okulun verdiği hiçbir şey çağrı zarı istemez.** Siper de, Karşı Büyücü de arkana (arcane) güçtür — her kullanımda yeniden istenen bir şey değil, bir kez öğrenilmiş bir zanaattır. @[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)'ndaki zar Cleric'i, Warlock'u ve Paladin'in ilahi büyülerini bağlar; büyücüyü bağlamaz.\n\nBu, masada çok somut bir şey demek: **ilahi iyileştiricisi olmayan bir grubun tek güvenilir hasar hattı sensin.** Cleric'in *Cure Wounds*'u 19 tutturamazsa hiçbir şey olmaz; senin siperin ise zar atmaz, sadece durur.\n\nLonca bunu bir erdem saymaz, bir sigorta sayar. Siper Okulu mezunları kervanlara, madenlere ve cephe gerisine atanır — kahraman olsunlar diye değil, **kimse ölmesin** diye.",
+        "features": [
+          {
+            "level": 3,
+            "name": "Siper",
+            "description": "**Uzun dinlenmede bir kez.** Bir yuva harcayarak 1. kademe ya da üstü bir **abjuration** büyüsü yaptığında, **istersen** o büyünün sırtında bir **Siper** örersin — aksiyon harcamaz, kararı sen verirsin.\n\nKapasite `2 × büyücü seviyesi + Zeka modifiyeri`; sana gelen hasarı siper alır. Siper ayaktayken yaptığın her abjuration büyüsü sipere **kademe × 2** can yazar (kendiliğinden, ek maliyet yok).\n\n**Canı 0'a düştüğünde siper kırılır**, artan hasarı sen alırsın ve **uzun dinlenmeye kadar** yenisi örülemez.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Siper"
+              }
+            ],
+            "granted_action_refs": [
+              {
+                "_ref": "creature-action",
+                "name": "Siperi Ör"
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "name": "Loncanın Defteri",
+            "description": "Bu okulu seçtiğinde büyü defterine **2. kademe ve altı iki abjuration büyüsü** bedavaya eklenir. Sonrasında **her yeni yuva kademesi açıldığında** bir abjuration büyüsü daha eklenir (yuvası olmayan kademeden seçemezsin).\n\nAyrıca **Shield** ve **Protection from Evil and Good** senin için daima hazırdır ve hazırladığın büyü sayısına sayılmaz.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Shield"
+              },
+              {
+                "slug": "spell",
+                "name": "Protection from Evil and Good"
+              }
+            ]
+          },
+          {
+            "level": 6,
+            "name": "Siperi Uzat",
+            "description": "**Tepki.** 30 ft içinde gördüğün bir yaratığa gelen hasarı Siper'ine yönlendirirsin. Aşan hasarı yaratık alır, siper 0 canda bekler.\n\nKullanım sınırı yok — sınır siperin canıdır.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Siperi Uzat"
+              }
+            ]
+          },
+          {
+            "level": 10,
+            "name": "Karşı Büyücü",
+            "description": "**Counterspell** ve **Dispel Magic** daima hazır; hazırladığın büyü sayısına sayılmaz.\n\n*Counterspell* hedefi kurtarma zarını geçerse **yuva harcanmaz**. *Dispel Magic* yetenek kontrolü gerektirdiğinde kontrole **yetkinlik bonusunu** eklersin.",
+            "always_prepared_spell_refs": [
+              {
+                "slug": "spell",
+                "name": "Counterspell"
+              },
+              {
+                "slug": "spell",
+                "name": "Dispel Magic"
+              }
+            ],
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Karşı Büyücü"
+              }
+            ]
+          },
+          {
+            "level": 14,
+            "name": "Büyüye Direnç",
+            "description": "Büyülerden gelen **her hasara dirençlisin** ve bir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın.",
+            "granted_trait_refs": [
+              {
+                "_ref": "trait",
+                "name": "Büyüye Direnç"
               }
             ]
           }

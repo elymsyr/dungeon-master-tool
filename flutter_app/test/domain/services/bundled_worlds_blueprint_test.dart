@@ -55,17 +55,7 @@ void main() {
             '--check` for the full report',
       );
       expect(result.entities, isNotEmpty);
-      // `pinned` girdileri `kategori/isim` — yazım hatası sessizce hiçbir
-      // şeyi pinlemez, o yüzden burada id'ye çözülüp entity'de aranıyor.
-      for (final ref in (blueprint?['pinned'] as List? ?? const [])) {
-        final i = (ref as String).indexOf('/');
-        expect(i, greaterThan(0), reason: 'pinned ref must be `slug/name`: $ref');
-        expect(
-          result.entities,
-          contains(converter.entityId(ref.substring(0, i), ref.substring(i + 1))),
-          reason: 'pinned entity not found: $ref',
-        );
-      }
+      expectRefsResolve(blueprint, converter, result.entities);
       // PC'ler entity değil; `Entity.fromJson`'ın beklediği biçimde
       // gelmezlerse kurulum karakteri hiç yazamaz.
       for (final c in result.characters) {
@@ -76,21 +66,23 @@ void main() {
     });
   }
 
-  // `assets/worlds/cairn/` dünya değil, **paket** authoring kaynağı: üstteki
-  // `manifest.json`'a yazılmaz (uygulamaya dünya olarak paketlenmez), ama
-  // ürettiği blueprint aynı converter'dan geçiyor. Aynı ships-broken koruması
+  // `assets/worlds/cairn/` ve `assets/worlds/aegis/` dünya değil, **paket**
+  // authoring kökleri: üstteki
+  // `manifest.json`'a yazılmazlar (uygulamaya dünya olarak paketlenmezler), ama
+  // ürettikleri blueprint aynı converter'dan geçiyor. Aynı ships-broken koruması
   // burada da geçerli — bozuk bir parser çıktısı build'i geçmemeli.
-  final cairn = Directory('${root.path}/cairn');
-  if (cairn.existsSync()) {
-    for (final dir in cairn.listSync().whereType<Directory>()) {
+  for (final packRoot in ['cairn', 'aegis']) {
+    final packs = Directory('${root.path}/$packRoot');
+    if (!packs.existsSync()) continue;
+    for (final dir in packs.listSync().whereType<Directory>()) {
       final meta = File('${dir.path}/manifest.json');
       final bp = File('${dir.path}/world-blueprint.json');
       if (!meta.existsSync() || !bp.existsSync()) continue;
       final slug =
           (jsonDecode(meta.readAsStringSync()) as Map)['slug'] as String;
 
-      test('cairn pack "$slug" converts cleanly', () {
-        final result = WorldBlueprintConverter(
+      test('$packRoot pack "$slug" converts cleanly', () {
+        final converter = WorldBlueprintConverter(
           packageName: slug,
           sourceTitle: slug,
           tier0Slugs: blueprintTier0Slugs(),
@@ -100,10 +92,10 @@ void main() {
           relationTargets: blueprintRelationTargets(),
           mediaResolver: (rel) =>
               File('${dir.path}/$rel').existsSync() ? rel : null,
-        ).convert(
-          worldBlueprint:
-              jsonDecode(bp.readAsStringSync()) as Map<String, dynamic>,
         );
+        final blueprint =
+            jsonDecode(bp.readAsStringSync()) as Map<String, dynamic>;
+        final result = converter.convert(worldBlueprint: blueprint);
 
         expect(
           result.issues.map((i) => '$i'),
@@ -111,7 +103,29 @@ void main() {
           reason: 'run `dart run tool/content/convert_blueprint.dart --dir '
               '${dir.path} --check` for the full report',
         );
+        expectRefsResolve(blueprint, converter, result.entities);
       });
+    }
+  }
+}
+
+/// Blueprint'in `pinned` / `shared` listeleri `kategori/isim` yazılıyor —
+/// yazım hatası sessizce hiçbir şeyi pinlemez ya da paylaşmaz, o yüzden
+/// burada id'ye çözülüp entity'de aranıyor.
+void expectRefsResolve(
+  Map<String, dynamic>? blueprint,
+  WorldBlueprintConverter converter,
+  Map<String, dynamic> entities,
+) {
+  for (final key in const ['pinned', 'shared']) {
+    for (final ref in (blueprint?[key] as List? ?? const [])) {
+      final i = (ref as String).indexOf('/');
+      expect(i, greaterThan(0), reason: '$key ref must be `slug/name`: $ref');
+      expect(
+        entities,
+        contains(converter.entityId(ref.substring(0, i), ref.substring(i + 1))),
+        reason: '$key entity not found: $ref',
+      );
     }
   }
 }
