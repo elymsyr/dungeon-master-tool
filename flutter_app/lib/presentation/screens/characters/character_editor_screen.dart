@@ -2987,8 +2987,12 @@ class _CharacterEditorScreenState
     required Map<String, Entity> entities,
     required String? classId,
   }) {
-    final raw = base.entity.fields['subclass_refs'] ??
-        base.entity.fields['subclass_id'];
+    // `subclass_refs` defaults to `[]`, never null, so a plain `??` never
+    // reached the wizard-written `subclass_id` fallback.
+    var raw = base.entity.fields['subclass_refs'];
+    if (raw == null || (raw is List && raw.isEmpty)) {
+      raw = base.entity.fields['subclass_id'];
+    }
     final ids = <String>[];
     if (raw is List) {
       for (final r in raw) {
