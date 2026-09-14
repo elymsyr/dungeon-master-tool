@@ -15,11 +15,14 @@ CombatNotifier _createNotifier({
   List<Character> Function()? getCharacters,
   bool Function()? isLoadWithoutDataSafe,
 }) {
+  final campaignData = <String, dynamic>{};
   return CombatNotifier(
     getEntities ?? () => <String, Entity>{},
     () => generateDefaultDnd5eSchema(),
     getCharacters ?? () => const <Character>[],
-    getCampaignData ?? () => null,
+    // An open world always has campaign data; null is only the load window,
+    // where the _loaded gate deliberately blocks writes.
+    getCampaignData ?? () => campaignData,
     eventBus ?? AppEventBus(),
     (_) async {},
     (_) async {},
