@@ -12,7 +12,7 @@ tags: [file]
 # `first_party_art_service.dart`
 
 > [!abstract] Primary Purpose
-> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e/Cairn paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1247 görseli), sonra paket kurulurken tek zip hâlinde inip açılan kurulum cache'i (`cacheDir/art/`). Okuma anında ağa çıkılmaz — R2'de görsel başına obje tutulmuyor, sadece paket başına zip var. Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
+> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1247 görseli), sonra paket kurulurken tek zip hâlinde inip açılan kurulum cache'i (`cacheDir/art/`). Okuma anında ağa çıkılmaz — R2'de görsel başına obje tutulmuyor, sadece paket başına zip var. Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
 
 ## Inputs / Outputs
 **Inputs**

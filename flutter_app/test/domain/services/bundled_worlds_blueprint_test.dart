@@ -66,12 +66,11 @@ void main() {
     });
   }
 
-  // `assets/worlds/cairn/` ve `assets/worlds/aegis/` dünya değil, **paket**
-  // authoring kökleri: üstteki
+  // `assets/worlds/aegis/` dünya değil, **paket** authoring kökü: üstteki
   // `manifest.json`'a yazılmazlar (uygulamaya dünya olarak paketlenmezler), ama
   // ürettikleri blueprint aynı converter'dan geçiyor. Aynı ships-broken koruması
   // burada da geçerli — bozuk bir parser çıktısı build'i geçmemeli.
-  for (final packRoot in ['cairn', 'aegis']) {
+  for (final packRoot in ['aegis']) {
     final packs = Directory('${root.path}/$packRoot');
     if (!packs.existsSync()) continue;
     for (final dir in packs.listSync().whereType<Directory>()) {

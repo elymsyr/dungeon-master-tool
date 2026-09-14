@@ -25,8 +25,8 @@ void main() {
   if (!root.existsSync()) return;
 
   // Every authoring source under `assets/worlds/`, manifest-listed or not —
-  // `aegis/` and `cairn/` ship as importable packages, not bundled worlds, and
-  // a subclass that grants nothing breaks the same way in both.
+  // `aegis/` ships as an importable package, not a bundled world, and a
+  // subclass that grants nothing breaks the same way in both.
   final dirs = root
       .listSync(recursive: true)
       .whereType<File>()

@@ -139,9 +139,8 @@ void writeUnmappedReport(Map<String, dynamic> report, String outDir) {
 /// Rewrite `manifest.json` for [results], **keeping** the entries this run did
 /// not produce.
 ///
-/// `assets/open5e_packs/` is written by two pipelines: this one and
-/// `tool/content/cairn/build_cairn.dart`. A plain overwrite silently evicted
-/// the two Cairn packs from the manifest on every `build_packs` run — the files
+/// `assets/open5e_packs/` can hold packs another pipeline wrote. A plain
+/// overwrite silently evicted those entries on every `build_packs` run — the files
 /// stayed on disk, so nothing failed; they just stopped being discovered. An
 /// entry is carried over only while its `.pkg.json` is still there, so a pack
 /// that is genuinely gone still leaves the manifest.

@@ -540,7 +540,7 @@ void main() {
           .where((n) => n.endsWith('.pkg.json'))
           .toList()
         ..sort();
-      expect(assets, hasLength(22));
+      expect(assets, hasLength(20));
 
       final undeclared = <String>{};
       final unreadSeen = <String>{};
