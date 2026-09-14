@@ -22,8 +22,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lore import lore_for
-from prompts import (NAME_ONLY_TYPES, clean_prose, lookup, monster_prompt,
-                     tidy_name)
+from prompts import (ART_TYPES, GEAR_TYPES, NAME_ONLY_TYPES, clean_prose,
+                     lookup, monster_prompt, mundane_hint, tidy_name)
 
 # Sunucudaki opencode erişimi. Zen free tier (mimo-v2.5-free) yanıt vermiyordu;
 # ücretli opencode-go provider'ı kullanılıyor. Bu provider --variant desteklemiyor.
@@ -37,6 +37,17 @@ LORE_DIR = Path.home() / "GitHub/5e-Tools/data"
 GEMINI_MODEL = "gemini-3.5-flash-lite"
 GEMINI_URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
               "{model}:generateContent")
+
+# Sıradan ekipman — SYS'teki "distinctive feature" kuralı süs/rün/parıltı
+# uydurtmasın diye işlevsel formu ayırt edici özellik olarak tanımlar.
+MUNDANE_GUIDE = (
+    "the ORDINARY, NON-MAGICAL object exactly as a medieval craftsman would make "
+    "it: overall shape, parts, materials (wood, iron, steel, leather, cloth, "
+    "glass, clay), size and signs of use. Plain and functional: no glow, no "
+    "runes, no gems, no gold filigree, no ornament beyond what the name itself "
+    "states. Its distinctive feature is its functional form, not decoration. "
+    "No person holding or wearing it. Describe only what IS there: never write "
+    "'no X' or 'without ornamentation' — the painter draws every word you name.")
 
 # Kategoriye göre görsel odak — LLM'e hangi yönleri betimleyeceğini söyler.
 CATEGORY_GUIDE = {
@@ -53,6 +64,21 @@ CATEGORY_GUIDE = {
                "features, distinguishing traits, typical dress",
     "class": "iconic equipment, weapon, armor, posture and silhouette defining "
              "this adventurer archetype, stance and build typical of this class",
+    **{t: MUNDANE_GUIDE for t in GEAR_TYPES},
+    "pack": MUNDANE_GUIDE + " Describe the backpack and the listed supplies together.",
+    "mount": "the ordinary domesticated animal as it really looks: build, coat "
+             "color, size, plus plain working tack (simple saddle, bridle or "
+             "harness). A real animal, not a monster: no barding, no ornament, no "
+             "fantasy features. Describe only what IS there.",
+    "vehicle": "the ordinary vehicle as real pre-industrial craftsmanship: body or "
+               "hull shape, wheels, oars, sails or rigging, materials, size, wear. "
+               "A plain working vehicle: no gilding, no glow, no fantasy ornament "
+               "(an airship may show its lifting envelope). Describe only what IS "
+               "there.",
+    "animal": "the real animal's natural anatomy: body shape, size, fur, feathers "
+              "or scales, colors, posture. A natural beast, not a monster: no "
+              "fantasy features unless the name states them (Giant, Dire). "
+              "Eyes are ordinary animal eyes, never glowing.",
 }
 
 SYS = (
@@ -135,6 +161,11 @@ def entity_input(row: dict) -> tuple[str, str, str, str]:
     pkg = row.get("_package", "")
     if t == "monster":
         desc = monster_prompt(name, attrs)
+    elif t == "animal":
+        desc = (f"{monster_prompt(name, attrs, beast=True)}. "
+                f"{clean_prose(row.get('description') or '')}")
+    elif t in GEAR_TYPES or t in ("mount", "vehicle"):
+        desc = mundane_hint(t, attrs)
     elif t in NAME_ONLY_TYPES:
         desc = NAME_ONLY_TYPES[t]
     else:
@@ -160,9 +191,7 @@ def load_packs(packs_dirs: list[Path]) -> dict[str, dict]:
             data = json.loads(pack.read_text())
             pkg_title = data.get("package_name") or pack.stem
             for uuid, row in (data.get("entities") or {}).items():
-                if row.get("type") not in NAME_ONLY_TYPES and row.get("type") not in (
-                        "monster", "spell", "magic-item", "background",
-                        "subspecies", "species", "class"):
+                if row.get("type") not in ART_TYPES:
                     continue
                 row["_package"] = pkg_title
                 out.setdefault(uuid, row)

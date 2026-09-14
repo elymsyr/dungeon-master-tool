@@ -7,7 +7,11 @@ arkaplanı — ama hepsi D&D estetiğinde ve AI görünümünden uzak.
 ## Kapsam
 
 `ART_TYPES` ile belirlenir: `monster`, `spell`, `magic-item`, `subclass`,
-`feat`, `background`, `subspecies`, `species`. Dışarıda kalanlar
+`feat`, `background`, `subspecies`, `species`, `class`; ayrıca yalnızca SRD'de
+bulunan sıradan ekipman/hayvan tipleri `weapon`, `armor`, `tool`,
+`adventuring-gear`, `ammunition`, `pack`, `mount`, `vehicle`, `animal`
+(2026-09, sade ışık/zemin — `GEAR_TYPES`, `MUNDANE_GUIDE`; çıktı
+`out_srd_gear/`, job listesi `art_jobs_srd_gear_final.jsonl`). Dışarıda kalanlar
 `creature-action` ve `trait` — bunlar bir nesne değil, kural cümlesi.
 
 ## Pipeline Adımları

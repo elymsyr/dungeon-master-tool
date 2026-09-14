@@ -6,7 +6,7 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 14 September 2026 (v16.4.0) — `flutter test` 1520 passing / 0 failing,
+**Last reviewed:** 14 September 2026 (v17.0.0) — `flutter test` 1509 passing / 0 failing,
 `flutter analyze` 0 errors / 0 warnings, worker `npm run typecheck` clean.
 
 ---
@@ -18,6 +18,8 @@ Anything fixed in an earlier release lives in that release's notes, not here.
   Low risk: the signature is still verified against Supabase's JWKS and a token without
   `sub` is refused, so forging one needs Supabase's signing key. The fix is one line —
   `if (payload.iss !== expectedIss)`. (September 2026 audit §6.)
+- **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
+  Fireball in this world"); sharing marks only add, they do not take away.
 
 ## Resolved
 
