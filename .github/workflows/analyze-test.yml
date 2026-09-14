@@ -38,10 +38,9 @@ jobs:
 
       - name: Analyze
         working-directory: ${{ env.WORKING_DIR }}
-        continue-on-error: true
         run: |
           set -o pipefail
-          flutter analyze 2>&1 | tee analyze.log
+          flutter analyze --no-fatal-infos 2>&1 | tee analyze.log
 
       - name: Upload analyze log
         if: always()
@@ -70,14 +69,16 @@ jobs:
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
 
+      # Drift tests load libsqlite3.so, which only the -dev package provides.
+      - name: Install libsqlite3-dev
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
       - name: Run tests
         working-directory: ${{ env.WORKING_DIR }}
-        continue-on-error: true
         run: |
           mkdir -p test-results
           set -o pipefail
-          flutter test --machine > test-results/test.json || true
-          flutter test --reporter=expanded 2>&1 | tee test-results/test.log
+          flutter test --reporter=expanded --file-reporter=json:test-results/test.json 2>&1 | tee test-results/test.log
 
       - name: Upload test results
         if: always()
@@ -86,3 +87,21 @@ jobs:
           name: test-results
           path: ${{ env.WORKING_DIR }}/test-results/
           retention-days: 30
+
+  worker:
+    name: Worker typecheck
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+
+      - name: Typecheck
+        working-directory: cloudflare
+        run: |
+          npm ci
+          npm run typecheck

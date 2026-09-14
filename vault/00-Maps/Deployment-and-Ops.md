@@ -11,7 +11,7 @@ tags: [moc]
 > Build/release pipeline and runtime config: GitHub Actions CI, multi-platform builds, `--dart-define` secrets, wrangler worker deploy, Supabase migration application, and the Open5e API staging Docker image. The "Deployment / Docker" domain.
 
 ## Key Files
-- [[ci-analyze-test]] — `.github/workflows/analyze-test.yml` (flutter analyze + test).
+- [[ci-analyze-test]] — `.github/workflows/analyze-test.yml` (flutter analyze + test + worker typecheck; manual, fails on red).
 - [[ci-build]] — `.github/workflows/build.yml` (Android/iOS/Windows/Linux/macOS on release).
 - [[pubspec]] — `flutter_app/pubspec.yaml` (deps, codegen, asset bundling; v12.0.0).
 - [[analysis_options]] — lint config + generated-file excludes.
