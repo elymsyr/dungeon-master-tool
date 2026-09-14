@@ -168,9 +168,9 @@ Bu, aşağıdaki dört adı ve Gümüşsu'nun adını değiştirmez; sadece onla
 
 | NPC | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|
-| **Duran** — köy başkanı *(insan)* | Köyün dağılmaması, dışarıdan müdahale gelmemesi | Üçlünün nereden geldiğini biliyor, söylemek istemiyor | "Limandan geldiler" |
-| **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti, saklıyor | Belirtilerin seyri (§4) |
-| **Corvin** — yolu bilen *(insan)* · **köyün yabancısı, §3.6** | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik; **ölürse kapanır (§3.6)** |
+| **Duran** — köy başkanı *(insan)* | Köyün dağılmaması, dışarıdan müdahale gelmemesi | Üçlünün nereden geldiğini biliyor, söylemek istemiyor; **Corvin'i gerçekten tanıyan ve limanın var olduğunu bilen tek köylü** (§3.6) | "Limandan geldiler" · köy ayakta kalırsa **Corvin'i ikna eder** |
+| **Umay** — hastalara bakan *(yarı-elf)* | Üç kişinin yaşaması | Kendi de temas etti, saklıyor | Belirtilerin seyri (§4) · **köyde ve kendisinde belirti yok** (§4.7) |
+| **Corvin** — yolu bilen *(insan)* · **köyün yabancısı, §3.6** | Para | Gizli Liman'ı biliyor, çünkü oradan mal taşıdı | **Gizli Liman** — ücret karşılığı rehberlik, **bir günlük yol**; **ölürse kapanır (§3.6)** |
 | **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarası olmayan NPC, 02 §4 kotası) | Söylenti, yabancı kaydı |
 | **Halim** — lonca adamı *(insan)* · **köylü değil, §3.5** | İşi bitirip dönmek | Kimin yolladığını | Orvan Sancar'ın adı, Meclis'e kısa yol |
 
@@ -423,6 +423,27 @@ yabancı: kimse ondan çekinmez, çocuklar peşine takılır, hancı ona borç y
 **bilmez** ve malın nereden geldiğini sormaz; bildiği tek şey Corvin'in gidip
 döndüğüdür. Limanı bilen tek köylü odur, ve bunu anlatmaz.
 
+**Yol bir gün** (KARAR, 2026-09-14). Gümüşsu ile liman arası **bir günlük yol**:
+şafakta çıkan akşamüstü kıyı kayalıklarına iner. Corvin'in gidip dönmesi bu yüzden
+en az iki gün sürer, ve karakterler onunla yola çıkarsa yolda **bir gece** geçirilir
+— kulübeye girmiş bir karakter için o gece, günlük hastalık zarının atıldığı gecedir
+([§4.2](act1.md)). Mesafenin perdedeki işi budur: liman bir sahne değil, bir yol.
+
+**Fiyat önce konuşulur.** Corvin yolu, mesafeyi ya da limanı anlatmadan ücretini
+söyler ve peşin ister; pazarlığa açıktır ama yarısının altına inmez. **Tek istisna
+köyün kurtulmasıdır:** karakterler şafakta köyü ayakta tuttuysa ([§5.1](act1.md))
+**Duran araya girer ve Corvin'i ikna eder** — fiyat hiç konuşulmaz. İkna eden
+karakterlerin sözü değil Duran'ındır, çünkü köyde Corvin'i gerçekten tanıyan tek
+adam odur (aşağı). Corvin homurdanır, yol azığının parasını ister ve kalkar.
+
+**Duran'la ilişkisi** (KARAR, 2026-09-14). Köy için Corvin gidip gelen bir
+yabancıdır ve kimse nereye indiğini sormaz. **Duran sorar ve bilir:** malın kıyıdan
+geldiğini, kıyıda gümrüğe uğramayan bir liman olduğunu, Corvin'in oraya gidip
+döndüğünü. Ama **orayı hiç görmedi** — yolu bilmez, o patikadan hiç yürümedi, ve
+zorlanırsa söyleyebileceği tek şey Corvin'in adıdır. Yani köyde iki ayrı bilgi var:
+**yolu** Corvin bilir, **limanın var olduğunu** Duran bilir, ve köyün kalanı ikisini
+de bilmez.
+
 **Ne zaman köyde.** Sürekli değil; kıyıyla köy arasında gider gelir. Dönüşüm
 sabahı **köydedir**: yükü sırtında, şafaktan **birkaç saat önce** döner. Yani
 [§5](act1.md)'in şafağı, Corvin'in dönüşünden birkaç saat sonradır. Karakterler
@@ -593,6 +614,34 @@ koltuğu bunu zaten denedi ve okuyamadı — [`lonca-sehir.md` §6](lonca-sehir.
 **çıkması** isteniyor; yoksa perde onsuz da tam çalışıyor, çünkü §3.3'ün kritik hattı
 zaten zarsız.
 
+### 4.7 Umay'ın tanıklığı — köyde belirti yok (KARAR, 2026-09-14)
+
+Karakterler hastalığı Umay'a sorarsa zar atılmaz; kırk yıllık bir bakıcının gözlemi
+gelir, ve üç cümle kendiliğinden söylenir:
+
+1. **Köyde kimsede hiçbir belirti yok.** Günlerdir el eklemlerine, boyunlara,
+   gözlerin kenarına bakıyor: ne ince siyah damar, ne ateş, ne grileşme. *"Kırk
+   yıldır bu köyün hastalarına bakıyorum, bir şey görsem tanırdım."*
+2. **Hastalara yemeği o götürüyor.** Tencereyi kapının önündeki düz taşa bırakan,
+   boş tencereyi geri alan, suyunu değiştiren o. Köyün kuralı *"kimse içeri
+   girmiyor"*; yemeği götüren gene o.
+3. **Kendisinde de belirti yok.** Dokundu, ateşlerine baktı, yaralarını sardı
+   (§3 sırrı) — ve üstünde hiçbir şey yok. Bunu bir rahatlama gibi değil,
+   **anlamadığı bir şey** gibi söyler.
+
+**Ne veriyor.** Hastalık Gümüşsu'da hiç kimseye geçmedi: köy bu hastalığın kaynağı
+değil, **bakıcısı**. Bu, Medicine DC 12'nin verdiği *"hasta geldiler"* cümlesini
+([§3.3](act1.md) iz 4) zarsız bir ikinci yoldan da verir.
+
+**Ne vermiyor: *"bulaşmıyor"* sonucunu.** Masa bu çıkarımı yapabilir ve Umay onu
+doğrulamaz — *"Ben bilmiyorum. Girmeyin demiyorum, ama ben girdim."* Kural değişmez:
+kulübeye giren karakter maruziyet zarını gene atar ([§4.1](act1.md)).
+
+**DM bilgisi.** Umay'ın **0 Hastalık Puanı** var — maruziyet zarlarını tuttu, o
+kadar. Bağışıklık değil, şans. Köylülerin belirti göstermemesinin sebebi ise daha
+basit: kulübeye girmediler, cesetle uğraşmadılar, hastayla aynı odada gece
+geçirmediler. **Maruziyet olmadan zar atılmaz** ([§4.1](act1.md)).
+
 ---
 
 ## 5. Şafak
@@ -617,7 +666,7 @@ kimin durduğu.**
 
 | Hâl | Köyde ne doğrudur |
 |---|---|
-| **Ayakta** | Ölen var, köy yaşıyor. Kapılar açık, ocak yanıyor, erzak para istemez. Duran borçlu ve borcunu biliyor: konuşmadığı şeyleri konuşur. Üçlünün üstü aranabilir ([§3.3](act1.md)) |
+| **Ayakta** | Ölen var, köy yaşıyor. Kapılar açık, ocak yanıyor, erzak para istemez. Duran borçlu ve borcunu biliyor: konuşmadığı şeyleri konuşur, **ve Corvin sağ kaldıysa onu karakterleri limana götürmesi için ikna eder — fiyat konuşulmaz** ([§3.6](act1.md)). Üçlünün üstü aranabilir ([§3.3](act1.md)) |
 | **Kırılmış** | Köyün çoğu ölü; şansa sağ kalanlar var ve çoğu o gün yola çıkar. Üç Dönüşmüş **serbest** — nereye gittikleri DM'in. Ocak sönük, kapılar açık kalmış, kazan devrilmiş |
 
 **İki hâlde de doğru olanlar.** Halim ([§3.5](act1.md)) kaçar ve dönmeyi başarır;

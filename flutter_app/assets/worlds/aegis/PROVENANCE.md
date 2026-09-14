@@ -4,6 +4,35 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.7.1 — 172 entity** (2026-09-14). **Gümüşsu–liman turu.** Yeni kart yok; sekiz
+kartın metni değişti. (1) **Yol bir gün:** Gümüşsu ile Gizli Liman arası bir günlük yol —
+şafakta çıkan akşamüstü kayalıklara iner, Corvin'in gidip dönmesi en az iki gün sürer, ve
+karakterler onunla yola çıkarsa yolda bir gece geçirilir (`npc/Corvin`, `location/Gizli Liman`,
+`location/Gümüşsu`, `scene/Limana Kabul`). (2) **Fiyat önce konuşulur:** Corvin yolu anlatmadan
+ücretini söyler ve peşin ister; **tek istisna köyün kurtulması** — *Ayakta* hâlinde
+`npc/Duran` araya girer ve Corvin'i karakterleri limana götürmesi için ikna eder, fiyat hiç
+konuşulmaz (`npc/Duran`, `npc/Corvin`, `scene/Şafak Dönüşümü`, `quest/Nereden Geldiler`).
+(3) **Duran, Corvin'i gerçekten tanıyan tek köylü:** malın kıyıdan geldiğini ve kıyıda
+gümrüksüz bir liman olduğunu bilir, **ama orayı hiç görmedi** — yolu Corvin bilir, limanın var
+olduğunu Duran bilir, köyün kalanı ikisini de bilmez. Corvin'e sözünün geçmesi buradan gelir.
+(4) **Umay'ın tanıklığı** (`npc/Umay`, `location/Gümüşsu`): köyde kimsede belirti yok, hastalara
+yemeği o götürüyor, ve dokunduğu hâlde kendisinde de belirti yok — Medicine DC 12'nin verdiği
+*"hasta geldiler"* cümlesini zarsız ikinci bir yoldan verir, ama *"bulaşmıyor"* sonucunu
+vermez; kulübeye giren gene maruziyet zarını atar. DM tarafı: Umay'ın 0 Hastalık Puanı var,
+bağışıklık değil şans; köylülerin belirti göstermemesinin sebebi maruziyetsizlik.
+Kanon karşılığı `lore/canon/act1.md` §3 tablosu · **§3.6 (yeni üç blok)** · **§4.7 (yeni)** ·
+§5.1. Hastalık **belirtilerinin** kendisine bu turda dokunulmadı — arşivdeki iki PDF
+birbiriyle çelişiyor ve karar kullanıcıya bırakıldı (aşağıdaki not).
+
+**Belirti kaynakları — çelişki kaydı (2026-09-14).** `curse/Blight — Enfeksiyon` ve
+`lore/Blight — Bilinen Hali`'ndeki belirtiler `lore/archive/YAKIN TARİH VE OYUN MEKANİKLERİ
+1.pdf`'in beş aşamalı "Yavaş Çürüme" listesini birebir izliyor (kuluçka → sistemik yayılma →
+ağır bozulma → morfolojik çözülme → tam çöküş). `lore/archive/Handbook.pdf` ise **dört**
+aşamalı ve bambaşka bir liste veriyor (Leke → Yayılma → Çözülme → Sessizlik; sarımsı cilt
+lekesi, iştah kaybı, uykunun bozulması). README §0'a göre PDF'ler kanonun en alt katmanı ve
+ikisi de revizyon öncesi; Notion notları belirti listesi vermiyor. Seçenekler kullanıcıya
+sunuldu, kart değiştirilmedi.
+
 **Sürüm 0.7.0 — 172 entity** (2026-09-14). **Görsel turu.** Yeni kart ya da metin değişikliği
 yok. 0.6.x turlarında eklenip görselsiz kalan 19 kart (resource-pool'lar hariç hepsi) görselini
 aldı: `npc/Halim`, `creature-action/Sıçrayıp Isırma` · `Siperi Uzat` · `Siperi Ör`, İrade

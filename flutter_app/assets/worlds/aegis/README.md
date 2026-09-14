@@ -346,6 +346,18 @@ blueprint ya da medya değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
+### 4.8 Yazılan kartlar (0.7.1)
+
+**0.7.1 (2026-09-14) — Gümüşsu–liman turu.** Yeni kart yok, sekiz kartın metni değişti.
+Köyden limana **bir günlük yol** (`npc/Corvin` · `location/Gizli Liman` · `location/Gümüşsu` ·
+`scene/Limana Kabul`); Corvin **önce fiyatı konuşur**, ama köy şafakta ayakta kaldıysa
+`npc/Duran` onu karakterleri limana götürmesi için **ikna eder** ve fiyat konuşulmaz
+(`npc/Duran` · `npc/Corvin` · `scene/Şafak Dönüşümü` · `quest/Nereden Geldiler`); Duran köyde
+**Corvin'i gerçekten tanıyan ve limanın var olduğunu bilen tek kişi** — orayı hiç görmemiş
+olsa da; `npc/Umay` hastalık sorulduğunda üç şey daha veriyor: **köyde kimsede belirti yok**,
+hastalara **yemeği o götürüyor**, ve dokunduğu hâlde **kendisinde de belirti yok** (§4.7).
+Kanon: [`act1.md`](lore/canon/act1.md) §3 · §3.6 · §4.7 · §5.1. pkg + zip yenilendi.
+
 ### 4.8 Yazılan kartlar (0.6.9)
 
 **0.6.9 (2026-09-13) — İrade Yemini sadeleştirildi.** Üç madde, üçü de yemini SRD
