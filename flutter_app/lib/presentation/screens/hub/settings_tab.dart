@@ -723,9 +723,9 @@ class _SoundLibrarySection extends ConsumerWidget {
     if (result == null || result.files.isEmpty) return;
     if (!context.mounted) return;
 
-    final controller = TextEditingController();
     // Tek dosya ise isim sor, çoklu ise dosya adlarını kullan
     if (result.files.length == 1) {
+      final controller = TextEditingController();
       final name = await showDialog<String>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -739,7 +739,7 @@ class _SoundLibrarySection extends ConsumerWidget {
             ),
           ],
         ),
-      );
+      ).whenComplete(controller.dispose);
       if (name == null || name.isEmpty) return;
       final addResult = await notifier.addSound(category, name, result.files.first.path!);
       if (context.mounted) {
