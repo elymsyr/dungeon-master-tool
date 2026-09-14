@@ -43,6 +43,13 @@ kendi "bu sayfa geçerlidir" beyanları):
 `notion-notes/` (2026-09-07 export) `update/` klasörünün (2026-08-13) üst
 kümesidir. **`update/` klasörünü kullanma** — eski ve eksik.
 
+**`masa/` de kanon değil.** Aegis tasarlanırken aynı anda oynanıyor; oynanan
+masanın kaydı [`masa/oturum-gunlugu.md`](masa/oturum-gunlugu.md)'de tutuluyor.
+Yukarıdaki tabloda yeri yok ve olmayacak: kanon dünyanın ne *olabileceğini*
+yazar, oturum günlüğü bir masada ne *olduğunu*. Çelişirlerse kanon kazanır.
+Masada doğan bir şey kanona ancak §4.2.2'nin **"Öneri / Fikir:"** kanalından
+girer. Kural seti: [`masa/README.md`](masa/README.md).
+
 ---
 
 ## 1. Kanon revizyonu — neyin değiştiğini bilmeden yazma
@@ -72,8 +79,9 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 > [`genel-kartlar.md`](lore/canon/genel-kartlar.md)'de duruyor.
 >
 > **Kanon dört içerik belgesi** (`lore/canon/`, çelişkide sırayla değil, konuya
-> göre); klasördeki diğer üç dosya (`kart-listesi`, `act1-kartlar`, `genel-kartlar`)
-> bunlardan türeyen kart listeleridir:
+> göre); klasördeki üç dosya (`kart-listesi`, `act1-kartlar`, `genel-kartlar`)
+> bunlardan türeyen kart listeleri, `olasilik-turu` ise yazılmış kartlara
+> uygulanmayı bekleyen bir öneri turudur (§3.1.1 A3):
 >
 > | Belge | Ne kapsar |
 > |---|---|
@@ -148,6 +156,13 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
 | 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. Gümüşsu bölümü ve açılış [`act1.md` §1–3](lore/canon/act1.md)'te yeniden kurgulandı — 07'deki ilkeler geçerli, sahne akışı değil |
+
+### 3.1.1 Sonradan kapatılanlar (2026-09-14)
+
+| # | Karar | İçerik |
+|---|---|---|
+| A3 | **Olasılık yaz, takvim yazma** | Kart bir durumu, bir mekanı ve orada duran insanları tarif eder; olayların sırasını ve gününü tarif etmez. *"Ertesi gün dönüşürler"* / *"o sabah köydedir"* / *"çıkışta teklifi alırlar"* biçimindeki her cümle ya bir **eşiğe** (durum), ya bir **alışkanlığa** (sıklık), ya da bir **olasılığa** (koşul) çevrilir. Kaçınılmaz olan şey kalır, takvimi kalkar. Uygulama kuralı §6.8, kart kart dökümü [`lore/canon/olasilik-turu.md`](lore/canon/olasilik-turu.md) |
+| A4 | **Oyun oynanırken tasarlanıyor → `masa/`** | DM (elymsyr) bu kampanyayı tasarlarken bir yandan oynatıyor. Oturumlarda ne olduğu dünyadan **ayrı** bir yerde tutulur: [`masa/oturum-gunlugu.md`](masa/oturum-gunlugu.md). Kanon hiyerarşisine (§0) girmez; masadan kanona geçiş yalnız §4.2.2'nin öneri kanalından olur |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
 
@@ -643,3 +658,30 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
    detay fikri varsa kartın içine değil, ilgili notun sonuna **"Öneri / Fikir:"**
    başlığıyla yazılır ve elymsyr'e sorulur; onay gelmeden hikâyeye kesinleşmiş gibi
    girmez.
+
+8. **Olasılık yaz, takvim yazma (2026-09-14, karar A3).** Kartın elinde üç şey
+   var: bir **durum**, **mekanlar** ve **insanlar**. Olayların sırası kartın işi
+   değil — masanın işi. Kart bir şeyin *ne zaman* olacağını söylediği anda
+   oyuncunun seçimi dekora dönüşür.
+
+   - **Kaçınılmaz olan kalır, takvimi kalkar.** Üç hastanın dönmesi geri
+     çevrilemez; *"ertesi sabah döner"* değil, **"son eşiğin bir adım
+     berisindeler"** yazılır. Eşiği ne zaman geçtiklerine masa ve zar karar
+     verir, kart değil.
+   - **Bir NPC'nin nerede olduğu bir takvim değil, bir alışkanlıktır.**
+     *"O sabah köydedir"* değil, **"ara ara köye uğrar"**. Sahnede lazımsa
+     oradadır; lazım değilse yoldadır.
+   - **Bir teklif, verilecek bir şey değil, duran bir şeydir.** *"Çıkışta
+     teklifi alırlar"* değil, **"şu adamın elinde şu teklif var ve alıcı
+     arıyor"**. Karakterler kapıyı çalmazsa teklif peşlerine düşmez; adı üç
+     ayrı yerden duyulur, gerisi onların.
+   - **Numaralı akış yok.** Sahne kartında `1 → 2 → 3` yerine *"burada ne var,
+     kim ne biliyor, nereye açılır"*. Görev kartında adım listesi yerine
+     *durum · eldekiler · açılan kapılar*.
+   - **Ölçü:** kartta geçen her *"olur / gelir / döner / eder"* fiilinin önünde
+     ya bir koşul (*"karakterler oradaysa"*), ya bir sıklık (*"birkaç günde
+     bir"*), ya da bir eşik (*"dokuzuncu puanda"*) olmalı. Hiçbiri yoksa o
+     cümle bir takvimdir ve yeniden yazılır.
+
+   Bu kural §6.0'ı gevşetmez: kart yine son ürün gibi, kendinden emin yazılır.
+   Belirsiz olan kartın üslubu değil, **dünyanın saati**.
