@@ -405,7 +405,7 @@ bu klasörden gelmeyen ama diskte duran görselleri (`*-Panorama.webp`) korur. S
 `Elymsyr` kartlarında **ilk görsel** `media/Artwork/<ad>-Panorama.webp` (`imagePath`),
 eski üretilmiş görsel ikinci (`images`). Sağ-alt köşedeki Gemini filigranı kırpıldı.
 `*-üstten.jpeg` haritaları `media/Maps/<ad>.webp` (2048²) olarak `Votumar`, `Lucid Triton`,
-`Gümüşsu` kartlarının **`map`** alanında — ana görsel değil.
+`Gümüşsu`, `Gizli Liman` (2816×1536) kartlarının **`map`** alanında — ana görsel değil.
 
 ---
 
