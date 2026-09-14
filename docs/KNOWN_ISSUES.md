@@ -13,6 +13,12 @@ Anything fixed in an earlier release lives in that release's notes, not here.
 
 ## Open
 
+- **Worker JWT check accepts a token with no `iss`** — [jwt.ts](../cloudflare/src/jwt.ts)
+  rejects a wrong issuer but lets a missing one through, and never checks `aud` or `role`.
+  Low risk: the signature is still verified against Supabase's JWKS and a token without
+  `sub` is refused, so forging one needs Supabase's signing key. The fix is one line —
+  `if (payload.iss !== expectedIss)`. (September 2026 audit §6.)
+
 ## Resolved
 
 - **The 12 September 2026 audit (60 failing tests)** — fixed 14 September 2026:
