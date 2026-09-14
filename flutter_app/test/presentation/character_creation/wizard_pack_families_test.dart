@@ -89,7 +89,7 @@ void main() {
     final loaded = installPack(file);
     final pack = loaded.entities;
     // Wizard'ın chargen adımları 5e ailesi için yazıldı; başka bir sistemin
-    // paketinde (ör. Cairn — sınıf kavramı yok) 5e kuralları aranmaz.
+    // paketinde 5e kuralları aranmaz.
     final isDnd5eFamily =
         loaded.system.startsWith('5e') || loaded.system == 'a5e';
     final byCat = <String, List<Entity>>{};

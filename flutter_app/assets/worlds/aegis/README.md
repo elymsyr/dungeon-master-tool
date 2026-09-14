@@ -1,7 +1,7 @@
 # Aegis — Meridia (eski adıyla Aethelgard)
 
 **Aegis** evreninin birinci kıtası merkezli, DnD 5e tabanlı **özgün** bir dünya.
-Cairn veya 99 Devils'tan farkı: bu bir üçüncü taraf metninin aktarımı değil,
+99 Devils'tan farkı: bu bir üçüncü taraf metninin aktarımı değil,
 **kendi evrenimiz** — lore birincil, mekanik ikincil.
 
 Hedef: `assets/worlds/aegis/` → `aegis-act1.pkg.json`, uygulamaya kurulabilir
@@ -191,7 +191,6 @@ kapanmadan yazılan her şey yeniden yazılır:
 | [tool/content/world-blueprint.md](../../../../tool/content/world-blueprint.md) | **Alan sözleşmesi** — her kategorinin key/tip/zorunluluk tablosu |
 | [tool/content/WORLD_CONTENT_ORDER.md](../../../../tool/content/WORLD_CONTENT_ORDER.md) | Kategori ekleme sırası (bağımlılık zinciri) + Tier kuralları |
 | [tool/content/character-blueprint.md](../../../../tool/content/character-blueprint.md) | Pre-gen PC alanları (`blueprint.json`) |
-| [assets/worlds/cairn/README.md](../cairn/README.md) | Faz planı + karar kaydı formatının en iyi örneği |
 | [vault/10-Files/world-content/world_blueprint_converter.md](../../../../vault/10-Files/world-content/world_blueprint_converter.md) | Converter'ın kendisi |
 
 ### 4.2 Aegis'in farkı: kaynak PDF yok
@@ -249,7 +248,7 @@ assets/worlds/aegis/
       Maps/  Artwork/  Handouts/
 ```
 
-`cairn/` gibi çok modüllü bir kök: `assets/worlds/aegis/` **doğrudan bir dünya
+Çok modüllü bir kök: `assets/worlds/aegis/` **doğrudan bir dünya
 dizini değil**, alt modül taşır. `convert_blueprint.dart --dir` her zaman
 `aegis/aegis-act1`'i alır, `aegis`'i değil.
 
@@ -328,7 +327,7 @@ CI karşılığı: `test/domain/services/bundled_worlds_blueprint_test.dart`.
 `assets/worlds/manifest.json`'a giriş eklemek dünyayı "bundled" yapar ve
 `BundledWorldsInstaller` görür. **Aegis oraya eklenmedi** — o ayrı bir karar.
 CI'daki `bundled_worlds_blueprint_test` yine de aegis'i geziyor: manifest
-listesinin yanında `cairn/` ve `aegis/` paket köklerini de dolaşır.
+listesinin yanında `aegis/` paket kökünü de dolaşır.
 
 Kurulum yolu şimdilik **diskten içe aktarma**: Admin → *Import world folder* →
 `assets/worlds/aegis/aegis-act1` klasörünü seç. `BundledWorldsInstaller
