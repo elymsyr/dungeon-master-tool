@@ -64,9 +64,9 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => context.go('/hub'),
             ),
-            title: const Text('Package'),
+            title: Text(L10n.of(context)!.itemTypePackage),
           ),
-          body: const Center(child: Text('No package loaded')),
+          body: Center(child: Text(L10n.of(context)!.packageNoneLoaded)),
         ),
       );
     }
@@ -95,7 +95,7 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
             ),
             title: Text(packageName),
           ),
-          body: const Center(child: Text('No template found for this package')),
+          body: Center(child: Text(L10n.of(context)!.packageNoTemplate)),
         ),
       );
     }
@@ -387,7 +387,7 @@ class _PackageScreenContentState
                 valueListenable: canUndoVN,
                 builder: (_, canUndo, _) => IconButton(
                   icon: const Icon(Icons.undo, size: 18),
-                  tooltip: 'Undo (Ctrl+Z)',
+                  tooltip: L10n.of(context)!.mainUndoTooltip,
                   onPressed: canUndo ? () => dispatcher.undo(0) : null,
                   color: palette.tabActiveText,
                   disabledColor: palette.tabText.withValues(alpha: 0.3),
@@ -401,7 +401,7 @@ class _PackageScreenContentState
                 valueListenable: canRedoVN,
                 builder: (_, canRedo, _) => IconButton(
                   icon: const Icon(Icons.redo, size: 18),
-                  tooltip: 'Redo (Ctrl+Shift+Z)',
+                  tooltip: L10n.of(context)!.mainRedoTooltip,
                   onPressed: canRedo ? () => dispatcher.redo(0) : null,
                   color: palette.tabActiveText,
                   disabledColor: palette.tabText.withValues(alpha: 0.3),
@@ -436,7 +436,7 @@ class _PackageScreenContentState
           if (_editMode && widget.packageName != srdCorePackageName)
             IconButton(
               icon: const Icon(Icons.tune, size: 20),
-              tooltip: 'Rule Settings',
+              tooltip: L10n.of(context)!.ruleSettingsTitle,
               onPressed: () => RuleConfigDialog.show(
                 context,
                 schema: widget.schema,
@@ -458,8 +458,8 @@ class _PackageScreenContentState
                     : null,
               ),
               tooltip: isBuiltin
-                  ? 'Built-in package — read only. Use "Copy" from the Packages tab to make an editable clone.'
-                  : (_editMode ? 'View mode' : 'Edit mode'),
+                  ? L10n.of(context)!.packageBuiltinReadOnly
+                  : (_editMode ? L10n.of(context)!.mainViewMode : L10n.of(context)!.mainEditMode),
               onPressed: isBuiltin
                   ? null
                   : () => setState(() => _editMode = !_editMode),
@@ -664,8 +664,8 @@ class _ShareToWorldButton extends ConsumerWidget {
         shared.where((r) => r.packageName == packageName).firstOrNull;
     return IconButton(
       tooltip: existing != null
-          ? 'Re-share with world'
-          : 'Share with world',
+          ? L10n.of(context)!.packageReshare
+          : L10n.of(context)!.packageShareWithWorld,
       icon: Icon(
         existing != null ? Icons.cloud_sync : Icons.public,
         size: 18,
@@ -679,12 +679,12 @@ class _ShareToWorldButton extends ConsumerWidget {
           );
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Shared $packageName with world')),
+            SnackBar(content: Text(L10n.of(context)!.packageSharedWithWorld(packageName))),
           );
         } catch (e) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Share failed: $e')),
+            SnackBar(content: Text(L10n.of(context)!.shareFailed('$e'))),
           );
         }
       },

@@ -6,6 +6,7 @@ import '../../application/providers/package_link_provider.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Lists packages installed into a world, with re-sync + remove actions.
 /// Lives in the per-world settings dialog.
@@ -51,7 +52,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
-          'Synced "${row.packageName}": +${result.added}, ~${result.updated}, -${result.removed}.'),
+          L10n.of(context)!.pkgSynced(row.packageName, '${result.added}', '${result.updated}', '${result.removed}')),
     ));
     await _refresh();
   }
@@ -61,20 +62,19 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Remove "${row.packageName}"?'),
-        content: const Text(
-          'Linked entities from this package will be deleted. '
-          'User-edited copies are kept as homebrew.',
+        title: Text(L10n.of(context)!.removeNamedTitle(row.packageName)),
+        content: Text(
+          L10n.of(context)!.removePackageFromWorldBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: palette.tabActiveText),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(L10n.of(context)!.btnRemove),
           ),
         ],
       ),
@@ -90,7 +90,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
-        'Removed ${result.removed} entities; ${result.detachedSurvived} kept as homebrew.',
+        L10n.of(context)!.pkgRemovedSummary('${result.removed}', '${result.detachedSurvived}'),
       ),
     ));
     await _refresh();
@@ -117,7 +117,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              'No packages installed.',
+              L10n.of(context)!.pkgNoneInstalled,
               style: TextStyle(
                   fontSize: 12, color: palette.sidebarLabelSecondary),
             ),
@@ -132,7 +132,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
                 Icon(Icons.inventory_2,
                     size: 16, color: palette.sidebarLabelSecondary),
                 const SizedBox(width: 6),
-                Text('Installed Packages',
+                Text(L10n.of(context)!.pkgInstalledTitle,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -153,7 +153,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
                               style:
                                   const TextStyle(fontSize: 13)),
                           Text(
-                              'Synced ${_relative(row.lastSyncedAt)}',
+                              L10n.of(context)!.pkgSyncedAgo(_relative(row.lastSyncedAt)),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: palette.sidebarLabelSecondary)),
@@ -162,12 +162,12 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.sync, size: 18),
-                      tooltip: 'Re-sync from package',
+                      tooltip: L10n.of(context)!.pkgResync,
                       onPressed: () => _resync(row),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 18),
-                      tooltip: 'Remove from world',
+                      tooltip: L10n.of(context)!.removeFromWorld,
                       onPressed: () => _remove(row),
                     ),
                   ],

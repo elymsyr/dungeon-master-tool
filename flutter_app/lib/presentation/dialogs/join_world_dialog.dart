@@ -59,7 +59,7 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joined world "${res.worldName}"')),
+        SnackBar(content: Text(L10n.of(context)!.joinWorldJoined(res.worldName))),
       );
     } catch (e) {
       setState(() {
@@ -95,7 +95,7 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
         ref.watch(worldMembershipServiceProvider) is NoOpWorldMembershipService;
 
     return AlertDialog(
-      title: const Text('Join World'),
+      title: Text(L10n.of(context)!.joinWorldTitle),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -107,16 +107,16 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
                   message: L10n.of(context)!.accountRequiredWorldSharing)
             else if (offline)
               Text(
-                'Online features require sign-in and Supabase configuration.',
+                L10n.of(context)!.onlineRequiresSignIn,
                 style: TextStyle(
                   fontSize: 12,
                   color: palette.sidebarLabelSecondary,
                 ),
               )
             else ...[
-              const Text(
-                'Enter the 8-character code from your DM:',
-                style: TextStyle(fontSize: 13),
+              Text(
+                L10n.of(context)!.joinWorldEnterCode,
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -149,7 +149,7 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton.icon(
           onPressed: _busy || offline ? null : _submit,
@@ -160,7 +160,7 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.login, size: 16),
-          label: const Text('Join'),
+          label: Text(L10n.of(context)!.worldsBtnJoin),
         ),
       ],
     );

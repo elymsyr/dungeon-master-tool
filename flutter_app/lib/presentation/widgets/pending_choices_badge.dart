@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 /// Themed `!` + count badge used on character card headers to surface
 /// unresolved level-up choices. Light theme → deep blue text, soft amber
@@ -19,7 +20,7 @@ Widget pendingChoicesBadge(BuildContext context, int count) {
   ];
   return Tooltip(
     message:
-        '$count pending level-up choice${count == 1 ? '' : 's'} — open character to resolve.',
+        L10n.of(context)!.pendingChoicesTooltip(count),
     child: Padding(
       padding: const EdgeInsets.only(left: 6),
       child: Text(

@@ -80,7 +80,7 @@ class OfficialPackageDialog extends ConsumerWidget {
                         size: 12, color: palette.featureCardAccent),
                     const SizedBox(width: 2),
                     Text(
-                      'Official',
+                      L10n.of(context)!.filterOfficial,
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

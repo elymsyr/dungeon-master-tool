@@ -13,6 +13,7 @@ import '../../../../dialogs/entity_preview_dialog.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
 import 'skill_mod_helper.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Wizard step that surfaces per-feat sub-choices.
 ///
@@ -45,8 +46,7 @@ class FeatsStep extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'No feats with choices yet — background grants none, and you '
-          'haven\'t taken a chooseable feat.',
+          L10n.of(context)!.featsNoChoices,
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -58,8 +58,7 @@ class FeatsStep extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'No feats with choices yet — background grants none, and you '
-          'haven\'t taken a chooseable feat.',
+          L10n.of(context)!.featsNoChoices,
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -184,7 +183,7 @@ class _GrantedFeatCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Granted automatically — no choices to make.',
+              L10n.of(context)!.featsGrantedAuto,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: palette.sidebarLabelSecondary,
@@ -470,13 +469,14 @@ class _ChoiceGroupSection extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 6),
-          _renderPicker(pickKind, pick, current, storageKey),
+          _renderPicker(context, pickKind, pick, current, storageKey),
         ],
       ),
     );
   }
 
   Widget _renderPicker(
+    BuildContext context,
     String kind,
     int pick,
     List<String> current,
@@ -535,7 +535,7 @@ class _ChoiceGroupSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (skills.isNotEmpty) ...[
-              _GroupLabel(text: 'Skills', palette: palette),
+              _GroupLabel(text: L10n.of(context)!.featsSkills, palette: palette),
               _ChipPicker(
                 options: [
                   for (final s in skills)
@@ -562,7 +562,7 @@ class _ChoiceGroupSection extends StatelessWidget {
               const SizedBox(height: 6),
             ],
             if (tools.isNotEmpty) ...[
-              _GroupLabel(text: 'Tools', palette: palette),
+              _GroupLabel(text: L10n.of(context)!.featsTools, palette: palette),
               _RowPicker(
                 options: [
                   for (final t in tools)
@@ -591,7 +591,7 @@ class _ChoiceGroupSection extends StatelessWidget {
                 .firstOrNull;
         if (listValue == null || listValue.isEmpty) {
           return Text(
-            'Pick the spell list first.',
+            L10n.of(context)!.featsPickSpellListFirst,
             style: TextStyle(
               fontSize: 11,
               color: palette.sidebarLabelSecondary,
@@ -621,7 +621,7 @@ class _ChoiceGroupSection extends StatelessWidget {
         );
       default:
         return Text(
-          'Unsupported choice kind "$kind" — choose post-creation.',
+          L10n.of(context)!.featsUnsupportedKind(kind),
           style: TextStyle(
             fontSize: 11,
             color: palette.sidebarLabelSecondary,
@@ -756,7 +756,7 @@ class _ChipPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     if (options.isEmpty) {
       return Text(
-        'No options available.',
+        L10n.of(context)!.noOptionsAvailable,
         style: TextStyle(
           fontSize: 11,
           color: palette.sidebarLabelSecondary,
@@ -910,7 +910,7 @@ class _RowPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     if (options.isEmpty) {
       return Text(
-        emptyHint ?? 'No options available.',
+        emptyHint ?? L10n.of(context)!.noOptionsAvailable,
         style: TextStyle(
           fontSize: 11,
           color: palette.sidebarLabelSecondary,

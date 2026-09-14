@@ -27,6 +27,7 @@ import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/projection/projectable.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Module-level cache: sorted/filtered field schema lists per category.
 /// Key: identity of EntityCategorySchema. Cleared automatically when category
@@ -287,7 +288,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       entityProvider.select((map) => map[widget.entityId]),
     );
     if (entity == null) {
-      return const Center(child: Text('Entity not found'));
+      return Center(child: Text(L10n.of(context)!.sessionEntityNotFound));
     }
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -411,8 +412,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                                     ? 1.2
                                     : 0,
                               ),
-                              decoration: const InputDecoration(
-                                hintText: 'Entity Name',
+                              decoration: InputDecoration(
+                                hintText: L10n.of(context)!.entityNameHint,
                                 border: InputBorder.none,
                                 isDense: true,
                                 filled: false,
@@ -451,7 +452,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               size: 18,
                               color: palette.srdHeadingRed,
                             ),
-                            tooltip: pinned ? 'Unpin' : 'Pin to top',
+                            tooltip: pinned ? L10n.of(context)!.btnUnpin : L10n.of(context)!.pinToTop,
                             iconSize: 18,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
@@ -503,7 +504,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     height: 1.45,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Markdown supported... (@ to mention)',
+                    hintText: L10n.of(context)!.markdownMentionHint,
                     border: InputBorder.none,
                     isDense: true,
                     filled: false,
@@ -584,7 +585,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       if (!isPlayer) ...[
         const SizedBox(height: 8),
         EntityCardSectionHeading(
-          title: 'DM Notes',
+          title: L10n.of(context)!.dmNotesTitle,
           palette: palette,
           leadingIcon: Icons.lock,
         ),
@@ -596,7 +597,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           maxLines: widget.readOnly ? null : 4,
           textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
           decoration: InputDecoration(
-            hintText: 'Private DM notes... (@ to mention)',
+            hintText: L10n.of(context)!.dmNotesPrivateHint,
             border: InputBorder.none,
             isDense: true,
             contentPadding: EdgeInsets.zero,
@@ -621,14 +622,14 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Delete Entity'),
+                    title: Text(L10n.of(context)!.entityDeleteTitle),
                     content: Text(
-                      'Are you sure you want to delete "${entity.name}"?',
+                      L10n.of(context)!.entityDeleteConfirm(entity.name),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Cancel'),
+                        child: Text(L10n.of(context)!.btnCancel),
                       ),
                       FilledButton(
                         onPressed: () {
@@ -641,11 +642,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           } else {
                             ScaffoldMessenger.of(context)
                               ..hideCurrentSnackBar()
-                              ..showSnackBar(const SnackBar(
+                              ..showSnackBar(SnackBar(
                                 content: Text(
-                                  'Built-in entries can\'t be deleted. '
-                                  'Edit it first to create a homebrew copy, '
-                                  'then delete the copy.',
+                                  L10n.of(context)!.entityBuiltinNoDelete,
                                 ),
                               ));
                           }
@@ -654,14 +653,14 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           backgroundColor: palette.dangerBtnBg,
                           foregroundColor: palette.dangerBtnText,
                         ),
-                        child: const Text('Delete'),
+                        child: Text(L10n.of(context)!.btnDelete),
                       ),
                     ],
                   ),
                 );
               },
               icon: const Icon(Icons.delete_outline, size: 16),
-              label: const Text('Delete'),
+              label: Text(L10n.of(context)!.btnDelete),
               style: FilledButton.styleFrom(
                 backgroundColor: palette.dangerBtnBg,
                 foregroundColor: palette.dangerBtnText,
@@ -881,7 +880,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     // Ungrouped fields — render under "Properties" heading, no boxed chrome.
     if (ungrouped.isNotEmpty) {
       widgets.add(
-        EntityCardSectionHeading(title: 'Properties', palette: palette),
+        EntityCardSectionHeading(title: L10n.of(context)!.propertiesTitle, palette: palette),
       );
       widgets.add(const SizedBox(height: 8));
       widgets.add(
@@ -1018,7 +1017,7 @@ class _SourceTagsRow extends StatelessWidget {
     final linkBadge = linked
         ? Tooltip(
             message:
-                'Linked to package — edits will detach this entity into a homebrew copy.',
+                L10n.of(context)!.entityLinkedToPackage,
             child: Padding(
               padding: const EdgeInsets.only(right: 4),
               child: Icon(Icons.link, size: 14, color: palette.tabActiveText),
@@ -1060,10 +1059,10 @@ class _SourceTagsRow extends StatelessWidget {
             controller: sourceController,
             focusNode: sourceFocus,
             style: TextStyle(fontSize: 14, color: palette.srdInk),
-            decoration: const InputDecoration(
-              labelText: 'Source',
-              hintText: 'e.g. D&D 5e SRD',
-              contentPadding: EdgeInsets.symmetric(
+            decoration: InputDecoration(
+              labelText: L10n.of(context)!.lblSource,
+              hintText: L10n.of(context)!.entitySourceHint,
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10,
                 vertical: 10,
               ),
@@ -1077,10 +1076,10 @@ class _SourceTagsRow extends StatelessWidget {
             controller: tagsController,
             focusNode: tagsFocus,
             style: TextStyle(fontSize: 14, color: palette.srdInk),
-            decoration: const InputDecoration(
-              labelText: 'Tags',
-              hintText: 'comma separated',
-              contentPadding: EdgeInsets.symmetric(
+            decoration: InputDecoration(
+              labelText: L10n.of(context)!.listingTagsLabel,
+              hintText: L10n.of(context)!.tagsCommaHint,
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10,
                 vertical: 10,
               ),
@@ -1390,7 +1389,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
           ),
           const SizedBox(height: 4),
           Text(
-            'No Image',
+            L10n.of(context)!.noImage,
             style: TextStyle(fontSize: 10, color: widget.palette.srdSubtitle),
           ),
         ],
@@ -1550,7 +1549,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     return SizedBox.square(
       dimension: 32,
       child: PopupMenuButton<_WorldMenuAction>(
-      tooltip: 'Player screen',
+      tooltip: L10n.of(context)!.sessionPlayerScreen,
       enabled: !_busy,
       iconSize: 18,
       padding: EdgeInsets.zero,
@@ -1570,20 +1569,20 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
           PopupMenuItem(
             value: _WorldMenuAction.projectImage,
             enabled: hasImage,
-            child: const ListTile(
+            child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.image),
-              title: Text('Project image'),
+              leading: const Icon(Icons.image),
+              title: Text(L10n.of(context)!.projectImage),
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: _WorldMenuAction.projectCard,
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.cast),
-              title: Text('Project card'),
+              leading: const Icon(Icons.cast),
+              title: Text(L10n.of(context)!.projectCard),
             ),
           ),
         ],
@@ -1593,7 +1592,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
             value: _WorldMenuAction.share,
             checked: isBuiltin || isShared,
             enabled: !isBuiltin,
-            child: Text(isBuiltin ? 'Built-in — always shared' : 'Share'),
+            child: Text(isBuiltin ? L10n.of(context)!.shareBuiltinAlways : L10n.of(context)!.btnShare),
           ),
       ],
       onSelected: (action) => _onSelected(action, worldId, isShared),
@@ -1638,7 +1637,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
       final chosen = remap[images[idx]] ?? images[idx];
       ref.read(projectionControllerProvider.notifier).addItem(
             ProjectionItemBuilders.image(
-              label: entity.name.isEmpty ? 'Image' : entity.name,
+              label: entity.name.isEmpty ? L10n.of(context)!.lblImage : entity.name,
               filePaths: [chosen],
             ),
             setActive: true,
@@ -1683,7 +1682,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
       if (!mounted) return;
       final String msg;
       if (isShared) {
-        msg = pushed ? 'Stopped sharing with players' : 'Unmarked for sharing';
+        msg = pushed ? L10n.of(context)!.shareStopped : L10n.of(context)!.shareUnmarked;
       } else {
         msg = pushed
             ? 'Shared with all players'
@@ -1698,7 +1697,7 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Share error: $e')));
+        ..showSnackBar(SnackBar(content: Text(L10n.of(context)!.shareFailed('$e'))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

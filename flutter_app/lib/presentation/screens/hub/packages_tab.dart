@@ -106,7 +106,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
-                    label: const Text('Marketplace'),
+                    label: Text(L10n.of(context)!.hubBtnMarketplace),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
@@ -116,7 +116,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     ),
                   );
                   final refreshBtn = Tooltip(
-                    message: 'Refresh from cloud',
+                    message: L10n.of(context)!.hubTooltipRefresh,
                     child: OutlinedButton(
                       onPressed: _refreshing ? null : _doRefresh,
                       style: OutlinedButton.styleFrom(
@@ -169,7 +169,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 },
               ),
               const SizedBox(height: 4),
-              Text('Select or create an entity package.',
+              Text(L10n.of(context)!.packagesSubtitle,
                   style: TextStyle(
                       fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
@@ -270,7 +270,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 },
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
               ),
 
               const SizedBox(height: 12),
@@ -289,14 +289,14 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             }
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
-                      label: const Text('Load Package'),
+                      label: Text(L10n.of(context)!.loadPackage),
                     ),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: _selectedIndex >= 0 ? _copyPackage : null,
                     icon: const Icon(Icons.content_copy, size: 18),
-                    label: const Text('Copy'),
+                    label: Text(L10n.of(context)!.charCopyToWorldAction),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
@@ -329,13 +329,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('No templates installed'),
-          content: const Text(
-              'You need at least one template to create a package. Visit the Marketplace to install one.'),
+          title: Text(L10n.of(context)!.worldsNoTemplatesTitle),
+          content: Text(
+              L10n.of(context)!.packagesNoTemplatesBody),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
+                child: Text(L10n.of(context)!.btnCancel)),
             FilledButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -343,7 +343,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 ref.read(hubTabIndexProvider.notifier).state = 0;
               },
               icon: const Icon(Icons.storefront, size: 16),
-              label: const Text('Go to Marketplace'),
+              label: Text(L10n.of(context)!.worldsBtnGoToMarketplace),
             ),
           ],
         ),
@@ -376,12 +376,12 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _selectedTemplate!.schemaId,
-                  decoration: const InputDecoration(labelText: 'Template'),
+                  decoration: InputDecoration(labelText: L10n.of(context)!.worldsTemplateLabel),
                   items: uniqueTemplates
                       .map((t) => DropdownMenuItem(
                             value: t.schemaId,
                             child: Text(
-                                '${t.name}  (${t.categories.length} cat)',
+                                L10n.of(context)!.templateCategoryCount(t.name, '${t.categories.length}'),
                                 style: const TextStyle(fontSize: 12)),
                           ))
                       .toList(),
@@ -411,7 +411,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
+                child: Text(L10n.of(context)!.btnCancel)),
             FilledButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
@@ -457,21 +457,21 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Copy Package'),
+        title: Text(L10n.of(context)!.copyPackageTitle),
         content: TextField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(labelText: 'New package name'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.newPackageName),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Copy'),
+            child: Text(L10n.of(context)!.charCopyToWorldAction),
           ),
         ],
       ),
@@ -482,7 +482,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     if (existingNames.contains(newName)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Package "$newName" already exists')),
+          SnackBar(content: Text(L10n.of(context)!.packageNameExists(newName))),
         );
       }
       return;
@@ -496,13 +496,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       ref.invalidate(packageListProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copied "$source" → "$newName"')),
+          SnackBar(content: Text(L10n.of(context)!.copiedFromTo(source, newName))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copy failed: $e')),
+          SnackBar(content: Text(L10n.of(context)!.copyFailed('$e'))),
         );
       }
     }
@@ -587,7 +587,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load package: $e')),
+          SnackBar(content: Text(L10n.of(context)!.packageLoadFailed('$e'))),
         );
       }
       return;
@@ -615,7 +615,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: Text('$packageName — Settings'),
+        title: Text(L10n.of(context)!.worldsSettingsTitle(packageName)),
         content: SizedBox(
           width: 440,
           child: SingleChildScrollView(
@@ -649,7 +649,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 children: [
                   Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
                   const SizedBox(width: 6),
-                  Text('Template: $templateName',
+                  Text(L10n.of(context)!.worldsTemplateLine(templateName),
                       style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                 ],
               ),
@@ -684,7 +684,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Rename failed: $e')),
+                      SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
                     );
                   }
                   return;

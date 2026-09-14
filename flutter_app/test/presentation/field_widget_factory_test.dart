@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dungeon_master_tool/presentation/widgets/field_widgets/field_widget_factory.dart';
 import 'package:dungeon_master_tool/presentation/widgets/markdown_text_area.dart';
@@ -24,7 +25,7 @@ FieldSchema _makeSchema(
 }
 
 Widget _wrap(Widget child) {
-  return MaterialApp(
+  return MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
     home: Scaffold(
       body: SingleChildScrollView(child: child),
     ),

@@ -20,6 +20,7 @@ import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
 import 'character_stat_chips.dart';
 import 'metadata_list_tile.dart';
+import '../l10n/app_localizations.dart';
 
 /// Shared character list for both the DM world sidebar and the player tab.
 ///
@@ -55,7 +56,7 @@ class WorldCharactersView extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Error: $e',
+            L10n.of(context)!.hubErrorGeneric('$e'),
             style: TextStyle(color: palette.dangerBtnBg),
           ),
         ),
@@ -82,7 +83,7 @@ class WorldCharactersView extends ConsumerWidget {
               _SectionHeader(
                 palette: palette,
                 icon: Icons.person,
-                title: 'Your Character${mine.length > 1 ? 's' : ''}',
+                title: L10n.of(context)!.charsYours(mine.length),
               ),
               const SizedBox(height: 8),
               for (final r in mine) ...[
@@ -101,14 +102,14 @@ class WorldCharactersView extends ConsumerWidget {
               _SectionHeader(
                 palette: palette,
                 icon: Icons.inventory_2,
-                title: 'Available to Claim',
+                title: L10n.of(context)!.charsAvailableToClaim,
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 26, bottom: 8, top: 4),
                 child: Text(
                   dmMode
                       ? 'Unclaimed characters. Claim or assign to a player.'
-                      : 'Unclaimed characters in this world. Claim one to make it yours.',
+                      : L10n.of(context)!.charsUnclaimedHint,
                   style: TextStyle(
                     fontSize: 12,
                     color: palette.sidebarLabelSecondary,
@@ -152,7 +153,7 @@ class WorldCharactersView extends ConsumerWidget {
                 palette: palette,
                 message: dmMode
                     ? 'No characters in this world yet. Create one to share with players.'
-                    : 'No characters in this world yet. The DM can publish one to share, or create your own.',
+                    : L10n.of(context)!.charsNoneInWorldHint,
               ),
           ],
         );
@@ -321,7 +322,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Character claimed')));
+        ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charClaimed)));
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -335,14 +336,14 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Release character?'),
-        content: const Text(
-          'You will give up ownership. Anyone in this world can claim it again.',
+        title: Text(L10n.of(context)!.charReleaseTitleQ),
+        content: Text(
+          L10n.of(context)!.charReleaseBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -350,7 +351,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
               backgroundColor: widget.palette.dangerBtnBg,
               foregroundColor: widget.palette.dangerBtnText,
             ),
-            child: const Text('Release'),
+            child: Text(L10n.of(context)!.charBtnRelease),
           ),
         ],
       ),
@@ -369,7 +370,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Already released')));
+      ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charAlreadyReleased)));
       return;
     }
     await _runBusy(() async {
@@ -393,7 +394,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Character released')));
+        ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charReleased)));
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -411,20 +412,20 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Already released')));
+      ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charAlreadyReleased)));
       return;
     }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Release this character?'),
+        title: Text(L10n.of(context)!.charReleaseThisTitle),
         content: Text(
-          '"${_displayNameFor(widget.row)}" will lose its owner and become claimable again.',
+          L10n.of(context)!.charLoseOwnerBody(_displayNameFor(widget.row)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -432,7 +433,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
               backgroundColor: widget.palette.dangerBtnBg,
               foregroundColor: widget.palette.dangerBtnText,
             ),
-            child: const Text('Release'),
+            child: Text(L10n.of(context)!.charBtnRelease),
           ),
         ],
       ),
@@ -453,7 +454,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Ownership released')));
+        ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charOwnershipReleased)));
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -481,24 +482,24 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final selected = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Assign "${_displayNameFor(widget.row)}" to'),
+        title: Text(L10n.of(context)!.charAssignTo(_displayNameFor(widget.row))),
         children: [
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, noneSentinel),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.person_off_outlined, size: 16),
-                SizedBox(width: 8),
-                Text('None (unassign)'),
+                const Icon(Icons.person_off_outlined, size: 16),
+                const SizedBox(width: 8),
+                Text(L10n.of(context)!.charUnassign),
               ],
             ),
           ),
           if (players.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Text(
-                'No players in this world yet.',
-                style: TextStyle(fontSize: 12),
+                L10n.of(context)!.playersNoneInWorld,
+                style: const TextStyle(fontSize: 12),
               ),
             )
           else
@@ -539,7 +540,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              userId == null ? 'Ownership cleared' : 'Assigned to player',
+              userId == null ? L10n.of(context)!.charOwnershipCleared : L10n.of(context)!.charAssignedToPlayer,
             ),
           ),
         );
@@ -561,7 +562,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Already released')));
+      ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.charAlreadyReleased)));
       return;
     }
     if (selfUid != null && widget.row.ownerId == selfUid) {
@@ -581,7 +582,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove from world?'),
+        title: Text(L10n.of(context)!.removeFromWorldTitle),
         content: Text(
           hasOwner
               ? '"${_displayNameFor(widget.row)}" leaves this world. The owner keeps the character in their Characters tab.'
@@ -590,7 +591,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -598,7 +599,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
               backgroundColor: widget.palette.dangerBtnBg,
               foregroundColor: widget.palette.dangerBtnText,
             ),
-            child: Text(hasOwner ? 'Remove' : 'Delete'),
+            child: Text(hasOwner ? L10n.of(context)!.btnRemove : L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -620,7 +621,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
             content: Text(
               result.deleted
                   ? 'Deleted from world'
-                  : 'Removed from world (owner keeps the character)',
+                  : L10n.of(context)!.charRemovedOwnerKeeps,
             ),
           ),
         );
@@ -724,6 +725,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
                   ? null
                   : CharacterStatChips(
                       lines: characterStatLines(
+                        l10n: L10n.of(context)!,
                         character,
                         entities,
                         // Owner'ı kanonik kolondan çöz — payload_json'a gömülü
@@ -772,7 +774,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
       );
     }
     return PopupMenuButton<String>(
-      tooltip: 'Actions',
+      tooltip: L10n.of(context)!.sessionActions,
       icon: Icon(
         Icons.more_vert,
         size: 18,
@@ -794,35 +796,35 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
       },
       itemBuilder: (_) => [
         if (isUnclaimed)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'claim',
             child: Row(
               children: [
-                Icon(Icons.check, size: 16),
-                SizedBox(width: 8),
-                Text('Claim'),
+                const Icon(Icons.check, size: 16),
+                const SizedBox(width: 8),
+                Text(L10n.of(context)!.charBtnClaim),
               ],
             ),
           ),
         if (canShowUnclaim)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'unclaim',
             child: Row(
               children: [
-                Icon(Icons.logout, size: 16),
-                SizedBox(width: 8),
-                Text('Unclaim'),
+                const Icon(Icons.logout, size: 16),
+                const SizedBox(width: 8),
+                Text(L10n.of(context)!.charBtnUnclaim),
               ],
             ),
           ),
         if (widget.dmMode) ...[
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'assign',
             child: Row(
               children: [
-                Icon(Icons.person_pin, size: 16),
-                SizedBox(width: 8),
-                Text('Assign to player...'),
+                const Icon(Icons.person_pin, size: 16),
+                const SizedBox(width: 8),
+                Text(L10n.of(context)!.charAssignToPlayer),
               ],
             ),
           ),
@@ -832,7 +834,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
               children: [
                 Icon(Icons.exit_to_app, size: 16, color: palette.dangerBtnBg),
                 const SizedBox(width: 8),
-                const Text('Remove from world'),
+                Text(L10n.of(context)!.removeFromWorld),
               ],
             ),
           ),
@@ -894,13 +896,13 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Imported "${c.entity.name}" to this world')),
+        SnackBar(content: Text(L10n.of(context)!.charImportedToWorld(c.entity.name))),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
+      ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.importFailed('$e'))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -913,13 +915,13 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
     final charList = ref.watch(characterListProvider);
 
     return AlertDialog(
-      title: const Text('Import Character'),
+      title: Text(L10n.of(context)!.importCharacterTitle),
       content: SizedBox(
         width: 480,
         height: 420,
         child: charList.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
           data: (chars) {
             // Orphan + self-owned filtresi. `worldId == null` kanon.
             final candidates = chars
@@ -930,8 +932,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'No orphan characters to import. Create one from the '
-                    'Characters tab first, then come back here.',
+                    L10n.of(context)!.importCharacterNone,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
@@ -987,7 +988,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             textStyle: const TextStyle(fontSize: 12),
                           ),
-                          child: const Text('Import'),
+                          child: Text(L10n.of(context)!.btnImport),
                         ),
                       ),
                     ],
@@ -1001,7 +1002,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
       ],
     );

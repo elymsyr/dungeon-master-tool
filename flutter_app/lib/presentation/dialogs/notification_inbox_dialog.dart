@@ -123,7 +123,7 @@ class _NotificationInboxDialogState
                   ),
                   error: (e, _) => Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('Error: $e',
+                    child: Text(L10n.of(context)!.hubErrorGeneric('$e'),
                         style: TextStyle(color: palette.dangerBtnBg)),
                   ),
                   data: (list) => list.isEmpty
@@ -262,7 +262,7 @@ class _NotificationDetailDialog extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.hubErrorGeneric('$e'))));
       }
     }
   }

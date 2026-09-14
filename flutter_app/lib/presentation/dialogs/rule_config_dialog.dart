@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/schema/rule_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../l10n/app_localizations.dart';
 
 /// Minimal editor for the template's tunable [RuleConfig] values
 /// (`metadata['rule_config']`): ASI levels, proficiency-bonus breakpoints,
@@ -177,7 +178,7 @@ class _RuleConfigDialogState extends State<RuleConfigDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Rule Settings'),
+      title: Text(L10n.of(context)!.ruleSettingsTitle),
       content: SizedBox(
         width: 480,
         child: SingleChildScrollView(
@@ -185,10 +186,9 @@ class _RuleConfigDialogState extends State<RuleConfigDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Numeric rules for this template. Character sheets, the '
-                'level-up planner and AC recompute immediately after saving.',
-                style: TextStyle(fontSize: 12),
+              Text(
+                L10n.of(context)!.ruleSettingsIntro,
+                style: const TextStyle(fontSize: 12),
               ),
               _sectionLabel('Progression'),
               _intField(_asiLevels, 'ASI / feat levels',
@@ -222,13 +222,13 @@ class _RuleConfigDialogState extends State<RuleConfigDialog> {
       actions: [
         TextButton(
           onPressed: _resetToDefaults,
-          child: const Text('Reset to D&D 5e defaults'),
+          child: Text(L10n.of(context)!.ruleSettingsReset),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
-        FilledButton(onPressed: _save, child: const Text('Save')),
+        FilledButton(onPressed: _save, child: Text(L10n.of(context)!.btnSave)),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dungeon_master_tool/domain/entities/character/effective_character.dart';
@@ -24,7 +25,7 @@ void main() {
   };
 
   Future<void> pump(WidgetTester tester, EffectiveCharacter effective) =>
-      tester.pumpWidget(MaterialApp(
+      tester.pumpWidget(MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
         theme: theme,
         home: Scaffold(
           body: SingleChildScrollView(

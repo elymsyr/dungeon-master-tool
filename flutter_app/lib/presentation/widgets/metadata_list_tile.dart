@@ -7,6 +7,7 @@ import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
 import 'asset_ref_image.dart';
 import 'banner_metrics.dart';
+import '../l10n/app_localizations.dart';
 
 /// Cover + name + description + tags içeren shared list satırı.
 /// Hub tab'larında (Characters / Worlds / Packages / Templates) kullanılır.
@@ -166,12 +167,12 @@ class MetadataListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (layout) {
-      MetadataTileLayout.leftAvatar => _buildLeftAvatar(),
-      MetadataTileLayout.topBanner => _buildTopBanner(),
+      MetadataTileLayout.leftAvatar => _buildLeftAvatar(context),
+      MetadataTileLayout.topBanner => _buildTopBanner(context),
     };
   }
 
-  Widget _buildLeftAvatar() {
+  Widget _buildLeftAvatar(BuildContext context) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,7 +188,7 @@ class MetadataListTile extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, right: 6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [trailingControl ?? _settingsButton()],
+              children: [trailingControl ?? _settingsButton(context)],
             ),
           ),
         ],
@@ -195,7 +196,7 @@ class MetadataListTile extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBanner() {
+  Widget _buildTopBanner(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -230,7 +231,7 @@ class MetadataListTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textBlock()),
-              trailingControl ?? _settingsButton(),
+              trailingControl ?? _settingsButton(context),
             ],
           ),
         ),
@@ -375,10 +376,10 @@ class MetadataListTile extends StatelessWidget {
     );
   }
 
-  Widget _settingsButton() {
+  Widget _settingsButton(BuildContext context) {
     return IconButton(
       icon: Icon(Icons.settings, size: 16, color: palette.tabText),
-      tooltip: 'Settings',
+      tooltip: L10n.of(context)!.lblSettings,
       onPressed: onSettings,
       visualDensity: VisualDensity.compact,
       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),

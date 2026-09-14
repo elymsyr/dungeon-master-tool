@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/admin_provider.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Online yasağı (restriction) konmuş kullanıcıya gösterilen banner.
 /// Restricted değilse hiç render edilmez (SizedBox.shrink).
@@ -56,7 +57,7 @@ class OnlineRestrictionBanner extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Your online interactions are restricted by an admin.',
+                      L10n.of(context)!.restrictionBannerTitle,
                       style: TextStyle(
                         fontSize: compact ? 11 : 12,
                         fontWeight: FontWeight.w600,
@@ -66,7 +67,7 @@ class OnlineRestrictionBanner extends ConsumerWidget {
                     if (reason.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'Reason: $reason',
+                        L10n.of(context)!.restrictionReason(reason),
                         style: TextStyle(
                           fontSize: compact ? 10 : 11,
                           color: palette.sidebarLabelSecondary,
@@ -76,7 +77,7 @@ class OnlineRestrictionBanner extends ConsumerWidget {
                     if (!compact) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'You can still browse and download marketplace items.',
+                        L10n.of(context)!.restrictionBannerBody,
                         style: TextStyle(
                           fontSize: 10,
                           color: palette.sidebarLabelSecondary,

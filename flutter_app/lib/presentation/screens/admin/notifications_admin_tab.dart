@@ -46,7 +46,7 @@ class NotificationsAdminTab extends ConsumerWidget {
               padding: EdgeInsets.all(24),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => Text('Error: $e',
+            error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e'),
                 style: TextStyle(color: palette.dangerBtnBg)),
             data: (items) => items.isEmpty
                 ? Padding(
@@ -100,7 +100,7 @@ class _NotificationRow extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.hubErrorGeneric('$e'))));
       }
     }
   }

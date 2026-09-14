@@ -10,6 +10,7 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../core/utils/screen_type.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Reusable text area with markdown rendering (view mode) and @entity mention
 /// autocomplete (edit mode).
@@ -392,10 +393,10 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
       textAlignVertical: widget.textAlignVertical,
       style: widget.textStyle,
       decoration: widget.decoration ??
-          const InputDecoration(
-            hintText: 'Use @ to mention entities. Markdown supported.',
+          InputDecoration(
+            hintText: L10n.of(context)!.markdownMentionHintAlt,
             isDense: true,
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
           ),
       onChanged: _onTextChanged,
       onSubmitted: widget.onSubmitted,

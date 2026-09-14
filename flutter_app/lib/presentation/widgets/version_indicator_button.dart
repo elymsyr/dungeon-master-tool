@@ -9,6 +9,7 @@ import '../../core/constants.dart';
 import '../../core/utils/screen_type.dart';
 import '../../data/network/release_check_service.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Compact AppBar action showing the current app version. Always clickable:
 /// opens the latest GitHub release notes dialog (markdown-rendered). When an
@@ -112,7 +113,7 @@ class VersionIndicatorButton extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(isUpdate ? 'Update available' : 'Release notes'),
+              child: Text(isUpdate ? L10n.of(context)!.updateAvailable : L10n.of(context)!.releaseNotes),
             ),
           ],
         ),
@@ -124,7 +125,7 @@ class VersionIndicatorButton extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Current: $appReleaseTag',
+                  L10n.of(context)!.versionCurrent(appReleaseTag),
                   style: TextStyle(
                     fontSize: 12,
                     color: palette.sidebarLabelSecondary,
@@ -132,7 +133,7 @@ class VersionIndicatorButton extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Latest: ${info.tag}',
+                  L10n.of(context)!.versionLatest(info.tag),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -170,11 +171,11 @@ class VersionIndicatorButton extends ConsumerWidget {
             ? [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Later'),
+                  child: Text(L10n.of(context)!.btnLater),
                 ),
                 FilledButton.icon(
                   icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('Download'),
+                  label: Text(L10n.of(context)!.marketplaceDownload),
                   onPressed: () async {
                     final uri = Uri.parse(info.htmlUrl);
                     await launchUrl(uri,
@@ -186,11 +187,11 @@ class VersionIndicatorButton extends ConsumerWidget {
             : [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Close'),
+                  child: Text(L10n.of(context)!.btnClose),
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('View on GitHub'),
+                  label: Text(L10n.of(context)!.viewOnGithub),
                   onPressed: () async {
                     final uri = Uri.parse(info.htmlUrl);
                     await launchUrl(uri,

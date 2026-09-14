@@ -8,6 +8,7 @@ import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Embeddable panel: pick a source world, filter entities, export as package.
 ///
@@ -191,7 +192,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
     if (existing.contains(name)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Package "$name" already exists')),
+        SnackBar(content: Text(L10n.of(context)!.packageNameExists(name))),
       );
       return;
     }
@@ -237,13 +238,13 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                'Exported "$name" with ${entitiesMap.length} entities.')),
+                L10n.of(context)!.exportPackageDone(name, '${entitiesMap.length}'))),
       );
       widget.onExported?.call();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.exportFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -266,8 +267,8 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
             child: infoAsync.when(
               data: (worlds) => DropdownButtonFormField<String>(
                 initialValue: _sourceWorldName,
-                decoration: const InputDecoration(
-                  labelText: 'Source World',
+                decoration: InputDecoration(
+                  labelText: L10n.of(context)!.exportSourceWorld,
                   isDense: true,
                 ),
                 items: worlds
@@ -283,7 +284,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
                 },
               ),
               loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Error: $e'),
+              error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
             ),
           ),
         if (_sourceWorldName != null && !_loadingEntities)
@@ -293,13 +294,13 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
               children: [
                 TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search entities...',
-                    prefixIcon: Icon(Icons.search, size: 18),
+                  decoration: InputDecoration(
+                    hintText: L10n.of(context)!.exportSearchEntities,
+                    prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -350,7 +351,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
                 Row(
                   children: [
                     Text(
-                      '${_selectedEntityIds.length} of ${filtered.length} shown selected · ${_entities.length} total',
+                      L10n.of(context)!.exportSelectionSummary('${_selectedEntityIds.length}', '${filtered.length}', '${_entities.length}'),
                       style: TextStyle(
                           fontSize: 11,
                           color: palette.sidebarLabelSecondary),
@@ -363,15 +364,15 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
                                 _selectedEntityIds
                                     .addAll(filtered.map((r) => r.id));
                               }),
-                      child: const Text('Select All',
-                          style: TextStyle(fontSize: 11)),
+                      child: Text(L10n.of(context)!.btnSelectAll,
+                          style: const TextStyle(fontSize: 11)),
                     ),
                     TextButton(
                       onPressed: _selectedEntityIds.isEmpty
                           ? null
                           : () => setState(_selectedEntityIds.clear),
-                      child: const Text('Clear',
-                          style: TextStyle(fontSize: 11)),
+                      child: Text(L10n.of(context)!.marketplaceFilterClear,
+                          style: const TextStyle(fontSize: 11)),
                     ),
                   ],
                 ),
@@ -382,7 +383,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
         Expanded(
           child: _sourceWorldName == null
               ? Center(
-                  child: Text('Pick a world to see its entities.',
+                  child: Text(L10n.of(context)!.exportPickWorld,
                       style: TextStyle(
                           fontSize: 12,
                           color: palette.sidebarLabelSecondary)),
@@ -390,10 +391,10 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
               : _loadingEntities
                   ? const Center(child: CircularProgressIndicator())
                   : _loadError != null
-                      ? Center(child: Text('Error: $_loadError'))
+                      ? Center(child: Text(L10n.of(context)!.hubErrorGeneric('$_loadError')))
                       : filtered.isEmpty
                           ? Center(
-                              child: Text('No entities match.',
+                              child: Text(L10n.of(context)!.exportNoMatch,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color:
@@ -484,11 +485,11 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
               Expanded(
                 child: TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    hintText: 'New package name',
+                  decoration: InputDecoration(
+                    hintText: L10n.of(context)!.newPackageName,
                     isDense: true,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 8),
                   ),
                 ),
@@ -527,7 +528,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
-            title: const Text('Filter Categories'),
+            title: Text(L10n.of(context)!.filterCategoriesTitle),
             content: SizedBox(
               width: 360,
               height: 420,
@@ -583,11 +584,11 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
             actions: [
               TextButton(
                 onPressed: () => setDialogState(working.clear),
-                child: const Text('Clear'),
+                child: Text(L10n.of(context)!.marketplaceFilterClear),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: Text(L10n.of(context)!.btnCancel),
               ),
               FilledButton(
                 onPressed: () {
@@ -598,7 +599,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
                   });
                   Navigator.pop(ctx);
                 },
-                child: const Text('Apply'),
+                child: Text(L10n.of(context)!.hubFilterApply),
               ),
             ],
           );
@@ -615,7 +616,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
-            title: const Text('Filter Sources'),
+            title: Text(L10n.of(context)!.filterSourcesTitle),
             content: SizedBox(
               width: 360,
               height: 420,
@@ -671,11 +672,11 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
             actions: [
               TextButton(
                 onPressed: () => setDialogState(working.clear),
-                child: const Text('Clear'),
+                child: Text(L10n.of(context)!.marketplaceFilterClear),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: Text(L10n.of(context)!.btnCancel),
               ),
               FilledButton(
                 onPressed: () {
@@ -686,7 +687,7 @@ class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
                   });
                   Navigator.pop(ctx);
                 },
-                child: const Text('Apply'),
+                child: Text(L10n.of(context)!.hubFilterApply),
               ),
             ],
           );

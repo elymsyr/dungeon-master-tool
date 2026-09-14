@@ -18,6 +18,7 @@ import '../../widgets/battle_map/battle_map_toolbar.dart';
 import '../../widgets/battle_map/token_widget.dart';
 import 'battle_map_notifier.dart';
 import 'battle_map_painter.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Battle map tab content — Python ui/windows/battle_map_window.py karşılığı.
 /// Session screen'deki "Battle Map" bottom tab'ına gömülür.
@@ -509,23 +510,23 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add label'),
+        title: Text(L10n.of(context)!.bmAddLabel),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLines: 1,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(hintText: 'Label text'),
+          decoration: InputDecoration(hintText: L10n.of(context)!.bmLabelText),
           onSubmitted: (v) => Navigator.of(ctx).pop(v),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Add'),
+            child: Text(L10n.of(context)!.btnAdd),
           ),
         ],
       ),
@@ -576,17 +577,17 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'HP  ${c.hp} / ${c.maxHp}',
+                  L10n.of(context)!.bmHpLine('${c.hp}', '${c.maxHp}'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   initialValue: '$amount',
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
+                  decoration: InputDecoration(
+                    labelText: L10n.of(context)!.bmAmount,
                     isDense: true,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (v) => amount = int.tryParse(v)?.abs() ?? 0,
                 ),
@@ -596,14 +597,14 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                     Expanded(
                       child: FilledButton.tonal(
                         onPressed: () => quick(-amount),
-                        child: const Text('Damage'),
+                        child: Text(L10n.of(context)!.bmDamage),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton.tonal(
                         onPressed: () => quick(amount),
-                        child: const Text('Heal'),
+                        child: Text(L10n.of(context)!.bmHeal),
                       ),
                     ),
                   ],
@@ -620,7 +621,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                         icon: Icon(
                           hidden ? Icons.visibility : Icons.visibility_off,
                         ),
-                        label: Text(hidden ? 'Reveal' : 'Hide'),
+                        label: Text(hidden ? L10n.of(context)!.bmReveal : L10n.of(context)!.bmHide),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -631,7 +632,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                           _showResizeDialog(id, mapState, notifier);
                         },
                         icon: const Icon(Icons.aspect_ratio),
-                        label: const Text('Resize'),
+                        label: Text(L10n.of(context)!.bmResize),
                       ),
                     ),
                   ],
@@ -641,7 +642,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Close'),
+                child: Text(L10n.of(context)!.btnClose),
               ),
             ],
           );
@@ -672,7 +673,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Token Size Multiplier'),
+        title: Text(L10n.of(context)!.bmTokenSizeMultiplier),
         content: StatefulBuilder(
           builder: (ctx, setDialogState) => Column(
             mainAxisSize: MainAxisSize.min,
@@ -694,7 +695,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               notifier.setTokenSizeMultiplier(id, multiplier);
               Navigator.pop(ctx);
             },
-            child: const Text('Apply'),
+            child: Text(L10n.of(context)!.hubFilterApply),
           ),
         ],
       ),

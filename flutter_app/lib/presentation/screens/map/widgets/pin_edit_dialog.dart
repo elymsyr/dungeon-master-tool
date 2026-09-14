@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/map_data.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Curated icon set the user can choose from when overriding a pin's icon.
 /// Mirrors `_iconFromName` in world_map_screen.dart — only public material
@@ -164,7 +165,7 @@ class _PinEditDialogState extends State<PinEditDialog> {
       titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
       title: Text(
-        'Edit Pin',
+        L10n.of(context)!.pinEditTitle,
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -192,7 +193,7 @@ class _PinEditDialogState extends State<PinEditDialog> {
                 decoration: deco('Note'),
               ),
               const SizedBox(height: 14),
-              Text('Color', style: labelStyle),
+              Text(L10n.of(context)!.lblColor, style: labelStyle),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -221,7 +222,7 @@ class _PinEditDialogState extends State<PinEditDialog> {
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              Text('Icon', style: labelStyle),
+              Text(L10n.of(context)!.lblIcon, style: labelStyle),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
@@ -231,7 +232,7 @@ class _PinEditDialogState extends State<PinEditDialog> {
                     name: '',
                     icon: Icons.refresh,
                     active: _iconName.isEmpty,
-                    tooltip: 'Use category default',
+                    tooltip: L10n.of(context)!.pinUseCategoryDefault,
                   ),
                   ...kPinIconChoices.map(
                     (e) => _iconChip(
@@ -253,14 +254,14 @@ class _PinEditDialogState extends State<PinEditDialog> {
             onPressed: () =>
                 Navigator.of(context).pop(const PinEditResult.delete()),
             child: Text(
-              'Delete',
+              L10n.of(context)!.btnDelete,
               style: TextStyle(color: palette.dangerBtnBg),
             ),
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            L10n.of(context)!.btnCancel,
             style: TextStyle(color: palette.uiFloatingText),
           ),
         ),
@@ -271,7 +272,7 @@ class _PinEditDialogState extends State<PinEditDialog> {
             shape: RoundedRectangleBorder(borderRadius: palette.br),
           ),
           onPressed: _save,
-          child: const Text('Save'),
+          child: Text(L10n.of(context)!.btnSave),
         ),
       ],
     );

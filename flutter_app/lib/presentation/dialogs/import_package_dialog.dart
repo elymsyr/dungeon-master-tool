@@ -82,7 +82,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               runSpacing: 8,
               children: [
                 _PillTab(
-                  label: 'Import',
+                  label: L10n.of(context)!.btnImport,
                   icon: Icons.download,
                   active: !_exportMode,
                   palette: palette,
@@ -91,7 +91,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
                       : () => setState(() => _exportMode = false),
                 ),
                 _PillTab(
-                  label: 'Export',
+                  label: L10n.of(context)!.btnExport,
                   icon: Icons.upload,
                   active: _exportMode,
                   palette: palette,
@@ -159,7 +159,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
     );
   }
 
@@ -168,20 +168,19 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Remove "${info.name}" from this world?'),
-        content: const Text(
-          'Linked entities from this package will be deleted. '
-          'User-edited copies are kept as homebrew.',
+        title: Text(L10n.of(context)!.removePackageFromWorldTitle(info.name)),
+        content: Text(
+          L10n.of(context)!.removePackageFromWorldBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(L10n.of(context)!.btnRemove),
           ),
         ],
       ),
@@ -197,7 +196,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       if (pkgRow == null || campaignId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot remove: missing context')),
+            SnackBar(content: Text(L10n.of(context)!.removeMissingContext)),
           );
         }
         return;
@@ -213,14 +212,14 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Removed "${info.name}": ${result.removed} deleted, ${result.detachedSurvived} kept as homebrew.'),
+                L10n.of(context)!.removePackageDone(info.name, '${result.removed}', '${result.detachedSurvived}')),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Remove failed: $e')),
+          SnackBar(content: Text(L10n.of(context)!.removeFailed('$e'))),
         );
       }
     } finally {
@@ -238,7 +237,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       if (pkgRow == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Package not found')),
+            SnackBar(content: Text(L10n.of(context)!.packageNotFound)),
           );
         }
         return;
@@ -249,7 +248,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       if (campaignId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No active world')),
+            SnackBar(content: Text(L10n.of(context)!.noActiveWorld)),
           );
         }
         return;
@@ -280,7 +279,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
+          SnackBar(content: Text(L10n.of(context)!.importFailed('$e'))),
         );
       }
     } finally {
@@ -455,7 +454,7 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                       child: OutlinedButton.icon(
                         onPressed: widget.importing ? null : widget.onRemove,
                         icon: const Icon(Icons.delete_outline, size: 14),
-                        label: const Text('Remove'),
+                        label: Text(L10n.of(context)!.btnRemove),
                         style: OutlinedButton.styleFrom(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 10),
@@ -480,7 +479,7 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                                 foregroundColor: palette.dangerBtnBg,
                                 side: BorderSide(color: palette.dangerBtnBg),
                               ),
-                              child: const Text('Force'),
+                              child: Text(L10n.of(context)!.importForce),
                             )
                           : FilledButton(
                               onPressed: canImport ? widget.onImport : null,
@@ -606,19 +605,16 @@ class _PackageImportCardState extends State<_PackageImportCard> {
           children: [
             Icon(Icons.warning, color: palette.dangerBtnBg, size: 22),
             const SizedBox(width: 8),
-            const Text('Force Import'),
+            Text(L10n.of(context)!.importForceTitle),
           ],
         ),
-        content: const Text(
-          'The package template is incompatible with this world.\n\n'
-          'Entities from unmatched categories will be skipped, and '
-          'mismatched fields will receive default values. '
-          'This may result in significant data loss.',
+        content: Text(
+          L10n.of(context)!.importForceBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -626,7 +622,7 @@ class _PackageImportCardState extends State<_PackageImportCard> {
               backgroundColor: palette.dangerBtnBg,
               foregroundColor: palette.dangerBtnText,
             ),
-            child: const Text('Force Import'),
+            child: Text(L10n.of(context)!.importForceTitle),
           ),
         ],
       ),

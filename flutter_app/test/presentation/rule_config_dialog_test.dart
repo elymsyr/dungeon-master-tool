@@ -1,4 +1,5 @@
 import 'package:dungeon_master_tool/domain/entities/schema/rule_config.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/presentation/dialogs/rule_config_dialog.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ void main() {
   testWidgets('editing values writes rule_config into metadata',
       (tester) async {
     WorldSchema? saved;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
       home: Scaffold(
         body: RuleConfigDialog(
           schema: _schema(),
@@ -52,7 +53,7 @@ void main() {
   testWidgets('values equal to the defaults remove the rule_config key',
       (tester) async {
     WorldSchema? saved;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
       home: Scaffold(
         body: RuleConfigDialog(
           schema: _schema(metadata: {
@@ -78,7 +79,7 @@ void main() {
   testWidgets('reset button restores defaults, save then drops the override',
       (tester) async {
     WorldSchema? saved;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
       home: Scaffold(
         body: RuleConfigDialog(
           schema: _schema(metadata: {
@@ -106,7 +107,7 @@ void main() {
   });
 
   testWidgets('existing override pre-fills every field', (tester) async {
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
       home: Scaffold(
         body: RuleConfigDialog(
           schema: _schema(metadata: {

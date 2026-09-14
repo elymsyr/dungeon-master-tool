@@ -6,6 +6,7 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
 import 'world_map_notifier.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Result returned by [DeleteWaypointDialog] — root world map strategy plus
 /// a per-location map override.
@@ -53,7 +54,7 @@ class _AddWaypointDialogState extends State<AddWaypointDialog> {
     final p = widget.palette;
     return AlertDialog(
       backgroundColor: p.uiFloatingBg,
-      title: Text('Add Waypoint',
+      title: Text(L10n.of(context)!.eraAddWaypoint,
           style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
       content: SizedBox(
         width: 300,
@@ -66,7 +67,7 @@ class _AddWaypointDialogState extends State<AddWaypointDialog> {
               autofocus: true,
               style: TextStyle(fontSize: 12, color: p.uiFloatingText),
               decoration: InputDecoration(
-                labelText: 'Name (number, date or text)',
+                labelText: L10n.of(context)!.eraWaypointNameLabel,
                 labelStyle: TextStyle(
                   fontSize: 11,
                   color: p.uiFloatingText.withValues(alpha: 0.6),
@@ -89,7 +90,7 @@ class _AddWaypointDialogState extends State<AddWaypointDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child:
-              Text('Cancel', style: TextStyle(color: p.uiFloatingText)),
+              Text(L10n.of(context)!.btnCancel, style: TextStyle(color: p.uiFloatingText)),
         ),
         ElevatedButton(
           onPressed: () {
@@ -104,7 +105,7 @@ class _AddWaypointDialogState extends State<AddWaypointDialog> {
               ),
             );
           },
-          child: const Text('Add'),
+          child: Text(L10n.of(context)!.btnAdd),
         ),
       ],
     );
@@ -186,7 +187,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
 
     return AlertDialog(
       backgroundColor: p.uiFloatingBg,
-      title: Text('Delete: ${widget.waypointLabel}',
+      title: Text(L10n.of(context)!.eraDeleteWaypoint(widget.waypointLabel),
           style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
       content: SizedBox(
         width: 520,
@@ -207,7 +208,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: p.uiFloatingText)),
+          child: Text(L10n.of(context)!.btnCancel, style: TextStyle(color: p.uiFloatingText)),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700]),
@@ -220,7 +221,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
               ),
             ),
           ),
-          child: const Text('Delete'),
+          child: Text(L10n.of(context)!.btnDelete),
         ),
       ],
     );
@@ -233,7 +234,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
         widget.rightEra.pins.length + widget.rightEra.timelinePins.length;
     return _scopeCard(
       p,
-      label: 'World map',
+      label: L10n.of(context)!.worldMapLower,
       leftRef: widget.leftEra.imagePath,
       rightRef: widget.rightEra.imagePath,
       leftPins: leftPins,
@@ -353,7 +354,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
                 color: p.canvasBg,
                 alignment: Alignment.center,
                 child: Text(
-                  'no map',
+                  L10n.of(context)!.eraNoMap,
                   style: TextStyle(
                     fontSize: 11,
                     color: p.uiFloatingText.withValues(alpha: 0.5),
@@ -370,7 +371,7 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
                   borderRadius: p.chr,
                 ),
                 child: Text(
-                  '$pins pins',
+                  L10n.of(context)!.eraPinCount('$pins'),
                   style: const TextStyle(color: Colors.white, fontSize: 10),
                 ),
               ),
@@ -415,7 +416,7 @@ class CopyToEraDialog extends StatelessWidget {
 
     return AlertDialog(
       backgroundColor: p.uiFloatingBg,
-      title: Text('Copy to...',
+      title: Text(L10n.of(context)!.eraCopyTo,
           style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
       content: SizedBox(
         width: 280,
@@ -471,7 +472,7 @@ class _RenameWaypointDialogState extends State<RenameWaypointDialog> {
     final p = widget.palette;
     return AlertDialog(
       backgroundColor: p.uiFloatingBg,
-      title: Text('Rename Waypoint',
+      title: Text(L10n.of(context)!.eraRenameWaypoint,
           style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
       content: TextField(
         controller: _ctrl,
@@ -480,7 +481,7 @@ class _RenameWaypointDialogState extends State<RenameWaypointDialog> {
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           isDense: true,
-          labelText: 'Label',
+          labelText: L10n.of(context)!.lblLabel,
           labelStyle: TextStyle(
             fontSize: 11,
             color: p.uiFloatingText.withValues(alpha: 0.6),
@@ -491,14 +492,14 @@ class _RenameWaypointDialogState extends State<RenameWaypointDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child:
-              Text('Cancel', style: TextStyle(color: p.uiFloatingText)),
+              Text(L10n.of(context)!.btnCancel, style: TextStyle(color: p.uiFloatingText)),
         ),
         ElevatedButton(
           onPressed: () {
             final label = _ctrl.text.trim();
             if (label.isNotEmpty) Navigator.pop(context, label);
           },
-          child: const Text('Save'),
+          child: Text(L10n.of(context)!.btnSave),
         ),
       ],
     );

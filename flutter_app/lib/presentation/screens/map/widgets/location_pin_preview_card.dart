@@ -4,6 +4,7 @@ import '../../../../domain/entities/entity.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/asset_ref_image.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Floating preview card shown when a location-linked map pin is hovered
 /// (desktop) or tapped (mobile). The map thumbnail is the drill-in handle.
@@ -105,9 +106,9 @@ class LocationPinPreviewCard extends StatelessWidget {
                                   color: Colors.black54,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Text(
-                                  'Open map',
-                                  style: TextStyle(
+                                child: Text(
+                                  L10n.of(context)!.openMap,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
                                   ),
@@ -120,7 +121,7 @@ class LocationPinPreviewCard extends StatelessWidget {
                           color: palette.canvasBg,
                           alignment: Alignment.center,
                           child: Text(
-                            'No map assigned',
+                            L10n.of(context)!.noMapAssigned,
                             style: TextStyle(
                               color: palette.uiFloatingText.withValues(alpha: 0.6),
                               fontSize: 11,

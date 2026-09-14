@@ -1457,5 +1457,1758 @@
   "lanSyncErrFailed": "Pairing failed.",
   "shareWithPlayers": "Share with players",
   "worldContentSharedTitle": "World content shared with players",
-  "worldContentSharedBody": "The cards you marked to share were shared with your players. Nothing else left your device — no category is shared automatically.\n\nMark or unmark any card from its menu; the Sharing filter in the sidebar shows what is marked. Marks you set while the world is offline go out the next time you publish."
+  "worldContentSharedBody": "The cards you marked to share were shared with your players. Nothing else left your device — no category is shared automatically.\n\nMark or unmark any card from its menu; the Sharing filter in the sidebar shows what is marked. Marks you set while the world is offline go out the next time you publish.",
+  "adminDmSent": "Message sent.",
+  "adminDmTitle": "Message {name}",
+  "@adminDmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminDmHint": "Type a message…",
+  "btnSend": "Send",
+  "bugReportSignInRequired": "Bug reporting requires cloud sign-in.",
+  "bugReportSent": "Thank you — your report was sent.",
+  "bugReportDescribe": "Describe the issue you encountered. Terminal output is captured automatically and will be sent with your report.",
+  "bugReportHint": "Steps to reproduce, expected vs actual behavior…",
+  "bugReportNoLogs": "(no terminal logs captured)",
+  "bugReportVersionLine": "Version: {version} · Platform: {platform}",
+  "@bugReportVersionLine": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "bugReportSend": "Send report",
+  "encounterColumnsTitle": "Configure Columns",
+  "lblLabel": "Label",
+  "encounterColumnEditable": "Editable",
+  "encounterColumnButtons": "+/- Buttons",
+  "encounterAddColumn": "Add Column",
+  "searchHint": "Search...",
+  "entitySelectorEmpty": "No entities found",
+  "packageNameExists": "Package \"{name}\" already exists",
+  "@packageNameExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "exportPackageDone": "Exported \"{name}\" with {count} entities.",
+  "@exportPackageDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "Export failed: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exportSourceWorld": "Source World",
+  "exportSearchEntities": "Search entities...",
+  "exportSelectionSummary": "{selected} of {shown} shown selected · {total} total",
+  "@exportSelectionSummary": {
+    "placeholders": {
+      "selected": {
+        "type": "String"
+      },
+      "shown": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "btnSelectAll": "Select All",
+  "exportPickWorld": "Pick a world to see its entities.",
+  "exportNoMatch": "No entities match.",
+  "newPackageName": "New package name",
+  "filterCategoriesTitle": "Filter Categories",
+  "filterSourcesTitle": "Filter Sources",
+  "importEntitiesDone": "{count, plural, =1{Imported 1 entity} other{Imported {count} entities}}",
+  "@importEntitiesDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importEntityTitle": "Import Entity",
+  "lblCategory": "Category",
+  "importPasteJson": "Paste JSON data:",
+  "importJsonHelp": "Supports single object or array of objects. Fields are auto-mapped to schema.",
+  "removePackageFromWorldTitle": "Remove \"{name}\" from this world?",
+  "@removePackageFromWorldTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removePackageFromWorldBody": "Linked entities from this package will be deleted. User-edited copies are kept as homebrew.",
+  "removeMissingContext": "Cannot remove: missing context",
+  "removePackageDone": "Removed \"{name}\": {removed} deleted, {kept} kept as homebrew.",
+  "@removePackageDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "removed": {
+        "type": "String"
+      },
+      "kept": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFailed": "Remove failed: {error}",
+  "@removeFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "packageNotFound": "Package not found",
+  "noActiveWorld": "No active world",
+  "importFailed": "Import failed: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importForce": "Force",
+  "importForceTitle": "Force Import",
+  "importForceBody": "The package template is incompatible with this world.\n\nEntities from unmatched categories will be skipped, and mismatched fields will receive default values. This may result in significant data loss.",
+  "joinWorldJoined": "Joined world \"{name}\"",
+  "@joinWorldJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinWorldTitle": "Join World",
+  "onlineRequiresSignIn": "Online features require sign-in and Supabase configuration.",
+  "joinWorldEnterCode": "Enter the 8-character code from your DM:",
+  "profileUploadAvatar": "Upload avatar",
+  "profileAvatarSoon": "Avatar upload coming soon",
+  "profileUsername": "Username",
+  "profileUsernameHelper": "Lowercase letters, digits, underscores",
+  "profileDisplayName": "Display name (optional)",
+  "profileBio": "Bio",
+  "ruleSettingsTitle": "Rule Settings",
+  "ruleSettingsIntro": "Numeric rules for this template. Character sheets, the level-up planner and AC recompute immediately after saving.",
+  "ruleSettingsReset": "Reset to D&D 5e defaults",
+  "screencastTitle": "Screen Cast",
+  "screencastNoDisplay": "No external display found.",
+  "screencastConnectHint": "Connect a display via HDMI, Miracast,\nChromecast, or AirPlay.",
+  "screencastWaiting": "Waiting for displays...",
+  "shareEntityTitle": "Share \"{name}\"",
+  "@shareEntityTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareWithAllPlayers": "Share with all players",
+  "shareWithAllPlayersHint": "Every member sees this entity.",
+  "shareIndividualPlayers": "Individual players",
+  "shareNoPlayers": "No players have joined yet.",
+  "sharePackageTitle": "Share package",
+  "sharePackageDmOnly": "Only the DM can share packages with the world.",
+  "sharePackageWithWorld": "Share package with world",
+  "sharePackageNoLocal": "No local packages found.",
+  "sharePackageSubtitle": "{template} • {count} entities",
+  "@sharePackageSubtitle": {
+    "placeholders": {
+      "template": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "sharePackageUpdate": "Update share",
+  "btnUnshare": "Unshare",
+  "btnShare": "Share",
+  "sharedName": "Shared {name}",
+  "@sharedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailed": "Share failed: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "unsharedName": "Unshared {name}",
+  "@unsharedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unshareFailed": "Unshare failed: {error}",
+  "@unshareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpen": "Could not open {target}",
+  "@couldNotOpen": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "themeBuilderName": "Theme Name",
+  "themeBuilderStates": "States",
+  "themeBuilderAddState": "Add State",
+  "themeBuilderTracks": "Tracks — {state}",
+  "@themeBuilderTracks": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "btnBrowse": "Browse",
+  "themeBuilderStateName": "State Name (e.g. combat, victory)",
+  "adminAccessDenied": "Access denied",
+  "adminPrivilegesRequired": "Admin privileges required.",
+  "adminTabDashboard": "Dashboard",
+  "adminTabUsers": "Users",
+  "adminTabContent": "Content",
+  "adminTabReports": "Reports",
+  "adminTabBanned": "Banned",
+  "adminTabRestricted": "Restricted",
+  "adminTabAudit": "Audit",
+  "adminTabStorage": "Storage",
+  "adminModeActive": "Admin mode active",
+  "adminInstallAssetPacks": "Install bundled asset packs",
+  "adminInstallAssetPacksHint": "Install the shipped assets/ content packs locally (tagged \"(assets)\") to inspect and compare against published versions.",
+  "adminImportWorldZip": "Import world zip",
+  "adminImportWorldZipHint": "Install a world from a .zip with the same layout — the only import path on phones, where folders cannot be picked.",
+  "adminChooseZip": "Choose zip…",
+  "adminImportWorldFolder": "Import world folder",
+  "adminImportWorldFolderHint": "Install a world directly from disk (manifest.json + blueprints + media/) — no rebuild, for authoring.",
+  "adminChooseFolder": "Choose folder…",
+  "adminInstallBundledWorlds": "Install bundled worlds",
+  "adminInstallBundledWorldsHint": "Install the shipped assets/worlds/ content locally (tagged \"(assets)\") to inspect, edit, and test before publishing.",
+  "failedGeneric": "Failed: {error}",
+  "@failedGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminTotalUsers": "TOTAL USERS",
+  "adminActive30d": "ACTIVE (30D)",
+  "adminSearchUsers": "Search by email or username…",
+  "btnRefresh": "Refresh",
+  "adminSort": "Sort:",
+  "adminChipBanned": "BANNED",
+  "adminChipRestricted": "RESTRICTED",
+  "adminUnban": "Unban",
+  "adminBan": "Ban",
+  "adminRestrictionRemoved": "Online restriction removed.",
+  "adminUnrestrictFailed": "Unrestrict failed: {error}",
+  "@adminUnrestrictFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminRestrictTitle": "Restrict {name}?",
+  "@adminRestrictTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminRestrictBody": "User can sign in and browse, but cannot post, like, message, publish to marketplace, or apply to games. Marketplace downloads still work.",
+  "adminReasonOptional": "Reason (optional)",
+  "adminRestrict": "Restrict",
+  "adminUserRestricted": "User restricted online.",
+  "adminRestrictFailed": "Restrict failed: {error}",
+  "@adminRestrictFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminBanTitle": "Ban {name}?",
+  "@adminBanTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminUserBanned": "User banned.",
+  "adminBanFailed": "Ban failed: {error}",
+  "@adminBanFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminUserUnbanned": "User unbanned.",
+  "adminUnbanFailed": "Unban failed: {error}",
+  "@adminUnbanFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminSortRegistered": "Registration date",
+  "adminSortLastSeen": "Last seen",
+  "adminSortAppVersion": "App version",
+  "adminNoBanned": "No banned users.",
+  "adminR2PoolError": "R2 pool: {error}",
+  "@adminR2PoolError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminR2Pool": "CLOUDFLARE R2 POOL",
+  "adminPoolPinned": "pinned (marketplace)",
+  "adminPoolPinnedSub": "{count} objects · {size} saved by dedup",
+  "@adminPoolPinnedSub": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPoolTransient": "transient (shares, LRU)",
+  "adminStorageSummary": "{count} objects across {buckets} buckets",
+  "@adminStorageSummary": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "buckets": {
+        "type": "String"
+      }
+    }
+  },
+  "adminQuotaUnavailable": "Quota limit not available",
+  "adminByBucket": "BY BUCKET",
+  "adminNoStorageObjects": "No storage objects.",
+  "adminObjectCount": "{count} objects",
+  "@adminObjectCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "adminNoAuditActions": "No admin actions yet.",
+  "adminNoBugReports": "No bug reports.",
+  "updateFailed": "Update failed: {error}",
+  "@updateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportCopied": "Report copied to clipboard",
+  "adminChipHasLogs": "HAS LOGS",
+  "adminNoteLine": "Note: {note}",
+  "@adminNoteLine": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "adminCopyAll": "Copy all",
+  "adminMarkRead": "Mark read",
+  "adminMarkResolved": "Mark resolved",
+  "adminModPosts": "Posts",
+  "adminModMarket": "Market",
+  "adminModGames": "Games",
+  "adminNoPosts": "No posts.",
+  "adminDeletePost": "Delete post",
+  "deletePostTitle": "Delete post?",
+  "adminPostDeleted": "Post deleted.",
+  "adminNoMarketListings": "No marketplace listings.",
+  "adminDeleteListingTitle": "Delete listing?",
+  "adminItemByOwner": "\"{title}\" by {owner}",
+  "@adminItemByOwner": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "adminListingDeleted": "Listing deleted.",
+  "adminNoGameListings": "No game listings.",
+  "adminDeleteGameListing": "Delete game listing",
+  "adminDeleteGameListingTitle": "Delete game listing?",
+  "adminGameListingDeleted": "Game listing deleted.",
+  "adminNoRestricted": "No online-restricted users.",
+  "adminUnrestrict": "Unrestrict",
+  "btnBack": "Back",
+  "charNotFound": "Character not found.",
+  "charTemplateMissing": "Template \"{name}\" missing.\nRestore it in the Templates tab to edit this character.",
+  "@charTemplateMissing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "charTemplateNoPlayer": "Template has no Player category.",
+  "dmNotesTitle": "DM Notes",
+  "dmNotesPrivateHint": "Private DM notes... (@ to mention)",
+  "charAddPhoto": "Add photo",
+  "charNameHint": "Character Name",
+  "markdownMentionHint": "Markdown supported... (@ to mention)",
+  "propertiesTitle": "Properties",
+  "levelUpTableTitle": "Level Up Table",
+  "charAncestryLabel": "Ancestry:",
+  "charNoneParen": "(None)",
+  "charLevelUp": "Level Up",
+  "charShortRest": "Short Rest",
+  "charLongRest": "Long Rest",
+  "charMaxLevel": "Already at level 20.",
+  "charClassMaxLevel": "{name} already at level 20.",
+  "@charClassMaxLevel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "charRest": "Rest",
+  "charSaved": "Character saved.",
+  "charPendingTooltip": "Tap to resolve · Long-press to discard",
+  "charCurrentLevelLine": "Current level {from} → {to}",
+  "@charCurrentLevelLine": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "charAddMulticlass": "Add new class (multiclass)",
+  "charLevelUpChooseClass": "Level Up — Choose Class",
+  "charNoOtherClasses": "No other classes available.",
+  "charMulticlassNew": "Multiclass: New Class",
+  "charPrereqNotMet": "{name} prereq not met",
+  "@charPrereqNotMet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "charPrereqProceed": "{reason}\n\nProceed anyway (homebrew / rule-zero)?",
+  "@charPrereqProceed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "btnProceed": "Proceed",
+  "charDiceToSpend": "Dice to spend:",
+  "charHpRestored": "HP restored: {hp}",
+  "@charHpRestored": {
+    "placeholders": {
+      "hp": {
+        "type": "String"
+      }
+    }
+  },
+  "saveAndSync": "Save & Sync",
+  "charUpgradesPending": "Upgrades · {count} pending",
+  "@charUpgradesPending": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "levelUpTitle": "Level Up: {from} → {to}",
+  "@levelUpTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "levelUpProficiencyBonus": "Proficiency Bonus",
+  "levelUpHitDice": "Hit Dice",
+  "levelUpNewFeatures": "New Features",
+  "levelUpNoFeatures": "No new features at this level.",
+  "levelUpHitPoints": "Hit Points",
+  "levelUpAverage": "Average",
+  "levelUpRoll": "Roll",
+  "levelUpReroll": "Re-roll",
+  "levelUpSpellcasting": "Spellcasting",
+  "levelUpPendingChoices": "Pending Choices",
+  "levelUpCarriedOver": "Carried over (resolve in the editor):",
+  "levelUpAddedAtLevel": "Added at this level:",
+  "levelUpClassResources": "Class Resources",
+  "btnDismiss": "Dismiss",
+  "pendingNoToolOptions": "No class tool options available (or all already proficient).",
+  "pendingPickUpTo": "Pick up to {max} (selected {count}).",
+  "@pendingPickUpTo": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingNoLanguages": "No languages available — PC already knows every language in the campaign.",
+  "pendingSourceGroupNotFound": "Source feat / choice group not found.",
+  "pendingPickSpellListFirst": "Pick the spell list first (resolve its pending choice).",
+  "pendingNoEligibleOptions": "No eligible options in the active campaign.",
+  "pendingSourceFeatNotFound": "Source feat not found in this campaign.",
+  "pendingNoExpertiseSkills": "No eligible skills — PC has no proficient skills without expertise.",
+  "pendingPickExpertise": "Pick up to {max} (selected {count}). Eligible skills are ones you're already proficient in.",
+  "@pendingPickExpertise": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingNoSkills": "No skills available — PC already proficient in every skill in the campaign.",
+  "pendingNoSubclasses": "No subclasses for this class in the active campaign.",
+  "pendingNoMasteryWeapons": "No weapons with mastery property in the active campaign.",
+  "pendingAsiPlusTwo": "+2 to one",
+  "pendingAsiPlusOneTwo": "+1 to two",
+  "pendingTakeFeat": "Take a feat",
+  "pendingFirstAbility": "First ability",
+  "pendingSecondAbility": "Second ability",
+  "pendingNoFightingStyle": "No Fighting Style feats in the active campaign yet.",
+  "pendingNoDivineOrder": "No Divine Order feats in the active campaign yet.",
+  "pendingNoOptionsFor": "No options authored for {name} in the active campaign yet.",
+  "@pendingNoOptionsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingNoEligibleFeats": "No eligible feats in the active campaign.",
+  "wizardTitle": "Create Character",
+  "wizardTemplateLoadError": "Template load error: {error}",
+  "@wizardTemplateLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardNoPlayerTemplate": "No template with a Player category is available. Add one in the Templates tab first.",
+  "wizardWorldLoadError": "World load error: {error}",
+  "@wizardWorldLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardStepIdentity": "Identity",
+  "wizardStepSpecies": "Race / Species",
+  "wizardStepClass": "Class",
+  "wizardStepSubclass": "Subclass",
+  "wizardStepBackground": "Background",
+  "wizardStepAbilities": "Abilities",
+  "wizardStepFeats": "Feats",
+  "wizardStepProficiencies": "Proficiencies & Languages",
+  "wizardStepSpells": "Spells",
+  "wizardStepEquipment": "Equipment",
+  "wizardStepPersonality": "Personality & Flavor",
+  "wizardStepReview": "Review",
+  "wizardNameRequired": "Character Name *",
+  "wizardShortDescription": "Short description",
+  "wizardShortDescriptionHint": "A weather-beaten ranger from the Northlands...",
+  "wizardTemplateRequired": "Template *",
+  "wizardBuiltinSrdDefault": "Built-in SRD (default)",
+  "wizardLevelRequired": "Level *",
+  "wizardAlignment": "Alignment",
+  "wizardPortraitHint": "Portrait (optional). You can change it later in the editor.",
+  "wizardContentSources": "Content Sources",
+  "wizardBuiltinSrd": "Built-in SRD",
+  "wizardNoExtraPackages": "No extra packages installed. Add one in the Packages tab.",
+  "wizardHigherLevels": "Starting at Higher Levels (Level {level})",
+  "@wizardHigherLevels": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardHigherLevelsIntro": "SRD §1 recommends the DM grant this bundle in addition to standard starting equipment:",
+  "wizardBundleMoney": "• Money: {money}",
+  "@wizardBundleMoney": {
+    "placeholders": {
+      "money": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardBundleItems": "• Magic items: {items}",
+  "@wizardBundleItems": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardBundleNote": "GP auto-added on creation (1d10 resolved at average = 6). Magic-item picks remain advisory — the DM curates rarity in the editor.",
+  "wizardRace": "Race",
+  "lblNone": "None",
+  "wizardStandardArrayHint": "Distribute 15/14/13/12/10/8 across the six abilities.",
+  "wizardRoll4d6": "Roll 4d6 drop low ×6",
+  "wizardRerollHint": "Reroll if unhappy.",
+  "wizardPointBuyRange": "(scores 8-15)",
+  "wizardBackgroundAsi": "Background ASI: {total} / 3",
+  "@wizardBackgroundAsi": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "btnReset": "Reset",
+  "equipNoChoices": "No equipment choices required for this build.",
+  "equipBackgroundFrom": "Background equipment (from {source})",
+  "@equipBackgroundFrom": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "equipNotPickable": "This package doesn't provide pickable equipment — add these manually after creation.",
+  "equipGranted": "{source}: Granted Equipment",
+  "@equipGranted": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "equipGrantedHint": "Added to your inventory automatically — no choice needed.",
+  "featsNoChoices": "No feats with choices yet — background grants none, and you haven't taken a chooseable feat.",
+  "featsGrantedAuto": "Granted automatically — no choices to make.",
+  "featsPickSpellListFirst": "Pick the spell list first.",
+  "featsUnsupportedKind": "Unsupported choice kind \"{kind}\" — choose post-creation.",
+  "@featsUnsupportedKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "noOptionsAvailable": "No options available.",
+  "persIntro": "Optional — SRD §1 \"Imagine Your Past and Present\" flavor. Leave blank to skip.",
+  "persTraits": "Personality Traits",
+  "persTraitsHint": "e.g. \"I am haunted by memories of war.\" (one or two short statements)",
+  "persIdeals": "Ideals",
+  "persIdealsHint": "e.g. \"Greater Good. Our lot is to lay down our lives in defense of others.\"",
+  "persBonds": "Bonds",
+  "persBondsHint": "e.g. \"I will avenge the destruction of my homeland.\" — a connection to people, places, or events",
+  "persFlaws": "Flaws",
+  "persFlawsHint": "e.g. \"I have a weakness for the vices of the city, especially hard drink.\" — one mortal trait",
+  "persPrompts": "Backstory prompts (answer the ones that spark something):",
+  "persBackstory": "Backstory",
+  "persBackstoryHint": "A few sentences sketching your past and what drives you.",
+  "persTrinket": "Trinket",
+  "persRollD100": "Roll d100",
+  "persTrinketHint": "A small item lightly touched by mystery — roll the SRD d100 above or write your own.",
+  "profNoChoices": "No proficiency or language choices for this class + background.",
+  "profWeapon": "Weapon Proficiencies (class)",
+  "profArmor": "Armor Training (class)",
+  "profGrantedSkills": "Granted Skills (background / species)",
+  "profGrantedLanguages": "Granted Languages (class / species)",
+  "profClassSkills": "Class Skills",
+  "profClassTools": "Class Tools",
+  "profBackgroundTool": "Background Tool Variant",
+  "profOriginLanguages": "Origin Languages (Standard)",
+  "profWeaponMastery": "Weapon Mastery",
+  "profNoOptionsForEntity": "No options defined for this entity in the active campaign.",
+  "wizardPickClassFirst": "Pick a class first.",
+  "spellsNotCaster": "{name} is not a spellcasting class — skip to the next step.",
+  "@spellsNotCaster": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "spellsCastingSummary": "Spellcasting: {name} ({kind}). Casting ability: {ability}.",
+  "@spellsCastingSummary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "ability": {
+        "type": "String"
+      }
+    }
+  },
+  "spellsNoTables": "Class entity has no cantrip/prepared tables — using SRD defaults. Populate the class data for exact caps.",
+  "spellsCantrips": "Cantrips",
+  "spellsNoPicksAtLevel": "This caster does not pick spells at level {level}.",
+  "@spellsNoPicksAtLevel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "spellsNoMatching": "No matching spells in the active campaign.",
+  "subclassNone": "No subclasses available for this class.",
+  "subclassAtLevel": "This class chooses a subclass at level {level}. Bump the level on the Identity step to unlock subclass picks.",
+  "@subclassAtLevel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "btnClearSelection": "Clear selection",
+  "bmAddLabel": "Add label",
+  "bmLabelText": "Label text",
+  "bmHpLine": "HP  {hp} / {max}",
+  "@bmHpLine": {
+    "placeholders": {
+      "hp": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "bmAmount": "Amount",
+  "bmDamage": "Damage",
+  "bmHeal": "Heal",
+  "bmResize": "Resize",
+  "bmTokenSizeMultiplier": "Token Size Multiplier",
+  "dbSelectEntityHint": "Select an entity from the sidebar\nor drag here",
+  "entityNameHint": "Entity Name",
+  "entityDeleteTitle": "Delete Entity",
+  "entityDeleteConfirm": "Are you sure you want to delete \"{name}\"?",
+  "@entityDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "entityBuiltinNoDelete": "Built-in entries can't be deleted. Edit it first to create a homebrew copy, then delete the copy.",
+  "entityLinkedToPackage": "Linked to package — edits will detach this entity into a homebrew copy.",
+  "lblSource": "Source",
+  "entitySourceHint": "e.g. D&D 5e SRD",
+  "tagsCommaHint": "comma separated",
+  "noImage": "No Image",
+  "projectImage": "Project image",
+  "projectCard": "Project card",
+  "copyCharacterTitle": "Copy Character",
+  "newCharacterName": "New character name",
+  "characterNameExists": "Character \"{name}\" already exists",
+  "@characterNameExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "copiedFromTo": "Copied \"{from}\" → \"{to}\"",
+  "@copiedFromTo": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "copyFailed": "Copy failed: {error}",
+  "@copyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "packagesSubtitle": "Select or create an entity package.",
+  "loadPackage": "Load Package",
+  "packagesNoTemplatesBody": "You need at least one template to create a package. Visit the Marketplace to install one.",
+  "templateCategoryCount": "{name}  ({count} cat)",
+  "@templateCategoryCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "copyPackageTitle": "Copy Package",
+  "packageLoadFailed": "Failed to load package: {error}",
+  "@packageLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "renameFailed": "Rename failed: {error}",
+  "@renameFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "openFolderFailed": "Could not open folder: {error}",
+  "@openFolderFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "pathCopied": "Path copied",
+  "copyPath": "Copy path",
+  "openDataFolder": "Open data folder",
+  "socialUnavailable": "Social features unavailable",
+  "supabaseNotConfigured": "Supabase backend is not configured.",
+  "notSignedIn": "Not Signed In",
+  "socialSignInPrompt": "Sign in to access social features.",
+  "templateNoCategories": "This template has no categories.",
+  "templateFieldCount": "{count} fields",
+  "@templateFieldCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "templateFieldsHeading": "Fields ({count})",
+  "@templateFieldsHeading": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "templateGroupsHeading": "Groups ({count})",
+  "@templateGroupsHeading": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "templateGroupLine": "• {name}  ({count} col)",
+  "@templateGroupLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "templateFieldRequired": "required",
+  "templatesSubtitle": "Read-only schema reference. Open a template to inspect its categories and fields.",
+  "templatesEmpty": "No templates available.",
+  "templateSummary": "{categories} categories · {fields} fields",
+  "@templateSummary": {
+    "placeholders": {
+      "categories": {
+        "type": "String"
+      },
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "btnView": "View",
+  "copyWorldTitle": "Copy World",
+  "newWorldName": "New world name",
+  "worldNameExists": "World \"{name}\" already exists",
+  "@worldNameExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eraAddWaypoint": "Add Waypoint",
+  "eraWaypointNameLabel": "Name (number, date or text)",
+  "eraDeleteWaypoint": "Delete: {name}",
+  "@eraDeleteWaypoint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "worldMapLower": "World map",
+  "eraNoMap": "no map",
+  "eraPinCount": "{count} pins",
+  "@eraPinCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "eraCopyTo": "Copy to...",
+  "eraRenameWaypoint": "Rename Waypoint",
+  "timelineDay": "Day",
+  "timelineNote": "Note",
+  "lblEntities": "Entities",
+  "lblColor": "Color",
+  "lblIcon": "Icon",
+  "lblDefault": "Default",
+  "openMap": "Open map",
+  "noMapAssigned": "No map assigned",
+  "mapHome": "Home",
+  "pinEditTitle": "Edit Pin",
+  "pinUseCategoryDefault": "Use category default",
+  "mapEra": "Era",
+  "mapAddFromDb": "Add from DB",
+  "mapHideAll": "Hide All",
+  "mapTimeline": "Timeline",
+  "mapPins": "Pins",
+  "btnProject": "Project",
+  "mapLinkModeHint": "Click pin to link · Click empty to create · Esc to cancel",
+  "mapHint": "Right-click to place pin · Drag to pan · Scroll to zoom",
+  "mapNoImage": "No map image loaded",
+  "mapNoImageHint": "Click \"Load Map Image\" in the toolbar to get started",
+  "mapEntityNotAllowed": "{name} ({category}) is not allowed on the world map",
+  "@mapEntityNotAllowed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "mapCantPinSelf": "Can't pin a location inside its own map",
+  "mapAddTimelinePin": "Add Timeline Pin",
+  "mapAddPin": "Add Pin",
+  "mapAddToMap": "Add to Map",
+  "mapAddEntitiesHint": "To add entities, right-click the map or drag them from the sidebar.",
+  "mapNoImageToProject": "No map image to project",
+  "worldMapTitle": "World Map",
+  "mapDayLabel": "Day {day}",
+  "@mapDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "mapSessionLinked": "Session linked",
+  "mapPinCategories": "Pin categories",
+  "mapCategoriesCount": "Categories ({visible}/{total})",
+  "@mapCategoriesCount": {
+    "placeholders": {
+      "visible": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "btnDone": "Done",
+  "mindMapNoteHint": "Write note... (@ to mention)",
+  "mindMapNoEntity": "No entity linked",
+  "mindMapSetImageHint": "Right-click to set image",
+  "mindMapEditNote": "Edit Note",
+  "mindMapTitleHint": "Title...",
+  "mindMapContentHint": "Enter markdown content...",
+  "pickColor": "Pick Color",
+  "mindMapDeleteConnection": "Delete Connection",
+  "mindMapWorkspaces": "Workspaces",
+  "mindMapCenterView": "Center View",
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "packageNoneLoaded": "No package loaded",
+  "packageNoTemplate": "No template found for this package",
+  "packageSharedWithWorld": "Shared {name} with world",
+  "@packageSharedWithWorld": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playerOpenWorldForChars": "Open a world to see characters.",
+  "playerWaitingForDm": "Waiting for DM",
+  "playerWaitingForDmBody": "Your DM has not started a live session yet. When they do, anything they project to the player screen will appear here.",
+  "profileNone": "No profile yet",
+  "profileCreate": "Create profile",
+  "profileTabPosts": "Posts",
+  "profileTabItems": "Items",
+  "profileNoPosts": "No posts yet",
+  "cannotBeUndone": "This cannot be undone.",
+  "profileNoMarketItems": "No marketplace items yet",
+  "deleteNamedTitle": "Delete \"{name}\"?",
+  "@deleteNamedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileDeleteSnapshotBody": "This will remove the current snapshot. This cannot be undone.",
+  "editNamed": "Edit {name}",
+  "@editNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bmProjected": "Battle map projected",
+  "bmNavigate": "Navigate",
+  "bmErase": "Erase",
+  "bmDraw": "Draw",
+  "bmAddFog": "Add Fog",
+  "bmEraseFog": "Erase Fog",
+  "bmFillFog": "Fill Fog",
+  "bmClearFog": "Clear Fog",
+  "bmClearDraw": "Clear Draw",
+  "bmClearMarks": "Clear Marks",
+  "bmClearShapes": "Clear Shapes",
+  "bmShapeLayer": "Shape layer:",
+  "bmLayerBackground": "Background",
+  "bmLayerObject": "Object",
+  "bmLayerGmOnly": "GM only",
+  "bmGridVisible": "Grid Visible",
+  "bmCellSize": "Cell Size",
+  "bmSnapToGrid": "Snap to Grid",
+  "bmShowAllHp": "Show all HP",
+  "bmCleanTokens": "Clean tokens",
+  "bmFeetPerCell": "Feet / Cell",
+  "bmDiagonalRule": "Diagonal Rule",
+  "bmResetView": "Reset View",
+  "bmOpenMap": "Open Map",
+  "bmTokenSize": "Token Size",
+  "bmTabTools": "Tools",
+  "bmGrid": "Grid",
+  "bmTabView": "View",
+  "bmOpenMapImage": "Open Map Image",
+  "bmProjectTooltip": "Project battle map to player screen",
+  "bmProjectedToPlayer": "Battle map projected to player screen",
+  "bmShowHpTooltip": "Show monster/NPC HP to players",
+  "bmShowHp": "Show HP",
+  "bmCleanTokensTooltip": "Hide HP bar + conditions under tokens",
+  "bmTokenLabel": "Token:",
+  "bmCells": "{count} cells",
+  "@bmCells": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "bmEraseTooltip": "Erase — drag over rulers/AoE/shapes/drawings to delete",
+  "bmClearDrawing": "Clear Drawing",
+  "bmGridColon": "Grid:",
+  "bmSnap": "Snap",
+  "bmFtPerCell": "Ft/cell:",
+  "bmDiag": "Diag:",
+  "bmLayer": "Layer:",
+  "bmPickFromDevice": "From device",
+  "bmPickFromLocations": "From location battlemaps",
+  "bmNoLocationMaps": "No locations with battlemaps",
+  "bmChooseMap": "Choose battlemap",
+  "bmDrawToolsTooltip": "Draw tools — ruler / AoE / shapes",
+  "charAddTooltip": "Add character",
+  "charImportNeedsWorld": "Open a world first to import.",
+  "charCreateNew": "Create new character",
+  "charImportExisting": "Import existing character...",
+  "statSpecies": "Species",
+  "statAncestry": "Ancestry",
+  "lblLevel": "Level",
+  "statUser": "User",
+  "removeFromWorldTitle": "Remove from world?",
+  "charRemoveFromWorldBody": "\"{name}\" leaves this world. The character itself is kept and can be attached to another world later.",
+  "@charRemoveFromWorldBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromWorld": "Remove from world",
+  "charsNoneInWorld": "No characters in this world yet.",
+  "lblLvl": "Lvl",
+  "lblPb": "PB",
+  "lblFeatures": "Features",
+  "resResetLongRest": "Reset (long rest)",
+  "resFontOfMagicConvert": "Font of Magic — convert",
+  "resFontOfMagic": "Font of Magic",
+  "resSorceryPoints": "Sorcery Points: {current} / {max}",
+  "@resSorceryPoints": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "resSlotToSp": "Slot → SP (refund slot for SP equal to slot level):",
+  "resSpToSlot": "SP → Slot (spend SP to create a slot):",
+  "saveFailed": "Save failed: {error}",
+  "@saveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "condEditDuration": "Edit Duration",
+  "condDurationRounds": "Duration (rounds)",
+  "offlineTitle": "You're offline",
+  "offlineBody": "Check your internet connection and try again.",
+  "sortByName": "Sort by Name",
+  "sortByCategory": "Sort by Category",
+  "sortBySource": "Sort by Source",
+  "sidebarLoadingMore": "Loading more… ({count} left)",
+  "@sidebarLoadingMore": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "filterSharingTitle": "Filter Sharing",
+  "selectCategory": "Select Category",
+  "sidebarOtherEntities": "Other entities ({count})",
+  "@sidebarOtherEntities": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "sidebarNoEntities": "No entities yet",
+  "sidebarNoResults": "No results",
+  "shareFilterBuiltin": "Built-in (auto-shared)",
+  "shareFilterShared": "Marked shared",
+  "shareFilterNotShared": "Not shared",
+  "markdownMentionHintShort": "Markdown supported (@ to mention)",
+  "markdownMentionHintLong": "Markdown supported. Use @ to mention entities.",
+  "mentionHint": "@ to mention entities",
+  "noItems": "No items",
+  "noItemsLinked": "No items linked",
+  "slotRemove": "Remove slot",
+  "slotAdd": "Add slot",
+  "slotRefill": "Refill",
+  "slotsEmpty": "No slots — tap + to add",
+  "slotsNoneNonCaster": "No slots — non-caster or sub-progression level.",
+  "rowAdd": "Add row",
+  "levelsEmpty": "No levels — tap + to add",
+  "lblValue": "Value",
+  "rowsEmptyTap": "No rows — tap + to add",
+  "addImage": "Add Image",
+  "erasEmptyHint": "No eras defined yet. Add eras from the Map tab to set per-era images.",
+  "addFile": "Add File",
+  "addPdf": "Add PDF",
+  "addTag": "Add Tag",
+  "tagNameHint": "Tag name (comma separated)",
+  "lblSkill": "Skill",
+  "lblAbilShort": "Abil",
+  "lblMisc": "Misc",
+  "lblTotal": "Total",
+  "rowsEmpty": "No rows",
+  "lblProficient": "Proficient",
+  "lblExpertise": "Expertise",
+  "autoFillSrd": "Auto-fill SRD",
+  "crEstimateHint": "AC {ac} · HP {hp} · DMG p.273-275 estimate. Copy the suggestion into CR + XP fields manually.",
+  "@crEstimateHint": {
+    "placeholders": {
+      "ac": {
+        "type": "String"
+      },
+      "hp": {
+        "type": "String"
+      }
+    }
+  },
+  "attackBonus": "Attack Bonus",
+  "dprAvg": "DPR (avg)",
+  "saveDc": "Save DC",
+  "lblPrepared": "Prepared",
+  "lblNotPrepared": "Not prepared",
+  "lblEquipped": "Equipped",
+  "lblNotEquipped": "Not equipped",
+  "entryAdd": "Add entry",
+  "entriesEmpty": "No entries",
+  "slSense": "Sense",
+  "slRangeFt": "Range (ft)",
+  "slFeature": "Feature",
+  "slSummary": "Summary",
+  "slRowBelowGrant": "Row level {row} is below subclass granted_at_level {granted} — resolver will skip this feature.",
+  "@slRowBelowGrant": {
+    "placeholders": {
+      "row": {
+        "type": "String"
+      },
+      "granted": {
+        "type": "String"
+      }
+    }
+  },
+  "slResistances": "Resistances",
+  "slImmunities": "Immunities",
+  "slConditionImm": "Condition Imm.",
+  "slSenses": "Senses",
+  "slLanguages": "Languages",
+  "slAlwaysPrepared": "Always Prepared Spells",
+  "slTraits": "Traits",
+  "slActions": "Actions",
+  "slBonusActions": "Bonus Actions",
+  "slReactions": "Reactions",
+  "slKind": "Kind",
+  "slDice": "Dice",
+  "slDamageType": "Damage Type",
+  "slSaveAbility": "Save Ability",
+  "slSaveEffect": "Save Effect",
+  "slScalingDice": "Scaling Dice",
+  "slAddGroup": "Add Group",
+  "slNoGroups": "No groups — tap + Add Group to author a \"Choose A or B\" choice.",
+  "slGoldGp": "Gold gp",
+  "slDeleteOption": "Delete option",
+  "slAddItem": "Add Item",
+  "slItem": "Item",
+  "slQty": "Qty",
+  "slDeleteItem": "Delete item",
+  "slPool": "Pool",
+  "slRecharge": "Recharge",
+  "slUses": "Uses",
+  "slFormula": "Formula (e.g. cha_mod_min_1)",
+  "slUsesByLevel": "Uses by level",
+  "slValShort": "Val",
+  "slSpell": "Spell",
+  "slAtLevel": "At level",
+  "slUsesPerLongRest": "Uses / long rest",
+  "slCantrip": "Cantrip",
+  "slPickFrom": "Pick from",
+  "slPicks": "Picks",
+  "slSpellLevel": "Spell level",
+  "slListGroupId": "List group id",
+  "slPromptToPlayer": "Prompt shown to the player",
+  "slOptionsColon": "Options:",
+  "slNewOption": "New option",
+  "slAddLineage": "Add Lineage",
+  "slNoLineages": "No lineages — tap + Add Lineage.",
+  "slDeleteLineage": "Delete lineage",
+  "markdownMentionHintAlt": "Use @ to mention entities. Markdown supported.",
+  "tagsExampleHint": "comma, separated, tags",
+  "tagsHelper": "Type tags separated by commas. Suggestions appear as you type.",
+  "addCoverImage": "Add cover image",
+  "restrictionBannerTitle": "Your online interactions are restricted by an admin.",
+  "restrictionReason": "Reason: {reason}",
+  "@restrictionReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "restrictionBannerBody": "You can still browse and download marketplace items.",
+  "onlineSignInToEnable": "Sign in and configure Supabase to enable online play.",
+  "onlineResolvingMembership": "Resolving membership...",
+  "onlineLocalOnly": "This world is local-only.",
+  "onlineMakeOnlineBody": "Making it online uploads world data to the cloud and lets you invite players. You stay the DM.",
+  "multiplayerOn": "Multiplayer On",
+  "worldIsOnline": "World is online",
+  "multiplayerOff": "Multiplayer Off",
+  "joinedAsPlayer": "Joined as Player",
+  "worldNowOnline": "World is now online",
+  "multiplayerOffBody": "This removes the world and all member data from the cloud. Local data is preserved. Continue?",
+  "removeMember": "Remove member",
+  "leaveWorldBody": "You will lose access to this world. Characters you owned become claimable again. The local copy of this world will be deleted from this device (your character copies stay).",
+  "leftWorldSnack": "Left \"{name}\"",
+  "@leftWorldSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteNone": "No invite available.",
+  "inviteRetryFetch": "Retry fetch",
+  "inviteCopied": "Invite code copied",
+  "inviteRegenerateTooltip": "Regenerate (invalidates old code)",
+  "inviteRegenerateTitle": "Regenerate invite?",
+  "inviteRegenerateBody": "This invalidates the current code. Anyone using the old code will need the new one to join.",
+  "inviteRegenerate": "Regenerate",
+  "inviteRegenerated": "Invite code regenerated",
+  "inviteRegenerateFailed": "Regenerate failed: {error}",
+  "@inviteRegenerateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "membersEmpty": "No members yet",
+  "projectedToPlayer": "Projected to player screen",
+  "projClearAll": "Clear all projections",
+  "projEmpty": "No projections yet.\nRight-click an image and choose \"Project\" to send it to the player screen.",
+  "projBlackoutOn": "Blackout ON",
+  "projBlackout": "Blackout",
+  "projOutputs": "Projection outputs",
+  "projScreencastFailed": "Could not start screen cast on this display.",
+  "grantsExtraSpeeds": "Extra Speeds",
+  "grantsOtherEffects": "Other Effects",
+  "grantsUnarmoredAc": "Unarmored AC",
+  "grantsWhileState": "{label} (while {state})",
+  "@grantsWhileState": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "grantsRuleWarnings": "Rule Warnings",
+  "grantsResolved": "Resolved Grants",
+  "saveSyncOpenWorld": "Open a world to access full save & sync controls.",
+  "internetRequiredRetry": "Internet connection required. Try again once online.",
+  "internetRequiredOffline": "Internet connection required — connect first to go offline.",
+  "worldNowOffline": "World is now offline",
+  "unpublishFailed": "Unpublish failed: {error}",
+  "@unpublishFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "publishingEllipsis": "Publishing...",
+  "nowPlaying": "Now playing",
+  "soundPlaying": "Playing",
+  "soundStopped": "Stopped",
+  "sfxNoneAvailable": "No SFX available",
+  "versionCurrent": "Current: {version}",
+  "@versionCurrent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "versionLatest": "Latest: {version}",
+  "@versionLatest": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "btnLater": "Later",
+  "viewOnGithub": "View on GitHub",
+  "updateAvailable": "Update available",
+  "releaseNotes": "Release notes",
+  "charsAvailableToClaim": "Available to Claim",
+  "charsUnclaimedHint": "Unclaimed characters in this world. Claim one to make it yours.",
+  "charsNoneInWorldHint": "No characters in this world yet. The DM can publish one to share, or create your own.",
+  "charClaimed": "Character claimed",
+  "charReleaseTitleQ": "Release character?",
+  "charReleaseBody": "You will give up ownership. Anyone in this world can claim it again.",
+  "charAlreadyReleased": "Already released",
+  "charReleased": "Character released",
+  "charReleaseThisTitle": "Release this character?",
+  "charLoseOwnerBody": "\"{name}\" will lose its owner and become claimable again.",
+  "@charLoseOwnerBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "charOwnershipReleased": "Ownership released",
+  "charAssignTo": "Assign \"{name}\" to",
+  "@charAssignTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "charUnassign": "None (unassign)",
+  "playersNoneInWorld": "No players in this world yet.",
+  "charOwnershipCleared": "Ownership cleared",
+  "charAssignedToPlayer": "Assigned to player",
+  "charRemovedOwnerKeeps": "Removed from world (owner keeps the character)",
+  "charBtnUnclaim": "Unclaim",
+  "charAssignToPlayer": "Assign to player...",
+  "charImportedToWorld": "Imported \"{name}\" to this world",
+  "@charImportedToWorld": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importCharacterTitle": "Import Character",
+  "importCharacterNone": "No orphan characters to import. Create one from the Characters tab first, then come back here.",
+  "pkgSynced": "Synced \"{name}\": +{added}, ~{updated}, -{removed}.",
+  "@pkgSynced": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "added": {
+        "type": "String"
+      },
+      "updated": {
+        "type": "String"
+      },
+      "removed": {
+        "type": "String"
+      }
+    }
+  },
+  "removeNamedTitle": "Remove \"{name}\"?",
+  "@removeNamedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgRemovedSummary": "Removed {removed} entities; {kept} kept as homebrew.",
+  "@pkgRemovedSummary": {
+    "placeholders": {
+      "removed": {
+        "type": "String"
+      },
+      "kept": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgNoneInstalled": "No packages installed.",
+  "pkgInstalledTitle": "Installed Packages",
+  "pkgSyncedAgo": "Synced {when}",
+  "@pkgSyncedAgo": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgResync": "Re-sync from package",
+  "packageBuiltinReadOnly": "Built-in package — read only. Use \"Copy\" from the Packages tab to make an editable clone.",
+  "packageReshare": "Re-share with world",
+  "packageShareWithWorld": "Share with world",
+  "levelTableShow": "Show level-up table",
+  "levelTableHide": "Hide level-up table",
+  "featsSkills": "Skills",
+  "featsTools": "Tools",
+  "profBonusLanguageRogue": "Bonus Language (Thieves' Cant feature)",
+  "profBonusLanguage": "Bonus Language",
+  "mindMapDragMove": "Drag the node to move it.",
+  "mindMapDragResize": "Drag a corner handle to resize.",
+  "lblImage": "Image",
+  "groupLeaveAdminBody": "You are the admin. Admin role will transfer to another member.",
+  "groupLeaveBody": "You will no longer receive messages from this group.",
+  "charReadOnlyNotOwner": "Read-only (not owner)",
+  "savingEllipsis": "Saving...",
+  "saveAndSyncOnline": "Online · Save & Sync",
+  "charNoHitDieData": "No class hit die data — set a class first.",
+  "charNoHitDiceLeft": "No hit dice left to spend.",
+  "btnContinue": "Continue",
+  "wizardStepError": "Step {step}: {error}",
+  "@wizardStepError": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardPickRace": "Pick a race.",
+  "wizardPickClass": "Pick a class.",
+  "wizardMaxCantrips": "Pick at most {count} cantrip(s).",
+  "@wizardMaxCantrips": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardMaxSpells": "Pick at most {count} spell(s).",
+  "@wizardMaxSpells": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardMaxSkills": "Pick at most {count} class skill(s).",
+  "@wizardMaxSkills": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardMaxTools": "Pick at most {count} class tool(s).",
+  "@wizardMaxTools": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardMaxLanguages": "Pick at most {count} origin language(s).",
+  "@wizardMaxLanguages": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardNameRequiredErr": "Name required.",
+  "wizardTemplateRequiredErr": "Template required.",
+  "wizardLevelRangeErr": "Level must be 1-20.",
+  "adminNewestFirst": "Newest first",
+  "adminOldestFirst": "Oldest first",
+  "adminRemoveRestriction": "Remove online restriction",
+  "adminRestrictOnline": "Restrict online",
+  "mapLoadMap": "Load Map",
+  "btnChange": "Change",
+  "btnUnpin": "Unpin",
+  "pinToTop": "Pin to top",
+  "shareBuiltinAlways": "Built-in — always shared",
+  "shareStopped": "Stopped sharing with players",
+  "shareUnmarked": "Unmarked for sharing",
+  "lblUnknown": "Unknown",
+  "chatGroupFallback": "Group",
+  "bmReveal": "Reveal",
+  "bmHide": "Hide",
+  "bmPlayerViewLocked": "Player view locked — your zoom/pan stays private",
+  "bmPlayerViewFollows": "Player view follows yours — click to lock",
+  "bugReportRecentLogs": "Recent logs ({count} lines — will be included)",
+  "@bugReportRecentLogs": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "adminDeletePostBody": "This will remove the post permanently.\n\n\"{body}\"",
+  "@adminDeletePostBody": {
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "adminImagePost": "(image)",
+  "charLongRestBody": "{regained, plural, =1{Restore HP to full ({maxHp}), regain 1 Hit Die (now {newHd}/{maxHd}), and reset class resources. Continue?} other{Restore HP to full ({maxHp}), regain {regained} Hit Dice (now {newHd}/{maxHd}), and reset class resources. Continue?}}",
+  "@charLongRestBody": {
+    "placeholders": {
+      "maxHp": {
+        "type": "String"
+      },
+      "newHd": {
+        "type": "String"
+      },
+      "maxHd": {
+        "type": "String"
+      },
+      "regained": {
+        "type": "int"
+      }
+    }
+  },
+  "charHitDiceAvailable": "Hit Dice available: {remaining}  ·  d{die}  ·  Con mod: {mod}",
+  "@charHitDiceAvailable": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "die": {
+        "type": "String"
+      },
+      "mod": {
+        "type": "String"
+      }
+    }
+  },
+  "charRollsLine": "Rolls: {rolls}  (+ {count} × {mod} Con)",
+  "@charRollsLine": {
+    "placeholders": {
+      "rolls": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "mod": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingFeatAsiLine": "+{amount} to chosen ability (cap {cap}).",
+  "@pendingFeatAsiLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "cap": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingFeatAsiSaveProf": "Also grants saving-throw proficiency for the chosen ability.",
+  "wizardPointsSpent": "Points spent: {spent} / {budget}",
+  "@wizardPointsSpent": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardMaxMasteries": "{count, plural, =1{Pick at most 1 weapon mastery.} other{Pick at most {count} weapon masteries.}}",
+  "@wizardMaxMasteries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "spellsLeveledTitle": "Spells (level {range})",
+  "@spellsLeveledTitle": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "eraRenameStart": "Rename Start",
+  "eraRenameEnd": "Rename End",
+  "adminOldest": "oldest {date}",
+  "@adminOldest": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "removeMemberBody": "Remove {name} from the world?",
+  "@removeMemberBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "thisPlayer": "this player",
+  "charsYours": "{count, plural, =1{Your Character} other{Your Characters}}",
+  "@charsYours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingChoicesTooltip": "{count, plural, =1{1 pending level-up choice — open character to resolve.} other{{count} pending level-up choices — open character to resolve.}}",
+  "@pendingChoicesTooltip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -7,6 +7,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../domain/entities/session.dart';
 import '../theme/dm_tool_colors.dart';
 import 'perf/image_cache_size.dart';
+import '../l10n/app_localizations.dart';
 
 class ConditionBadge extends ConsumerWidget {
   final CombatCondition condition;
@@ -158,7 +159,7 @@ class ConditionBadge extends ConsumerWidget {
             children: [
               Icon(Icons.timer_outlined, size: 16, color: palette.tabText),
               const SizedBox(width: 8),
-              Text('Edit Duration', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.condEditDuration, style: TextStyle(fontSize: 12, color: palette.tabText)),
             ],
           ),
         ),
@@ -168,7 +169,7 @@ class ConditionBadge extends ConsumerWidget {
             children: [
               Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
               const SizedBox(width: 8),
-              Text('Remove', style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
+              Text(L10n.of(context)!.btnRemove, style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
             ],
           ),
         ),
@@ -188,24 +189,24 @@ class ConditionBadge extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Duration', style: TextStyle(fontSize: 14)),
+        title: Text(L10n.of(context)!.condEditDuration, style: const TextStyle(fontSize: 14)),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Duration (rounds)'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.condDurationRounds),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () {
               onUpdateDuration?.call(int.tryParse(controller.text));
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),

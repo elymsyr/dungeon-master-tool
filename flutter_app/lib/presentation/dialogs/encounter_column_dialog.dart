@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/schema/encounter_config.dart';
+import '../l10n/app_localizations.dart';
 
 /// Available combat_stats subfield keys.
 const _availableSubFields = [
@@ -101,7 +102,7 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
         .toList();
 
     return AlertDialog(
-      title: const Text('Configure Columns'),
+      title: Text(L10n.of(context)!.encounterColumnsTitle),
       content: SizedBox(
         width: 500,
         child: Column(
@@ -140,10 +141,10 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                             width: 80,
                             child: TextField(
                               controller: entry.labelController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 isDense: true,
-                                labelText: 'Label',
-                                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                labelText: L10n.of(context)!.lblLabel,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                               ),
                               style: const TextStyle(fontSize: 12),
                               onChanged: (v) => entry.label = v,
@@ -168,9 +169,9 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                           const SizedBox(width: 8),
                           // Editable toggle
                           Tooltip(
-                            message: 'Editable',
+                            message: L10n.of(context)!.encounterColumnEditable,
                             child: FilterChip(
-                              label: const Text('Edit', style: TextStyle(fontSize: 10)),
+                              label: Text(L10n.of(context)!.btnEdit, style: const TextStyle(fontSize: 10)),
                               selected: entry.editable,
                               onSelected: (v) => setState(() => entry.editable = v),
                               visualDensity: VisualDensity.compact,
@@ -179,7 +180,7 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                           const SizedBox(width: 4),
                           // ShowButtons toggle
                           Tooltip(
-                            message: '+/- Buttons',
+                            message: L10n.of(context)!.encounterColumnButtons,
                             child: FilterChip(
                               label: const Text('+/-', style: TextStyle(fontSize: 10)),
                               selected: entry.showButtons,
@@ -212,12 +213,12 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                             child: Text(f.$2, style: const TextStyle(fontSize: 13)),
                           ))
                       .toList(),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add, size: 16),
-                      SizedBox(width: 4),
-                      Text('Add Column', style: TextStyle(fontSize: 13)),
+                      const Icon(Icons.add, size: 16),
+                      const SizedBox(width: 4),
+                      Text(L10n.of(context)!.encounterAddColumn, style: const TextStyle(fontSize: 13)),
                     ],
                   ),
                 ),
@@ -226,10 +227,10 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context)!.btnCancel)),
         FilledButton(
           onPressed: () => Navigator.pop(context, _buildResult()),
-          child: const Text('Save'),
+          child: Text(L10n.of(context)!.btnSave),
         ),
       ],
     );

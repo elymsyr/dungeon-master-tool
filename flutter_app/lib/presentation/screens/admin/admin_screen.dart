@@ -24,6 +24,7 @@ import 'bug_reports_tab.dart';
 import 'content_moderation_tab.dart';
 import 'notifications_admin_tab.dart';
 import 'restricted_users_tab.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Admin paneli — PillTabBar ile 4 sekme: Dashboard / Users / Banned / Storage.
 /// Erişim Supabase `is_admin()` RPC'si ile korunur; admin olmayan kullanıcı
@@ -46,21 +47,21 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
     return isAdminAsync.when(
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, st) => Scaffold(body: Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e')))),
       data: (isAdmin) {
         if (!isAdmin) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Admin Panel')),
+            appBar: AppBar(title: Text(L10n.of(context)!.profileMenuAdminPanel)),
             body: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.lock, size: 64, color: palette.dangerBtnBg),
                   const SizedBox(height: 12),
-                  Text('Access denied',
+                  Text(L10n.of(context)!.adminAccessDenied,
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                   const SizedBox(height: 4),
-                  Text('Admin privileges required.',
+                  Text(L10n.of(context)!.adminPrivilegesRequired,
                       style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
                 ],
               ),
@@ -69,15 +70,15 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         }
 
         final tabs = <PillTab<String>>[
-          const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
-          const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
-          const PillTab(id: 'notifications', icon: Icons.campaign_outlined, label: 'Notifications'),
-          const PillTab(id: 'content', icon: Icons.forum_outlined, label: 'Content'),
-          const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
-          const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
-          const PillTab(id: 'restricted', icon: Icons.lock_outline, label: 'Restricted'),
-          const PillTab(id: 'audit', icon: Icons.fact_check_outlined, label: 'Audit'),
-          const PillTab(id: 'storage', icon: Icons.storage_outlined, label: 'Storage'),
+          PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: L10n.of(context)!.adminTabDashboard),
+          PillTab(id: 'users', icon: Icons.people_outline, label: L10n.of(context)!.adminTabUsers),
+          PillTab(id: 'notifications', icon: Icons.campaign_outlined, label: L10n.of(context)!.notifAdminTab),
+          PillTab(id: 'content', icon: Icons.forum_outlined, label: L10n.of(context)!.adminTabContent),
+          PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: L10n.of(context)!.adminTabReports),
+          PillTab(id: 'banned', icon: Icons.block_outlined, label: L10n.of(context)!.adminTabBanned),
+          PillTab(id: 'restricted', icon: Icons.lock_outline, label: L10n.of(context)!.adminTabRestricted),
+          PillTab(id: 'audit', icon: Icons.fact_check_outlined, label: L10n.of(context)!.adminTabAudit),
+          PillTab(id: 'storage', icon: Icons.storage_outlined, label: L10n.of(context)!.adminTabStorage),
         ];
         final bar = PillTabBar<String>(
           tabs: tabs,
@@ -128,7 +129,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
               );
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Admin Panel')),
+          appBar: AppBar(title: Text(L10n.of(context)!.profileMenuAdminPanel)),
           body: Column(
             children: phone
                 ? [Expanded(child: constrained), bar]
@@ -173,7 +174,7 @@ class _DashboardTab extends ConsumerWidget {
               Icon(Icons.shield, size: 24, color: palette.featureCardAccent),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('Admin mode active',
+                child: Text(L10n.of(context)!.adminModeActive,
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -191,15 +192,13 @@ class _DashboardTab extends ConsumerWidget {
               onChanged: (v) => _toggleAssetsPacks(context, ref, v),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              title: Text('Install bundled asset packs',
+              title: Text(L10n.of(context)!.adminInstallAssetPacks,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               subtitle: Text(
-                  'Install the shipped assets/ content packs locally (tagged '
-                  '"(assets)") to inspect and compare against published '
-                  'versions.',
+                  L10n.of(context)!.adminInstallAssetPacksHint,
                   style: TextStyle(
                       fontSize: 11, color: palette.sidebarLabelSecondary)),
             ),
@@ -212,19 +211,18 @@ class _DashboardTab extends ConsumerWidget {
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              title: Text('Import world zip',
+              title: Text(L10n.of(context)!.adminImportWorldZip,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               subtitle: Text(
-                  'Install a world from a .zip with the same layout — the only '
-                  'import path on phones, where folders cannot be picked.',
+                  L10n.of(context)!.adminImportWorldZipHint,
                   style: TextStyle(
                       fontSize: 11, color: palette.sidebarLabelSecondary)),
               trailing: TextButton(
                 onPressed: () => _importWorldZip(context, ref),
-                child: const Text('Choose zip…'),
+                child: Text(L10n.of(context)!.adminChooseZip),
               ),
             ),
           ),
@@ -238,19 +236,18 @@ class _DashboardTab extends ConsumerWidget {
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              title: Text('Import world folder',
+              title: Text(L10n.of(context)!.adminImportWorldFolder,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               subtitle: Text(
-                  'Install a world directly from disk (manifest.json + '
-                  'blueprints + media/) — no rebuild, for authoring.',
+                  L10n.of(context)!.adminImportWorldFolderHint,
                   style: TextStyle(
                       fontSize: 11, color: palette.sidebarLabelSecondary)),
               trailing: TextButton(
                 onPressed: () => _importWorldFolder(context, ref),
-                child: const Text('Choose folder…'),
+                child: Text(L10n.of(context)!.adminChooseFolder),
               ),
             ),
           ),
@@ -264,14 +261,13 @@ class _DashboardTab extends ConsumerWidget {
               onChanged: (v) => _toggleBundledWorlds(context, ref, v),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              title: Text('Install bundled worlds',
+              title: Text(L10n.of(context)!.adminInstallBundledWorlds,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               subtitle: Text(
-                  'Install the shipped assets/worlds/ content locally (tagged '
-                  '"(assets)") to inspect, edit, and test before publishing.',
+                  L10n.of(context)!.adminInstallBundledWorldsHint,
                   style: TextStyle(
                       fontSize: 11, color: palette.sidebarLabelSecondary)),
             ),
@@ -292,6 +288,7 @@ class _DashboardTab extends ConsumerWidget {
         ));
     final installer = ref.read(assetsPackInstallerProvider);
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = L10n.of(context)!;
     try {
       final count = await withLoading(
         ref.read(globalLoadingProvider.notifier),
@@ -310,7 +307,7 @@ class _DashboardTab extends ConsumerWidget {
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
             showAssetsPacks: !on,
           ));
-      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.failedGeneric('$e'))));
     }
   }
 
@@ -338,6 +335,7 @@ class _DashboardTab extends ConsumerWidget {
   ) async {
     final installer = ref.read(bundledWorldsInstallerProvider);
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = L10n.of(context)!;
     try {
       final summary = await withLoading(
         ref.read(globalLoadingProvider.notifier),
@@ -369,7 +367,7 @@ class _DashboardTab extends ConsumerWidget {
       ref.invalidate(characterListProvider);
       messenger.showSnackBar(SnackBar(content: Text(summary)));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.failedGeneric('$e'))));
     }
   }
 
@@ -383,6 +381,7 @@ class _DashboardTab extends ConsumerWidget {
         ));
     final installer = ref.read(bundledWorldsInstallerProvider);
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = L10n.of(context)!;
     try {
       final summary = await withLoading(
         ref.read(globalLoadingProvider.notifier),
@@ -417,7 +416,7 @@ class _DashboardTab extends ConsumerWidget {
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
             showBundledWorlds: !on,
           ));
-      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.failedGeneric('$e'))));
     }
   }
 }
@@ -532,7 +531,7 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
               Expanded(
                 child: _StatTile(
                   icon: Icons.people_outline,
-                  label: 'TOTAL USERS',
+                  label: L10n.of(context)!.adminTotalUsers,
                   value: statsAsync.maybeWhen(
                     data: (s) => s.total.toString(),
                     orElse: () => '…',
@@ -544,7 +543,7 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
               Expanded(
                 child: _StatTile(
                   icon: Icons.access_time,
-                  label: 'ACTIVE (30D)',
+                  label: L10n.of(context)!.adminActive30d,
                   value: usersAsync.maybeWhen(
                     data: (users) {
                       final cutoff = DateTime.now().subtract(const Duration(days: 30));
@@ -570,8 +569,8 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Search by email or username…',
+                    decoration: InputDecoration(
+                      hintText: L10n.of(context)!.adminSearchUsers,
                       border: InputBorder.none,
                       isDense: true,
                     ),
@@ -592,7 +591,7 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
                   ),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 18),
-                  tooltip: 'Refresh',
+                  tooltip: L10n.of(context)!.btnRefresh,
                   onPressed: () {
                     ref.invalidate(adminUserListProvider);
                     ref.invalidate(adminUserStatsProvider);
@@ -608,7 +607,7 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
               children: [
                 Icon(Icons.sort, size: 16, color: palette.sidebarLabelSecondary),
                 const SizedBox(width: 8),
-                Text('Sort:',
+                Text(L10n.of(context)!.adminSort,
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -626,7 +625,7 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
                     sortReversed ? Icons.arrow_downward : Icons.arrow_upward,
                     size: 16,
                   ),
-                  tooltip: sortReversed ? 'Newest first' : 'Oldest first',
+                  tooltip: sortReversed ? L10n.of(context)!.adminNewestFirst : L10n.of(context)!.adminOldestFirst,
                   visualDensity: VisualDensity.compact,
                   onPressed: () {
                     ref.read(adminUserSortReversedProvider.notifier).state =
@@ -640,11 +639,11 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
           Expanded(
             child: usersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
               data: (users) {
                 if (users.isEmpty) {
                   return Center(
-                    child: Text('No users found.',
+                    child: Text(L10n.of(context)!.discoverEmptySearch,
                         style: TextStyle(color: palette.sidebarLabelSecondary)),
                   );
                 }
@@ -722,9 +721,9 @@ class _UserRow extends ConsumerWidget {
                             color: palette.tabActiveText)),
                     _Chip(label: user.provider.toUpperCase(), color: palette.featureCardBorder),
                     if (user.isBanned)
-                      _Chip(label: 'BANNED', color: palette.dangerBtnBg),
+                      _Chip(label: L10n.of(context)!.adminChipBanned, color: palette.dangerBtnBg),
                     if (user.onlineRestricted && !user.isBanned)
-                      _Chip(label: 'RESTRICTED', color: palette.dangerBtnBg),
+                      _Chip(label: L10n.of(context)!.adminChipRestricted, color: palette.dangerBtnBg),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -738,7 +737,7 @@ class _UserRow extends ConsumerWidget {
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline, size: 18),
-            tooltip: 'Message',
+            tooltip: L10n.of(context)!.listingMessageApplicant,
             onPressed: () => AdminComposeDmDialog.show(
               context,
               targetUserId: user.userId,
@@ -755,19 +754,19 @@ class _UserRow extends ConsumerWidget {
                     : palette.dangerBtnBg,
               ),
               tooltip:
-                  user.onlineRestricted ? 'Remove online restriction' : 'Restrict online',
+                  user.onlineRestricted ? L10n.of(context)!.adminRemoveRestriction : L10n.of(context)!.adminRestrictOnline,
               onPressed: () => _toggleRestriction(context, ref),
             ),
           user.isBanned
               ? TextButton.icon(
                   icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Unban'),
+                  label: Text(L10n.of(context)!.adminUnban),
                   onPressed: () => _unban(context, ref),
                 )
               : TextButton.icon(
                   style: TextButton.styleFrom(foregroundColor: palette.dangerBtnBg),
                   icon: const Icon(Icons.block, size: 16),
-                  label: const Text('Ban'),
+                  label: Text(L10n.of(context)!.adminBan),
                   onPressed: () => _banDialog(context, ref),
                 ),
         ],
@@ -787,12 +786,12 @@ class _UserRow extends ConsumerWidget {
         ref.invalidate(adminAuditLogProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Online restriction removed.')));
+              SnackBar(content: Text(L10n.of(context)!.adminRestrictionRemoved)));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Unrestrict failed: $e')));
+              .showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminUnrestrictFailed('$e'))));
         }
       }
       return;
@@ -801,21 +800,21 @@ class _UserRow extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Restrict ${user.username ?? user.email ?? "user"}?'),
+        title: Text(L10n.of(context)!.adminRestrictTitle(user.username ?? user.email ?? 'user')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'User can sign in and browse, but cannot post, like, message, publish to marketplace, or apply to games. Marketplace downloads still work.',
-              style: TextStyle(fontSize: 12),
+            Text(
+              L10n.of(context)!.adminRestrictBody,
+              style: const TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Reason (optional)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.adminReasonOptional,
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
             ),
@@ -824,10 +823,10 @@ class _UserRow extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restrict'),
+            child: Text(L10n.of(context)!.adminRestrict),
           ),
         ],
       ),
@@ -844,12 +843,12 @@ class _UserRow extends ConsumerWidget {
       ref.invalidate(adminAuditLogProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User restricted online.')));
+            SnackBar(content: Text(L10n.of(context)!.adminUserRestricted)));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Restrict failed: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminRestrictFailed('$e'))));
       }
     }
   }
@@ -859,21 +858,21 @@ class _UserRow extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Ban ${user.username ?? user.email ?? "user"}?'),
+        title: Text(L10n.of(context)!.adminBanTitle(user.username ?? user.email ?? 'user')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Reason (optional)',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: L10n.of(context)!.adminReasonOptional,
+            border: const OutlineInputBorder(),
           ),
           maxLines: 3,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ban'),
+            child: Text(L10n.of(context)!.adminBan),
           ),
         ],
       ),
@@ -884,11 +883,11 @@ class _UserRow extends ConsumerWidget {
       ref.invalidate(adminUserListProvider);
       ref.invalidate(adminBannedUsersProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User banned.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminUserBanned)));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ban failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminBanFailed('$e'))));
       }
     }
   }
@@ -899,11 +898,11 @@ class _UserRow extends ConsumerWidget {
       ref.invalidate(adminUserListProvider);
       ref.invalidate(adminBannedUsersProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User unbanned.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminUserUnbanned)));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unban failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminUnbanFailed('$e'))));
       }
     }
   }
@@ -954,18 +953,18 @@ class _SortDropdown extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: palette.tabActiveText),
-          items: const [
+          items: [
             DropdownMenuItem(
               value: AdminUserSortMode.registrationDate,
-              child: Text('Registration date'),
+              child: Text(L10n.of(context)!.adminSortRegistered),
             ),
             DropdownMenuItem(
               value: AdminUserSortMode.lastSeen,
-              child: Text('Last seen'),
+              child: Text(L10n.of(context)!.adminSortLastSeen),
             ),
             DropdownMenuItem(
               value: AdminUserSortMode.appVersion,
-              child: Text('App version'),
+              child: Text(L10n.of(context)!.adminSortAppVersion),
             ),
           ],
           onChanged: (v) {
@@ -991,7 +990,7 @@ class _BannedTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: bannedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
         data: (entries) {
           if (entries.isEmpty) {
             return Center(
@@ -1001,7 +1000,7 @@ class _BannedTab extends ConsumerWidget {
                   Icon(Icons.check_circle_outline,
                       size: 48, color: palette.sidebarLabelSecondary),
                   const SizedBox(height: 8),
-                  Text('No banned users.',
+                  Text(L10n.of(context)!.adminNoBanned,
                       style: TextStyle(color: palette.sidebarLabelSecondary)),
                 ],
               ),
@@ -1056,7 +1055,7 @@ class _BannedTab extends ConsumerWidget {
                       const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        tooltip: 'Message',
+                        tooltip: L10n.of(context)!.listingMessageApplicant,
                         onPressed: () => AdminComposeDmDialog.show(
                           context,
                           targetUserId: e.userId,
@@ -1065,7 +1064,7 @@ class _BannedTab extends ConsumerWidget {
                       ),
                       TextButton.icon(
                         icon: const Icon(Icons.check, size: 16),
-                        label: const Text('Unban'),
+                        label: Text(L10n.of(context)!.adminUnban),
                         onPressed: () async {
                           try {
                             await ref
@@ -1076,7 +1075,7 @@ class _BannedTab extends ConsumerWidget {
                           } catch (err) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Unban failed: $err')));
+                                  SnackBar(content: Text(L10n.of(context)!.adminUnbanFailed('$err'))));
                             }
                           }
                         },
@@ -1108,7 +1107,7 @@ class _R2PoolSection extends ConsumerWidget {
     final poolAsync = ref.watch(adminR2PoolStatsProvider);
     return poolAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Text('R2 pool: $e',
+      error: (e, _) => Text(L10n.of(context)!.adminR2PoolError('$e'),
           style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
       data: (pool) {
         if (pool == null) return const SizedBox.shrink();
@@ -1118,7 +1117,7 @@ class _R2PoolSection extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('CLOUDFLARE R2 POOL',
+              Text(L10n.of(context)!.adminR2Pool,
                   style: TextStyle(
                       fontSize: 10,
                       color: palette.sidebarLabelSecondary,
@@ -1126,19 +1125,18 @@ class _R2PoolSection extends ConsumerWidget {
                       letterSpacing: 0.8)),
               const SizedBox(height: 12),
               _PoolBar(
-                label: 'pinned (marketplace)',
+                label: L10n.of(context)!.adminPoolPinned,
                 used: pool.pinnedUsed,
                 cap: pool.pinnedCap,
-                subtitle: '${pool.pinnedObjects} objects · '
-                    '${formatBytes(pool.dedupSavedBytes)} saved by dedup',
+                subtitle: L10n.of(context)!.adminPoolPinnedSub('${pool.pinnedObjects}', formatBytes(pool.dedupSavedBytes)),
               ),
               const SizedBox(height: 12),
               _PoolBar(
-                label: 'transient (shares, LRU)',
+                label: L10n.of(context)!.adminPoolTransient,
                 used: pool.transientUsed,
                 cap: pool.transientCap,
-                subtitle: '${pool.transientObjects} objects'
-                    '${oldest == null ? '' : ' · oldest ${oldest.toLocal().toString().split('.').first}'}'
+                subtitle: '${L10n.of(context)!.adminObjectCount('${pool.transientObjects}')}'
+                    '${oldest == null ? '' : ' · ${L10n.of(context)!.adminOldest(oldest.toLocal().toString().split('.').first)}'}'
                     '${pool.evictQueueDepth == 0 ? '' : ' · ${pool.evictQueueDepth} queued for eviction'}',
               ),
             ],
@@ -1222,7 +1220,7 @@ class _StorageTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
         data: (stats) {
           final total = stats.fold<int>(0, (acc, s) => acc + s.usedBytes);
           final totalObjects = stats.fold<int>(0, (acc, s) => acc + s.objectCount);
@@ -1265,11 +1263,11 @@ class _StorageTab extends ConsumerWidget {
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                     color: palette.tabActiveText)),
-                            Text('$totalObjects objects across ${stats.length} buckets',
+                            Text(L10n.of(context)!.adminStorageSummary('$totalObjects', '${stats.length}'),
                                 style: TextStyle(
                                     fontSize: 11, color: palette.sidebarLabelSecondary)),
                             const SizedBox(height: 4),
-                            Text('Quota limit not available',
+                            Text(L10n.of(context)!.adminQuotaUnavailable,
                                 style: TextStyle(
                                     fontSize: 10,
                                     color: palette.sidebarLabelSecondary,
@@ -1281,7 +1279,7 @@ class _StorageTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('BY BUCKET',
+                Text(L10n.of(context)!.adminByBucket,
                     style: TextStyle(
                         fontSize: 10,
                         color: palette.sidebarLabelSecondary,
@@ -1292,7 +1290,7 @@ class _StorageTab extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Center(
-                      child: Text('No storage objects.',
+                      child: Text(L10n.of(context)!.adminNoStorageObjects,
                           style: TextStyle(color: palette.sidebarLabelSecondary)),
                     ),
                   )
@@ -1315,7 +1313,7 @@ class _StorageTab extends ConsumerWidget {
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: palette.tabActiveText)),
-                                    Text('${s.objectCount} objects',
+                                    Text(L10n.of(context)!.adminObjectCount('${s.objectCount}'),
                                         style: TextStyle(
                                             fontSize: 11,
                                             color: palette.sidebarLabelSecondary)),

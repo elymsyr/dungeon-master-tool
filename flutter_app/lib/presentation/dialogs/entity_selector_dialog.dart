@@ -8,6 +8,7 @@ import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 import 'entity_preview_dialog.dart';
+import '../l10n/app_localizations.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
 /// [allowedTypes]: sadece bu kategorideki entity'ler gösterilir (null=tümü).
@@ -151,11 +152,11 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
             // Arama — F4: 150 ms debounce before re-running the filter.
             TextField(
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search, size: 18),
+              decoration: InputDecoration(
+                hintText: L10n.of(context)!.searchHint,
+                prefixIcon: const Icon(Icons.search, size: 18),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 8),
               ),
               onChanged: (v) {
@@ -174,7 +175,7 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
             // Liste
             Expanded(
               child: filtered.isEmpty
-                  ? Center(child: Text('No entities found', style: TextStyle(color: palette.sidebarLabelSecondary)))
+                  ? Center(child: Text(L10n.of(context)!.entitySelectorEmpty, style: TextStyle(color: palette.sidebarLabelSecondary)))
                   : ListView.builder(
                       itemCount: filtered.length,
                       itemBuilder: (context, i) {
@@ -224,11 +225,11 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context)!.btnCancel)),
         if (widget.multiSelect)
           FilledButton(
             onPressed: _selected.isEmpty ? null : () => Navigator.pop(context, _selected.toList()),
-            child: Text('Add (${_selected.length})'),
+            child: Text(L10n.of(context)!.sessionAddWithQuantity(_selected.length)),
           ),
       ],
     );

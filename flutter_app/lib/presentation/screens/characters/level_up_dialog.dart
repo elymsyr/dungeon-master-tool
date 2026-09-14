@@ -6,6 +6,7 @@ import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/pending_choices.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Outcome of the level-up dialog. The dialog no longer captures interactive
 /// picks (ASI / Feat / Fighting Style / spell selection); those are queued
@@ -163,7 +164,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     // dismiss without applying — the level bump is discarded and the
     // character state stays untouched.
     return AlertDialog(
-      title: Text('Level Up: ${plan.fromLevel} → ${plan.toLevel}'),
+      title: Text(L10n.of(context)!.levelUpTitle('${plan.fromLevel}', '${plan.toLevel}')),
       content: SizedBox(
         width: _kLevelUpDialogWidth,
         child: SingleChildScrollView(
@@ -174,7 +175,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
               _hpSection(hint),
               const SizedBox(height: 10),
               _stat(
-                label: 'Proficiency Bonus',
+                label: L10n.of(context)!.levelUpProficiencyBonus,
                 value: plan.pbDelta == 0
                     ? '+${plan.newProfBonus} (unchanged)'
                     : '+${plan.prevProfBonus} → +${plan.newProfBonus}',
@@ -183,7 +184,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
               if (plan.hitDieFaces > 0 && plan.levelsGained > 0) ...[
                 const SizedBox(height: 6),
                 _stat(
-                  label: 'Hit Dice',
+                  label: L10n.of(context)!.levelUpHitDice,
                   value:
                       '${plan.fromLevel}${plan.hitDie} → ${plan.toLevel}${plan.hitDie}',
                   hint: hint,
@@ -198,15 +199,15 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
               _resourcePoolBlock(hint),
               _pendingChoicesBlock(hint),
               const SizedBox(height: 12),
-              const Text(
-                'New Features',
+              Text(
+                L10n.of(context)!.levelUpNewFeatures,
                 style:
-                    TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               if (plan.newFeatures.isEmpty)
                 Text(
-                  'No new features at this level.',
+                  L10n.of(context)!.levelUpNoFeatures,
                   style: TextStyle(fontSize: 12, color: hint),
                 )
               else
@@ -236,11 +237,11 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(LevelUpResult.skipped),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_applyResult),
-          child: const Text('Apply'),
+          child: Text(L10n.of(context)!.hubFilterApply),
         ),
       ],
     );
@@ -272,12 +273,12 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       children: [
         Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 132,
               child: Text(
-                'Hit Points',
+                L10n.of(context)!.levelUpHitPoints,
                 style:
-                    TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
             Expanded(
@@ -296,12 +297,12 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _segmentButton(
-                  label: 'Average',
+                  label: L10n.of(context)!.levelUpAverage,
                   selected: _hpMode == _HpMode.average,
                   onTap: () => setState(() => _hpMode = _HpMode.average),
                 ),
                 _segmentButton(
-                  label: 'Roll',
+                  label: L10n.of(context)!.levelUpRoll,
                   selected: _hpMode == _HpMode.manual,
                   onTap: () {
                     setState(() {
@@ -314,7 +315,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                   TextButton.icon(
                     onPressed: _rollHp,
                     icon: const Icon(Icons.casino, size: 14),
-                    label: const Text('Re-roll'),
+                    label: Text(L10n.of(context)!.levelUpReroll),
                   ),
                   if (_rollFaces.isNotEmpty)
                     Text(
@@ -442,9 +443,9 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Spellcasting',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          Text(
+            L10n.of(context)!.levelUpSpellcasting,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
           for (final l in lines)
             Text('• $l', style: TextStyle(fontSize: 12, color: hint)),
@@ -467,14 +468,14 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Pending Choices',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          Text(
+            L10n.of(context)!.levelUpPendingChoices,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           if (existing.isNotEmpty) ...[
             Text(
-              'Carried over (resolve in the editor):',
+              L10n.of(context)!.levelUpCarriedOver,
               style: TextStyle(fontSize: 11, color: hint),
             ),
             for (final p in existing)
@@ -486,7 +487,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
           ],
           if (_pending.isNotEmpty) ...[
             Text(
-              'Added at this level:',
+              L10n.of(context)!.levelUpAddedAtLevel,
               style: TextStyle(fontSize: 11, color: hint),
             ),
             for (final p in _pending)
@@ -521,9 +522,9 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Class Resources',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          Text(
+            L10n.of(context)!.levelUpClassResources,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           for (final r in rows)

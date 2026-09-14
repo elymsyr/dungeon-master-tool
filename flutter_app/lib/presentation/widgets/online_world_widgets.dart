@@ -120,7 +120,7 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
             children: [
               Expanded(
                 child: Text(
-                  'No invite available.',
+                  L10n.of(context)!.inviteNone,
                   style: TextStyle(
                     fontSize: 12,
                     color: palette.sidebarLabelSecondary,
@@ -128,7 +128,7 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
                 ),
               ),
               IconButton(
-                tooltip: 'Retry fetch',
+                tooltip: L10n.of(context)!.inviteRetryFetch,
                 icon: const Icon(Icons.refresh, size: 16),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -154,7 +154,7 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
               ),
             ),
             IconButton(
-              tooltip: 'Copy',
+              tooltip: L10n.of(context)!.charCopyToWorldAction,
               icon: const Icon(Icons.copy, size: 16),
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
@@ -163,12 +163,12 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: code));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Invite code copied')),
+                  SnackBar(content: Text(L10n.of(context)!.inviteCopied)),
                 );
               },
             ),
             IconButton(
-              tooltip: 'Regenerate (invalidates old code)',
+              tooltip: L10n.of(context)!.inviteRegenerateTooltip,
               icon: const Icon(Icons.refresh, size: 16),
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
@@ -186,17 +186,16 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Regenerate invite?'),
-        content: const Text(
-            'This invalidates the current code. Anyone using the old code '
-            'will need the new one to join.'),
+        title: Text(L10n.of(context)!.inviteRegenerateTitle),
+        content: Text(
+            L10n.of(context)!.inviteRegenerateBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Regenerate')),
+              child: Text(L10n.of(context)!.inviteRegenerate)),
         ],
       ),
     );
@@ -209,12 +208,12 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
       ref.invalidate(worldActiveInviteCodeProvider(widget.worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invite code regenerated')),
+        SnackBar(content: Text(L10n.of(context)!.inviteRegenerated)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Regenerate failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.inviteRegenerateFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -290,7 +289,7 @@ class MemberRow extends StatelessWidget {
           if (onRemove != null) ...[
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Remove from world',
+              tooltip: L10n.of(context)!.removeFromWorld,
               icon: Icon(Icons.delete_outline,
                   size: 14, color: palette.dangerBtnBg),
               visualDensity: VisualDensity.compact,
@@ -333,7 +332,7 @@ class MembersStrip extends ConsumerWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'No members yet',
+                  L10n.of(context)!.membersEmpty,
                   style: TextStyle(
                     fontSize: 11,
                     color: palette.sidebarLabelSecondary,
@@ -488,7 +487,7 @@ class MembersList extends ConsumerWidget {
       data: (members) {
         if (members.isEmpty) {
           return Text(
-            'No members yet.',
+            L10n.of(context)!.membersEmpty,
             style: TextStyle(
               fontSize: 12,
               color: palette.sidebarLabelSecondary,

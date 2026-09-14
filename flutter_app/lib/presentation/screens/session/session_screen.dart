@@ -2070,7 +2070,7 @@ class _CombatantRow extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Edit $label', style: const TextStyle(fontSize: 14)),
+        title: Text(L10n.of(context)!.editNamed(label), style: const TextStyle(fontSize: 14)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2139,7 +2139,7 @@ class _CombatantRow extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Edit $label'),
+        title: Text(L10n.of(context)!.editNamed(label)),
         content: TextField(
           controller: controller,
           autofocus: true,

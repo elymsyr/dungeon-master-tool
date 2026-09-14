@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'projection_thumb_chip.dart';
+import '../../l10n/app_localizations.dart';
 
 /// DM-side control surface for the player screen — lives inside the
 /// Session tab's "Player Screen" bottom tab. Shows the open/close window
@@ -31,7 +32,7 @@ class ProjectionPanel extends ConsumerWidget {
           child: Row(
             children: [
               IconButton(
-                tooltip: state.blackoutOverride ? 'Blackout ON' : 'Blackout',
+                tooltip: state.blackoutOverride ? L10n.of(context)!.projBlackoutOn : L10n.of(context)!.projBlackout,
                 isSelected: state.blackoutOverride,
                 selectedIcon: Icon(
                   Icons.visibility_off,
@@ -44,7 +45,7 @@ class ProjectionPanel extends ConsumerWidget {
               const Spacer(),
               if (state.items.isNotEmpty)
                 IconButton(
-                  tooltip: 'Clear all projections',
+                  tooltip: L10n.of(context)!.projClearAll,
                   icon: const Icon(Icons.delete_sweep, size: 18),
                   onPressed: controller.clearAll,
                 ),
@@ -57,7 +58,7 @@ class ProjectionPanel extends ConsumerWidget {
           child: state.items.isEmpty
               ? Center(
                   child: Text(
-                    'No projections yet.\nRight-click an image and choose "Project" to send it to the player screen.',
+                    L10n.of(context)!.projEmpty,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Vertical era bar — opens upward from bottom-left.
 /// Start at top, End at bottom. Fixed segment height per era.
@@ -191,7 +192,7 @@ class _EraScrollBarState extends State<EraScrollBar> {
           child: Row(children: [
             Icon(Icons.edit, size: 14, color: p.uiFloatingText),
             const SizedBox(width: 8),
-            Text('Rename',
+            Text(L10n.of(context)!.sessionRename,
                 style: TextStyle(fontSize: 12, color: p.uiFloatingText)),
           ]),
         ),
@@ -211,7 +212,7 @@ class _EraScrollBarState extends State<EraScrollBar> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: p.uiFloatingBg,
-        title: Text('Rename ${which == 'start' ? 'Start' : 'End'}',
+        title: Text(which == 'start' ? L10n.of(context)!.eraRenameStart : L10n.of(context)!.eraRenameEnd,
             style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
         content: TextField(
           controller: ctrl,
@@ -226,14 +227,14 @@ class _EraScrollBarState extends State<EraScrollBar> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                Text('Cancel', style: TextStyle(color: p.uiFloatingText)),
+                Text(L10n.of(context)!.btnCancel, style: TextStyle(color: p.uiFloatingText)),
           ),
           ElevatedButton(
             onPressed: () {
               final label = ctrl.text.trim();
               if (label.isNotEmpty) Navigator.pop(ctx, label);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),
@@ -260,7 +261,7 @@ class _EraScrollBarState extends State<EraScrollBar> {
           child: Row(children: [
             Icon(Icons.edit, size: 14, color: p.uiFloatingText),
             const SizedBox(width: 8),
-            Text('Rename',
+            Text(L10n.of(context)!.sessionRename,
                 style: TextStyle(fontSize: 12, color: p.uiFloatingText)),
           ]),
         ),
@@ -270,7 +271,7 @@ class _EraScrollBarState extends State<EraScrollBar> {
           child: Row(children: [
             Icon(Icons.delete_outline, size: 14, color: Colors.red[300]),
             const SizedBox(width: 8),
-            Text('Delete',
+            Text(L10n.of(context)!.btnDelete,
                 style: TextStyle(fontSize: 12, color: Colors.red[300])),
           ]),
         ),

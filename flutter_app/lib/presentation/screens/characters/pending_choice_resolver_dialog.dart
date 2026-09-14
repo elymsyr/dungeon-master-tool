@@ -7,6 +7,7 @@ import '../../../application/character_creation/pending_choices.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Payload the editor mutates onto the character when the player resolves
 /// one pending choice. Only the fields relevant to the resolved kind are
@@ -819,16 +820,16 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         TextButton(
           onPressed: () =>
               Navigator.of(context).pop(const PendingChoiceResolution()),
-          child: const Text('Dismiss'),
+          child: Text(L10n.of(context)!.btnDismiss),
         ),
         FilledButton(
           onPressed: _isValid ? () => Navigator.of(context).pop(_buildResolution()) : null,
-          child: const Text('Apply'),
+          child: Text(L10n.of(context)!.hubFilterApply),
         ),
       ],
     );
@@ -870,7 +871,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _toolProficiencyBody(Color hint) {
     if (_eligibleTools.isEmpty) {
       return Text(
-        'No class tool options available (or all already proficient).',
+        L10n.of(context)!.pendingNoToolOptions,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -880,7 +881,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedTools.length}).',
+          L10n.of(context)!.pendingPickUpTo('$cap', '${_pickedTools.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -917,7 +918,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _languagesBody(Color hint) {
     if (_eligibleLanguages.isEmpty) {
       return Text(
-        'No languages available — PC already knows every language in the campaign.',
+        L10n.of(context)!.pendingNoLanguages,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -927,7 +928,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedLanguages.length}).',
+          L10n.of(context)!.pendingPickUpTo('$cap', '${_pickedLanguages.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -965,7 +966,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     final group = _featChoiceGroup;
     if (group == null) {
       return Text(
-        'Source feat / choice group not found.',
+        L10n.of(context)!.pendingSourceGroupNotFound,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -979,14 +980,14 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       // `null` means "blocked by an upstream choice" (spell_from_list whose
       // list pick hasn't been made yet).
       return Text(
-        'Pick the spell list first (resolve its pending choice).',
+        L10n.of(context)!.pendingPickSpellListFirst,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
     }
     if (options.isEmpty) {
       return Text(
-        'No eligible options in the active campaign.',
+        L10n.of(context)!.pendingNoEligibleOptions,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1000,7 +1001,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
             child: Text(prompt, style: TextStyle(fontSize: 11, color: hint)),
           ),
         Text(
-          'Pick up to $pick (selected ${_pickedFeatChoice.length}).',
+          L10n.of(context)!.pendingPickUpTo('$pick', '${_pickedFeatChoice.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -1195,7 +1196,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _featAsiBody(Color hint) {
     if (_featAsiSource == null) {
       return Text(
-        'Source feat not found in this campaign.',
+        L10n.of(context)!.pendingSourceFeatNotFound,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1207,8 +1208,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '+$_featAsiAmount to chosen ability (cap $_featAsiMaxScore).'
-          '${saveProf ? ' Also grants saving-throw proficiency for the chosen ability.' : ''}',
+          '${L10n.of(context)!.pendingFeatAsiLine('$_featAsiAmount', '$_featAsiMaxScore')}'
+          '${saveProf ? ' ${L10n.of(context)!.pendingFeatAsiSaveProf}' : ''}',
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -1233,7 +1234,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _expertiseBody(Color hint) {
     if (_eligibleExpertise.isEmpty) {
       return Text(
-        'No eligible skills — PC has no proficient skills without expertise.',
+        L10n.of(context)!.pendingNoExpertiseSkills,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1243,7 +1244,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedExpertise.length}). Eligible skills are ones you\'re already proficient in.',
+          L10n.of(context)!.pendingPickExpertise('$cap', '${_pickedExpertise.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -1280,7 +1281,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _skillProficiencyBody(Color hint) {
     if (_eligibleSkills.isEmpty) {
       return Text(
-        'No skills available — PC already proficient in every skill in the campaign.',
+        L10n.of(context)!.pendingNoSkills,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1290,7 +1291,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedSkills.length}).',
+          L10n.of(context)!.pendingPickUpTo('$cap', '${_pickedSkills.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -1327,7 +1328,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _subclassBody(Color hint) {
     if (_eligibleSubclasses.isEmpty) {
       return Text(
-        'No subclasses for this class in the active campaign.',
+        L10n.of(context)!.pendingNoSubclasses,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1355,7 +1356,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _weaponMasteryBody(Color hint) {
     if (_eligibleWeapons.isEmpty) {
       return Text(
-        'No weapons with mastery property in the active campaign.',
+        L10n.of(context)!.pendingNoMasteryWeapons,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1365,7 +1366,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedWeaponMasteries.length}).',
+          L10n.of(context)!.pendingPickUpTo('$cap', '${_pickedWeaponMasteries.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),
@@ -1420,17 +1421,17 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           spacing: 8,
           children: [
             _segmentButton(
-              label: '+2 to one',
+              label: L10n.of(context)!.pendingAsiPlusTwo,
               selected: _asiChoice == _AsiChoice.asiSingle,
               onTap: () => setState(() => _asiChoice = _AsiChoice.asiSingle),
             ),
             _segmentButton(
-              label: '+1 to two',
+              label: L10n.of(context)!.pendingAsiPlusOneTwo,
               selected: _asiChoice == _AsiChoice.asiSplit,
               onTap: () => setState(() => _asiChoice = _AsiChoice.asiSplit),
             ),
             _segmentButton(
-              label: 'Take a feat',
+              label: L10n.of(context)!.pendingTakeFeat,
               selected: _asiChoice == _AsiChoice.feat,
               onTap: () => setState(() => _asiChoice = _AsiChoice.feat),
             ),
@@ -1448,7 +1449,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('First ability', style: TextStyle(fontSize: 11, color: hint)),
+              Text(L10n.of(context)!.pendingFirstAbility, style: TextStyle(fontSize: 11, color: hint)),
               _abilityChips(
                 selected: _asiSplitA,
                 disabledIf: (k) => !_canBump(k, 1) || k == _asiSplitB,
@@ -1456,7 +1457,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
                 hint: hint,
               ),
               const SizedBox(height: 4),
-              Text('Second ability', style: TextStyle(fontSize: 11, color: hint)),
+              Text(L10n.of(context)!.pendingSecondAbility, style: TextStyle(fontSize: 11, color: hint)),
               _abilityChips(
                 selected: _asiSplitB,
                 disabledIf: (k) => !_canBump(k, 1) || k == _asiSplitA,
@@ -1476,7 +1477,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _fightingStyleBody(Color hint) {
     if (_fightingStyleFeats.isEmpty) {
       return Text(
-        'No Fighting Style feats in the active campaign yet.',
+        L10n.of(context)!.pendingNoFightingStyle,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1492,7 +1493,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   Widget _divineOrderBody(Color hint) {
     if (_divineOrderFeats.isEmpty) {
       return Text(
-        'No Divine Order feats in the active campaign yet.',
+        L10n.of(context)!.pendingNoDivineOrder,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1509,7 +1510,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     final name = widget.choice.featureName ?? 'this feature';
     if (_featureOptionFeats.isEmpty) {
       return Text(
-        'No options authored for $name in the active campaign yet.',
+        L10n.of(context)!.pendingNoOptionsFor(name),
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1530,7 +1531,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   ) {
     if (feats.isEmpty) {
       return Text(
-        'No eligible feats in the active campaign.',
+        L10n.of(context)!.pendingNoEligibleFeats,
         style:
             TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
       );
@@ -1572,7 +1573,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pick up to $cap (selected ${_pickedSpells.length}).',
+          L10n.of(context)!.pendingPickUpTo('$cap', '${_pickedSpells.length}'),
           style: TextStyle(fontSize: 11, color: hint),
         ),
         const SizedBox(height: 6),

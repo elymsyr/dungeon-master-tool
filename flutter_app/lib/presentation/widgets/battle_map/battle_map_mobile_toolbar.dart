@@ -9,6 +9,7 @@ import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
 import 'draw_tools_button.dart';
+import '../../l10n/app_localizations.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -103,9 +104,9 @@ class BattleMapMobileToolbar extends ConsumerWidget {
               if (!context.mounted) return;
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
-                ..showSnackBar(const SnackBar(
-                  duration: Duration(seconds: 2),
-                  content: Text('Battle map projected'),
+                ..showSnackBar(SnackBar(
+                  duration: const Duration(seconds: 2),
+                  content: Text(L10n.of(context)!.bmProjected),
                 ));
             },
             borderRadius: palette.br,
@@ -260,10 +261,10 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
             labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
             dividerColor: palette.sidebarDivider,
-            tabs: const [
-              Tab(text: 'Tools', height: 32),
-              Tab(text: 'Grid', height: 32),
-              Tab(text: 'View', height: 32),
+            tabs: [
+              Tab(text: L10n.of(context)!.bmTabTools, height: 32),
+              Tab(text: L10n.of(context)!.bmGrid, height: 32),
+              Tab(text: L10n.of(context)!.bmTabView, height: 32),
             ],
           ),
 
@@ -315,13 +316,13 @@ class _ToolsTab extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: 'Navigate', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: L10n.of(context)!.bmNavigate, tb: tb, notifier: notifier, palette: palette),
               // All measure / AoE / shape tools merged into one picker button.
               DrawToolsButton(activeTool: tb.activeTool, notifier: notifier, palette: palette, compact: true),
-              _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: 'Erase', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: 'Draw', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: 'Add Fog', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, label: 'Erase Fog', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: L10n.of(context)!.bmErase, tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: L10n.of(context)!.bmDraw, tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: L10n.of(context)!.bmAddFog, tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, label: L10n.of(context)!.bmEraseFog, tb: tb, notifier: notifier, palette: palette),
             ],
           ),
           const SizedBox(height: 12),
@@ -333,19 +334,19 @@ class _ToolsTab extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _SheetActionButton(icon: Icons.cloud_queue, label: 'Fill Fog', palette: palette, onTap: () async { await notifier.fillFog(); }),
-              _SheetActionButton(icon: Icons.wb_sunny_outlined, label: 'Clear Fog', palette: palette, onTap: () async { await notifier.clearFog(); }),
-              _SheetActionButton(icon: Icons.cleaning_services_outlined, label: 'Clear Draw', palette: palette, onTap: () => notifier.clearAnnotation(layer: tb.activeLayer)),
-              _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Marks', palette: palette, onTap: () => notifier.clearMeasurements(layer: tb.activeLayer)),
-              _SheetActionButton(icon: Icons.format_shapes_outlined, label: 'Clear Shapes', palette: palette, onTap: () => notifier.clearShapes(layer: tb.activeLayer)),
-              _SheetActionButton(icon: Icons.delete_sweep_outlined, label: 'Clear All', palette: palette, onTap: () async { await notifier.clearAll(); }),
+              _SheetActionButton(icon: Icons.cloud_queue, label: L10n.of(context)!.bmFillFog, palette: palette, onTap: () async { await notifier.fillFog(); }),
+              _SheetActionButton(icon: Icons.wb_sunny_outlined, label: L10n.of(context)!.bmClearFog, palette: palette, onTap: () async { await notifier.clearFog(); }),
+              _SheetActionButton(icon: Icons.cleaning_services_outlined, label: L10n.of(context)!.bmClearDraw, palette: palette, onTap: () => notifier.clearAnnotation(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.straighten_outlined, label: L10n.of(context)!.bmClearMarks, palette: palette, onTap: () => notifier.clearMeasurements(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.format_shapes_outlined, label: L10n.of(context)!.bmClearShapes, palette: palette, onTap: () => notifier.clearShapes(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.delete_sweep_outlined, label: L10n.of(context)!.sessionClearAll, palette: palette, onTap: () async { await notifier.clearAll(); }),
             ],
           ),
           const SizedBox(height: 10),
           // Shape layer (Phase 6) — which layer new shapes land on.
           Row(
             children: [
-              Text('Shape layer:',
+              Text(L10n.of(context)!.bmShapeLayer,
                   style: TextStyle(fontSize: 13, color: palette.tabText)),
               const SizedBox(width: 8),
               Container(
@@ -360,10 +361,10 @@ class _ToolsTab extends StatelessWidget {
                     isDense: true,
                     dropdownColor: palette.tabBg,
                     style: TextStyle(fontSize: 13, color: palette.tabText),
-                    items: const [
-                      DropdownMenuItem(value: 0, child: Text('Background')),
-                      DropdownMenuItem(value: 1, child: Text('Object')),
-                      DropdownMenuItem(value: 2, child: Text('GM only')),
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text(L10n.of(context)!.bmLayerBackground)),
+                      DropdownMenuItem(value: 1, child: Text(L10n.of(context)!.bmLayerObject)),
+                      DropdownMenuItem(value: 2, child: Text(L10n.of(context)!.bmLayerGmOnly)),
                     ],
                     onChanged: (v) {
                       if (v != null) notifier.setActiveLayer(shapeLayerFromInt(v));
@@ -402,7 +403,7 @@ class _GridTab extends StatelessWidget {
         children: [
           // Grid visible toggle
           _SwitchRow(
-            label: 'Grid Visible',
+            label: L10n.of(context)!.bmGridVisible,
             value: tb.gridVisible,
             palette: palette,
             onChanged: notifier.setGridVisible,
@@ -410,7 +411,7 @@ class _GridTab extends StatelessWidget {
           const SizedBox(height: 12),
           // Grid cell size
           _SpinBoxRow(
-            label: 'Cell Size',
+            label: L10n.of(context)!.bmCellSize,
             suffix: 'px',
             value: tb.gridSize,
             min: 10,
@@ -421,7 +422,7 @@ class _GridTab extends StatelessWidget {
           const SizedBox(height: 12),
           // Snap toggle
           _SwitchRow(
-            label: 'Snap to Grid',
+            label: L10n.of(context)!.bmSnapToGrid,
             value: tb.gridSnap,
             palette: palette,
             onChanged: notifier.setGridSnap,
@@ -429,7 +430,7 @@ class _GridTab extends StatelessWidget {
           const SizedBox(height: 12),
           // Show monster/NPC HP to players on every projection output
           _SwitchRow(
-            label: 'Show all HP',
+            label: L10n.of(context)!.bmShowAllHp,
             value: tb.showAllHp,
             palette: palette,
             onChanged: notifier.setShowAllHp,
@@ -437,7 +438,7 @@ class _GridTab extends StatelessWidget {
           const SizedBox(height: 12),
           // Hide HP bar + conditions under tokens on the player projection
           _SwitchRow(
-            label: 'Clean tokens',
+            label: L10n.of(context)!.bmCleanTokens,
             value: tb.hideTokenHud,
             palette: palette,
             onChanged: notifier.setHideTokenHud,
@@ -445,7 +446,7 @@ class _GridTab extends StatelessWidget {
           const SizedBox(height: 12),
           // Feet per cell
           _SpinBoxRow(
-            label: 'Feet / Cell',
+            label: L10n.of(context)!.bmFeetPerCell,
             suffix: 'ft',
             value: tb.feetPerCell,
             min: 1,
@@ -458,7 +459,7 @@ class _GridTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Diagonal Rule',
+              Text(L10n.of(context)!.bmDiagonalRule,
                   style: TextStyle(fontSize: 13, color: palette.tabText)),
               DropdownButton<int>(
                 value: diagonalRuleFromInt(tb.diagonalRule).index,
@@ -512,14 +513,14 @@ class _ViewTab extends ConsumerWidget {
             children: [
               _SheetActionButton(
                 icon: Icons.fit_screen,
-                label: 'Reset View',
+                label: L10n.of(context)!.bmResetView,
                 palette: palette,
                 onTap: notifier.resetView,
               ),
               const SizedBox(width: 8),
               _SheetActionButton(
                 icon: Icons.image_outlined,
-                label: 'Open Map',
+                label: L10n.of(context)!.bmOpenMap,
                 palette: palette,
                 onTap: () async {
                   await openBattlemapPicker(context, ref, notifier);
@@ -532,7 +533,7 @@ class _ViewTab extends ConsumerWidget {
           Row(
             children: [
               Text(
-                'Token Size',
+                L10n.of(context)!.bmTokenSize,
                 style: TextStyle(fontSize: 12, color: palette.tabText),
               ),
               const SizedBox(width: 8),

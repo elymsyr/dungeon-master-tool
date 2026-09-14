@@ -8,6 +8,7 @@ import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/field_widgets/entity_link.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Aggregates `equipment_choice_groups` from the chosen class, subclass and
 /// background, then renders one card per group with selectable options.
@@ -65,9 +66,9 @@ class EquipmentStep extends ConsumerWidget {
     final bgNote = _backgroundEquipmentNote(entities);
 
     if (groups.isEmpty && defaults.isEmpty && bgNote == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('No equipment choices required for this build.'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(L10n.of(context)!.equipNoChoices),
       );
     }
     return Column(
@@ -152,7 +153,7 @@ class _EquipmentProseNote extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Background equipment (from $sourceName)',
+                    L10n.of(context)!.equipBackgroundFrom(sourceName),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -160,8 +161,7 @@ class _EquipmentProseNote extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "This package doesn't provide pickable equipment — add these "
-              'manually after creation.',
+              L10n.of(context)!.equipNotPickable,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: palette.sidebarLabelSecondary,
@@ -260,7 +260,7 @@ class _DefaultsCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '$source: Granted Equipment',
+                    L10n.of(context)!.equipGranted(source),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -268,7 +268,7 @@ class _DefaultsCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Added to your inventory automatically — no choice needed.',
+              L10n.of(context)!.equipGrantedHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: palette.sidebarLabelSecondary,
                   ),

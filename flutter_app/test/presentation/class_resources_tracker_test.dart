@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dungeon_master_tool/domain/entities/character/effective_character.dart';
@@ -25,7 +26,7 @@ EffectiveCharacter _withPool({required String id, int max = 1}) =>
       },
     );
 
-Widget _wrap(Widget child) => MaterialApp(
+Widget _wrap(Widget child) => MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
       theme: ThemeData.dark().copyWith(extensions: [_palette]),
       home: Scaffold(body: child),
     );
@@ -116,7 +117,7 @@ void main() {
     testWidgets('unresolvable pool_ref renders nothing', (tester) async {
       // Resolver artık zarfı id'ye çeviriyor; çeviremediğinde uydurma
       // kapasiteli bir sayaç göstermektense satırı hiç çizmiyoruz.
-      final eff = EffectiveCharacter(
+      const eff = EffectiveCharacter(
         characterId: 'c1',
         resourcePools: [
           {

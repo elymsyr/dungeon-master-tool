@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Player için sade soundpad sidebar — DM'in tetiklediği tema/parçayı
 /// görüntüler ve sadece **master volume** ayarına izin verir. Track
@@ -22,8 +23,8 @@ class SoundpadPlayerSidebar extends ConsumerWidget {
         : notifier.themes[state.activeThemeId];
     final themeName = theme?.name ?? state.activeThemeId ?? 'No theme';
     final musicTitle = state.musicPlaying
-        ? (state.activeStateName ?? 'Playing')
-        : 'Stopped';
+        ? (state.activeStateName ?? L10n.of(context)!.soundPlaying)
+        : L10n.of(context)!.soundStopped;
 
     return Container(
       color: palette.tabBg,
@@ -41,7 +42,7 @@ class SoundpadPlayerSidebar extends ConsumerWidget {
                 Icon(Icons.headphones,
                     size: 18, color: palette.tabActiveText),
                 const SizedBox(width: 8),
-                Text('Soundpad',
+                Text(L10n.of(context)!.tabSoundpad,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -71,7 +72,7 @@ class SoundpadPlayerSidebar extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          state.musicPlaying ? 'Playing' : 'Stopped',
+                          state.musicPlaying ? L10n.of(context)!.soundPlaying : L10n.of(context)!.soundStopped,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -84,7 +85,7 @@ class SoundpadPlayerSidebar extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text('Theme',
+                  Text(L10n.of(context)!.lblTheme,
                       style: TextStyle(
                         fontSize: 11,
                         color: palette.sidebarLabelSecondary,
@@ -99,7 +100,7 @@ class SoundpadPlayerSidebar extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Now playing',
+                  Text(L10n.of(context)!.nowPlaying,
                       style: TextStyle(
                         fontSize: 11,
                         color: palette.sidebarLabelSecondary,

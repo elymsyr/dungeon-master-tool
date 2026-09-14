@@ -43,6 +43,7 @@ import 'steps/personality_step.dart';
 import 'steps/proficiencies_step.dart';
 import 'steps/spells_step.dart';
 import 'steps/subclass_step.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Multi-step D&D 5e character creation wizard. Authors a [CharacterDraft]
 /// across six steps then commits via `characterListProvider.create`,
@@ -162,7 +163,7 @@ class _CharacterCreationWizardScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Character'),
+        title: Text(L10n.of(context)!.wizardTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: _committing ? null : () => context.pop(),
@@ -171,7 +172,7 @@ class _CharacterCreationWizardScreenState
       backgroundColor: palette.srdParchment,
       body: templatesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Template load error: $e')),
+        error: (e, _) => Center(child: Text(L10n.of(context)!.wizardTemplateLoadError('$e'))),
         data: (templates) {
           final playerTemplates = templates
               .where((t) => findPlayerCategory(t) != null)
@@ -181,8 +182,7 @@ class _CharacterCreationWizardScreenState
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No template with a Player category is available. '
-                  'Add one in the Templates tab first.',
+                  L10n.of(context)!.wizardNoPlayerTemplate,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: palette.sidebarLabelSecondary),
                 ),
@@ -191,7 +191,7 @@ class _CharacterCreationWizardScreenState
           }
           return campaignsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('World load error: $e')),
+            error: (e, _) => Center(child: Text(L10n.of(context)!.wizardWorldLoadError('$e'))),
             data: (worlds) => Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
@@ -245,13 +245,13 @@ class _CharacterCreationWizardScreenState
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2),
                                   )
-                                : Text(isLast ? 'Create' : 'Continue'),
+                                : Text(isLast ? L10n.of(context)!.btnCreate : L10n.of(context)!.btnContinue),
                           ),
                           const SizedBox(width: 8),
                           TextButton(
                             onPressed:
                                 _committing ? null : details.onStepCancel,
-                            child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
+                            child: Text(_currentStep == 0 ? L10n.of(context)!.btnCancel : L10n.of(context)!.btnBack),
                           ),
                         ],
                       ),
@@ -259,7 +259,7 @@ class _CharacterCreationWizardScreenState
                   },
                   steps: [
                     Step(
-                      title: const Text('Identity'),
+                      title: Text(L10n.of(context)!.wizardStepIdentity),
                       isActive: _currentStep >= 0,
                       state: _stateFor(0, draft),
                       content: _StepBody(
@@ -281,7 +281,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Race / Species'),
+                      title: Text(L10n.of(context)!.wizardStepSpecies),
                       isActive: _currentStep >= 1,
                       state: _stateFor(1, draft),
                       content: _StepBody(
@@ -290,13 +290,13 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Class'),
+                      title: Text(L10n.of(context)!.wizardStepClass),
                       isActive: _currentStep >= 2,
                       state: _stateFor(2, draft),
                       content: _StepBody(
                         active: _currentStep == 2,
                         child: _EntityPickStep(
-                          title: 'Class',
+                          title: L10n.of(context)!.wizardStepClass,
                           slugs: const ['class'],
                           selectedId: draft.classId,
                           onChanged: notifier.setClass,
@@ -304,7 +304,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Subclass'),
+                      title: Text(L10n.of(context)!.wizardStepSubclass),
                       isActive: _currentStep >= 3,
                       state: _stateFor(3, draft),
                       content: _StepBody(
@@ -314,13 +314,13 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Background'),
+                      title: Text(L10n.of(context)!.wizardStepBackground),
                       isActive: _currentStep >= 4,
                       state: _stateFor(4, draft),
                       content: _StepBody(
                         active: _currentStep == 4,
                         child: _EntityPickStep(
-                          title: 'Background',
+                          title: L10n.of(context)!.wizardStepBackground,
                           slugs: const ['background'],
                           selectedId: draft.backgroundId,
                           onChanged: notifier.setBackground,
@@ -329,7 +329,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Abilities'),
+                      title: Text(L10n.of(context)!.wizardStepAbilities),
                       isActive: _currentStep >= 5,
                       state: _stateFor(5, draft),
                       content: _StepBody(
@@ -339,7 +339,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Feats'),
+                      title: Text(L10n.of(context)!.wizardStepFeats),
                       isActive: _currentStep >= 6,
                       state: _stateFor(6, draft),
                       content: _StepBody(
@@ -348,7 +348,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Proficiencies & Languages'),
+                      title: Text(L10n.of(context)!.wizardStepProficiencies),
                       isActive: _currentStep >= 7,
                       state: _stateFor(7, draft),
                       content: _StepBody(
@@ -358,7 +358,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Spells'),
+                      title: Text(L10n.of(context)!.wizardStepSpells),
                       isActive: _currentStep >= 8,
                       state: _stateFor(8, draft),
                       content: _StepBody(
@@ -368,7 +368,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Equipment'),
+                      title: Text(L10n.of(context)!.wizardStepEquipment),
                       isActive: _currentStep >= 9,
                       state: _stateFor(9, draft),
                       content: _StepBody(
@@ -378,7 +378,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Personality & Flavor'),
+                      title: Text(L10n.of(context)!.wizardStepPersonality),
                       isActive: _currentStep >= 10,
                       state: _stateFor(10, draft),
                       content: _StepBody(
@@ -388,7 +388,7 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Review'),
+                      title: Text(L10n.of(context)!.wizardStepReview),
                       isActive: _currentStep >= 11,
                       state: _stateFor(11, draft),
                       content: _StepBody(
@@ -417,7 +417,7 @@ class _CharacterCreationWizardScreenState
   String? _firstErrorBefore(int target, CharacterDraft draft) {
     for (var i = 0; i < target; i++) {
       final err = _validateStep(i, draft);
-      if (err != null) return 'Step ${i + 1}: $err';
+      if (err != null) return L10n.of(context)!.wizardStepError('${i + 1}', err);
     }
     return null;
   }
@@ -425,8 +425,8 @@ class _CharacterCreationWizardScreenState
   String? _validateStep(int index, CharacterDraft draft) {
     return switch (index) {
       0 => _validateIdentity(draft),
-      1 => draft.raceId == null ? 'Pick a race.' : null,
-      2 => draft.classId == null ? 'Pick a class.' : null,
+      1 => draft.raceId == null ? L10n.of(context)!.wizardPickRace : null,
+      2 => draft.classId == null ? L10n.of(context)!.wizardPickClass : null,
       3 => null,
       4 => null,
       5 => AbilityScoreValidator.validate(
@@ -477,10 +477,10 @@ class _CharacterCreationWizardScreenState
     // them empty and pick remaining spells in the editor later. Only fail
     // when the draft somehow holds *more* than the SRD cap.
     if (cantripCap > 0 && draft.cantripIds.length > cantripCap) {
-      return 'Pick at most $cantripCap cantrip(s).';
+      return L10n.of(context)!.wizardMaxCantrips('$cantripCap');
     }
     if (preparedCap > 0 && draft.preparedSpellIds.length > preparedCap) {
-      return 'Pick at most $preparedCap spell(s).';
+      return L10n.of(context)!.wizardMaxSpells('$preparedCap');
     }
     return null;
   }
@@ -523,16 +523,16 @@ class _CharacterCreationWizardScreenState
     if (skillCap > 0 &&
         skillOptionsCount > 0 &&
         draft.skillChoiceIds.length > skillCap) {
-      return 'Pick at most $skillCap class skill(s).';
+      return L10n.of(context)!.wizardMaxSkills('$skillCap');
     }
     if (toolCap > 0 &&
         toolOptionsCount > 0 &&
         draft.toolChoiceIds.length > toolCap) {
-      return 'Pick at most $toolCap class tool(s).';
+      return L10n.of(context)!.wizardMaxTools('$toolCap');
     }
     if (languageOptionsCount > 0 &&
         draft.languageChoiceIds.length > languageCap) {
-      return 'Pick at most $languageCap origin language(s).';
+      return L10n.of(context)!.wizardMaxLanguages('$languageCap');
     }
     // Weapon Mastery cap at L1 — computed from auto-granted class feats.
     if (classEntity != null) {
@@ -546,18 +546,18 @@ class _CharacterCreationWizardScreenState
       );
       if (masteryCap > 0 &&
           draft.weaponMasteryChoiceIds.length > masteryCap) {
-        return 'Pick at most $masteryCap weapon master${masteryCap == 1 ? 'y' : 'ies'}.';
+        return L10n.of(context)!.wizardMaxMasteries(masteryCap);
       }
     }
     return null;
   }
 
   String? _validateIdentity(CharacterDraft d) {
-    if (d.name.trim().isEmpty) return 'Name required.';
-    if (d.templateId.isEmpty) return 'Template required.';
+    if (d.name.trim().isEmpty) return L10n.of(context)!.wizardNameRequiredErr;
+    if (d.templateId.isEmpty) return L10n.of(context)!.wizardTemplateRequiredErr;
     // World is optional — when left blank the commit step falls back to
     // the auto-provisioned SRD 5.2.1 default world.
-    if (d.level < 1 || d.level > 20) return 'Level must be 1-20.';
+    if (d.level < 1 || d.level > 20) return L10n.of(context)!.wizardLevelRangeErr;
     return null;
   }
 
@@ -1713,8 +1713,8 @@ class _IdentityStep extends StatelessWidget {
       children: [
         _DebouncedTextField(
           initialValue: draft.name,
-          decoration: const InputDecoration(
-            labelText: 'Character Name *',
+          decoration: InputDecoration(
+            labelText: L10n.of(context)!.wizardNameRequired,
           ),
           onChangedDebounced: notifier.setName,
         ),
@@ -1723,9 +1723,9 @@ class _IdentityStep extends StatelessWidget {
           initialValue: draft.description,
           minLines: 1,
           maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Short description',
-            hintText: 'A weather-beaten ranger from the Northlands...',
+          decoration: InputDecoration(
+            labelText: L10n.of(context)!.wizardShortDescription,
+            hintText: L10n.of(context)!.wizardShortDescriptionHint,
           ),
           onChangedDebounced: notifier.setDescription,
         ),
@@ -1737,7 +1737,7 @@ class _IdentityStep extends StatelessWidget {
                 initialValue:
                     draft.templateId.isEmpty ? null : draft.templateId,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Template *'),
+                decoration: InputDecoration(labelText: L10n.of(context)!.wizardTemplateRequired),
                 items: templates
                     .map((t) => DropdownMenuItem(
                           value: t.schemaId,
@@ -1772,7 +1772,7 @@ class _IdentityStep extends StatelessWidget {
                   initialValue: pickerValue,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'World',
+                    labelText: L10n.of(context)!.charCreateWorldLabel,
                     suffixIcon: activatingWorld
                         ? const Padding(
                             padding: EdgeInsets.all(8),
@@ -1786,10 +1786,10 @@ class _IdentityStep extends StatelessWidget {
                         : null,
                   ),
                   items: [
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: '',
                       child: Text(
-                        'Built-in SRD (default)',
+                        L10n.of(context)!.wizardBuiltinSrdDefault,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1827,7 +1827,7 @@ class _IdentityStep extends StatelessWidget {
               width: 120,
               child: DropdownButtonFormField<int>(
                 initialValue: draft.level,
-                decoration: const InputDecoration(labelText: 'Level *'),
+                decoration: InputDecoration(labelText: L10n.of(context)!.wizardLevelRequired),
                 items: List.generate(20, (i) => i + 1)
                     .map((n) =>
                         DropdownMenuItem(value: n, child: Text('$n')))
@@ -1842,7 +1842,7 @@ class _IdentityStep extends StatelessWidget {
               child: DropdownButtonFormField<String>(
                 initialValue:
                     draft.alignment.isEmpty ? null : draft.alignment,
-                decoration: const InputDecoration(labelText: 'Alignment'),
+                decoration: InputDecoration(labelText: L10n.of(context)!.wizardAlignment),
                 items: alignments
                     .map((a) => DropdownMenuItem(value: a, child: Text(a)))
                     .toList(),
@@ -1872,7 +1872,7 @@ class _IdentityStep extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Portrait (optional). You can change it later in the editor.',
+                L10n.of(context)!.wizardPortraitHint,
                 style: TextStyle(
                   fontSize: 12,
                   color: palette.sidebarLabelSecondary,
@@ -1930,7 +1930,7 @@ class _SourcePackagePicker extends ConsumerWidget {
                   size: 14, color: palette.tabActiveText),
               const SizedBox(width: 6),
               Text(
-                'Content Sources',
+                L10n.of(context)!.wizardContentSources,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1957,11 +1957,11 @@ class _SourcePackagePicker extends ConsumerWidget {
             runSpacing: 8,
             children: [
               // Built-in pack — always on, not togglable.
-              const FilterChip(
-                label: Text('Built-in SRD'),
+              FilterChip(
+                label: Text(L10n.of(context)!.wizardBuiltinSrd),
                 selected: true,
                 onSelected: null,
-                avatar: Icon(Icons.lock, size: 14),
+                avatar: const Icon(Icons.lock, size: 14),
               ),
               ...addonNames.map((name) {
                 final isOn = selected.contains(name);
@@ -1987,7 +1987,7 @@ class _SourcePackagePicker extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                'No extra packages installed. Add one in the Packages tab.',
+                L10n.of(context)!.wizardNoExtraPackages,
                 style: TextStyle(
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
@@ -2053,7 +2053,7 @@ class _HigherLevelStartPanel extends StatelessWidget {
               Icon(Icons.auto_awesome, size: 14, color: palette.tabActiveText),
               const SizedBox(width: 6),
               Text(
-                'Starting at Higher Levels (Level $level)',
+                L10n.of(context)!.wizardHigherLevels('$level'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -2064,8 +2064,7 @@ class _HigherLevelStartPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'SRD §1 recommends the DM grant this bundle in addition to '
-            'standard starting equipment:',
+            L10n.of(context)!.wizardHigherLevelsIntro,
             style: TextStyle(
               fontSize: 11,
               color: palette.sidebarLabelSecondary,
@@ -2073,18 +2072,16 @@ class _HigherLevelStartPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '• Money: ${bundle.money}',
+            L10n.of(context)!.wizardBundleMoney(bundle.money),
             style: TextStyle(fontSize: 11, color: palette.tabActiveText),
           ),
           Text(
-            '• Magic items: ${bundle.items}',
+            L10n.of(context)!.wizardBundleItems(bundle.items),
             style: TextStyle(fontSize: 11, color: palette.tabActiveText),
           ),
           const SizedBox(height: 4),
           Text(
-            'GP auto-added on creation (1d10 resolved at average = 6). '
-            'Magic-item picks remain advisory — the DM curates rarity in '
-            'the editor.',
+            L10n.of(context)!.wizardBundleNote,
             style: TextStyle(
               fontSize: 10,
               fontStyle: FontStyle.italic,
@@ -2177,7 +2174,7 @@ class _RaceStep extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _EntityPickStep(
-          title: 'Race',
+          title: L10n.of(context)!.wizardRace,
           slugs: const ['species', 'race'],
           selectedId: draft.raceId,
           onChanged: notifier.setRace,
@@ -2312,7 +2309,7 @@ class _EntityPickStep extends ConsumerWidget {
             // ignore: deprecated_member_use
             onChanged: onChanged,
             dense: true,
-            title: const Text('None'),
+            title: Text(L10n.of(context)!.lblNone),
           ),
         ...candidates.map((e) => EntityPreviewLongPress(
               entity: e,
@@ -2371,7 +2368,7 @@ class _AbilitiesStep extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Distribute 15/14/13/12/10/8 across the six abilities.',
+              L10n.of(context)!.wizardStandardArrayHint,
               style: TextStyle(
                 fontSize: 12,
                 color: palette.sidebarLabelSecondary,
@@ -2385,13 +2382,13 @@ class _AbilitiesStep extends StatelessWidget {
               children: [
                 FilledButton.icon(
                   icon: const Icon(Icons.casino, size: 16),
-                  label: const Text('Roll 4d6 drop low ×6'),
+                  label: Text(L10n.of(context)!.wizardRoll4d6),
                   onPressed: notifier.rollRandomAbilities,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Reroll if unhappy.',
+                    L10n.of(context)!.wizardRerollHint,
                     style: TextStyle(
                       fontSize: 12,
                       color: palette.sidebarLabelSecondary,
@@ -2457,7 +2454,7 @@ class _PointBuyHeader extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Points spent: ${spent < 0 ? '—' : spent} / $kPointBuyBudget',
+            L10n.of(context)!.wizardPointsSpent('${spent < 0 ? '—' : spent}', '$kPointBuyBudget'),
             style: TextStyle(
               fontSize: 12,
               color: overspent
@@ -2468,7 +2465,7 @@ class _PointBuyHeader extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            '(scores 8-15)',
+            L10n.of(context)!.wizardPointBuyRange,
             style: TextStyle(
               fontSize: 11,
               color: palette.sidebarLabelSecondary,
@@ -2498,7 +2495,7 @@ class _BackgroundAsiHeader extends StatelessWidget {
         Icon(Icons.info_outline, size: 16, color: palette.sidebarLabelSecondary),
         const SizedBox(width: 6),
         Text(
-          'Background ASI: $total / 3',
+          L10n.of(context)!.wizardBackgroundAsi('$total'),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -2509,7 +2506,7 @@ class _BackgroundAsiHeader extends StatelessWidget {
         if (total > 0)
           TextButton.icon(
             icon: const Icon(Icons.clear, size: 14),
-            label: const Text('Reset'),
+            label: Text(L10n.of(context)!.btnReset),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
               minimumSize: const Size(0, 28),
@@ -2557,7 +2554,7 @@ class _AbilityRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          SizedBox(width: 110, child: _baseEditor()),
+          SizedBox(width: 110, child: _baseEditor(context)),
           const SizedBox(width: 8),
           SizedBox(
             width: 90,
@@ -2602,12 +2599,12 @@ class _AbilityRow extends StatelessWidget {
     );
   }
 
-  Widget _baseEditor() {
+  Widget _baseEditor(BuildContext context) {
     return switch (method) {
       AbilityScoreMethod.standardArray => DropdownButtonFormField<int>(
           initialValue:
               kStandardArray.contains(base) ? base : kStandardArray.first,
-          decoration: const InputDecoration(labelText: 'Base'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.soundpadIntensityBase),
           // Every array value stays selectable: picking one already held by
           // another ability swaps the two (see swapAbility).
           items: kStandardArray
@@ -2619,7 +2616,7 @@ class _AbilityRow extends StatelessWidget {
         ),
       AbilityScoreMethod.pointBuy => DropdownButtonFormField<int>(
           initialValue: base.clamp(8, 15),
-          decoration: const InputDecoration(labelText: 'Base'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.soundpadIntensityBase),
           // W10: items are state-independent — promoted to a static const
           // list so the wizard doesn't reallocate 8 DropdownMenuItems per
           // rebuild of every ability row.
@@ -2640,7 +2637,7 @@ class _AbilityRow extends StatelessWidget {
               : ValueKey('random_$abilityKey-$base'),
           initialValue: '$base',
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Base'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.soundpadIntensityBase),
           onChanged: (v) {
             final parsed = int.tryParse(v);
             if (parsed != null) onBase(parsed);

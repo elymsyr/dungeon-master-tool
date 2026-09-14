@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Read-only per-level progression table built by merging a class's
 /// `features` list with the picked subclass's `features` list. Renders
@@ -76,9 +77,9 @@ class ClassLevelUpTable extends StatelessWidget {
             dataRowMinHeight: 28,
             dataRowMaxHeight: 80,
             columns: [
-              DataColumn(label: Text('Lvl', style: headerStyle)),
-              DataColumn(label: Text('PB', style: headerStyle)),
-              DataColumn(label: Text('Features', style: headerStyle)),
+              DataColumn(label: Text(L10n.of(context)!.lblLvl, style: headerStyle)),
+              DataColumn(label: Text(L10n.of(context)!.lblPb, style: headerStyle)),
+              DataColumn(label: Text(L10n.of(context)!.lblFeatures, style: headerStyle)),
             ],
             rows: [
               for (var lvl = 1; lvl <= 20; lvl++)

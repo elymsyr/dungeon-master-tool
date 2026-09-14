@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'widgets/pin_edit_dialog.dart' show kPinIconChoices;
+import '../../l10n/app_localizations.dart';
 
 /// Dialog for creating / editing a timeline pin.
 ///
@@ -81,7 +82,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
                 decoration: InputDecoration(
-                  labelText: 'Day',
+                  labelText: L10n.of(context)!.timelineDay,
                   labelStyle: TextStyle(
                     fontSize: 11,
                     color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -100,7 +101,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
                 maxLines: 3,
                 style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
                 decoration: InputDecoration(
-                  labelText: 'Note',
+                  labelText: L10n.of(context)!.timelineNote,
                   labelStyle: TextStyle(
                     fontSize: 11,
                     color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -115,7 +116,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
               if (_selectedEntityIds.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Entities',
+                  L10n.of(context)!.lblEntities,
                   style: TextStyle(
                     fontSize: 11,
                     color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -155,7 +156,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
 
               // Color
               Text(
-                'Color',
+                L10n.of(context)!.lblColor,
                 style: TextStyle(
                   fontSize: 11,
                   color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -187,7 +188,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Icon',
+                L10n.of(context)!.lblIcon,
                 style: TextStyle(
                   fontSize: 11,
                   color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -202,7 +203,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
                       name: '',
                       icon: Icons.refresh,
                       active: _iconName.isEmpty,
-                      tooltip: 'Default'),
+                      tooltip: L10n.of(context)!.lblDefault),
                   ...kPinIconChoices.map(
                     (e) => _iconChip(
                       name: e.$1,
@@ -219,7 +220,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel',
+          child: Text(L10n.of(context)!.btnCancel,
               style: TextStyle(color: palette.uiFloatingText)),
         ),
         ElevatedButton(

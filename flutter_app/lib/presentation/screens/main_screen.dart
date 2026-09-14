@@ -811,7 +811,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     ),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 if (editMode)
-                  const PopupMenuItem(value: 'rules', child: Row(children: [Icon(Icons.tune, size: 18), SizedBox(width: 8), Text('Rule Settings')])),
+                  PopupMenuItem(value: 'rules', child: Row(children: [const Icon(Icons.tune, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.ruleSettingsTitle)])),
                 const PopupMenuDivider(),
                 ...themeNames.map((name) => PopupMenuItem(
                   value: 'theme:$name',
@@ -843,7 +843,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             if (editMode)
               IconButton(
                 icon: const Icon(Icons.tune, size: 20),
-                tooltip: 'Rule Settings',
+                tooltip: L10n.of(context)!.ruleSettingsTitle,
                 onPressed: _openRuleSettings,
               ),
             // Tema

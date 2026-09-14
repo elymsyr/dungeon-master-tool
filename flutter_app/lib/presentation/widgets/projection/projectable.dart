@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/projection/projection_item.dart';
+import '../../l10n/app_localizations.dart';
 
 const _uuid = Uuid();
 
@@ -20,9 +21,9 @@ void showProjectedSnack(BuildContext context, WidgetRef ref) {
         duration: const Duration(milliseconds: 1500),
         behavior: SnackBarBehavior.floating,
         width: 320,
-        content: const Text('Projected to player screen'),
+        content: Text(L10n.of(context)!.projectedToPlayer),
         action: SnackBarAction(
-          label: 'View',
+          label: L10n.of(context)!.btnView,
           onPressed: () {
             // Trigger main_screen to switch to Session tab + focus the
             // projection (Player Screen) bottom tab.

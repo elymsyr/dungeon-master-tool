@@ -6,6 +6,7 @@ import '../../../application/providers/projection_provider.dart';
 import '../../../domain/entities/projection/projection_output_mode.dart';
 import '../../dialogs/screencast_display_picker.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// AppBar projection toggle button. Adapts to the current platform + role:
 ///
@@ -43,7 +44,7 @@ class ProjectionStatusIcon extends ConsumerWidget {
     }
 
     return PopupMenuButton<ProjectionOutputMode>(
-      tooltip: 'Projection outputs',
+      tooltip: L10n.of(context)!.projOutputs,
       icon: Icon(Icons.cast, size: 20, color: iconColor),
       onSelected: (mode) =>
           _toggle(context, controller, mode, state.outputModes.contains(mode)),
@@ -95,9 +96,9 @@ class ProjectionStatusIcon extends ConsumerWidget {
       final ok = await controller.activateOutput(mode, displayId: display.id);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not start screen cast on this display.'),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(L10n.of(context)!.projScreencastFailed),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -107,7 +108,7 @@ class ProjectionStatusIcon extends ConsumerWidget {
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open ${_labelForMode(mode)}.'),
+          content: Text(L10n.of(context)!.couldNotOpen(_labelForMode(mode))),
           duration: const Duration(seconds: 3),
         ),
       );

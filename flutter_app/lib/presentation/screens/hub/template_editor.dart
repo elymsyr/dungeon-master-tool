@@ -4,6 +4,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Read-only template inspector. Walks a [WorldSchema] and renders its
 /// categories, fields, and groups for browsing. The schema is no longer
@@ -30,7 +31,7 @@ class TemplateEditorState extends State<TemplateEditor> {
     if (categories.isEmpty) {
       return Center(
         child: Text(
-          'This template has no categories.',
+          L10n.of(context)!.templateNoCategories,
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -65,7 +66,7 @@ class TemplateEditorState extends State<TemplateEditor> {
                     ),
                   ),
                   subtitle: Text(
-                    '${cat.fields.length} fields',
+                    L10n.of(context)!.templateFieldCount('${cat.fields.length}'),
                     style: TextStyle(
                       fontSize: 11,
                       color: palette.sidebarLabelSecondary,
@@ -118,7 +119,7 @@ class _CategoryInspector extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Fields (${category.fields.length})',
+            L10n.of(context)!.templateFieldsHeading('${category.fields.length}'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -130,7 +131,7 @@ class _CategoryInspector extends StatelessWidget {
           if (category.fieldGroups.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'Groups (${category.fieldGroups.length})',
+              L10n.of(context)!.templateGroupsHeading('${category.fieldGroups.length}'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -142,7 +143,7 @@ class _CategoryInspector extends StatelessWidget {
               (g) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Text(
-                  '• ${g.name}  (${g.gridColumns} col)',
+                  L10n.of(context)!.templateGroupLine(g.name, '${g.gridColumns}'),
                   style: TextStyle(
                     fontSize: 12,
                     color: palette.tabActiveText,
@@ -206,7 +207,7 @@ class _FieldRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                'required',
+                L10n.of(context)!.templateFieldRequired,
                 style: TextStyle(
                   fontSize: 10,
                   color: palette.dangerBtnBg,

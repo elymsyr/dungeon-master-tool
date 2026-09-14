@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/providers/role_provider.dart';
 import '../theme/dm_tool_colors.dart';
 import 'world_characters_view.dart';
+import '../l10n/app_localizations.dart';
 
 /// "+" entry point shared by the DM character sidebar and the player tab.
 /// Two actions: Create new character (always available with an active world)
@@ -33,7 +34,7 @@ class CharacterAddButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasWorld = activeWorld != null && activeWorld!.isNotEmpty;
     return PopupMenuButton<String>(
-      tooltip: 'Add character',
+      tooltip: L10n.of(context)!.charAddTooltip,
       enabled: hasWorld,
       icon: dense
           ? Icon(Icons.add, color: palette.tabActiveText)
@@ -52,13 +53,13 @@ class CharacterAddButton extends ConsumerWidget {
                 borderRadius: palette.br,
               ),
               alignment: Alignment.center,
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add, size: 16, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text('Add',
-                      style: TextStyle(
+                  const Icon(Icons.add, size: 16, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(L10n.of(context)!.btnAdd,
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w600)),
@@ -80,8 +81,8 @@ class CharacterAddButton extends ConsumerWidget {
             if (!context.mounted) return;
             if (worldId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Open a world first to import.')),
+                SnackBar(
+                    content: Text(L10n.of(context)!.charImportNeedsWorld)),
               );
               return;
             }
@@ -94,21 +95,21 @@ class CharacterAddButton extends ConsumerWidget {
             );
         }
       },
-      itemBuilder: (_) => const [
+      itemBuilder: (_) => [
         PopupMenuItem(
           value: 'create',
           child: Row(children: [
-            Icon(Icons.add_circle_outline, size: 16),
-            SizedBox(width: 8),
-            Text('Create new character'),
+            const Icon(Icons.add_circle_outline, size: 16),
+            const SizedBox(width: 8),
+            Text(L10n.of(context)!.charCreateNew),
           ]),
         ),
         PopupMenuItem(
           value: 'import',
           child: Row(children: [
-            Icon(Icons.input, size: 16),
-            SizedBox(width: 8),
-            Text('Import existing character...'),
+            const Icon(Icons.input, size: 16),
+            const SizedBox(width: 8),
+            Text(L10n.of(context)!.charImportExisting),
           ]),
         ),
       ],

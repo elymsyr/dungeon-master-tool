@@ -9,6 +9,7 @@
 //   cd flutter_app && flutter test test/presentation/pack_field_render_test.dart
 
 import 'dart:convert';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'dart:io';
 
 import 'package:dungeon_master_tool/application/services/builtin_srd_entities.dart';
@@ -25,7 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 // null-check patlıyordu (F-pass0-01) — kapı taramanın yarısını sessizce
 // bırakıyordu.
 Widget _wrap(Widget child) => ProviderScope(
-      child: MaterialApp(
+      child: MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
         theme: buildThemeData('dark'),
         home: Scaffold(
           body: SizedBox(

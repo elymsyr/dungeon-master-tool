@@ -11,6 +11,7 @@ import '../../../domain/entities/online/world_role.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Son açılan kartların id'leri, en yeni başta, en fazla 50 tane. Kart
 /// kapansa da listede kalır — mobil geçmiş FAB'i bunu gösterir. Oturumluk;
@@ -132,7 +133,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
     final entry = _TabEntry(
       entityId: entityId,
-      title: entity?.name ?? 'Unknown',
+      title: entity?.name ?? L10n.of(context)!.lblUnknown,
       categorySlug: entity?.categorySlug ?? '',
       categoryColor: catColor,
     );
@@ -629,7 +630,7 @@ class _EmptyPanel extends StatelessWidget {
           Icon(Icons.description_outlined, size: 40, color: palette.sidebarLabelSecondary.withValues(alpha: 0.4)),
           const SizedBox(height: 8),
           Text(
-            'Select an entity from the sidebar\nor drag here',
+            L10n.of(context)!.dbSelectEntityHint,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: palette.sidebarLabelSecondary,

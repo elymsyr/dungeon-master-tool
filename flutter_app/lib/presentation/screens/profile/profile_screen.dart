@@ -70,7 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(L10n.of(context)!.profileMenuTooltip),
       ),
       body: OfflineGuard(
         child: profileAsync.when(
@@ -93,12 +93,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Icon(Icons.person_outline, size: 64, color: palette.sidebarLabelSecondary),
                   const SizedBox(height: 12),
-                  const Text('No profile yet'),
+                  Text(L10n.of(context)!.profileNone),
                   if (isMe) ...[
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: () => ProfileEditDialog.show(context),
-                      child: const Text('Create profile'),
+                      child: Text(L10n.of(context)!.profileCreate),
                     ),
                   ],
                 ],
@@ -137,8 +137,8 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     final phone = isPhone(context);
     final l10n = L10n.of(context)!;
     final tabs = <PillTab<String>>[
-      const PillTab(id: 'posts', icon: Icons.article_outlined, label: 'Posts'),
-      const PillTab(id: 'items', icon: Icons.storefront_outlined, label: 'Items'),
+      PillTab(id: 'posts', icon: Icons.article_outlined, label: L10n.of(context)!.profileTabPosts),
+      PillTab(id: 'items', icon: Icons.storefront_outlined, label: L10n.of(context)!.profileTabItems),
       PillTab(
         id: 'listings',
         icon: Icons.groups_outlined,
@@ -239,7 +239,7 @@ class _ProfileHeader extends StatelessWidget {
               if (isMe)
                 FilledButton.icon(
                   icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Edit profile'),
+                  label: Text(L10n.of(context)!.profileMenuEditProfile),
                   onPressed: () => ProfileEditDialog.show(context, existing: profile),
                 )
               else
@@ -382,7 +382,7 @@ class _UserPostsTab extends ConsumerWidget {
                         Icon(Icons.article_outlined,
                             size: 36, color: palette.sidebarLabelSecondary),
                         const SizedBox(height: 8),
-                        Text('No posts yet',
+                        Text(L10n.of(context)!.profileNoPosts,
                             style: TextStyle(
                                 fontSize: 13, color: palette.sidebarLabelSecondary)),
                       ],
@@ -419,17 +419,17 @@ class _UserPostsTab extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete post?'),
-        content: const Text('This cannot be undone.'),
+        title: Text(L10n.of(context)!.deletePostTitle),
+        content: Text(L10n.of(context)!.cannotBeUndone),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -444,7 +444,7 @@ class _UserPostsTab extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))),
       );
     }
   }
@@ -571,7 +571,7 @@ class _UserItemsTab extends ConsumerWidget {
                         Icon(Icons.storefront_outlined,
                             size: 36, color: palette.sidebarLabelSecondary),
                         const SizedBox(height: 8),
-                        Text('No marketplace items yet',
+                        Text(L10n.of(context)!.profileNoMarketItems,
                             style: TextStyle(
                                 fontSize: 13, color: palette.sidebarLabelSecondary)),
                       ],
@@ -616,18 +616,18 @@ class _UserItemsTab extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${listing.title}"?'),
-        content: const Text(
-            'This will remove the current snapshot. This cannot be undone.'),
+        title: Text(L10n.of(context)!.deleteNamedTitle(listing.title)),
+        content: Text(
+            L10n.of(context)!.profileDeleteSnapshotBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -643,7 +643,7 @@ class _UserItemsTab extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))),
       );
     }
   }
@@ -792,17 +792,17 @@ class _UserListingsTab extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${listing.title}"?'),
-        content: const Text('This cannot be undone.'),
+        title: Text(L10n.of(context)!.deleteNamedTitle(listing.title)),
+        content: Text(L10n.of(context)!.cannotBeUndone),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -817,7 +817,7 @@ class _UserListingsTab extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))),
       );
     }
   }

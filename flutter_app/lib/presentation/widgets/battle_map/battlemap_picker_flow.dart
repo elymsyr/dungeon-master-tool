@@ -8,6 +8,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Opens the battle map background picker — DM chooses between a fresh
 /// device file or an already-uploaded image from a location entity's
@@ -39,14 +40,14 @@ Future<void> openBattlemapPicker(
   final source = await showMenu<_PickerSource>(
     context: context,
     position: position,
-    items: const [
+    items: [
       PopupMenuItem(
         value: _PickerSource.device,
         child: ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.folder_open),
-          title: Text('From device'),
+          leading: const Icon(Icons.folder_open),
+          title: Text(L10n.of(context)!.bmPickFromDevice),
         ),
       ),
       PopupMenuItem(
@@ -54,8 +55,8 @@ Future<void> openBattlemapPicker(
         child: ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.place_outlined),
-          title: Text('From location battlemaps'),
+          leading: const Icon(Icons.place_outlined),
+          title: Text(L10n.of(context)!.bmPickFromLocations),
         ),
       ),
     ],
@@ -97,7 +98,7 @@ Future<String?> _pickLocationWithBattlemaps(
   ];
   if (eligible.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No locations with battlemaps')),
+      SnackBar(content: Text(L10n.of(context)!.bmNoLocationMaps)),
     );
     return null;
   }
@@ -122,7 +123,7 @@ Future<String?> _pickBattlemapImage(
     builder: (ctx) {
       final palette = Theme.of(ctx).extension<DmToolColors>()!;
       return AlertDialog(
-        title: const Text('Choose battlemap', style: TextStyle(fontSize: 16)),
+        title: Text(L10n.of(context)!.bmChooseMap, style: const TextStyle(fontSize: 16)),
         content: SizedBox(
           width: 480,
           height: 480,
@@ -159,7 +160,7 @@ Future<String?> _pickBattlemapImage(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
         ],
       );

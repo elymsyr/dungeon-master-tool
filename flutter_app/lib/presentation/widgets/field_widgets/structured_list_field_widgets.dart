@@ -7,6 +7,7 @@ import '../../../domain/services/entity_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../expandable_markdown.dart';
 import 'entity_link.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Typed structured-list editors for the structured list FieldTypes:
 ///   - classFeatures
@@ -92,7 +93,7 @@ class _StructuredListShell extends StatelessWidget {
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
-                    tooltip: 'Add entry',
+                    tooltip: L10n.of(context)!.entryAdd,
                     onPressed: _addRow,
                     visualDensity: VisualDensity.compact,
                   ),
@@ -102,7 +103,7 @@ class _StructuredListShell extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No entries',
+                  L10n.of(context)!.entriesEmpty,
                   style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
                 ),
               ),
@@ -150,7 +151,7 @@ class _StructuredListShell extends StatelessWidget {
                         if (!readOnly)
                           IconButton(
                             icon: const Icon(Icons.close, size: 14),
-                            tooltip: 'Remove',
+                            tooltip: L10n.of(context)!.btnRemove,
                             onPressed: () => _removeRow(i),
                             visualDensity: VisualDensity.compact,
                           ),
@@ -582,7 +583,7 @@ class RangedSenseListFieldWidget extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _MiniRelationField(
-              label: 'Sense',
+              label: L10n.of(context)!.slSense,
               value: row['sense_ref'],
               allowedTypes: const ['sense'],
               entities: entities,
@@ -591,7 +592,7 @@ class RangedSenseListFieldWidget extends StatelessWidget {
               onChanged: (v) => onRowChanged({...row, 'sense_ref': v}),
             ),
             _miniInt(
-              label: 'Range (ft)',
+              label: L10n.of(context)!.slRangeFt,
               value: row['range_ft'] is int ? row['range_ft'] as int : null,
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'range_ft': v}),
@@ -680,7 +681,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _miniInt(
-                  label: 'Level',
+                  label: L10n.of(context)!.lblLevel,
                   value: rowLvl,
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'level': v}),
@@ -691,14 +692,14 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                 // feature title. It matters more now that the row is the
                 // single place a level-gated grant is declared.
                 _miniText(
-                  label: 'Feature',
+                  label: L10n.of(context)!.slFeature,
                   value: (row['name'] ?? '').toString(),
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'name': v}),
                   width: 200,
                 ),
                 _miniText(
-                  label: 'Summary',
+                  label: L10n.of(context)!.slSummary,
                   value: (row['description'] ?? '').toString(),
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'description': v}),
@@ -708,8 +709,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                 if (gateMiss)
                   Tooltip(
                     message:
-                        'Row level $rowLvl is below subclass granted_at_level '
-                        '$grantedAtLevel — resolver will skip this feature.',
+                        L10n.of(context)!.slRowBelowGrant('$rowLvl', '$grantedAtLevel'),
                     child: const Icon(Icons.warning_amber,
                         size: 16, color: Colors.orange),
                   ),
@@ -721,7 +721,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
               runSpacing: 4,
               children: [
                 _MiniRelationListField(
-                  label: 'Resistances',
+                  label: L10n.of(context)!.slResistances,
                   values: _readStrList(row, 'granted_damage_resistances'),
                   allowedTypes: const ['damage-type'],
                   entities: entities,
@@ -731,7 +731,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       {...row, 'granted_damage_resistances': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Immunities',
+                  label: L10n.of(context)!.slImmunities,
                   values: _readStrList(row, 'granted_damage_immunities'),
                   allowedTypes: const ['damage-type'],
                   entities: entities,
@@ -741,7 +741,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       {...row, 'granted_damage_immunities': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Condition Imm.',
+                  label: L10n.of(context)!.slConditionImm,
                   values: _readStrList(row, 'granted_condition_immunities'),
                   allowedTypes: const ['condition'],
                   entities: entities,
@@ -751,7 +751,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       {...row, 'granted_condition_immunities': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Senses',
+                  label: L10n.of(context)!.slSenses,
                   values: _readStrList(row, 'granted_senses'),
                   allowedTypes: const ['sense'],
                   entities: entities,
@@ -761,7 +761,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'granted_senses': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Languages',
+                  label: L10n.of(context)!.slLanguages,
                   values: _readStrList(row, 'granted_languages'),
                   allowedTypes: const ['language'],
                   entities: entities,
@@ -774,7 +774,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                 // by the row it sits on, so it is authored here and not on a
                 // separate feat card.
                 _MiniRelationListField(
-                  label: 'Always Prepared Spells',
+                  label: L10n.of(context)!.slAlwaysPrepared,
                   values: _readStrList(row, 'always_prepared_spell_refs'),
                   allowedTypes: const ['spell'],
                   entities: entities,
@@ -784,7 +784,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'always_prepared_spell_refs': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Feats',
+                  label: L10n.of(context)!.wizardStepFeats,
                   values: _readStrList(row, 'granted_feat_refs'),
                   allowedTypes: const ['feat'],
                   entities: entities,
@@ -794,7 +794,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'granted_feat_refs': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Traits',
+                  label: L10n.of(context)!.slTraits,
                   values: _readStrList(row, 'granted_trait_refs'),
                   allowedTypes: const ['trait'],
                   entities: entities,
@@ -804,7 +804,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'granted_trait_refs': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Actions',
+                  label: L10n.of(context)!.slActions,
                   values: _readStrList(row, 'granted_action_refs'),
                   allowedTypes: const ['creature-action'],
                   entities: entities,
@@ -814,7 +814,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'granted_action_refs': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Bonus Actions',
+                  label: L10n.of(context)!.slBonusActions,
                   values: _readStrList(row, 'granted_bonus_action_refs'),
                   allowedTypes: const ['creature-action'],
                   entities: entities,
@@ -824,7 +824,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                       onRowChanged({...row, 'granted_bonus_action_refs': v}),
                 ),
                 _MiniRelationListField(
-                  label: 'Reactions',
+                  label: L10n.of(context)!.slReactions,
                   values: _readStrList(row, 'granted_reaction_refs'),
                   allowedTypes: const ['creature-action'],
                   entities: entities,
@@ -907,7 +907,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _miniEnum(
-              label: 'Kind',
+              label: L10n.of(context)!.slKind,
               value: row['kind'],
               options: _spellEffectKinds,
               readOnly: readOnly,
@@ -915,14 +915,14 @@ class SpellEffectListFieldWidget extends StatelessWidget {
               width: 120,
             ),
             _miniText(
-              label: 'Dice',
+              label: L10n.of(context)!.slDice,
               value: (row['dice'] ?? '').toString(),
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'dice': v}),
               width: 90,
             ),
             _MiniRelationField(
-              label: 'Damage Type',
+              label: L10n.of(context)!.slDamageType,
               value: row['type_ref'],
               allowedTypes: const ['damage-type'],
               entities: entities,
@@ -931,7 +931,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
               onChanged: (v) => onRowChanged({...row, 'type_ref': v}),
             ),
             _MiniRelationField(
-              label: 'Save Ability',
+              label: L10n.of(context)!.slSaveAbility,
               value: row['save_ability_ref'],
               allowedTypes: const ['ability'],
               entities: entities,
@@ -940,7 +940,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
               onChanged: (v) => onRowChanged({...row, 'save_ability_ref': v}),
             ),
             _miniEnum(
-              label: 'Save Effect',
+              label: L10n.of(context)!.slSaveEffect,
               value: row['save_effect'],
               options: _spellSaveEffects,
               readOnly: readOnly,
@@ -948,7 +948,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
               width: 110,
             ),
             _MiniRelationListField(
-              label: 'Conditions',
+              label: L10n.of(context)!.sessionConditions,
               values: condRefs,
               allowedTypes: const ['condition'],
               entities: entities,
@@ -957,7 +957,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
               onChanged: (v) => onRowChanged({...row, 'condition_refs': v}),
             ),
             _miniText(
-              label: 'Scaling Dice',
+              label: L10n.of(context)!.slScalingDice,
               value: (row['scaling_dice'] ?? '').toString(),
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'scaling_dice': v}),
@@ -1051,8 +1051,8 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 if (!readOnly)
                   TextButton.icon(
                     icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Add Group',
-                        style: TextStyle(fontSize: 11)),
+                    label: Text(L10n.of(context)!.slAddGroup,
+                        style: const TextStyle(fontSize: 11)),
                     onPressed: () {
                       final next = [
                         ...groups,
@@ -1074,7 +1074,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 child: Text(
                   readOnly
                       ? '—'
-                      : 'No groups — tap + Add Group to author a "Choose A or B" choice.',
+                      : L10n.of(context)!.slNoGroups,
                   style: TextStyle(
                     fontSize: 11,
                     color: palette.colorScheme.outline,
@@ -1126,7 +1126,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _miniText(
-                  label: 'Label',
+                  label: L10n.of(context)!.lblLabel,
                   value: (group['label'] ?? '').toString(),
                   readOnly: readOnly,
                   onChanged: (s) => writeGroup({...group, 'label': s}),
@@ -1135,7 +1135,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _miniText(
-                    label: 'Prompt',
+                    label: L10n.of(context)!.notifInputPrompt,
                     value: (group['prompt'] ?? '').toString(),
                     readOnly: readOnly,
                     onChanged: (s) => writeGroup({...group, 'prompt': s}),
@@ -1146,7 +1146,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 16),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Delete group',
+                    tooltip: L10n.of(context)!.chatMenuDeleteGroup,
                     onPressed: removeGroup,
                   ),
               ],
@@ -1159,8 +1159,8 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4, left: 8),
                 child: TextButton.icon(
                   icon: const Icon(Icons.add_circle_outline, size: 14),
-                  label: const Text('Add Option',
-                      style: TextStyle(fontSize: 11)),
+                  label: Text(L10n.of(context)!.notifAddOption,
+                      style: const TextStyle(fontSize: 11)),
                   onPressed: () {
                     final next = [
                       ...options,
@@ -1232,7 +1232,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: _miniText(
-                    label: 'Label',
+                    label: L10n.of(context)!.lblLabel,
                     value: (option['label'] ?? '').toString(),
                     readOnly: readOnly,
                     onChanged: (s) => writeOption({...option, 'label': s}),
@@ -1241,7 +1241,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 _miniInt(
-                  label: 'Gold gp',
+                  label: L10n.of(context)!.slGoldGp,
                   value: goldGp is int
                       ? goldGp
                       : (goldGp is num ? goldGp.toInt() : null),
@@ -1261,21 +1261,21 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.close, size: 14),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Delete option',
+                    tooltip: L10n.of(context)!.slDeleteOption,
                     onPressed: removeOption,
                   ),
               ],
             ),
             const SizedBox(height: 4),
             for (var ii = 0; ii < items.length; ii++)
-              _buildItem(option, writeOption, items, ii),
+              _buildItem(context, option, writeOption, items, ii),
             if (!readOnly)
               Padding(
                 padding: const EdgeInsets.only(top: 2, left: 6),
                 child: TextButton.icon(
                   icon: const Icon(Icons.add, size: 12),
-                  label: const Text('Add Item',
-                      style: TextStyle(fontSize: 10)),
+                  label: Text(L10n.of(context)!.slAddItem,
+                      style: const TextStyle(fontSize: 10)),
                   onPressed: () {
                     final next = [
                       ...items,
@@ -1291,7 +1291,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(
+  Widget _buildItem(BuildContext context,
     Map<String, dynamic> option,
     void Function(Map<String, dynamic>) writeOption,
     List<Map<String, dynamic>> items,
@@ -1317,7 +1317,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
       child: Row(
         children: [
           _MiniRelationField(
-            label: 'Item',
+            label: L10n.of(context)!.slItem,
             value: refId,
             allowedTypes: _kItemPickAllowedTypes,
             entities: entities,
@@ -1327,7 +1327,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           _miniInt(
-            label: 'Qty',
+            label: L10n.of(context)!.slQty,
             value:
                 qty is int ? qty : (qty is num ? qty.toInt() : null),
             readOnly: readOnly,
@@ -1338,7 +1338,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.close, size: 12),
               visualDensity: VisualDensity.compact,
-              tooltip: 'Delete item',
+              tooltip: L10n.of(context)!.slDeleteItem,
               onPressed: removeItem,
             ),
         ],
@@ -1398,7 +1398,7 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _MiniRelationField(
-                  label: 'Pool',
+                  label: L10n.of(context)!.slPool,
                   value: row['pool_ref'],
                   allowedTypes: const ['resource-pool'],
                   entities: entities,
@@ -1412,7 +1412,7 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
                     Colors.teal,
                   ),
                 _miniEnum(
-                  label: 'Recharge',
+                  label: L10n.of(context)!.slRecharge,
                   value: row['recharge']?.toString(),
                   options: _poolRecharges,
                   readOnly: readOnly,
@@ -1421,14 +1421,14 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
                   width: 120,
                 ),
                 _miniInt(
-                  label: 'Uses',
+                  label: L10n.of(context)!.slUses,
                   value: row['count'] is int ? row['count'] as int : null,
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'count': v}),
                   width: 70,
                 ),
                 _miniText(
-                  label: 'Formula (e.g. cha_mod_min_1)',
+                  label: L10n.of(context)!.slFormula,
                   value: row['count_formula']?.toString() ?? '',
                   readOnly: readOnly,
                   width: 190,
@@ -1438,7 +1438,7 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
               ],
             ),
             _LevelValueTableEditor(
-              title: 'Uses by level',
+              title: L10n.of(context)!.slUsesByLevel,
               table: table,
               classRefName: row['class_ref'] is Map
                   ? (row['class_ref'] as Map)['name']?.toString()
@@ -1549,10 +1549,10 @@ class _AddLevelValueButtonState extends State<_AddLevelValueButton> {
             controller: _lvl,
             keyboardType: TextInputType.number,
             style: const TextStyle(fontSize: 11),
-            decoration: const InputDecoration(
-                labelText: 'Lvl',
+            decoration: InputDecoration(
+                labelText: L10n.of(context)!.lblLvl,
                 isDense: true,
-                labelStyle: TextStyle(fontSize: 10)),
+                labelStyle: const TextStyle(fontSize: 10)),
           ),
         ),
         const SizedBox(width: 4),
@@ -1562,10 +1562,10 @@ class _AddLevelValueButtonState extends State<_AddLevelValueButton> {
             controller: _val,
             keyboardType: TextInputType.number,
             style: const TextStyle(fontSize: 11),
-            decoration: const InputDecoration(
-                labelText: 'Val',
+            decoration: InputDecoration(
+                labelText: L10n.of(context)!.slValShort,
                 isDense: true,
-                labelStyle: TextStyle(fontSize: 10)),
+                labelStyle: const TextStyle(fontSize: 10)),
           ),
         ),
         IconButton(
@@ -1626,7 +1626,7 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _MiniRelationField(
-            label: 'Spell',
+            label: L10n.of(context)!.slSpell,
             value: row['spell_ref'],
             allowedTypes: const ['spell'],
             entities: entities,
@@ -1640,14 +1640,14 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
               Colors.indigo,
             ),
           _miniInt(
-            label: 'At level',
+            label: L10n.of(context)!.slAtLevel,
             value: row['at_level'] is int ? row['at_level'] as int : null,
             readOnly: readOnly,
             onChanged: (v) => onRowChanged({...row, 'at_level': v ?? 1}),
             width: 90,
           ),
           _miniInt(
-            label: 'Uses / long rest',
+            label: L10n.of(context)!.slUsesPerLongRest,
             value: row['uses_per_long_rest'] is int
                 ? row['uses_per_long_rest'] as int
                 : null,
@@ -1665,7 +1665,7 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
           ),
           if (!readOnly || row['is_cantrip'] == true)
             FilterChip(
-              label: const Text('Cantrip', style: TextStyle(fontSize: 11)),
+              label: Text(L10n.of(context)!.slCantrip, style: const TextStyle(fontSize: 11)),
               selected: row['is_cantrip'] == true,
               onSelected: readOnly
                   ? null
@@ -1757,14 +1757,14 @@ class PlayerChoicesFieldWidget extends StatelessWidget {
                   onChanged: (s) => onRowChanged({...row, 'group_id': s}),
                 ),
                 _miniText(
-                  label: 'Label',
+                  label: L10n.of(context)!.lblLabel,
                   value: row['label']?.toString() ?? '',
                   readOnly: readOnly,
                   width: 140,
                   onChanged: (s) => onRowChanged({...row, 'label': s}),
                 ),
                 _miniEnum(
-                  label: 'Pick from',
+                  label: L10n.of(context)!.slPickFrom,
                   value: row['pick_kind']?.toString(),
                   options: _playerChoicePickKinds,
                   readOnly: readOnly,
@@ -1772,7 +1772,7 @@ class PlayerChoicesFieldWidget extends StatelessWidget {
                   width: 140,
                 ),
                 _miniInt(
-                  label: 'Picks',
+                  label: L10n.of(context)!.slPicks,
                   value: row['pick'] is int ? row['pick'] as int : null,
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'pick': v ?? 1}),
@@ -1780,7 +1780,7 @@ class PlayerChoicesFieldWidget extends StatelessWidget {
                 ),
                 if (row['pick_kind'] == 'spell_from_list') ...[
                   _miniInt(
-                    label: 'Spell level',
+                    label: L10n.of(context)!.slSpellLevel,
                     value: row['spell_level'] is int
                         ? row['spell_level'] as int
                         : null,
@@ -1790,7 +1790,7 @@ class PlayerChoicesFieldWidget extends StatelessWidget {
                     width: 90,
                   ),
                   _miniText(
-                    label: 'List group id',
+                    label: L10n.of(context)!.slListGroupId,
                     value: row['list_group_id']?.toString() ?? '',
                     readOnly: readOnly,
                     width: 110,
@@ -1801,7 +1801,7 @@ class PlayerChoicesFieldWidget extends StatelessWidget {
               ],
             ),
             _miniText(
-              label: 'Prompt shown to the player',
+              label: L10n.of(context)!.slPromptToPlayer,
               value: row['prompt']?.toString() ?? '',
               readOnly: readOnly,
               width: 420,
@@ -1846,7 +1846,7 @@ class _ChoiceOptionsEditor extends StatelessWidget {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text('Options:',
+          Text(L10n.of(context)!.slOptionsColon,
               style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.outline)),
@@ -1905,10 +1905,10 @@ class _AddChoiceOptionButtonState extends State<_AddChoiceOptionButton> {
           child: TextField(
             controller: _ctrl,
             style: const TextStyle(fontSize: 11),
-            decoration: const InputDecoration(
-                labelText: 'New option',
+            decoration: InputDecoration(
+                labelText: L10n.of(context)!.slNewOption,
                 isDense: true,
-                labelStyle: TextStyle(fontSize: 10)),
+                labelStyle: const TextStyle(fontSize: 10)),
             onSubmitted: (s) {
               if (s.trim().isEmpty) return;
               widget.onAdd(s.trim());
@@ -2018,8 +2018,8 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
                 if (!readOnly)
                   TextButton.icon(
                     icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Add Lineage',
-                        style: TextStyle(fontSize: 11)),
+                    label: Text(L10n.of(context)!.slAddLineage,
+                        style: const TextStyle(fontSize: 11)),
                     onPressed: () {
                       writeRows([
                         ...rows,
@@ -2036,7 +2036,7 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  readOnly ? '—' : 'No lineages — tap + Add Lineage.',
+                  readOnly ? '—' : L10n.of(context)!.slNoLineages,
                   style: TextStyle(
                     fontSize: 11,
                     color: palette.colorScheme.outline,
@@ -2090,14 +2090,14 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
             : IconButton(
                 icon: const Icon(Icons.delete_outline, size: 16),
                 visualDensity: VisualDensity.compact,
-                tooltip: 'Delete lineage',
+                tooltip: L10n.of(context)!.slDeleteLineage,
                 onPressed: removeRow,
               ),
         children: [
           Row(
             children: [
               _miniText(
-                label: 'Name',
+                label: L10n.of(context)!.sessionName,
                 value: name,
                 readOnly: readOnly,
                 onChanged: (s) => writeRow({...row, 'name': s}),
@@ -2106,7 +2106,7 @@ class SubspeciesOptionsFieldWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _miniText(
-                  label: 'Description',
+                  label: L10n.of(context)!.listingDescriptionLabel,
                   value: description,
                   readOnly: readOnly,
                   onChanged: (s) =>
@@ -2236,17 +2236,17 @@ class _RelationListChips extends StatelessWidget {
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
+                    child: Padding(
                       padding:
-                          EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.add, size: 12),
-                          SizedBox(width: 2),
+                          const Icon(Icons.add, size: 12),
+                          const SizedBox(width: 2),
                           Text(
-                            'Add',
-                            style: TextStyle(fontSize: 11),
+                            L10n.of(context)!.btnAdd,
+                            style: const TextStyle(fontSize: 11),
                           ),
                         ],
                       ),

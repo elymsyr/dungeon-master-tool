@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/admin_provider.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Online yasaklı kullanıcılar listesi + "Remove restriction" aksiyonu.
 class RestrictedUsersTab extends ConsumerWidget {
@@ -18,7 +19,7 @@ class RestrictedUsersTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
         data: (entries) {
           if (entries.isEmpty) {
             return Center(
@@ -28,7 +29,7 @@ class RestrictedUsersTab extends ConsumerWidget {
                   Icon(Icons.check_circle_outline,
                       size: 48, color: palette.sidebarLabelSecondary),
                   const SizedBox(height: 8),
-                  Text('No online-restricted users.',
+                  Text(L10n.of(context)!.adminNoRestricted,
                       style: TextStyle(color: palette.sidebarLabelSecondary)),
                 ],
               ),
@@ -92,7 +93,7 @@ class RestrictedUsersTab extends ConsumerWidget {
                       ),
                       TextButton.icon(
                         icon: const Icon(Icons.lock_open, size: 16),
-                        label: const Text('Unrestrict'),
+                        label: Text(L10n.of(context)!.adminUnrestrict),
                         onPressed: () async {
                           try {
                             await ref
@@ -109,7 +110,7 @@ class RestrictedUsersTab extends ConsumerWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                       content:
-                                          Text('Unrestrict failed: $err')));
+                                          Text(L10n.of(context)!.adminUnrestrictFailed('$err'))));
                             }
                           }
                         },

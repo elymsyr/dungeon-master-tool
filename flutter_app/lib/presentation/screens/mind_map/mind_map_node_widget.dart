@@ -15,6 +15,7 @@ import '../../widgets/asset_ref_image.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projectable.dart';
 import 'mind_map_notifier.dart';
+import '../../l10n/app_localizations.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
 ///
@@ -134,10 +135,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           duration: const Duration(seconds: 30),
           content: Text(
             move
-                ? 'Drag the node to move it.'
-                : 'Drag a corner handle to resize.',
+                ? L10n.of(context)!.mindMapDragMove
+                : L10n.of(context)!.mindMapDragResize,
           ),
-          action: SnackBarAction(label: 'Done', onPressed: _exitMobileMode),
+          action: SnackBarAction(label: L10n.of(context)!.btnDone, onPressed: _exitMobileMode),
         ),
       );
       _mobileModeSnack?.closed.then((_) {
@@ -604,14 +605,14 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                         color: palette.nodeText.withValues(alpha: 0.85),
                         height: 1.4,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         filled: false,
-                        hintText: 'Write note... (@ to mention)',
+                        hintText: L10n.of(context)!.mindMapNoteHint,
                       ),
                       onChanged: (v) =>
                           widget.notifier.updateNodeContent(n.id, v),
@@ -642,7 +643,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Text(
-          'No entity linked',
+          L10n.of(context)!.mindMapNoEntity,
           style: TextStyle(
             fontSize: 10,
             color: palette.tabText.withValues(alpha: 0.4),
@@ -657,7 +658,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Text(
-          'Entity not found',
+          L10n.of(context)!.sessionEntityNotFound,
           style: TextStyle(
             fontSize: 10,
             color: palette.tabText.withValues(alpha: 0.4),
@@ -840,7 +841,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Right-click to set image',
+            L10n.of(context)!.mindMapSetImageHint,
             style: TextStyle(
               fontSize: 10,
               color: palette.tabText.withValues(alpha: 0.4),
@@ -1110,7 +1111,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
         title: Text(
-          'Edit Note',
+          L10n.of(context)!.mindMapEditNote,
           style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
         ),
         content: SizedBox(
@@ -1126,7 +1127,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                   border: OutlineInputBorder(
                     borderSide: BorderSide(color: palette.uiFloatingBorder),
                   ),
-                  hintText: 'Title...',
+                  hintText: L10n.of(context)!.mindMapTitleHint,
                   hintStyle: TextStyle(
                     color: palette.uiFloatingText.withValues(alpha: 0.4),
                     fontSize: 12,
@@ -1142,7 +1143,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                   border: OutlineInputBorder(
                     borderSide: BorderSide(color: palette.uiFloatingBorder),
                   ),
-                  hintText: 'Enter markdown content...',
+                  hintText: L10n.of(context)!.mindMapContentHint,
                   hintStyle: TextStyle(
                     color: palette.uiFloatingText.withValues(alpha: 0.4),
                     fontSize: 12,
@@ -1156,7 +1157,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              L10n.of(context)!.btnCancel,
               style: TextStyle(color: palette.uiFloatingText),
             ),
           ),
@@ -1172,7 +1173,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
               );
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),
@@ -1190,7 +1191,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
         title: Text(
-          'Rename',
+          L10n.of(context)!.sessionRename,
           style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
         ),
         content: TextField(
@@ -1207,7 +1208,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              L10n.of(context)!.btnCancel,
               style: TextStyle(color: palette.uiFloatingText),
             ),
           ),
@@ -1216,7 +1217,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
               widget.notifier.updateNodeLabel(n.id, ctrl.text);
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),
@@ -1242,7 +1243,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
         title: Text(
-          'Pick Color',
+          L10n.of(context)!.pickColor,
           style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
         ),
         content: Wrap(
@@ -1305,6 +1306,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     final initial = widget.node.imageUrl;
     if (initial == null || initial.isEmpty) return;
     var url = initial;
+    final imageLabel = L10n.of(context)!.lblImage;
     try {
       // Transient ref projeksiyona özel — node'a yazılmaz.
       url = await projectableMapImage(ref.read, url);
@@ -1312,7 +1314,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     } catch (_) {}
     ref.read(projectionControllerProvider.notifier).addItem(
           ProjectionItemBuilders.image(
-            label: widget.node.label.isEmpty ? 'Image' : widget.node.label,
+            label: widget.node.label.isEmpty ? imageLabel : widget.node.label,
             filePaths: [url],
           ),
           setActive: true,
@@ -1481,7 +1483,7 @@ void showMindMapEdgeMenu(
           children: [
             Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
             const SizedBox(width: 8),
-            Text('Delete Connection',
+            Text(L10n.of(context)!.mindMapDeleteConnection,
                 style: TextStyle(color: Colors.red[300], fontSize: 13)),
           ],
         ),

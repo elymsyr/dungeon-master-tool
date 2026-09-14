@@ -56,7 +56,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           children: [
             Icon(Icons.cloud_outlined, size: 16, color: palette.tabActiveText),
             const SizedBox(width: 6),
-            Text('Online',
+            Text(L10n.of(context)!.worldsRoleBadgeNone,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -67,7 +67,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
         const SizedBox(height: 8),
         if (offline)
           Text(
-            'Sign in and configure Supabase to enable online play.',
+            L10n.of(context)!.onlineSignInToEnable,
             style: TextStyle(
                 fontSize: 12, color: palette.sidebarLabelSecondary),
           )
@@ -98,10 +98,10 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
         if (role == WorldRole.dm) return _dmManageOnline(palette);
         if (role == WorldRole.player) return _playerInfo(palette);
         // online ama henüz üyelik bilgisi gelmedi: yumuşak bekleme.
-        return const Padding(
-          padding: EdgeInsets.all(8),
-          child: Text('Resolving membership...',
-              style: TextStyle(fontSize: 12)),
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(L10n.of(context)!.onlineResolvingMembership,
+              style: const TextStyle(fontSize: 12)),
         );
       },
     );
@@ -118,14 +118,13 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'This world is local-only.',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          Text(
+            L10n.of(context)!.onlineLocalOnly,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
-            'Making it online uploads world data to the cloud and lets you '
-            'invite players. You stay the DM.',
+            L10n.of(context)!.onlineMakeOnlineBody,
             style: TextStyle(
                 fontSize: 12, color: palette.sidebarLabelSecondary),
           ),
@@ -139,7 +138,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.cloud_upload, size: 16),
-            label: const Text('Multiplayer On'),
+            label: Text(L10n.of(context)!.multiplayerOn),
           ),
         ],
       ),
@@ -154,13 +153,13 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           children: [
             Icon(Icons.check_circle, size: 14, color: palette.successBtnBg),
             const SizedBox(width: 6),
-            const Text('World is online',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(L10n.of(context)!.worldIsOnline,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const Spacer(),
             TextButton.icon(
               onPressed: _busy ? null : _unpublish,
               icon: const Icon(Icons.cloud_off, size: 14),
-              label: const Text('Multiplayer Off'),
+              label: Text(L10n.of(context)!.multiplayerOff),
               style: TextButton.styleFrom(
                 foregroundColor: palette.dangerBtnBg,
                 visualDensity: VisualDensity.compact,
@@ -192,13 +191,13 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           children: [
             Icon(Icons.person, size: 14, color: palette.tabActiveText),
             const SizedBox(width: 6),
-            const Text('Joined as Player',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(L10n.of(context)!.joinedAsPlayer,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const Spacer(),
             TextButton.icon(
               onPressed: _busy ? null : _leave,
               icon: const Icon(Icons.exit_to_app, size: 14),
-              label: const Text('Leave World'),
+              label: Text(L10n.of(context)!.worldsLeaveTitle),
               style: TextButton.styleFrom(
                 foregroundColor: palette.dangerBtnBg,
                 visualDensity: VisualDensity.compact,
@@ -258,7 +257,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.invalidate(worldRoleProvider(widget.campaignId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('World is now online')),
+        SnackBar(content: Text(L10n.of(context)!.worldNowOnline)),
       );
       // Hub'daki ayar diyaloğu aktif OLMAYAN bir dünyayı da publish
       // edebiliyor — tohum `data`'dan okumalı, provider'lardan değil.
@@ -279,17 +278,16 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Multiplayer Off'),
-        content: const Text(
-            'This removes the world and all member data from the cloud. '
-            'Local data is preserved. Continue?'),
+        title: Text(L10n.of(context)!.multiplayerOff),
+        content: Text(
+            L10n.of(context)!.multiplayerOffBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Multiplayer Off')),
+              child: Text(L10n.of(context)!.multiplayerOff)),
         ],
       ),
     );
@@ -323,16 +321,16 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove member'),
+        title: Text(L10n.of(context)!.removeMember),
         content: Text(
-            'Remove ${m.displayName ?? m.username ?? 'this player'} from the world?'),
+            L10n.of(context)!.removeMemberBody(m.displayName ?? m.username ?? L10n.of(context)!.thisPlayer)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove')),
+              child: Text(L10n.of(context)!.btnRemove)),
         ],
       ),
     );
@@ -355,18 +353,16 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Leave world'),
-        content: const Text(
-            'You will lose access to this world. Characters you owned '
-            'become claimable again. The local copy of this world will '
-            'be deleted from this device (your character copies stay).'),
+        title: Text(L10n.of(context)!.worldsLeaveTitle),
+        content: Text(
+            L10n.of(context)!.leaveWorldBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Leave')),
+              child: Text(L10n.of(context)!.worldsBtnLeave)),
         ],
       ),
     );
@@ -393,7 +389,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Left "${widget.campaignName}"')),
+          SnackBar(content: Text(L10n.of(context)!.leftWorldSnack(widget.campaignName))),
         );
       }
     } catch (e) {

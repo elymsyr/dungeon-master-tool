@@ -133,8 +133,8 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       if (worldName.isEmpty) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Character world not found locally.'),
+          SnackBar(
+            content: Text(L10n.of(context)!.charWorldNotFound),
           ),
         );
         return;
@@ -152,7 +152,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'World "$worldName" not found on disk — character cannot open.'),
+                  L10n.of(context)!.charWorldMissingOnDisk(worldName)),
             ),
           );
           return;
@@ -251,7 +251,7 @@ class _OfflineCharacterList extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Error: $e',
+            L10n.of(context)!.hubErrorGeneric('$e'),
             style: TextStyle(color: palette.dangerBtnBg),
           ),
         ),
@@ -270,7 +270,7 @@ class _OfflineCharacterList extends ConsumerWidget {
               child: Text(
                 activeWorld == null
                     ? 'Open a world to see its characters.'
-                    : 'No characters in this world yet.',
+                    : L10n.of(context)!.charsNoneInWorld,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: palette.sidebarLabelSecondary,
@@ -332,14 +332,14 @@ class _OfflineCharacterRowState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove from world?'),
+        title: Text(L10n.of(context)!.removeFromWorldTitle),
         content: Text(
-          '"${c.entity.name}" leaves this world. The character itself is kept and can be attached to another world later.',
+          L10n.of(context)!.charRemoveFromWorldBody(c.entity.name),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -347,7 +347,7 @@ class _OfflineCharacterRowState
               backgroundColor: palette.dangerBtnBg,
               foregroundColor: palette.dangerBtnText,
             ),
-            child: const Text('Remove'),
+            child: Text(L10n.of(context)!.btnRemove),
           ),
         ],
       ),
@@ -433,6 +433,7 @@ class _OfflineCharacterRowState
             onSettings: () {},
             infoChips: CharacterStatChips(
               lines: characterStatLines(
+                l10n: L10n.of(context)!,
                 c,
                 entities,
                 ownerLabel: resolveCharacterOwnerLabel(ref, c),
@@ -450,7 +451,7 @@ class _OfflineCharacterRowState
                     ),
                   )
                 : PopupMenuButton<String>(
-                    tooltip: 'Actions',
+                    tooltip: L10n.of(context)!.sessionActions,
                     icon: Icon(Icons.more_vert,
                         size: 18, color: palette.sidebarLabelSecondary),
                     padding: EdgeInsets.zero,
@@ -497,7 +498,7 @@ class _OfflineCharacterRowState
                             Icon(Icons.exit_to_app,
                                 size: 16, color: palette.dangerBtnBg),
                             const SizedBox(width: 8),
-                            const Text('Remove from world'),
+                            Text(L10n.of(context)!.removeFromWorld),
                           ]),
                         ),
                     ],

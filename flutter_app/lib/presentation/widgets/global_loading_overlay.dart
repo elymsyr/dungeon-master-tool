@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/global_loading_provider.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Full-screen overlay that displays the most recent [LoadingTask] as an
 /// indeterminate/determinate progress card over a dimmed barrier.
@@ -83,7 +84,7 @@ class GlobalLoadingOverlay extends ConsumerWidget {
                   if (extraCount > 0) ...[
                     const SizedBox(height: 8),
                     Text(
-                      '+$extraCount more',
+                      L10n.of(context)!.marketplaceMoreEntities(extraCount),
                       style: TextStyle(
                         fontSize: 11,
                         color: palette.srdSubtitle,

@@ -10,6 +10,7 @@ import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../theme/dm_tool_colors.dart';
 import 'asset_ref_image.dart';
+import '../l10n/app_localizations.dart';
 
 /// Kart metadata'sı için shared editor: cover image + name + description + tags.
 /// Worlds / Packages / Templates / Characters settings dialog'larında aynı
@@ -154,7 +155,7 @@ class _MetadataEditorSectionState
         if (widget.showNameField) ...[
           TextField(
             controller: _nameCtrl,
-            decoration: _deco(labelText: 'Name'),
+            decoration: _deco(labelText: L10n.of(context)!.sessionName),
             onChanged: widget.onNameChanged,
           ),
           const SizedBox(height: 8),
@@ -163,7 +164,7 @@ class _MetadataEditorSectionState
           controller: _descCtrl,
           minLines: 2,
           maxLines: 4,
-          decoration: _deco(labelText: 'Description'),
+          decoration: _deco(labelText: L10n.of(context)!.listingDescriptionLabel),
           onChanged: widget.onDescriptionChanged,
         ),
         const SizedBox(height: 8),
@@ -204,8 +205,8 @@ class _MetadataEditorSectionState
               controller: controller,
               focusNode: focus,
               decoration: _deco(
-                labelText: 'Tags',
-                hintText: 'comma, separated, tags',
+                labelText: L10n.of(context)!.listingTagsLabel,
+                hintText: L10n.of(context)!.tagsExampleHint,
                 errorText: _tagsError,
               ),
               onChanged: _commitTags,
@@ -263,7 +264,7 @@ class _MetadataEditorSectionState
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Type tags separated by commas. Suggestions appear as you type.',
+              L10n.of(context)!.tagsHelper,
               style: TextStyle(
                 fontSize: 10,
                 color: palette.sidebarLabelSecondary,
@@ -329,7 +330,7 @@ class _MetadataEditorSectionState
                   Icon(Icons.add_photo_alternate_outlined,
                       size: 36, color: palette.sidebarLabelSecondary),
                   const SizedBox(height: 4),
-                  Text('Add cover image',
+                  Text(L10n.of(context)!.addCoverImage,
                       style: TextStyle(
                           fontSize: 12,
                           color: palette.sidebarLabelSecondary)),

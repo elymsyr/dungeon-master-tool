@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Sınıf/altsınıf/feat kaynaklı sayılabilir kaynaklar — Rage uses, Bardic
 /// Inspiration, Channel Divinity, Focus Points, Sorcery Points…  Karakter
@@ -89,11 +90,11 @@ class ClassResourcesTracker extends StatelessWidget {
     if (rows.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [for (final r in rows) _poolRow(r.id, r.max, r.recharge)],
+      children: [for (final r in rows) _poolRow(context, r.id, r.max, r.recharge)],
     );
   }
 
-  Widget _poolRow(String id, int max, String? recharge) {
+  Widget _poolRow(BuildContext context, String id, int max, String? recharge) {
     final pool = entities[id];
     // The row *name* stays the machine key — `pool:sorcery_points` below keys
     // the Font of Magic affordance off it. Only the label is humanised.
@@ -148,7 +149,7 @@ class ClassResourcesTracker extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 iconSize: 18,
-                tooltip: 'Reset (long rest)',
+                tooltip: L10n.of(context)!.resResetLongRest,
                 onPressed: readOnly || cur >= max ? null : () => emit(max),
                 icon: const Icon(Icons.bedtime_outlined),
               ),
@@ -164,7 +165,7 @@ class ClassResourcesTracker extends StatelessWidget {
                     constraints:
                         const BoxConstraints(minWidth: 28, minHeight: 28),
                     iconSize: 18,
-                    tooltip: 'Font of Magic — convert',
+                    tooltip: L10n.of(context)!.resFontOfMagicConvert,
                     onPressed: () => _openFontOfMagic(context, id, cur, max),
                     icon: const Icon(Icons.swap_horiz),
                   ),
@@ -244,18 +245,18 @@ class ClassResourcesTracker extends StatelessWidget {
             }
 
             return AlertDialog(
-              title: const Text('Font of Magic'),
+              title: Text(L10n.of(context)!.resFontOfMagic),
               content: SizedBox(
                 width: 360,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sorcery Points: $spCurrent / $spMax'),
+                    Text(L10n.of(context)!.resSorceryPoints('$spCurrent', '$spMax')),
                     const SizedBox(height: 12),
-                    const Text(
-                        'Slot → SP (refund slot for SP equal to slot level):',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                        L10n.of(context)!.resSlotToSp,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 6,
@@ -273,8 +274,8 @@ class ClassResourcesTracker extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text('SP → Slot (spend SP to create a slot):',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context)!.resSpToSlot,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 6,
@@ -299,7 +300,7 @@ class ClassResourcesTracker extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Done'),
+                  child: Text(L10n.of(context)!.btnDone),
                 ),
               ],
             );

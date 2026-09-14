@@ -119,10 +119,10 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.upload, size: 14),
-                label: const Text('Upload avatar', style: TextStyle(fontSize: 12)),
+                label: Text(L10n.of(context)!.profileUploadAvatar, style: const TextStyle(fontSize: 12)),
                 onPressed: isBusy ? null : () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Avatar upload coming soon')),
+                    SnackBar(content: Text(L10n.of(context)!.profileAvatarSoon)),
                   );
                 },
               ),
@@ -137,9 +137,9 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
                 FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9_]')),
               ],
               decoration: InputDecoration(
-                labelText: 'Username',
+                labelText: L10n.of(context)!.profileUsername,
                 prefixText: '@',
-                helperText: 'Lowercase letters, digits, underscores',
+                helperText: L10n.of(context)!.profileUsernameHelper,
                 errorText: _localError,
                 border: const OutlineInputBorder(),
               ),
@@ -150,9 +150,9 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
               controller: _displayNameCtrl,
               enabled: !isBusy,
               maxLength: 40,
-              decoration: const InputDecoration(
-                labelText: 'Display name (optional)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.profileDisplayName,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -161,9 +161,9 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
               enabled: !isBusy,
               maxLines: 3,
               maxLength: 280,
-              decoration: const InputDecoration(
-                labelText: 'Bio',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.profileBio,
+                border: const OutlineInputBorder(),
               ),
             ),
             if (!_isCreate) ...[
@@ -205,7 +205,7 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
         if (!_isCreate)
           TextButton(
             onPressed: isBusy ? null : () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
         FilledButton(
           onPressed: isBusy ? null : _save,

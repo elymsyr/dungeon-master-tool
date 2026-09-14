@@ -8,6 +8,7 @@ import '../../application/providers/world_packages_provider.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/package_info.dart';
+import '../l10n/app_localizations.dart';
 
 /// PR-SYNC-5: DM picks a local personal package and shares it into the
 /// currently-active world. All world members see the shared package via
@@ -32,12 +33,12 @@ class SharePackageToWorldDialog extends ConsumerWidget {
     final role = ref.watch(currentWorldRoleProvider).valueOrNull;
     if (role != WorldRole.dm) {
       return AlertDialog(
-        title: const Text('Share package'),
-        content: const Text('Only the DM can share packages with the world.'),
+        title: Text(L10n.of(context)!.sharePackageTitle),
+        content: Text(L10n.of(context)!.sharePackageDmOnly),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(L10n.of(context)!.btnClose),
           ),
         ],
       );
@@ -46,15 +47,15 @@ class SharePackageToWorldDialog extends ConsumerWidget {
     final shared = ref.watch(worldPackagesProvider(worldId)).valueOrNull ?? [];
     final sharedNames = {for (final r in shared) r.packageName};
     return AlertDialog(
-      title: const Text('Share package with world'),
+      title: Text(L10n.of(context)!.sharePackageWithWorld),
       content: SizedBox(
         width: 400,
         child: pkgListAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
           data: (packages) {
             if (packages.isEmpty) {
-              return const Text('No local packages found.');
+              return Text(L10n.of(context)!.sharePackageNoLocal);
             }
             return ListView.builder(
               shrinkWrap: true,
@@ -77,7 +78,7 @@ class SharePackageToWorldDialog extends ConsumerWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(L10n.of(context)!.btnClose),
         ),
       ],
     );
@@ -102,7 +103,7 @@ class _PackageRow extends ConsumerWidget {
     return ListTile(
       title: Text(info.name),
       subtitle: Text(
-        '${info.templateName} • ${info.entityCount} entities',
+        L10n.of(context)!.sharePackageSubtitle(info.templateName, '${info.entityCount}'),
         style: Theme.of(context).textTheme.bodySmall,
       ),
       trailing: alreadyShared
@@ -111,12 +112,12 @@ class _PackageRow extends ConsumerWidget {
               children: [
                 const Icon(Icons.cloud_done, size: 18),
                 IconButton(
-                  tooltip: 'Update share',
+                  tooltip: L10n.of(context)!.sharePackageUpdate,
                   icon: const Icon(Icons.refresh),
                   onPressed: () => _share(ref, context),
                 ),
                 IconButton(
-                  tooltip: 'Unshare',
+                  tooltip: L10n.of(context)!.btnUnshare,
                   icon: const Icon(Icons.cloud_off),
                   onPressed: () => _unshare(ref, context),
                 ),
@@ -124,7 +125,7 @@ class _PackageRow extends ConsumerWidget {
             )
           : FilledButton(
               onPressed: () => _share(ref, context),
-              child: const Text('Share'),
+              child: Text(L10n.of(context)!.btnShare),
             ),
     );
   }
@@ -143,13 +144,13 @@ class _PackageRow extends ConsumerWidget {
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Shared ${info.name}')),
+          SnackBar(content: Text(L10n.of(context)!.sharedName(info.name))),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Share failed: ${formatError(e)}')),
+          SnackBar(content: Text(L10n.of(context)!.shareFailed(formatError(e)))),
         );
       }
     }
@@ -168,13 +169,13 @@ class _PackageRow extends ConsumerWidget {
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unshared ${info.name}')),
+          SnackBar(content: Text(L10n.of(context)!.unsharedName(info.name))),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unshare failed: ${formatError(e)}')),
+          SnackBar(content: Text(L10n.of(context)!.unshareFailed(formatError(e)))),
         );
       }
     }

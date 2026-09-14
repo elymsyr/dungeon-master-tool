@@ -7,6 +7,7 @@ import '../../../core/utils/relative_time.dart';
 import '../../../data/datasources/remote/bug_reports_remote_ds.dart';
 import '../../dialogs/admin_compose_dm_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Admin panel → Reports sekmesi. Kullanıcı gönderimleri listelenir,
 /// status (open/read/resolved) filtresiyle süzülür, inline action'larla
@@ -58,7 +59,7 @@ class BugReportsTab extends ConsumerWidget {
             child: reportsAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
               data: (reports) {
                 if (reports.isEmpty) {
                   return Center(
@@ -68,7 +69,7 @@ class BugReportsTab extends ConsumerWidget {
                         Icon(Icons.check_circle_outline,
                             size: 48, color: palette.sidebarLabelSecondary),
                         const SizedBox(height: 8),
-                        Text('No bug reports.',
+                        Text(L10n.of(context)!.adminNoBugReports,
                             style: TextStyle(
                                 color: palette.sidebarLabelSecondary)),
                       ],
@@ -128,7 +129,7 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Update failed: $e')));
+          .showSnackBar(SnackBar(content: Text(L10n.of(context)!.updateFailed('$e'))));
     }
   }
 
@@ -153,9 +154,9 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
     }
     Clipboard.setData(ClipboardData(text: buf.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report copied to clipboard'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(L10n.of(context)!.adminReportCopied),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -229,7 +230,7 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
                 color: palette.featureCardBorder,
               ),
               if (hasLogs)
-                _Chip(label: 'HAS LOGS', color: palette.featureCardAccent),
+                _Chip(label: L10n.of(context)!.adminChipHasLogs, color: palette.featureCardAccent),
             ],
           ),
           const SizedBox(height: 10),
@@ -298,7 +299,7 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
           if (r.adminNote != null && r.adminNote!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Note: ${r.adminNote}',
+              L10n.of(context)!.adminNoteLine('${r.adminNote}'),
               style: TextStyle(
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
@@ -313,24 +314,24 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
             children: [
               IconButton(
                 icon: const Icon(Icons.copy, size: 16),
-                tooltip: 'Copy all',
+                tooltip: L10n.of(context)!.adminCopyAll,
                 onPressed: _copyAll,
               ),
               if (r.status == 'open')
                 TextButton.icon(
                   icon: const Icon(Icons.mark_email_read_outlined, size: 16),
-                  label: const Text('Mark read'),
+                  label: Text(L10n.of(context)!.adminMarkRead),
                   onPressed: () => _updateStatus('read'),
                 ),
               if (r.status != 'resolved')
                 TextButton.icon(
                   icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('Mark resolved'),
+                  label: Text(L10n.of(context)!.adminMarkResolved),
                   onPressed: () => _updateStatus('resolved'),
                 ),
               TextButton.icon(
                 icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                label: const Text('Message'),
+                label: Text(L10n.of(context)!.listingMessageApplicant),
                 onPressed: () => AdminComposeDmDialog.show(
                   context,
                   targetUserId: r.userId,

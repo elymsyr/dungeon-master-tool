@@ -10,6 +10,7 @@ import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'mind_map_canvas.dart';
 import 'mind_map_notifier.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Mind Map tab root — full-bleed canvas + floating controls at bottom-right.
 class MindMapScreen extends ConsumerStatefulWidget {
@@ -229,7 +230,7 @@ class _FloatingControls extends StatelessWidget {
         if (workspaces.isNotEmpty)
           _FloatingButton(
             icon: Icons.grid_view_rounded,
-            tooltip: 'Workspaces',
+            tooltip: L10n.of(context)!.mindMapWorkspaces,
             palette: palette,
             onPressed: () => _showWorkspaceMenu(context, workspaces),
           ),
@@ -237,21 +238,21 @@ class _FloatingControls extends StatelessWidget {
 
         _FloatingButton(
           icon: Icons.center_focus_strong,
-          tooltip: 'Center View',
+          tooltip: L10n.of(context)!.mindMapCenterView,
           palette: palette,
           onPressed: notifier.centerView,
         ),
         const SizedBox(height: 4),
         _FloatingButton(
           icon: Icons.add,
-          tooltip: 'Zoom In',
+          tooltip: L10n.of(context)!.zoomIn,
           palette: palette,
           onPressed: notifier.zoomIn,
         ),
         const SizedBox(height: 4),
         _FloatingButton(
           icon: Icons.remove,
-          tooltip: 'Zoom Out',
+          tooltip: L10n.of(context)!.zoomOut,
           palette: palette,
           onPressed: notifier.zoomOut,
         ),

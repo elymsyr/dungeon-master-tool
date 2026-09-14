@@ -31,6 +31,7 @@ import '../markdown_text_area.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
 import 'structured_list_field_widgets.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Resolve a relation field value to an entity UUID. Handles three formats
 /// stored in `fields`:
@@ -825,7 +826,7 @@ class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
             maxLines: widget.readOnly ? null : 4,
             textStyle: TextStyle(fontSize: 13, color: inkColor),
             decoration: InputDecoration(
-              hintText: 'Markdown supported (@ to mention)',
+              hintText: L10n.of(context)!.markdownMentionHintShort,
               hintStyle: TextStyle(
                 color: palette?.srdSubtitle,
                 fontSize: 12,
@@ -943,7 +944,7 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
             minLines: 4,
             textStyle: TextStyle(fontSize: 13, color: inkColor),
             decoration: InputDecoration(
-              hintText: 'Markdown supported. Use @ to mention entities.',
+              hintText: L10n.of(context)!.markdownMentionHintLong,
               hintStyle: TextStyle(
                 color: palette?.srdSubtitle,
                 fontSize: 12,
@@ -1858,8 +1859,8 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                       readOnly: widget.readOnly,
                       maxLines: widget.readOnly ? null : 3,
                       textStyle: TextStyle(fontSize: 13, color: p?.htmlText),
-                      decoration: const InputDecoration(
-                        hintText: '@ to mention entities',
+                      decoration: InputDecoration(
+                        hintText: L10n.of(context)!.mentionHint,
                         isDense: true,
                         alignLabelWithHint: true,
                       ),
@@ -1986,7 +1987,7 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No items',
+                  L10n.of(context)!.noItems,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.outline,
                     fontSize: 12,
@@ -2147,7 +2148,7 @@ class _MarkdownListFieldWidgetState extends State<_MarkdownListFieldWidget> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No items',
+                  L10n.of(context)!.noItems,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.outline,
                     fontSize: 12,
@@ -2353,7 +2354,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No items linked',
+                  L10n.of(context)!.noItemsLinked,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.outline,
                     fontSize: 12,
@@ -2410,8 +2411,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                     : Theme.of(context).colorScheme.outline,
                               ),
                               tooltip: schema.fieldKey == 'spells_known'
-                                  ? (isEquipped ? 'Prepared' : 'Not prepared')
-                                  : (isEquipped ? 'Equipped' : 'Not equipped'),
+                                  ? (isEquipped ? L10n.of(context)!.lblPrepared : L10n.of(context)!.lblNotPrepared)
+                                  : (isEquipped ? L10n.of(context)!.lblEquipped : L10n.of(context)!.lblNotEquipped),
                               // Equip/prepare flag toggles independent of edit
                               // mode — players juggle these mid-session.
                               onPressed: () {
@@ -2744,7 +2745,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
             ),
           IconButton(
             icon: const Icon(Icons.add, size: 18),
-            tooltip: 'Add',
+            tooltip: L10n.of(context)!.btnAdd,
             visualDensity: VisualDensity.compact,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             padding: EdgeInsets.zero,
@@ -2873,7 +2874,7 @@ class _SlotFieldWidget extends StatelessWidget {
               ),
               if (!readOnly) ...[
                 IconButton(
-                  tooltip: 'Remove slot',
+                  tooltip: L10n.of(context)!.slotRemove,
                   icon: const Icon(Icons.remove_circle_outline, size: 18),
                   onPressed: count == 0
                       ? null
@@ -2889,7 +2890,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Add slot',
+                  tooltip: L10n.of(context)!.slotAdd,
                   icon: const Icon(Icons.add_circle_outline, size: 18),
                   onPressed: count >= 99
                       ? null
@@ -2905,7 +2906,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Refill',
+                  tooltip: L10n.of(context)!.slotRefill,
                   icon: const Icon(Icons.refresh, size: 18),
                   onPressed: anyFilled
                       ? null
@@ -2928,7 +2929,7 @@ class _SlotFieldWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                'No slots — tap + to add',
+                L10n.of(context)!.slotsEmpty,
                 style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
               ),
             )
@@ -3031,7 +3032,7 @@ class _SpellSlotGridFieldWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                'No slots — non-caster or sub-progression level.',
+                L10n.of(context)!.slotsNoneNonCaster,
                 style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
               ),
             )
@@ -3187,7 +3188,7 @@ class _LevelTableFieldWidget extends StatelessWidget {
                 ),
                 if (!readOnly)
                   IconButton(
-                    tooltip: 'Add row',
+                    tooltip: L10n.of(context)!.rowAdd,
                     icon: const Icon(Icons.add, size: 16),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
@@ -3202,7 +3203,7 @@ class _LevelTableFieldWidget extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Text(
-                  'No levels — tap + to add',
+                  L10n.of(context)!.levelsEmpty,
                   style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
                 ),
               )
@@ -3214,7 +3215,7 @@ class _LevelTableFieldWidget extends StatelessWidget {
                     SizedBox(
                       width: 60,
                       child: Text(
-                        'Level',
+                        L10n.of(context)!.lblLevel,
                         style: TextStyle(
                           fontSize: 10,
                           color: palette.srdSubtitle,
@@ -3224,7 +3225,7 @@ class _LevelTableFieldWidget extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Value',
+                        L10n.of(context)!.lblValue,
                         style: TextStyle(
                           fontSize: 10,
                           color: palette.srdSubtitle,
@@ -3373,7 +3374,7 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
                 ),
                 if (!readOnly)
                   IconButton(
-                    tooltip: 'Add row',
+                    tooltip: L10n.of(context)!.rowAdd,
                     icon: const Icon(Icons.add, size: 16),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
@@ -3388,7 +3389,7 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Text(
-                  'No rows — tap + to add',
+                  L10n.of(context)!.rowsEmptyTap,
                   style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
                 ),
               )
@@ -3400,7 +3401,7 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
                     SizedBox(
                       width: 60,
                       child: Text(
-                        'Level',
+                        L10n.of(context)!.lblLevel,
                         style: TextStyle(
                           fontSize: 10,
                           color: palette.srdSubtitle,
@@ -3410,7 +3411,7 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Description',
+                        L10n.of(context)!.listingDescriptionLabel,
                         style: TextStyle(
                           fontSize: 10,
                           color: palette.srdSubtitle,
@@ -3688,18 +3689,18 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                     TextButton.icon(
                       onPressed: () => _removeImage(_currentIndex),
                       icon: const Icon(Icons.delete, size: 16),
-                      label: const Text(
-                        'Remove',
-                        style: TextStyle(fontSize: 12),
+                      label: Text(
+                        L10n.of(context)!.btnRemove,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                   if (images.length < kMaxEntityImages)
                     TextButton.icon(
                       onPressed: _pickImages,
                       icon: const Icon(Icons.add_photo_alternate, size: 16),
-                      label: const Text(
-                        'Add Image',
-                        style: TextStyle(fontSize: 12),
+                      label: Text(
+                        L10n.of(context)!.addImage,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                 ],
@@ -3802,7 +3803,7 @@ class _ImagePerEraFieldWidgetState
             ? Padding(
                 padding: const EdgeInsets.all(8),
                 child: Text(
-                  'No eras defined yet. Add eras from the Map tab to set per-era images.',
+                  L10n.of(context)!.erasEmptyHint,
                   style: TextStyle(
                     fontSize: 12,
                     color: palette?.srdSubtitle,
@@ -3863,7 +3864,7 @@ class _ImagePerEraFieldWidgetState
                           ),
                           if (map[eras[i].id] != null && !widget.readOnly)
                             IconButton(
-                              tooltip: 'Remove',
+                              tooltip: L10n.of(context)!.btnRemove,
                               icon: const Icon(Icons.delete, size: 18),
                               onPressed: () => _removeFor(eras[i].id),
                             ),
@@ -3969,7 +3970,7 @@ class _FileFieldWidget extends StatelessWidget {
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.attach_file, size: 16),
-                  label: const Text('Add File', style: TextStyle(fontSize: 12)),
+                  label: Text(L10n.of(context)!.addFile, style: const TextStyle(fontSize: 12)),
                 ),
               ),
           ],
@@ -4106,7 +4107,7 @@ class _PdfFieldWidget extends StatelessWidget {
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 16),
-                  label: const Text('Add PDF', style: TextStyle(fontSize: 12)),
+                  label: Text(L10n.of(context)!.addPdf, style: const TextStyle(fontSize: 12)),
                 ),
               ),
           ],
@@ -4166,23 +4167,23 @@ class _TagListFieldWidget extends StatelessWidget {
                 final result = await showDialog<String>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Add Tag'),
+                    title: Text(L10n.of(context)!.addTag),
                     content: TextField(
                       controller: controller,
                       autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: 'Tag name (comma separated)',
+                      decoration: InputDecoration(
+                        hintText: L10n.of(context)!.tagNameHint,
                       ),
                       onSubmitted: (v) => Navigator.of(ctx).pop(v),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Cancel'),
+                        child: Text(L10n.of(context)!.btnCancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(controller.text),
-                        child: const Text('Add'),
+                        child: Text(L10n.of(context)!.btnAdd),
                       ),
                     ],
                   ),
@@ -4364,21 +4365,21 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    'Skill',
+                    L10n.of(context)!.lblSkill,
                     style: TextStyle(fontSize: 10, color: outline),
                   ),
                 ),
                 SizedBox(
                   width: 34,
                   child: Text(
-                    'Abil',
+                    L10n.of(context)!.lblAbilShort,
                     style: TextStyle(fontSize: 10, color: outline),
                   ),
                 ),
                 SizedBox(
                   width: 44,
                   child: Text(
-                    'Misc',
+                    L10n.of(context)!.lblMisc,
                     style: TextStyle(fontSize: 10, color: outline),
                     textAlign: TextAlign.center,
                   ),
@@ -4386,7 +4387,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                 SizedBox(
                   width: 40,
                   child: Text(
-                    'Total',
+                    L10n.of(context)!.lblTotal,
                     style: TextStyle(fontSize: 10, color: outline),
                     textAlign: TextAlign.right,
                   ),
@@ -4395,7 +4396,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
             ),
             const Divider(height: 8),
             if (rows.isEmpty)
-              Text('No rows', style: TextStyle(color: outline, fontSize: 12))
+              Text(L10n.of(context)!.rowsEmpty, style: TextStyle(color: outline, fontSize: 12))
             else
               ...rows.asMap().entries.map((e) {
                 final i = e.key;
@@ -4425,7 +4426,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                     children: [
                       _ProfDot(
                         active: proficient,
-                        tooltip: 'Proficient',
+                        tooltip: L10n.of(context)!.lblProficient,
                         onTap: readOnly
                             ? null
                             : () => _updateRow(i, {'proficient': !proficient}),
@@ -4433,7 +4434,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                       _ProfDot(
                         active: expertise,
                         doubled: true,
-                        tooltip: 'Expertise',
+                        tooltip: L10n.of(context)!.lblExpertise,
                         onTap: readOnly
                             ? null
                             : () => _updateRow(i, {'expertise': !expertise}),
@@ -4713,7 +4714,7 @@ class _SpellSlotProgressionFieldWidget extends StatelessWidget {
                 if (!readOnly) ...[
                   TextButton.icon(
                     icon: const Icon(Icons.auto_awesome, size: 14),
-                    label: const Text('Auto-fill SRD', style: TextStyle(fontSize: 11)),
+                    label: Text(L10n.of(context)!.autoFillSrd, style: const TextStyle(fontSize: 11)),
                     onPressed: kind == CasterKind.none
                         ? null
                         : () => _write(preset),
@@ -4721,7 +4722,7 @@ class _SpellSlotProgressionFieldWidget extends StatelessWidget {
                   if (hasOverride)
                     TextButton.icon(
                       icon: const Icon(Icons.clear_all, size: 14),
-                      label: const Text('Clear', style: TextStyle(fontSize: 11)),
+                      label: Text(L10n.of(context)!.marketplaceFilterClear, style: const TextStyle(fontSize: 11)),
                       onPressed: () => _write(const {}),
                     ),
                 ],
@@ -4745,7 +4746,7 @@ class _SpellSlotProgressionFieldWidget extends StatelessWidget {
                 columnSpacing: 12,
                 horizontalMargin: 8,
                 columns: [
-                  const DataColumn(label: Text('Lvl', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700))),
+                  DataColumn(label: Text(L10n.of(context)!.lblLvl, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700))),
                   for (var sl = 1; sl <= _kMaxSpellLevel; sl++)
                     DataColumn(
                       label: Text(
@@ -4938,7 +4939,7 @@ class _CrCalculatorFieldWidget extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'AC $ac · HP $hp · DMG p.273-275 estimate. Copy the suggestion into CR + XP fields manually.',
+              L10n.of(context)!.crEstimateHint('$ac', '$hp'),
               style: TextStyle(fontSize: 10, color: palette.colorScheme.outline),
             ),
             const SizedBox(height: 8),
@@ -4954,10 +4955,10 @@ class _CrCalculatorFieldWidget extends StatelessWidget {
                     readOnly: readOnly,
                     style: const TextStyle(fontSize: 12),
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Attack Bonus',
+                    decoration: InputDecoration(
+                      labelText: L10n.of(context)!.attackBonus,
                       isDense: true,
-                      labelStyle: TextStyle(fontSize: 11),
+                      labelStyle: const TextStyle(fontSize: 11),
                     ),
                     onChanged: (s) => write('atk_bonus', int.tryParse(s.trim())),
                   ),
@@ -4969,10 +4970,10 @@ class _CrCalculatorFieldWidget extends StatelessWidget {
                     readOnly: readOnly,
                     style: const TextStyle(fontSize: 12),
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'DPR (avg)',
+                    decoration: InputDecoration(
+                      labelText: L10n.of(context)!.dprAvg,
                       isDense: true,
-                      labelStyle: TextStyle(fontSize: 11),
+                      labelStyle: const TextStyle(fontSize: 11),
                     ),
                     onChanged: (s) => write('dpr_avg', int.tryParse(s.trim())),
                   ),
@@ -4986,10 +4987,10 @@ class _CrCalculatorFieldWidget extends StatelessWidget {
                     readOnly: readOnly,
                     style: const TextStyle(fontSize: 12),
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Save DC',
+                    decoration: InputDecoration(
+                      labelText: L10n.of(context)!.saveDc,
                       isDense: true,
-                      labelStyle: TextStyle(fontSize: 11),
+                      labelStyle: const TextStyle(fontSize: 11),
                     ),
                     onChanged: (s) => write('save_dc', int.tryParse(s.trim())),
                   ),
