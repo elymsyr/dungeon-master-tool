@@ -31,7 +31,7 @@
       "r2_path": "package/cairn-2e-core@1.0.0.json.gz",
       "size_bytes": 806741,
       "art_count": 311,
-      "art_bytes": 0,
+      "art_bytes": 33313552,
       "banner_credit": {
         "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
         "link": "https://cairnrpg.com/second-edition/"
@@ -59,7 +59,7 @@
       "r2_path": "package/cairn-community@1.0.0.json.gz",
       "size_bytes": 423931,
       "art_count": 342,
-      "art_bytes": 0,
+      "art_bytes": 37139610,
       "banner_credit": {
         "creator": "Dungeon Master Tool (original artwork, Alegreya/OFL)",
         "link": "https://cairnrpg.com/resources/"
@@ -85,7 +85,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
       "r2_path": "package/open5e-a5e-ag@2.1.0.json.gz",
-      "size_bytes": 1176472,
+      "size_bytes": 1199677,
+      "art_count": 455,
+      "art_bytes": 64314484,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/two-travelers-discovered-ruins-ancient-city-dense-forest-3d-illustration_15174550.htm#fromView=author&page=1&position=11&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
@@ -107,7 +109,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ddg.pkg.json",
       "r2_path": "package/open5e-a5e-ddg@2.1.0.json.gz",
-      "size_bytes": 25660,
+      "size_bytes": 25864,
+      "art_count": 4,
+      "art_bytes": 320542,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://fistfulofmeeples.wordpress.com/wp-content/uploads/2020/11/gauntlgrym.png"
@@ -129,7 +133,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-gpg.pkg.json",
       "r2_path": "package/open5e-a5e-gpg@2.1.0.json.gz",
-      "size_bytes": 16804,
+      "size_bytes": 16906,
+      "art_count": 2,
+      "art_bytes": 171944,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.goodfon.com/fantasy/wallpaper-nikolai-lebedev-kingdom-of-ashland-art.html"
@@ -154,7 +160,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-mm.pkg.json",
       "r2_path": "package/open5e-a5e-mm@2.1.0.json.gz",
-      "size_bytes": 3370205,
+      "size_bytes": 3400091,
+      "art_count": 586,
+      "art_bytes": 47084556,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.polygon.com/24172797/dnd-dungeons-dragons-core-rulebook-cover-art-gallery-phb-dmg-mm/"
@@ -183,7 +191,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-bfrd.pkg.json",
       "r2_path": "package/open5e-bfrd@2.1.0.json.gz",
-      "size_bytes": 2290084,
+      "size_bytes": 2308546,
+      "art_count": 362,
+      "art_bytes": 42433504,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/digital-painting-ancient-warships-traveling-rough-seas_14402173.htm#fromView=author&page=2&position=29&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
@@ -209,7 +219,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-ccdx.pkg.json",
       "r2_path": "package/open5e-ccdx@2.1.0.json.gz",
-      "size_bytes": 2640698,
+      "size_bytes": 2658854,
+      "art_count": 356,
+      "art_bytes": 54049742,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2024/08/dnd-dungeons-dragson-5.5e-monster-manual-skeletons-header.jpg"
@@ -231,7 +243,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepm.pkg.json",
       "r2_path": "package/open5e-deepm@2.1.0.json.gz",
-      "size_bytes": 1229051,
+      "size_bytes": 1255316,
+      "art_count": 515,
+      "art_bytes": 39791584,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.gamepur.com/guides/how-one-dnd-has-changed-the-wizard-class"
@@ -253,7 +267,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepmx.pkg.json",
       "r2_path": "package/open5e-deepmx@2.1.0.json.gz",
-      "size_bytes": 128170,
+      "size_bytes": 131434,
+      "art_count": 64,
+      "art_bytes": 6427764,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.polygon.com/dnd-dungeons-dragons-circle-magic-spells-best-use/"
@@ -275,7 +291,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-kp.pkg.json",
       "r2_path": "package/open5e-kp@2.1.0.json.gz",
-      "size_bytes": 74581,
+      "size_bytes": 76162,
+      "art_count": 31,
+      "art_bytes": 3603948,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://nerdarchy.com/surprise-entertain-and-terrify-5e-dd-heroes-with-tome-of-beasts-2-from-kobold-press/"
@@ -301,7 +319,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
       "r2_path": "package/open5e-open5e@2.1.0.json.gz",
-      "size_bytes": 360599,
+      "size_bytes": 361721,
+      "art_count": 22,
+      "art_bytes": 2417696,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://screenrant.com/dnd-best-free-adventures/"
@@ -323,7 +343,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-spells-that-dont-suck.pkg.json",
       "r2_path": "package/open5e-spells-that-dont-suck@2.1.0.json.gz",
-      "size_bytes": 511100,
+      "size_bytes": 520280,
+      "art_count": 180,
+      "art_bytes": 18908614,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.thegamer.com/dungeons-dragons-underrated-spells-uses/"
@@ -350,7 +372,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tdcs.pkg.json",
       "r2_path": "package/open5e-tdcs@2.1.0.json.gz",
-      "size_bytes": 144944,
+      "size_bytes": 145658,
+      "art_count": 14,
+      "art_bytes": 1238834,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.dndspeak.com/wp-content/uploads/2022/02/art-city-town-paint-painting-fantastic-deviantart-fantasy-wo.jpg"
@@ -376,7 +400,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob.pkg.json",
       "r2_path": "package/open5e-tob@2.1.0.json.gz",
-      "size_bytes": 3014661,
+      "size_bytes": 3034602,
+      "art_count": 391,
+      "art_bytes": 49492498,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://drawyourweapon.com/dungeons-and-dragons-art/"
@@ -401,7 +427,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob-2023.pkg.json",
       "r2_path": "package/open5e-tob-2023@2.1.0.json.gz",
-      "size_bytes": 3453328,
+      "size_bytes": 3474136,
+      "art_count": 408,
+      "art_bytes": 39709844,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.wargamer.com/wp-content/sites/wargamer/2022/11/dnd-displacer-beast-5e-and-monsters.jpg"
@@ -426,7 +454,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob2.pkg.json",
       "r2_path": "package/open5e-tob2@2.1.0.json.gz",
-      "size_bytes": 2882485,
+      "size_bytes": 2902018,
+      "art_count": 383,
+      "art_bytes": 34522648,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://arstechnica.com/gaming/2016/02/reviewed-dungeons-dragons-5th-edition/"
@@ -451,7 +481,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob3.pkg.json",
       "r2_path": "package/open5e-tob3@2.1.0.json.gz",
-      "size_bytes": 2907819,
+      "size_bytes": 2928066,
+      "art_count": 397,
+      "art_bytes": 33959174,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2025/07/Dnd-gelatinous-cube-2025-e1753770574655.jpg"
@@ -478,7 +510,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
       "r2_path": "package/open5e-toh@2.1.0.json.gz",
-      "size_bytes": 2114520,
+      "size_bytes": 2126709,
+      "art_count": 239,
+      "art_bytes": 27125242,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/challenger-stands-front-spooky-castle-illustration_14402210.htm#fromView=search&page=1&position=11&uuid=37bc4aac-de5b-4771-b758-f3ced966bee5&query=Dnd+art"
@@ -500,7 +534,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-vom.pkg.json",
       "r2_path": "package/open5e-vom@2.1.0.json.gz",
-      "size_bytes": 2003755,
+      "size_bytes": 2057968,
+      "art_count": 1063,
+      "art_bytes": 103903958,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/wizard-dark-dungeon-illustration_14402228.htm#fromView=search&page=1&position=4&uuid=13bf4f9f-f40a-411d-94a7-969d828be57f&query=tomb+of+monsters+dnd+art"
@@ -522,7 +558,9 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-wz.pkg.json",
       "r2_path": "package/open5e-wz@2.1.0.json.gz",
-      "size_bytes": 113300,
+      "size_bytes": 115493,
+      "art_count": 43,
+      "art_bytes": 7160706,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/terrible-fantasy-scenes-digital-illustrations_14541107.htm"
