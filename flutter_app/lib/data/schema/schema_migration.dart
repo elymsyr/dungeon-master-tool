@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/deep_copy.dart';
@@ -63,24 +64,21 @@ class SchemaMigration {
       try {
         _migrateSessions(data);
       } catch (e, st) {
-        // ignore: avoid_print
-        print('SchemaMigration._migrateSessions failed: $e\n$st');
+        debugPrint('SchemaMigration._migrateSessions failed: $e\n$st');
       }
 
       // 4. Map data (pins, timeline pins)
       try {
         _migrateMapData(data);
       } catch (e, st) {
-        // ignore: avoid_print
-        print('SchemaMigration._migrateMapData failed: $e\n$st');
+        debugPrint('SchemaMigration._migrateMapData failed: $e\n$st');
       }
 
       // 5. Mind maps (nodes + connections → edges)
       try {
         _migrateMindMaps(data);
       } catch (e, st) {
-        // ignore: avoid_print
-        print('SchemaMigration._migrateMindMaps failed: $e\n$st');
+        debugPrint('SchemaMigration._migrateMindMaps failed: $e\n$st');
       }
 
       changed = true;
@@ -198,8 +196,7 @@ class SchemaMigration {
         migrated.add(_migrateSession(Map<String, dynamic>.from(s)));
       } catch (e, st) {
         // Bozuk tekil session — import'u düşürmemek için placeholder ekle.
-        // ignore: avoid_print
-        print('SchemaMigration._migrateSession failed, inserting stub: $e\n$st');
+        debugPrint('SchemaMigration._migrateSession failed, inserting stub: $e\n$st');
         migrated.add(<String, dynamic>{
           'id': (s['id'] ?? _uuid.v4()).toString(),
           'name': (s['name'] ?? 'Corrupted Session').toString(),

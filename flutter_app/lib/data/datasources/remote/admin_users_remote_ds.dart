@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/utils/parse_utils.dart';
@@ -341,8 +342,7 @@ class AdminUsersRemoteDataSource {
       }
     } catch (e) {
       // Storage cleanup best-effort; ban kaydı yine de açılmış olacak.
-      // ignore: avoid_print
-      print('Ban storage cleanup warning for $userId: $e');
+      debugPrint('Ban storage cleanup warning for $userId: $e');
     }
   }
 
