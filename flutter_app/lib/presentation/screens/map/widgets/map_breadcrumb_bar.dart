@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/entity.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Drill-in navigation bar above the world map canvas. Shows
 /// `Home > Castle > Crypt > …`. Each segment is tappable and pops the stack
@@ -24,7 +25,7 @@ class MapBreadcrumbBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (locationStack.isEmpty) return const SizedBox.shrink();
     final segments = <Widget>[
-      _segment(context, label: 'Home', onTap: () => onJumpToDepth(0)),
+      _segment(context, label: L10n.of(context)!.mapHome, onTap: () => onJumpToDepth(0)),
     ];
     for (var i = 0; i < locationStack.length; i++) {
       segments.add(_chevron());

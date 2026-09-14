@@ -6,6 +6,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/banner_metrics.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Read-only templates browser. Lists the built-in D&D 5e schema with a
 /// "View" button that opens the inspector. Templates are no longer
@@ -30,7 +31,7 @@ class TemplatesTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Templates',
+                L10n.of(context)!.tabTemplates,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -39,7 +40,7 @@ class TemplatesTab extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Read-only schema reference. Open a template to inspect its categories and fields.',
+                L10n.of(context)!.templatesSubtitle,
                 style: TextStyle(
                   fontSize: 12,
                   color: palette.sidebarLabelSecondary,
@@ -89,7 +90,7 @@ class _EmptyCard extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          'No templates available.',
+          L10n.of(context)!.templatesEmpty,
           textAlign: TextAlign.center,
           style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
         ),
@@ -158,7 +159,7 @@ class _TemplateTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${schema.categories.length} categories · $totalFields fields',
+                        L10n.of(context)!.templateSummary('${schema.categories.length}', '$totalFields'),
                         style: TextStyle(
                           fontSize: 11,
                           color: palette.sidebarLabelSecondary,
@@ -183,7 +184,7 @@ class _TemplateTile extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onView,
                   icon: const Icon(Icons.visibility, size: 16),
-                  label: const Text('View'),
+                  label: Text(L10n.of(context)!.btnView),
                 ),
               ],
             ),

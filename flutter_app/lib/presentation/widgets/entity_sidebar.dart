@@ -596,23 +596,23 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                   setState(() => _sortMode = v);
                   _persistFilter();
                 },
-                itemBuilder: (_) => const [
+                itemBuilder: (_) => [
                   PopupMenuItem(
                     value: _SortMode.name,
-                    child: Text('Sort by Name', style: TextStyle(fontSize: 12)),
+                    child: Text(L10n.of(context)!.sortByName, style: const TextStyle(fontSize: 12)),
                   ),
                   PopupMenuItem(
                     value: _SortMode.category,
                     child: Text(
-                      'Sort by Category',
-                      style: TextStyle(fontSize: 12),
+                      L10n.of(context)!.sortByCategory,
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   PopupMenuItem(
                     value: _SortMode.source,
                     child: Text(
-                      'Sort by Source',
-                      style: TextStyle(fontSize: 12),
+                      L10n.of(context)!.sortBySource,
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
                 ],
@@ -627,7 +627,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     const SizedBox(width: 2),
                     Text(
                       switch (_sortMode) {
-                        _SortMode.name => 'Name',
+                        _SortMode.name => L10n.of(context)!.sessionName,
                         _SortMode.category => 'Category',
                         _SortMode.source => 'Source',
                       },
@@ -652,7 +652,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           child: (matched.isEmpty && others.isEmpty)
               ? Center(
                   child: Text(
-                    summaries.isEmpty ? 'No entities yet' : 'No results',
+                    summaries.isEmpty ? L10n.of(context)!.sidebarNoEntities : L10n.of(context)!.sidebarNoResults,
                     style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
                 )
@@ -694,7 +694,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Center(
                               child: Text(
-                                'Loading more… (${fullTotal - cap} left)',
+                                L10n.of(context)!.sidebarLoadingMore('${fullTotal - cap}'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: palette.sidebarLabelSecondary,
@@ -796,7 +796,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Filter Sources',
+                            L10n.of(context)!.filterSourcesTitle,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -806,9 +806,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const Spacer(),
                           TextButton(
                             onPressed: () => setDialogState(working.clear),
-                            child: const Text(
-                              'Clear',
-                              style: TextStyle(fontSize: 12),
+                            child: Text(
+                              L10n.of(context)!.marketplaceFilterClear,
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ),
                           IconButton(
@@ -895,7 +895,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const Spacer(),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Cancel'),
+                            child: Text(L10n.of(context)!.btnCancel),
                           ),
                           const SizedBox(width: 4),
                           FilledButton(
@@ -909,7 +909,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                               _persistFilter();
                               Navigator.pop(ctx);
                             },
-                            child: const Text('Apply'),
+                            child: Text(L10n.of(context)!.hubFilterApply),
                           ),
                         ],
                       ),
@@ -928,10 +928,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final working = Set<_ShareFilter>.from(_selectedShareModes);
 
-    const labels = <_ShareFilter, String>{
-      _ShareFilter.builtin: 'Built-in (auto-shared)',
-      _ShareFilter.shared: 'Marked shared',
-      _ShareFilter.notShared: 'Not shared',
+    final labels = <_ShareFilter, String>{
+      _ShareFilter.builtin: L10n.of(context)!.shareFilterBuiltin,
+      _ShareFilter.shared: L10n.of(context)!.shareFilterShared,
+      _ShareFilter.notShared: L10n.of(context)!.shareFilterNotShared,
     };
     const order = <_ShareFilter>[
       _ShareFilter.builtin,
@@ -967,7 +967,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Filter Sharing',
+                            L10n.of(context)!.filterSharingTitle,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -977,9 +977,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const Spacer(),
                           TextButton(
                             onPressed: () => setDialogState(working.clear),
-                            child: const Text(
-                              'Clear',
-                              style: TextStyle(fontSize: 12),
+                            child: Text(
+                              L10n.of(context)!.marketplaceFilterClear,
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ),
                           IconButton(
@@ -1057,7 +1057,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const Spacer(),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Cancel'),
+                            child: Text(L10n.of(context)!.btnCancel),
                           ),
                           const SizedBox(width: 4),
                           FilledButton(
@@ -1071,7 +1071,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                               _persistFilter();
                               Navigator.pop(ctx);
                             },
-                            child: const Text('Apply'),
+                            child: Text(L10n.of(context)!.hubFilterApply),
                           ),
                         ],
                       ),
@@ -1125,7 +1125,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Filter Categories',
+                            L10n.of(context)!.filterCategoriesTitle,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -1190,7 +1190,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const Spacer(),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Cancel'),
+                            child: Text(L10n.of(context)!.btnCancel),
                           ),
                           const SizedBox(width: 4),
                           FilledButton(
@@ -1204,7 +1204,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                               _persistFilter();
                               Navigator.pop(ctx);
                             },
-                            child: const Text('Apply'),
+                            child: Text(L10n.of(context)!.hubFilterApply),
                           ),
                         ],
                       ),
@@ -1390,9 +1390,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: TextField(
                         controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Name',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: L10n.of(context)!.sessionName,
+                          border: const OutlineInputBorder(),
                           isDense: true,
                         ),
                         autofocus: true,
@@ -1417,7 +1417,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
                       child: Text(
-                        'Select Category',
+                        L10n.of(context)!.selectCategory,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1713,7 +1713,7 @@ class _OtherEntitiesHeader extends StatelessWidget {
           Expanded(child: Divider(color: palette.sidebarDivider)),
           const SizedBox(width: 8),
           Text(
-            'Other entities ($count)',
+            L10n.of(context)!.sidebarOtherEntities('$count'),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,

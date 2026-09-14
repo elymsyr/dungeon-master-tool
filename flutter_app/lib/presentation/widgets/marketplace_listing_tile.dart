@@ -296,7 +296,7 @@ class _OwnerMenu extends StatelessWidget {
     final l10n = L10n.of(context)!;
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, size: 18),
-      tooltip: 'Actions',
+      tooltip: L10n.of(context)!.sessionActions,
       onSelected: (v) {
         if (v == 'delete') onDelete();
       },

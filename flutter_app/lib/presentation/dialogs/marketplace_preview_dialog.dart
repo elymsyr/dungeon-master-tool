@@ -88,7 +88,7 @@ class MarketplacePreviewDialog extends ConsumerWidget {
               ],
               if (listing.changelog != null && listing.changelog!.isNotEmpty) ...[
                 Text(
-                  "What's new",
+                  L10n.of(context)!.marketplaceWhatsNew,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

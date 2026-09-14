@@ -99,7 +99,7 @@ class _SupportLinkTile extends StatelessWidget {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open ${link.url}')),
+        SnackBar(content: Text(L10n.of(context)!.couldNotOpen(link.url))),
       );
     }
   }

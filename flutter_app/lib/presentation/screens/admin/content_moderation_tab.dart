@@ -6,6 +6,7 @@ import '../../../core/utils/format_bytes.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../data/datasources/remote/admin_users_remote_ds.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Admin moderation — Posts / Marketplace / Game Listings arasında geçişli
 /// tek sekme. Her satırda "Delete" butonu vardır ve silme başarılıysa
@@ -32,21 +33,21 @@ class _ContentModerationTabState extends ConsumerState<ContentModerationTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SegmentedButton<_ContentKind>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: _ContentKind.posts,
-                icon: Icon(Icons.forum_outlined, size: 16),
-                label: Text('Posts'),
+                icon: const Icon(Icons.forum_outlined, size: 16),
+                label: Text(L10n.of(context)!.adminModPosts),
               ),
               ButtonSegment(
                 value: _ContentKind.marketplace,
-                icon: Icon(Icons.storefront_outlined, size: 16),
-                label: Text('Market'),
+                icon: const Icon(Icons.storefront_outlined, size: 16),
+                label: Text(L10n.of(context)!.adminModMarket),
               ),
               ButtonSegment(
                 value: _ContentKind.gameListings,
-                icon: Icon(Icons.casino_outlined, size: 16),
-                label: Text('Games'),
+                icon: const Icon(Icons.casino_outlined, size: 16),
+                label: Text(L10n.of(context)!.adminModGames),
               ),
             ],
             selected: {_kind},
@@ -80,11 +81,11 @@ class _PostsList extends ConsumerWidget {
     final async = ref.watch(adminAllPostsProvider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
       data: (rows) {
         if (rows.isEmpty) {
           return Center(
-            child: Text('No posts.',
+            child: Text(L10n.of(context)!.adminNoPosts,
                 style: TextStyle(color: palette.sidebarLabelSecondary)),
           );
         }
@@ -143,7 +144,7 @@ class _PostCard extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.delete_outline,
                 size: 18, color: palette.dangerBtnBg),
-            tooltip: 'Delete post',
+            tooltip: L10n.of(context)!.adminDeletePost,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -155,15 +156,15 @@ class _PostCard extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete post?'),
-        content: Text('This will remove the post permanently.\n\n"${row.body ?? '(image)'}"',
+        title: Text(L10n.of(context)!.deletePostTitle),
+        content: Text(L10n.of(context)!.adminDeletePostBody(row.body ?? L10n.of(context)!.adminImagePost),
             maxLines: 6, overflow: TextOverflow.ellipsis),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -175,12 +176,12 @@ class _PostCard extends ConsumerWidget {
       ref.invalidate(adminAuditLogProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Post deleted.')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminPostDeleted)));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))));
       }
     }
   }
@@ -195,11 +196,11 @@ class _MarketplaceList extends ConsumerWidget {
     final async = ref.watch(adminAllMarketplaceListingsProvider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
       data: (rows) {
         if (rows.isEmpty) {
           return Center(
-            child: Text('No marketplace listings.',
+            child: Text(L10n.of(context)!.adminNoMarketListings,
                 style: TextStyle(color: palette.sidebarLabelSecondary)),
           );
         }
@@ -259,7 +260,7 @@ class _MarketplaceCard extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.delete_outline,
                 size: 18, color: palette.dangerBtnBg),
-            tooltip: 'Delete listing',
+            tooltip: L10n.of(context)!.listingDeleteAction,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -286,14 +287,14 @@ class _MarketplaceCard extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete listing?'),
-        content: Text('"${row.title}" by ${row.ownerName}'),
+        title: Text(L10n.of(context)!.adminDeleteListingTitle),
+        content: Text(L10n.of(context)!.adminItemByOwner(row.title, row.ownerName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -307,12 +308,12 @@ class _MarketplaceCard extends ConsumerWidget {
       ref.invalidate(adminAuditLogProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Listing deleted.')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminListingDeleted)));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))));
       }
     }
   }
@@ -327,11 +328,11 @@ class _GameListingsList extends ConsumerWidget {
     final async = ref.watch(adminAllGameListingsProvider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
       data: (rows) {
         if (rows.isEmpty) {
           return Center(
-            child: Text('No game listings.',
+            child: Text(L10n.of(context)!.adminNoGameListings,
                 style: TextStyle(color: palette.sidebarLabelSecondary)),
           );
         }
@@ -390,7 +391,7 @@ class _GameListingCard extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.delete_outline,
                 size: 18, color: palette.dangerBtnBg),
-            tooltip: 'Delete game listing',
+            tooltip: L10n.of(context)!.adminDeleteGameListing,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -402,14 +403,14 @@ class _GameListingCard extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete game listing?'),
-        content: Text('"${row.title}" by ${row.ownerName}'),
+        title: Text(L10n.of(context)!.adminDeleteGameListingTitle),
+        content: Text(L10n.of(context)!.adminItemByOwner(row.title, row.ownerName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -423,12 +424,12 @@ class _GameListingCard extends ConsumerWidget {
       ref.invalidate(adminAuditLogProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Game listing deleted.')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.adminGameListingDeleted)));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.worldsDeleteFailed('$e'))));
       }
     }
   }

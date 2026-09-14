@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// All the measure / AoE / vector-shape tools merged into a single toolbar
 /// button. Tapping it opens an icon-only grid (3 per row) of every tool;
@@ -170,7 +171,7 @@ class _DrawToolsButtonState extends State<DrawToolsButton> {
                   size: 18,
                   color: active ? palette.tabIndicator : palette.tabText),
               const SizedBox(height: 2),
-              Text('Draw',
+              Text(L10n.of(context)!.bmDraw,
                   style: TextStyle(
                       fontSize: 9,
                       color: active ? palette.tabIndicator : palette.tabText)),
@@ -181,7 +182,7 @@ class _DrawToolsButtonState extends State<DrawToolsButton> {
     }
 
     return Tooltip(
-      message: 'Draw tools — ruler / AoE / shapes',
+      message: L10n.of(context)!.bmDrawToolsTooltip,
       child: InkWell(
         onTap: _openPicker,
         borderRadius: palette.br,

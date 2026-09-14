@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/connectivity_provider.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Centered "no connection" placeholder — single clean message shown when a
 /// network-backed screen can't load because the device is offline. Modeled
@@ -37,7 +38,7 @@ class ConnectionErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "You're offline",
+              L10n.of(context)!.offlineTitle,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -46,7 +47,7 @@ class ConnectionErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              message ?? 'Check your internet connection and try again.',
+              message ?? L10n.of(context)!.offlineBody,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 12, color: palette.sidebarLabelSecondary),
@@ -57,7 +58,7 @@ class ConnectionErrorView extends StatelessWidget {
                 onPressed: onRetry,
                 icon: Icon(Icons.refresh,
                     size: 18, color: palette.featureCardAccent),
-                label: Text('Retry',
+                label: Text(L10n.of(context)!.soundpackRetry,
                     style: TextStyle(color: palette.featureCardAccent)),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: palette.featureCardAccent),

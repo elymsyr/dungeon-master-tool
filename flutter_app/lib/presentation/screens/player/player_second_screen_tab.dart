@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/online_projection_provider.dart';
 import '../player_window/player_window_root.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Player's "Second Screen" tab — renders whatever the DM is currently
 /// projecting to online players.
@@ -47,7 +48,7 @@ class _WaitingPlaceholder extends StatelessWidget {
                   size: 56, color: palette.sidebarLabelSecondary),
               const SizedBox(height: 12),
               Text(
-                'Waiting for DM',
+                L10n.of(context)!.playerWaitingForDm,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -56,8 +57,7 @@ class _WaitingPlaceholder extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your DM has not started a live session yet. When they do,'
-                ' anything they project to the player screen will appear here.',
+                L10n.of(context)!.playerWaitingForDmBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

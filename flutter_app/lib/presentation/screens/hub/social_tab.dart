@@ -12,6 +12,7 @@ import '../social/game_listings_tab.dart';
 import '../social/marketplace_tab.dart';
 import '../social/messages_tab.dart';
 import '../social/social_shell.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Aktif Social sub-tab'ı — hub_screen help button'u hangi yardım metnini
 /// göstereceğini buradan okur (Marketplace için ayrı metin göstermek için).
@@ -80,10 +81,10 @@ class _NotConfigured extends StatelessWidget {
         children: [
           Icon(Icons.cloud_off, size: 64, color: palette.sidebarLabelSecondary),
           const SizedBox(height: 16),
-          Text('Social features unavailable',
+          Text(L10n.of(context)!.socialUnavailable,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
           const SizedBox(height: 8),
-          Text('Supabase backend is not configured.',
+          Text(L10n.of(context)!.supabaseNotConfigured,
               style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
         ],
       ),
@@ -103,16 +104,16 @@ class _NotSignedIn extends StatelessWidget {
         children: [
           Icon(Icons.account_circle_outlined, size: 64, color: palette.sidebarLabelSecondary),
           const SizedBox(height: 16),
-          Text('Not Signed In',
+          Text(L10n.of(context)!.notSignedIn,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
           const SizedBox(height: 8),
-          Text('Sign in to access social features.',
+          Text(L10n.of(context)!.socialSignInPrompt,
               style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () => context.go('/'),
             icon: Icon(Icons.login, size: 18, color: palette.featureCardAccent),
-            label: Text('Sign In', style: TextStyle(color: palette.featureCardAccent)),
+            label: Text(L10n.of(context)!.landingSignIn, style: TextStyle(color: palette.featureCardAccent)),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: palette.featureCardAccent),
               shape: RoundedRectangleBorder(borderRadius: palette.br),

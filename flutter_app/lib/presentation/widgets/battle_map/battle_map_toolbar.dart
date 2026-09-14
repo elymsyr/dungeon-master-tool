@@ -10,6 +10,7 @@ import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
 import 'draw_tools_button.dart';
+import '../../l10n/app_localizations.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -85,7 +86,7 @@ class BattleMapToolbar extends ConsumerWidget {
           // Reset view
           _ToolbarButton(
             icon: Icons.fit_screen,
-            tooltip: 'Reset View',
+            tooltip: L10n.of(context)!.bmResetView,
             palette: palette,
             onPressed: notifier.resetView,
           ),
@@ -93,7 +94,7 @@ class BattleMapToolbar extends ConsumerWidget {
           // Map image picker
           _ToolbarButton(
             icon: Icons.image_outlined,
-            tooltip: 'Open Map Image',
+            tooltip: L10n.of(context)!.bmOpenMapImage,
             palette: palette,
             onPressed: () async {
               await openBattlemapPicker(context, ref, notifier);
@@ -103,7 +104,7 @@ class BattleMapToolbar extends ConsumerWidget {
           // Project to player screen
           _ToolbarButton(
             icon: Icons.cast,
-            tooltip: 'Project battle map to player screen',
+            tooltip: L10n.of(context)!.bmProjectTooltip,
             palette: palette,
             onPressed: () async {
               final encounter = ref
@@ -124,9 +125,9 @@ class BattleMapToolbar extends ConsumerWidget {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    duration: Duration(seconds: 2),
-                    content: Text('Battle map projected to player screen'),
+                  SnackBar(
+                    duration: const Duration(seconds: 2),
+                    content: Text(L10n.of(context)!.bmProjectedToPlayer),
                   ),
                 );
             },
@@ -141,7 +142,7 @@ class BattleMapToolbar extends ConsumerWidget {
           // Show all HP — reveal monster/NPC HP to players on every projection
           // output (cast / online share / second window). Default off.
           Tooltip(
-            message: 'Show monster/NPC HP to players',
+            message: L10n.of(context)!.bmShowHpTooltip,
             child: Row(
               children: [
                 SizedBox(
@@ -156,7 +157,7 @@ class BattleMapToolbar extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text('Show HP', style: TextStyle(fontSize: 12, color: palette.tabText)),
+                Text(L10n.of(context)!.bmShowHp, style: TextStyle(fontSize: 12, color: palette.tabText)),
               ],
             ),
           ),
@@ -164,7 +165,7 @@ class BattleMapToolbar extends ConsumerWidget {
           // Clean tokens — hide HP bar + condition badge under tokens on the
           // player projection (name stays). Default off.
           Tooltip(
-            message: 'Hide HP bar + conditions under tokens',
+            message: L10n.of(context)!.bmCleanTokensTooltip,
             child: Row(
               children: [
                 SizedBox(
@@ -179,14 +180,14 @@ class BattleMapToolbar extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text('Clean tokens', style: TextStyle(fontSize: 12, color: palette.tabText)),
+                Text(L10n.of(context)!.bmCleanTokens, style: TextStyle(fontSize: 12, color: palette.tabText)),
               ],
             ),
           ),
           const SizedBox(width: 12),
           // Token size label
           Text(
-            'Token:',
+            L10n.of(context)!.bmTokenLabel,
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
           const SizedBox(width: 4),
@@ -213,7 +214,7 @@ class BattleMapToolbar extends ConsumerWidget {
             ),
           ),
           Text(
-            '${(mapState.tokenSize / mapState.gridSize).toStringAsFixed(2)} cells',
+            L10n.of(context)!.bmCells((mapState.tokenSize / mapState.gridSize).toStringAsFixed(2)),
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
           const Spacer(),
@@ -237,22 +238,22 @@ class BattleMapToolbar extends ConsumerWidget {
         alignment: WrapAlignment.start,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: 'Navigate', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: L10n.of(context)!.bmNavigate, mapState: mapState, notifier: notifier, palette: palette),
           // All measure / AoE / shape tools merged into one picker button.
           DrawToolsButton(activeTool: mapState.activeTool, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: 'Erase — drag over rulers/AoE/shapes/drawings to delete', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: 'Draw', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: 'Add Fog', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: 'Erase Fog', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: L10n.of(context)!.bmEraseTooltip, mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: L10n.of(context)!.bmDraw, mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: L10n.of(context)!.bmAddFog, mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: L10n.of(context)!.bmEraseFog, mapState: mapState, notifier: notifier, palette: palette),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
-          _ToolbarButton(icon: Icons.cloud_queue, tooltip: 'Fill Fog', palette: palette, onPressed: () async { await notifier.fillFog(); }),
-          _ToolbarButton(icon: Icons.wb_sunny_outlined, tooltip: 'Clear Fog', palette: palette, onPressed: () async { await notifier.clearFog(); }),
+          _ToolbarButton(icon: Icons.cloud_queue, tooltip: L10n.of(context)!.bmFillFog, palette: palette, onPressed: () async { await notifier.fillFog(); }),
+          _ToolbarButton(icon: Icons.wb_sunny_outlined, tooltip: L10n.of(context)!.bmClearFog, palette: palette, onPressed: () async { await notifier.clearFog(); }),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
-          _ToolbarButton(icon: Icons.cleaning_services_outlined, tooltip: 'Clear Drawing', palette: palette, onPressed: () => notifier.clearAnnotation(layer: mapState.activeLayer)),
-          _ToolbarButton(icon: Icons.straighten_outlined, tooltip: 'Clear Marks', palette: palette, onPressed: () => notifier.clearMeasurements(layer: mapState.activeLayer)),
-          _ToolbarButton(icon: Icons.format_shapes_outlined, tooltip: 'Clear Shapes', palette: palette, onPressed: () => notifier.clearShapes(layer: mapState.activeLayer)),
+          _ToolbarButton(icon: Icons.cleaning_services_outlined, tooltip: L10n.of(context)!.bmClearDrawing, palette: palette, onPressed: () => notifier.clearAnnotation(layer: mapState.activeLayer)),
+          _ToolbarButton(icon: Icons.straighten_outlined, tooltip: L10n.of(context)!.bmClearMarks, palette: palette, onPressed: () => notifier.clearMeasurements(layer: mapState.activeLayer)),
+          _ToolbarButton(icon: Icons.format_shapes_outlined, tooltip: L10n.of(context)!.bmClearShapes, palette: palette, onPressed: () => notifier.clearShapes(layer: mapState.activeLayer)),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
-          _ToolbarButton(icon: Icons.delete_sweep_outlined, tooltip: 'Clear All', palette: palette, onPressed: () async { await notifier.clearAll(); }),
+          _ToolbarButton(icon: Icons.delete_sweep_outlined, tooltip: L10n.of(context)!.sessionClearAll, palette: palette, onPressed: () async { await notifier.clearAll(); }),
         ],
       ),
     );
@@ -287,14 +288,14 @@ class BattleMapToolbar extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Text('Grid', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmGrid, style: TextStyle(fontSize: 12, color: palette.tabText)),
             ],
           ),
           // Grid columns x rows
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Grid:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmGridColon, style: TextStyle(fontSize: 12, color: palette.tabText)),
               const SizedBox(width: 4),
               _DoubleSpinBox(
                 value: mapState.canvasWidth / mapState.gridSize,
@@ -325,14 +326,14 @@ class BattleMapToolbar extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Text('Snap', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmSnap, style: TextStyle(fontSize: 12, color: palette.tabText)),
             ],
           ),
           // Feet per cell
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Ft/cell:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmFtPerCell, style: TextStyle(fontSize: 12, color: palette.tabText)),
               const SizedBox(width: 4),
               _SpinBox(
                 value: mapState.feetPerCell,
@@ -347,7 +348,7 @@ class BattleMapToolbar extends ConsumerWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Diag:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmDiag, style: TextStyle(fontSize: 12, color: palette.tabText)),
               const SizedBox(width: 4),
               _DiagonalRuleSelector(
                 value: mapState.diagonalRule,
@@ -360,7 +361,7 @@ class BattleMapToolbar extends ConsumerWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Layer:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              Text(L10n.of(context)!.bmLayer, style: TextStyle(fontSize: 12, color: palette.tabText)),
               const SizedBox(width: 4),
               _ShapeLayerSelector(
                 value: mapState.activeLayer,
@@ -390,12 +391,12 @@ class _ShapeLayerSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static String _label(ShapeLayer l) {
+  static String _label(BuildContext context, ShapeLayer l) {
     switch (l) {
       case ShapeLayer.background:
-        return 'Background';
+        return L10n.of(context)!.bmLayerBackground;
       case ShapeLayer.object:
-        return 'Object';
+        return L10n.of(context)!.bmLayerObject;
       case ShapeLayer.gm:
         return 'GM only';
     }
@@ -420,7 +421,7 @@ class _ShapeLayerSelector extends StatelessWidget {
             for (final l in ShapeLayer.values)
               DropdownMenuItem(
                 value: l.index,
-                child: Text(_label(l),
+                child: Text(_label(context, l),
                     style: TextStyle(fontSize: 12, color: palette.tabText)),
               ),
           ],
@@ -715,8 +716,8 @@ class _ProjectionLockButton extends ConsumerWidget {
       borderRadius: palette.br,
       child: Tooltip(
         message: locked
-            ? 'Player view locked — your zoom/pan stays private'
-            : 'Player view follows yours — click to lock',
+            ? L10n.of(context)!.bmPlayerViewLocked
+            : L10n.of(context)!.bmPlayerViewFollows,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           decoration: BoxDecoration(

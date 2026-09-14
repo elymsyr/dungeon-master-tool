@@ -7,6 +7,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../data/services/entity_parser.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../l10n/app_localizations.dart';
 
 /// Dialog for importing entities from JSON data.
 class ImportDialog extends ConsumerStatefulWidget {
@@ -95,7 +96,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
-                  Text('Imported $count entit${count > 1 ? "ies" : "y"}')),
+                  Text(L10n.of(context)!.importEntitiesDone(count))),
         );
         Navigator.pop(context);
       }
@@ -110,7 +111,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Import Entity'),
+      title: Text(L10n.of(context)!.importEntityTitle),
       content: SizedBox(
         width: 500,
         child: Column(
@@ -121,9 +122,9 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             DropdownButtonFormField<String>(
               // ignore: deprecated_member_use
               initialValue: _selectedSlug,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.lblCategory,
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
               items: _categories
@@ -135,8 +136,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             ),
             const SizedBox(height: 12),
             // JSON input
-            const Text('Paste JSON data:',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(L10n.of(context)!.importPasteJson,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             TextField(
               controller: _jsonController,
@@ -152,8 +153,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Supports single object or array of objects. '
-              'Fields are auto-mapped to schema.',
+              L10n.of(context)!.importJsonHelp,
               style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.outline),
@@ -164,7 +164,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel')),
+            child: Text(L10n.of(context)!.btnCancel)),
         FilledButton(
           onPressed: _importing ? null : _doImport,
           child: _importing
@@ -172,7 +172,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Import'),
+              : Text(L10n.of(context)!.btnImport),
         ),
       ],
     );

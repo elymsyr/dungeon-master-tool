@@ -6,6 +6,7 @@ import '../../application/providers/world_membership_provider.dart';
 import '../../domain/entities/online/entity_share.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// DM'in entity'i hangi oyuncularla paylaştığını yönetmesini sağlar.
 /// "Share with all" tek seçenek; her üye için ayrı toggle.
@@ -53,7 +54,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
         ref.watch(worldEntitySharesProvider(widget.worldId));
 
     return AlertDialog(
-      title: Text('Share "${widget.entityName}"'),
+      title: Text(L10n.of(context)!.shareEntityTitle(widget.entityName)),
       content: SizedBox(
         width: 380,
         child: Column(
@@ -65,7 +66,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
                 padding: EdgeInsets.all(12),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => Text('Error: $e',
+              error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e'),
                   style: TextStyle(color: palette.dangerBtnBg)),
               data: (allShares) {
                 final shares = allShares
@@ -77,9 +78,9 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SwitchListTile(
-                      title: const Text('Share with all players'),
+                      title: Text(L10n.of(context)!.shareWithAllPlayers),
                       subtitle: Text(
-                        'Every member sees this entity.',
+                        L10n.of(context)!.shareWithAllPlayersHint,
                         style: TextStyle(
                             fontSize: 12,
                             color: palette.sidebarLabelSecondary),
@@ -93,7 +94,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
                     const Divider(),
                     Padding(
                       padding: const EdgeInsets.only(top: 4, bottom: 4),
-                      child: Text('Individual players',
+                      child: Text(L10n.of(context)!.shareIndividualPlayers,
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -108,7 +109,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                      error: (e, _) => Text('Error: $e',
+                      error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e'),
                           style: TextStyle(color: palette.dangerBtnBg)),
                       data: (members) {
                         final players = members
@@ -117,7 +118,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
                         if (players.isEmpty) {
                           return Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text('No players have joined yet.',
+                            child: Text(L10n.of(context)!.shareNoPlayers,
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: palette.sidebarLabelSecondary)),
@@ -153,7 +154,7 @@ class _ShareEntityDialogState extends ConsumerState<ShareEntityDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Close'),
+          child: Text(L10n.of(context)!.btnClose),
         ),
       ],
     );

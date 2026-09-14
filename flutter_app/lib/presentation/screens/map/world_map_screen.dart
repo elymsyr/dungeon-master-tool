@@ -26,6 +26,7 @@ import 'widgets/location_pin_preview_card.dart';
 import 'widgets/map_breadcrumb_bar.dart';
 import 'widgets/pin_edit_dialog.dart';
 import 'world_map_notifier.dart';
+import '../../l10n/app_localizations.dart';
 
 /// World Map tab root — toolbar + pannable/zoomable image canvas with pins
 /// and timeline support.
@@ -326,7 +327,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Era',
+                                L10n.of(context)!.mapEra,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -379,7 +380,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           // Pick map image
           _ToolbarButton(
             icon: Icons.map_outlined,
-            label: mapState.imagePath.isEmpty ? 'Load Map' : 'Change',
+            label: mapState.imagePath.isEmpty ? L10n.of(context)!.mapLoadMap : L10n.of(context)!.btnChange,
             palette: palette,
             onTap: () => notifier.pickMapImage(context),
           ),
@@ -389,7 +390,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             _VertDiv(palette: palette),
             _ToolbarButton(
               icon: Icons.add_location_alt_outlined,
-              label: 'Add from DB',
+              label: L10n.of(context)!.mapAddFromDb,
               palette: palette,
               onTap: () => _showEntityPickerForMap(
                 notifier.viewportCenterCanvas,
@@ -411,7 +412,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
           // Hide all checkbox
           _ToolbarCheckbox(
-            label: 'Hide All',
+            label: L10n.of(context)!.mapHideAll,
             value: allHidden,
             palette: palette,
             onChanged: (v) {
@@ -449,7 +450,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
           // Timeline checkbox
           _ToolbarCheckbox(
-            label: 'Timeline',
+            label: L10n.of(context)!.mapTimeline,
             value: mapState.showTimeline,
             palette: palette,
             onChanged: (_) => notifier.toggleTimelineVisibility(),
@@ -457,7 +458,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
           // Pins checkbox
           _ToolbarCheckbox(
-            label: 'Pins',
+            label: L10n.of(context)!.mapPins,
             value: mapState.showMapPins,
             palette: palette,
             onChanged: (_) => notifier.toggleMapPinsVisibility(),
@@ -500,7 +501,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             _VertDiv(palette: palette),
             _ToolbarButton(
               icon: Icons.photo_camera,
-              label: 'Project',
+              label: L10n.of(context)!.btnProject,
               palette: palette,
               onTap: () => _projectMap(palette),
             ),
@@ -511,7 +512,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                'Click pin to link · Click empty to create · Esc to cancel',
+                L10n.of(context)!.mapLinkModeHint,
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.amber.withValues(alpha: 0.8),
@@ -522,7 +523,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                'Right-click to place pin · Drag to pan · Scroll to zoom',
+                L10n.of(context)!.mapHint,
                 style: TextStyle(
                   fontSize: 10,
                   color: palette.tabText.withValues(alpha: 0.4),
@@ -862,7 +863,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               left: hovered.x + half + 6,
               top: hovered.y - half - 4,
               child: IgnorePointer(
-                child: _timelineHoverCard(
+                child: _timelineHoverCard(context,
                   palette,
                   hovered,
                   _entityNameMap(hovered.entityIds),
@@ -923,7 +924,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'No map image loaded',
+              L10n.of(context)!.mapNoImage,
               style: TextStyle(
                 fontSize: 14,
                 color: palette.tabText.withValues(alpha: 0.35),
@@ -931,7 +932,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Click "Load Map Image" in the toolbar to get started',
+              L10n.of(context)!.mapNoImageHint,
               style: TextStyle(
                 fontSize: 11,
                 color: palette.tabText.withValues(alpha: 0.25),
@@ -967,7 +968,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${entity.name} (${entity.categorySlug}) is not allowed on the world map',
+              L10n.of(context)!.mapEntityNotAllowed(entity.name, entity.categorySlug),
             ),
           ),
         );
@@ -978,8 +979,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     if (notifier.isRecursiveSelfPin(entityId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Can't pin a location inside its own map"),
+          SnackBar(
+            content: Text(L10n.of(context)!.mapCantPinSelf),
           ),
         );
       }
@@ -1021,7 +1022,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${entity.name} (${entity.categorySlug}) is not allowed on the world map',
+              L10n.of(context)!.mapEntityNotAllowed(entity.name, entity.categorySlug),
             ),
           ),
         );
@@ -1071,7 +1072,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Add Timeline Pin',
+                  L10n.of(context)!.mapAddTimelinePin,
                   style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
                 ),
               ],
@@ -1089,7 +1090,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Add Pin',
+                  L10n.of(context)!.mapAddPin,
                   style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
                 ),
               ],
@@ -1106,7 +1107,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Add from Database',
+                  L10n.of(context)!.sessionAddFromDatabase,
                   style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
                 ),
               ],
@@ -1157,8 +1158,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     if (notifier.isRecursiveSelfPin(entityId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Can't pin a location inside its own map"),
+          SnackBar(
+            content: Text(L10n.of(context)!.mapCantPinSelf),
           ),
         );
       }
@@ -1187,7 +1188,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
         title: Text(
-          'Add to Map',
+          L10n.of(context)!.mapAddToMap,
           style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
         ),
         content: Column(
@@ -1199,7 +1200,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               focusNode: labelFocus,
               style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
               decoration: InputDecoration(
-                labelText: 'Label',
+                labelText: L10n.of(context)!.lblLabel,
                 labelStyle: TextStyle(
                   fontSize: 11,
                   color: palette.uiFloatingText.withValues(alpha: 0.6),
@@ -1222,7 +1223,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'To add entities, right-click the map or drag them from the sidebar.',
+                    L10n.of(context)!.mapAddEntitiesHint,
                     style: TextStyle(
                       fontSize: 10,
                       color: palette.uiFloatingText.withValues(alpha: 0.5),
@@ -1238,7 +1239,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              L10n.of(context)!.btnCancel,
               style: TextStyle(color: palette.uiFloatingText),
             ),
           ),
@@ -1247,7 +1248,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               notifier.addPin(canvasPos, label: labelCtrl.text);
               Navigator.pop(ctx);
             },
-            child: const Text('Add Pin'),
+            child: Text(L10n.of(context)!.mapAddPin),
           ),
         ],
       ),
@@ -1493,7 +1494,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     if (imagePath.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('No map image to project'),
+          content: Text(L10n.of(context)!.mapNoImageToProject),
           backgroundColor: palette.tabBg,
         ),
       );
@@ -1503,7 +1504,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         .read(projectionControllerProvider.notifier)
         .addItem(
           ProjectionItemBuilders.image(
-            label: 'World Map',
+            label: L10n.of(context)!.worldMapTitle,
             filePaths: [imagePath],
           ),
           setActive: true,
@@ -2015,7 +2016,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
 }
 
 // F4: top-level builder shared by canvas-level hover overlay.
-Widget _timelineHoverCard(
+Widget _timelineHoverCard(BuildContext context,
   DmToolColors palette,
   TimelinePin pin,
   Map<String, String> entityNames,
@@ -2040,7 +2041,7 @@ Widget _timelineHoverCard(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Day ${pin.day}',
+          L10n.of(context)!.mapDayLabel('${pin.day}'),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -2101,7 +2102,7 @@ Widget _timelineHoverCard(
               ),
               const SizedBox(width: 3),
               Text(
-                'Session linked',
+                L10n.of(context)!.mapSessionLinked,
                 style: TextStyle(
                   fontSize: 9,
                   fontStyle: FontStyle.italic,
@@ -2377,7 +2378,7 @@ class _PinCategoryDropdown extends StatelessWidget {
         .length;
 
     return PopupMenuButton<String>(
-      tooltip: 'Pin categories',
+      tooltip: L10n.of(context)!.mapPinCategories,
       offset: const Offset(0, 36),
       color: palette.uiFloatingBg,
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
@@ -2433,7 +2434,7 @@ class _PinCategoryDropdown extends StatelessWidget {
             Icon(Icons.category, size: 14, color: palette.tabText),
             const SizedBox(width: 4),
             Text(
-              'Categories ($visibleCount/${pinTypes.length})',
+              L10n.of(context)!.mapCategoriesCount('$visibleCount', '${pinTypes.length}'),
               style: TextStyle(fontSize: 10, color: palette.tabText),
             ),
             Icon(Icons.arrow_drop_down, size: 14, color: palette.tabText),

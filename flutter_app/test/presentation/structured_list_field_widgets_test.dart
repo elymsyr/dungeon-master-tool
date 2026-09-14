@@ -1,4 +1,5 @@
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:dungeon_master_tool/presentation/widgets/field_widgets/field_widget_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +23,7 @@ Widget _wrap(Widget child) {
   return ProviderScope(
     child: MediaQuery(
       data: const MediaQueryData(size: Size(2400, 1200)),
-      child: MaterialApp(
+      child: MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
         home: Scaffold(
           body: SizedBox(
             width: 2400,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../application/services/screencast_platform.dart';
+import '../l10n/app_localizations.dart';
 
 /// Dialog that lists available external displays for screencast.
 ///
@@ -59,11 +60,11 @@ class _ScreencastDisplayPickerState extends State<ScreencastDisplayPicker> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.cast, size: 22),
-          SizedBox(width: 10),
-          Text('Screen Cast'),
+          const Icon(Icons.cast, size: 22),
+          const SizedBox(width: 10),
+          Text(L10n.of(context)!.screencastTitle),
         ],
       ),
       content: SizedBox(
@@ -73,7 +74,7 @@ class _ScreencastDisplayPickerState extends State<ScreencastDisplayPicker> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
       ],
     );
@@ -89,37 +90,37 @@ class _ScreencastDisplayPickerState extends State<ScreencastDisplayPicker> {
 
     final displays = _displays ?? [];
     if (displays.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cast, size: 48, color: Colors.white24),
-            SizedBox(height: 12),
+            const Icon(Icons.cast, size: 48, color: Colors.white24),
+            const SizedBox(height: 12),
             Text(
-              'No external display found.',
-              style: TextStyle(fontSize: 15),
+              L10n.of(context)!.screencastNoDisplay,
+              style: const TextStyle(fontSize: 15),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Connect a display via HDMI, Miracast,\nChromecast, or AirPlay.',
+              L10n.of(context)!.screencastConnectHint,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.white54),
+              style: const TextStyle(fontSize: 13, color: Colors.white54),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 14,
                   height: 14,
                   child:
                       CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
-                  'Waiting for displays...',
-                  style: TextStyle(fontSize: 12, color: Colors.white38),
+                  L10n.of(context)!.screencastWaiting,
+                  style: const TextStyle(fontSize: 12, color: Colors.white38),
                 ),
               ],
             ),

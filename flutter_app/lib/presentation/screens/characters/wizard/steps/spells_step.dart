@@ -12,6 +12,7 @@ import '../../../../dialogs/entity_preview_dialog.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Wizard step that lets spellcasting classes pick their starting
 /// cantrips and prepared/known spells. Hidden (renders an empty notice)
@@ -37,9 +38,9 @@ class SpellsStep extends ConsumerWidget {
     final classEntity =
         draft.classId == null ? null : entities[draft.classId];
     if (classEntity == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Pick a class first.'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(L10n.of(context)!.wizardPickClassFirst),
       );
     }
 
@@ -51,7 +52,7 @@ class SpellsStep extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          '${classEntity.name} is not a spellcasting class — skip to the next step.',
+          L10n.of(context)!.spellsNotCaster(classEntity.name),
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -90,8 +91,7 @@ class SpellsStep extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Spellcasting: ${classEntity.name} (${_kindLabel(kind)}). '
-          'Casting ability: ${_castingAbilityLabel(entities, classEntity)}.',
+          L10n.of(context)!.spellsCastingSummary(classEntity.name, _kindLabel(kind), _castingAbilityLabel(entities, classEntity)),
           style: TextStyle(
             fontSize: 12,
             color: palette.sidebarLabelSecondary,
@@ -101,8 +101,7 @@ class SpellsStep extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Class entity has no cantrip/prepared tables — using SRD defaults. '
-              'Populate the class data for exact caps.',
+              L10n.of(context)!.spellsNoTables,
               style: TextStyle(
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
@@ -113,7 +112,7 @@ class SpellsStep extends ConsumerWidget {
         const SizedBox(height: 8),
         if (cantripCap > 0)
           _SpellSection(
-            title: 'Cantrips',
+            title: L10n.of(context)!.spellsCantrips,
             cap: cantripCap,
             picked: draft.cantripIds,
             spells: cantrips,
@@ -125,7 +124,7 @@ class SpellsStep extends ConsumerWidget {
         if (preparedCap > 0)
           _SpellSection(
             title:
-                'Spells (level 1${maxSpellLevel > 1 ? '–$maxSpellLevel' : ''})',
+                L10n.of(context)!.spellsLeveledTitle('1${maxSpellLevel > 1 ? '–$maxSpellLevel' : ''}'),
             cap: preparedCap,
             picked: draft.preparedSpellIds,
             spells: leveled,
@@ -139,7 +138,7 @@ class SpellsStep extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              'This caster does not pick spells at level ${draft.level}.',
+              L10n.of(context)!.spellsNoPicksAtLevel('${draft.level}'),
               style: TextStyle(
                 fontSize: 12,
                 color: palette.sidebarLabelSecondary,
@@ -236,7 +235,7 @@ class _SpellSection extends StatelessWidget {
           const SizedBox(height: 4),
           if (spells.isEmpty)
             Text(
-              'No matching spells in the active campaign.',
+              L10n.of(context)!.spellsNoMatching,
               style: TextStyle(
                 fontSize: 11,
                 color: palette.sidebarLabelSecondary,

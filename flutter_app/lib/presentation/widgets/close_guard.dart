@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/save_state_provider.dart';
+import '../l10n/app_localizations.dart';
 
 /// Item kapatılırken çalışan flush. Auto-save kaldırıldığı için close noktası
 /// son-save+push fırsatıdır. Sessizce diske yazar ve mirror'a push'lar; cloud
@@ -23,7 +24,7 @@ Future<bool> confirmCloseWithBackupCheck({
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.saveFailed('$e'))),
       );
     }
   }
@@ -46,11 +47,11 @@ Future<bool> confirmCloseUnconditional({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Close'),
+          child: Text(L10n.of(context)!.btnClose),
         ),
       ],
     ),

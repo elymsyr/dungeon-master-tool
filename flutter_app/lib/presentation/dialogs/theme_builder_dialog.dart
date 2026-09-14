@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Theme oluşturma dialog'u — PyQt ThemeBuilderDialog portu.
 /// Sol: state listesi + ekle/sil, Sağ: seçili state'in track dosya seçicileri.
@@ -65,7 +66,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
     final palette = widget.palette;
 
     return AlertDialog(
-      title: const Text('Create Theme'),
+      title: Text(L10n.of(context)!.soundpadCreateTheme),
       content: SizedBox(
         width: 700,
         height: 480,
@@ -79,7 +80,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
                   child: TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: 'Theme Name',
+                      labelText: L10n.of(context)!.themeBuilderName,
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
                     ),
@@ -115,7 +116,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('States', style: TextStyle(fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+                        Text(L10n.of(context)!.themeBuilderStates, style: TextStyle(fontWeight: FontWeight.w600, color: palette.tabActiveText)),
                         const SizedBox(height: 8),
                         Expanded(
                           child: Container(
@@ -157,7 +158,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
                           child: OutlinedButton.icon(
                             onPressed: _addState,
                             icon: const Icon(Icons.add, size: 16),
-                            label: const Text('Add State', style: TextStyle(fontSize: 12)),
+                            label: Text(L10n.of(context)!.themeBuilderAddState, style: const TextStyle(fontSize: 12)),
                           ),
                         ),
                       ],
@@ -170,7 +171,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Tracks — ${_states[_selectedStateIndex]}',
+                          L10n.of(context)!.themeBuilderTracks(_states[_selectedStateIndex]),
                           style: TextStyle(fontWeight: FontWeight.w600, color: palette.tabActiveText),
                         ),
                         const SizedBox(height: 8),
@@ -217,13 +218,13 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
                                     const SizedBox(width: 4),
                                     IconButton(
                                       icon: Icon(Icons.folder_open, size: 18, color: palette.featureCardAccent),
-                                      tooltip: 'Browse',
+                                      tooltip: L10n.of(context)!.btnBrowse,
                                       onPressed: () => _pickFile(trackKey),
                                     ),
                                     if (filePath.isNotEmpty)
                                       IconButton(
                                         icon: Icon(Icons.clear, size: 18, color: palette.tokenBorderHostile),
-                                        tooltip: 'Clear',
+                                        tooltip: L10n.of(context)!.marketplaceFilterClear,
                                         onPressed: () => _clearFile(trackKey),
                                       ),
                                   ],
@@ -242,10 +243,10 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context)!.btnCancel)),
         FilledButton(
           onPressed: _canCreate ? _onCreate : null,
-          child: const Text('Create'),
+          child: Text(L10n.of(context)!.btnCreate),
         ),
       ],
     );
@@ -263,17 +264,17 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add State'),
+        title: Text(L10n.of(context)!.themeBuilderAddState),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'State Name (e.g. combat, victory)'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.themeBuilderStateName),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim().toLowerCase()),
-            child: const Text('Add'),
+            child: Text(L10n.of(context)!.btnAdd),
           ),
         ],
       ),

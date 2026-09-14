@@ -391,7 +391,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   OutlinedButton.icon(
                     onPressed: _selectedIndex >= 0 ? _copyWorld : null,
                     icon: const Icon(Icons.content_copy, size: 18),
-                    label: const Text('Copy'),
+                    label: Text(L10n.of(context)!.charCopyToWorldAction),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
@@ -482,7 +482,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                         (t) => DropdownMenuItem(
                           value: t.schemaId,
                           child: Text(
-                            '${t.name}  (${t.categories.length} cat)',
+                            L10n.of(context)!.templateCategoryCount(t.name, '${t.categories.length}'),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
@@ -672,21 +672,21 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Copy World'),
+        title: Text(L10n.of(context)!.copyWorldTitle),
         content: TextField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(labelText: 'New world name'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.newWorldName),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Copy'),
+            child: Text(L10n.of(context)!.charCopyToWorldAction),
           ),
         ],
       ),
@@ -697,7 +697,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (existingNames.contains(newName)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('World "$newName" already exists')),
+          SnackBar(content: Text(L10n.of(context)!.worldNameExists(newName))),
         );
       }
       return;
@@ -712,13 +712,13 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       ref.invalidate(campaignInfoListProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copied "$source" → "$newName"')),
+          SnackBar(content: Text(L10n.of(context)!.copiedFromTo(source, newName))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copy failed: $e')),
+          SnackBar(content: Text(L10n.of(context)!.copyFailed('$e'))),
         );
       }
     }
@@ -997,7 +997,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Rename failed: $e')),
+                        SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
                       );
                     }
                     return;

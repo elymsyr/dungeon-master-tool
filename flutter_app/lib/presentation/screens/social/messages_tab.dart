@@ -99,7 +99,7 @@ void _showConversationContextMenu({
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
-                  'ADMIN',
+                  L10n.of(context)!.groupSettingsAdmin,
                   style: TextStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
@@ -295,7 +295,7 @@ Future<void> _deleteDmFlow({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
@@ -410,11 +410,11 @@ Future<void> _renameGroupFlow({
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),
@@ -461,7 +461,7 @@ Future<void> _leaveGroupFlow({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
@@ -503,7 +503,7 @@ Future<void> _deleteGroupFlow({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
@@ -878,7 +878,7 @@ class _ConvTile extends ConsumerWidget {
     final myId = auth?.uid;
 
     final title = conversation.isGroup
-        ? (conversation.title ?? 'Group')
+        ? (conversation.title ?? L10n.of(context)!.chatGroupFallback)
         : _dmOtherName(conversation, myId);
     final displayTitle = title.isEmpty ? '(empty)' : title;
     final fallback = title.isEmpty ? '?' : title;
@@ -1073,7 +1073,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       messagesStreamProvider(widget.conversation.id),
     );
     final title = widget.conversation.isGroup
-        ? (widget.conversation.title ?? 'Group')
+        ? (widget.conversation.title ?? L10n.of(context)!.chatGroupFallback)
         : _dmOtherName(widget.conversation, widget.myUserId);
     final fallback = title.isEmpty ? '?' : title;
 

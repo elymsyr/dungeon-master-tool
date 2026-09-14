@@ -7,6 +7,7 @@ import '../../../core/utils/error_format.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
+import '../../l10n/app_localizations.dart';
 
 class GroupSettingsScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -56,7 +57,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
       ref.invalidate(myConversationsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Group name updated.')),
+          SnackBar(content: Text(L10n.of(context)!.groupNameUpdated)),
         );
       }
     } catch (e) {
@@ -73,20 +74,20 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Leave group?'),
+        title: Text(L10n.of(context)!.groupSettingsLeaveTitle),
         content: Text(
           _isAdmin
-              ? 'You are the admin. Admin role will transfer to another member.'
-              : 'You will no longer receive messages from this group.',
+              ? L10n.of(context)!.groupLeaveAdminBody
+              : L10n.of(context)!.groupLeaveBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Leave',
+            child: Text(L10n.of(context)!.worldsBtnLeave,
                 style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
@@ -119,19 +120,18 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete group?'),
-        content: const Text(
-          'This will delete all messages for everyone. '
-          'This action cannot be undone.',
+        title: Text(L10n.of(context)!.groupSettingsDeleteTitle),
+        content: Text(
+          L10n.of(context)!.groupSettingsDeleteBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete',
+            child: Text(L10n.of(context)!.btnDelete,
                 style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
@@ -166,13 +166,13 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
     final adminId = conv.createdBy;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Group Settings')),
+      appBar: AppBar(title: Text(L10n.of(context)!.groupSettingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // ── Group name ──
           Text(
-            'Group Name',
+            L10n.of(context)!.groupSettingsName,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -190,7 +190,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     counterText: '',
-                    hintText: 'Group name',
+                    hintText: L10n.of(context)!.chatRenameHint,
                     suffixIcon: !_isAdmin
                         ? const Icon(Icons.lock_outline, size: 18)
                         : null,
@@ -207,7 +207,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : Text(L10n.of(context)!.btnSave),
                 ),
               ],
             ],
@@ -217,7 +217,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
 
           // ── Members ──
           Text(
-            'Members (${conv.memberUsernames.length})',
+            L10n.of(context)!.groupSettingsMembers(conv.memberUsernames.length),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -257,7 +257,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                         ),
                       ),
                       child: Text(
-                        'ADMIN',
+                        L10n.of(context)!.groupSettingsAdmin,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
@@ -284,7 +284,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                 : Icon(Icons.exit_to_app,
                     color: Theme.of(context).colorScheme.error),
             label: Text(
-              'Leave Group',
+              L10n.of(context)!.groupSettingsLeave,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             style: OutlinedButton.styleFrom(
@@ -306,7 +306,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                           strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.delete_forever),
-              label: const Text('Delete Group for Everyone'),
+              label: Text(L10n.of(context)!.groupSettingsDelete),
               style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),

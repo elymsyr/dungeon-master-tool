@@ -9,6 +9,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/character_add_menu.dart';
 import '../../widgets/online_world_widgets.dart';
 import '../../widgets/world_characters_view.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Player character tab. Hosts the shared [WorldCharactersView] (3 sections:
 /// Your / Available to Claim / Other Players) plus a roster strip + create
@@ -130,7 +131,7 @@ class _EmptyOpenWorld extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Text(
-          'Open a world to see characters.',
+          L10n.of(context)!.playerOpenWorldForChars,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: palette.sidebarLabelSecondary,

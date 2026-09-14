@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/datasources/remote/messages_remote_ds.dart';
+import '../l10n/app_localizations.dart';
 
 /// Admin panelden bir kullanıcıya DM göndermek için hızlı compose dialog.
 /// Mevcut messaging altyapısını kullanır: `open_direct_conversation` RPC ile
@@ -67,7 +68,7 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Message sent.')),
+        SnackBar(content: Text(L10n.of(context)!.adminDmSent)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -94,7 +95,7 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Message ${widget.targetName}',
+              L10n.of(context)!.adminDmTitle(widget.targetName),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -109,7 +110,7 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
           autofocus: true,
           enabled: !_sending,
           decoration: InputDecoration(
-            hintText: 'Type a message…',
+            hintText: L10n.of(context)!.adminDmHint,
             border: const OutlineInputBorder(),
             errorText: _errorText,
           ),
@@ -121,7 +122,7 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
       actions: [
         TextButton(
           onPressed: _sending ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton.icon(
           icon: _sending
@@ -131,7 +132,7 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.send, size: 16),
-          label: const Text('Send'),
+          label: Text(L10n.of(context)!.btnSend),
           onPressed: _sending ? null : _send,
         ),
       ],

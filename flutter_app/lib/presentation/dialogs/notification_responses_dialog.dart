@@ -60,7 +60,7 @@ class NotificationResponsesDialog extends ConsumerWidget {
                   ),
                   error: (e, _) => Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('Error: $e',
+                    child: Text(L10n.of(context)!.hubErrorGeneric('$e'),
                         style: TextStyle(color: palette.dangerBtnBg)),
                   ),
                   data: (rows) => rows.isEmpty

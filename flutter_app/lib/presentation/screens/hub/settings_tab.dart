@@ -277,7 +277,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                         },
                       ),
                 loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
               ),
 
               // --- DANGER ZONE --- (yalnız oturum açıkken; en altta, kazara
@@ -479,7 +479,7 @@ class _DataPathActions extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Could not open folder: $e')));
+            .showSnackBar(SnackBar(content: Text(L10n.of(context)!.openFolderFailed('$e'))));
       }
     }
   }
@@ -493,12 +493,12 @@ class _DataPathActions extends StatelessWidget {
             await Clipboard.setData(ClipboardData(text: path));
             if (context.mounted) {
               ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('Path copied')));
+                  .showSnackBar(SnackBar(content: Text(L10n.of(context)!.pathCopied)));
             }
           },
           icon: const Icon(Icons.copy, size: 14),
-          label: const Text('Copy path',
-              style: TextStyle(fontSize: 12)),
+          label: Text(L10n.of(context)!.copyPath,
+              style: const TextStyle(fontSize: 12)),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             minimumSize: const Size(0, 28),
@@ -509,8 +509,8 @@ class _DataPathActions extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => _open(context),
             icon: const Icon(Icons.folder_open, size: 14),
-            label: const Text('Open data folder',
-                style: TextStyle(fontSize: 12)),
+            label: Text(L10n.of(context)!.openDataFolder,
+                style: const TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               minimumSize: const Size(0, 28),
@@ -586,7 +586,7 @@ class _SoundLibrarySection extends ConsumerWidget {
             ],
           ),
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
         ),
 
         const SizedBox(height: 20),
@@ -618,7 +618,7 @@ class _SoundLibrarySection extends ConsumerWidget {
             ],
           ),
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
         ),
 
         const SizedBox(height: 20),
@@ -650,7 +650,7 @@ class _SoundLibrarySection extends ConsumerWidget {
             ],
           ),
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e')),
         ),
       ],
     );

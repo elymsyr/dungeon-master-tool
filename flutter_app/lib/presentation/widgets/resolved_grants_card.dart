@@ -4,6 +4,7 @@ import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 import '../screens/database/entity_card.dart';
+import '../l10n/app_localizations.dart';
 
 /// Read-only summary of grants computed by [CharacterResolver] but not always
 /// mirrored on the PC entity's raw ref fields — senses, damage resistances /
@@ -135,7 +136,7 @@ class ResolvedGrantsCard extends StatelessWidget {
 
   /// Extra-speed row (fly/swim/climb/burrow). Renders as text chips of
   /// `mode N ft` since speeds aren't entity ids.
-  Widget _extraSpeedsRow(Map<String, int> speeds, Color chipColor) {
+  Widget _extraSpeedsRow(BuildContext context, Map<String, int> speeds, Color chipColor) {
     if (speeds.isEmpty) return const SizedBox.shrink();
     chipColor = _tone(chipColor);
     final entries = speeds.entries.where((e) => e.value > 0).toList()
@@ -151,7 +152,7 @@ class ResolvedGrantsCard extends StatelessWidget {
           SizedBox(
             width: 130,
             child: Text(
-              'Extra Speeds',
+              L10n.of(context)!.grantsExtraSpeeds,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -250,7 +251,7 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// granted card. These are the rules the engine does not compute
   /// (advantage riders, rerolls, reaction abilities, …) surfaced verbatim so
   /// the player still sees them on the sheet.
-  Widget _mechanicalNotesBlock(List<String> notes) {
+  Widget _mechanicalNotesBlock(BuildContext context, List<String> notes) {
     if (notes.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -258,7 +259,7 @@ class ResolvedGrantsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Other Effects',
+            L10n.of(context)!.grantsOtherEffects,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -282,12 +283,12 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// Render unarmored AC formula entries (Barbarian/Monk/Sorcerer Draconic
   /// Resilience). Sheet's AC field is manual — this row surfaces the formula
   /// so the player knows what to set it to when not wearing armor.
-  Widget _unarmoredFormulasBlock(List<Map<String, dynamic>> formulas) {
+  Widget _unarmoredFormulasBlock(BuildContext context, List<Map<String, dynamic>> formulas) {
     if (formulas.isEmpty) return const SizedBox.shrink();
     final unarmoredColor = _tone(Colors.blueGrey);
     String describe(Map<String, dynamic> eff) {
       final payload = eff['payload'];
-      if (payload is! Map) return 'Unarmored AC';
+      if (payload is! Map) return L10n.of(context)!.grantsUnarmoredAc;
       final base = payload['base'];
       final mods = payload['ability_mods'];
       final shield = payload['shield_allowed'] == true;
@@ -311,7 +312,7 @@ class ResolvedGrantsCard extends StatelessWidget {
           SizedBox(
             width: 130,
             child: Text(
-              'Unarmored AC',
+              L10n.of(context)!.grantsUnarmoredAc,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -347,7 +348,7 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// Render each conditionalGrants entry as a chip prefixed by the gating
   /// state. Groups entries by `kind` so the player sees one labelled row per
   /// (kind, state) bucket. Uses the kind's normal chip colour.
-  Widget _conditionalGrantsBlock(List<Map<String, dynamic>> grants) {
+  Widget _conditionalGrantsBlock(BuildContext context, List<Map<String, dynamic>> grants) {
     if (grants.isEmpty) return const SizedBox.shrink();
     const colourForKind = <String, Color>{
       'damage_resistance': Colors.green,
@@ -389,7 +390,7 @@ class ResolvedGrantsCard extends StatelessWidget {
             final label = labelForKind[kind] ?? kind;
             final stateLabel = state.replaceFirst('state:', '');
             final fullLabel =
-                stateLabel.isEmpty ? label : '$label (while $stateLabel)';
+                stateLabel.isEmpty ? label : L10n.of(context)!.grantsWhileState(label, stateLabel);
             return _chipRow(
               fullLabel,
               buckets[key]!,
@@ -402,14 +403,14 @@ class ResolvedGrantsCard extends StatelessWidget {
 
   /// Resolver warnings (unapplied effect kinds, dropped rows). Rendered so
   /// "I authored an effect and nothing happened" is visible instead of silent.
-  Widget _warningsBlock(List<String> warnings) {
+  Widget _warningsBlock(BuildContext context, List<String> warnings) {
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rule Warnings',
+            L10n.of(context)!.grantsRuleWarnings,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -516,13 +517,13 @@ class ResolvedGrantsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             EntityCardSectionHeading(
-              title: 'Resolved Grants',
+              title: L10n.of(context)!.grantsResolved,
               palette: palette,
               leadingIcon: Icons.shield_outlined,
             ),
             const SizedBox(height: 8),
             _chipRow('Senses', senses, Colors.indigo, withRange: true),
-            _extraSpeedsRow(extraSpeeds, Colors.lightBlue),
+            _extraSpeedsRow(context, extraSpeeds, Colors.lightBlue),
             _textChipRow('HP Bonus', hpChips, Colors.pink),
             _textChipRow('Initiative', initChips, Colors.lightGreen),
             _chipRow('Skill Prof.', extraSkillProfIds, Colors.lime),
@@ -533,20 +534,20 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Immunities', imm, Colors.blue),
             _chipRow('Vulnerabilities', vuln, Colors.deepOrange),
             _chipRow('Condition Imm.', cimm, Colors.purple),
-            _conditionalGrantsBlock(conditional),
+            _conditionalGrantsBlock(context, conditional),
             _chipRow('Traits', traits, Colors.teal),
             _chipRow('Actions', actions, Colors.red),
             _chipRow('Bonus Actions', bonusActions, Colors.amber),
             _chipRow('Reactions', reactions, Colors.cyan),
-            _mechanicalNotesBlock(mechanicalNotes),
-            _unarmoredFormulasBlock(unarmoredFormulas),
+            _mechanicalNotesBlock(context, mechanicalNotes),
+            _unarmoredFormulasBlock(context, unarmoredFormulas),
             _chipRow('Cantrips', grantedCantrips, Colors.lightGreen),
             _chipRow('Always Prepared', alwaysPrepared, Colors.indigoAccent),
             _chipRow('Granted Spells', grantedSpells, Colors.purple),
             _chipRow('Free Casts', freeCast, Colors.deepPurple),
             _chipRow('Ritual Book', ritualBook, Colors.brown),
             _chipRow('Active Conditions', activeConditions, Colors.redAccent),
-            if (warnings.isNotEmpty) _warningsBlock(warnings),
+            if (warnings.isNotEmpty) _warningsBlock(context, warnings),
           ],
         ),
       ),

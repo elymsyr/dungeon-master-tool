@@ -1,4 +1,5 @@
 import 'package:dungeon_master_tool/application/providers/ui_state_provider.dart';
+import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/services/entity_ref.dart';
@@ -72,7 +73,7 @@ void main() {
 
   Widget wrap(Widget Function(WidgetRef ref) build) {
     return ProviderScope(
-      child: MaterialApp(
+      child: MaterialApp(localizationsDelegates: L10n.localizationsDelegates, supportedLocales: L10n.supportedLocales, 
         home: Scaffold(
           body: SizedBox(
             width: 2400,

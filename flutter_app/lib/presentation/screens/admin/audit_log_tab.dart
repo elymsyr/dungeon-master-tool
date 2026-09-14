@@ -5,6 +5,7 @@ import '../../../application/providers/admin_provider.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../data/datasources/remote/admin_users_remote_ds.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Admin audit log — tüm admin aksiyonları (ban/unban, restrict/unrestrict,
 /// delete_*) tarih sırasına göre.
@@ -19,11 +20,11 @@ class AuditLogTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e'))),
         data: (entries) {
           if (entries.isEmpty) {
             return Center(
-              child: Text('No admin actions yet.',
+              child: Text(L10n.of(context)!.adminNoAuditActions,
                   style: TextStyle(color: palette.sidebarLabelSecondary)),
             );
           }

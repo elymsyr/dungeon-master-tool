@@ -10,6 +10,7 @@ import '../../../../../domain/entities/entity.dart';
 import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import 'skill_mod_helper.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Wizard step that asks the player to spend the proficiency / language
 /// "choice slots" their class and background grant, and to lock in the L1
@@ -150,7 +151,7 @@ class ProficienciesStep extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'No proficiency or language choices for this class + background.',
+          L10n.of(context)!.profNoChoices,
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -176,21 +177,21 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (weaponCategoryIds.isNotEmpty)
           _GrantedSection(
-            title: 'Weapon Proficiencies (class)',
+            title: L10n.of(context)!.profWeapon,
             ids: weaponCategoryIds,
             entities: entities,
             palette: palette,
           ),
         if (armorCategoryIds.isNotEmpty)
           _GrantedSection(
-            title: 'Armor Training (class)',
+            title: L10n.of(context)!.profArmor,
             ids: armorCategoryIds,
             entities: entities,
             palette: palette,
           ),
         if (grantedSkillIds.isNotEmpty)
           _GrantedSection(
-            title: 'Granted Skills (background / species)',
+            title: L10n.of(context)!.profGrantedSkills,
             ids: grantedSkillIds,
             entities: entities,
             palette: palette,
@@ -198,14 +199,14 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (grantedLanguageIds.isNotEmpty)
           _GrantedSection(
-            title: 'Granted Languages (class / species)',
+            title: L10n.of(context)!.profGrantedLanguages,
             ids: grantedLanguageIds,
             entities: entities,
             palette: palette,
           ),
         if (skillCap > 0)
           _PickerSection(
-            title: 'Class Skills',
+            title: L10n.of(context)!.profClassSkills,
             cap: skillCap,
             picked: draft.skillChoiceIds,
             optionIds: skillOptionIds,
@@ -219,7 +220,7 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (toolCap > 0)
           _PickerSection(
-            title: 'Class Tools',
+            title: L10n.of(context)!.profClassTools,
             cap: toolCap,
             picked: draft.toolChoiceIds,
             optionIds: toolOptionIds,
@@ -231,7 +232,7 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (bgToolVariantOptions.isNotEmpty)
           _SingleChoiceSection(
-            title: 'Background Tool Variant',
+            title: L10n.of(context)!.profBackgroundTool,
             options: bgToolVariantOptions,
             pickedId: draft.backgroundToolVariantId,
             onPick: notifier.setBackgroundToolVariant,
@@ -239,7 +240,7 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (standardLanguageIds.isNotEmpty)
           _PickerSection(
-            title: 'Origin Languages (Standard)',
+            title: L10n.of(context)!.profOriginLanguages,
             cap: languageCap,
             picked: draft.languageChoiceIds,
             optionIds: standardLanguageIds,
@@ -253,8 +254,8 @@ class ProficienciesStep extends ConsumerWidget {
         if (bonusLanguageCap > 0)
           _PickerSection(
             title: classEntity!.name == 'Rogue'
-                ? "Bonus Language (Thieves' Cant feature)"
-                : 'Bonus Language',
+                ? L10n.of(context)!.profBonusLanguageRogue
+                : L10n.of(context)!.profBonusLanguage,
             cap: bonusLanguageCap,
             picked: draft.bonusLanguageChoiceIds,
             optionIds: allLanguageIds,
@@ -271,7 +272,7 @@ class ProficienciesStep extends ConsumerWidget {
           ),
         if (masteryCap > 0 && masteryWeaponIds.isNotEmpty)
           _PickerSection(
-            title: 'Weapon Mastery',
+            title: L10n.of(context)!.profWeaponMastery,
             cap: masteryCap,
             picked: draft.weaponMasteryChoiceIds,
             optionIds: masteryWeaponIds,
@@ -732,7 +733,7 @@ class _PickerSection extends StatelessWidget {
           const SizedBox(height: 4),
           if (sortedOptions.isEmpty)
             Text(
-              'No options defined for this entity in the active campaign.',
+              L10n.of(context)!.profNoOptionsForEntity,
               style: TextStyle(
                 fontSize: 11,
                 color: palette.sidebarLabelSecondary,

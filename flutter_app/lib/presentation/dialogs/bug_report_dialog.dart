@@ -10,6 +10,7 @@ import '../../application/providers/account_gate.dart';
 import '../../core/constants.dart';
 import '../../core/services/log_buffer.dart';
 import '../../data/datasources/remote/bug_reports_remote_ds.dart';
+import '../l10n/app_localizations.dart';
 
 const _githubIssuesUrl =
     'https://github.com/elymsyr/dungeon-master-tool/issues';
@@ -24,8 +25,8 @@ class BugReportDialog extends ConsumerStatefulWidget {
     // O2: the gate, without changing the signature eight call sites use.
     if (!ProviderScope.containerOf(context).read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bug reporting requires cloud sign-in.'),
+        SnackBar(
+          content: Text(L10n.of(context)!.bugReportSignInRequired),
         ),
       );
       return Future.value();
@@ -91,7 +92,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thank you — your report was sent.')),
+        SnackBar(content: Text(L10n.of(context)!.bugReportSent)),
       );
     } on BugReportRateLimitException {
       if (!mounted) return;
@@ -127,7 +128,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
         children: [
           Icon(Icons.bug_report_outlined, color: theme.colorScheme.error),
           const SizedBox(width: 12),
-          const Expanded(child: Text('Report a bug')),
+          Expanded(child: Text(L10n.of(context)!.profileMenuReportBug)),
         ],
       ),
       content: ConstrainedBox(
@@ -138,8 +139,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Describe the issue you encountered. '
-                'Terminal output is captured automatically and will be sent with your report.',
+                L10n.of(context)!.bugReportDescribe,
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
@@ -151,7 +151,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
                 enabled: !_submitting,
                 decoration: InputDecoration(
                   hintText:
-                      'Steps to reproduce, expected vs actual behavior…',
+                      L10n.of(context)!.bugReportHint,
                   border: const OutlineInputBorder(),
                   alignLabelWithHint: true,
                   errorText: _errorText,
@@ -173,7 +173,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
                         color: theme.colorScheme.secondary),
                     const SizedBox(width: 6),
                     Text(
-                      'Recent logs (${_logsSnapshot.split('\n').length} lines — will be included)',
+                      L10n.of(context)!.bugReportRecentLogs('${_logsSnapshot.split('\n').length}'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.secondary,
                       ),
@@ -201,12 +201,12 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
                 ),
               ] else
                 Text(
-                  '(no terminal logs captured)',
+                  L10n.of(context)!.bugReportNoLogs,
                   style: theme.textTheme.bodySmall,
                 ),
               const SizedBox(height: 8),
               Text(
-                'Version: $appReleaseTag · Platform: ${_platformLabel()}',
+                L10n.of(context)!.bugReportVersionLine(appReleaseTag, _platformLabel()),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.disabledColor,
                 ),
@@ -223,7 +223,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
         ),
         TextButton(
           onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton.icon(
           icon: _submitting
@@ -233,7 +233,7 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.send, size: 16),
-          label: const Text('Send report'),
+          label: Text(L10n.of(context)!.bugReportSend),
           onPressed: canSubmit ? _submit : null,
         ),
       ],

@@ -50,7 +50,7 @@ class SaveSyncIndicator extends ConsumerWidget {
     if (compact) {
       return IconButton(
         icon: Icon(Icons.save, size: 20, color: palette.sidebarLabelSecondary),
-        tooltip: 'Save',
+        tooltip: L10n.of(context)!.btnSave,
         onPressed: () => _showSaveSyncDialog(context, ref, compact: true),
       );
     }
@@ -151,7 +151,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Save & Sync',
+                      L10n.of(context)!.saveAndSync,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -197,7 +197,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                 // ── Compact mode hint ──
                 if (compact)
                   Text(
-                    'Open a world to access full save & sync controls.',
+                    L10n.of(context)!.saveSyncOpenWorld,
                     style: TextStyle(
                       fontSize: 12,
                       color: palette.sidebarLabelSecondary,
@@ -413,7 +413,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
           if (isDm) ...[
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Multiplayer Off',
+              tooltip: L10n.of(context)!.multiplayerOff,
               icon: const Icon(Icons.cloud_off, size: 16),
               onPressed: _busy ? null : () => _confirmOffline(worldId),
               visualDensity: VisualDensity.compact,
@@ -433,7 +433,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
 
     return _ActionButton(
       icon: Icons.cloud_upload,
-      label: _busy ? 'Publishing...' : 'Multiplayer On',
+      label: _busy ? L10n.of(context)!.publishingEllipsis : L10n.of(context)!.multiplayerOn,
       onPressed: _busy ? null : () => _makeOnline(campaignName, worldId),
       palette: palette,
     );
@@ -451,8 +451,8 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final online = ref.read(connectivityStreamProvider).valueOrNull ?? true;
     if (!online) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('İnternet bağlantısı gerekli. Çevrimiçi olunca tekrar deneyin.'),
+        SnackBar(
+          content: Text(L10n.of(context)!.internetRequiredRetry),
         ),
       );
       return;
@@ -509,13 +509,13 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       ref.invalidate(worldRoleProvider(worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('World is now online')),
+        SnackBar(content: Text(L10n.of(context)!.worldNowOnline)),
       );
       await seedAndAnnounceWorldContent(context, ref, worldId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Publish failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.publishDialogFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -529,9 +529,9 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final online = ref.read(connectivityStreamProvider).valueOrNull ?? true;
     if (!online) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'İnternet bağlantısı gerekli — offline yapmak için önce bağlanın.',
+            L10n.of(context)!.internetRequiredOffline,
           ),
         ),
       );
@@ -540,17 +540,16 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Multiplayer Off'),
-        content: const Text(
-            'This removes the world and all member data from the cloud. '
-            'Local data is preserved. Continue?'),
+        title: Text(L10n.of(context)!.multiplayerOff),
+        content: Text(
+            L10n.of(context)!.multiplayerOffBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(L10n.of(context)!.btnCancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Multiplayer Off')),
+              child: Text(L10n.of(context)!.multiplayerOff)),
         ],
       ),
     );
@@ -569,14 +568,14 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       ref.invalidate(worldOnlineStatusProvider(worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('World is now offline')),
+        SnackBar(content: Text(L10n.of(context)!.worldNowOffline)),
       );
     } catch (e) {
       // Unpublish başarısız → DELETE CDC gelmez, guard'ı bırak.
       mirror?.clearExpectedUnpublish(worldId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unpublish failed: $e')),
+        SnackBar(content: Text(L10n.of(context)!.unpublishFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

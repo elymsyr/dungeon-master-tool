@@ -340,7 +340,7 @@ class _CharacterEditorScreenState
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back, size: 20),
-                tooltip: 'Back',
+                tooltip: L10n.of(context)!.btnBack,
                 onPressed: () {
                   if (onClose != null) {
                     onClose();
@@ -351,11 +351,11 @@ class _CharacterEditorScreenState
                 visualDensity: VisualDensity.compact,
               ),
               const SizedBox(width: 4),
-              const Text('Character'),
+              Text(L10n.of(context)!.itemTypeCharacter),
             ],
           ),
         ),
-        body: const Center(child: Text('Character not found.')),
+        body: Center(child: Text(L10n.of(context)!.charNotFound)),
       );
     }
 
@@ -367,7 +367,7 @@ class _CharacterEditorScreenState
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(L10n.of(context)!.hubErrorGeneric('$e')))),
       data: (templates) {
         final template = templates
             .where((t) => t.schemaId == character.templateId)
@@ -377,8 +377,7 @@ class _CharacterEditorScreenState
             appBar: AppBar(title: Text(character.entity.name)),
             body: Center(
               child: Text(
-                'Template "${character.templateName}" missing.\n'
-                'Restore it in the Templates tab to edit this character.',
+                L10n.of(context)!.charTemplateMissing(character.templateName),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: palette.sidebarLabelSecondary),
               ),
@@ -389,8 +388,8 @@ class _CharacterEditorScreenState
         if (playerCat == null) {
           return Scaffold(
             appBar: AppBar(title: Text(character.entity.name)),
-            body: const Center(
-              child: Text('Template has no Player category.'),
+            body: Center(
+              child: Text(L10n.of(context)!.charTemplateNoPlayer),
             ),
           );
         }
@@ -421,7 +420,7 @@ class _CharacterEditorScreenState
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back, size: 20),
-                tooltip: 'Back',
+                tooltip: L10n.of(context)!.btnBack,
                 onPressed: () => _saveAndClose(context),
                 visualDensity: VisualDensity.compact,
               ),
@@ -469,8 +468,8 @@ class _CharacterEditorScreenState
               icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
                   size: 20),
               tooltip: _canEdit
-                  ? (_readOnly ? 'Edit' : 'View')
-                  : 'Read-only (not owner)',
+                  ? (_readOnly ? L10n.of(context)!.btnEdit : L10n.of(context)!.btnView)
+                  : L10n.of(context)!.charReadOnlyNotOwner,
               onPressed: !_canEdit
                   ? null
                   : () => setState(() => _readOnly = !_readOnly),
@@ -482,14 +481,14 @@ class _CharacterEditorScreenState
             // undoable/redoable from anywhere.
             IconButton(
               icon: const Icon(Icons.undo, size: 18),
-              tooltip: 'Undo',
+              tooltip: L10n.of(context)!.mainUndoShort,
               onPressed: !_canUndo ? null : _undo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
             IconButton(
               icon: const Icon(Icons.redo, size: 18),
-              tooltip: 'Redo',
+              tooltip: L10n.of(context)!.mainRedoShort,
               onPressed: !_canRedo ? null : _redo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
@@ -534,7 +533,7 @@ class _CharacterEditorScreenState
                   PopupMenuItem(value: 'sync', child: Row(children: [
                     Icon(_saving ? Icons.cloud_upload : Icons.cloud_done, size: 18, color: palette.sidebarLabelSecondary),
                     const SizedBox(width: 8),
-                    Text(_saving ? 'Saving...' : 'Save & Sync'),
+                    Text(_saving ? L10n.of(context)!.savingEllipsis : L10n.of(context)!.saveAndSync),
                   ])),
                   const PopupMenuDivider(),
                   PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
@@ -553,7 +552,7 @@ class _CharacterEditorScreenState
                   const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
                   const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                   const PopupMenuDivider(),
-                  const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
+                  PopupMenuItem(value: 'bug', child: Row(children: [const Icon(Icons.bug_report_outlined, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.menuReportBug)])),
                 ],
               ),
             ] else if (!embedded) ...[
@@ -606,7 +605,7 @@ class _CharacterEditorScreenState
               // Bug report
               IconButton(
                 icon: const Icon(Icons.bug_report_outlined, size: 20),
-                tooltip: 'Report a Bug',
+                tooltip: L10n.of(context)!.menuReportBug,
                 onPressed: () => BugReportDialog.show(context),
               ),
             ],
@@ -738,7 +737,7 @@ class _CharacterEditorScreenState
     ..._renderLevelUpTable(palette, character),
     const SizedBox(height: 8),
     EntityCardSectionHeading(
-      title: 'DM Notes',
+      title: L10n.of(context)!.dmNotesTitle,
       palette: palette,
       leadingIcon: Icons.lock,
     ),
@@ -753,7 +752,7 @@ class _CharacterEditorScreenState
           color: palette.srdInk,
           height: 1.4),
       decoration: InputDecoration(
-        hintText: 'Private DM notes... (@ to mention)',
+        hintText: L10n.of(context)!.dmNotesPrivateHint,
         border: InputBorder.none,
         isDense: true,
         contentPadding: EdgeInsets.zero,
@@ -845,7 +844,7 @@ class _CharacterEditorScreenState
                 size: 56, color: palette.sidebarLabelSecondary),
             if (!_readOnly) ...[
               const SizedBox(height: 4),
-              Text('Add photo',
+              Text(L10n.of(context)!.charAddPhoto,
                   style: TextStyle(
                       fontSize: 11,
                       color: palette.sidebarLabelSecondary)),
@@ -928,8 +927,8 @@ class _CharacterEditorScreenState
                     letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
                     height: 1.1,
                   ),
-                  decoration: const InputDecoration(
-                    hintText: 'Character Name',
+                  decoration: InputDecoration(
+                    hintText: L10n.of(context)!.charNameHint,
                     border: InputBorder.none,
                     isDense: true,
                     filled: false,
@@ -964,7 +963,7 @@ class _CharacterEditorScreenState
                 textStyle: TextStyle(
                     fontSize: 16, color: palette.srdInk, height: 1.45),
                 decoration: InputDecoration(
-                  hintText: 'Markdown supported... (@ to mention)',
+                  hintText: L10n.of(context)!.markdownMentionHint,
                   border: InputBorder.none,
                   isDense: true,
                   filled: false,
@@ -1096,7 +1095,7 @@ class _CharacterEditorScreenState
     final ungrouped = fieldsByGroup[null] ?? const <FieldSchema>[];
     if (ungrouped.isNotEmpty) {
       widgets.add(EntityCardSectionHeading(
-          title: 'Properties', palette: palette));
+          title: L10n.of(context)!.propertiesTitle, palette: palette));
       widgets.add(const SizedBox(height: 8));
       widgets.add(Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2068,13 +2067,13 @@ class _CharacterEditorScreenState
     final level = fields['level'] is int ? fields['level'] as int : null;
     return [
       const SizedBox(height: 16),
-      EntityCardSectionHeading(title: 'Level Up Table', palette: palette),
+      EntityCardSectionHeading(title: L10n.of(context)!.levelUpTableTitle, palette: palette),
       const SizedBox(height: 8),
       // Collapsed by default — reference detail, kept consistent with the
       // wizard's subclass step.
       ExpandableSection(
-        collapsedLabel: 'Show level-up table',
-        expandedLabel: 'Hide level-up table',
+        collapsedLabel: L10n.of(context)!.levelTableShow,
+        expandedLabel: L10n.of(context)!.levelTableHide,
         child: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: ClassLevelUpTable(
@@ -2174,7 +2173,7 @@ class _CharacterEditorScreenState
             child: Padding(
               padding: const EdgeInsets.only(right: 8, top: 1),
               child: Text(
-                'Ancestry:',
+                L10n.of(context)!.charAncestryLabel,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -2217,10 +2216,10 @@ class _CharacterEditorScreenState
                       ),
                     ),
                     items: <DropdownMenuItem<String?>>[
-                      const DropdownMenuItem<String?>(
+                      DropdownMenuItem<String?>(
                         value: null,
                         child:
-                            Text('(None)', overflow: TextOverflow.ellipsis),
+                            Text(L10n.of(context)!.charNoneParen, overflow: TextOverflow.ellipsis),
                       ),
                       for (final c in choices)
                         DropdownMenuItem<String?>(
@@ -2707,7 +2706,7 @@ class _CharacterEditorScreenState
           child: OutlinedButton.icon(
             onPressed: () => _levelUp(character),
             icon: const Icon(Icons.arrow_upward, size: 16),
-            label: const Text('Level Up'),
+            label: Text(L10n.of(context)!.charLevelUp),
           ),
         ),
         const SizedBox(width: 8),
@@ -2715,7 +2714,7 @@ class _CharacterEditorScreenState
           child: OutlinedButton.icon(
             onPressed: () => _shortRest(character),
             icon: const Icon(Icons.bedtime_outlined, size: 16),
-            label: const Text('Short Rest'),
+            label: Text(L10n.of(context)!.charShortRest),
           ),
         ),
         const SizedBox(width: 8),
@@ -2723,7 +2722,7 @@ class _CharacterEditorScreenState
           child: OutlinedButton.icon(
             onPressed: () => _longRest(character),
             icon: const Icon(Icons.nightlight_round, size: 16),
-            label: const Text('Long Rest'),
+            label: Text(L10n.of(context)!.charLongRest),
           ),
         ),
       ],
@@ -2935,7 +2934,7 @@ class _CharacterEditorScreenState
     final totalLevel = _asInt(character.entity.fields['level'], 1);
     if (totalLevel >= 20) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already at level 20.')),
+        SnackBar(content: Text(L10n.of(context)!.charMaxLevel)),
       );
       return;
     }
@@ -2957,7 +2956,7 @@ class _CharacterEditorScreenState
     final prevClassLevel = classLevels[targetClassId] ?? 0;
     if (prevClassLevel >= 20) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${pick.classLabel} already at level 20.')),
+        SnackBar(content: Text(L10n.of(context)!.charClassMaxLevel(pick.classLabel))),
       );
       return;
     }
@@ -3181,8 +3180,8 @@ class _CharacterEditorScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(dieMax <= 0
-              ? 'No class hit die data — set a class first.'
-              : 'No hit dice left to spend.'),
+              ? L10n.of(context)!.charNoHitDieData
+              : L10n.of(context)!.charNoHitDiceLeft),
         ),
       );
       return;
@@ -3224,21 +3223,18 @@ class _CharacterEditorScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Long Rest'),
+        title: Text(L10n.of(context)!.charLongRest),
         content: Text(
-          'Restore HP to full ($maxHp), regain $regained Hit Die'
-          '${regained == 1 ? '' : 's'} '
-          '(now $newHd/$maxHd), and reset class resources. '
-          'Continue?',
+          L10n.of(context)!.charLongRestBody('$maxHp', '$newHd', '$maxHd', regained),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Rest'),
+            child: Text(L10n.of(context)!.charRest),
           ),
         ],
       ),
@@ -3267,9 +3263,9 @@ class _CharacterEditorScreenState
       if (!mounted) return;
       if (!silent) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Character saved.'),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: Text(L10n.of(context)!.charSaved),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -3377,7 +3373,7 @@ class _PendingChip extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(14),
         child: Tooltip(
-          message: 'Tap to resolve · Long-press to discard',
+          message: L10n.of(context)!.charPendingTooltip,
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -3458,7 +3454,7 @@ class _LevelUpClassPicker extends StatelessWidget {
       rows.add(ListTile(
         dense: true,
         title: Text(label),
-        subtitle: Text('Current level $level → ${level + 1}'),
+        subtitle: Text(L10n.of(context)!.charCurrentLevelLine('$level', '${level + 1}')),
         onTap: level >= 20
             ? null
             : () => Navigator.of(context).pop(
@@ -3472,7 +3468,7 @@ class _LevelUpClassPicker extends StatelessWidget {
     rows.add(ListTile(
       dense: true,
       leading: const Icon(Icons.add_circle_outline),
-      title: const Text('Add new class (multiclass)'),
+      title: Text(L10n.of(context)!.charAddMulticlass),
       onTap: () async {
         final pick = await _showAddClassDialog(context);
         if (pick != null && context.mounted) {
@@ -3482,7 +3478,7 @@ class _LevelUpClassPicker extends StatelessWidget {
     ));
 
     return AlertDialog(
-      title: const Text('Level Up — Choose Class'),
+      title: Text(L10n.of(context)!.charLevelUpChooseClass),
       content: SizedBox(
         width: 380,
         child: ConstrainedBox(
@@ -3507,7 +3503,7 @@ class _LevelUpClassPicker extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
       ],
     );
@@ -3521,14 +3517,14 @@ class _LevelUpClassPicker extends StatelessWidget {
       ..sort((a, b) => a.name.compareTo(b.name));
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No other classes available.')),
+        SnackBar(content: Text(L10n.of(context)!.charNoOtherClasses)),
       );
       return Future.value(null);
     }
     return showDialog<_LevelUpPick>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Multiclass: New Class'),
+        title: Text(L10n.of(context)!.charMulticlassNew),
         children: [
           for (final cls in available)
             SimpleDialogOption(
@@ -3542,18 +3538,18 @@ class _LevelUpClassPicker extends StatelessWidget {
                   final ok = await showDialog<bool>(
                     context: ctx,
                     builder: (warn) => AlertDialog(
-                      title: Text('${cls.name} prereq not met'),
+                      title: Text(L10n.of(context)!.charPrereqNotMet(cls.name)),
                       content: Text(
-                        '${check.reason}\n\nProceed anyway (homebrew / rule-zero)?',
+                        L10n.of(context)!.charPrereqProceed(check.reason),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(warn, false),
-                          child: const Text('Cancel'),
+                          child: Text(L10n.of(context)!.btnCancel),
                         ),
                         FilledButton(
                           onPressed: () => Navigator.pop(warn, true),
-                          child: const Text('Proceed'),
+                          child: Text(L10n.of(context)!.btnProceed),
                         ),
                       ],
                     ),
@@ -3626,7 +3622,7 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
     final restored = _rolls.fold<int>(0, (a, b) => a + b) +
         (_rolls.length * widget.conMod);
     return AlertDialog(
-      title: const Text('Short Rest'),
+      title: Text(L10n.of(context)!.charShortRest),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Column(
@@ -3634,14 +3630,14 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hit Dice available: ${widget.hdRemaining}  ·  d${widget.dieMax}  ·  '
-              'Con mod: ${widget.conMod >= 0 ? '+' : ''}${widget.conMod}',
+              L10n.of(context)!.charHitDiceAvailable('${widget.hdRemaining}', '${widget.dieMax}',
+                  '${widget.conMod >= 0 ? '+' : ''}${widget.conMod}'),
               style: TextStyle(fontSize: 12, color: hint),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Dice to spend:'),
+                Text(L10n.of(context)!.charDiceToSpend),
                 const SizedBox(width: 12),
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
@@ -3681,13 +3677,12 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
             if (_rolls.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                'Rolls: ${_rolls.join(', ')}  '
-                '(+ ${_rolls.length} × ${widget.conMod} Con)',
+                L10n.of(context)!.charRollsLine(_rolls.join(', '), '${_rolls.length}', '${widget.conMod}'),
                 style: TextStyle(fontSize: 12, color: hint),
               ),
               const SizedBox(height: 4),
               Text(
-                'HP restored: $restored',
+                L10n.of(context)!.charHpRestored('$restored'),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ],
@@ -3697,7 +3692,7 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(L10n.of(context)!.btnCancel),
         ),
         FilledButton(
           onPressed: _rolls.isEmpty
@@ -3706,7 +3701,7 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
                     context,
                     _ShortRestSpend(dice: _dice, restored: restored),
                   ),
-          child: const Text('Apply'),
+          child: Text(L10n.of(context)!.hubFilterApply),
         ),
       ],
     );
@@ -3750,8 +3745,8 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
             )
           : Icon(icon, size: 20, color: color),
       tooltip: saving
-          ? 'Saving...'
-          : (isOnline ? 'Online · Save & Sync' : 'Save & Sync'),
+          ? L10n.of(context)!.savingEllipsis
+          : (isOnline ? L10n.of(context)!.saveAndSyncOnline : L10n.of(context)!.saveAndSync),
       onPressed: () => showDialog<void>(
         context: context,
         builder: (ctx) => _CharacterSaveSyncDialog(
@@ -3816,7 +3811,7 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Save & Sync',
+                      L10n.of(context)!.saveAndSync,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -3926,6 +3921,7 @@ class _StatChipsHeader extends ConsumerWidget {
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(
+          l10n: L10n.of(context)!,
           character,
           raceName: resolve(ids.raceId, ids.raceName),
           className: resolve(ids.classId, ids.className),
@@ -3984,7 +3980,7 @@ class _UpgradesPanel extends StatelessWidget {
                 const Icon(Icons.upgrade, size: 14, color: Colors.orange),
                 const SizedBox(width: 6),
                 Text(
-                  'Upgrades · ${all.length} pending',
+                  L10n.of(context)!.charUpgradesPending('${all.length}'),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

@@ -13,6 +13,7 @@ import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/services/entity_ref.dart';
 import '../theme/dm_tool_colors.dart';
+import '../l10n/app_localizations.dart';
 
 /// Six summary stats shown on character header / sidebar / tab cards in
 /// place of the freeform tag list: HP / max HP, Species, Class, Level,
@@ -108,6 +109,7 @@ List<CharacterStatLine> characterStatLines(
   Map<String, Entity> entities, {
   int? effectiveAc,
   String? ownerLabel,
+  L10n? l10n,
 }) {
   final ids = characterRaceClassIds(character, entities);
   final rid = ids.raceId;
@@ -130,6 +132,7 @@ List<CharacterStatLine> characterStatLines(
     subspeciesName: subspeciesName,
     effectiveAc: effectiveAc,
     ownerLabel: ownerLabel,
+    l10n: l10n,
   );
 }
 
@@ -144,7 +147,10 @@ List<CharacterStatLine> characterStatLinesWithNames(
   String subspeciesName = '',
   int? effectiveAc,
   String? ownerLabel,
+  L10n? l10n,
 }) {
+  // Pure function (tested without a widget tree): English unless the caller passes its locale.
+  final t = l10n ?? lookupL10n(const Locale('en'));
   final fields = character.entity.fields;
 
   int asInt(Object? raw) {
@@ -205,23 +211,23 @@ List<CharacterStatLine> characterStatLinesWithNames(
     ),
     CharacterStatLine(
       icon: Icons.pets,
-      label: 'Species',
+      label: t.statSpecies,
       value: raceName,
     ),
     if (subspeciesLabel.isNotEmpty)
       CharacterStatLine(
         icon: Icons.diversity_3,
-        label: 'Ancestry',
+        label: t.statAncestry,
         value: subspeciesLabel,
       ),
     CharacterStatLine(
       icon: Icons.shield_moon_outlined,
-      label: 'Class',
+      label: t.wizardStepClass,
       value: className,
     ),
     CharacterStatLine(
       icon: Icons.trending_up,
-      label: 'Level',
+      label: t.lblLevel,
       value: level > 0 ? '$level' : '—',
     ),
     CharacterStatLine(
@@ -231,7 +237,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
     ),
     CharacterStatLine(
       icon: Icons.person_outline,
-      label: 'User',
+      label: t.statUser,
       value: ownerLabel ?? '—',
     ),
   ];

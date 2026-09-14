@@ -12,6 +12,7 @@ import '../../../../widgets/class_level_up_table.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/expandable_section.dart';
 import '../../../../widgets/source_badge.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Subclass picker. Always shown when the chosen class has at least one
 /// subclass entity referencing it via `parent_class_ref`. Selection is
@@ -26,9 +27,9 @@ class SubclassStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (draft.classId == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Pick a class first.'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(L10n.of(context)!.wizardPickClassFirst),
       );
     }
     final entities = ref.watch(wizardEntitiesProvider);
@@ -40,9 +41,9 @@ class SubclassStep extends ConsumerWidget {
       candidates: allSubclasses,
     );
     if (subclasses.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('No subclasses available for this class.'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(L10n.of(context)!.subclassNone),
       );
     }
     // Per SRD §1.5, a subclass cannot be picked before the class's
@@ -69,8 +70,7 @@ class SubclassStep extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'This class chooses a subclass at level $minGranted. '
-              'Bump the level on the Identity step to unlock subclass picks.',
+              L10n.of(context)!.subclassAtLevel('$minGranted'),
               style: const TextStyle(fontStyle: FontStyle.italic),
             ),
           ),
@@ -88,7 +88,7 @@ class SubclassStep extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               icon: const Icon(Icons.clear, size: 16),
-              label: const Text('Clear selection'),
+              label: Text(L10n.of(context)!.btnClearSelection),
               onPressed: () => notifier.setSubclass(null),
             ),
           ),
@@ -97,8 +97,8 @@ class SubclassStep extends ConsumerWidget {
           // Collapsed by default — the 20-row table is reference detail, not a
           // decision the player makes here, so it shouldn't dominate the step.
           ExpandableSection(
-            collapsedLabel: 'Show level-up table',
-            expandedLabel: 'Hide level-up table',
+            collapsedLabel: L10n.of(context)!.levelTableShow,
+            expandedLabel: L10n.of(context)!.levelTableHide,
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: ClassLevelUpTable(

@@ -275,6 +275,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       // VLB builder'ında TEKRARLANMAZ.
                       final infoChips = CharacterStatChips(
                         lines: characterStatLines(
+                          l10n: L10n.of(context)!,
                           c,
                           entitiesFor(c),
                           ownerLabel: resolveCharacterOwnerLabel(ref, c),
@@ -398,7 +399,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     OutlinedButton.icon(
                       onPressed: selected != null ? _copyCharacter : null,
                       icon: const Icon(Icons.content_copy, size: 18),
-                      label: const Text('Copy'),
+                      label: Text(L10n.of(context)!.charCopyToWorldAction),
                     ),
                     const SizedBox(width: 8),
                     actionButton,
@@ -591,21 +592,21 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Copy Character'),
+        title: Text(L10n.of(context)!.copyCharacterTitle),
         content: TextField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(labelText: 'New character name'),
+          decoration: InputDecoration(labelText: L10n.of(context)!.newCharacterName),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Copy'),
+            child: Text(L10n.of(context)!.charCopyToWorldAction),
           ),
         ],
       ),
@@ -616,7 +617,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (existingNames.contains(newName)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Character "$newName" already exists')),
+          SnackBar(content: Text(L10n.of(context)!.characterNameExists(newName))),
         );
       }
       return;
@@ -630,13 +631,13 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Copied "${source.entity.name}" → "$newName"')),
+              content: Text(L10n.of(context)!.copiedFromTo(source.entity.name, newName))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copy failed: $e')),
+          SnackBar(content: Text(L10n.of(context)!.copyFailed('$e'))),
         );
       }
     }

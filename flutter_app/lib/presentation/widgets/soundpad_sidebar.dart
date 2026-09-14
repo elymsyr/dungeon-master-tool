@@ -105,7 +105,7 @@ class _MusicSection extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (e, _) => Text('Error: $e',
+            error: (e, _) => Text(L10n.of(context)!.hubErrorGeneric('$e'),
                 style: TextStyle(color: palette.tokenBorderHostile)),
           ),
           if (activeThemeId != null) ...[
@@ -314,7 +314,7 @@ class _SfxSection extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             child: Text(
-              'No SFX available',
+              L10n.of(context)!.sfxNoneAvailable,
               style: TextStyle(
                   fontSize: 12, color: palette.tabText.withValues(alpha: 0.5)),
             ),
@@ -349,7 +349,7 @@ class _SfxSection extends ConsumerWidget {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(12),
-        child: Text('Error: $e'),
+        child: Text(L10n.of(context)!.hubErrorGeneric('$e')),
       ),
     );
   }
@@ -467,7 +467,7 @@ class _AmbienceSection extends ConsumerWidget {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(12),
-        child: Text('Error: $e'),
+        child: Text(L10n.of(context)!.hubErrorGeneric('$e')),
       ),
     );
   }
@@ -540,7 +540,7 @@ class _AmbienceCompactRow extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             color: palette.tabText,
             onPressed: onClear,
-            tooltip: 'Remove',
+            tooltip: L10n.of(context)!.btnRemove,
           ),
         ],
       ),
@@ -571,7 +571,7 @@ class _AddAmbienceButton extends StatelessWidget {
       width: double.infinity,
       child: PopupMenuButton<String>(
         enabled: enabled,
-        tooltip: 'Add ambience',
+        tooltip: L10n.of(context)!.soundpadAddAmbience,
         color: palette.canvasBg,
         position: PopupMenuPosition.under,
         itemBuilder: (context) => available
@@ -602,7 +602,7 @@ class _AddAmbienceButton extends StatelessWidget {
                       : palette.tabText.withValues(alpha: 0.4)),
               const SizedBox(width: 6),
               Text(
-                'Add ambience',
+                L10n.of(context)!.soundpadAddAmbience,
                 style: TextStyle(
                   fontSize: 12,
                   color: enabled

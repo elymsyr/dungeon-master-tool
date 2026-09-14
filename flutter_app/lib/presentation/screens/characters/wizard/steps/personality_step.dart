@@ -6,6 +6,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/character_creation/srd_trinkets.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Wizard step that collects the SRD §1 "Imagine Your Past and Present"
 /// flavor: four personality components (Traits/Ideals/Bonds/Flaws), a
@@ -38,8 +39,7 @@ class PersonalityStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Optional — SRD §1 "Imagine Your Past and Present" flavor. '
-          'Leave blank to skip.',
+          L10n.of(context)!.persIntro,
           style: TextStyle(
             fontSize: 12,
             color: palette.sidebarLabelSecondary,
@@ -47,36 +47,36 @@ class PersonalityStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _Field(
-          label: 'Personality Traits',
+          label: L10n.of(context)!.persTraits,
           hint:
-              'e.g. "I am haunted by memories of war." (one or two short statements)',
+              L10n.of(context)!.persTraitsHint,
           initialValue: draft.personalityTraits,
           onChanged: notifier.setPersonalityTraits,
         ),
         _Field(
-          label: 'Ideals',
+          label: L10n.of(context)!.persIdeals,
           hint:
-              'e.g. "Greater Good. Our lot is to lay down our lives in defense of others."',
+              L10n.of(context)!.persIdealsHint,
           initialValue: draft.ideals,
           onChanged: notifier.setIdeals,
         ),
         _Field(
-          label: 'Bonds',
+          label: L10n.of(context)!.persBonds,
           hint:
-              'e.g. "I will avenge the destruction of my homeland." — a connection to people, places, or events',
+              L10n.of(context)!.persBondsHint,
           initialValue: draft.bonds,
           onChanged: notifier.setBonds,
         ),
         _Field(
-          label: 'Flaws',
+          label: L10n.of(context)!.persFlaws,
           hint:
-              'e.g. "I have a weakness for the vices of the city, especially hard drink." — one mortal trait',
+              L10n.of(context)!.persFlawsHint,
           initialValue: draft.flaws,
           onChanged: notifier.setFlaws,
         ),
         const SizedBox(height: 4),
         Text(
-          'Backstory prompts (answer the ones that spark something):',
+          L10n.of(context)!.persPrompts,
           style: TextStyle(
             fontSize: 12,
             color: palette.sidebarLabelSecondary,
@@ -97,8 +97,8 @@ class PersonalityStep extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         _Field(
-          label: 'Backstory',
-          hint: 'A few sentences sketching your past and what drives you.',
+          label: L10n.of(context)!.persBackstory,
+          hint: L10n.of(context)!.persBackstoryHint,
           initialValue: draft.backstory,
           minLines: 3,
           maxLines: 6,
@@ -109,7 +109,7 @@ class PersonalityStep extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Trinket',
+                L10n.of(context)!.persTrinket,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -119,7 +119,7 @@ class PersonalityStep extends StatelessWidget {
             ),
             TextButton.icon(
               icon: const Icon(Icons.casino, size: 14),
-              label: const Text('Roll d100'),
+              label: Text(L10n.of(context)!.persRollD100),
               style: TextButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
@@ -133,7 +133,7 @@ class PersonalityStep extends StatelessWidget {
         _Field(
           label: '',
           hint:
-              'A small item lightly touched by mystery — roll the SRD d100 above or write your own.',
+              L10n.of(context)!.persTrinketHint,
           initialValue: draft.trinket,
           onChanged: notifier.setTrinket,
           // Re-key on draft.trinket so the random-roll button overwrites
