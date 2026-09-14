@@ -6,8 +6,8 @@ void main() {
   late final schema = generateDefaultDnd5eSchema();
 
   group('Default D&D 5e Schema', () {
-    test('generates 19 categories', () {
-      expect(schema.categories.length, 19);
+    test('generates 18 categories', () {
+      expect(schema.categories.length, 18);
     });
 
     test('schema metadata is correct', () {
@@ -25,11 +25,13 @@ void main() {
     test('categories have correct slugs', () {
       final slugs = schema.categories.map((c) => c.slug).toList();
       expect(slugs, containsAll([
-        'npc', 'monster', 'player', 'spell', 'equipment',
+        'npc', 'monster', 'spell', 'equipment',
         'class', 'race', 'location', 'quest', 'lore',
         'status-effect', 'feat', 'background', 'plane', 'condition',
         'trait', 'action', 'reaction', 'legendary-action',
       ]));
+      // `player` was removed; legacy data goes through legacy_maps.dart.
+      expect(slugs, isNot(contains('player')));
     });
 
     test('NPC has statBlock, combatStats, actionList, spellList fields', () {
@@ -64,12 +66,9 @@ void main() {
       expect(textFields.length, 12);
     });
 
-    test('Monster and Player do NOT have creature-only fields', () {
-      // Monster and Player should have statBlock like NPC
+    test('Monster has a statBlock like NPC', () {
       final monster = schema.categories.firstWhere((c) => c.slug == 'monster');
-      final player = schema.categories.firstWhere((c) => c.slug == 'player');
       expect(monster.fields.any((f) => f.fieldType == FieldType.statBlock), true);
-      expect(player.fields.any((f) => f.fieldType == FieldType.statBlock), true);
     });
 
     test('Condition has source, effects, and condition_stats fields', () {
