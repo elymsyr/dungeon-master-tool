@@ -615,7 +615,8 @@
             "gizli-liman",
             "liman"
           ],
-          "imagePath": "media/Artwork/Gizli-Liman.webp"
+          "imagePath": "media/Artwork/Gizli-Liman.webp",
+          "map": "media/Maps/Gizli-Liman.webp"
         }
       },
       {

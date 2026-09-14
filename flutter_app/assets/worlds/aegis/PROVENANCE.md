@@ -10,7 +10,7 @@ aldı: `npc/Halim`, `creature-action/Sıçrayıp Isırma` · `Siperi Uzat` · `S
 Yemini'nin altı ve Siper Okulu'nun dört trait'i, iki alt sınıf kartı, `lore/Fihrist`,
 `lore/İlahi Büyü Listesi`, `quest/İyi Yazı`. `location/Votumar` · `Lucid Triton` · `Elymsyr`
 kartlarının ilk görseli artık `tool/aegis_art/ref/` altındaki panorama (`*-Panorama.webp`),
-eski görsel ikinci. `Votumar` · `Lucid Triton` · `Gümüşsu` kartlarının `map` alanına üstten
+eski görsel ikinci. `Votumar` · `Lucid Triton` · `Gümüşsu` · `Gizli Liman` kartlarının `map` alanına üstten
 haritaları girdi (`media/Maps/`). Üretim akışı `tool/aegis_art/README.md` §6.1.
 
 **Sürüm 0.6.9 — 172 entity** (2026-09-13). **İrade Yemini sadeleştirmesi.** Yeni kart
