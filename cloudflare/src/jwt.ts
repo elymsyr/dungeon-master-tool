@@ -147,8 +147,8 @@ export async function verifyJwt(
 
 interface AlgParams {
   kty: string;
-  importAlgorithm: RsaHashedImportParams | EcKeyImportParams;
-  verifyAlgorithm: AlgorithmIdentifier | EcdsaParams;
+  importAlgorithm: SubtleCryptoImportKeyAlgorithm;
+  verifyAlgorithm: string | SubtleCryptoSignAlgorithm;
 }
 
 function algToParams(alg: string): AlgParams | null {
