@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/guest_promotion_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-09-14
 tags: [file]
 ---
 
@@ -100,6 +100,8 @@ Düz satır kopyası bu yüzden mümkün olan en kötü şeyi yapıyordu:
 Eşleme ölçütü bilerek **bozulmanın kendisi**: ortak entity id'si, misafir satırlarının yutulmasına yol açan şeyin ta kendisi. Sadece ismi aynı olan iki farklı kullanıcı paketi rastgele id üretir, hiçbir id paylaşmaz — dolayısıyla dokunulmaz ve ikisi de hayatta kalır.
 
 Testler: `guest_promotion_service_test.dart` içinde **`packages that exist on both sides`** grubu (3 vaka). Düzeltme geri alındığında ilk vaka düşüyor — doğrulandı.
+
+**Ek (2026-09-14) — isim çakışması.** `e900f257` SRD tekrarını önlemek için isim eşleşen *her* misafir paketini merge'den atıyordu; aynı isimli farklı bir kullanıcı paketi ("Notes") böylece sessizce kayboluyordu. İki düzeltme: (1) yerleşik SRD (`srdCorePackageName`, yeniden adlandırılamaz) `_guestPackageRemap`'te **yalnız isimle** eşleniyor — dünyanın bağlantısı da hesabın SRD'sine çevriliyor; (2) remap'in dokunmadığı ama ismi hesapta olan misafir paketi `_guestPackageRenames` ile **"Ad (2)"** olarak geliyor (LAN sync'in `_uniqueName` soneki). Sebep `idx_packages_name` UNIQUE index'i: yeniden adlandırmadan `INSERT OR IGNORE` paket satırını düşürüp entity'lerini sahipsiz bırakır.
 
 ### O6 — misafir alanı birden fazla kez yaşar (2026-08-15)
 

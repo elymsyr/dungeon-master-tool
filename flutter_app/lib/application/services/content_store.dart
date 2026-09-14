@@ -150,9 +150,13 @@ class ContentStore {
   Future<void> touchAccess(String sha) => _touch(sha);
 
   Future<void> _touch(String sha) async {
-    final m = await metadataFor(sha);
-    if (m == null) return;
-    await _writeMeta(sha, m.copyWith(lastAccessAt: DateTime.now()));
+    try {
+      final m = await metadataFor(sha);
+      if (m == null) return;
+      await _writeMeta(sha, m.copyWith(lastAccessAt: DateTime.now()));
+    } catch (_) {
+      // best-effort — okuma sırasında cache dizini silinmiş olabilir
+    }
   }
 
   Future<void> _writeMeta(String sha, ContentMetadata m) async {

@@ -5,7 +5,7 @@ path: flutter_app/lib/data/services/first_party_art_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-12
+updated: 2026-09-14
 tags: [file]
 ---
 
@@ -41,6 +41,7 @@ tags: [file]
 - **Path guard:** `name` içinde `/`, `\`, `..` varsa null. Ref pack verisinden geliyor, cache dizininin dışına yazamamalı.
 - **Bundle görselleri diskte iki kez yer kaplar** (APK içinde + cache'te), çünkü Flutter asset'i `File` olarak açılamaz. Sadece görüntülenenler için, cache silinebilir.
 - Bundle q50 (~52 MB), zip'lerdeki kopya orijinal q82. Aynı uuid, farklı kalite — bundle bir optimizasyon.
+- **`sweepUnreferenced(db)`** — paket/dünya silindikten sonra `cacheDir/art/` altında hiçbir canlı referansın (`package_entities`/`world_entities` `image_path`, `trash_items`/`world_characters` payload'ı) göstermediği dosyaları siler. **Best-effort:** her hatayı kendi içinde yutar ve 0 döner — silme transaction'ı zaten commit edildiği için cache GC hatası (ör. `AppPaths.cacheDir` set değil → `LateInitializationError`) silmeyi başarısız göstermemeli. Çağıranlar: `WorldRepositoryImpl._purgeWorld`, `PackageRepositoryImpl._purgePackage`.
 - **LRU/kota yok:** `ContentStore` sha-adresli, art ref'leri uuid-adresli olduğu için oraya girmiyorlar. Tüm bestiary gezilirse cache 762 MB'ye kadar büyüyebilir.
 
 ## Notes

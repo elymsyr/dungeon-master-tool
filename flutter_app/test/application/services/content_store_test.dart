@@ -17,7 +17,17 @@ void main() {
   });
 
   tearDown(() async {
-    if (await tempRoot.exists()) await tempRoot.delete(recursive: true);
+    // read() fires an unawaited _touch that renames a .meta.tmp; a file
+    // appearing (ENOTEMPTY) or vanishing (ENOENT) mid-walk fails the
+    // recursive delete, so retry once it has settled.
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (await tempRoot.exists()) await tempRoot.delete(recursive: true);
+        return;
+      } on FileSystemException {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+    }
   });
 
   String shaOf(Uint8List bytes) => sha256.convert(bytes).toString();

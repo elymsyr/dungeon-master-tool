@@ -692,6 +692,9 @@ void main() {
         final packages = await db.select(db.packages).get();
         expect(packages.map((e) => e.id),
             containsAll(['guest-notes', 'account-notes']));
+        expect(packages.singleWhere((e) => e.id == 'guest-notes').name,
+            'Notes (2)',
+            reason: 'idx_packages_name is UNIQUE, so the guest copy is renamed');
         final installed = await db.select(db.installedPackages).get();
         expect(installed.single.packageId, 'guest-notes');
       });
