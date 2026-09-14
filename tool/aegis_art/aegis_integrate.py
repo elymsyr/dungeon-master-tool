@@ -69,7 +69,7 @@ def main() -> None:
     bp_index: dict[str, dict[str, int]] = {}
     for cat, items in bp.get("categories", {}).items():
         for i, entity in enumerate(items):
-            name = entity["source_name"]
+            name = entity["mapping"].get("name", entity.get("source_name"))
             bp_index.setdefault(name, {})[cat] = i
 
     # Birden fazla kategoride geçen job adları — dosya adına kategori öneki alırlar.
@@ -125,6 +125,8 @@ def main() -> None:
     old_files = manifest.get("files", {})
     old_media = old_files.get("media", {})
     old_artwork = old_media.get("artwork", [])
+    # Bu klasörden gelmeyen ama diskte duran görseller (ör. *-Panorama.webp) listede kalır.
+    artwork_key = sorted(set(artwork_key) | {f for f in old_artwork if (BP_DIR / f).is_file()})
 
     if old_artwork != artwork_key:
         if not dry:

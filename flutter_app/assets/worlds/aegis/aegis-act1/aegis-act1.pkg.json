@@ -7,7 +7,7 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.6.9",
+    "pack_version": "0.7.0",
     "counts": {
       "campaign": 1,
       "lore": 22,
@@ -60,7 +60,7 @@
       "type": "lore",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Zincir zincir kart listesi: bir görevde geçmesi muhtemel bütün mekanlar, NPC'ler, sahneler, eşyalar ve kurallar tek yerde.",
-      "image_path": "",
+      "image_path": "media/Artwork/Fihrist.webp",
       "images": [],
       "tags": [
         "lore",
@@ -514,7 +514,7 @@
       "type": "lore",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Çağrı zarı hangi büyülerde isteniyor: Cleric, Warlock ve Paladin listelerinin SRD dökümü, ve zarsız yapılamayan büyüler.",
-      "image_path": "",
+      "image_path": "media/Artwork/İlahi-Büyü-Listesi.webp",
       "images": [],
       "tags": [
         "lore",
@@ -624,7 +624,8 @@
           "_ref": "location",
           "name": "Meridia"
         },
-        "secrets": "**Hastalığı üç yabancı getirdi.** Üçü @[Öte](entity:c6c3921f-a75f-513c-a598-100ff34f9ffc)'den geldi, gümrüğe uğramadan @[Gizli Liman](entity:6dc53369-23d2-564f-97a8-ea6ceaa075c7) üzerinden kıtaya girdi, ve gidebildikleri son yer Gümüşsu oldu. Köy bu hastalığın kaynağı değil.\n\n@[Duran](entity:096cfb65-cba4-5473-b404-c6050881da7b) üçünün nereden geldiğini biliyor ve söylemek istemiyor. @[Umay](entity:21acd1eb-e4a3-5461-9c24-dcd19c7a1265) onlara dokundu ve bunu saklıyor.\n\n**Şafak.** Kulübedekiler ilk gecenin sonunda döner ve köye yürür (@[Şafak Dönüşümü](entity:dfe67be9-b370-5acd-858b-a49f47ed425e)). Köy bu saldırıdan ayakta çıkar."
+        "secrets": "**Hastalığı üç yabancı getirdi.** Üçü @[Öte](entity:c6c3921f-a75f-513c-a598-100ff34f9ffc)'den geldi, gümrüğe uğramadan @[Gizli Liman](entity:6dc53369-23d2-564f-97a8-ea6ceaa075c7) üzerinden kıtaya girdi, ve gidebildikleri son yer Gümüşsu oldu. Köy bu hastalığın kaynağı değil.\n\n@[Duran](entity:096cfb65-cba4-5473-b404-c6050881da7b) üçünün nereden geldiğini biliyor ve söylemek istemiyor. @[Umay](entity:21acd1eb-e4a3-5461-9c24-dcd19c7a1265) onlara dokundu ve bunu saklıyor.\n\n**Şafak.** Kulübedekiler ilk gecenin sonunda döner ve köye yürür (@[Şafak Dönüşümü](entity:dfe67be9-b370-5acd-858b-a49f47ed425e)). Köy bu saldırıdan ayakta çıkar.",
+        "map": "media/Maps/Gümüşsu.webp"
       }
     },
     "2f35c095-5ba6-56a6-be8b-855c4f9d9558": {
@@ -729,8 +730,10 @@
       "type": "location",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Meridia'nın başkenti: beyaz mermer cepheler, renkli yapraklı ağaçlarla dizili caddeler, Lonca Meclisi.",
-      "image_path": "media/Artwork/Lucid-Triton.webp",
-      "images": [],
+      "image_path": "media/Artwork/Lucid-Triton-Panorama.webp",
+      "images": [
+        "media/Artwork/Lucid-Triton.webp"
+      ],
       "tags": [
         "şehir",
         "lucid-triton"
@@ -745,7 +748,8 @@
           "_ref": "location",
           "name": "Meridia"
         },
-        "secrets": "**Hastalık şehre henüz gelmedi; haberi geldi.** Meclis'in altı koltuğu haberi altı ayrı biçimde susturuyor. Sokakta hastalıktan söz eden az.\n\nŞehrin bildiğini gösteren bir belge var: hastalığın ilk beyanının kopyası @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0)'de. Beyanları @[Baş Otacı — Caramip Kalender](entity:49136109-7388-5661-9147-b38b3ee9f763) değiştirtti.\n\n**Üç yabancının izi bu şehre hiç ulaşmadı.** Gümrüğe uğramadıkları için hiçbir şehir defterinde satırları yok. Karakterler burada arayacak olsa bir şey bulamaz, ve bulamamaları bilgidir: bu üç insan kıtaya kayıt dışı girdi."
+        "secrets": "**Hastalık şehre henüz gelmedi; haberi geldi.** Meclis'in altı koltuğu haberi altı ayrı biçimde susturuyor. Sokakta hastalıktan söz eden az.\n\nŞehrin bildiğini gösteren bir belge var: hastalığın ilk beyanının kopyası @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0)'de. Beyanları @[Baş Otacı — Caramip Kalender](entity:49136109-7388-5661-9147-b38b3ee9f763) değiştirtti.\n\n**Üç yabancının izi bu şehre hiç ulaşmadı.** Gümrüğe uğramadıkları için hiçbir şehir defterinde satırları yok. Karakterler burada arayacak olsa bir şey bulamaz, ve bulamamaları bilgidir: bu üç insan kıtaya kayıt dışı girdi.",
+        "map": "media/Maps/Lucid-Triton.webp"
       }
     },
     "a39b0874-c08b-539e-8f03-890eeddcb5b5": {
@@ -824,8 +828,10 @@
       "type": "location",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Meridia'nın resmi deniz limanı, ikinci adı Claport. Vinçleri, antrepoları ve gümrüğüyle kıtanın kapısı.",
-      "image_path": "media/Artwork/Elymsyr.webp",
-      "images": [],
+      "image_path": "media/Artwork/Elymsyr-Panorama.webp",
+      "images": [
+        "media/Artwork/Elymsyr.webp"
+      ],
       "tags": [
         "elymsyr",
         "liman",
@@ -849,8 +855,10 @@
       "type": "location",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Doğu körfezinin paladin şatosu. Beyaz kireçtaşı surlar, askeri valilik; bölge kendine \"Sarsılmaz Zırh\" der.",
-      "image_path": "media/Artwork/Votumar.webp",
-      "images": [],
+      "image_path": "media/Artwork/Votumar-Panorama.webp",
+      "images": [
+        "media/Artwork/Votumar.webp"
+      ],
       "tags": [
         "votumar",
         "şato",
@@ -866,7 +874,8 @@
           "_ref": "location",
           "name": "Meridia"
         },
-        "secrets": "**@[Başkumandan](entity:0ad235a6-bee9-5a23-abb8-09e87b1815d9) Suretsiz'dir.** Halk da askerler de ona gerçekten güveniyor, ve bu güven hiç sarsılmadı.\n\n**Bazı yüksek rütbeli subaylar bir terslik seziyor.** Başkumandan'ın emirlerinde mantık hataları var, ve tavrı eskisi gibi değil: soğuk, duygusuz. Kimse bunu yüksek sesle söylemiyor. Söyleyen, halkın sevdiği bir adama iftira atmış sayılır, ve bunun bedeli rütbeden önce onurdur.\n\n**Son iki aydır emirler sözlü geliyor.** Başkumandan'ın elinden çıkmış tek bir yazılı emir yok. Bunu @[Kapı Komutanı](entity:1c20fbd7-2d2c-58fe-b73b-8110b4391d97) biliyor.\n\nBaşkumandan'da bir terslik olduğunu iki kişi ayrı ayrı biliyor: @[Şüpheci Rütbeli](entity:47bd01d4-3448-5cc9-9f91-46d725b28ada) ve raporu şatoya ulaşmayan @[Kule Nöbetçisi](entity:9ee8c7da-cf9d-5674-9631-b75a4723c263).\n\nVotumar bir düşman kalesi değildir. Şatodaki herkes işini iyi yapıyor ve komutanına güveniyor."
+        "secrets": "**@[Başkumandan](entity:0ad235a6-bee9-5a23-abb8-09e87b1815d9) Suretsiz'dir.** Halk da askerler de ona gerçekten güveniyor, ve bu güven hiç sarsılmadı.\n\n**Bazı yüksek rütbeli subaylar bir terslik seziyor.** Başkumandan'ın emirlerinde mantık hataları var, ve tavrı eskisi gibi değil: soğuk, duygusuz. Kimse bunu yüksek sesle söylemiyor. Söyleyen, halkın sevdiği bir adama iftira atmış sayılır, ve bunun bedeli rütbeden önce onurdur.\n\n**Son iki aydır emirler sözlü geliyor.** Başkumandan'ın elinden çıkmış tek bir yazılı emir yok. Bunu @[Kapı Komutanı](entity:1c20fbd7-2d2c-58fe-b73b-8110b4391d97) biliyor.\n\nBaşkumandan'da bir terslik olduğunu iki kişi ayrı ayrı biliyor: @[Şüpheci Rütbeli](entity:47bd01d4-3448-5cc9-9f91-46d725b28ada) ve raporu şatoya ulaşmayan @[Kule Nöbetçisi](entity:9ee8c7da-cf9d-5674-9631-b75a4723c263).\n\nVotumar bir düşman kalesi değildir. Şatodaki herkes işini iyi yapıyor ve komutanına güveniyor.",
+        "map": "media/Maps/Votumar.webp"
       }
     },
     "867029cb-b106-59a2-9d0c-bca4865ac2d3": {
@@ -2113,7 +2122,7 @@
       "type": "npc",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Gümüşsu'daki dördüncü yabancı, ve tek ayakta olanı. Karakterlerden önce geldi ve @[Goodbarrel'ın Ocak Başı](entity:d979e72b-580a-5ecb-b069-e3b36a314b9c)'nın üst katındaki iki odadan birinde kalıyor.\n\n@[Sınır ve Ticaret Loncası](entity:efb11a6c-d65f-5368-a134-d42b5ddb1fd6) onu buraya **duruma bakması** için yolladı. Bir şey çözmesi, bir şey düzeltmesi, birini bulması istenmedi; bakacak, dönecek, anlatacak, parasını alacak. Kendisi de işi tam olarak böyle anlatır.\n\nAjan değil. Bir kere kabul edilmiş bir iş, ve aldığı paraya değmediğini çoktan anlamış bir adam.",
-      "image_path": "",
+      "image_path": "media/Artwork/Halim.webp",
       "images": [],
       "tags": [
         "npc",
@@ -2550,7 +2559,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Güç** puanın **1 artar** (en fazla 20).\n\n**History** ve **Investigation** becerilerinde yetkinlik kazanırsın.",
-      "image_path": "",
+      "image_path": "media/Artwork/Yeminin-Ağırlığı.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2588,7 +2597,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Yakın silahlı saldırın bir yaratığa isabet ettiğinde, bir **büyü yuvası** harcayarak fazladan **2d8 kuvvet** hasarı verirsin. 1. seviyenin üstündeki her yuva kademesi için **+1d8**, en fazla **5d8**.\n\nHedef **Blight'lı** bir yaratıksa fazladan **+1d8**.\n\nTurda bir kez kullanılır.",
-      "image_path": "",
+      "image_path": "media/Artwork/Yemin-Darbesi.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2608,7 +2617,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Channel Divinity.** Aksiyonunla yeminini yüksek sesle tekrarlarsın. Bir sonraki sıranın sonuna kadar sen ve **10 ft** içindeki dostların, @[Blight — Enfeksiyon](entity:8d891cfd-1411-5a83-af13-5ca63dd1e862) maruziyet zarlarını **avantajlı** atar.",
-      "image_path": "",
+      "image_path": "media/Artwork/Yemin-Andı-Cepheyi-Tut.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2628,7 +2637,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Senden **10 ft** içindeki dostların (sen dahil), **Hastalık Puanı** kazandıracak her kurtarma zarını **avantajlı** atar (@[Blight — Enfeksiyon](entity:8d891cfd-1411-5a83-af13-5ca63dd1e862)).\n\n18. seviyede menzil **30 ft** olur.",
-      "image_path": "",
+      "image_path": "media/Artwork/Bozulmayan-Söz.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2648,7 +2657,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Korkutulamazsın.**\n\nAyrıca seni 0 cana düşürecek bir hasar aldığında **1 canda** kalırsın.",
-      "image_path": "",
+      "image_path": "media/Artwork/Yemin-Yorulmaz.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2678,7 +2687,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Bonus aksiyon**, 10 dakika sürer. Bu süre boyunca auraların menzili **30 ft**'e çıkar ve **Blight'lı** yaratıklara yaptığın saldırı atışları **avantajlı** olur.",
-      "image_path": "",
+      "image_path": "media/Artwork/Andın-Hli.webp",
       "images": [],
       "tags": [
         "irade-yemini",
@@ -2708,7 +2717,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Uzun dinlenmede bir kez.** 1. kademe ya da üstü bir **abjuration** büyüsünü bir yuva harcayarak yaptığında, o büyünün gücünün bir kısmını ayırıp etrafına bir **Siper** örebilirsin.\n\n**Örmek senin kararın.** Her abjuration büyüsü siperi zorla kurmaz — büyüyü yaparken *bu sefer örüyorum* dersin. Siper hep o büyünün sırtında kurulur; başka türlü kurulamaz.\n\n**Siperin can kapasitesi: `2 × büyücü seviyesi + Zeka modifiyeri`.**\n\nSiper örüldüğü andan **kırılana kadar** durur ve sana yönelen hasarı senin yerine alır.",
-      "image_path": "",
+      "image_path": "media/Artwork/Siper.webp",
       "images": [],
       "tags": [
         "siper-okulu",
@@ -2745,7 +2754,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Siper artık yalnız seni değil, **gördüğün herkesi** tutar.",
-      "image_path": "",
+      "image_path": "media/Artwork/trait-Siperi-Uzat.webp",
       "images": [],
       "tags": [
         "siper-okulu",
@@ -2772,7 +2781,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "**Counterspell** ve **Dispel Magic** senin için daima hazırdır ve hazırladığın büyü sayısına **sayılmaz**.",
-      "image_path": "",
+      "image_path": "media/Artwork/Karşı-Büyücü.webp",
       "images": [],
       "tags": [
         "siper-okulu",
@@ -2793,7 +2802,7 @@
       "type": "trait",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Büyülerden gelen **her hasara dirençlisin**.\n\nBir büyünün etkisine karşı atılan **her kurtarma zarını avantajlı** atarsın.",
-      "image_path": "",
+      "image_path": "media/Artwork/Büyüye-Direnç.webp",
       "images": [],
       "tags": [
         "siper-okulu",
@@ -2864,7 +2873,7 @@
       "type": "creature-action",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "*Yeniden şarj 5–6.* Dönüşmüş dizlerini kırar ve **15 ft**'e kadar — üç dört uzun adım — sıçrayıp gördüğü bir yaratığın üstüne iner. **Saldırı zarı atılmaz:** sıçrayış tutar.\n\n**Vuruş:** 1d8 delici hasar (ort. 4). Hedef ardından bir **Constitution DC 8** kurtarma zarı atar; başarısızlıkta **+1 Hastalık Puanı** (@[Blight — Enfeksiyon](entity:8d891cfd-1411-5a83-af13-5ca63dd1e862)). Kurtarma zarı hasarı değil, **hastalığı** karşılar.\n\nPençe uzaktan gelir; bu gelmez. Ağırlığıyla üstünüze biner, dişleri boğazın ya da omzun derisine girer, ve giren tek şey diş değildir. Bir Dönüşmüş'ün Blight'ı geçirebildiği **tek** saldırı budur.",
-      "image_path": "",
+      "image_path": "media/Artwork/Sıçrayıp-Isırma.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -3045,7 +3054,7 @@
       "type": "creature-action",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır ve senin ayakta bir **Siper**in vardır.\n\nTepkinle o hasarı sipere yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa **siper kırılır** ve aşan kısmı yaratık alır.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır.",
-      "image_path": "",
+      "image_path": "media/Artwork/creature-action-Siperi-Uzat.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -3062,7 +3071,7 @@
       "type": "creature-action",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "*Tetikleyici:* bir yuva harcayarak **1. kademe ya da üstü bir abjuration büyüsü** yaparsın.\n\nO büyünün gücünden **Siper**ini örersin. Kapasite `2 × büyücü seviyesi + Zeka modifiyeri`.\n\nAksiyon, bonus aksiyon ya da tepki harcamaz — kararı büyüyü yaparken verirsin. **Uzun dinlenmede bir kez.**\n\nSiper, canı 0'a düştüğünde **kırılır** ve uzun dinlenmeye kadar geri gelmez; o yüzden hangi büyüde öreceğin bu okulun asıl kararıdır.",
-      "image_path": "",
+      "image_path": "media/Artwork/Siperi-Ör.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -4091,7 +4100,7 @@
       "type": "quest",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Meridia'da yollar serbesttir; para isteyen tek şey bir gemiye binmektir. Kıtadan çıkmanın iki yolu var: iyi yazı ya da iyi para.",
-      "image_path": "",
+      "image_path": "media/Artwork/İyi-Yazı.webp",
       "images": [],
       "tags": [
         "görev",
@@ -5393,7 +5402,7 @@
       "type": "subclass",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Yeminin bir tanrıya edilmedi. Tanık önünde edildi, deftere geçti, ve bozulmadığı sürece duruyor.\n\nBu kıtada bir tanrıdan bir şey istemek bir kumardır (@[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)) ve paladin düzenleri bunu üç yüzyıl önce kabul edip sormayı bıraktı. Geriye kalan şey daha küçük ve daha güvenilir: verilmiş bir söz, ve onu tutan bir beden.\n\nYeminli iyileştirmez, kutsamaz, mucize göstermez. **Bulur ve tutar.** Düzenin ona öğrettiği şey dua değil: bir defteri okumak, bir izi sürmek, ve bir hattı kimse gelene kadar bırakmamak.",
-      "image_path": "",
+      "image_path": "media/Artwork/İrade-Yemini.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -5552,7 +5561,7 @@
       "type": "subclass",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Büyücü Loncası'nın en sevilmeyen ve en çok çağrılan kolu.\n\nBu kıtada bir tanrıdan yardım istemek bir kumardır (@[Kural Sapmaları](entity:f2ee5139-3781-5d77-8198-352e5e1a071c)) — ilahi iyileştirme her seferinde yeniden istenir ve çoğu zaman gelmez. @[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c) bu boşluğu üç yüzyıl önce fark etti ve sorunu tersinden çözdü: **yara kapatılamıyorsa, yaranın açılmasına izin verilmez.**\n\nSiper Okulu'nun mezunu ateş atmaz, ölüyü kaldırmaz, geleceği okumaz. Bir odaya girer, arkadaşlarının önüne görünmez bir duvar örer ve o duvar dağılana kadar orada durur. Loncanın kendi deyişiyle: *\"Biz iyileştirmeyiz. Biz gerekmemesini sağlarız.\"*",
-      "image_path": "",
+      "image_path": "media/Artwork/Siper-Okulu.webp",
       "images": [],
       "tags": [
         "alt-sınıf",

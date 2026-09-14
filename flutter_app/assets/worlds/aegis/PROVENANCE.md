@@ -4,6 +4,15 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.7.0 — 172 entity** (2026-09-14). **Görsel turu.** Yeni kart ya da metin değişikliği
+yok. 0.6.x turlarında eklenip görselsiz kalan 19 kart (resource-pool'lar hariç hepsi) görselini
+aldı: `npc/Halim`, `creature-action/Sıçrayıp Isırma` · `Siperi Uzat` · `Siperi Ör`, İrade
+Yemini'nin altı ve Siper Okulu'nun dört trait'i, iki alt sınıf kartı, `lore/Fihrist`,
+`lore/İlahi Büyü Listesi`, `quest/İyi Yazı`. `location/Votumar` · `Lucid Triton` · `Elymsyr`
+kartlarının ilk görseli artık `tool/aegis_art/ref/` altındaki panorama (`*-Panorama.webp`),
+eski görsel ikinci. `Votumar` · `Lucid Triton` · `Gümüşsu` kartlarının `map` alanına üstten
+haritaları girdi (`media/Maps/`). Üretim akışı `tool/aegis_art/README.md` §6.1.
+
 **Sürüm 0.6.9 — 172 entity** (2026-09-13). **İrade Yemini sadeleştirmesi.** Yeni kart
 yok; üç mekanik geri alındı. (1) Alt sınıf **1. seviyeden 3'e** taşındı — `granted_at_level`
 **3**, ve 1. seviyedeki iki özellik (Yeminin Ağırlığı · Yemin Darbesi) 3'e indi. Bu, dünyanın

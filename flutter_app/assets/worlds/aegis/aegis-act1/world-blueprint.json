@@ -109,7 +109,8 @@
             "# Karakter kartları\n\n## Backgroundlar ve eşyaları\n\n- @[Arşivci](entity:background/Arşivci) — @[Tasnif Çantası](entity:adventuring-gear/Tasnif Çantası) · @[Kayıt Elifbası](entity:adventuring-gear/Kayıt Elifbası) · @[Sancak Fihristi](entity:adventuring-gear/Sancak Fihristi)\n- @[Lonca Üyesi](entity:background/Lonca Üyesi) — @[Lonca Mührü](entity:trinket/Lonca Mührü) · @[Lonca Rozeti](entity:trinket/Lonca Rozeti)\n- @[Mertebeli Lonca Çocuğu](entity:background/Mertebeli Lonca Çocuğu) — @[Mertebe Kaftanı](entity:adventuring-gear/Mertebe Kaftanı) · @[Aile Mührü](entity:trinket/Aile Mührü)\n- @[Sihir Loncası Öğrencisi](entity:background/Sihir Loncası Öğrencisi) — @[Öğrenci Defteri](entity:adventuring-gear/Öğrenci Defteri) · @[Direnç Şerbeti](entity:adventuring-gear/Direnç Şerbeti)\n- @[Lonca Ajanı](entity:background/Lonca Ajanı) — @[Sahte Mühür](entity:trinket/Sahte Mühür)\n- @[Rıhtım İşçisi](entity:background/Rıhtım İşçisi) — @[Yük Kancası](entity:adventuring-gear/Yük Kancası)\n- @[Gemi Kaptanı](entity:background/Gemi Kaptanı) — @[Seyir Defteri](entity:adventuring-gear/Seyir Defteri)\n- @[Paladin Askeri](entity:background/Paladin Askeri) — @[Kışla Künyesi](entity:trinket/Kışla Künyesi)\n- @[Paladin Rütbelisi](entity:background/Paladin Rütbelisi) — @[Emir Mührü](entity:trinket/Emir Mührü)\n\n## Alt sınıflar\n\n**@[İrade Yemini](entity:subclass/İrade Yemini)** (Paladin) — @[Yeminin Ağırlığı](entity:trait/Yeminin Ağırlığı) · @[Yemin Darbesi](entity:trait/Yemin Darbesi) · @[Yemin Andı: Cepheyi Tut](entity:trait/Yemin Andı: Cepheyi Tut) · @[Bozulmayan Söz](entity:trait/Bozulmayan Söz) · @[Yemin Yorulmaz](entity:trait/Yemin Yorulmaz) · @[Andın Hâli](entity:trait/Andın Hâli)\n\n**@[Clockwork Soul](entity:subclass/Clockwork Soul)** (Sorcerer) · **@[Drakewarden](entity:subclass/Drakewarden)** (Ranger) — çağrılan yoldaş @[Drake](entity:animal/Drake).\n\n## Hiçbir backgrounda ait olmayan eşya\n\n@[Mühürsüz Yüzük](entity:trinket/Mühürsüz Yüzük) — @[Kulübe Sorgusu](entity:scene/Kulübe Sorgusu)'nda bulunur; @[Nereden Geldiler](entity:quest/Nereden Geldiler)'in tek nesnesi.\n",
             "# Kurallar ve kurumlar\n\n## Bu dünyanın kural kartları\n\n- @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) — Hastalık Puanı, beş aşama, maruziyet yolları\n- @[Kural Sapmaları](entity:lore/Kural Sapmaları) — diriltmenin bedeli, ışınlanma ve mesafe, kalıcı yaralar\n- @[İlahi Büyü Listesi](entity:lore/İlahi Büyü Listesi) — çağrı zarı hangi büyüde isteniyor\n- @[Tanrılar ve Fısıltı](entity:lore/Tanrılar ve Fısıltı) — ilahi büyünün bu kıtadaki hâli\n- @[Blight — Bilinen Hali](entity:lore/Blight — Bilinen Hali) — halkın bildiği kadarı\n\n## Altı lonca, altı koltuk\n\n- @[Sınır ve Ticaret Loncası](entity:lore/Sınır ve Ticaret Loncası) — @[Sınır ve Ticaret — Orvan Sancar](entity:npc/Sınır ve Ticaret — Orvan Sancar)\n- @[Demircilik ve İşçi Loncası](entity:lore/Demircilik ve İşçi Loncası) — @[Kalfa Başı — Adrik Ferrun](entity:npc/Kalfa Başı — Adrik Ferrun)\n- @[Simya ve Şifacılar Loncası](entity:lore/Simya ve Şifacılar Loncası) — @[Baş Otacı — Caramip Kalender](entity:npc/Baş Otacı — Caramip Kalender)\n- @[Askeri Hukuk Loncası](entity:lore/Askeri Hukuk Loncası) — @[Sicil Ağası — Valen Custar](entity:npc/Sicil Ağası — Valen Custar)\n- @[Mimarlık ve Planlama Loncası](entity:lore/Mimarlık ve Planlama Loncası) — @[Levha Sahibi — Perhun Mizan](entity:npc/Levha Sahibi — Perhun Mizan)\n- @[Büyücü Loncası](entity:lore/Büyücü Loncası) — @[Rektör — Quarion](entity:npc/Rektör — Quarion)\n\nAltısını bir arada anlatan kart: @[Konsey ve Lonca Meclisi](entity:lore/Konsey ve Lonca Meclisi).\n\n## Düzen, doktrin, toplum\n\n@[İrade Çağı](entity:lore/İrade Çağı) · @[İrade Yolu](entity:lore/İrade Yolu) · @[Sessiz Mabetler](entity:lore/Sessiz Mabetler) · @[Hizmet Basamakları](entity:lore/Hizmet Basamakları) · @[Sancak Kaydı](entity:lore/Sancak Kaydı) · @[Onur Mahkemeleri](entity:lore/Onur Mahkemeleri) · @[Gümüş Kalkan Nişanı](entity:lore/Gümüş Kalkan Nişanı) · @[Kuzeyin Gözcüleri](entity:lore/Kuzeyin Gözcüleri) · @[Liman Ahdi](entity:lore/Liman Ahdi)\n"
           ],
-          "dmNotes": "Oturum öncesi bu kartı aç, o akşam masaya gelmesi muhtemel kartları buradan tek tek çıkar. 2–4. sayfalar zincir sırasına göre; 5. sayfa yer ağacı, 6–7 karakter ve kural kartları.\n\nSayfalarda sır yok, hepsi kartların açık alanlarından. Sırlar kendi kartlarının **secrets** alanında durur."
+          "dmNotes": "Oturum öncesi bu kartı aç, o akşam masaya gelmesi muhtemel kartları buradan tek tek çıkar. 2–4. sayfalar zincir sırasına göre; 5. sayfa yer ağacı, 6–7 karakter ve kural kartları.\n\nSayfalarda sır yok, hepsi kartların açık alanlarından. Sırlar kendi kartlarının **secrets** alanında durur.",
+          "imagePath": "media/Artwork/Fihrist.webp"
         }
       },
       {
@@ -474,7 +475,8 @@
             "# Cleric — 105 büyü\n\n**Hepsi zar ister.** Bu kart listeyi kısaltmıyor; kısaltılmadığını görmek kuralın ağırlığını anlatan şeyin kendisi.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Guidance° · Light° · Mending° · Resistance° · Sacred Flame · Spare the Dying° · Thaumaturgy |\n| **1. seviye** | Bane° · Bless · Command° · Create or Destroy Water° · Cure Wounds° · Detect Evil and Good · Detect Magic° · Detect Poison and Disease° · Guiding Bolt · Healing Word° · Inflict Wounds · Protection from Evil and Good° · Purify Food and Drink° · Sanctuary · Shield of Faith |\n| **2. seviye** | Aid° · Augury · Blindness/Deafness° · Calm Emotions° · Continual Flame° · Enhance Ability° · Find Traps° · Gentle Repose° · Hold Person° · Lesser Restoration° · Locate Object° · Prayer of Healing · Protection from Poison° · Silence° · Spiritual Weapon · Warding Bond · Zone of Truth° |\n| **3. seviye** | Animate Dead° · Beacon of Hope · Bestow Curse° · Clairvoyance° · Create Food and Water · Daylight° · Dispel Magic° · Glyph of Warding° · Magic Circle° · Mass Healing Word° · Meld into Stone° · Protection from Energy° · Remove Curse° · Revivify · Sending° · Speak with Dead° · Spirit Guardians · Tongues° · Water Walk° |\n| **4. seviye** | Banishment° · Control Water° · Death Ward · Divination° · Freedom of Movement° · Guardian of Faith · Locate Creature° · Stone Shape° |\n| **5. seviye** | Blade Barrier° · Commune · Contagion° · Dispel Evil and Good · Flame Strike · Geas° · Greater Restoration° · Hallow · Insect Plague° · Legend Lore° · Mass Cure Wounds° · Planar Binding° · Raise Dead° · Scrying° |\n| **6. seviye** | Create Undead° · Find the Path° · Forbiddance · Harm · Heal° · Heroes' Feast° · Planar Ally · True Seeing° · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word · Etherealness° · Fire Storm° · Plane Shift° · Regenerate° · Resurrection° · Symbol° |\n| **8. seviye** | Antimagic Field° · Control Weather° · Earthquake° · Holy Aura |\n| **9. seviye** | Astral Projection° · Gate° · Mass Heal · True Resurrection° |",
             "# Warlock — 68 büyü\n\n**Hepsi zar ister.** Sebebi ilahilik değil, verilmiş olmak — patron her çağrıda cevap vermez.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Chill Touch° · Eldritch Blast · Mage Hand° · Minor Illusion° · Poison Spray° · Prestidigitation° · True Strike° |\n| **1. seviye** | Charm Person° · Comprehend Languages° · Disguise Self° · Expeditious Retreat° · Hellish Rebuke · Hex · Illusory Script° · Protection from Evil and Good° · Unseen Servant° |\n| **2. seviye** | Darkness° · Enthrall° · Hold Person° · Invisibility° · Mind Spike° · Mirror Image° · Misty Step° · Ray of Enfeeblement° · Shatter° · Spider Climb° · Suggestion° |\n| **3. seviye** | Counterspell° · Dispel Magic° · Fear° · Fly° · Gaseous Form° · Hypnotic Pattern° · Magic Circle° · Major Image° · Remove Curse° · Tongues° · Vampiric Touch° |\n| **4. seviye** | Banishment° · Blight° · Charm Monster° · Dimension Door° · Hallucinatory Terrain° |\n| **5. seviye** | Contact Other Plane° · Dream° · Hold Monster° · Scrying° |\n| **6. seviye** | Circle of Death° · Conjure Fey° · Create Undead° · Eyebite° · Flesh to Stone° · Mass Suggestion° · True Seeing° |\n| **7. seviye** | Etherealness° · Finger of Death° · Forcecage° · Plane Shift° |\n| **8. seviye** | Befuddlement° · Demiplane° · Dominate Monster° · Glibness° · Power Word Stun° |\n| **9. seviye** | Astral Projection° · Foresight° · Imprisonment° · Power Word Kill° · True Polymorph° |",
             "# Bu kıtada neredeyse hiç görülmeyen 38 büyü\n\nAşağıdakiler **yalnız** Cleric, Paladin ve Warlock listelerinde var: başka hiçbir sınıf bunları yapamaz, yani bu kıtada bu büyüler zarsız **hiç** yapılamaz.\n\n| Seviye | Büyü |\n|---|---|\n| **Cantrip** | Eldritch Blast · Sacred Flame · Thaumaturgy |\n| **1. seviye** | Bless · Detect Evil and Good · Divine Favor · Divine Smite · Guiding Bolt · Hellish Rebuke · Hex · Inflict Wounds · Sanctuary · Shield of Faith |\n| **2. seviye** | Augury · Find Steed · Prayer of Healing · Shining Smite · Spiritual Weapon · Warding Bond |\n| **3. seviye** | Beacon of Hope · Create Food and Water · Revivify · Spirit Guardians |\n| **4. seviye** | Aura of Life · Death Ward · Guardian of Faith |\n| **5. seviye** | Commune · Dispel Evil and Good · Flame Strike · Hallow |\n| **6. seviye** | Forbiddance · Harm · Planar Ally · Word of Recall |\n| **7. seviye** | Conjure Celestial · Divine Word |\n| **8. seviye** | Holy Aura |\n| **9. seviye** | Mass Heal |\n\n**DM için:** bu tablo bir yasak listesi değil, bir **nadirlik** listesi. Bir oyuncu 3. seviye bir *Revivify* denediğinde masada olan şey budur: eşik, saatlik sayaç, ve harcanan slot. Bir NPC bunlardan birini gözle görülür şekilde yaptığında ise şehirde konuşulan tek şey o olur (@[Tanrılar ve Fısıltı](entity:lore/Tanrılar ve Fısıltı))."
-          ]
+          ],
+          "imagePath": "media/Artwork/İlahi-Büyü-Listesi.webp"
         }
       }
     ],
@@ -551,7 +553,8 @@
             "köy",
             "gümüşsu"
           ],
-          "imagePath": "media/Artwork/Gümüşsu.webp"
+          "imagePath": "media/Artwork/Gümüşsu.webp",
+          "map": "media/Maps/Gümüşsu.webp"
         }
       },
       {
@@ -652,7 +655,11 @@
             "şehir",
             "lucid-triton"
           ],
-          "imagePath": "media/Artwork/Lucid-Triton.webp"
+          "imagePath": "media/Artwork/Lucid-Triton-Panorama.webp",
+          "images": [
+            "media/Artwork/Lucid-Triton.webp"
+          ],
+          "map": "media/Maps/Lucid-Triton.webp"
         }
       },
       {
@@ -732,7 +739,10 @@
             "liman",
             "şehir"
           ],
-          "imagePath": "media/Artwork/Elymsyr.webp"
+          "imagePath": "media/Artwork/Elymsyr-Panorama.webp",
+          "images": [
+            "media/Artwork/Elymsyr.webp"
+          ]
         }
       },
       {
@@ -753,7 +763,11 @@
             "şato",
             "paladin"
           ],
-          "imagePath": "media/Artwork/Votumar.webp"
+          "imagePath": "media/Artwork/Votumar-Panorama.webp",
+          "images": [
+            "media/Artwork/Votumar.webp"
+          ],
+          "map": "media/Maps/Votumar.webp"
         }
       },
       {
@@ -1968,7 +1982,8 @@
             "npc",
             "gümüşsu",
             "lonca"
-          ]
+          ],
+          "imagePath": "media/Artwork/Halim.webp"
         }
       }
     ],
@@ -2344,7 +2359,8 @@
             "INT": 0,
             "WIS": 0,
             "CHA": 0
-          }
+          },
+          "imagePath": "media/Artwork/Yeminin-Ağırlığı.webp"
         }
       },
       {
@@ -2358,7 +2374,8 @@
           "tags": [
             "irade-yemini",
             "paladin"
-          ]
+          ],
+          "imagePath": "media/Artwork/Yemin-Darbesi.webp"
         }
       },
       {
@@ -2372,7 +2389,8 @@
           "tags": [
             "irade-yemini",
             "paladin"
-          ]
+          ],
+          "imagePath": "media/Artwork/Yemin-Andı-Cepheyi-Tut.webp"
         }
       },
       {
@@ -2386,7 +2404,8 @@
           "tags": [
             "irade-yemini",
             "paladin"
-          ]
+          ],
+          "imagePath": "media/Artwork/Bozulmayan-Söz.webp"
         }
       },
       {
@@ -2411,7 +2430,8 @@
               "recharge": "long_rest",
               "count": 1
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/Yemin-Yorulmaz.webp"
         }
       },
       {
@@ -2436,7 +2456,8 @@
               "recharge": "long_rest",
               "count": 1
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/Andın-Hli.webp"
         }
       },
       {
@@ -2469,7 +2490,8 @@
               "recharge": "long_rest",
               "count": 1
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/Siper.webp"
         }
       },
       {
@@ -2491,7 +2513,8 @@
             "siper-okulu",
             "wizard",
             "abjuration"
-          ]
+          ],
+          "imagePath": "media/Artwork/trait-Siperi-Uzat.webp"
         }
       },
       {
@@ -2506,7 +2529,8 @@
             "siper-okulu",
             "wizard",
             "abjuration"
-          ]
+          ],
+          "imagePath": "media/Artwork/Karşı-Büyücü.webp"
         }
       },
       {
@@ -2521,7 +2545,8 @@
             "siper-okulu",
             "wizard",
             "abjuration"
-          ]
+          ],
+          "imagePath": "media/Artwork/Büyüye-Direnç.webp"
         }
       }
     ],
@@ -2587,7 +2612,8 @@
             "match": "name",
             "value": "Constitution"
           },
-          "description": "*Yeniden şarj 5–6.* Dönüşmüş dizlerini kırar ve **15 ft**'e kadar — üç dört uzun adım — sıçrayıp gördüğü bir yaratığın üstüne iner. **Saldırı zarı atılmaz:** sıçrayış tutar.\n\n**Vuruş:** 1d8 delici hasar (ort. 4). Hedef ardından bir **Constitution DC 8** kurtarma zarı atar; başarısızlıkta **+1 Hastalık Puanı** (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)). Kurtarma zarı hasarı değil, **hastalığı** karşılar.\n\nPençe uzaktan gelir; bu gelmez. Ağırlığıyla üstünüze biner, dişleri boğazın ya da omzun derisine girer, ve giren tek şey diş değildir. Bir Dönüşmüş'ün Blight'ı geçirebildiği **tek** saldırı budur."
+          "description": "*Yeniden şarj 5–6.* Dönüşmüş dizlerini kırar ve **15 ft**'e kadar — üç dört uzun adım — sıçrayıp gördüğü bir yaratığın üstüne iner. **Saldırı zarı atılmaz:** sıçrayış tutar.\n\n**Vuruş:** 1d8 delici hasar (ort. 4). Hedef ardından bir **Constitution DC 8** kurtarma zarı atar; başarısızlıkta **+1 Hastalık Puanı** (@[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon)). Kurtarma zarı hasarı değil, **hastalığı** karşılar.\n\nPençe uzaktan gelir; bu gelmez. Ağırlığıyla üstünüze biner, dişleri boğazın ya da omzun derisine girer, ve giren tek şey diş değildir. Bir Dönüşmüş'ün Blight'ı geçirebildiği **tek** saldırı budur.",
+          "imagePath": "media/Artwork/Sıçrayıp-Isırma.webp"
         }
       },
       {
@@ -2711,7 +2737,8 @@
           "source": "Siper Okulu",
           "action_type": "Reaction",
           "range_normal_ft": 30,
-          "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır ve senin ayakta bir **Siper**in vardır.\n\nTepkinle o hasarı sipere yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa **siper kırılır** ve aşan kısmı yaratık alır.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır."
+          "description": "*Tetikleyici:* **30 ft** içinde gördüğün bir yaratık hasar alır ve senin ayakta bir **Siper**in vardır.\n\nTepkinle o hasarı sipere yönlendirirsin; hasarı yaratık değil siper alır.\n\nHasar siperin mevcut canını aşarsa **siper kırılır** ve aşan kısmı yaratık alır.\n\nYaratığın o hasar türüne **direnci ya da zayıflığı** varsa, sipere yazılan miktar hesaplanırken bu uygulanır.\n\nKullanım sınırı yok; sınır siperin canıdır.",
+          "imagePath": "media/Artwork/creature-action-Siperi-Uzat.webp"
         }
       },
       {
@@ -2721,7 +2748,8 @@
           "source": "Siper Okulu",
           "action_type": "Free",
           "recharge_kind": "Long Rest",
-          "description": "*Tetikleyici:* bir yuva harcayarak **1. kademe ya da üstü bir abjuration büyüsü** yaparsın.\n\nO büyünün gücünden **Siper**ini örersin. Kapasite `2 × büyücü seviyesi + Zeka modifiyeri`.\n\nAksiyon, bonus aksiyon ya da tepki harcamaz — kararı büyüyü yaparken verirsin. **Uzun dinlenmede bir kez.**\n\nSiper, canı 0'a düştüğünde **kırılır** ve uzun dinlenmeye kadar geri gelmez; o yüzden hangi büyüde öreceğin bu okulun asıl kararıdır."
+          "description": "*Tetikleyici:* bir yuva harcayarak **1. kademe ya da üstü bir abjuration büyüsü** yaparsın.\n\nO büyünün gücünden **Siper**ini örersin. Kapasite `2 × büyücü seviyesi + Zeka modifiyeri`.\n\nAksiyon, bonus aksiyon ya da tepki harcamaz — kararı büyüyü yaparken verirsin. **Uzun dinlenmede bir kez.**\n\nSiper, canı 0'a düştüğünde **kırılır** ve uzun dinlenmeye kadar geri gelmez; o yüzden hangi büyüde öreceğin bu okulun asıl kararıdır.",
+          "imagePath": "media/Artwork/Siperi-Ör.webp"
         }
       }
     ],
@@ -3796,7 +3824,8 @@
             "geçiş",
             "liman"
           ],
-          "dmNotes": "Kart listesi görevin kendi sayfasının altında. Diğer zincirler ve mekan/karakter kartları: @[Fihrist](entity:lore/Fihrist)."
+          "dmNotes": "Kart listesi görevin kendi sayfasının altında. Diğer zincirler ve mekan/karakter kartları: @[Fihrist](entity:lore/Fihrist).",
+          "imagePath": "media/Artwork/İyi-Yazı.webp"
         }
       }
     ],
@@ -5180,7 +5209,8 @@
                 }
               ]
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/İrade-Yemini.webp"
         }
       },
       {
@@ -5288,7 +5318,8 @@
             "wizard",
             "abjuration",
             "kural-sapması"
-          ]
+          ],
+          "imagePath": "media/Artwork/Siper-Okulu.webp"
         }
       }
     ],

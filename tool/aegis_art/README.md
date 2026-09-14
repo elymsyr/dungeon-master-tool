@@ -379,28 +379,33 @@ dart run tool/content/convert_blueprint.dart --dir flutter_app/assets/worlds/aeg
 
 ## 6.1 Görselsiz kalan kartlar
 
-0.6.3 itibarıyla iki kartın görseli yok — ikisi de bu makinede üretilemedi
-(ComfyUI ağda değildi). Prompt'ları `aegis_prompts.py` ile **çevrimdışı** üretilip
-hazır bekliyor:
+0.7.0'da 0.6.x turlarında eklenip görselsiz kalan **19 kart** (Halim, Sıçrayıp Isırma,
+İrade Yemini ve Siper Okulu kartları, Fihrist, İlahi Büyü Listesi, İyi Yazı) üretildi.
+Konuları Gemini yerine elle yazılıp `aegis_subject_cache.json`'a eklendi; job'lar
+`aegis_polish.build()` ile (kart-özel ışık dahil) `art_jobs_069_missing.jsonl`'e yazıldı.
 
-| Kart | Neden yok |
-|---|---|
-| `npc/Halim` | 0.6.0'da eklendi, o turun görsel akışı çalıştırılmadı |
-| `creature-action/Sıçrayıp Isırma` | 0.6.3'te eklendi |
+> Polish sözlüklerinin anahtarları blueprint'teki ad değişikliklerinin gerisinde
+> (`Pul Bağıtlısı → Drakewarden` vb.), yani tam `merge → polish` şu an hata veriyor.
+> Yeni kartlar için `build()`'i doğrudan çağırmak bu yüzden.
 
 ```bash
 cd tool/aegis_art
-python3 aegis_generate.py --jobs art_jobs_063_missing.jsonl --out out_fix
-# beğenilenleri out_artwork_choosen/ altına al, sonra:
-python3 aegis_integrate.py --apply
+python3 aegis_generate.py --jobs art_jobs_069_missing.jsonl --out out_fix
+# out_fix/*.webp → out_artwork_choosen/, job satırlarını 000out_choosen-art_jobs_chosen.jsonl'e ekle
+python3 aegis_integrate.py --apply --check
 ```
 
-`aegis_integrate.py` `imagePath` ve `manifest.json` satırlarını kendi yazar;
-sonrasında `.pkg.json` ve zip'i yeniden üretmeyi unutma.
+`aegis_integrate.py` `imagePath` ve `manifest.json` satırlarını kendi yazar; manifest'te
+bu klasörden gelmeyen ama diskte duran görselleri (`*-Panorama.webp`) korur. Sonrasında
+`.pkg.json` ve zip'i yeniden üretmeyi unutma.
 
-Prompt'u beğenmezsen `art_jobs_063_missing.jsonl`'i elle düzenle — dosya iki
-satır, seed'ler sabit (`35135083` · `3033273147`), yani aynı kompozisyonun
-düzeltilmiş hâli gelir (§3.1).
+### Referans görseller kartlarda
+
+`ref/` altındaki üç görsel doğrudan karta girdi (üretim yok): `Votumar`, `Lucid Triton`,
+`Elymsyr` kartlarında **ilk görsel** `media/Artwork/<ad>-Panorama.webp` (`imagePath`),
+eski üretilmiş görsel ikinci (`images`). Sağ-alt köşedeki Gemini filigranı kırpıldı.
+`*-üstten.jpeg` haritaları `media/Maps/<ad>.webp` (2048²) olarak `Votumar`, `Lucid Triton`,
+`Gümüşsu` kartlarının **`map`** alanında — ana görsel değil.
 
 ---
 
