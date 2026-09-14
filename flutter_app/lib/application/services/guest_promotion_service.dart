@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../../data/database/app_database.dart';
+import 'srd_core_package_bootstrap.dart';
 
 /// **Audit phase O3 — the guest → account handover.**
 ///
@@ -611,10 +612,7 @@ class GuestPromotionService {
     await db.customStatement('ATTACH DATABASE ? AS guest', [guest.path]);
     try {
       final remap = await _guestPackageRemap(db);
-      // Precompute guest packages whose name already exists in the account —
-      // these must be skipped to prevent duplicates (INSERT OR IGNORE only
-      // checks PK, not name).
-      final nameConflicts = await _computeNameConflicts(db);
+      final renames = await _guestPackageRenames(db, remap.keys.toSet());
       final tables = await db
           .customSelect(
             "SELECT name FROM guest.sqlite_master WHERE type = 'table' "
@@ -634,20 +632,20 @@ class GuestPromotionService {
         // The account's copy of a remapped package wins whole: its rows are
         // already here under the ids the guest side would have used, and the
         // guest's package/schema/entity rows would only add an empty duplicate.
-        //
-        // Name conflict: INSERT OR IGNORE only checks PK, not name. A guest
-        // SRD package with a different UUID would slip through and create a
-        // duplicate. Exclude guest packages whose name already exists in the
-        // account — same effect as INSERT OR IGNORE on a UNIQUE(name) index.
         final skip = _packageOwnedTables.contains(table)
-            ? _remapExclusion(table, remap.keys, nameConflicts: nameConflicts)
+            ? _remapExclusion(table, remap.keys)
             : '';
         // Everywhere else the guest rows are kept and merely re-pointed.
-        final select = shared
-            .map((c) => c == 'package_id' && remap.isNotEmpty
-                ? '${_remapCase(remap)} AS "package_id"'
-                : '"$c"')
-            .join(', ');
+        final select = shared.map((c) {
+          if (c == 'package_id' && remap.isNotEmpty) {
+            return '${_caseSql('package_id', remap, 'package_id')} '
+                'AS "package_id"';
+          }
+          if (table == 'packages' && c == 'name' && renames.isNotEmpty) {
+            return '${_caseSql('id', renames, 'name')} AS "name"';
+          }
+          return '"$c"';
+        }).join(', ');
 
         // customUpdate, not customInsert: we want the affected-row count here,
         // not the last inserted rowid.
@@ -684,6 +682,11 @@ class GuestPromotionService {
   /// makes the guest's rows unmergeable. Two genuinely different packages that
   /// happen to share a name mint random ids and share nothing, so they are left
   /// alone and both survive.
+  ///
+  /// The built-in SRD package is the one exception: it is a singleton by name
+  /// (it cannot be renamed), so it is mapped on the name alone even when the
+  /// two copies share no entity id yet - otherwise the account would end up
+  /// with two of it.
   Future<Map<String, String>> _guestPackageRemap(AppDatabase db) async {
     final out = <String, String>{};
     try {
@@ -691,10 +694,11 @@ class GuestPromotionService {
           .customSelect(
             'SELECT g.id AS guest_id, m.id AS account_id '
             'FROM guest.packages g JOIN main.packages m ON m.name = g.name '
-            'WHERE g.id <> m.id AND EXISTS ('
+            'WHERE g.id <> m.id AND ('
+            '  g.name = ${_sqlString(srdCorePackageName)} OR EXISTS ('
             '  SELECT 1 FROM guest.package_entities ge '
             '  JOIN main.package_entities me ON me.id = ge.id '
-            '  WHERE ge.package_id = g.id AND me.package_id = m.id)',
+            '  WHERE ge.package_id = g.id AND me.package_id = m.id))',
           )
           .get();
       for (final row in rows) {
@@ -718,54 +722,58 @@ class GuestPromotionService {
     'package_entities',
   };
 
-  /// Guest packages whose name already exists in the account — these must be
-  /// skipped during merge to prevent name-based duplicates (INSERT OR IGNORE
-  /// only checks PK, not name).
-  Future<Set<String>> _computeNameConflicts(AppDatabase db) async {
+  /// A guest package the remap leaves alone can still share its name with an
+  /// account package, and `idx_packages_name` is UNIQUE: `INSERT OR IGNORE`
+  /// would drop the package row and orphan its entities - the homebrew made
+  /// while signed out would silently vanish. It comes over as "Name (2)"
+  /// instead, the suffix LAN sync uses for the same collision.
+  Future<Map<String, String>> _guestPackageRenames(
+      AppDatabase db, Set<String> remapped) async {
+    final out = <String, String>{};
     try {
-      final rows = await db.customSelect(
-        'SELECT g.name FROM guest.packages g '
-        'JOIN main.packages m ON m.name = g.name '
-        'WHERE g.id != m.id',
-      ).get();
-      return {for (final r in rows) r.read<String>('name')};
+      final account = {
+        for (final r
+            in await db.customSelect('SELECT name FROM main.packages').get())
+          r.read<String>('name'),
+      };
+      // Rows whose id the account already has are dropped by the PK anyway.
+      final incoming = await db
+          .customSelect('SELECT id, name FROM guest.packages '
+              'WHERE id NOT IN (SELECT id FROM main.packages)')
+          .get();
+      final taken = {...account, for (final r in incoming) r.read<String>('name')};
+      for (final r in incoming) {
+        final id = r.read<String>('id');
+        final name = r.read<String>('name');
+        if (remapped.contains(id) || !account.contains(name)) continue;
+        var i = 2;
+        while (taken.contains('$name ($i)')) {
+          i++;
+        }
+        final renamed = '$name ($i)';
+        out[id] = renamed;
+        taken.add(renamed);
+      }
     } catch (_) {
       return const {};
     }
+    return out;
   }
 
-  String _remapExclusion(String table, Iterable<String> guestIds,
-      {Set<String> nameConflicts = const {}}) {
-    final conditions = <String>[];
-    if (guestIds.isNotEmpty) {
-      final column = table == 'packages' ? 'id' : 'package_id';
-      final list = guestIds.map(_sqlString).join(', ');
-      conditions.add('"$column" NOT IN ($list)');
-    }
-    // Exclude guest packages whose name already exists in the account —
-    // prevents INSERT OR IGNORE from creating name-based duplicates.
-    if (nameConflicts.isNotEmpty && table == 'packages') {
-      final list = nameConflicts.map(_sqlString).join(', ');
-      conditions.add('"name" NOT IN ($list)');
-    } else if (nameConflicts.isNotEmpty) {
-      // For package_schemas / package_entities: exclude rows whose
-      // parent package name already exists in the account.
-      final list = nameConflicts.map(_sqlString).join(', ');
-      conditions.add(
-        '"package_id" NOT IN '
-        '(SELECT id FROM main.packages WHERE name IN ($list))',
-      );
-    }
-    if (conditions.isEmpty) return '';
-    return ' WHERE ${conditions.join(' AND ')}';
+  String _remapExclusion(String table, Iterable<String> guestIds) {
+    if (guestIds.isEmpty) return '';
+    final column = table == 'packages' ? 'id' : 'package_id';
+    final list = guestIds.map(_sqlString).join(', ');
+    return ' WHERE "$column" NOT IN ($list)';
   }
 
-  String _remapCase(Map<String, String> remap) {
-    final buffer = StringBuffer('CASE "package_id"');
-    remap.forEach((guestId, accountId) {
-      buffer.write(' WHEN ${_sqlString(guestId)} THEN ${_sqlString(accountId)}');
+  /// `CASE "key" WHEN k THEN v ... ELSE "orElse" END` over [map].
+  String _caseSql(String key, Map<String, String> map, String orElse) {
+    final buffer = StringBuffer('CASE "$key"');
+    map.forEach((k, v) {
+      buffer.write(' WHEN ${_sqlString(k)} THEN ${_sqlString(v)}');
     });
-    buffer.write(' ELSE "package_id" END');
+    buffer.write(' ELSE "$orElse" END');
     return buffer.toString();
   }
 

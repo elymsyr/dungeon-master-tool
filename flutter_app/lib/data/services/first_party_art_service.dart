@@ -54,6 +54,17 @@ class FirstPartyArtService {
   /// Silinen dosya kayıp değil: yeniden kurulumda zip'ten, bundle'daki görsel
   /// ise [resolve] ile anında geri gelir.
   static Future<int> sweepUnreferenced(AppDatabase db) async {
+    // Best-effort cache GC: silme zaten commit edildi, sweep hatası onu
+    // başarısız göstermesin.
+    try {
+      return await _sweepUnreferenced(db);
+    } catch (e) {
+      debugPrint('[art] sweep failed: $e');
+      return 0;
+    }
+  }
+
+  static Future<int> _sweepUnreferenced(AppDatabase db) async {
     final dir = Directory(p.join(AppPaths.cacheDir, 'art'));
     if (!await dir.exists()) return 0;
 
