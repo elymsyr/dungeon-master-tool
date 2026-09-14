@@ -40,6 +40,10 @@ kendi "bu sayfa geçerlidir" beyanları):
 > kitabın test edilmiş bir örneğidir." Sahneleri fikir olarak kullan, olay
 > olarak yazma.
 
+**Bugünkü masa da kanon değil.** Dünya burada tasarlanırken aynı anda bir masada
+oynatılıyor; oynanan oturumlar [`oturum-kaydi.md`](oturum-kaydi.md)'de tutulur.
+Masada olan olay kartlara taşınmaz — oradan yalnız yazım geri bildirimi gelir.
+
 `notion-notes/` (2026-09-07 export) `update/` klasörünün (2026-08-13) üst
 kümesidir. **`update/` klasörünü kullanma** — eski ve eksik.
 
@@ -147,6 +151,7 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | 06 #1 | **Pre-gen isim seti: Jaonos · Bızdır · Aly · Will** | Diğer set (Ilysard / Fyli / Goliath) terk edildi |
 | A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
+| A3 | **Durum yazılır, olay takvimi yazılmaz** (2026-09-14) | Kartlar bir durum, mekanlar ve NPC'ler kurar; olayları saate ya da oyuncunun hamlesine bağlayıp *olacakmış gibi* yazmaz. *"Şafakta üçü döner"* → *"üçü son aşamaya geçmek üzere"*; *"Corvin şafaktan önce köye döner"* → *"Corvin ara ara köye uğrar"*; *"Orvan kapıda bekler ve teklif eder"* → Orvan'ın elinde bir teklif var, yapıp yapmayacağı masanın. Masadan gelen yorumlardan çıktı ([`oturum-kaydi.md`](oturum-kaydi.md)). Uygulama kuralı §6.8 |
 | 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. Gümüşsu bölümü ve açılış [`act1.md` §1–3](lore/canon/act1.md)'te yeniden kurgulandı — 07'deki ilkeler geçerli, sahne akışı değil |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
@@ -346,7 +351,30 @@ blueprint ya da medya değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.6.9)
+### 4.8 Yazılan kartlar (0.8.2)
+
+**0.8.2 (2026-09-15).** Yeni kart yok. **Gizli Liman'da insan yazılmaz, yalnız mal** — Sicim'in
+defteri hangi geminin ne getirdiğini ve ne ödediğini yazar; limanda silinen satır yok. Sekiz kartın
+metni değişti (`npc/Sicim` · `location/Gizli Liman` · `quest/Nereden Geldiler` · `lore/Sancak Kaydı` ·
+`lore/Fihrist` · `npc/Vinç Ustası` · `background/Arşivci` · `scene/Limana Kabul`).
+Vinç Ustası parayla silmenin fiyatını artık bilmiyor. Kanon: [`act1.md` §9 madde 43](lore/canon/act1.md).
+Yazılmayı bekleyen işler: [`yapilacaklar.md`](yapilacaklar.md).
+
+**0.8.1 (2026-09-15).** Yeni kart yok. Silmenin parasını *Kader*'in kaptanının verdiği
+bilgisi `npc/Sicim`, `location/Gizli Liman` ve `quest/Nereden Geldiler`'den çıktı — üçlüyü
+*Kader* getirdi, kimin ödediği yazılmıyor. `npc/Başkumandan`'ın refakatçi teklifi silindi.
+Kanon: [`act1.md` §9 madde 41–42](lore/canon/act1.md).
+
+**0.8.0 (2026-09-14) — durum turu (karar A3).** Yeni kart yok, adı değişen kart yok;
+**26 kartın metni** olay takviminden durum anlatımına çevrildi. Üçlü artık *"8 puan,
+şafakta döner"* değil **son aşamaya geçmek üzere** — dönüşümün anı DM'in; iki *Şafak*
+kartı adını korudu ama içlerinde saat yok. Corvin **ara ara köye uğrar**, Halim **sağ
+dönerse** anlatır, Orvan'ın teklifi zorla ulaşmaz — elinde duran bir olasılık; Meclis'in
+kesin reddi de sahneden çıktı. **Kadife kimseyi Meclis'e yollamıyor**; limanda bir lonca
+eli olarak kaldı. `curse/Blight — Enfeksiyon`'a **Genel seyir** eklendi: yaklaşık bir
+hafta kuluçka, genelde bir ay ilerleme, sonunda ölüm ya da tam dönüşüm. Hastalık Puanı
+oyuncu karakterinin sayacı olarak aynen duruyor. Kanon:
+[`act1.md` §9 madde 38–40](lore/canon/act1.md), [`lonca-sehir.md` §6.2](lore/canon/lonca-sehir.md).
 
 **0.6.9 (2026-09-13) — İrade Yemini sadeleştirildi.** Üç madde, üçü de yemini SRD
 paladininin önüne geçiren şeyleri geri alıyor: alt sınıf **1. seviyeden 3'e** taşındı
@@ -643,3 +671,17 @@ Bir faz kapanmadan sonrakine geçilmez (10 · Çalışma Ritmi).
    detay fikri varsa kartın içine değil, ilgili notun sonuna **"Öneri / Fikir:"**
    başlığıyla yazılır ve elymsyr'e sorulur; onay gelmeden hikâyeye kesinleşmiş gibi
    girmez.
+8. **Durum yaz, olay takvimi yazma (karar A3, 2026-09-14).** Kart DM'e bir *hâl*
+   verir: kim nerede, ne istiyor, ne biliyor, hastalık hangi eşikte. Ne zaman ne
+   olacağına DM masada karar verir; biz çok karışmayız.
+   - **Saat bağlama.** *"Şafakta"*, *"ertesi gün"*, *"birkaç saat önce döner"* gibi
+     zamanlanmış olay yazılmaz. Yerine eşik ya da alışkanlık yazılır: *"son aşamanın
+     eşiğinde"*, *"ara ara köye uğrar"*.
+   - **Sonucu önceden yazma.** *"Köy ayakta çıkar"*, *"iki makam da reddeder"*,
+     *"teklif yine ulaşır"*, *"her hâlde geri döner"* yazılmaz. NPC'nin tutumu ve
+     çıkarı yazılır; sonuç masada çıkar.
+   - **Sahne bir olasılıktır.** Sahne kartı *"bu olur"* değil *"bu olursa böyle
+     oynar"* der. Görev ve fihrist kartlarında sahneler olay sırası gibi numaralanmaz (bir işin
+     mantıksal adımları — önce imza, sonra karşı-imza — hariç).
+   - Kilitlenme kuralı (§2) aynen geçerli: bir kapının iki taşıyıcısı olması, bir
+     NPC'nin kapıyı oyuncuya zorla getirmesinden iyidir.
