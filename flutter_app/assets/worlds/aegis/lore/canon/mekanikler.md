@@ -465,7 +465,8 @@ Birimi", savaş alanı kuralları, Kırılma Noktası) **incelenmedi** — bu tu
   hasar, oyuncunun kabul etmediği bir bedeldir.
 - **Reddedilenler listesini (§10) silme.** Hastalık Puanı sistemi o listeden
   2026-09-10'da geri geldi ve `act1.md` §4'ün evreleri **birlikte** değişti. Üçlünün
-  hikayesi aynı kaldı: 8 puanla gelip kulübedeki gecenin zarıyla 9'a çıkıyorlar.
+  hikayesi aynı kaldı; 2026-09-14'ten beri puanla değil seyirle yazılıyor: son aşamaya
+  geçmek üzereler, ne zaman döndükleri DM'in (`act1.md` §4.2, §4.5).
   Kalan satırların neden düştüğü tabloda yazılı.
 - **Puan sistemi Act 1'de yavaş değil, sayılı işler.** Kulübeye giren her PC bir
   maruziyet zarı atar ve o puanı köyden çıkınca da taşır — puan **hiç inmez**;

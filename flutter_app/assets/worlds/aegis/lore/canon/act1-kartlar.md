@@ -65,18 +65,20 @@ Asgari linkleme:
 | Kart | Yer | Durum | Not |
 |---|---|---|---|
 | **Duran** · **Umay** · **Corvin** · **Milo** | Gümüşsu | ✅ | act1.md §3 tablosu — üç satır hazır |
-| **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *1. gün hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
+| **Alton Leagallow** · **Merla Tealeaf** · **Kromanna** | Kulübe | ✅ | §3.1 — karı koca halfling + tiefling kadın hizmetli-koruyucu, Vorstrand'dan gelen zengin bir hane. İki halflingin adı sahte, tieflinginki değil. *hasta hali*; her biri `monster` ikizli, `species_ref` SRD'ye |
 | **Sicim** · **Fare** · **Kaptan Caelynn** · **Kaptan Holg** · **Mine** | Gizli Liman | ✅ | §7.4 — lakaplılar kayıtsız, Caelynn kayıtlı olduğu için lakapsız. **Mine** (cüce kuyumcu) yüzüğü eğeleyen el — ✅ *5. turda kapandı: damga vurmaz, çünkü damga bir imzadır ve klan adını geride bıraktı* |
-| **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. **DM inisiyatifi:** o gelir ve karakterleri Meclis'e yollar (*"önce onlar duymalı"*). Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
+| **Kadife** — konsey aracısı | Rıhtım | ✅ | §7.4 — rıhtımın en iyi giyimlisi; lonca hattından PC **zarsız** tanır, diğerleri Insight DC 13. Defterdeki adı **Halet Custar** — yani Askeri Hukuk koltuğunun limanda parası var |
 
-**İki taşıyıcı açığı kapandı:** *limanda bir silme oldu* artık iki yerde — **Sicim**
-(defterdeki boşluk) ve **Mine** (eğelenmiş yüzük). Kuyumcu bir `npc` kartı oldu: klan
+~~**İki taşıyıcı açığı kapandı:** *limanda bir silme oldu* artık iki yerde — **Sicim**
+(defterdeki boşluk) ve **Mine** (eğelenmiş yüzük).~~ *2026-09-15:* Gizli Liman insan
+yazmaz, yalnız mal — Sicim'in defterinde silinen satır yok, bilgi yalnız Mine'da;
+Mine mührün orijinal halini de verebilir (act1.md §9 madde 43). Kuyumcu bir `npc` kartı oldu: klan
 adını söylemeyen bir cüce, yani kayıtsız değil *kendini kayıttan düşürmüş* biri
 (act1.md §7.4).
 
-*5. tur notu:* **kimin ödediği** artık tek taşıyıcılı ve bu bilinçli — cevabı yalnız
-Sicim verir (***Kader*'in kaptanı**), ve cevap hiçbir kapı açmaz. Kaçıran masa bir hat
-kaybetmiyor, sadece bir cümle kaybediyor.
+*5. tur notu:* ~~**kimin ödediği** artık tek taşıyıcılı — cevabı yalnız Sicim verir
+(***Kader*'in kaptanı**).~~ *2026-09-15: çıkarıldı* — kimin ödediği yazılmıyor; Sicim
+yalnız üçlüyü *Kader*'in getirdiğini söyler (act1.md §7.5, §9 madde 41).
 
 *Yüzüğün kendisinin taşıyıcı açığı yok:* Investigation DC 15 · Jeweler's Tools ·
 mühür taşıyan herhangi bir PC — üç kapı (act1.md §3.3).
@@ -85,7 +87,7 @@ mühür taşıyan herhangi bir PC — üç kapı (act1.md §3.3).
 
 | Kart | Durum | Not |
 |---|---|---|
-| **Dönüşmüş Alton** (halfling, CR 1/2) · **Dönüşmüş Merla** (halfling, CR 1/2) · **Dönüşmüş Kromanna** (tiefling, CR 1) | ✅ | act1.md **§5.1 — statblock'lar yazıldı.** Aynı üç kişinin 2. gün hali; `npc` ikizine linkli |
+| **Dönüşmüş Alton** (halfling, CR 1/2) · **Dönüşmüş Merla** (halfling, CR 1/2) · **Dönüşmüş Kromanna** (tiefling, CR 1) | ✅ | act1.md **§5.1 — statblock'lar yazıldı.** Aynı üç kişinin dönüşmüş hali; `npc` ikizine linkli |
 
 Üçü de jenerik **Dönüşmüş** gövdesinden türer (act üstü, genel-kartlar §7);
 o kart yazıldığında bu üçü ondan `derived` sayılır, tersi değil.
@@ -180,7 +182,7 @@ Yazılmayacak, sadece unutulmasın diye duruyor. Sırası geldiğinde kart olur.
 
 ⚠️ *5. tur (2026-09-13):* eskiden burada *"kim ödedi cevabı da oraya düştü — Corin
 Sancar + Kildrak Ferrun"* yazıyordu. **O hat kaldırıldı.** Cevap şehre değil limana
-düştü (*Kader*'in kaptanı), Corin bir kanıt değil bir **kilit** oldu, ve Kildrak bir
+düştü (*Kader*; kimin ödediği 2026-09-15'ten beri yazılmıyor), Corin bir kanıt değil bir **kilit** oldu, ve Kildrak bir
 ad değil bir **yön** veriyor. Bkz. `act1.md` §9, 30–32.
 
 **Resmi liman / Elymsyr** — Gizli Liman'ın alternatif yolu. İki liman gerçekten

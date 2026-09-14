@@ -178,7 +178,7 @@ ve kümelenme kanonun lonca-hane tablosuyla kendiliğinden örtüşüyor.
 | **İnsan** | Yönetim, idare, subaylık | Meclis'in altı koltuğunun üçü ([`lonca-sehir.md` §6](lonca-sehir.md)) |
 | **Cüce** | Metal işçiliği, mimari, sur ve zırh, ağır mekanizma | **Ferrunlar** bir cüce hanesi; ayar damgası onların. Kuyumcu **Mine**, ayar ustası **Kildrak** |
 | **Elf** | Akademi, kütüphane, hukuk danışmanlığı | **Rektör Quarion** — Büyücü Loncası koltuğu, elf, hanesiz |
-| **Gnome** | Simya, bitkibilim, mekanik mühendislik (vinç, değirmen, su yolu) | **Baş Otacı Caramip Kalender** · simyacı çırağı **Sindri** · limanın defterini tutan **Sicim** |
+| **Gnome** | Simya, bitkibilim, mekanik mühendislik (vinç, değirmen, su yolu) | **Baş Otacı Caramip Kalender** · simyacı çırağı **Sindri** · limanın mal defterini tutan **Sicim** |
 | **Halfling** | Gıda, yerel esnaflık, hancılık | **Milo Goodbarrel** · rıhtım çırağı **Fare** |
 | **Ejderdoğan** | Az sayıda, elit görevler: konsey muhafızlığı, sahil gözcülüğü | Votumar'ın Sahil Gözcüleri (§3.4) |
 | **Yarı-ırklar ve tiefling** | Ara katmanlar: hizmet, aracılık, bilgi ağları | **Umay** (yarı-elf) · **Kaptan Caelynn** (yarı-elf) · **Kromanna** (tiefling) |

@@ -98,11 +98,13 @@ hepsi masada sorulan bir soruya karşılık gelir:
 
    ⚠️ **5. tur düzeltmesi:** bu kural Act 1'in soruşturmasına **bağlanmıyor.** Üçlü
    gümrüğe hiç uğramadı, yani hiçbir şehir defterine hiç yazılmadılar — hiç yazılmamış
-   bir satır silinemez. Act 1'de silinen tek defter **Gizli Liman'ın kendi defteri**
-   (`act1.md` §7.5). Şehir defterleri temiz.
+   bir satır silinemez. ~~Act 1'de silinen tek defter **Gizli Liman'ın kendi defteri**~~
+   *(2026-09-15: Gizli Liman insan yazmaz, yalnız mal — `act1.md` §9 madde 43).*
+   Act 1'de silme hiç geçmez; üçlü hiçbir defterde yok.
 
-Kartın `dmNotes` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir** —
-Sicim de Vinç Ustası da aynı rakamı söyler, çünkü rakamı koyan yer aynıdır.
+Kartın `dmNotes` alanı tek cümle: **ödenmiş silme fiyatlıdır ve fiyatı bellidir.**
+*(2026-09-15: rakamı bilen taşıyıcı yok — Sicim çıktı çünkü liman insan yazmaz; Vinç
+Ustası NPC olarak kalıyor ama bu bilgi ondan çıkarıldı.)*
 
 `lore/Kural Sapmaları` 🟡: üç sayfanın da **sayıları** karar bekliyor (Diriltme
 Sınavı'nın zarı, Kalıcı Yara bandları — `mekanikler.md` §11). Kart başlıkla ve
@@ -146,7 +148,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Milo Goodbarrel** — hancı *(halfling)* | İşin yürümesi | — (yarasız NPC) | Söylenti, yabancı kaydı, kumaş | ✅ |
 | **Halim** — lonca adamı *(insan)* | İşi bitirip dönmek | Kimin yolladığını | Orvan Sancar'ın adı, Meclis'e kısa yol | ✅ |
 
-**Kulübe** — üçü de 1. gün hali; her birinin `monster` ikizi var, `species_ref` SRD'ye
+**Kulübe** — üçü de hasta hali; her birinin `monster` ikizi var, `species_ref` SRD'ye
 
 | Kart | Ne | Durum |
 |---|---|---|
@@ -158,11 +160,11 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **Sicim** — defter tutan | Limanın işlemesi | Silmenin parasını ***Kader*'in kaptanı** verdi · gerçek adı Burgell | Ücret · kefalet · üçlünün izi **ve izin bittiği yer** | ✅ |
+| **Sicim** — mal defterini tutan | Limanın işlemesi | Gerçek adı Burgell | Ücret · kefalet · üçlünün izi **ve izin bittiği yer** | ✅ |
 | **Fare** — rıhtım çırağı | Bir gemiye alınmak | — (yarasız NPC) | Her şey: kim ne zaman yanaştı | ✅ |
 | **Kaptan Caelynn** *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi | Temiz yolculuk — yazı ya da yüksek fiyat | ✅ |
 | **Kaptan Holg** *(yarı-orc)* | Para, hızlı sefer | Gemisi güvenilmez | Ucuz ve kötü yolculuk | ✅ |
-| **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması; haberin Meclis'e önce ondan gitmesi | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | **Meclis'e giden yol** (DM inisiyatifi) · "İyi yazı"nın nasıl alındığı | ✅ |
+| **Kadife** — konsey aracısı *(insan)* | Limanın konseye yararlı kalması | Hangi koltukların pay aldığı; defterdeki adı **Halet Custar** | Limanda bir lonca elinin olduğu · "İyi yazı"nın nasıl alındığı | ✅ |
 | **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki; **damga vurmaz**; klan adını söylemiyor | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret | ✅ |
 
 **Meclis — altı koltuk, altı inkâr.** Kartlar koltuk adıyla yazılır.
@@ -212,7 +214,10 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Patika Gözcüsü** *(yarı-elf)* | Kimsenin yukarı çıkmaması | Son aylarda çıkmayı deneyen ilk kişilerin kim olduğunu | Kimin Ravenhall'ı aradığı — ve neden | 🟡 ad |
 
 > **İki taşıyıcı kuralı (5. tur güncellemesi):** *limana nasıl gidilir* iki yerde
-> (Duran/Corvin · yüzük→Kildrak). *Silme oldu mu* iki yerde (Sicim · Mine).
+> (Duran/Corvin · yüzük→Kildrak). ~~*Silme oldu mu* iki yerde (Sicim · Mine).~~ *2026-09-15:* limanda insan yazılmadığı
+> için Sicim'in defterinde silinen satır yok; *bir kimlik silindi* bilgisi yalnız **Mine**'da
+> (eğelenmiş yüzük) — tek taşıyıcı, ama kritik değil; Mine mührün orijinal halini de
+> verebilir (`act1.md` §9 madde 43).
 > Eski hali aşağıdaydı ve *kim ödedi* hattı 5. turda kaldırıldı:
 >
 > ~~*kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
@@ -270,11 +275,11 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|---|
 | **Köye Varış** | Gümüşsu | İlk karşılaşma; köy huzursuz ama ayakta | ✅ |
 | **Kulübe Sorgusu** | Kulübe | Üçünün son konuşabilen hali | ✅ |
-| **Şafak Dönüşümü** | Kulübe | Üçü tamamen döner | ✅ |
+| **Şafak Dönüşümü** | Kulübe | Üçü döndüğünde — anı DM'in | ✅ |
 | **Limana Kabul** | Gizli Liman | Birinci kapı: kefil, iş veya yük | ✅ |
 | **Geçiş Pazarlığı** | Rıhtım | İkinci kapı: iyi yazı ya da iyi para | ✅ |
-| **Meclis Oturumu** | Meclis Salonu | Altı inkâr, tek sessiz üye; masa reddedilir | ✅ |
-| **Kapı Önündeki Teklif** | Meclis Salonu | Oturumun **hemen ardından**: "onları geçireni bana getirin" | ✅ |
+| **Meclis Oturumu** | Meclis Salonu | Altı koltuk, beş inkâr, inkâr etmeyen tek üye | ✅ |
+| **Kapı Önündeki Teklif** | Meclis Salonu | Orvan'ın elindeki teklif, ne zaman yapacağı yazılmaz: "onları geçireni bana getirin" | ✅ |
 | **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur): Orvan'ın imzası elde, Corin ikinciyi vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
 | **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. **Karakterler buradan tayfa olarak biner** (5. tur) | ✅ |
 | **Susan Kule** | Gözcü Kuleleri Hattı | Bir kulenin raporu şatoya ulaşmadı. Sessizlik, yalandan yüksek sesle konuşur | ✅ |
@@ -290,7 +295,7 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 
 | Kart | Zincir | Durum |
 |---|---|---|
-| **Söylentinin Peşinde** | Giriş kancası: köy → kulübe → şafak → **bir makama götür** (Meclis ve/veya Votumar); gidilen makam reddedince kapanır | ✅ |
+| **Söylentinin Peşinde** | Giriş kancası: Gümüşsu'da ne olduğunu gör, **bir makama götür** (Meclis ve/veya Votumar); makama götürülünce kapanır | ✅ |
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda biter (*Kader*) | ✅ |
 | **İyi Yazı** | Kıtadan çıkış: karşı-imza yolu ya da para yolu | ✅ |
 

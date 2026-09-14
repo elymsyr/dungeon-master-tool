@@ -33,9 +33,9 @@ Bu, üç şeyi bedavaya veriyor:
   deftere yazma yetkisidir. On üç background eşyasının dördünün mühür olması
   tesadüf değil.
 - **Act 1'in kanıt hattı** (act1.md §3.3) buraya *sistem olarak* bağlanıyor: bir
-  satırın silinmesi bir hizmettir ve ücreti vardır. *(5. tur: Act 1'de silinen defter
-  şehrin değil **limanın** kendi defteri — üçlü hiçbir şehir defterine yazılmadı.
-  Kural ayakta, olay şehirde değil.)*
+  satırın silinmesi bir hizmettir ve ücreti vardır. *(2026-09-15: Act 1'de silme hiç
+  geçmez — üçlü hiçbir şehir defterine yazılmadı, ve Gizli Liman'ın defteri insan değil
+  yalnız **mal** yazar. Kural ayakta, Act 1'de olayı yok.)*
 
 ---
 
@@ -223,14 +223,17 @@ Aynı yapı, onu **inanan tek üye** yapıyor:
 > adam haklıdır ve odada hiçbir ağırlığı yoktur. Odanın ders verdiği şey budur —
 > Meclis'te haklı olmak bir para birimi değil.
 
-### 6.2 Oturumdan sonra — gizli görev (KARAR)
+### 6.2 Orvan'ın teklifi — gizli görev (KARAR; 2026-09-14'te olasılığa çevrildi)
 
-Oyuncular Gümüşsu'nun kanıtıyla Meclis'e çıkarsa **reddedilirler.** Bu bir
-başarısızlık değil, tasarım: oturum bir kapı değil bir **teşhis**. Ama çıkarken
-kapıda beklenirler.
+Meclis'in beş koltuğu hastalığı kendi çıkarının gözünden görmez (§6), ve
+Gümüşsu'nun kanıtı bu tutumu kolay değiştirmez: oturum bir kapı değil bir
+**teşhis**. Orvan'ın ise elinde bir teklif var. **Ne zaman, nerede yapacağı ve
+yapıp yapmayacağı yazılmaz** (README A3): karakterler ona ulaşırsa ya da o onları
+işe yarar bulursa yapar. Önceki "reddedilirler, çıkarken kapıda beklenirler" akışı
+kaldırıldı.
 
 **Teklifi yapan:** Sınır ve Ticaret koltuğu — kendisi ya da tek adamı (§7'deki
-geçiş memuru değil; onun kendi çırağı). Oturumda konuşmadığı şeyi burada söyler.
+geçiş memuru değil; onun kendi çırağı). Salonda konuşmadığı şeyi burada söyler.
 
 **Teklif üç cümle:**
 
@@ -296,7 +299,7 @@ soruyu kuruma taşıyan **bilet**.
 §3.1'de de karar verilmedi.
 
 **Zorunlu değil.** Oyuncular gerçek adları hiç öğrenmeyebilir; §6.2'nin teklifi
-adlardan bağımsız gelir. İki hat birbirinin ön koşulu değil, aynı odaya iki kapı.
+adlardan bağımsızdır. İki hat birbirinin ön koşulu değil, aynı odaya iki kapı.
 
 ---
 
@@ -318,8 +321,8 @@ hiçbir şehir defterine yazılmadı, ve silinen sayfa kurgusu bununla çelişiy
 
 Yerine geçen iki taşıyıcı, **limana giden yol** için: @[Duran](entity:npc/Duran)/
 @[Corvin](entity:npc/Corvin) (köyden) ve **Kildrak** (yüzükten). *Kim ödedi* sorusunun
-cevabı ise tek taşıyıcılı ve bilinçli öyle — Sicim söyler, ve cevap (***Kader*'in
-kaptanı**) hiçbir kapı açmaz.
+cevabı yazılmıyor (2026-09-15, `act1.md` §9 madde 41) — Sicim yalnız üçlüyü *Kader*'in
+getirdiğini söyler, ve bu da hiçbir kapı açmaz.
 
 **Corin Sancar'ın yeni işi:** kanıt değil **kilit.** @[İyi Yazı](entity:quest/İyi Yazı)
 görevinde karşı-imzayı verir ya da yığının altına kaydırır.

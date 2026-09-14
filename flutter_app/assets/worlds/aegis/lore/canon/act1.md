@@ -35,6 +35,16 @@
 > kaldırmıyor ve puan da silmiyor, **bir sonraki hastalık zarına +4** veriyor (§4.4) · üçlünün hikayesi
 > değişmedi, eşikleri 8 puan olarak yazıldı (§4.5).
 >
+> **2026-09-14 revizyonu (durum turu, README A3):** olay takvimi kaldırıldı — üçlü bir
+> saate değil bir **eşiğe** bağlı, dönüşümün anı DM'in (§4.5, §5) · hastalığın **genel
+> seyri** yazıldı: yaklaşık bir hafta kuluçka, genelde bir ay, sonunda ölüm ya da tam
+> dönüşüm (§4.2) · Corvin'in dönüş saati ve Halim'in kesin dönüşü çıktı (§3.6, §5.1) ·
+> Kadife kimseyi Meclis'e yollamıyor (§7.4). Sahneler ve adları kaldı.
+>
+> **2026-09-15 revizyonu:** silmenin parasını *Kader*'in kaptanı vermiyor (§7.5) ·
+> Başkumandan'ın refakatçi teklifi çıktı (§9 madde 41–42) · **Gizli Liman'da insan yazılmaz,
+> yalnız mal** — limanda silinen satır yok (§7, §7.5, §9 madde 43).
+>
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
 > §10'da ayrı duruyor — kartların içine girmez.
 
@@ -207,7 +217,7 @@ tam geçmişleri ve izledikleri yol **karar verilmedi.** Aşağıdaki anlatı bu
 
 > İkinci kıtada hastalık yayılırken limanlar kapanmadan çıkmak için çok para ödediler.
 > **Kaçamadılar** — bindiklerinde zaten taşıyorlardı. Meridia'ya vardıklarında bir kez
-> daha ödediler: bu sefer karaya çıkışlarının **kayıttan silinmesi** ve kimsenin soru
+> daha ödediler: bu sefer **kayda geçmeden** karaya çıkmaları ve kimsenin soru
 > sormadığı bir yere yerleştirilmeleri için.
 
 **Karar verilene kadar masada doğru olan üç şey:** üçü de **ikinci kıtadan** geldi ·
@@ -263,7 +273,7 @@ kıtadan getirdi.**
 > **Salgın araştırılmaz, suç araştırılır.**
 
 Suç artık *bulaştırma* değil **gizleme**: birileri üç hasta insanı kordonun içinden
-geçirdi, kayıtlarını sildi ve kayıtsız bir köye yerleştirdi. Onları buraya sokan kişi
+kayda geçirmeden geçirdi ve kayıtsız bir köye yerleştirdi. Onları buraya sokan kişi
 Gümüşsu'yu satmış oldu.
 
 **Üçlünün bu işlemdeki rolü açık değil (4. tur).** Parayı onlar mı verdi, biri onlar
@@ -423,15 +433,12 @@ yabancı: kimse ondan çekinmez, çocuklar peşine takılır, hancı ona borç y
 **bilmez** ve malın nereden geldiğini sormaz; bildiği tek şey Corvin'in gidip
 döndüğüdür. Limanı bilen tek köylü odur, ve bunu anlatmaz.
 
-**Ne zaman köyde.** Sürekli değil; kıyıyla köy arasında gider gelir. Dönüşüm
-sabahı **köydedir**: yükü sırtında, şafaktan **birkaç saat önce** döner. Yani
-[§5](act1.md)'in şafağı, Corvin'in dönüşünden birkaç saat sonradır. Karakterler
-gündüz geldiyse onu ilk kez o gece handa ya da sabaha karşı kuyu başında görür.
-DM onu daha erken köyde tutmak isterse tutabilir; **zorunlu olan tek şey, dönüşüm
-olduğunda köyde olması.**
+**Ne zaman köyde.** Sürekli değil; kıyıyla köy arasında gider gelir ve **ara ara
+köye uğrar.** Karakterler geldiğinde köyde olup olmadığı DM'in (KARAR, 2026-09-14 —
+önceki "şafaktan birkaç saat önce döner" saati kaldırıldı, README A3).
 
-**Ölürse.** Şafakta ölmesi mümkündür: kaçmaz, öne de atılmaz, kendi kapısının
-önünde bıçağıyla durur. Öldüğünde kıyıya giden yol karakterlere **kapanır** ve
+**Ölürse.** Dönüşüm olduğunda köydeyse ölmesi mümkündür: kaçmaz, öne de atılmaz,
+kendi kapısının önünde bıçağıyla durur. Öldüğünde kıyıya giden yol karakterlere **kapanır** ve
 köyde o yolu açacak kimse yoktur. Bunun telafisi yok; yerine bir rehber çıkarma.
 
 Dünya yine de kapanmaz. Limanın yerini kıtada bilenler var — bazı Konsey
@@ -506,6 +513,19 @@ sahip olan (1+ puan) taşıyıcı **CON DC 13** atar; başarısızlık +1:
 
 ⚠️ *Günlük zarın DC'si türetildi — eski Evre 2 zarından korundu.*
 
+**Genel seyir (KARAR, 2026-09-14).** Puan masada sayar; hastalığın bir insanın içindeki
+yolu kabaca şudur:
+
+- **Kuluçka — yaklaşık bir hafta.** Belirtiler hafiftir ve kolay geçiştirilir.
+- **İlerleme — genelde bir ay kadar.** Aşamalar birbirini izler; süre kişiden kişiye
+  değişir (§4.3). Güvenli bölge uzatır, vahşi doğa kısaltır.
+- **Son — iki yoldan biri.** Beden çöker ve hasta **ölür**, ya da bilinç kapanır ve
+  hasta **tamamen döner.**
+
+**NPC'ler puanla değil seyirle yazılır** (*"kuluçkada"*, *"son aşamaya geçmek
+üzere"*). Puan oyuncu karakterinin sayacıdır; seyir, DM'in dünyadaki hastaları nasıl
+düşündüğüdür.
+
 | Aşama | Puan | Belirtiler | Mekanik etki |
 |---|---|---|---|
 | **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince siyah damarlar, sürekli metalik tat | CON temelli **yetenek kontrollerinde** dezavantaj. Büyülerde görsel "bozulmalar" başlar, mekanik engel yok |
@@ -562,9 +582,8 @@ işaret eden fiziksel bir nesne yok. Ama artık **tamamen görünmez de değil**
 Act 1'in kanıtladığı tek şey suçun **gizleme** olduğu; eserin kendisi sonraki
 perdelere kalır.
 
-Üçlü **şu an son aşamanın eşiğinde** (8 puan, Aşama 4'ün sonunda). Kulübedeki gecenin
-günlük hastalık zarı onları 9'a taşır — şafaktaki dönüşüm budur (§5). Oyuncular bunu
-bilmiyor; kimse bilmiyor.
+Üçlü **son aşamaya geçmek üzere** — seyrin sonunda (§4.2). Ne zaman döneceklerini
+kimse bilmiyor, oyuncular da; anı DM seçer (§5).
 
 ### 4.6 Yalnız biyolojik değil — büyülü de (KARAR, 4. tur)
 
@@ -600,19 +619,21 @@ zaten zarsız.
 Kulübede üç **hasta** var: konuşabilen, sayıklayan, korkmuş insanlar. Sorgu mümkün
 ve buradan çıkacak son bilgi odur.
 
-> **Şafakta üçü tamamen döner. Oyuncular orada olsun olmasın.**
+> **Üçü son aşamaya geçmek üzere. Ne zaman dönecekleri yazılmaz** (KARAR,
+> 2026-09-14, README A3).
 
-Üçü 8 puanla yatıyor ([§4.2](act1.md)); gecenin günlük hastalık zarı onları 9'a
-taşıyor. Bu bir seçimin cezası değil, hastalığın takvimi (08 §4) — kimse
-bilmiyor, kimse durduramıyor, ve saat oyuncuların masasında durmuyor.
+Üçü hastalığın seyrinin sonunda ([§4.2](act1.md)). Dönüşüm bir seçimin cezası değil,
+hastalığın kendi yolu (08 §4) — kimse bilmiyor, kimse durduramıyor. Anı DM seçer;
+kartlar yalnız eşiği söyler. *Şafak* bu bölümün ve iki kartın adı olarak kaldı, bir
+saat olarak değil.
 
 **Köylüler geceyi köyde geçirmeyi önerir** çünkü yol karanlıkta tehlikeli ve
 konuk göndermek ayıp; Duran bunu söyler, Milo oda hazırlar. Bu bir yönlendirme
 değil, köyün alışkanlığı. Kalmak da gitmek de masanın işi.
 
-### 5.1 Hâller — şafaktan sonra köy
+### 5.1 Hâller — dönüşümden sonra köy
 
-Şafağın iki sonucu var, ve ikisini ayıran tek şey **o sabah kulübeyle köy arasında
+Dönüşümün iki sonucu var, ve ikisini ayıran tek şey **o an kulübeyle köy arasında
 kimin durduğu.**
 
 | Hâl | Köyde ne doğrudur |
@@ -620,9 +641,8 @@ kimin durduğu.**
 | **Ayakta** | Ölen var, köy yaşıyor. Kapılar açık, ocak yanıyor, erzak para istemez. Duran borçlu ve borcunu biliyor: konuşmadığı şeyleri konuşur. Üçlünün üstü aranabilir ([§3.3](act1.md)) |
 | **Kırılmış** | Köyün çoğu ölü; şansa sağ kalanlar var ve çoğu o gün yola çıkar. Üç Dönüşmüş **serbest** — nereye gittikleri DM'in. Ocak sönük, kapılar açık kalmış, kazan devrilmiş |
 
-**İki hâlde de doğru olanlar.** Halim ([§3.5](act1.md)) kaçar ve dönmeyi başarır;
-Gümüşsu'da olan şey Sınır ve Ticaret koltuğuna ulaşır. Söylenti artar — ne kadar
-sürdüğü DM'in, günlerle bir hafta arası. Ve köyden sağ çıkan kim varsa aynı iki
+**İki hâlde de doğru olanlar.** Halim ([§3.5](act1.md)) köydeyse kaçar; sağ dönerse
+Gümüşsu'da olan şey Sınır ve Ticaret koltuğuna ulaşır ve söylenti artar. Ve köyden sağ çıkan kim varsa aynı iki
 cümleyi taşır: *"hastaydılar"* ve *"buralı değillerdi."*
 
 **Kurtarılabilirlik (06 #8 ✅):** "ayakta" hâli masanın ilk zaferidir — kazanmak
@@ -631,7 +651,7 @@ sadece başka bir sabah: perde ikisinde de aynı yere, limana ve loncaya bakıyo
 
 ### 5.2 Kart ihtiyacı
 
-Her biri için **iki kart** — `npc` (1. gün, hasta) + `monster` (2. gün, dönüşmüş).
+Her biri için **iki kart** — `npc` (hasta) + `monster` (dönüşmüş).
 Aynı üç kişi, iki hal. Bu ikilik oyuncuya kimin öldürüldüğünü hatırlatır.
 
 ### 5.3 Statblock'lar
@@ -786,6 +806,12 @@ yüzden burada duruyor: Meridia'dan çıkmanın kayıtsız yolu.
 **Ad kuralı:** burada takma ad, meslek adı ve gemi adı kullanılır — herkes başka
 bir yerden gelmiş, kimse doğduğu adı vermiyor. (Dil ayrımı kanon değil, §3.)
 
+**Kayıt kuralı — burada yalnız mal yazılır (KARAR, 2026-09-15).** Liman şehir gibi
+değil: her şey kayda geçmez. @[Sicim](entity:npc/Sicim)'in defteri **malı** yazar —
+hangi gemi ne getirdi, ne indirdi, ne ödedi. **İnsan yazılmaz:** kimin geldiği, kimin
+kime kefil olduğu deftere geçmez. Şehirde defterde olmayan şey resmi olarak yoktur
+([`lonca-sehir.md` §0](lonca-sehir.md)); burada defterde insan yoktur.
+
 ### 7.1 İçeri girmek — birinci kapı
 
 **Yeri kimler biliyor.** Halkın bilgisi değil, ama bir sır da değil: bazı Konsey
@@ -851,11 +877,11 @@ sözlerinin bozulması herkese pahalıya patlar.
 
 | NPC | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|
-| **Sicim** — defter tutan, düzenleyici *(gnome)* | Limanın işlemeye devam etmesi | Silmenin parasını ***Kader*'in kaptanı** verdi · gerçek adı **Burgell** | Ücret · kefalet · **üçlünün izi — ve izin bittiği yer** |
+| **Sicim** — mal defterini tutan, düzenleyici *(gnome)* | Limanın işlemeye devam etmesi | Gerçek adı **Burgell** | Ücret · kefalet · **üçlünün izi — ve izin bittiği yer** |
 | **Fare** — rıhtım çırağı *(halfling)* | Bir gün bir gemiye alınmak | — (yarası olmayan NPC, 02 §4 kotası) · gerçek adı **Trym** · *Fare* denmesinden hoşlanmıyor | Her şey: kim ne zaman yanaştı, hangi kaptan kimi alır |
 | **Kaptan Caelynn** — iyi kaptan *(yarı-elf)* | Göremediği yükü taşımamak | Üçlüyü geri çevirdi; sonra başka gemiyle gittiklerini duydu | Temiz yolculuk — **yazı ya da yüksek fiyat** |
 | **Kaptan Holg** — ucuz kaptan *(yarı-orc)* | Para, hızlı sefer | Gemisi ve mürettebatı güvenilmez | Ucuz ve kötü yolculuk (gerçek bir seçenek) |
-| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması · haberin Meclis'e **onun yolundan** gitmesi | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** · karakterleri iyilik olsun diye yollamadığı | **Meclis'e giden yol** — kapı değil, itiş (§7.4, 2026-09-13) |
+| **Kadife** — konsey aracısı, saklanmıyor *(insan)* | Limanın konseye yararlı kalması | Hangi konsey koltuklarının pay aldığı · defterdeki adı **Halet Custar** | Limanda **bir lonca elinin** olduğu — kapı değil, işaret (§7.4, 2026-09-14) |
 | **Mine** — kuyumcu *(cüce)* | Tezgahının açık kalması | Yüzüğü eğeleyen el onunki · **damga vurmaz** · **klan adını söylemiyor** | Eğelemeden önce gördüğü yüz: kıtada karşılığı olmayan bir işaret |
 
 **Adlandırma kuralı — limanın tamamı lakapla konuşur.** *Sicim · Fare · Kadife ·
@@ -884,46 +910,20 @@ limanın konseyce bilindiği zaten kabul edilmiş bir gerçek (§7.3).
 > Diğer PC'ler için **Insight DC 13**: adamın rıhtıma ait olmadığını görür, kime
 > ait olduğunu göremez.
 
-**Kadife ne işe yarar (KARAR, 2026-09-13 — 34. maddeyi geri alır).** Önceki hali
-onu süse indirmişti: zincirde durmuyor, tek işi oyuncuda *"bu adamın burada ne işi
-var"* sorusunu bırakmak. O soru kalıyor, ama artık bir cevabı da var. Kadife'nin iki
-işi var ve ikisini aynı anda yapar:
+**Kadife ne işe yarar (KARAR, 2026-09-14 — 2026-09-13 kararının yollama yarısı geri
+alındı, §9 madde 40).** Limanda bir lonca elinin olduğunu gösterir: konsey adına
+konuşan herkes bir loncanın adına konuşur (§7.3 · `lonca §1`), ve Kadife bu cümlenin
+rıhtımdaki görünür karşılığıdır. Oyuncuyu bir yere yollamaz, yanlarına kendiliğinden
+gelmez; DM'in kolu değildir. *"Bu adamın burada ne işi var"* sorusu masada kalır.
 
-1. **Limanda bir lonca elinin olduğunu gösterir.** Konsey adına konuşan herkes bir
-   loncanın adına konuşur (§7.3 · `lonca §1`) — Kadife bu cümlenin rıhtımdaki
-   görünür karşılığıdır.
-2. **Oyuncuyu Meclis'e yollar.** Bir bilgi kaynağı değil, bir **yön.**
+**Ne verir, ne vermez.** Ad yok, kağıt yok, para yok, kefalet yok. Sorulana kibar ve
+kısa cevap verir, bir şey vermez: *"Yanlış adama geldiniz."* Kimin adına durduğu
+sorulursa cevap vermez — **Custar katmanı Act 1'de açılmıyor.** Karakterlerin
+görebileceği tek şey, limanda *bir* koltuğun eli olduğudur.
 
-**DM inisiyatifi — o gelir.** Bu sahnenin tetiği oyuncuda değil, **DM'de.**
-Karakterler rıhtımda üç yabancıyı, *Kader*'i ya da silinmiş satırı konuşmaya
-başladığı an Kadife kağıtlarını kapatır ve yanlarına gelir:
-
-> *"Bunu kime anlatacaksınız?"*
-
-Cevabı beklemez:
-
-> *"Burada anlatmayın. Rıhtımda anlatılan her şeyin bir fiyatı olur, ve o fiyatı siz
-> ödemezsiniz. Lucid Triton'a gidin, Meclis'e söyleyin. **Önce onlar duymalı.**"*
-
-**İki masada da çalışır.** Lonca adı perdede **hiç geçmediyse** burası o adın masaya
-ilk kez konduğu yerdir — Kadife *lonca* demez, **Meclis** der, ve iyi giyimli bir
-adamın limanda Meclis adına konuşması sorunun kendisini kurar. Lonca adı **zaten
-geçtiyse** (Halim · Duran · Orvan Sancar) Kadife onaylar ve **acele ettirir:** yol
-doğru, eksik olan hız.
-
-**Ne verir, ne vermez.** Ad yok, kağıt yok, para yok, kefalet yok. Verdiği tek şey
-yön ve bir uyarı: *"Adımı vermeyin. Adımı verirseniz o kapı açılmaz, kapanır."*
-Kimin adına konuştuğu sorulursa cevap vermez — **Custar katmanı Act 1'de hâlâ
-açılmıyor.** Karakterlerin öğrendiği tek şey, limanda *bir* koltuğun eli olduğudur.
-
-**İzi uzatmıyor.** §7.5 duruyor: üçlünün izi limanda bitiyor. Kadife yeni bir kanıt
-vermiyor, elde olanı **nereye götüreceğini** söylüyor. Gitmeyen masa bir şey
-kaybetmez; Meclis yolu Halim'den de, Duran'ın izinden de, doğrudan loncaya
-gitmekten de açılır. Kadife bir kapı değil, **bir itiş.**
-
-**Neden yapıyor.** Yardım etmiyor. Haber Meclis'e onun yolladığı insanlarla giderse
-koltuk ona borçlanır; kıymetli olan haber değil, **kimin getirdiği.** Karakterler
-bunu fark ederse inkâr etmez, omuz silker.
+**İzi uzatmıyor.** §7.5 duruyor: üçlünün izi limanda bitiyor. Meclis yolu Halim'den,
+Duran'ın izinden ya da doğrudan loncaya gitmekten açılır; Kadife o yollardan biri
+değil.
 
 Kart **Konsey Aracısı** başlığıyla yazılır; rıhtımda **Kadife** diye çağrılır,
 defterdeki adı **Halet Custar**'dır (KARAR, 2026-09-09 3. tur). İki adı birleştiren
@@ -955,22 +955,23 @@ anlatır ve barakayı gösterir; kuyumcuya giden yol §7.4'te onun üstünden ge
 
 Limanda öğrenilen üç şey, ve üçü de somut:
 
-1. **Satır parayla silindi.** Sicim defterini açar ve çıkarılan satırın sütunda
-   bıraktığı boşluğu gösterir. (@[Arşivci](entity:background/Arşivci) bunu zarsız
-   görür.)
-2. **Parayı ***Kader*'in kaptanı verdi.** Sicim bunu söylemekten çekinmez, çünkü
-   söylemesinin kimseye bir zararı yok: *"Adını sormadım, burada kimse sormaz.
-   Gemisi vardı; adı oydu."*
+1. **Limanda da adları yok.** Sicim'in defteri insan yazmaz, yalnız mal; üçlü burada
+   da hiçbir satırda değil. *"Burada insan yazılmaz. Mal yazılır."*
+2. **Onları *Kader* getirdi.** Sicim geminin adını söylemekten çekinmez: *"Kaptanının
+   adını sormadım, burada kimse sormaz. Gemisi vardı; adı oydu."*
 3. **Kader o geceden sonra bir daha yanaşmadı.** Üçlünün nereden geldiğini bilen tek
    adam denize açıldı.
 
+**Limanda silme yok** (KARAR, 2026-09-15): silinecek bir satır hiç yazılmadı. Önceki
+*"satır parayla silindi"* ve *"silmenin parasını Kader'in kaptanı verdi"* çıkarıldı.
+
 **Neden şehre bağlanmıyor.** Üçlü gümrüğe uğramadı; yani hiçbir **şehir** defterinde
-satırları yok. Silinen defter limanın kendi defteri. Şehre bir iz taşımak için
+satırları yok. Limanın defteri de insan yazmaz. Şehre bir iz taşımak için
 şehirde de bir kayıt uydurmak gerekirdi, ve o kayıt Act 1'in en temel cümlesini
 bozardı: *bu üç insan kıtaya kayıt dışı girdi.* Limanda bitmek doğru son.
 
 **Elde kalan:** bir gemi adı (**Kader**), bir çizim (Mine'ın hatırladığı, kıtada
-karşılığı olmayan işaret), ve silinmiş bir satır. Üçü de somut; üçü de Act 1'de
+karşılığı olmayan işaret). İkisi de somut; ikisi de Act 1'de
 hiçbir kapı açmıyor. *Kader*'in kaptanının **kimin adına** taşıdığı, macerada
 sorulup cevaplanmayan üç sorudan biridir.
 
@@ -1017,7 +1018,7 @@ kendiliğinden işe alınır, ve işçi ağı ona ilk gün konuşmaz ama ikinci 
 | Kategori | Act 1 açılışı için |
 |---|---|
 | `location` | Gümüşsu · Kulübe · **Goodbarrel'ın Ocak Başı** (§3.4) · Gizli Liman · **Rıhtım** (§7.6) |
-| `npc` | Gümüşsu kadrosu (4) + üç hasta (1. gün hali) + Gizli Liman kadrosu (5, **Konsey Aracısı** dahil) |
+| `npc` | Gümüşsu kadrosu (4) + üç hasta (hasta hali) + Gizli Liman kadrosu (5, **Konsey Aracısı** dahil) |
 | `monster` | Dönüşmüş üçlü (3 kart, statblock §5.3) |
 | `background` | §2'deki 9 background — mekanikleri kapandı, yazılabilir |
 | `curse` | **Blight — Enfeksiyon** (§4): perdede fiilen işleyen kural sapması. Kalanlar [`mekanikler.md` §9](mekanikler.md)'da |
@@ -1041,7 +1042,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 1. **Cerrahi iğne kaldırıldı** (§3.2). Kimse kimseyi bilerek hasta etmedi; hastalık
    ikinci kıtadan geldi. Suç bulaştırma değil **gizleme**.
 2. **Üçlü kim** (§3.1): iki halfling + bir tiefling, üçü de zengin, ikinci kıtadan
-   kaçtılar, kaçamadılar, kayıtlarını parayla sildirdiler, limandan sonra yol bitti.
+   kaçtılar, kaçamadılar, ~~kayıtlarını parayla sildirdiler~~ *(madde 43)*, limandan sonra yol bitti.
    "Sivil yolcu" kararı korundu — paladin/asker değiller.
 3. **Adları sahte** (§3.1). Gerçek adlar köyde yazılmıyor; **4. turda** karşılığını
    Meclis'te buldular ([`lonca-sehir.md` §6.3](lonca-sehir.md)).
@@ -1125,10 +1126,12 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     geçişinin *şehrin* defterinden silindiğini ve altında **Corin Sancar**'ın
     karşı-imzasının kaldığını söylüyordu. Bu, üçlünün **gümrüğe hiç uğramadığı**
     kararıyla çelişiyordu: hiç yazılmamış bir satır silinemez. Şehir defterleri
-    temiz; silinen tek defter limanın kendi defteri.
-31. **Üçlünün izi limanda bitiyor** (§7.5). Silmenin parasını ***Kader*'in kaptanı**
-    verdi, ve gemi o geceden sonra bir daha yanaşmadı. *Kim ödedi* sorusu
-    cevaplanıyor ama hiçbir yere çıkmıyor; cevaplanmayan soru artık **kaptanın kimin
+    temiz; ~~silinen tek defter limanın kendi defteri~~ *(2026-09-15: limanda da
+    silme yok, madde 43)*.
+31. **Üçlünün izi limanda bitiyor** (§7.5). Onları ***Kader*** getirdi, ve gemi o
+    geceden sonra bir daha yanaşmadı. ~~Silmenin parasını *Kader*'in kaptanı verdi.~~
+    *(2026-09-15'te çıkarıldı, madde 41.)* *Kim ödedi* sorusu
+    yazılmıyor; cevaplanmayan sorulardan biri de **kaptanın kimin
     adına taşıdığı.**
 32. **Corin Sancar kanıt olmaktan çıktı, engel oldu** (`lonca-sehir.md` §6.2).
     *Geçiş Divanı'nda Sıra* artık bir soruşturma değil bir kilit: oyuncunun elinde
@@ -1142,7 +1145,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     Soru kalıyor (*"bu adamın burada ne işi var"*), ama Kadife artık bir **yön:**
     limanda bir lonca eli olduğunu gösterir ve karakterleri Meclis'e yollar —
     DM inisiyatifiyle, o gelerek. İz uzamıyor (§7.5 duruyor), yalnız yön veriliyor.
-    Custar katmanı Act 1'de hâlâ açılmıyor. Gerekçe ve replikler §7.4'te.
+    Custar katmanı Act 1'de hâlâ açılmıyor. *(Yollama yarısı 40. maddede geri alındı.)*
 35. **Görev sayısı 2 → 3.** *Söylentinin Peşinde* artık **Votumar'ı da kapsıyor** ve
     gidilen makam reddettiğinde kapanır. *Nereden Geldiler* limanda biter. Yeni
     üçüncü görev **İyi Yazı**: kıtadan çıkmak, iki yolla (karşı-imza ya da para).
@@ -1154,8 +1157,36 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     defterine uydurduğu bir satırdır.
 37. **Başkumandan'a hastalık replikleri yazıldı** (`bolgeler.md` hattı). Meclis'in
     altı koltuğu **samimi olarak** reddeder; Başkumandan **zaman kazanmak için**
-    reddeder. Ayrıca **refakatçi teklifi**: Gümüşsu'ya bir asker yollamayı önerir,
-    ve o askerin raporu — Susan Kule'deki gibi — kaybolur.
+    reddeder. *(Refakatçi teklifi 2026-09-15'te çıkarıldı, madde 42.)*
+
+**Kapatılanlar (2026-09-14, durum turu — README A3):**
+
+38. **Olay takvimi kaldırıldı.** Kanon ve kartlar bir durum yazar; bir saat ya da
+    önceden belirlenmiş bir sonuç yazmaz. Üçlü bir eşiğe bağlı (§4.5, §5); Corvin'in
+    dönüş saati (§3.6), Halim'in kesin dönüşü (§5.1), Orvan'ın teklifinin zorla
+    ulaşması ve Meclis'in kesin reddi ([`lonca-sehir.md` §6.2](lonca-sehir.md))
+    çıkarıldı. Sahneler ve adları kaldı; sahne *"bu olursa böyle oynar"* der.
+39. **Hastalığın genel seyri** (§4.2): yaklaşık bir hafta kuluçka, genelde bir ay
+    ilerleme, sonunda ölüm ya da tam dönüşüm. NPC'ler puanla değil seyirle yazılır;
+    Hastalık Puanı oyuncu karakterinin sayacı olarak aynen duruyor.
+40. **Kadife kimseyi yollamıyor** (§7.4) — 34. maddenin yollama yarısı geri alındı.
+    Limanda bir lonca eli olarak kalıyor; DM inisiyatifi, *"önce onlar duymalı"* ve
+    Meclis'e itiş çıktı.
+
+**Kapatılanlar (2026-09-15):**
+
+41. **Silmenin parasını *Kader*'in kaptanı vermiyor** (§7.5) — 31. maddenin o yarısı
+    çıkarıldı. Üçlüyü *Kader* getirdi ve gemi bir daha yanaşmadı; silmenin parasını
+    kimin verdiği yazılmıyor.
+42. **Başkumandan'ın refakatçi teklifi kaldırıldı** (37. madde) — Gümüşsu'ya asker
+    yollamıyor; askerin kaybolan raporu da yok.
+43. **Gizli Liman'da insan yazılmaz, yalnız mal** (§7, §7.5). Liman şehir gibi değil:
+    Sicim'in defteri hangi geminin ne getirdiğini ve ne ödediğini yazar, kimin
+    geldiğini yazmaz. Bu yüzden **limanda silinen satır yok** — 30. maddenin
+    *"silinen tek defter limanın kendi defteri"* cümlesi ve §7.5'in *"satır parayla
+    silindi"* izi çıktı. Üçlü **hiçbir defterde** yok. *Limanda bir kimlik silindi*
+    bilgisinin tek taşıyıcısı artık Mine'ın eğelediği yüzük — ve Mine mührün **orijinal
+    halini** karakterlere verebilir (hatırladığı eski yüzü çizer, §7.4).
 
 **Açık:**
 

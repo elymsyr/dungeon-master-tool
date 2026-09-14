@@ -4,6 +4,30 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.8.2 — 172 entity** (2026-09-15). Yeni kart yok. Kaynak `act1 §7, §7.5, §9 madde 43`.
+**Gizli Liman'da insan yazılmaz, yalnız mal**; limanda silinen satır yok (`npc/Sicim` ·
+`location/Gizli Liman` · `quest/Nereden Geldiler` · `lore/Sancak Kaydı` · `lore/Fihrist` ·
+`npc/Vinç Ustası` · `background/Arşivci` · `scene/Limana Kabul`). Vinç Ustası parayla silmenin
+fiyatını artık bilmiyor. Yazılmayı bekleyen işler: `yapilacaklar.md`.
+
+**Sürüm 0.8.1 — 172 entity** (2026-09-15). Yeni kart yok; 4 kartın metni kısaldı. Kaynak
+`act1 §7.5, §9 madde 41–42`. Silmenin parasını *Kader*'in kaptanının verdiği bilgisi çıkarıldı
+(`npc/Sicim` · `location/Gizli Liman` · `quest/Nereden Geldiler`) — üçlüyü *Kader* getirdi,
+kimin ödediği yazılmıyor. `npc/Başkumandan`'ın refakatçi teklifi ve askerin raporu silindi.
+
+**Sürüm 0.8.0 — 172 entity** (2026-09-14). **Durum turu (README A3).** Yeni kart yok; 26 kartın
+metni değişti, hiçbir kartın adı değişmedi. Kaynak `act1 §3.6, §4.2, §4.5, §5, §5.1, §7.4, §9
+madde 38–40` ve `lonca §6.2`. Üçlünün puan/şafak saati → *son aşamaya geçmek üzere*
+(`location/Kulübe` · `Gümüşsu` · üç `npc` · üç `monster` · `scene/Köye Varış` · `Kulübe Sorgusu` ·
+`Şafak Dönüşümü` · `encounter/Şafak Çatışması` · `quest/Söylentinin Peşinde` · `campaign/Aegis` ·
+`lore/Fihrist`). Corvin'in dönüş saati ve Halim'in kesin dönüşü çıktı. Orvan'ın teklifi ve
+Meclis'in kararı olasılığa çevrildi (`scene/Meclis Oturumu` · `Kapı Önündeki Teklif` ·
+`location/Meclis Salonu` · `npc/Sınır ve Ticaret — Orvan Sancar` · `quest/Nereden Geldiler`).
+`npc/Kadife`'nin Meclis'e yollama kısmı ve `scene/Limana Kabul`'deki maddesi silindi.
+`npc/Başkumandan`'ın refakatçi askerinin kesin sonu bir duruma çevrildi.
+`curse/Blight — Enfeksiyon`'a **Genel seyir** (`act1 §4.2`; elymsyr kararı 2026-09-14: yaklaşık bir
+hafta kuluçka, genelde bir ay, ölüm ya da tam dönüşüm).
+
 **Sürüm 0.7.0 — 172 entity** (2026-09-14). **Görsel turu.** Yeni kart ya da metin değişikliği
 yok. 0.6.x turlarında eklenip görselsiz kalan 19 kart (resource-pool'lar hariç hepsi) görselini
 aldı: `npc/Halim`, `creature-action/Sıçrayıp Isırma` · `Siperi Uzat` · `Siperi Ör`, İrade
