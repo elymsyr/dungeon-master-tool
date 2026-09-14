@@ -20,7 +20,15 @@ from pathlib import Path
 ART_TYPES = {
     "monster", "spell", "magic-item", "subclass",
     "feat", "background", "subspecies", "species", "class",
+    # Sıradan ekipman + hayvanlar (2026-09, yalnızca SRD'de var). Büyüsüz, süssüz.
+    "weapon", "armor", "tool", "adventuring-gear", "ammunition", "pack",
+    "mount", "vehicle", "animal",
 }
+
+# Sıradan eşya tipleri — ışık/zemin/çerçeve sade tutulur ki model "uçmasın".
+GEAR_TYPES = ("weapon", "armor", "tool", "adventuring-gear", "ammunition", "pack")
+PLAIN_LIGHT_TYPES = GEAR_TYPES + ("mount", "vehicle")
+PLAIN_LIGHT = "soft even natural daylight"
 
 # ---------------------------------------------------------------------------
 # Anti-AI skeleton — her paketin stilinin kuyruğu. Araştırma bulguları (2026-08):
@@ -196,6 +204,11 @@ CATEGORY_PALETTE = {
     "subspecies": "ivory, amber, bronze tones",
     "species":    "ivory, amber, bronze tones",
     "class":      "heraldic accents, deep gold, polished steel, scarlet",
+    **{t: "plain practical materials, weathered wood, dull iron, worn leather, "
+          "undyed canvas" for t in GEAR_TYPES},
+    "mount":      "natural animal coat colors, worn brown leather tack",
+    "vehicle":    "weathered timber, tarred rope, dull iron fittings, faded canvas",
+    "animal":     "natural animal coloring",
 }
 
 # Kategori zemini (sahne tipi — parlaklık paketten gelir, burası sadece neyin
@@ -212,6 +225,17 @@ CATEGORY_BG = {
     "subspecies": "in a natural landscape",
     "species":    "in a natural landscape",
     "class":      "adventurer's workshop, training ground",
+    **{t: "in a humble outfitter's shop" for t in GEAR_TYPES},
+    "mount":      "in a dusty stable yard",
+    "vehicle":    "on a rutted country dirt road",
+    "animal":     "in its natural habitat, untamed wilderness terrain",
+}
+
+# vehicle zemini vehicle_kind'e göre — gemiyi yola koymasın.
+VEHICLE_BG = {
+    "Land": "on a rutted country dirt road",
+    "Waterborne": "on calm open water beside a wooden dock",
+    "Airborne": "high in an open cloudy sky",
 }
 
 # Pakete özel zemin sözcükleri — CATEGORY_BG yerine geçer. Arka planda "o işi
@@ -258,6 +282,11 @@ BG_FLAVOR = {
                    "at dusk, embers glowing", "in early spring light"],
     "class": ["amid scattered weapons and gear", "beside a well-worn training post",
               "in a stone hall with heraldic tapestries", "at a campfire with adventuring gear"],
+    **{t: ["on a rough plank workbench", "on a folded canvas cloth",
+           "on a cluttered wooden shop shelf", "on a packed-earth floor"]
+       for t in GEAR_TYPES},
+    "animal": ["close-up among dense foliage", "in an open clearing",
+               "framed by rocky outcrops", "among tall grass and low scrub"],
 }
 
 # Her entity'ye deterministik atanan küçük stil farkları — medya-agnostik.
@@ -280,6 +309,21 @@ FRAMING = {
     "subspecies": "character portrait, bust framing",
     "species":    "character portrait, bust framing",
     "class":      "character portrait, full body stance, iconic pose",
+    "weapon":     "single ordinary weapon still life, plain functional design, "
+                  "true to real scale",
+    "armor":      "single ordinary armor piece on a plain wooden stand, "
+                  "plain functional design",
+    "tool":       "ordinary craftsman's tools laid out together, plain "
+                  "functional design",
+    "adventuring-gear": "single ordinary everyday object still life, plain "
+                        "functional design, true to real scale",
+    "ammunition": "a small bundle of ordinary ammunition beside its container, "
+                  "close-up still life",
+    "pack":       "an ordinary backpack with its supplies laid out beside it",
+    "mount":      "full body animal, side view, plain simple riding tack",
+    "vehicle":    "full view of the vehicle, three-quarter view, plain working "
+                  "craftsmanship",
+    "animal":     "full body animal portrait, three-quarter view",
 }
 
 # species/subspecies çerçevelemesi — kullanıcı: "tek bir birey (portre ya da
@@ -399,8 +443,12 @@ def tidy_name(name: str) -> str:
     return name
 
 
-def monster_prompt(name: str, a: dict) -> str:
-    """Pack canavarlarının %100'ünde description boş — yapısal alanlardan sentezle."""
+def monster_prompt(name: str, a: dict, beast: bool = False) -> str:
+    """Pack canavarlarının %100'ünde description boş — yapısal alanlardan sentezle.
+
+    beast=True (animal): sıradan hayvan — darkvision'dan "glowing eyes", hizalamadan
+    "menacing", CR'den "legendary" eklenmez; LLM bunları parlayan göze çeviriyordu.
+    """
     size, ctype = lookup(a, "size_ref"), lookup(a, "creature_type_ref")
     kind = f"{size.lower()} {ctype.lower()}".strip() or "creature"
     bits = [tidy_name(name), f"a {kind}"]
@@ -411,6 +459,8 @@ def monster_prompt(name: str, a: dict) -> str:
         bits.append("aquatic")
     if a.get("speed_burrow_ft"):
         bits.append("burrowing, earth-caked")
+    if beast:
+        return ", ".join(bits)
     if any(lookup(s, "sense_ref") == "Darkvision" for s in a.get("senses") or []):
         bits.append("glowing eyes")
 
@@ -429,6 +479,18 @@ def monster_prompt(name: str, a: dict) -> str:
     return ", ".join(b for b in bits if b)
 
 
+def mundane_hint(t: str, attrs: dict) -> str:
+    """Açıklaması boş sıradan eşya/binek/taşıt için zayıf, süssüz ipucu."""
+    if t == "pack":
+        return f"an ordinary adventurer's equipment pack: {attrs.get('contents') or ''}"
+    if t == "vehicle":
+        return f"an ordinary {(attrs.get('vehicle_kind') or '').lower()} vehicle"
+    if t == "mount":
+        return "an ordinary domesticated riding or draft animal"
+    cat = lookup(attrs, "category_ref").lower()
+    return " ".join(f"ordinary non-magical {cat} {t.replace('-', ' ')}".split())
+
+
 def style_for(pkg: str) -> str:
     return PACKAGE_STYLE.get(pkg, PACKAGE_STYLE[DEFAULT_PACKAGE])
 
@@ -439,12 +501,17 @@ def palette_for(pkg: str, t: str) -> str:
     return f"{base}, {accent}"
 
 
-def mood_for(pkg: str, t: str, uuid: str) -> str:
-    light = PACKAGE_LIGHT.get(pkg, PACKAGE_LIGHT[DEFAULT_PACKAGE])
+def mood_for(pkg: str, t: str, uuid: str, attrs: dict | None = None) -> str:
+    if t in PLAIN_LIGHT_TYPES:
+        light = PLAIN_LIGHT
+    else:
+        light = PACKAGE_LIGHT.get(pkg, PACKAGE_LIGHT[DEFAULT_PACKAGE])
     if pkg in PACKAGE_BG and t in PACKAGE_BG[pkg]:
         bg = PACKAGE_BG[pkg][t]
     else:
         bg = CATEGORY_BG[t]
+        if t == "vehicle":
+            bg = VEHICLE_BG.get((attrs or {}).get("vehicle_kind"), bg)
         flavor = BG_FLAVOR.get(t)
         if flavor:
             bg = f"{bg}, {flavor[_hash(uuid) % len(flavor)]}"
@@ -466,8 +533,10 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     cached = _SUBJECT_CACHE.get(uuid)
     if cached:
         subject = f"{tidy_name(name)}, {cached}"
-    elif t == "monster":
-        subject = monster_prompt(name, attrs)
+    elif t in ("monster", "animal"):
+        subject = monster_prompt(name, attrs, beast=t == "animal")
+    elif t in GEAR_TYPES or t in ("mount", "vehicle"):
+        subject = f"{tidy_name(name)}, {mundane_hint(t, attrs)}"
     elif t in NAME_ONLY_TYPES:
         subject = f"{tidy_name(name)}, {NAME_ONLY_TYPES[t]}"
     else:
@@ -525,7 +594,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         "name": name,
         "prompt": (f"{header}\n{subject_body}. {FULL_BLEED}, "
                    f"{DND_CONTEXT}, {framing}, "
-                   f"{palette_for(pkg, t)}, {mood_for(pkg, t, uuid)}, "
+                   f"{palette_for(pkg, t)}, {mood_for(pkg, t, uuid, attrs)}, "
                    f"{style}, {flavor}"),
         "seed": int(uuid[:8], 16),
     }

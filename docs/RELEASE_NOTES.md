@@ -1,5 +1,87 @@
 # Release Notes
 
+## Dungeon Master Tool v17.0.0 — Every Screen in Your Language (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v17.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A cleanup release. Screens that still showed English no matter which language you picked now read in Turkish, German and French too, and two ways of losing work are fixed: homebrew made while signed out no longer disappears when you sign in, and deleting a world no longer reports a failure after it succeeded. The two Cairn packages are gone from the official catalog, which is why this is a major version. Aegis Act 1 also gets one more location map.
+
+> **Heads-up for Cairn users:** the Cairn Second Edition and Cairn Community Content packages can no longer be downloaded from **Marketplace → Official**. Copies you already installed stay and keep working, but if you remove one you cannot download it again.
+
+---
+
+### Highlights
+
+- **The whole interface is translated** — character creation, level-up, the character editor, the battle map, import/export and sharing dialogs, and the admin screens now follow your language setting.
+- **A map for Gizli Liman** — the hidden harbour in Aegis Act 1 now has a top-down map.
+
+---
+
+### Language
+
+#### The whole interface is translated
+
+Roughly 780 labels, buttons and messages that were written straight into the screens are now translated like the rest of the app, in English, Turkish, German and French. Before, they showed in English regardless of your language setting. Most were in the character creation wizard, the level-up and pending-choice dialogs, the character editor, the battle map, package import/export, sharing to players, the theme builder and the admin screens.
+
+A few things stay the same in every language on purpose: language names, brand names, rules abbreviations such as `HP`, `AC` and `CR 5`, and the pop-out player window.
+
+---
+
+### Aegis
+
+#### A map for Gizli Liman
+
+The Gizli Liman location card in Aegis Act 1 now carries a top-down map, like Votumar, Lucid Triton and Gümüşsu already do. Re-download the world from **Marketplace → Official** to get it.
+
+---
+
+### Bug fixes
+
+- **Homebrew lost on sign-in** — a package you made while signed out is no longer dropped when your account already has a package with the same name. It now comes over as "Name (2)", and your signed-out copy of the built-in SRD is matched to the account's own copy.
+- **Deleting a world or package reported an error after succeeding** — the image cleanup that runs after a delete no longer turns its own failure into a delete failure.
+- **Wrong art counts and sizes for official packs** — **Marketplace → Official** now shows the artwork counts and download sizes that actually ship.
+
+---
+
+### Deprecations & removals
+
+- **Cairn Second Edition and Cairn Community Content** — removed from **Marketplace → Official**. Installed copies are not removed.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `16.4.0` → `17.0.0`.
+- **No migration.** Your database, worlds, packages and characters are untouched.
+- **Cairn:** already-installed Cairn packages stay installed and usable. Once you remove one, it cannot be downloaded again.
+- **Aegis:** re-download Aegis Act 1 from **Marketplace → Official** for the Gizli Liman map.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer** — it rejects a token from the wrong issuer, but lets one with no issuer through. Low risk: the token's signature is still checked, so forging one needs the sign-in provider's signing key.
+- **Banning is not possible** — you cannot hide SRD content from players ("there is no Fireball in this world"); sharing marks only add, they do not take away.
+
+The v16.4.0 known issue *"Combat is frozen in a world with no campaign data"* turned out to be a faulty test, not an app bug, and has been dropped from the list.
+
+---
+
+### For developers
+
+- **Tests are gated** — the analyze-test workflow now fails on analyzer errors or warnings, failing tests, or a worker type error; it stays manually triggered.
+- **Dependencies** — `flutter_markdown` is replaced by `flutter_markdown_plus`, and `supabase_flutter` is now `^2.17.2`.
+- **Cairn** — the packs, world blueprints and `tool/content/cairn/` build tool are deleted; run `publish_catalog` so the online R2 manifest drops the two entries as well.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v16.4.0 — You Decide What Players See (Beta)
 
 **Release date:** September 2026
