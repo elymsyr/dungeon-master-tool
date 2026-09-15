@@ -1,5 +1,65 @@
 # Release Notes
 
+## Dungeon Master Tool v17.1.0 — Pictures for Every Piece of Gear (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v17.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A content release. The built-in SRD now has artwork for its everyday equipment and animals: weapons, armor, tools, adventuring gear, packs, mounts, vehicles and beasts. Before, only spells, monsters, classes and other headline cards had pictures. Aegis Act 1 also gets a writing pass: its cards now describe how things stand and leave what happens next to the DM. Nothing to do on your side. The new SRD art appears on its own after you update.
+
+---
+
+### SRD content
+
+#### Artwork for ordinary equipment and animals
+
+325 new pictures ship inside the app for SRD cards that had none: 38 weapons, 13 armors, 38 tools, 107 pieces of adventuring gear, 5 ammunition types, 7 equipment packs, 8 mounts, 12 vehicles and 97 animals. Every card in those categories now has a picture. Like the rest of the SRD art, it is bundled with the app, so it works offline and without an account.
+
+- The built-in SRD package refreshes itself on first launch to pick up the new pictures. Your own worlds and homebrew are not touched.
+- Creature actions and traits still have no pictures. That is deliberate.
+- The download gets about 12 MB bigger.
+
+---
+
+### Aegis
+
+#### Cards describe the situation, not a schedule
+
+The Aegis Act 1 cards no longer tie events to a time or decide how they turn out. About 26 cards were rewritten. For example, the infected trio is now "about to reach the final stage" instead of "turns at dawn", and Orvan holds an offer that he may or may not make. The Blight infection card gains a general course: about a week of incubation, usually a month of progression, and then death or full transformation. The Disease Points counter for player characters is unchanged.
+
+Two follow-up passes remove story threads from the canon. Nothing says any more who paid to have entries erased. Sicim's ledger at Gizli Liman records cargo and payments only, never people, and eight cards change to match, including Sicim, Gizli Liman, Vinç Ustası and the Arşivci background. The Başkumandan no longer offers an escort. No cards were added or renamed. Re-download the world from **Marketplace → Official** to get the new text.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `17.0.0` → `17.1.0`.
+- **SRD refresh:** the built-in SRD package version goes from `1.5.0` to `1.6.0`, and existing installs refresh it once on first launch. Your worlds, packages and characters stay as they are.
+- **Aegis:** re-download Aegis Act 1 (`0.8.2`) from **Marketplace → Official** for the rewritten cards.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Art pipeline:** `tool/art_gen` now covers the mundane Tier 1 types (`GEAR_TYPES`, `VEHICLE_BG`, `MUNDANE_GUIDE`), and `review_ui.py` takes `--jobs/--out/--reviews`. The new job list is `art_jobs_srd_gear_final.jsonl`.
+- **`_artedSlugs`** in `srd_core_pack.dart` has 9 more slugs, and `srdCorePackVersion` is now `1.6.0`. The bundle holds 1572 images, about 63 MB.
+- **Aegis:** writing rule A3 is in the world README §6.8. Played sessions are logged outside the canon in `assets/worlds/aegis/oturum-kaydi.md`, and open work is tracked in `yapilacaklar.md`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v17.0.0 — Every Screen in Your Language (Beta)
 
 **Release date:** September 2026
