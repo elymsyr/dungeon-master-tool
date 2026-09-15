@@ -40,23 +40,32 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.5.0';
+const srdCorePackVersion = '1.6.0';
 
-/// `tool/art_gen` görseli olan slug'lar. Bu sekiz kategorinin HER satırının
-/// görseli var (1247/1247), diğerlerinin (creature-action, trait, gear, weapon,
-/// …) hiç yok — o yüzden uuid listesi tutmak yerine slug kontrolü yetiyor.
-/// Görseller `assets/art/srd/{uuid}.webp` olarak bundle'da; ref'i
-/// [FirstPartyArtService] çözüyor.
+/// `tool/art_gen` görseli olan slug'lar. Bu kategorilerin HER satırının
+/// görseli var (1247 + 325 sıradan ekipman/hayvan, 2026-09), diğerlerinin
+/// (creature-action, trait) hiç yok — o yüzden uuid listesi tutmak yerine slug
+/// kontrolü yetiyor. Görseller `assets/art/srd/{uuid}.webp` olarak bundle'da;
+/// ref'i [FirstPartyArtService] çözüyor.
 const _artedSlugs = <String>{
+  'adventuring-gear',
+  'ammunition',
+  'animal',
+  'armor',
   'background',
   'class',
   'feat',
   'magic-item',
   'monster',
+  'mount',
+  'pack',
   'species',
   'spell',
   'subclass',
   'subspecies',
+  'tool',
+  'vehicle',
+  'weapon',
 };
 
 /// Output of [buildSrdCorePack]. `entities` is keyed by the freshly minted

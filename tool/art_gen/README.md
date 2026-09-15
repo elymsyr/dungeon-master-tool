@@ -10,8 +10,11 @@ arkaplanı — ama hepsi D&D estetiğinde ve AI görünümünden uzak.
 `feat`, `background`, `subspecies`, `species`, `class`; ayrıca yalnızca SRD'de
 bulunan sıradan ekipman/hayvan tipleri `weapon`, `armor`, `tool`,
 `adventuring-gear`, `ammunition`, `pack`, `mount`, `vehicle`, `animal`
-(2026-09, sade ışık/zemin — `GEAR_TYPES`, `MUNDANE_GUIDE`; çıktı
-`out_srd_gear/`, job listesi `art_jobs_srd_gear_final.jsonl`). Dışarıda kalanlar
+(2026-09, sade malzeme ama dolu sahne zemini — `GEAR_TYPES`, `MUNDANE_GUIDE`,
+`PLAIN_LIGHT`; "soft even daylight" beyaz stüdyo zemini üretiyordu; çıktı
+`out_srd_gear/`, job listesi `art_jobs_srd_gear_final.jsonl`, gözden geçirme
+`review_ui.py --jobs art_jobs_srd_gear_final.jsonl --out out_srd_gear --reviews
+art_reviews_srd_gear.json serve`). Dışarıda kalanlar
 `creature-action` ve `trait` — bunlar bir nesne değil, kural cümlesi.
 
 ## Pipeline Adımları

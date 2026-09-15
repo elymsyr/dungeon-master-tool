@@ -4,6 +4,10 @@
   python review_ui.py serve                 # http://127.0.0.1:8765  (tikla -> yorum)
   python review_ui.py rewrite               # yorumlu promptlari Gemini ile yeniden yaz
   python review_ui.py regen                 # yeni promptlarla goselleri yeniden uret
+
+SRD gear seti icin (her komutta ayni uc bayrak):
+  python review_ui.py --jobs art_jobs_srd_gear_final.jsonl --out out_srd_gear \\
+      --reviews art_reviews_srd_gear.json serve|rewrite|regen
 """
 import argparse, json, sys, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -178,13 +182,19 @@ def regen(args):
         if cur.exists():
             cur.replace(rejected / f"{u}.webp")
         cur.write_bytes(to_webp(png, args.quality, args.crop))
-        reviews[u]["regenerated"] = True
+        jobs[u] = job
+        JOBS.write_text("".join(json.dumps(j, ensure_ascii=False) + "\n" for j in jobs.values()))
+        reviews.pop(u)   # yeni prompt jobs'a yazildi -> tekrar yorumlanabilir
         save_reviews(reviews)
         print(f"{i}/{len(todo)} {job['name']}", file=sys.stderr)
 
 
 def main():
+    global JOBS, OUT, REVIEWS
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--jobs", type=Path, default=JOBS)
+    p.add_argument("--out", type=Path, default=OUT)
+    p.add_argument("--reviews", type=Path, default=REVIEWS)
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("serve")
@@ -211,6 +221,7 @@ def main():
     g.set_defaults(fn=regen)
 
     args = p.parse_args()
+    JOBS, OUT, REVIEWS = args.jobs.resolve(), args.out.resolve(), args.reviews.resolve()
     args.fn(args)
 
 
