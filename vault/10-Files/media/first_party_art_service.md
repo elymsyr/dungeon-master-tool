@@ -5,14 +5,14 @@ path: flutter_app/lib/data/services/first_party_art_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-14
+updated: 2026-09-15
 tags: [file]
 ---
 
 # `first_party_art_service.dart`
 
 > [!abstract] Primary Purpose
-> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1247 görseli), sonra paket kurulurken tek zip hâlinde inip açılan kurulum cache'i (`cacheDir/art/`). Okuma anında ağa çıkılmaz — R2'de görsel başına obje tutulmuyor, sadece paket başına zip var. Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
+> `dmt-art://{uuid}.webp` ref'lerini diskteki bir dosyaya çözer — built-in SRD ve resmî Open5e paketlerinin `tool/art_gen` üretimi kart görselleri (7413 adet). İki kaynağa bakar: önce app bundle (`assets/art/srd/`, sadece SRD'nin 1572 görseli — 2026-09-15'te sıradan ekipman/binek/taşıt/hayvan 325 görseli eklendi), sonra paket kurulurken tek zip hâlinde inip açılan kurulum cache'i (`cacheDir/art/`). Okuma anında ağa çıkılmaz — R2'de görsel başına obje tutulmuyor, sadece paket başına zip var. Ref hangi görselin nerede olduğunu **taşımaz** — bundle kapsamı değişince veri migrasyonu gerekmesin diye.
 
 ## Inputs / Outputs
 **Inputs**
@@ -40,7 +40,7 @@ tags: [file]
 - **Görsel başına indirme yolu yoktur.** `catalog/art/*.webp` objeleri R2'den kaldırıldı; zip inmezse görsel gelmez, kurulum yine de başarılı sayılır (ref pack'te kalır).
 - **Path guard:** `name` içinde `/`, `\`, `..` varsa null. Ref pack verisinden geliyor, cache dizininin dışına yazamamalı.
 - **Bundle görselleri diskte iki kez yer kaplar** (APK içinde + cache'te), çünkü Flutter asset'i `File` olarak açılamaz. Sadece görüntülenenler için, cache silinebilir.
-- Bundle q50 (~52 MB), zip'lerdeki kopya orijinal q82. Aynı uuid, farklı kalite — bundle bir optimizasyon.
+- Bundle q50 (~63 MB), zip'lerdeki kopya orijinal q82. Aynı uuid, farklı kalite — bundle bir optimizasyon.
 - **`sweepUnreferenced(db)`** — paket/dünya silindikten sonra `cacheDir/art/` altında hiçbir canlı referansın (`package_entities`/`world_entities` `image_path`, `trash_items`/`world_characters` payload'ı) göstermediği dosyaları siler. **Best-effort:** her hatayı kendi içinde yutar ve 0 döner — silme transaction'ı zaten commit edildiği için cache GC hatası (ör. `AppPaths.cacheDir` set değil → `LateInitializationError`) silmeyi başarısız göstermemeli. Çağıranlar: `WorldRepositoryImpl._purgeWorld`, `PackageRepositoryImpl._purgePackage`.
 - **LRU/kota yok:** `ContentStore` sha-adresli, art ref'leri uuid-adresli olduğu için oraya girmiyorlar. Tüm bestiary gezilirse cache 762 MB'ye kadar büyüyebilir.
 

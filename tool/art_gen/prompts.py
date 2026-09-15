@@ -28,7 +28,10 @@ ART_TYPES = {
 # Sıradan eşya tipleri — ışık/zemin/çerçeve sade tutulur ki model "uçmasın".
 GEAR_TYPES = ("weapon", "armor", "tool", "adventuring-gear", "ammunition", "pack")
 PLAIN_LIGHT_TYPES = GEAR_TYPES + ("mount", "vehicle")
-PLAIN_LIGHT = "soft even natural daylight"
+# "soft even daylight" + "still life" modeli beyaz stüdyo zeminine itiyordu
+# (2026-09 gear seti: ~%70 beyaz/krem zemin) → sıcak, gölgeli sahne ışığı.
+PLAIN_LIGHT = ("warm natural light with soft cast shadows, richly painted detailed "
+               "background covering the entire canvas")
 
 # ---------------------------------------------------------------------------
 # Anti-AI skeleton — her paketin stilinin kuyruğu. Araştırma bulguları (2026-08):
@@ -225,17 +228,23 @@ CATEGORY_BG = {
     "subspecies": "in a natural landscape",
     "species":    "in a natural landscape",
     "class":      "adventurer's workshop, training ground",
-    **{t: "in a humble outfitter's shop" for t in GEAR_TYPES},
-    "mount":      "in a dusty stable yard",
-    "vehicle":    "on a rutted country dirt road",
+    **{t: "inside a dim cluttered medieval outfitter's shop, timber walls, "
+          "shelves of goods and hanging gear behind in warm shadow"
+       for t in GEAR_TYPES},
+    # gökyüzü görünen avlu beyaza kaçıyordu → kadrajı ahır duvarı doldursun
+    "mount":      "standing on straw in front of a dark weathered timber barn "
+                  "wall, hay bales and hanging tack around",
+    "vehicle":    "on a rutted country dirt road winding through green fields "
+                  "and trees",
     "animal":     "in its natural habitat, untamed wilderness terrain",
 }
 
 # vehicle zemini vehicle_kind'e göre — gemiyi yola koymasın.
 VEHICLE_BG = {
-    "Land": "on a rutted country dirt road",
-    "Waterborne": "on calm open water beside a wooden dock",
-    "Airborne": "high in an open cloudy sky",
+    "Land": CATEGORY_BG["vehicle"],
+    "Waterborne": "on open water beside a wooden harbor dock, cloudy sky and "
+                  "distant coastline",
+    "Airborne": "high among towering clouds above distant green hills",
 }
 
 # Pakete özel zemin sözcükleri — CATEGORY_BG yerine geçer. Arka planda "o işi
@@ -282,8 +291,10 @@ BG_FLAVOR = {
                    "at dusk, embers glowing", "in early spring light"],
     "class": ["amid scattered weapons and gear", "beside a well-worn training post",
               "in a stone hall with heraldic tapestries", "at a campfire with adventuring gear"],
-    **{t: ["on a rough plank workbench", "on a folded canvas cloth",
-           "on a cluttered wooden shop shelf", "on a packed-earth floor"]
+    **{t: ["resting on a dark weathered plank workbench",
+           "resting on a folded canvas cloth over an old oak table",
+           "resting on a cluttered wooden shop shelf",
+           "resting on worn flagstones beside barrels and crates"]
        for t in GEAR_TYPES},
     "animal": ["close-up among dense foliage", "in an open clearing",
                "framed by rocky outcrops", "among tall grass and low scrub"],

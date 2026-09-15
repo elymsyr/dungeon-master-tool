@@ -16,7 +16,7 @@ import 'first_party_catalog_service.dart';
 ///
 /// İki kaynak, bu sırayla:
 ///  1. **App bundle** — `assets/art/srd/{uuid}.webp`. Built-in SRD 5.2.1
-///     paketinin 1247 görseli (webp q50, ~51 MB) build'e gömülüdür, yani
+///     paketinin 1572 görseli (webp q50, ~63 MB) build'e gömülüdür, yani
 ///     çevrimdışı ve hesapsız çalışır.
 ///  2. **Kurulum cache'i** — `cacheDir/art/{uuid}.webp`. Geri kalan resmî
 ///     paketlerin görselleri paket kurulurken [prefetchBundle] ile tek zip
