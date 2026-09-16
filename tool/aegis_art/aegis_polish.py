@@ -392,7 +392,7 @@ LIGHT = {
 "location|Mühür Salonu": "hard shafts of pale daylight falling from very high windows into a dim hall, warm candle and wax-burner glow at each desk, dust and smoke in the beams",
 "location|Meclis Salonu": "cold grey daylight from high clerestory windows, deep shadow filling the vault above, small warm candle points on the piers",
 "location|Karşı-İmza Masası": "a windowless corridor lit only by a receding line of wall lamps, yellow pools on stone, deep dark between them",
-"location|Elymsyr": "molten golden hour, the low sun straight down the river mouth, warm light on stacked terraces, glittering water, sea haze",
+"location|Elymsyr": "clear bright late afternoon, cool white sunlight on pale grey limestone, crisp blue shadows between the terraces, only the painted roofs and awnings carrying colour, sparkling water, faint sea haze",
 "location|Votumar": "storm light, heavy slate cloud stacked over the sea, one cold break of sun striking wet white limestone, spray in the air",
 "location|Gözcü Kuleleri Hattı": "hard bright midday sun, hammered glare off the sea, sharp black shadows, salt haze on the horizon",
 "location|Ravenhall Avlusu": "moonlight breaking through thick fog, cold silver air, faint amber glow rising out of the rune grooves",
@@ -616,9 +616,6 @@ def main() -> None:
     print(f"yazildi: {args.out}", file=sys.stderr)
 
 
-if __name__ == "__main__":
-    main()
-
 
 # ---------------------------------------------------------------------------
 # 0.9.0 v3 — Lucid Triton alt mekanlari (12 kart), sifirdan yazildi.
@@ -789,3 +786,103 @@ SUBJECT.update({
  "dwarf labourers hooking sacks onto a rope fall and a halfling clerk writing in a ledger "
  "beside a great timber and iron weighing balance",
 })
+
+
+# ---------------------------------------------------------------------------
+# 0.9.1 — Elymsyr turu. Yeni kanon: kent bir kiyi kenti degil bir AGIZ kentidir.
+# Iki kanyon duvari arasinda, nehrin genis agzinda, IKI YAKAYA birden kurulu;
+# kopru yok, mavna var. Kent iki parca: suya kazik ustune kurulan giris yapilari
+# (isler) + kayaya basamak basamak kurulan bal rengi kirectasi teraslar (yasar).
+# Kapi HER ZAMAN ACIK; zincir suyun altinda gevsek yatiyor; balistalarin uzeri
+# ziftli bezle ortulu (bakim degil, gorunti meselesi). Beyaz mermer DEGIL.
+
+FRAMING.update({
+    "location|Gümrük Binası": INTERIOR,
+    "location|Aşağı Rıhtım": ("working quay seen from a moored barge at water level, the wharf and the "
+                              "warehouse fronts running away on a strong diagonal, the cliff terraces of "
+                              "the city rising above them and filling the top of the frame, cargo and "
+                              "labourers large in the foreground"),
+    "location|Kanyon Asansörleri": ("vertiginous shot from a timber platform pinned to a canyon wall, the "
+                                    "opposite wall rising the full height of the frame, the river a narrow "
+                                    "green thread far below, extreme vertical scale"),
+})
+
+LIGHT.update({
+    "location|Gümrük Binası": "steep dusty shafts of daylight from high clerestory windows landing on the chalked floor squares, the rest of the long hall in warm brown shade, one lamp over the weighing scale",
+    "location|Aşağı Rıhtım": "cold clear early morning just after sunrise, long low light down the river throwing crane shadows across the quay, steam from a cargo lift catching the sun, water silver",
+    "location|Kanyon Asansörleri": "high overhead sun reaching only the upper canyon wall, the gorge below in deep cool shadow, one hot band of light across the timber platforms",
+})
+
+SUBJECT.update({
+"location|Elymsyr":
+ "A great living city built at the wide mouth of a river that bursts out between two enormous "
+ "canyon walls into the sea, the city standing on both banks at once and spilling outside the "
+ "mouth onto the coast, in the foreground timber landing halls and jetties built out over the "
+ "water on driven piles with moored ships alongside, and rising behind them a dense crowded "
+ "town climbing the cliff in stacked pale grey and white limestone terraces, cool grey stone not "
+ "yellow stone, not warehouses but a city, buildings of every size crowded together, squat "
+ "workshops beside four storey merchant houses, slender watchtowers and bell towers standing up "
+ "here and there along both cliffsides, tall narrow houses shoulder to shoulder with painted roof "
+ "tiles in red, green, "
+ "blue and ochre, balconies, washing lines and potted plants between them, striped awnings and "
+ "canvas market canopies over a stepped bazaar street packed with stalls, a domed bathhouse, a "
+ "temple dome, a caravanserai with an arcaded courtyard, inn signs hanging over lanes, chimney "
+ "smoke, stairways and switchback lanes threading between the terraces, a walled governor\'s "
+ "palace on the topmost terrace, warehouse quays with gnome built roof cranes only along the "
+ "waterline below, and outside the mouth the city carrying straight on out over the open water, "
+ "whole streets of houses, taverns and shrines standing on driven piles above the sea linked by "
+ "plank causeways and little bridges, the river mouth enormously wide here, a great open harbour basin miles across "
+ "opening into the sea, in the middle of the harbour one huge wooden cargo ship dominating the "
+ "picture, a high sided three masted carrack with a tall aftcastle, square sails brailed up on "
+ "her yards and cargo nets swinging off her side, small boats clustered around her hull, and "
+ "around her ships of every other size coming and going, round bellied cogs being warped in, small fishing "
+ "skiffs and rowing lighters darting between them, moored ships in rows along both quays, flat ferry barges crossing between the two banks, the two sides of "
+ "the city joined by no bridge at all, an unbroken open channel of water from the sea to the "
+ "canyon, "
+ "two stone watchtowers set into the rock at the throat, crowds of small figures everywhere in "
+ "the lanes and on the quays, humans, dwarves, gnomes, halflings, half elves, a tabaxi and a "
+ "dragonborn among them, robes, turbans, sailors\' slops, guild coats and foreign dress all "
+ "mixed together, laden donkeys and handcarts on the stairs, the canyon narrowing away inland "
+ "behind the city, low sun turning cliff, painted roofs and water molten gold",
+"location|Gümrük Binası":
+ "The interior of a colossal stone customs hall as big as a cathedral nave, a vaulted roof far "
+ "overhead carried on two rows of great piers, the hall running so far back that its end is lost "
+ "in haze, the flagstone floor ruled into dozens of big chalked squares with one cargo standing in "
+ "each, the floor crowded with cargo everywhere, towering stacks of crates, walls of bales, rows of "
+ "amphorae in sand cradles, roped barrels, rolled carpets, sacks split open with spice spilling "
+ "out, caged birds, ivory tusks, coils of rope and timber baulks leaving barely a lane to walk, "
+ "every "
+ "square busy, hundreds of people spread right across the hall and in among the cargo, "
+ "porters carrying sacks, dockhands levering crate lids open, a cooper hammering a hoop, two men "
+ "arguing over a bale, a guard leaning on a spear, only a few clerks with ledgers among them, "
+ "humans, dwarves with braided beards, gnomes up stepladders, halflings with tally sticks, half "
+ "elves interpreting, a tabaxi sailor and a dragonborn cargo master waiting their turn, robes, turbans, furs, sailors' "
+ "slops and guild coats all mixed together, argument and paperwork everywhere, one crate lid levered up with straw pulled out of it by the handful, a great copper "
+ "weighing pan hung on chains from the roof beams at the far end of the hall with its chain "
+ "swinging, a clerk calling out a figure while another writes it into a ledger, a side doorway "
+ "stacked with rolled manifests, armed guards at the entrance watching the crates and not the "
+ "people",
+"location|Aşağı Rıhtım":
+ "A crowded medieval fantasy river quay at the foot of a canyon city before full sunrise, a broad "
+ "stone wharf running away along the near bank with a long line of high gabled stone and timber "
+ "warehouses behind it, pale grey limestone terraces of the city climbing the cliff face directly "
+ "above their roofs, gnome built timber treadwheel cranes standing on the warehouse roofs and "
+ "leaning out over the water, a counterweighted rope hoist lifting a stack of crates up towards an "
+ "upper terrace, wooden sailing ships and barges moored gunwale to gunwale along the wharf with "
+ "gangplanks down, the far bank across the water carrying the same warehouses and cranes, the "
+ "wharf packed with work, dwarves and gnomes swarming over a crane\'s gearing with tools, human "
+ "porters bent under sacks, halflings marking barrels, a half elf standing at the head of the "
+ "jetty folding a paper into a pocket, a tabaxi deckhand coiling rope and a dragonborn cargo "
+ "master shouting orders, stacked bales, nets, amphorae and coiled hawsers everywhere on the "
+ "stones, mules and handcarts, no machinery but wood, rope and iron",
+"location|Kanyon Asansörleri":
+ "Timber platforms and narrow plank walkways spiked into the sheer face of a river canyon far "
+ "above the water, rope elevators with counterweights and great pulley blocks hanging between "
+ "them, a loaded cage lift rising with its boards creaking while ropemen haul below in rhythm, "
+ "the opposite canyon wall rising the full height of the picture, the river a narrow green "
+ "thread far down with barges on it the size of saucers, bales and barrels stacked waiting on "
+ "the platforms",
+})
+
+if __name__ == "__main__":
+    main()
