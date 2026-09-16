@@ -36,7 +36,7 @@ sağlam, boşluk *bilgide*. Ama `AE`'nin coğrafyası tümden atılmıyor — at
 
 | `AE` ne diyor | Kanona giren |
 |---|---|
-| Batıda geçit vermez sıradağlar; ordunun geçmesi imkansız | **Batıda dağlar var**, ve içlerinden bir nehir geçiyor. Duvar değil, **arazi** |
+| Batıda geçit vermez sıradağlar; ordunun geçmesi imkansız | **Batıda dağlar var**, ve içlerinden **Altın Nehir** geçiyor. Duvar değil, **arazi** |
 | Doğuda gemi yanaştırmayan beyaz kireçtaşı uçurumlar | **Doğu kıyısı beyaz kireçtaşı**, ve tek derin koyu Votumar tutuyor. Kıyı zor, kapalı değil |
 | Kuzeyde sisli, rüzgarlı platolar | **Ravenhall o platoda**, ve oraya giden tek dar patika var (§4) |
 | **Tek giriş kapısı** nehir ağzıdır | **Elymsyr resmi kapıdır, tek kapı değil.** İkinci kapı Gizli Liman (`act1.md` §7), ve kıyı ikisinden ibaret değil |
@@ -714,7 +714,11 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 4. **M0.6 — Kara Gemiler ablukasının zamanı.** İki bölüm buna bağlı: Elymsyr'in zinciri
    (§2.3) ve Votumar'ın bugünkü hali (§3.6). Karar verilene kadar ikisi de 🟡.
    Filonun **kimliği** de yazılmadı (ork değil, ne olduğu belli değil).
-5. **Nehrin adı.** `AE` "Altın Nehir" diyor; karar verilmedi, belgede adsız geçiyor.
+5. ~~**Nehrin adı.**~~ — **KAPANDI (2026-09-16):** nehrin adı **Altın Nehir**. Batı
+   dağlarından çıkar, **Elymsyr** onun deniz ağzındadır, ve mavnaları yükün başkente
+   düşen payını yukarı taşır (`location/Nehir Yükleme Alanı`). Lucid Triton nehrin
+   yukarısındadır; oraya gelen mal **teslimdir, transit değil** — şehir yine hiçbir şey
+   üretmez, yalnız tükettiğini de deftere yazar.
 6. ~~**06 #14**~~ — **KAPANDI** (genel-kartlar): hastalık **Vorstrand'dan** geldi
    (`act1.md` §3.1); kuzeyden gelen çürüme yok, Gümüşsu'nun güneyde olması çelişki değil.
 7. **Argenfon'un adı** (§5). Adlandırma Doktrini'nde *Argentfons* Gümüşsu'nun

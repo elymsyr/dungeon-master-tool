@@ -148,6 +148,7 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | M0.1 | **Kıta adı: Meridia** | Adlandırma Doktrini **tam** uygulanıyor. Kral **Lucian**, başkent **Lucid Triton**, kıta **Meridia**. `Aethel` / `Aethelgard` **terk edildi** — arşivdeki her geçiş aktarımda çevrilecek |
 | M0.4 | **Gümüşsu adı kalıyor** | Latinleştirilmiyor. Halk dili / Latin ayrımı kanon **değil** — adlar karışık kalır, hiçbir ad bir dil kuralına uymak zorunda değil ([`act1.md` §3](lore/canon/act1.md)) |
 | M0.5 | **Hafif ad dozu** | Cinervik · Argenfon · Votumar · Elymsyr (ikinci adı **Claport**) — 2-3 hece. Ağır sonekler (-castrum, -arx, -portus, -montes) kullanılmıyor |
+| M0.7 | **Nehrin adı: Altın Nehir** | `bolgeler.md` §9 madde 5 kapandı (2026-09-16). Batı dağlarından çıkar, ağzında **Elymsyr** durur, mavnaları başkente çıkar. Lucid Triton'a gelen mal **teslim**tir, transit değil — `location/Nehir Yükleme Alanı` |
 | 06 #1 | **Pre-gen isim seti: Jaonos · Bızdır · Aly · Will** | Diğer set (Ilysard / Fyli / Goliath) terk edildi |
 | A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |

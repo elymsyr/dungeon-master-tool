@@ -618,3 +618,174 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------------------
+# 0.9.0 v3 — Lucid Triton alt mekanlari (12 kart), sifirdan yazildi.
+# Onceki iki tur "donem filmi" gibi cikti: hepsi ayni yumusak gunduz isiginda, goz
+# hizasinda, on kalem detay dagilmis halde. v3'un kurali: KART BASINA TEK BASKIN
+# GORUNTU, dramatik kamera, tek guclu isik kaynagi, ve 12 kart arasinda isik
+# cesitliligi (gece / mavi saat / safak / tepe isigi / mesale). Stil bloklari
+# (DND, ERA, FULL_BLEED, STYLE, TAIL, FLAVOR) degismedi.
+
+FRAMING.update({
+    "location|Meclis Binası": ("low vantage at the foot of the steps looking up the full height of the facade, "
+                               "colossal columns cropped by the top of the frame, the crowd small at their base"),
+    "location|Kalem Binası": ("three-quarter view of a tall broad building from across a lane at night, its "
+                              "upper storeys rising past the top of the frame, its lit doorway the warm heart of "
+                              "the picture, an even larger hall looming behind it, figures small at the step"),
+    "location|Kayıt Salonu": ("close on the open ledger in the foreground with the hand and quill large, "
+                              "the hall opening out behind it in deep receding perspective"),
+    "location|Sınır ve Ticaret Loncası Divanhanesi": ("enormous palatial interior, the ceiling far out of frame, "
+                                                     "one small figure dwarfed at the bottom of a huge gilded room, "
+                                                     "vast window shaft crossing the whole picture"),
+    "location|Büyücü Loncası Akademisi": ("night scene lit from a single source on the ground, faces lit from below, "
+                                          "the master silhouetted against the glow, cloister arches receding into dark"),
+    "location|Şifacılar Kışlası": ("steam-filled dispensary, shelves of glassware towering on both sides, "
+                                   "an arch at the back opening onto rows of cots, strong lamp light in the middle"),
+    "location|Yukarı Çarşı": ("extreme foreground close on a workbench with hands at work, "
+                              "the sunlit arcade market blazing away behind in deep perspective"),
+    "location|Aşağı Çarşı": ("dusk, crush of stalls in the lower two thirds lit by braziers, "
+                             "the vast wall above catching the last daylight, strong warm and cool split"),
+    "location|Mimar Meydanı": ("blue hour, immense open square stretching far back to distant marble facades, "
+                               "the colossal statue towering over a tiny crowd, ring after ring of lamps being lit, "
+                               "long reflections running across a huge expanse of wet marble"),
+    "location|Şehir Kapıları": ("close three-quarter view from just above the water, the gatehouse and the near "
+                                "span of the bridge filling most of the frame, the bridge deck running diagonally "
+                                "out of the bottom corner, only a narrow band of city roofs above the wall, cool "
+                                "grey-blue stone against warm lamplight"),
+    "location|Sessiz Sokak": ("night, close on a wall niche full of candle flames with a face lit beside it, "
+                              "the alley falling away behind into blue dark"),
+    "location|Nehir Yükleme Alanı": ("dawn mist, steep upward shot from water level, a sheer wall of stone rising "
+                                     "the full height of a tall vertical frame with its battlements near the very "
+                                     "top, cranes leaning out far overhead, barges and shacks tiny along the foot, "
+                                     "extreme scale contrast"),
+})
+
+LIGHT.update({
+    "location|Meclis Binası": "hard high midday sun blazing off white marble, deep black shade inside the portico, shadows of the columns thrown across the steps",
+    "location|Kalem Binası": "night, one warm lamp burning over a doorway, a cold blue moonlit wall above, breath visible in the air",
+    "location|Kayıt Salonu": "a single steep shaft of daylight from a high window landing straight on the open page, the rest of the hall in warm brown shade",
+    "location|Sınır ve Ticaret Loncası Divanhanesi": "one enormous cold grey shaft from a two storey window cutting across a great dim hall, dust hanging in it, pale marble and dark wood taking the light, a few small gilded mouldings catching faint sparks far up in the gloom, a cold swept hearth",
+    "location|Büyücü Loncası Akademisi": "night, a cold blue-white glow rising out of a chalk circle on the ground as the only real light, warm amber squares of library windows above",
+    "location|Şifacılar Kışlası": "warm lamp and brazier light through dense steam, glass and copper catching highlights, cold green daylight at the far arch",
+    "location|Yukarı Çarşı": "a forge brazier glowing on the bench in the foreground, brilliant white sunlight flooding the arcade behind, strong contrast between the two",
+    "location|Aşağı Çarşı": "last orange daylight on the top of the wall, the lane below already in blue shadow lit by charcoal braziers and hanging oil lamps",
+    "location|Mimar Meydanı": "deep blue twilight, the first lamps burning warm gold in a ring around the square, marble going violet, one lamp still dark",
+    "location|Şehir Kapıları": "overcast dusk, cold grey-blue light on pale stone and slate roofs, warm orange lantern and torch glow pooling in the gate passages and along the bridge, the wide river below burning gold with reflected sky, smoke from chimneys drifting",
+    "location|Sessiz Sokak": "night, dozens of small candle flames in wall niches as the only light, warm on faces and stone, deep blue dark above",
+    "location|Nehir Yükleme Alanı": "cold grey dawn with river mist, torches still burning on the quay, a thin band of pink light on the top of the wall",
+})
+
+SUBJECT.update({
+"location|Meclis Binası":
+ "The towering white marble front of a guild assembly building seen from the foot of its steps, "
+ "colossal fluted columns rising past the top of the frame, six enormous banners hung the full "
+ "height between them each bearing one guild sigil, a hammer, a balance scale, a pair of "
+ "compasses, a sword, a key, and one banner of plain undyed cloth, a queue of petitioners "
+ "winding up the wide steps clutching folios, dwarves, gnomes, halflings and humans among them, "
+ "two clerks at a table on the top step turning people back",
+"location|Kalem Binası":
+ "A substantial four storey marble clerks' hall standing alone on a lane at night, broad "
+ "fronted with eleven bays of windows and a heavy cornice, seen from "
+ "across the lane, warm lamplight pouring out of its tall open doorway and down the worn hollow "
+ "of its threshold onto the flagstones, a lantern on an iron bracket beside the door, both its "
+ "upper windows shuttered but two showing a thin line of candlelight, a short queue of three "
+ "people waiting on the step with folded papers held against their chests, a gnome among them "
+ "stamping his feet against the cold, and behind the hall the colossal moonlit flank of "
+ "the assembly hall rising into the night sky",
+"location|Kayıt Salonu":
+ "A colossal open registry ledger filling the foreground on a marble table, its page ruled into "
+ "four columns of names in brown ink, a clerk's hand with a quill poised over the empty fourth "
+ "column, a brass weight and a sand shaker at the page edge, and beyond the book a family "
+ "standing waiting, a woman holding an infant and a tiefling man with curling horns behind her, "
+ "benches of waiting people receding into the depth of a tall marble hall",
+"location|Sınır ve Ticaret Loncası Divanhanesi":
+ "The colossal audience hall of a wealthy merchant guild, a deep coffered ceiling of dark "
+ "carved oak far above with a thin gilded line picking out its ribs, walls of polished white "
+ "and grey-green marble, two storeys of plain carved galleries running around the room packed "
+ "with leather ledgers, a two storey arched window pouring one huge grey shaft of light across "
+ "an inlaid stone floor, an immense chimneypiece of carved marble with a key cut into its "
+ "lintel and a cold swept grate, a long council table of dark polished wood with twenty "
+ "high-backed leather chairs and only one occupied, a sweeping double staircase with an iron "
+ "balustrade, restrained and severe rather than gilded, and one small clerk alone at the foot "
+ "of it filling in a tally sheet",
+"location|Büyücü Loncası Akademisi":
+ "A chalk circle drawn on the flagstones of a white marble cloister at night, burning with a "
+ "cold blue-white light that throws the kneeling students' faces into hard lit relief, a tall "
+ "elf master standing at the edge of the circle in silhouette with one hand raised, thin steam "
+ "lifting off the dry stone inside the ring, crimson leaved branches black against the glow, "
+ "amber library windows burning high above the cloister arches",
+"location|Şifacılar Kışlası":
+ "A dispensary thick with steam, shelves of glass bottles and stoneware jars towering on both "
+ "sides to the ceiling, three copper alembics working over charcoal fires with their coils "
+ "dripping, a gnome apprentice halfway up a ladder passing a bottle down, bunches of drying "
+ "herbs hung from every beam, and through a broad arch at the back a long dim ward of narrow "
+ "cots receding into shadow",
+"location|Yukarı Çarşı":
+ "A hallmarking bench filling the foreground, a bearded dwarf master's hands holding a steel "
+ "punch against a small metal ring with a hammer raised over it, a glowing brazier and a bronze "
+ "balance scale at his elbow, struck marks bitten into the bench top, and behind him a great "
+ "white marble arcade market in full sunlight, stalls of cloth and fruit and knives under the "
+ "arches with licence plaques at every corner and a crowd moving between the piers",
+"location|Aşağı Çarşı":
+ "A crush of second-hand stalls jammed into a lane at the foot of an enormous marble city wall "
+ "at dusk, patched awnings strung wall to wall overhead, charcoal braziers and hanging oil "
+ "lamps lighting heaps of mended boots, worn tools and dented pots from below, a halfling "
+ "cobbler working with a knife in the foreground, a tiefling and a human leaning close over a "
+ "stall with empty hands between them, the top of the wall far above still catching orange "
+ "daylight",
+"location|Mimar Meydanı":
+ "An immense paved marble square at blue twilight, at its centre a colossal statue of a founder "
+ "carved entirely from one block of white marble, statue and plinth and every detail the same "
+ "pale stone with no metal and no gilding anywhere, a long spear held upright in his right "
+ "hand, a thick book held against his side in his left, a shallow round boss of grey-white marble carved "
+ "flat against his chest below the throat, its rim in soft stone shadow, the whole figure one "
+ "single colour of unpainted pale marble from spear to plinth, only two carved lines cut into the plinth below him, and rising behind him "
+ "across the far side of the square an enormous palatial assembly building approached by a very "
+ "wide flight of high steps and a deep columned portico at their head, and on its roof exactly "
+ "three enormous square stone towers standing in a row, tall slender shafts with crenellated "
+ "parapets and narrow slit windows, no bells and no spires and nothing religious, the middle "
+ "tower rising twice as high again as the two beside it and towering over everything in the "
+ "picture, the hall itself a huge deep block running far back into the city so that its long "
+ "flank recedes in perspective behind the towers, storey on storey of stone, the building standing in the middle of a dense city with ordinary three "
+ "storey houses, shop fronts, tiled roofs, chimneys and narrow streets pressed up against its "
+ "flanks and crowding away behind it, no city wall and no fortification around it, smaller "
+ "three storey colonnaded houses and halls crowded along the square on either side of it, rings of wrought iron lamp posts marching away "
+ "across the emptiness with lamplighters up ladders lighting them one after another, warm gold "
+ "pools spreading on violet wet marble, crimson and orange leaved trees at the square edges "
+ "shedding leaves across the paving, a horse-drawn cart crossing the far side, small knots of "
+ "people scattered over the vast pavement and one dense crowd near the plinth gathered around a "
+ "family whose child holds a new apprentice coat, one lamp at the far edge still dark",
+"location|Şehir Kapıları":
+ "A massive pale stone gatehouse at dusk seen close from just above the river, two square "
+ "crenellated towers flanking one tall lamplit arched passage with portcullis teeth in its "
+ "vault, its foot planted on the bank where a long low bridge meets it, and that bridge "
+ "swinging out of the bottom of the picture on heavy round arches with thick cutwater piers "
+ "standing in the gold-lit water, a stone parapet with iron lamp posts and crooked "
+ "timber-framed booths built along it, a small square turret standing astride the bridge "
+ "halfway out, ox waggons and handcarts and cloaked travellers crowding through the gate "
+ "passage, a clerk with a ledger at a stone kiosk in the archway, spearmen on the tower tops, "
+ "a colossal armoured statue on a plinth beside the gate, laden barges passing under the "
+ "arches, and only a thin band of steep slate roofs and one distant tower showing above the "
+ "battlements behind",
+"location|Sessiz Sokak":
+ "A wall niche at night crowded with burning candle stubs, offerings pressed in among them, a "
+ "heel of bread, a ribbon, a handful of salt, a bird bone, wax running down onto old marble "
+ "footings, an old woman's face lit warm from below as she stands before it with her lips "
+ "moving, and behind her a very narrow alley falling away into blue dark with more small flames "
+ "burning in niche after niche down both walls",
+"location|Nehir Yükleme Alanı":
+ "A sheer white marble city wall of enormous height at cold misty dawn, rising like a cliff "
+ "twenty times the height of the boats at its foot, its battlements far up near the top of the "
+ "sky, seen from the water far below, huge "
+ "timber crane jibs mounted on top of the battlements and leaning far out over the wall head "
+ "into the open air, great treadwheel hoists and counterweights standing behind them on the "
+ "wall walk with crews working them, rope falls running from the jib tips all the way down to "
+ "the river, a row of small lamplit openings pierced low in the wall face below, net slings and crates of cargo hanging in mid air halfway up, flat-bottomed barges "
+ "moored in a row at the foot of the wall with their ropes stretched tight, a cramped strip of "
+ "mud between wall and water crowded with crooked wooden shacks and warehouses on stilts "
+ "overhanging the river, plank walkways between them, torches still burning, broad shouldered "
+ "dwarf labourers hooking sacks onto a rope fall and a halfling clerk writing in a ledger "
+ "beside a great timber and iron weighing balance",
+})
