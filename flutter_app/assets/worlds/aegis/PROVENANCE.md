@@ -4,6 +4,8 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.9.0 — 184 entity** (2026-09-16). **Lucid Triton turu.** 12 yeni `location`: `Meclis Binası` · `Kalem Binası` · `Kayıt Salonu` · `Sınır ve Ticaret Loncası Divanhanesi` · `Büyücü Loncası Akademisi` · `Şifacılar Kışlası` · `Yukarı Çarşı` · `Aşağı Çarşı` · `Mimar Meydanı` · `Şehir Kapıları` · `Sessiz Sokak` · `Nehir Yükleme Alanı`. Kaynak `lonca-sehir.md` §2–§6, `bolgeler.md` §1.3, §1.5, §9 madde 5, `lore/Sancak Kaydı` s.2, `lore/Sessiz Mabetler`. Üç kartın üstü değişti (`Meclis Salonu` · `Mühür Salonu` → Meclis Binası, `Karşı-İmza Masası` → Kalem Binası), dört NPC kendi mekanına taşındı (`Kildrak Ferrun` · `Kandil` · `Sindri` · `Çavuş Krusk`), `location/Lucid Triton`'ın "önemli yerler" listesi 12 entity linkine çevrildi. Nehrin adı kondu: **Altın Nehir**; şehre gelen mal **teslim**, transit değil. 12 kartın görseli `tool/aegis_art` ile üretildi.
+
 **Sürüm 0.8.2 — 172 entity** (2026-09-15). Yeni kart yok. Kaynak `act1 §7, §7.5, §9 madde 43`.
 **Gizli Liman'da insan yazılmaz, yalnız mal**; limanda silinen satır yok (`npc/Sicim` ·
 `location/Gizli Liman` · `quest/Nereden Geldiler` · `lore/Sancak Kaydı` · `lore/Fihrist` ·

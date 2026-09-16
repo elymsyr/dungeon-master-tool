@@ -7,11 +7,11 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.8.2",
+    "pack_version": "0.9.0",
     "counts": {
       "campaign": 1,
       "lore": 22,
-      "location": 18,
+      "location": 30,
       "npc": 35,
       "trait": 25,
       "creature-action": 13,
@@ -744,7 +744,7 @@
       "location_id": null,
       "attributes": {
         "environment": "Beyaz mermer şehir",
-        "description_long": "> Şehir uzaktan beyaz görünüyor, yaklaştıkça daha da beyaz. Mermer cepheler öğle güneşini geri yolluyor ve gözlerinizi kısıyorsunuz. Geniş caddelerin iki yanına kızıl, turuncu ve mor yapraklı ağaçlar dikilmiş; düşen yapraklar beyaz taşın üstünde renkli lekeler gibi duruyor. Meydanda taştan bir mimar heykeli yükseliyor, ve kaidesinde yalnız adı ve mesleği yazıyor.\n>\n> Kalabalık büyük, ama gürültü az. İnsanlar ellerinde kağıtlarla yürüyor ve kapıların önünde sıra bekliyor. Bir yerde bir mühür tok bir sesle tahtaya iniyor. Şehir kapısındaki görevli defterini açıyor ve size ne istediğinizi değil, kimin adına geldiğinizi soruyor.\n\nMeridia'nın başkenti, ve kıtanın en büyük şehri. Halkın çoğu insandır. Resmi adı **Lucidum Triton**'dur, ama kimse bu adı kullanmaz.\n\n## Şehir neyle geçinir\n\nLucid Triton pek az şey üretir. Kıtanın işleri burada onaylanır: geçiş kağıdı, ruhsat, ayar damgası, lonca izni. Şehrin zenginliği bu kağıtların ücretinden gelir. Mal @[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e)'den geçer; malın kağıdı buraya gelir.\n\n## Halk\n\nŞehirde iki isimli ve tek isimli insanlar vardır. İkinci isim bir haneye ya da loncaya aitliği gösterir; tek isimli olanlar hizmet eder. Kimse kimseyi açıkça aşağılamaz. Yükselmek mümkündür ve gerçekten olur. Bkz. @[Hizmet Basamakları](entity:4045dbc8-0e05-5cca-a7aa-5ab19cc24cb7).\n\n## Şehrin görünüşü\n\n- **Mermer ve ağaç.** Binalar göğe tırmanmaz; iki üç kattır, ama taş işçiliği kusursuzdur. Her caddede renkli yapraklı ağaçlar vardır.\n- **Heykeller.** Meydanlarda tanrı heykeli yoktur. Mimarlar, mühendisler ve adı bilinmeyen askerler vardır.\n- **Fenerler.** Gece bütün caddeler fenerlerle aydınlatılır. Fenerciler her akşam aynı sırayla dolaşır; sönmüş bir fener kötü bir işaret sayılır ve sabaha kadar yeniden yakılır.\n- **Tören.** Şehirde tapınak yoktur, ama tören çoktur: ad koyma, çıraklığa yazılma, mühür devri.\n\n## Büyü\n\nŞehir sınırları içinde büyü yapmak **Lonca Lisansı** ister (@[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c)). İlahi büyü yapan biri mucize gösteren biri değil, usulsüzlük yapan biri olarak görülür — ama bu şehirde kimse öyle bir şey görmemiştir. Duyan çoktur, gören yoktur (@[Tanrılar ve Fısıltı](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b)).\n\n## Şehrin önemli yerleri\n\n- @[Meclis Salonu](entity:ac3d6681-69ce-531e-94bc-b55e2d224876) — Lonca Meclisi'nin altı koltuğunun oturduğu salon.\n- @[Mühür Salonu](entity:a39b0874-c08b-539e-8f03-890eeddcb5b5) — kararların mühürlendiği uzun oda.\n- @[Karşı-İmza Masası](entity:d8ea3dc6-6fc6-5d86-b2ed-21928438917a) — halkın Geçiş Divanı dediği, koridorun sonundaki masa.\n- **Demirci çarşısı** — örslerin hiç susmadığı sokak. Ayar ustası @[Kildrak Ferrun](entity:589cb835-6923-5569-b0d5-02183589dd4a)'un tezgahı burada.\n- **Şifacılar kışlası** — @[Simya ve Şifacılar Loncası](entity:d2ba52b6-0502-5ee3-93c3-81b17bce1782)'nın çıraklarının yaşadığı taş bina. Çırak @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0) burada çalışır.\n- **Çarşı** — esnaf tezgahları. @[Kandil](entity:5d9360f3-f972-5a34-8350-8c7f44868699)'in yarı boş tezgahı burada.\n- **Kapılar** — gündüz görevliler, gece kolluk devriyesi. @[Çavuş Krusk](entity:a2df2945-7ab3-5482-b784-d0e5a7b39261) burada nöbet tutar.\n\n## Siyaset\n\nŞehri Konsey adına **Lonca Meclisi** yönetir: altı koltuk, beş hane, bir atama. Kararlar oturumdan önce, kapalı kapılar ardında alınır; oturumda yalnız açıklanır. Bir koltuk sahibi karşı çıkmak istiyorsa oturuma gelmez. Bkz. @[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88).",
+        "description_long": "> Şehir uzaktan beyaz görünüyor, yaklaştıkça daha da beyaz. Mermer cepheler öğle güneşini geri yolluyor ve gözlerinizi kısıyorsunuz. Geniş caddelerin iki yanına kızıl, turuncu ve mor yapraklı ağaçlar dikilmiş; düşen yapraklar beyaz taşın üstünde renkli lekeler gibi duruyor. Meydanda taştan bir mimar heykeli yükseliyor, ve kaidesinde yalnız adı ve mesleği yazıyor.\n>\n> Kalabalık büyük, ama gürültü az. İnsanlar ellerinde kağıtlarla yürüyor ve kapıların önünde sıra bekliyor. Bir yerde bir mühür tok bir sesle tahtaya iniyor. Şehir kapısındaki görevli defterini açıyor ve size ne istediğinizi değil, kimin adına geldiğinizi soruyor.\n\nMeridia'nın başkenti, ve kıtanın en büyük şehri. Halkın çoğu insandır. Resmi adı **Lucidum Triton**'dur, ama kimse bu adı kullanmaz.\n\n## Şehir neyle geçinir\n\nLucid Triton pek az şey üretir. Kıtanın işleri burada onaylanır: geçiş kağıdı, ruhsat, ayar damgası, lonca izni. Şehrin zenginliği bu kağıtların ücretinden gelir. Mal @[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e)'den geçer; malın kağıdı buraya gelir. Şehrin kendi tükettiği pay Altın Nehir'in mavnalarıyla yukarı taşınır ve surun dibinde teslim edilir (@[Nehir Yükleme Alanı](entity:afba05e5-655c-5efa-8a58-a166c5594cd9)); bu bir teslimdir, transit değil — şehirden geçip giden mal yoktur.\n\n## Halk\n\nŞehirde iki isimli ve tek isimli insanlar vardır. İkinci isim bir haneye ya da loncaya aitliği gösterir; tek isimli olanlar hizmet eder. Kimse kimseyi açıkça aşağılamaz. Yükselmek mümkündür ve gerçekten olur. Bkz. @[Hizmet Basamakları](entity:4045dbc8-0e05-5cca-a7aa-5ab19cc24cb7).\n\n## Şehrin görünüşü\n\n- **Mermer ve ağaç.** Binalar göğe tırmanmaz; iki üç kattır, ama taş işçiliği kusursuzdur. Her caddede renkli yapraklı ağaçlar vardır.\n- **Heykeller.** Meydanlarda tanrı heykeli yoktur. Mimarlar, mühendisler ve adı bilinmeyen askerler vardır.\n- **Fenerler.** Gece bütün caddeler fenerlerle aydınlatılır. Fenerciler her akşam aynı sırayla dolaşır; sönmüş bir fener kötü bir işaret sayılır ve sabaha kadar yeniden yakılır.\n- **Tören.** Şehirde tapınak yoktur, ama tören çoktur: ad koyma, çıraklığa yazılma, mühür devri.\n\n## Büyü\n\nŞehir sınırları içinde büyü yapmak **Lonca Lisansı** ister (@[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c)). İlahi büyü yapan biri mucize gösteren biri değil, usulsüzlük yapan biri olarak görülür — ama bu şehirde kimse öyle bir şey görmemiştir. Duyan çoktur, gören yoktur (@[Tanrılar ve Fısıltı](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b)).\n\n## Şehrin önemli yerleri\n\n- @[Meclis Binası](entity:60033fa0-aa39-580a-9521-98d99fb783af) — Lonca Meclisi'nin binası; içinde @[Meclis Salonu](entity:ac3d6681-69ce-531e-94bc-b55e2d224876) ve @[Mühür Salonu](entity:a39b0874-c08b-539e-8f03-890eeddcb5b5).\n- @[Kalem Binası](entity:f4f948bd-d066-5428-ab66-2b966bac5f5b) — Meclis'in arkasında; içinde @[Kayıt Salonu](entity:3a2f14d0-9996-5e9f-8649-3841d47642e5) ve @[Karşı-İmza Masası](entity:d8ea3dc6-6fc6-5d86-b2ed-21928438917a).\n- @[Sınır ve Ticaret Loncası Divanhanesi](entity:2ab43c29-08ad-56c1-bc30-7ce6fc7c19c6) — tonaj, gümrük kopyaları, geçiş kağıdı. @[Sınır ve Ticaret — Orvan Sancar](entity:c2556c57-a80c-54ff-b76d-23515025ea1f)'ın loncası.\n- @[Büyücü Loncası Akademisi](entity:1d4b97c2-bb54-5b23-b5e3-f8568dcf6277) — lisans masası, ışınlanma kaydı, sınama odası.\n- @[Şifacılar Kışlası](entity:6301eb9d-aa05-5789-b5c4-587f66d1c868) — ruhsat, iksir ve ölüm sebebi beyanı. Çırak @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0) burada.\n- @[Yukarı Çarşı](entity:0cb257e9-da67-5860-940f-0383e958e6f5) — ruhsatlı çarşı ve ayar masası. Ayar ustası @[Kildrak Ferrun](entity:589cb835-6923-5569-b0d5-02183589dd4a) burada.\n- @[Aşağı Çarşı](entity:3820ce8d-9d24-5262-9036-dd041f98b05b) — sur dibi: tamir, ikinci el, devredilen borç. @[Kandil](entity:5d9360f3-f972-5a34-8350-8c7f44868699)'in tezgahı burada.\n- @[Mimar Meydanı](entity:0f507fe1-2b61-5882-b0f3-9e3225f38ad1) — ana meydan; heykel, fenerler, törenler.\n- @[Şehir Kapıları](entity:9383a40b-af23-5294-9545-0d471d1a1e7f) — girişin yazıldığı yer. @[Çavuş Krusk](entity:a2df2945-7ab3-5482-b784-d0e5a7b39261) gece devriyesinin çavuşu.\n- @[Sessiz Sokak](entity:14b81234-3f55-51a9-ab06-ed6a22446c75) — eski tanrılara saygı duyanların sokağı; hiçbir mahalle defterinde yok.\n- @[Nehir Yükleme Alanı](entity:afba05e5-655c-5efa-8a58-a166c5594cd9) — Altın Nehir'in mavnaları, kantar, ve sur.\n\n## Siyaset\n\nŞehri Konsey adına **Lonca Meclisi** yönetir: altı koltuk, beş hane, bir atama. Kararlar oturumdan önce, kapalı kapılar ardında alınır; oturumda yalnız açıklanır. Bir koltuk sahibi karşı çıkmak istiyorsa oturuma gelmez. Bkz. @[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88).",
         "parent_location_ref": {
           "_ref": "location",
           "name": "Meridia"
@@ -771,7 +771,7 @@
         "description_long": "> Uzun bir oda; pencereler o kadar yüksek ki dışarıdan yalnız gökyüzü görünüyor. Masalar iki sıra halinde dizili, ve her masada açık bir defter, bir mum ocağı ve kapağı kalkık bir mühür kutusu var. Kimse konuşmuyor. Kağıt çevriliyor; arada bir, bir mühür sıcak mumun üstüne iniyor ve tok bir vuruş odanın sonuna kadar gidiyor. Havada erimiş kırmızı mum ve lamba yağı kokusu var.\n>\n> Kapının yanındaki masada oturan memur başını kaldırmadan elini uzatıyor. Kağıdınızı bekliyor.\n\n@[Meclis Salonu](entity:ac3d6681-69ce-531e-94bc-b55e2d224876)'nda açıklanan kararlar buraya gelir ve mühürlenir. Mührünü almamış bir karar henüz yürürlüğe girmemiştir.\n\n## Salon\n\n- **Masalar.** İki sıra masa; her birinde bir memur ve bir mühür kutusu.\n- **Mum ocakları.** Her masada, küçük bir kandilin üstünde mum eriten bakır bir kap. Oda bu yüzden hep ılıktır.\n- **Arka duvar.** Mühürlenmiş kağıtların beklediği, gözlü bir dolap. Dolabın anahtarı başmemurun kemerinde.\n\nBir kararı mühürleyen memur, onu hangi loncanın adına mühürlediğini deftere yazar. Bir mühür masaya indiyse, o kararı o lonca vermiş sayılır.",
         "parent_location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Meclis Binası"
         },
         "secrets": "Meclis'te açıklanan bir karar buraya hiç gelmeyebilir. Bir koltuk sahibi kararın mühürlenmesini istemiyorsa kağıt yolda bekletilir. Meclis'te açıkça *hayır* denmez; kağıt buraya ulaşmaz."
       }
@@ -795,7 +795,7 @@
         "description_long": "> Yüksek tavanlı, serin bir salon. Altı ağır ahşap koltuk yarım daire halinde dizilmiş. Beşinin arkasındaki duvarda bir hanenin işareti asılı: bir çekiç, bir terazi, bir pergel, bir kılıç, bir anahtar. Altıncı koltuğun arkası çıplak taş. Koltukların karşısında, dilekçe sahiplerinin durduğu alçak bir ahşap parmaklık var; parmaklık ellerin tuttuğu yerlerde parlamış. Taş ve mum kokuyor. Her ses tavanda bir süre asılı kalıyor.\n>\n> Parmaklığın yanındaki kürsüde bir kâtip adınızı soruyor, yazıyor, ve kalemini kaldırıp bekliyor.\n\n@[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88)'nin toplandığı salon. Dilekçe sahipleri parmaklığın arkasında ayakta durur ve kâtip sırayla adlarını okur.\n\n## Koltuklar\n\nSoldan sağa:\n\n| Koltuk | Lonca | Duvardaki işaret |\n|---|---|---|\n| @[Rektör — Quarion](entity:75a5f5c6-9cb3-5dd2-bc55-aeb292dff9c6) | Büyücü Loncası | Yok; çıplak taş |\n| @[Sınır ve Ticaret — Orvan Sancar](entity:c2556c57-a80c-54ff-b76d-23515025ea1f) | Sınır ve Ticaret Loncası | Bir anahtar |\n| @[Kalfa Başı — Adrik Ferrun](entity:e7ebea71-440d-5ef0-bc70-9bd88769475c) | Demircilik ve İşçi Loncası | Bir çekiç |\n| @[Baş Otacı — Caramip Kalender](entity:49136109-7388-5661-9147-b38b3ee9f763) | Simya ve Şifacılar Loncası | Bir terazi |\n| @[Sicil Ağası — Valen Custar](entity:ad7dfdc7-82b3-53f5-8a8c-55f4dcaf344d) | Askeri Hukuk Loncası | Bir kılıç |\n| @[Levha Sahibi — Perhun Mizan](entity:516a595f-5d69-5434-bf97-b8d920505567) | Mimarlık ve Planlama Loncası | Bir pergel |\n\n## Oturum nasıl işler\n\nKâtip dilekçe sahibinin adını okur, dilekçe sahibi konuşur, koltuk sahipleri cevap verir. Oylama yapılmaz. Kararlar oturumdan önce alınmıştır; oturumda yalnız söylenir. Bir koltuk sahibi bir karara karşıysa, o gün oturuma gelmez.\n\nKarakterlerin buradaki oturumu: @[Meclis Oturumu](entity:22b9b1a5-9cf5-53bf-8fa5-2b9648b498e8).",
         "parent_location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Meclis Binası"
         },
         "secrets": "Koltukların beşi hastalığı kendi loncasının çıkarından görür; karakterler buraya kanıtla gelse bile bu tutumlar kolay değişmez. Burada duyulabilecek asıl şey, her birinin neden hayır dediği.\n\n@[Sınır ve Ticaret — Orvan Sancar](entity:c2556c57-a80c-54ff-b76d-23515025ea1f)'ın elinde bir teklif var: @[Kapı Önündeki Teklif](entity:0a7ee098-36e1-5c22-85cd-b087425a2875)."
       }
@@ -819,9 +819,321 @@
         "description_long": "> Uzun, penceresiz bir koridor; duvar lambalarının ışığı taş zemine sarı halkalar düşürüyor. Koridorun sonunda tek bir masa, ve masanın önünde ağır ağır ilerleyen bir sıra. Sırada bekleyenlerin hepsinin elinde kağıt var, ve kimse kağıdını katlamıyor. Masanın köşesinde imza bekleyen bir yığın duruyor; alttaki kağıtların kenarları sararmış. Memur bir kağıdı imzalıyor, bir sonrakini okumadan yığının altına kaydırıyor. Kalemin hışırtısı koridorun başına kadar duyuluyor.\n>\n> Önünüzdeki adam öksürüyor, bir şey diyecek gibi oluyor, ama susuyor. Sıra size geliyor.\n\nHalkın **Geçiş Divanı** dediği yer. @[Sınır ve Ticaret Loncası](entity:efb11a6c-d65f-5368-a134-d42b5ddb1fd6)'nın karşı-imzalı geçiş kağıdı bu masadan çıkar; limanlarda buna **iyi yazı** denir. İyi yazı taşıyan biri @[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e)'de de, @[Gizli Liman](entity:6dc53369-23d2-564f-97a8-ea6ceaa075c7)'da da bir gemiye binebilir.\n\n## Nasıl işler\n\nBir işin yapılabilmesi için bir imza yeter; resmi olarak yapılmış sayılması için ikinci bir imza gerekir. İkinci imza bu masada atılır.\n\nMemur kimseye *hayır* demez. İmzalamak istemediği kağıt yığında bekler, ve yığın hiç azalmaz.\n\n## Masa\n\nMeşe bir masa, üstünde bir mürekkep hokkası, üç kalem, bir kum serpiştirici ve karşı-imza defteri. Memurun sandalyesinin arkasında, kilitli bir dolapta eski defterler duruyor.\n\nMasadaki memur: @[Corin Sancar](entity:3f989d46-cf9e-5bb8-a24c-4948ac8393f3).",
         "parent_location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Kalem Binası"
         },
         "secrets": "**İki imza arasındaki bekleme rüşvetle kısalır.** Kıtada en çok rüşvet verilen yer burasıdır. Memur kimseye *hayır* demez; imzalamak istemediği kağıt yığında bekler, ve yığın hiç azalmaz.\n\n**Masadaki memuru bu masaya kayıran adam @[Sınır ve Ticaret — Orvan Sancar](entity:c2556c57-a80c-54ff-b76d-23515025ea1f).** @[Corin Sancar](entity:3f989d46-cf9e-5bb8-a24c-4948ac8393f3) burada hak ettiği için değil, adı yüzünden oturuyor — ve bunu biliyor. Orvan'ın adını kullanan karakterler için bu hem anahtar, hem de Corin'i kıran bir şey.\n\nBkz. @[Geçiş Divanı'nda Sıra](entity:e70de6a9-4e68-50c3-a7a5-7429b8cd6f5b)."
+      }
+    },
+    "60033fa0-aa39-580a-9521-98d99fb783af": {
+      "name": "Meclis Binası",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Lonca Meclisi'nin binası: dilekçe avlusu, kâtip odaları, altı loncanın kendi kalemleri ve iki salon.",
+      "image_path": "media/Artwork/Meclis-Binası.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "meclis",
+        "yönetim"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Beyaz mermer yönetim binası",
+        "danger_level": "Safe",
+        "description_long": "> Avluya girdiğiniz anda ses değişiyor: dışarıdaki cadde gürültüsü kapının ardında kalıyor ve yerine kalem hışırtısı, ayakkabı sürtünmesi ve arada bir seslenen bir kâtibin okuduğu ad geliyor. Avlunun üç yanı kemerli; kemerlerin altında sıra sıra insan oturuyor, hepsinin kucağında kağıt var. Mermer taban dilekçe sırasının durduğu yerde çukurlaşmış. Bir kâtip avlunun ortasına çıkıp bir ad okuyor, kimse kalkmıyor, adı bir kez daha okuyor.\n>\n> Avlunun dibindeki iki kapının biri açık, biri kapalı. Açık olanın yanındaki kâtip elindeki listeden başını kaldırıp size bakıyor.\n\nŞehrin yönetim binası. İçeride altı loncanın her birinin kendi kalemi var: kendi kâtibi, kendi defteri, kendi bekleme sırası. Binaya gelen herkes önce hangi loncanın işini yaptığını söyler; sıraya ondan sonra girer.\n\n## Bina\n\n- **Dilekçe avlusu.** Üç yanı kemerli, üstü açık. İş burada beklenir.\n- **Lonca kalemleri.** Avlunun etrafındaki odalar. Her kapıda loncanın işareti: çekiç, terazi, pergel, kılıç, anahtar — ve bir kapıda işaret yok.\n- **@[Meclis Salonu](entity:ac3d6681-69ce-531e-94bc-b55e2d224876)** — altı koltuğun toplandığı salon.\n- **@[Mühür Salonu](entity:a39b0874-c08b-539e-8f03-890eeddcb5b5)** — kararların mühürlendiği uzun oda.\n\nBina Meclis'in *önüdür*; insanın ve geçişin yazıldığı yer arkadaki @[Kalem Binası](entity:f4f948bd-d066-5428-ab66-2b966bac5f5b)'dır.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "Kararlar bu binada alınmaz. Oturumdan önce, bu avluya bakmayan odalarda alınır; salonda yalnız söylenir (@[Konsey ve Lonca Meclisi](entity:036c27a1-4823-5242-812f-a79c0ea7cf88)).\n\nAvluda uzun süre duran biri bir şey fark edebilir: kâtiplerin okuduğu bazı adlar hiç cevap almıyor ve tekrar okunmuyor. O adlar sırada değil, sıranın dışında bekletiliyor — @[Karşı-İmza Masası](entity:d8ea3dc6-6fc6-5d86-b2ed-21928438917a)'ndaki yığının bu binadaki karşılığı."
+      }
+    },
+    "f4f948bd-d066-5428-ab66-2b966bac5f5b": {
+      "name": "Kalem Binası",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Meclis Binası'nın arkasına tahsis edilmiş küçük bina: insan burada deftere yazılır, kıtadan çıkış kağıdı burada imzalanır.",
+      "image_path": "media/Artwork/Kalem-Binası.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "kayıt",
+        "sancak kaydı"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Meclis'in arkasında iki katlı taş bina",
+        "danger_level": "Safe",
+        "description_long": "> Meclis'in arkasındaki dar sokakta, gölgede kalan iki katlı bir bina. Cephesi sade, kapısı tek kanat, ve kapının eşiği ortasından aşınmış. İçeride mürekkep ve ıslak kağıt kokuyor; birinci kattaki salondan bir çocuk sesi ve arkasından kalabalığın alçak bir uğultusu geliyor. Koridorun öbür ucundan gelen tek ses kalem hışırtısı.\n>\n> Kapıdaki görevli sizi durdurmuyor, sadece soruyor: *\"Yazılmaya mı, imzaya mı?\"*\n\nHalk bu binaya bir ad vermez; gittiği masanın adını söyler. *\"Kaleme yazıldım\"* demek deftere geçmek, *\"Divan'a çıktım\"* demek karşı-imza beklemek demektir.\n\n## Bina\n\n- **@[Kayıt Salonu](entity:3a2f14d0-9996-5e9f-8649-3841d47642e5)** — birinci kat. Bir insanın adı ve satırı burada açılır.\n- **@[Karşı-İmza Masası](entity:d8ea3dc6-6fc6-5d86-b2ed-21928438917a)** — zemin kattaki uzun koridorun sonunda. Halk buraya **Geçiş Divanı** der.\n- **Eski defterler.** Üst kattaki kilitli odada, yıla göre dizili. Anahtar başkâtipte.\n\n@[Sancak Kaydı](entity:f8e345a5-4d56-59a3-9265-1189e858ec7b)'nın şehirdeki iki işlemi bu binada yapılır: satırın açılması ve satırın karşı-imzalanması.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "Bu şehirde bir insan aynı binada başlar ve aynı binadan çıkar. Kartı masaya koyarken bunu söyleme; oyuncu @[Kayıt Salonu](entity:3a2f14d0-9996-5e9f-8649-3841d47642e5)'ndan çıkıp koridora girdiğinde kendi görür.\n\nÜst kattaki eski defterler taşra kopyalarını da tutar. Bir satırın kopyasının iki yerde durması (@[Sancak Kaydı](entity:f8e345a5-4d56-59a3-9265-1189e858ec7b)) bu odayı ileride bir hedef yapar; Act 1'de kimse buraya girmeyi denemez."
+      }
+    },
+    "3a2f14d0-9996-5e9f-8649-3841d47642e5": {
+      "name": "Kayıt Salonu",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Bir çocuğun adının konduğu ve aynı anda deftere yazıldığı salon. Bu şehirde ikisi tek işlemdir.",
+      "image_path": "media/Artwork/Kayıt-Salonu.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "kayıt",
+        "tören"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Yüksek pencereli tören salonu",
+        "danger_level": "Safe",
+        "description_long": "> Salon kalabalık ve sıcak. Yüksek pencerelerden inen ışık, ortadaki uzun masaya ve masanın üstündeki açık deftere düşüyor. Bir aile masanın önünde duruyor; kadının kucağındaki çocuk ağlıyor ve kimse susturmaya çalışmıyor. Kâtip dört kutuyu yüksek sesle okuyor: ad, hane, lonca ve mertebe, kefil. Üçüncü kutuda duruyor, aileye bakıyor, ve o kutuyu boş bırakıyor.\n>\n> Kalemi kaldırıyor. *\"Kefil?\"*\n\nBu kıtada kayıt doğumla gelmez, **kefaletle** gelir (@[Sancak Kaydı](entity:f8e345a5-4d56-59a3-9265-1189e858ec7b)). Ad koyma ile deftere geçme aynı gün, aynı salonda olur, ve halk ikisini ayrı iş saymaz. Bir insanın *\"adı var\"* demek, *\"defterde var\"* demektir.\n\n## Salon\n\n- **Uzun masa ve açık defter.** Satır dört kutudur: ad · hane · lonca ve mertebe · kefil.\n- **Bekleme sıraları.** Ailelerin oturduğu ahşap sıralar. Duvar boyunca, omuz hizasında parlamış.\n- **Kefil kürsüsü.** Kefilin adını söylediği alçak kürsü. Kefil olan, kefil olduğunun borcunu da taşır.\n\nHane kutusu boşsa kişi mühürsüzdür. Kefil kutusu boşsa **satır hiç açılmaz.**",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Kalem Binası"
+        },
+        "secrets": "Halfling ve cüce soyadları hane sayılmaz; defter onları *\"tek isim + boş hane\"* yazar. Üçlünün sahte kimliği tam bu boşluğa oturuyor (@[Alton Leagallow](entity:d3b77212-f854-5326-87b3-3346b35235a6) · @[Merla Tealeaf](entity:244fff94-e35d-5db8-8435-79558843667f)) — kontrol edilecek bir kayıt yok.\n\nBu salonda bir karakter kendi satırını isteyebilir. @[Arşivci](entity:a62099dd-e7e9-5dca-9ebe-9485bcbc07e6) ya da @[Lonca Üyesi](entity:52f2f0d6-3209-58aa-bc72-c018165528a9) geçmişi olan biri kendi kefilinin adını orada görür; @[Mertebeli Lonca Çocuğu](entity:4f245f5e-6297-58c3-a4c2-341f6a3e40d0) ise hane kutusunda ailesinin mührünü. Kayıtsız bir karakter burada hiçbir şey bulamaz, ve bulamaması bu salonun asıl dersidir."
+      }
+    },
+    "2ab43c29-08ad-56c1-bc30-7ce6fc7c19c6": {
+      "name": "Sınır ve Ticaret Loncası Divanhanesi",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Sınır ve Ticaret Loncası'nın ana binası. En eski mühür, en bakımsız bina.",
+      "image_path": "media/Artwork/Sınır-ve-Ticaret-Loncası-Divanhanesi.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "lonca",
+        "sınır ve ticaret"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Yıpranmış lonca binası",
+        "danger_level": "Safe",
+        "description_long": "> Kapının üstündeki taş anahtar kabartması aşınmış, ama derin oyulduğu için hâlâ okunuyor. İçerisi soğuk; ocakta ateş yok ve raflardaki cilt sırtları rutubetten kabarmış. Bir kâtip merdivenin dibinde, dizinin üstünde bir cetvel dolduruyor — masası yok. Üst kattan tahta gıcırtısı geliyor ve bir kapı kapanıyor.\n>\n> Kâtip cetvelden başını kaldırmadan konuşuyor: *\"Tonaj mı, geçiş mi?\"*\n\n@[Sınır ve Ticaret Loncası](entity:efb11a6c-d65f-5368-a134-d42b5ddb1fd6)'nın merkezi. Gümrük cetvelleri, tonaj defterleri, tahıl fiyatları ve @[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e)'den gelen yük listelerinin kopyaları burada toplanır.\n\n## Bina\n\n- **Cetvel odası.** Elymsyr'den gelen liste kopyaları, yıla ve gemiye göre dizili.\n- **Tahıl kalemi.** Fiyatın yazıldığı oda; şehrin ekmeğinin fiyatı burada bir ithalat kalemidir.\n- **Üst kat.** Koltuk sahibinin odası. @[Sınır ve Ticaret — Orvan Sancar](entity:c2556c57-a80c-54ff-b76d-23515025ea1f) Meclis'te değilse buradadır.\n\nBu loncanın geliri akıştan gelir, mülkten değil. Gemiler seyrekleştikçe bina da beraberinde eskiyor: Meclis'in en eski mührü, en az bakılan binasında duruyor.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Elymsyr'in vali kopyaları bu binada.** @[Gümrük Valisi](entity:2aa492a9-daca-5b1c-81d5-a0e7a1fd8f54) eksik boşaltılan yükleri defterde tam yazıyor; o defterin ikinci nüshası cetvel odasında. Okumasını bilen biri (@[Arşivci](entity:a62099dd-e7e9-5dca-9ebe-9485bcbc07e6)) hangi geminin ne getirdiğini ve ne boşalttığını karşılaştırabilir.\n\n@[Corin Sancar](entity:3f989d46-cf9e-5bb8-a24c-4948ac8393f3)'ı @[Karşı-İmza Masası](entity:d8ea3dc6-6fc6-5d86-b2ed-21928438917a)'na oturtan imza bu binadan çıktı. Karakterler bunu burada da öğrenebilir; Corin'in kendisi de söyler, ama farklı bir sesle."
+      }
+    },
+    "1d4b97c2-bb54-5b23-b5e3-f8568dcf6277": {
+      "name": "Büyücü Loncası Akademisi",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Büyücü Loncası'nın akademisi: lisans masası, ışınlanma kaydı ve sınama odası.",
+      "image_path": "media/Artwork/Büyücü-Loncası-Akademisi.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "büyücü loncası",
+        "akademi"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Bahçeli akademi yapısı",
+        "danger_level": "Low",
+        "description_long": "> Bahçe kapısından geçer geçmez hava değişiyor — birkaç derece serin, ve tebeşir tozuyla yanmış ot kokuyor. Avluda bir öğrenci grubu tebeşirle çizilmiş bir halkanın etrafında diz çökmüş; halkanın içindeki taş ıslak değil ama buhar çıkarıyor. Bir üstat elini kaldırıyor, öğrenciler geri çekiliyor, ve halka sönüyor.\n>\n> Giriş kapısının yanındaki masada oturan kâtip önündeki defteri size doğru çeviriyor. Sayfa boş. *\"Adınız, ve ne yapacağınız.\"*\n\n@[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c)'nın akademisi. Meclis'in altıncı koltuğu buradan gelir, ve o koltuk **hanesiz**dir — Meclis atar. Loncanın gücü mülkte değil tuttuğu kayıtta: kimin büyü yapmaya izinli olduğu, ve kimin nereye gittiği.\n\n## Bina\n\n- **Lisans masası.** Şehir içinde büyü yapmak **Lonca Lisansı** ister. Lisanssız büyü \"kamu güvenliğini tehdit\" suçudur ve suçu @[Askeri Hukuk Loncası](entity:05b9eeff-25e8-5915-a189-17d4ca9b82f0) yazar — yani lisanssız büyücü iki loncaya birden borçlanır.\n- **Işınlanma kaydı.** Uzun mesafe ışınlanma yalnız bu loncadan geçer. Kaydı tutmak formalite değil, hizmetin kendisidir: kimin nereye gittiği bu defterde durur.\n- **Sınama odası.** Penceresiz, tebeşir çizgili taş oda. Bir şeyin ne olduğu burada sınanır.\n- **Kütüphane.** @[Sihir Loncası Öğrencisi](entity:f2ecab69-bab6-5074-8a52-2e29baa7460d) geçmişi olan karakter buraya girebilir; her açılış kayda geçer.\n\nNecromancy ve zihin kontrolü içeren Enchantment lisansla dahi açılmaz.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Sınama yapıldı.** @[Rektör — Quarion](entity:75a5f5c6-9cb3-5dd2-bc55-aeb292dff9c6)'un Meclis'te söylediği *\"hiçbir tespit büyüsü bir şey göstermedi\"* cümlesinin arkasında bu odadaki bir kayıt var, ve kayıt \"yok\" demiyor — **\"okunamadı\"** diyor. Kağıt duruyor; sonuç sütunu boş bırakılmış.\n\nBunu bir karakter kütüphane hakkıyla ya da Quarion'u sıkıştırarak öğrenebilir. Öğrendiğinde eline geçen şey hastalığın adı değil, Meclis'in en güçlü inkârının **bilgisizlik** olduğudur."
+      }
+    },
+    "6301eb9d-aa05-5789-b5c4-587f66d1c868": {
+      "name": "Şifacılar Kışlası",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Simya ve Şifacılar Loncası'nın çıraklarının yaşadığı bina. Ruhsat, iksir ve ölüm sebebi beyanı buradan geçer.",
+      "image_path": "media/Artwork/Şifacılar-Kışlası.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "simya",
+        "şifacılar"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Taş yatakhane ve eczane",
+        "danger_level": "Safe",
+        "description_long": "> Uzun bir taş bina; kapı açıkken bile içerisi loş. Koridor sirke, kaynamış bez ve tatlımsı bir ot kokusuyla dolu, ve koku insanın üstüne siniyor. Bir çırak elinde üst üste dizilmiş şişelerle yan yan geçiyor, sizi görünce duruyor ve şişeleri düşürmemek için dirseğiyle duvara yaslanıyor. Arka avludan bakır bir kabın taşa vurma sesi geliyor.\n>\n> Çırak şişelerin arkasından size bakıyor. *\"Hasta mısınız, yoksa kağıt mı lazım?\"*\n\n@[Simya ve Şifacılar Loncası](entity:d2ba52b6-0502-5ee3-93c3-81b17bce1782)'nın çırak yatakhanesi ve eczanesi. Hekimlik ruhsatı buradan verilir, iksir burada yapılır, ve bir ölümün sebebi burada beyan edilir.\n\n## Bina\n\n- **Yatakhane.** Çırakların koğuşu. @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0) burada çalışır ve burada uyur.\n- **Eczane.** Ruhsatlı iksirin yapıldığı oda. Şifa iksirinin kıt olmasının sebebi para değil **ruhsat**tır.\n- **Beyan kalemi.** Ölüm sebebi beyanlarının yazıldığı masa. Her beyanın iki nüshası çıkar.\n\n@[Direnç Şerbeti](entity:433ac541-c537-5ae1-914b-8910f3988f72)'ni bu kıtada yapabilecek ruhsatlı otacılar bu loncanındır.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Hastalığın ilk beyanının kopyası bu binada.** Beyanları @[Baş Otacı — Caramip Kalender](entity:49136109-7388-5661-9147-b38b3ee9f763) değiştirtti; ama beyan iki nüsha çıkar ve ikinci nüsha beyan kaleminde kalır.\n\nYani şehrin bildiğinin belgesi burada duruyor, ve onu verebilecek kişi bir çırak. @[Sindri](entity:339c0ad8-a803-5aaa-b644-55e64eff3cd0) bunu kolay vermez — verdiği gün ruhsatı ve yatağı gider."
+      }
+    },
+    "0cb257e9-da67-5860-940f-0383e958e6f5": {
+      "name": "Yukarı Çarşı",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Şehrin ruhsatlı çarşısı: mermer kemerler, ayar masası, görünür kolluk. Pahalı, ve her satış bir deftere yazılı.",
+      "image_path": "media/Artwork/Yukarı-Çarşı.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "çarşı",
+        "ruhsat"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Kemerli, ruhsatlı çarşı",
+        "danger_level": "Low",
+        "description_long": "> Kemerlerin altı serin, ve ses buraya girer girmez yükseliyor: pazarlık, bakır tartı kefesinin tıkırtısı, bir yerde arka arkaya üç çekiç darbesi. Tezgahlar karışık dizili — bir kumaşçının yanında bir bıçakçı, onun yanında ipek keseler satan bir kadın — ama aynı işi yapanlar aynı kemerin altına toplanmış, sanki biri onları oraya koymuş gibi. Her tezgahın köşesinde ruhsat levhası asılı.\n>\n> Kemerin dibindeki ayar masasında bir usta elindeki parçayı ışığa tutuyor, sonra size çeviriyor. *\"Sıra sizin mi?\"*\n\nŞehrin büyük çarşısı. Burada satış yapmak ruhsat ister, ve ruhsatlı tezgah kolluğun koruduğu tezgahtır. Mallar karışık: aynı sokakta gıda, kumaş, alet ve ziynet bir arada bulunur — ama alıcı bir şeyi nerede arayacağını bilir, çünkü tezgahlar zamanla kendiliğinden kümelenmiş.\n\n## Çarşı\n\n- **Ayar masası.** Metalin ayarının ölçüldüğü ve damganın vurulduğu masa. @[Kildrak Ferrun](entity:589cb835-6923-5569-b0d5-02183589dd4a)'un tezgahı burada.\n- **Ruhsat levhaları.** Her tezgahta asılı. Levhasız tezgah bir gün içinde kaldırılır.\n- **Kolluk.** @[Demircilik ve İşçi Loncası](entity:e2c24cb9-55de-516d-909d-0a1872394300)'nın kendi kolluğu çarşının içinde durur; çabuk gelir, ve kimin haklı olduğunu levhaya bakarak karar verir.\n\nFiyatlar @[Aşağı Çarşı](entity:3820ce8d-9d24-5262-9036-dd041f98b05b)'dan belirgin biçimde yüksek, ve alıcılar bunu bilerek buraya geliyor: burada alınan şeyin bir kaydı oluyor.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Damgasız iş burada satılamaz.** @[Mühürsüz Yüzük](entity:4e9e1485-9c75-591e-96d4-d242738e57b1)'ü bu çarşıda bir tezgaha götüren karakter satış yapamaz; yaptığı şey bir **soru** açar. @[Kildrak Ferrun](entity:589cb835-6923-5569-b0d5-02183589dd4a) parçayı okur ve damgasızlığın ne anlama geldiğini söyler — ama okuduğu bir tezgahta okunmuştur, ve tezgah bir defterdir.\n\nKarakterler burada dikkatli davranmazsa, aradıkları şeyin kaydı kendilerinden önce şehre yayılır."
+      }
+    },
+    "3820ce8d-9d24-5262-9036-dd041f98b05b": {
+      "name": "Aşağı Çarşı",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Sur dibindeki çarşı: tamir, ikinci el, devredilen borç. Ucuz, ve çoğu satışın kaydı yok.",
+      "image_path": "media/Artwork/Aşağı-Çarşı.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "çarşı",
+        "kayıtsız"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Sur dibinde üstü bezle örtülü çarşı",
+        "danger_level": "Medium",
+        "description_long": "> Sur dibindeki dar sokakta tezgahların üstü iplere gerilmiş bezlerle örtülmüş, ve bezlerin altındaki ışık sarıya çalıyor. Kızarmış yağ, ıslak yün ve is kokuyor. Bir tamirci önündeki bir çift çizmenin tabanını söküyor ve söktüğü parçayı yanındaki kutuya atıyor; kutu dolu. İki tezgah ötede bir adam alçak sesle konuşuyor, karşısındaki başını sallıyor, ve para el değiştirmiyor.\n>\n> Bez örtünün altından bir ses size sesleniyor, ama hangisi olduğunu anlayamıyorsunuz: *\"Ne arıyorsan var. Sorma da.\"*\n\nŞehrin ucuz çarşısı. Burada satılan şeyin çoğu daha önce birinin olmuştu. Tamir, ikinci el, rehin ve borç devri — dört işin dördü de aynı tezgahta yapılır.\n\n## Çarşı\n\n- **Bez örtüler.** Sabit dükkan az; çoğu tezgah akşam toplanır.\n- **Tamirci sırası.** Sur dibine en yakın hat. Bir şeyin nereden geldiği burada sorulmaz.\n- **Borç devri.** Birinin borcunu devralmak burada yazısız yapılır, ve yazısız olduğu için geri dönüşü yoktur. @[Kandil](entity:5d9360f3-f972-5a34-8350-8c7f44868699)'in yarı boş tezgahı burada.\n- **Kolluk.** Gelir, ama geç gelir. Bir suçun sahibi yoksa suç da yoktur (@[Onur Mahkemeleri](entity:b7a6221f-7a0b-5c7d-8312-2715695e8aa7)).",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**\"İyi para\" burada bulunur.** @[İyi Yazı](entity:3cd57df3-1a5c-5d09-bde6-8f10fe75e9d6)'nın kaçak yolu için gereken parayı arayan karakterler bu çarşıya döner: satılacak bir mal, bir gündelik iş, ya da birinin borcunu devralmak.\n\nBurada @[Mühürsüz Yüzük](entity:4e9e1485-9c75-591e-96d4-d242738e57b1) satılabilir — kimse damga sormaz. Ama satılan yüzük zincirin tek nesnesidir (@[Nereden Geldiler](entity:e4350906-a611-555d-86c3-8486d22f3d7a)); karakterler onu bir daha bulamaz. Bu bir ceza değil, bir seçim: kartı masaya koyarken yüzüğün ne olduğunu hatırlatma."
+      }
+    },
+    "0f507fe1-2b61-5882-b0f3-9e3225f38ad1": {
+      "name": "Mimar Meydanı",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Şehrin ana meydanı. Kenarında dükkanlar var ama meydan onlara ait değil: burası tören yeridir.",
+      "image_path": "media/Artwork/Mimar-Meydanı.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "meydan",
+        "tören"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Açık tören meydanı",
+        "danger_level": "Safe",
+        "description_long": "> Meydan geniş, ve kalabalığına göre sessiz. Ortadaki taş heykel bir adamı gösteriyor: elinde bir pergel, ayağının dibinde açık bir levha. Kaidesinde iki satır var — bir ad, ve bir meslek. Meydanı çevreleyen fener direkleri eşit aralıklarla dikilmiş; bir fenerci direğe tırmanmış, camı beziyle siliyor ve aşağıdakilere bir şey söylüyor, aşağıdakiler gülüyor. Taşın üstünde kızıl ve turuncu yapraklar var, ve süpürülmemişler.\n>\n> Heykelin dibindeki kalabalık aralanıyor: ortada bir aile duruyor, ve yanlarındaki çocuğun elinde yeni bir çırak kaftanı var.\n\nŞehrin ana meydanı ve tören yeri. Ad koyma, çıraklığa yazılma ve mühür devri burada kutlanır — işlemi @[Kalem Binası](entity:f4f948bd-d066-5428-ab66-2b966bac5f5b) yapar, meydan onu görünür kılar.\n\n## Meydan\n\n- **Mimar heykeli.** Meydanlarda tanrı heykeli yoktur: mimarlar, mühendisler ve adı bilinmeyen askerler vardır. Kaidede yalnız ad ve meslek yazar.\n- **Fener direkleri.** Şehrin fener disiplini buradan başlar. Sönmüş bir fener ihmal değil, kötü bir işaret sayılır.\n- **Kenar dükkanları.** Meydana bakan dükkanlar pahalıdır ve çoğu tören malı satar: kaftan, mum, mühür mumu, hediye.\n- **Duyuru taşı.** Konsey'in ilanlarının asıldığı düz yüzey. Asılan her kağıdın köşesinde bir mühür var.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**İlahi büyü bu şehirde duyulmuştur, görülmemiştir** (@[Tanrılar ve Fısıltı](entity:255a1d0e-5d61-51ed-84d8-027e7af3461b)). Bir karakter burada, bu kalabalıkta ilahi bir büyü yaparsa o iş bir mucize değil bir **usulsüzlük** olarak okunur — ve meydan şehrin en kalabalık yeri olduğu için tanık sayısı zar istemez.\n\nBunun cezası kartta yazılı değil çünkü kurumsal karşılığı belirsiz: @[Büyücü Loncası](entity:77381d26-85b5-572e-8223-e046b1d4012c) lisans ihlali, @[Askeri Hukuk Loncası](entity:05b9eeff-25e8-5915-a189-17d4ca9b82f0) suç yazar, ve ikisi de bunun hangisi olduğunu bilmiyor."
+      }
+    },
+    "9383a40b-af23-5294-9545-0d471d1a1e7f": {
+      "name": "Şehir Kapıları",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Şehre girişin yazıldığı yer. Gündüz görevli, gece devriye; ikisinin defteri ayrı.",
+      "image_path": "media/Artwork/Şehir-Kapıları.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "kapı",
+        "kolluk"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Surdaki kapı ve nöbet odaları",
+        "danger_level": "Low",
+        "description_long": "> Kapı kemerinin altı gündüz bile serin, ve at, taş tozu ve soğuk demir kokuyor. İçeri giren arabalar kemerin altında bir an duruyor, tekerlekler taş oluğa oturunca kütürdüyor, sonra devam ediyor. Kemerin yanındaki taş sekide bir görevli oturmuş, dizindeki defteri koluyla rüzgardan koruyor. Yukarıdan, mazgaldan biri aşağı bir şey sesleniyor; görevli başını kaldırmadan elini kaldırıp cevap veriyor.\n>\n> Görevli defterin sayfasını çeviriyor ve size ne istediğinizi değil, **kimin adına geldiğinizi** soruyor.\n\nŞehrin kapıları. Giren yazılır, ve yazılan şey kişinin kendisi değil **kimin adına geldiğidir**: bir lonca, bir hane, bir iş.\n\n## Kapı\n\n- **Gündüz görevlileri.** Kemerin altındaki seki. Defter burada tutulur, ve yük arabaları burada bir kez durur.\n- **Gece devriyesi.** Kapılar kapandıktan sonra sokakların devri. @[Çavuş Krusk](entity:a2df2945-7ab3-5482-b784-d0e5a7b39261) bu devriyenin çavuşu.\n- **Nöbet odası.** Kemerin içindeki dar oda: ocak, sıra, ve duvarda asılı bir sicil levhası.\n\nKapıdan geçen bir yükün kağıdı @[Sınır ve Ticaret Loncası](entity:efb11a6c-d65f-5368-a134-d42b5ddb1fd6)'na, insanın satırı @[Kalem Binası](entity:f4f948bd-d066-5428-ab66-2b966bac5f5b)'na gider.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Gece defteri gündüz defterinden kısadır**, ve bunun sebebi gece az insan girmesi değil. Gece giren bazı yükler gündüz sütununa yazılıyor — kimse yalan yazmıyor, sadece saat yazılmıyor.\n\n@[Çavuş Krusk](entity:a2df2945-7ab3-5482-b784-d0e5a7b39261) bunu biliyor ve bir sorun saymıyor: onun işi kimin girdiği, ne zaman girdiği değil. Karakterler *\"şu gece kim girdi\"* diye sorarsa alacakları cevap eksik olur, ve eksikliğin kendisi bilgidir."
+      }
+    },
+    "14b81234-3f55-51a9-ab06-ed6a22446c75": {
+      "name": "Sessiz Sokak",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Eski tanrılara saygı duyanların sokağı. Yasak değil — görülmeyen: Mimarlık Loncası'nın mahalle defterinde bu sokak yok.",
+      "image_path": "media/Artwork/Sessiz-Sokak.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "sessiz mabetler",
+        "kenar mahalle"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Kenar mahallede dar sokak",
+        "danger_level": "Low",
+        "description_long": "> Sokak iki insanın omuz omuza geçebileceği kadar dar, ve girişinde levha yok. İçeride mum, kurumuş çiçek ve nemli taş kokuyor. Duvarlardaki oyuklara küçük şeyler bırakılmış: bir dilim kuru ekmek, bir kurdele, bir avuç tuz, bir kuş kemiği. Bir kadın bir oyuğun önünde duruyor, dudakları kıpırdıyor ama ses çıkmıyor; sizin geçtiğinizi duyuyor ve konuşmasını bitirene kadar dönmüyor.\n>\n> Sokağın sonundaki kapı aralık. İçerisi karanlık değil — bir yerde mum yanıyor.\n\n@[Sessiz Mabetler](entity:29fbb681-f005-5416-89e7-4809b86659dc)'in şehirdeki adresi. Kadim tanrı kırıntıları, atalar kültü, doğa ruhları, kör şans ve Akışın Ruhu — hepsinin buradaki hali aynı: bir duvar oyuğu, ve önüne bırakılan bir şey.\n\nBurada tapınak yoktur çünkü tapınak bir yapıdır ve yapı **ruhsat** ister (@[Mimarlık ve Planlama Loncası](entity:1a9423bb-798d-51a9-937a-6076db02a9d8)). Ruhsat istemek görünmek demektir. Bu yüzden inanç bir binaya değil, bir sokağın duvarlarına yerleşmiş.\n\n## Sokak\n\n- **Duvar oyukları.** Sunak değil, oyuk. Bırakılan şey alınır, ve kimin aldığı sorulmaz.\n- **Aralık kapılar.** Sokaktaki evlerin bazılarının ön odası akşamları açık kalır. Davet yok, engel de yok.\n- **Levhasızlık.** Sokağın adı yok. Tarif edilirken hep bir başka şeyin arkası olarak tarif edilir.\n\nKimse buraya baskın yapmaz. @[İrade Yolu](entity:8a1d5228-1010-575e-8c19-ac200740625f) bunu bir tehdit saymaz — bir eksiklik sayar.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Bu sokak Mimarlık Loncası'nın mahalle sınırları defterinde yok.** Burada oturanların kayıtları komşu sokağa yazılı. Kayıt evreninde bunun tek bir sonucu var: **burada birini aramak, adresle bulunamaz.**\n\nAct 1'de bunun bir kullanımı yok, ve zorlama. Karakterler buraya girerse aldıkları şey bilgi değil, şehrin nasıl unutma yaptığının resmi olur — ve @[Levha Sahibi — Perhun Mizan](entity:516a595f-5d69-5434-bf97-b8d920505567)'ın *\"bu şehir hastalanmayacak biçimde planlandı\"* cümlesi bu sokağı görmüş biri için başka duyulur."
+      }
+    },
+    "afba05e5-655c-5efa-8a58-a166c5594cd9": {
+      "name": "Nehir Yükleme Alanı",
+      "type": "location",
+      "source": "Aegis — Meridia: Birinci Perde, dnd5e",
+      "description": "Altın Nehir'in mavnalarının boşaltıldığı alan. Yük surun dışında bekler, kağıdı içeride yazılır.",
+      "image_path": "media/Artwork/Nehir-Yükleme-Alanı.webp",
+      "images": [],
+      "tags": [
+        "lucid triton",
+        "nehir",
+        "yük"
+      ],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "environment": "Sur dışı iskele ve sur içi kantar avlusu",
+        "danger_level": "Medium",
+        "description_long": "> Surun dışındaki iskelede mavnalar yan yana bağlı, ve halatlar gerildikçe ahşap inliyor. Islak çuval, nehir çamuru ve kenevir kokuyor. Bir amele sırtındaki çuvalı kantarın kefesine bırakıyor, kefe sarsılıyor, ve kantarın başındaki kâtip rakamı yüksek sesle söyleyip defterine yazıyor. Surun dibindeki dar kapıdan içeri giren yük arabaları teker teker duruyor.\n>\n> Duvarın kapının solunda kalan kısmında, taşların arasındaki harç yeni sıvanmış ve rengi tutmamış. Kantarcı bakışınızı yakalıyor ve elindeki defteri kapatıyor.\n\n@[Elymsyr](entity:1653014b-ecac-54c8-96cf-6f096e9ae42e) yükü kıtaya sokar; **Altın Nehir**'in mavnaları o yükün başkente düşen payını yukarı taşır. Şehir yine hiçbir şey üretmez — burada olan şey **teslim**, transit değil.\n\n## Alan\n\n- **Sur dışı iskele.** Mavnaların bağlandığı ahşap rıhtım ve bekleme alanı. Yük gece boyunca burada kalır.\n- **Kantar.** Surun dibinde. Tartılan her çuval deftere geçer, ve rakam yüksek sesle söylenir.\n- **Dar kapı.** Yükün sur içine alındığı kapı; büyük kapılardan ayrı tutulur.\n- **Sur içi avlu.** Kalem odası ve ambarlar. Kağıt buradan @[Sınır ve Ticaret Loncası Divanhanesi](entity:2ab43c29-08ad-56c1-bc30-7ce6fc7c19c6)'ne gider.",
+        "parent_location_ref": {
+          "_ref": "location",
+          "name": "Lucid Triton"
+        },
+        "secrets": "**Sur onarımı kağıt üstünde kaldı.** Kantarın solundaki duvar parçası onarılmış görünüyor ama yalnız yüzü sıvanmış; harç derine gitmemiş. @[Levha Sahibi — Perhun Mizan](entity:516a595f-5d69-5434-bf97-b8d920505567)'ın Meclis'teki *\"bu şehir hastalanmayacak biçimde planlandı\"* cümlesinin fiziksel karşılığı bu duvar.\n\nBir karakterin bunu görmesi için zar gerekmez, durup bakması yeterli; ne olduğunu anlaması için @[Mimarlık ve Planlama Loncası](entity:1a9423bb-798d-51a9-937a-6076db02a9d8)'nı ya da taş işini bilmesi gerekir.\n\n**Yük surun dışında geceler.** Burası şehrin kaydın dışında kalan tek yeri: içerisi yazılı, dışarısı bekliyor."
       }
     },
     "1653014b-ecac-54c8-96cf-6f096e9ae42e": {
@@ -1681,7 +1993,7 @@
         },
         "location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Yukarı Çarşı"
         },
         "attitude_ref": {
           "_lookup": "attitude",
@@ -1716,7 +2028,7 @@
         },
         "location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Şifacılar Kışlası"
         },
         "attitude_ref": {
           "_lookup": "attitude",
@@ -1751,7 +2063,7 @@
         },
         "location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Aşağı Çarşı"
         },
         "attitude_ref": {
           "_lookup": "attitude",
@@ -1781,7 +2093,7 @@
       "attributes": {
         "location_ref": {
           "_ref": "location",
-          "name": "Lucid Triton"
+          "name": "Şehir Kapıları"
         },
         "attitude_ref": {
           "_lookup": "attitude",

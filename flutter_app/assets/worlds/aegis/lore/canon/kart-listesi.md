@@ -113,7 +113,7 @@ anlatıyla yazılır, `pages[]` içindeki rakamlar kilitlenmez.
 Haneler ayrı kart değil — ait oldukları loncanın kartı içinde yazılır. Bir hane
 masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi kartını alır.
 
-## 3. `location` — 18
+## 3. `location` — 30
 
 | Kart | Üst (`parent_location_ref`) | Ne | Durum |
 |---|---|---|---|
@@ -135,6 +135,18 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Ravenhall Avlusu** | Meridia | Rünlü taş dairesi. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
 | **Cinervik** | Meridia | Yol köyü. Han, at kiralama, nalbant. Söylenti bol **ve yanlış** | ✅ |
 | **Argenfon** | Meridia | Kıyı köyü. Balıkçılık, Deniz Festivali, paladin dostluğu | ✅ |
+| **Meclis Binası** | Lucid Triton | Dilekçe avlusu, altı loncanın kalemi; Meclis ve Mühür salonlarının üstü | ✅ |
+| **Kalem Binası** | Lucid Triton | Meclis'in arkası. İnsan burada yazılır, geçiş burada imzalanır | ✅ |
+| **Kayıt Salonu** | Kalem Binası | Ad koyma = kayda geçme. Dört kutu: ad · hane · lonca · kefil | ✅ |
+| **Sınır ve Ticaret Loncası Divanhanesi** | Lucid Triton | Orvan'ın loncasının merkezi. En eski mühür, en bakımsız bina | ✅ |
+| **Büyücü Loncası Akademisi** | Lucid Triton | Lisans masası, ışınlanma kaydı, sınama odası | ✅ |
+| **Şifacılar Kışlası** | Lucid Triton | Çırak koğuşu, eczane, ölüm sebebi beyanı. Sindri burada | ✅ |
+| **Yukarı Çarşı** | Lucid Triton | Ruhsatlı çarşı, ayar masası, görünür kolluk. Mallar karışık | ✅ |
+| **Aşağı Çarşı** | Lucid Triton | Sur dibi: tamir, ikinci el, yazısız borç devri | ✅ |
+| **Mimar Meydanı** | Lucid Triton | Ana meydan. Heykel, fener disiplini, törenler | ✅ |
+| **Şehir Kapıları** | Lucid Triton | Girişin yazıldığı yer; gündüz ve gece defterleri ayrı | ✅ |
+| **Sessiz Sokak** | Lucid Triton | Eski tanrıların sokağı; hiçbir mahalle defterinde yok | ✅ |
+| **Nehir Yükleme Alanı** | Lucid Triton | Altın Nehir'in mavnaları, kantar, sur dışı ve içi | ✅ |
 
 ## 4. `npc` — 35
 
@@ -394,7 +406,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 21 | 1 | — | 22 |
-| `location` | 18 | — | — | 18 |
+| `location` | 30 | — | — | 30 |
 | `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
 | `creature-action` | 13 | — | — | 13 |
@@ -410,13 +422,18 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **160** | **12** | **—** | **172** |
+| **Toplam** | **172** | **12** | **—** | **184** |
 
-**160/172 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
+**172/184 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
 dört okul `trait`'i, `creature-action/Siperi Uzat` + `Siperi Ör` ve `pool:siper` —
 164'ten 172'ye. Wizard'a çağrı zarına girmeyen bir destek hattı yazıldı, ve siper
 aynı turda **günde bir / kırılabilir** hâline çekildi;
 [`alt-siniflar.md` §4](alt-siniflar.md).)*
+
+**Lucid Triton turu (2026-09-16, 0.9.0):** başkente 12 alt mekan yazıldı — 172'den 184'e.
+`Meclis Salonu` ve `Mühür Salonu`'nun üstü **Meclis Binası**, `Karşı-İmza Masası`'nınki
+**Kalem Binası** oldu; `Kildrak Ferrun` · `Kandil` · `Sindri` · `Çavuş Krusk` kendi
+mekanlarına taşındı. Nehrin adı bu turda kondu: **Altın Nehir** (`bolgeler.md` §9 madde 5).
 
 Öncesi: **152/164 ✅** *(2026-09-13, denge turu: dört `Pençe` kartı iki karta indi (**Pençe Saldırısı** · **Güçlü Pençe Saldırısı**), `trait/Bulaştıran Yara` kaldırıldı, ve bulaşma tek bir yeniden-şarjlı eyleme taşındı: **Sıçrayıp Isırma**.)*
 
