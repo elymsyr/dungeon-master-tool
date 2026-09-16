@@ -45,6 +45,17 @@
 > Başkumandan'ın refakatçi teklifi çıktı (§9 madde 41–42) · **Gizli Liman'da insan yazılmaz,
 > yalnız mal** — limanda silinen satır yok (§7, §7.5, §9 madde 43).
 >
+> **2026-09-16 revizyonu (kapı turu):** kartlar artık karakterlerin ya da dünyanın
+> ne *yapacağını* yazmıyor; **kilit davranışları** yazıyor. Her sahnenin `beats`
+> alanının başında bir **`## Kapı`** bloğu var: *bu sahne ne zaman durur* + *hangi
+> kapılar açılabilir* + *anahtarları*. Görev kartlarının `objective` alanı güzergah
+> olmaktan çıkıp **açık kapılar listesine** döndü, ve her görevin **birden çok
+> kapanışı** var. Üç kilit anı sahneye çevrildi: **Kapıya En Yakın Masa** (Halim →
+> Orvan'ın adı), **Dilekçe Avlusu** (Meclis'e giriş), **Ayar Masası** (yüzük →
+> liman). Gerçek adların anahtarı yazıldı (alyansların içindeki *C. & P. Greenbottle*
+> ve tarif), ve Ravenhall patikasının ikinci anahtarı çürümeden söz etmek oldu.
+> *"Karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (§4.4, §5).
+>
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
 > §10'da ayrı duruyor — kartların içine girmez.
 
@@ -561,7 +572,9 @@ değişkenlikte, Kromanna bedende.
 
 ### 4.4 Tedavi
 
-**Bilinen bir tedavi yok** ve Act 1'de kimse bulmaz.
+**Blight'ı durdurmanın bilinen bir yolu yok** — Meridia'da kimse bilmiyor, ve
+kartlarda bir tedavi durmuyor. Masanın denemesi bir hata değil; dünyanın cevabı
+sessizlik.
 
 - *Lesser Restoration* — Bir sonraki hastalık zarına +2 verir. **Yapan 1 seviye
   Exhaustion alır.**
@@ -623,13 +636,14 @@ ve buradan çıkacak son bilgi odur.
 > 2026-09-14, README A3).
 
 Üçü hastalığın seyrinin sonunda ([§4.2](act1.md)). Dönüşüm bir seçimin cezası değil,
-hastalığın kendi yolu (08 §4) — kimse bilmiyor, kimse durduramıyor. Anı DM seçer;
+hastalığın kendi yolu (08 §4) — kimse bilmiyor, ve durdurmanın bilinen bir yolu yok.
+Karakterlerin hiçbir kararı eşiği tetiklemez, hiçbiri geciktirmez. Anı DM seçer;
 kartlar yalnız eşiği söyler. *Şafak* bu bölümün ve iki kartın adı olarak kaldı, bir
 saat olarak değil.
 
-**Köylüler geceyi köyde geçirmeyi önerir** çünkü yol karanlıkta tehlikeli ve
-konuk göndermek ayıp; Duran bunu söyler, Milo oda hazırlar. Bu bir yönlendirme
-değil, köyün alışkanlığı. Kalmak da gitmek de masanın işi.
+**Köylülerin geceyi köyde geçirme teklifi** bir yönlendirme değil, köyün
+alışkanlığı: yol karanlıkta tehlikeli ve konuk göndermek ayıp. Duran bunu söyler,
+Milo oda hazırlar. Kalmak da gitmek de masanın işi, ve ikisi de eşiği oynatmaz.
 
 ### 5.1 Hâller — dönüşümden sonra köy
 
@@ -641,8 +655,11 @@ kimin durduğu.**
 | **Ayakta** | Ölen var, köy yaşıyor. Kapılar açık, ocak yanıyor, erzak para istemez. Duran borçlu ve borcunu biliyor: konuşmadığı şeyleri konuşur. Üçlünün üstü aranabilir ([§3.3](act1.md)) |
 | **Kırılmış** | Köyün çoğu ölü; şansa sağ kalanlar var ve çoğu o gün yola çıkar. Üç Dönüşmüş **serbest** — nereye gittikleri DM'in. Ocak sönük, kapılar açık kalmış, kazan devrilmiş |
 
-**İki hâlde de doğru olanlar.** Halim ([§3.5](act1.md)) köydeyse kaçar; sağ dönerse
-Gümüşsu'da olan şey Sınır ve Ticaret koltuğuna ulaşır ve söylenti artar. Ve köyden sağ çıkan kim varsa aynı iki
+**İki hâlde de doğru olanlar.** Halim'in ([§3.5](act1.md)) burada kalacak bir sebebi
+yok — işi bakmak ve dönüp anlatmaktı, ve kalıp dövüşmesi için ikna edilemez. Sağ
+dönerse Gümüşsu'da olan şey Sınır ve Ticaret koltuğuna ulaşır ve söylenti artar;
+karakterler oradaysa adları da o anlatının içindedir (@Kapı Önündeki Teklif'in
+tetiklerinden biri). Ve köyden sağ çıkan kim varsa aynı iki
 cümleyi taşır: *"hastaydılar"* ve *"buralı değillerdi."*
 
 **Kurtarılabilirlik (06 #8 ✅):** "ayakta" hâli masanın ilk zaferidir — kazanmak
@@ -726,7 +743,7 @@ hâlleri zaten Aşama 5'te bitmişti ([§4.2](act1.md)). Kurtarılacak olan üç
 
 ## 6. Sonrası — açılan kapılar
 
-Savaştan sonra yön **oyuncuya kalır.** Köyün elinde şunlar var:
+Dönüşümden sonra yön **masanın.** Köyün elinde şunlar var:
 
 - **"Hastalık" / "Blight"** — köylüler adı koyar; ne olduğunu bilmezler.
 - **"Bir limandan geldiler"** — kimin söylediğine göre hangi liman değişir (§8).
