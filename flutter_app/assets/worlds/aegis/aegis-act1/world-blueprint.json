@@ -1008,7 +1008,8 @@
           "images": [
             "media/Artwork/Elymsyr.webp"
           ],
-          "danger_level": "Medium"
+          "danger_level": "Medium",
+          "map": "media/Maps/Elymsyr.webp"
         }
       },
       {

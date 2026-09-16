@@ -7,7 +7,7 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.9.2",
+    "pack_version": "0.9.3",
     "counts": {
       "campaign": 1,
       "lore": 22,
@@ -1161,7 +1161,8 @@
           "name": "Meridia"
         },
         "secrets": "**Elymsyr'de söylentinin izi defterde durur.** Hangi gemi gelmedi, hangi yük eksik boşaltıldı, hangi mürettebat karaya çıkmadı: gümrük defterleri okumasını bilene bunları söyler (@[Arşivci](entity:a62099dd-e7e9-5dca-9ebe-9485bcbc07e6)).\n\nKentin üç çatlağı üç ayrı kartta duruyor: valinin defteri (@[Gümrük Binası](entity:5878e8a6-bf8d-5497-8787-117b3aa401de)), bakımsız zincir (bu kartta), ve gece boşaltmaları (@[Aşağı Rıhtım](entity:67d75e7a-899a-5ce7-aa13-800f966bf09a)).\n\n**Kent kapanmıyor.** Kapı hep açık, zincir hep suyun altında. Bu bir ihmal gibi görünür; aslında bir karardır — akış durursa @[Sınır ve Ticaret Loncası](entity:efb11a6c-d65f-5368-a134-d42b5ddb1fd6) aç kalır.",
-        "danger_level": "Medium"
+        "danger_level": "Medium",
+        "map": "media/Maps/Elymsyr.webp"
       }
     },
     "5878e8a6-bf8d-5497-8787-117b3aa401de": {
