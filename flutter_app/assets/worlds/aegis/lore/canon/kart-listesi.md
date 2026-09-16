@@ -113,7 +113,7 @@ anlatıyla yazılır, `pages[]` içindeki rakamlar kilitlenmez.
 Haneler ayrı kart değil — ait oldukları loncanın kartı içinde yazılır. Bir hane
 masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi kartını alır.
 
-## 3. `location` — 30
+## 3. `location` — 33
 
 | Kart | Üst (`parent_location_ref`) | Ne | Durum |
 |---|---|---|---|
@@ -129,7 +129,10 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
 | **Meclis Salonu** | Lucid Triton | Altı koltuğun toplandığı oda; §8'in iki sahnesinin yeri | ✅ |
 | **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
-| **Elymsyr** | Meridia | Resmi kapı; ikinci adı **Claport**. Teraslı taş kent, gnome vinçleri, gümrük. Mal buradan geçer, **kağıt şehre gider** | ✅ |
+| **Elymsyr** | Meridia | Resmi kapı; ikinci adı **Claport**. Altın Nehir'in kanyon ağzında, iki yakaya kurulmuş. Hep açık kapı ve kalkmayan zincir bu kartta. Mal buradan geçer, **kağıt şehre gider** | ✅ |
+| **Gümrük Binası** | Elymsyr | Yükün açıldığı, tartıldığı ve yazıldığı salon; valinin odası üst katta | ✅ |
+| **Aşağı Rıhtım** | Elymsyr | İki yakadaki antrepolar, hangarlar, gnome vinçleri. Gece boşaltmalarının yeri | ✅ |
+| **Kanyon Asansörleri** | Elymsyr | Kanyon duvarındaki ahşap hat; mal iç yerleşimlere buradan çıkar. Halatçıların kendi çetelesi | ✅ |
 | **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
 | **Gözcü Kuleleri Hattı** | Votumar | İşaret ağı: gece ateş, gündüz dev aynalar. En uçta deniz feneri | ✅ |
 | **Ravenhall Avlusu** | Meridia | Rünlü taş dairesi. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
@@ -406,7 +409,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 21 | 1 | — | 22 |
-| `location` | 30 | — | — | 30 |
+| `location` | 33 | — | — | 33 |
 | `npc` | 25 | 10 | — | 35 |
 | `monster` | 4 | — | — | 4 |
 | `creature-action` | 13 | — | — | 13 |
@@ -422,13 +425,30 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **172** | **12** | **—** | **184** |
+| **Toplam** | **175** | **12** | **—** | **187** |
 
-**172/184 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
+**175/187 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
 dört okul `trait`'i, `creature-action/Siperi Uzat` + `Siperi Ör` ve `pool:siper` —
 164'ten 172'ye. Wizard'a çağrı zarına girmeyen bir destek hattı yazıldı, ve siper
 aynı turda **günde bir / kırılabilir** hâline çekildi;
 [`alt-siniflar.md` §4](alt-siniflar.md).)*
+
+**Elymsyr turu (2026-09-16):** resmi limana 4 alt mekan yazıldı — 184'ten 188'e; sonra `location/Boğaz ve Zincir` geri çekildi (187), içeriği şehir kartının **Kapı ve zincir** bölümüne taşındı: boğaz kendi başına bir mekan değil, kentin bir özelliği.
+Kentin kaynak metni kanona alındı: ordunun adı **Demir Lejyon** (`bolgeler.md` §9 açık 2'nin
+ad yarısı kapandı), kent **iki parça** (su üstü giriş yapıları + yamaç terasları), balistalar
+örtülü ve **ticareti ürkütmemek için** saklı, kent kıtanın **yüzü**, ve ırklara göre oturmuş
+bir işbölümü. Dört NPC tek "Elymsyr" kartından kendi mekanlarına dağıldı; `scene/Gümrük
+Rıhtımı` artık `Gümrük Binası`'na bağlı. `lore/Fihrist` s.5 yer ağacı yeniden yazıldı —
+Lucid Triton'ın 12 alt mekanı da oraya girdi.
+
+*Aynı turda yazılıp geri alındı:* `scene/Gece Boşaltması` · `scene/Zincir Denemesi` ·
+`encounter/Antrepo Araması`. Zincir sahnesi §2.3'ün *"karar verilmeden manzara, sonra
+sahne"* kuralına aykırıydı (M0.6 açık), antrepo baskını da "Yazılmayacaklar"daki *kavga
+bir kurgu değil bir sonuç* maddesine. Taşıdıkları bilgi mekan kartlarının `secrets`
+alanında duruyor.
+Kentin coğrafyası kanona girdi (`bolgeler.md` §2): **Altın Nehir**'in kanyon ağzı, iki
+yakaya kurulmuş ve ağzın dışına taşmış kent, **hep açık kapı**, ve **uzun zamandır
+kaldırılmayan zincir**. **Teraslar** bilerek kart değil: NPC'si ve sahnesi yok, manzarası ana kartta duruyor.
 
 **Lucid Triton turu (2026-09-16, 0.9.0):** başkente 12 alt mekan yazıldı — 172'den 184'e.
 `Meclis Salonu` ve `Mühür Salonu`'nun üstü **Meclis Binası**, `Karşı-İmza Masası`'nınki

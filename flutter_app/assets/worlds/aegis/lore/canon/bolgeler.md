@@ -207,11 +207,26 @@ hesaplanamaz") için ilk çivi. **Diğer mesafeler hâlâ yazılmadı** ve uydur
 
 ## 2. Elymsyr — resmi kapı
 
-Kıtanın batısında, dağları yaran derin bir yarıktan içeri süzülen nehrin ağzında.
-Meridia'nın **resmi** deniz kapısı: açık, hızlı, kayıtlı — ve tam da bu yüzden
-riskli (README §2, adım 5).
+Kıtanın batısında, **Altın Nehir**'in denize döküldüğü ağızda. Nehir doğunun ve
+güneyin dağlarından iner, Lucid Triton'un dibinden geçer, ve burada iki uzun kanyonun
+arasından denize açılır. Meridia'nın **resmi** deniz kapısı: açık, hızlı, kayıtlı —
+ve tam da bu yüzden riskli (README §2, adım 5).
 
-**Manzara:** dağın dik yamacına teraslar halinde kurulmuş taş bir kent. Nehir boyunca
+**Kuruluş (KARAR, 2026-09-16).** Kent bir kıyı kenti değil bir **ağız** kentidir:
+nehrin geniş ağzına, **iki yakaya birden** kurulmuş, ve ağzın dışına, kıyıya doğru
+taşmıştır. Yakalar arasında köprü yoktur; mavnalar gider gelir. Kentin kapısı
+geniştir ve **her zaman açıktır**; gerektiğinde gerilen zincir sistemiyle korunur
+(§2.3). İçeriye doğru, girişten sonraki ilk kilometrelerde kanyon duvarına çakılmış
+ahşap yapılar, geçitler ve **asansörler** görünür: kuzey ve güneydeki yakın
+yerleşimlerin malı gemiyle değil, buradan **yukarı çekilerek** gider.
+
+**Kent iki parçadır.** Birincisi nehrin ağzında, **su üstüne kurulmuş giriş
+yapıları**: kazıklar üstündeki iskeleler, gümrük ve bekleme yapıları — gemi önce bunlara
+yanaşır. İkincisi dağların dik yamaçlarına kurulmuş **teraslı taş binalar**: evler,
+antrepolar, meyhaneler, en üstte valinin sarayı. Suya kurulan kısım işler, kayaya
+kurulan kısım yaşar.
+
+**Manzara:** kayaya oturtulmuş, teraslar halinde yükselen taş bir kent. Nehir boyunca
 kilometrelerce antrepo ve hangar; üstlerinde gnome işi devasa vinçler ve yük
 asansörleri, hepsi çalışır halde, hepsi bakımlı. Ortak lisanın yanında yarım düzine
 dış lehçe duyulur. Kent, kıtanın **tek yüksek sesle konuşulan** yeridir.
@@ -220,6 +235,10 @@ dış lehçe duyulur. Kent, kıtanın **tek yüksek sesle konuşulan** yeridir.
 
 Kenti Konsey'in atadığı bir **Gümrük Valisi** ve ona bağlı bürokratlar yönetir.
 Buradaki siyasetin tamamı tek bir şey üzerinedir: **kayıt ve denetim.**
+
+**Yabancı diplomasisi.** Dış dünyadan gelen elçi ve tüccar için kıtanın başladığı yer
+burasıdır: Meridia'nın **yüzü** Lucid Triton değil Elymsyr'dir. Başkente ulaşan elçi
+zaten bir kez kaydedilmiş, bir kez tartılmış ve bir kez karşılanmış olur.
 
 Ve kanonun kuralı burada da işliyor ([`lonca-sehir.md` §1](lonca-sehir.md)): Konsey
 adına konuşan herkes aslında bir loncanın adına konuşur. Elymsyr'in gümrüğü
@@ -238,7 +257,8 @@ Bu, Lucid Triton'un ekonomisini tamamlayan yarıdır. Şehir *"kıtanın malı b
 çıkmaz, buraya **yazılır**"* diyordu ([`lonca-sehir.md` §5](lonca-sehir.md)). Malın
 fiziksel olarak geçtiği yer **burası:**
 
-- Baharat, kumaş, nadir maden, ince alet — hepsi Elymsyr'den girer.
+- Baharat, ipek ve kumaş, nadir maden, ince alet ve mekanizma parçası — hepsi
+  Elymsyr'den girer.
 - Her yük gümrük memurları tarafından didik didik edilir; kaydı çıkar, kağıt Lucid
   Triton'a gider, mal içeri.
 - Kentin zenginliği maldan değil **geçiş ücretinden**; yani Elymsyr ile Lucid Triton
@@ -254,16 +274,25 @@ işçilik (§1.5). Sebebi ahlaki değil muhasebi: kaçak mal, ücreti ödenmemi�
 
 ### 2.3 Savunma — zincir
 
-Boğazın iki yanındaki yüksek kulelerde **Nehir Muhafızları** konuşlanmış: düzenli
-ordunun nehir ve deniz güvenliğine bakan kolu (§9 açık 2). Dağ yamaçlarına
-yerleştirilmiş balistalar boğaza giren her gemiyi menzilde tutuyor.
+Boğazın iki yanındaki yüksek kulelerde **Nehir Muhafızları** (*River Wardens*)
+konuşlanmış: **Demir Lejyon**'un — düzenli ordunun — nehir ve deniz güvenliğine
+uzmanlaşmış kolu. *(Ordunun adı bu turda kanona girdi; §9 açık 2'nin ad yarısı kapandı,
+komuta yarısı açık.)*
+
+Dağ yamaçlarına yerleştirilmiş balistalar boğaza giren her gemiyi batırabilecek
+kapasitede. **Uzun zamandır kullanılmadılar**, ve üstleri örtülü duruyor — sebebi bakım
+değil görüntü: açıkta duran bir balista ticaret ağını ürkütür. Kentin savunması
+saklanmıyor, **nazikleştiriliyor.**
 
 > **Zincir.** Nehrin girişinde, iki kıyıdaki devasa vinçlerle kontrol edilen, suyun
 > altından yükselen bir demir zincir sistemi var. Kalktığında nehre girmek fiziksel
 > olarak imkansız hale gelir.
 
-Zincir normalde suyun altında yatar ve yılda birkaç kez, tören havasında denenir.
-Kentin çocukları denemeyi izlemeye gider.
+**Zincir uzun zamandır kaldırılmadı (KARAR, 2026-09-16).** Eskiden yılda birkaç kez,
+tören havasında denenirdi ve kentin çocukları denemeyi izlemeye giderdi; şimdi büyüyen
+çocuklar zinciri hiç kalkarken görmedi. Denemeyi kimse yasaklamadı, kimse de istemedi:
+bir deneme günü boğaz kapanır, ve o günün hesabını kimse yazmak istemiyor. Mekanizmanın
+bakımsızlığı (§2.7, nehir muhafızı çavuşu) bu sessizliğin sonucu değil sebebidir.
 
 🟡 **Zincirin ne zaman kalkacağı bir karara bağlı: M0.6** (Kara Gemiler ablukasının
 zamanı, README §3.2). Abluka gelirse Elymsyr'in "donanma riski" soyut bir tehlike
@@ -279,6 +308,14 @@ ve bu onları kıtanın geri kalanından ayırıyor: **burada yabancı bir olay 
 
 Yerel söz kenti özetliyor: *"Misafir kapıda karşılanır, kalpte değil."* Mesafeli ama
 saygılı — ve tamamen ticari.
+
+**Demografi.** Kentin işbölümü ırklara göre oturmuş, ve kimse bunu bir kural sanmıyor:
+**insanlar** idarenin ve askerin merkezinde; **gnomelar ve cüceler** vinçlerin, yük
+asansörlerinin ve zincir sisteminin bakımında — kentin mühendislik harikaları onların
+elinden çıktı; **yarı-elfler** çevirmenlikte ve arabuluculukta en çok aranan taraf.
+Bunların üstüne, liman bölgesinde her zaman **geçici konaklayan yabancılar** var: başka
+kıtaların ırkları (tabaxi, ejderdoğan ve adı burada bilinmeyenler). Meridia'nın geri
+kalanında bir olay olan şey burada bir salı günüdür.
 
 ### 2.5 Bilgi eğimi — söylenti bol ve **kayıtlı**
 
@@ -703,10 +740,11 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 
 1. **On NPC'nin adı** (§2.7, §3.7, §4.6). Kart-listesi'nin adlandırma kuralları
    (üç katman: iki isim / tek isim / lakap) hazır; ad turu ayrı bir iş.
-2. **Düzenli ordunun adı ve komutası.** `AE`'nin "Demir Lejyon"u bu belgeye
-   **alınmadı** — kanonda ordunun adı yok. Ve daha ağır soru: Başkumandan'ı Konsey
-   atıyorsa, koltukları loncalar doldurduğuna göre **hangi lonca atıyor?** Cevap,
-   Suretsiz'i o koltuğa kimin oturttuğunu söyler (§3.1).
+2. **Düzenli ordunun komutası.** ~~Adı~~ — **AD KAPANDI (2026-09-16):** ordunun adı
+   **Demir Lejyon**, ve **Nehir Muhafızları** (*River Wardens*) onun nehir/deniz koludur
+   (§2.3). Açık kalan ağır yarı duruyor: Başkumandan'ı Konsey atıyorsa, koltukları
+   loncalar doldurduğuna göre **hangi lonca atıyor?** Cevap, Suretsiz'i o koltuğa kimin
+   oturttuğunu söyler (§3.1).
 3. **Suretsiz Votumar'da ne arıyor** (§3.6). Arşivin cevabı (mızrağın parçası) README §1
    ile düştü; yerine bir şey konmadı. Act 1'i bloke etmiyor — perde şatoya varmadan da
    kapanıyor — ama `npc/Başkumandan` kartının `secrets` alanı bu karar verilmeden
