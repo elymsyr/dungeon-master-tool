@@ -153,6 +153,7 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | A1 | **Anlatım üslubu: WotC read-aloud** | Kart gövdelerinin ve sahne metinlerinin üslubu karara bağlandı — atmosferik, duyusal, eyleme hazır. Tolkien ağırlıklı kadim/destansı üslup ve hibrit denendi, **seçilmedi**. Uygulama kuralı §6.7 |
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
 | A3 | **Durum yazılır, olay takvimi yazılmaz** (2026-09-14) | Kartlar bir durum, mekanlar ve NPC'ler kurar; olayları saate ya da oyuncunun hamlesine bağlayıp *olacakmış gibi* yazmaz. *"Şafakta üçü döner"* → *"üçü son aşamaya geçmek üzere"*; *"Corvin şafaktan önce köye döner"* → *"Corvin ara ara köye uğrar"*; *"Orvan kapıda bekler ve teklif eder"* → Orvan'ın elinde bir teklif var, yapıp yapmayacağı masanın. Masadan gelen yorumlardan çıktı ([`oturum-kaydi.md`](oturum-kaydi.md)). Uygulama kuralı §6.8 |
+| A4 | **Votumar: Başkumandan şatoda değil** (2026-09-17) | Ordugahtan çıkmayan adam iki ay önce iki yardımcısından birini alıp başkente gitti, o gün bu gün kaleye uğramadı, ve hastalık söylentileriyle ilgilenmiyor. Şatoya emirler ağızdan geliyor; askerler yokluktan **açıkça** şikayetçi, sebebe dair şüphe ise fısıltı. Yokluğu **Paladin Askeri / Paladin Rütbelisi** geçmişi olan bir karakter önceden bilir, başkasının duyma ihtimali düşüktür. Kadro dörtten sekize çıktı ve **adlar kondu**; *Şüpheci Rütbeli* = şatoda kalan yardımcı **Aren**. Kanon: [`bolgeler.md` §3.6–3.7](lore/canon/bolgeler.md) |
 | 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. Gümüşsu bölümü ve açılış [`act1.md` §1–3](lore/canon/act1.md)'te yeniden kurgulandı — 07'deki ilkeler geçerli, sahne akışı değil |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
@@ -352,7 +353,9 @@ blueprint ya da medya değişirse zip'i yeniden üret:
 cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis-act1.zip aegis-act1
 ```
 
-### 4.8 Yazılan kartlar (0.8.2)
+### 4.8 Yazılan kartlar (0.11.0)
+
+**0.11.0 (2026-09-17) — Votumar turu.** **Beş yeni kart:** `npc/Ocak Ustası — Torvun` (cüce, alt katların ocakları) · `npc/Şato Kâtibi — Nerion` (elf, kayıt odası) · `npc/Kıyı Kardeşleri — Kessa, Bram ve Tomas` (susan gecenin sivil tanığı; üç kardeş tek kart) · `npc/Gözcü Yüzbaşısı — Drahan` (hattın şato ucu) · `quest/Yazılmayan Emir` (Votumar'ın kapı kartı). Votumar'ın dört kartı **adlandırıldı**: Başkumandan → **Varhan**, Kapı Komutanı → **Nevra**, Şüpheci Rütbeli → **Başkumandan Yardımcısı — Aren**, Kule Nöbetçisi → **Vrask**. Başkumandan iki aydır şatoda değil (karar A4); `location_ref`'i artık `Lucid Triton`, ve `location/Votumar` · `location/Gözcü Kuleleri Hattı` · `scene/Susan Kule` · `lore/Fihrist` (8. sayfa) bu duruma göre güncellendi. Görseller `tool/aegis_art` ile üretilip `media/Artwork/`'e girdi. Kanon: [`bolgeler.md` §3.6–3.7](lore/canon/bolgeler.md).
 
 **0.8.2 (2026-09-15).** Yeni kart yok. **Gizli Liman'da insan yazılmaz, yalnız mal** — Sicim'in
 defteri hangi geminin ne getirdiğini ve ne ödediğini yazar; limanda silinen satır yok. Sekiz kartın

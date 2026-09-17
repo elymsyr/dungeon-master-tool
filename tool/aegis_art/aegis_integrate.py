@@ -27,7 +27,7 @@ def sanitize(name: str) -> str:
     s = s.replace("'", "").replace("'", "").replace("'", "")
     s = s.replace('"', "").replace('"', "").replace('"', "")
     s = re.sub(r"\s+", "-", s)
-    s = re.sub(r"[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ\-]", "", s, flags=re.UNICODE)
+    s = re.sub(r"[^a-zA-Z0-9ığüşöçİĞÜŞÖÇâîûÂÎÛ\-]", "", s, flags=re.UNICODE)
     s = re.sub(r"-{2,}", "-", s)
     return s.strip("-") or "unknown"
 
