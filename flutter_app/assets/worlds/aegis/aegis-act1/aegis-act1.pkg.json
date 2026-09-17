@@ -1142,9 +1142,7 @@
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
       "description": "Meridia'nın resmi deniz limanı, ikinci adı Claport. Altın Nehir'in kanyon ağzında su üstüne ve yamaca kurulmuş; kıtanın kapısı ve yüzü.",
       "image_path": "media/Artwork/Elymsyr-Panorama.webp",
-      "images": [
-        "media/Artwork/Elymsyr.webp"
-      ],
+      "images": [],
       "tags": [
         "elymsyr",
         "liman",
