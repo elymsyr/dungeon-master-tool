@@ -352,7 +352,7 @@ SUBJECT = {
  "three sizes of iron spanner hanging from his belt, standing on the timber roof platform of "
  "a warehouse beside the oak gear housing and hemp rope drum of a great wooden treadwheel "
  "crane, the masts of sailing ships and stacked stone terraces behind him",
-"npc|Kule Nöbetçisi":
+"npc|Kule Nöbetçisi — Vrask":
  "A young powerfully built dragonborn, bronze scales dulled by salt and wind, a row of short "
  "spines running from the back of the head down the neck with one snapped off, bright yellow "
  "eyes, wearing the grey cloak and light armour of a coast watch, one callused hand on the "
@@ -448,10 +448,10 @@ LIGHT = {
 "npc|Nehir Muhafızı Çavuşu": "hard wind-blown daylight on a tower platform, cold light, sea glare behind",
 "npc|Vinç Ustası": "strong sun on a warehouse roof, high contrast, dust and grease catching the light",
 "npc|Çevirmen": "busy quay daylight broken up by crowd and rigging, dappled light",
-"npc|Başkumandan": "clean cold courtyard daylight, hard white highlights on flawless plate, a grey sky above",
-"npc|Kapı Komutanı": "the shade of a gatehouse arch with cold light from outside, the open register bright under her hand",
-"npc|Şüpheci Rütbeli": "one shuttered window throwing a single bar of light across a dim stone chamber, most of the face in shadow",
-"npc|Kule Nöbetçisi": "hard coastal sun and mirror glare, salt haze, bronze scales flashing",
+"npc|Başkumandan — Varhan": "clean cold courtyard daylight, hard white highlights on flawless plate, a grey sky above",
+"npc|Kapı Komutanı — Nevra": "the shade of a gatehouse arch with cold light from outside, the open register bright under her hand",
+"npc|Başkumandan Yardımcısı — Aren": "one shuttered window throwing a single bar of light across a dim stone chamber, most of the face in shadow",
+"npc|Kule Nöbetçisi — Vrask": "hard coastal sun and mirror glare, salt haze, bronze scales flashing",
 "npc|En Yaşlı Druid": "fog-diffused plateau light, cold silver air, a faint amber rune glow from below",
 "npc|Patika Gözcüsü": "overcast cliff-path light, cold green-grey, wet rock",
 
@@ -882,6 +882,81 @@ SUBJECT.update({
  "the opposite canyon wall rising the full height of the picture, the river a narrow green "
  "thread far down with barges on it the size of saucers, bales and barrels stacked waiting on "
  "the platforms",
+})
+
+
+# ---------------------------------------------------------------------------
+# 0.11.0 — Votumar kadrosu: dort yeni NPC + Yazilmayan Emir gorevi.
+# Ayni kural: kart basina tek baskin goruntu, tek guclu isik kaynagi.
+# ---------------------------------------------------------------------------
+
+FRAMING.update({
+    "npc|Kıyı Kardeşleri — Kessa, Bram ve Tomas": ("warm three figure group composition, all "
+                                                    "three faces visible and lit, the boat and "
+                                                    "the open sea behind them, figures large in "
+                                                    "frame"),
+    "quest|Yazılmayan Emir": ("close three-quarter view down onto the open register on the table, "
+                              "the gate and the empty courtyard falling away behind it"),
+})
+
+LIGHT.update({
+"npc|Ocak Ustası — Torvun":
+ "orange forge light from below and one side, the vault overhead lost in dark, coal glow and "
+ "sparks the only colour in the frame",
+"npc|Şato Kâtibi — Nerion":
+ "flat cold daylight through an open shutter with one small warm brazier at his elbow, ink and "
+ "paper the brightest things in the room",
+"npc|Kıyı Kardeşleri — Kessa, Bram ve Tomas":
+ "bright clear morning sun off the water, warm skin tones, the white cliffs glowing behind them "
+ "and light bouncing up from the wet stones, the happiest light in the set",
+"npc|Gözcü Yüzbaşısı — Drahan":
+ "hard late afternoon sun off the sea behind him, his face in its own shadow, the bronze disc "
+ "throwing one hard bright reflection",
+"quest|Yazılmayan Emir":
+ "cold grey daylight from an open gate, the empty column of the page the brightest surface in "
+ "the picture",
+})
+
+SUBJECT.update({
+"npc|Ocak Ustası — Torvun":
+ "A short barrel-chested dwarf smith in his sixties standing at the mouth of a forge cut into "
+ "living rock, a broad blunt nose and small round human ears, no pointed ears, the lower half of "
+ "his face smudged with soot, a thick red beard split into two braids "
+ "gathered in leather rings with the ends singed short, no eyebrows, wearing a leather apron "
+ "pitted with dozens of small burn holes, one hand on the haft of a hammer resting on an anvil, "
+ "behind him the iron gearing and rope drum of a wall winch and the glowing throat of a charcoal "
+ "forge, pale limestone vaults overhead, a small ledger and a stub of chalk on the anvil beside him",
+"npc|Şato Kâtibi — Nerion":
+ "A slender long-fingered elf clerk seated at a writing table in a cold stone record room, the "
+ "side of his right hand permanently greyed with ink, hair gathered at the nape with one loose "
+ "strand fallen forward, a quill still in his hand but not writing, a small brazier burning at "
+ "his elbow and a shutter open to grey daylight, tall shelves of bound watch registers and rolled "
+ "supply lists behind him, one register lying open with a page corner turned in",
+"npc|Kıyı Kardeşleri — Kessa, Bram ve Tomas":
+ "Three teenage siblings laughing together on a stony beach below white limestone cliffs on a "
+ "bright morning, a seventeen year old human girl standing beside a small clinker built boat "
+ "drawn up on the stones with a net over her shoulder and her hair in one thick braid, wearing a "
+ "man's oversized waxed canvas coat with the sleeves rolled twice, a fifteen year old human boy "
+ "balanced on the upturned keel pointing out to sea in the middle of a story with his mouth open, "
+ "knees patched, and a fourteen year old tiefling boy sitting on the gunwale grinning, red skin, "
+ "short backward curving horns, a slim tail with a scrap of rope tied at its tip, tying a knot in "
+ "a net cord with that tail to show off, buckets of fish and coiled net on the stones around them, "
+ "small coast flowers and a rune scratched into a rock at the waterline, the great white castle "
+ "wall far above on the cliff",
+"npc|Gözcü Yüzbaşısı — Drahan":
+ "An old heavy built dragonborn, a draconic humanoid with a scaled reptilian head and a blunt "
+ "muzzle, curved horns swept back from the skull, slit yellow eyes, no hair and no human face, "
+ "grey green scales worn thin at the muzzle and on the backs of the hands, a thin straight scar "
+ "above the left eye, wearing the grey cloak of a coast watch clasped at one "
+ "shoulder, standing with his hands clasped behind his back in the doorway of a signal station, "
+ "the line register lying closed on a stool beside him, an iron fire basin and a great polished "
+ "bronze signal disc on its swivel frame behind him, a chain of stone towers receding along the "
+ "cliffs",
+"quest|Yazılmayan Emir":
+ "An open watch register on a gatehouse table in a white limestone castle, the column headed for "
+ "orders empty down page after page, a quill dried in its stand and a stick of sealing wax never "
+ "used, one line of entry with no matching line of return, the great gate standing open beyond "
+ "with a single paladin in a white cloak on watch and the courtyard empty behind him",
 })
 
 if __name__ == "__main__":

@@ -216,10 +216,14 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **Başkumandan** *(insan görünümünde)* | İtaat ve zaman | **Suretsiz olduğunu** (`secrets`). Ne aradığı yazılmadı | Şatonun her kapısı; ve hiçbiri | 🟡 ad |
-| **Kapı Komutanı** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda **hiçbir emrin yazılı gelmediğini** | Şatoya giriş; ve kayıt evreninde en ağır kanıt: yazılı emir yokluğu | 🟡 ad |
-| **Şüpheci Rütbeli** *(insan / ejderdoğan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini | Çatlak — inanılacak ilk kurum içi ses | 🟡 ad |
-| **Kule Nöbetçisi** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** | 🟡 ad |
+| **Başkumandan — Varhan** *(insan görünümünde)* | İtaat ve zaman | **Suretsiz olduğunu** (`secrets`). Ne aradığı yazılmadı. **İki aydır şatoda değil** — başkentte, yanında iki yardımcısından biri | Şatonun her kapısı; ve hiçbiri | ✅ |
+| **Başkumandan Yardımcısı — Aren** *(insan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; şüphesinin bir kısmının geride bırakılmaktan geldiğinden korktuğunu | Çatlak — inanılacak ilk kurum içi ses, ve şatonun kalemi | ✅ |
+| **Kapı Komutanı — Nevra** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda **hiçbir emrin yazılı gelmediğini**; defterde çıkış satırı var, dönüş satırı yok | Şatoya giriş; ve kayıt evreninde en ağır kanıt: yazılı emir yokluğu | ✅ |
+| **Ocak Ustası — Torvun** *(cüce)* | Ocakların durmaması | İkmal emirlerinin de iki aydır ağızdan geldiğini; bunu kendi kusuru sandığını | Aynı eksiğin ikinci, daha kolay açılan tanığı | ✅ |
+| **Şato Kâtibi — Nerion** *(elf)* | Defterin eksiksiz kapanması | Gelmeyen bir gece kaydının boşluğunu kendi eliyle doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu | ✅ |
+| **Kule Nöbetçisi — Vrask** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** | ✅ |
+| **Gözcü Yüzbaşısı — Drahan** *(ejderdoğan)* | Hattın itibarı | O geceyi yazmamasının ağızdan bir emirle olduğunu; emri getireni tanımadığını | Hattın şato ucu: kaza değil karar — **ama kararı verenin adı hiçbir yerde yok** | ✅ |
+| **Kıyı Kardeşleri — Kessa, Bram ve Tomas** *(iki insan, bir tiefling)* | Teknenin ve birbirlerinin güvende kalması | Aynı gece kıyıdan bir ışık gördüklerini; o saatte orada olmamaları gerektiğini | Susan gecenin **sivil** tanığı; şatoya girmeden ulaşılır. **Üç kardeş, tek kart** | ✅ |
 
 **Ravenhall** — `bolgeler.md` §4.6
 
@@ -238,9 +242,10 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 > ~~*kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
 > Ustası). *Kaydı kim sildirdi* iki yerde (Sicim · Mine). *Kayıtsız geçiş nasıl
 > satın alınır* iki limanda birden (Sicim · Vinç Ustası). *Başkumandan'da bir
-> terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi).
+> terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi). *Votumar turunda bu hat
+> yediye çıktı — bkz. `quest/Yazılmayan Emir`.*
 
-**Adı bekleyen 10 NPC** (🟡): Elymsyr'in dördü, Votumar'ın dördü, Ravenhall'ın ikisi.
+**Adı bekleyen 6 NPC** (🟡): Elymsyr'in dördü, Ravenhall'ın ikisi. *(Votumar'ın kadrosu 2026-09-17'de adlandırıldı ve sekize çıktı.)*
 Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
 `npc/Konsey Aracısı`'nın **Kadife** olmadan önceki hali gibi.
 
@@ -309,13 +314,14 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 3
+## 10. `quest` — 4
 
 | Kart | Zincir | Durum |
 |---|---|---|
 | **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · plato. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
 | **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
+| **Yazılmayan Emir** | Votumar'ın kapı kartı: iki aydır yazılı emir yok, ve Başkumandan şatoda değil. Yedi taşıyıcı, üç hat (yazı yok · kayıt eksik · gören var); ikisi bir araya gelirse kurum içi ilk ses açılır | ✅ |
 
 ## 11. `background` — 9
 

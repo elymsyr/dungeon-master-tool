@@ -4,6 +4,8 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.11.0 — 195 entity** (2026-09-17). **Votumar turu.** Şatonun kadrosu dörtten sekize çıktı ve dört eski kart adlandırıldı (`bolge §3.7`). Yeni kanon (karar A4, `bolge §3.6`): **Başkumandan iki aydır şatoda değil** — iki yardımcısından birini alıp başkente gitti, kaleye uğramıyor, hastalık söylentileriyle ilgilenmiyor, ve emirler ağızdan geliyor; askerler yokluktan açıkça şikayetçi, sebebe dair şüphe fısıltı. Yokluğu **Paladin Askeri / Paladin Rütbelisi** geçmişi önceden bilir. *Şüpheci Rütbeli* artık **şatoda kalan yardımcı** (`npc/Başkumandan Yardımcısı — Aren`), ve *kurum içinden inanan ilk ses* onun ağzı. **Beş yeni kart:** `npc/Ocak Ustası — Torvun` (`bolge §3.4` cüce ocakları) · `npc/Şato Kâtibi — Nerion` (`bolge §3.4` kütüphane/kayıt) · `npc/Kıyı Kardeşleri — Kessa, Bram ve Tomas` (`bolge §3.5` çiçek ve rün; üç kardeş tek kartta — iki insan, bir tiefling, 14–18) · `npc/Gözcü Yüzbaşısı — Drahan` (`bolge §3.3` hattın şato ucu) · `quest/Yazılmayan Emir`. Görev **yedi taşıyıcıyı üç hatta** topluyor (yazı yok · kayıt eksik · gören var) ve hiçbir olay sırası yazmıyor (karar A3). **Emri kimin verdiği yazılmadı ve uydurulmadı** — Votumar'da kanıt yazıdır, ve bu hattın taşıdığı şey yazının yokluğudur.
+
 **Sürüm 0.10.0 — 190 entity** (2026-09-16). **Kapı turu.** Kartlar artık bir karakterin ya da dünyanın ne *yapacağını* yazmıyor; kapı açan **kilit davranışları** yazıyor (doktrin: `lore/canon/act1-kartlar.md` §0). 11 sahnenin hepsine `## Kapı` bloğu yazıldı: *bu sahne ne zaman durur* · *anahtarlar* · *buradan hangi kapılar açılabilir*. **Üç yeni kart, üçü de kilit sahnesi** ve üçü de daha önce bir NPC kartının `dmNotes`'una gömülüydü: `scene/Kapıya En Yakın Masa` (Halim → Orvan Sancar'ın adı; kaynak `act1 §3.5`, `§6.1`), `scene/Dilekçe Avlusu` (Meclis Salonu'na giriş; kaynak `lonca §1`, `act1 §6.1`, `liste §3` Meclis Binası satırı), `scene/Ayar Masası` (Kildrak yüzüğü okur, ad değil yön verir; kaynak `act1 §3.3` iz 3, `lonca §7`). Üç görev kartının `objective` alanı güzergah olmaktan çıkıp açık kapı tablosuna döndü ve her görev **çok kapanışlı** oldu; `quest/İyi Yazı` bir iş değil **kapı mekanizması** olarak yazıldı. İki anahtarsız kilide anahtar yazıldı: gerçek adlar (alyansların iç yüzünde *C. & P. Greenbottle*, ikinci taşıyıcı Orvan'ın tarife de tepki vermesi — `act1 §3.1`) ve Ravenhall patikası (gözcüyü ikna · çürümeden söz etmek — `bolge §4`). 15 kartta tek cümlelik ihlal düzeltildi, ve *"karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (`act1 §4.4`, `§5`).
 
 **Sürüm 0.9.3 — 187 entity** (2026-09-16). **Elymsyr kuşbakışı haritası.** Yeni kart yok. `location/Elymsyr` artık `map: media/Maps/Elymsyr.webp` taşıyor; harita kentin kanon coğrafyasını gösteriyor — iki yakaya birden kurulu kent, kazık üstüne kurulmuş su mahallesi, boğazdaki iki vinç kulesi ile suyun altında yatan zincir, köprüsüz kanal ve mavnalar, kanyon duvarındaki ahşap platformlar. Kaynak `tool/aegis_art/ref/elymsyr-üstten.jpeg`.
@@ -264,7 +266,7 @@ Kaynak kısaltmaları:
 | Cinervik | Meridia | `bolge §5.1` |
 | Argenfon | Meridia | `bolge §5.2` |
 
-## npc — 35
+## npc — 39
 
 | Grup | Entity | Kaynak |
 |---|---|---|
@@ -275,7 +277,8 @@ Kaynak kısaltmaları:
 | Meclis | Rektör — Quarion · Sınır ve Ticaret — Orvan Sancar · Kalfa Başı — Adrik Ferrun · Baş Otacı — Caramip Kalender · Sicil Ağası — Valen Custar · Levha Sahibi — Perhun Mizan | `lonca §6, §6.1–6.3, §10` (kırılma noktaları) |
 | Sokak | Corin Sancar · Kildrak Ferrun · Sindri · Kandil · Çavuş Krusk | `lonca §7` + `liste §2` (Corin'in karşı-imzası, Orvan'ın nüshası) + `liste` adlandırma (Kandil) |
 | Elymsyr | Gümrük Valisi · Nehir Muhafızı Çavuşu · Vinç Ustası · Çevirmen | `bolge §2.1, §2.7` |
-| Votumar | Başkumandan · Kapı Komutanı · Şüpheci Rütbeli · Kule Nöbetçisi | `bolge §3.1, §3.6, §3.7, §10` + `09 §2` (gerçek Başkumandan tutuluyor) + `08 §1` (Lucian'ın eli) |
+| Votumar | Başkumandan — Varhan · Başkumandan Yardımcısı — Aren · Kapı Komutanı — Nevra · Kule Nöbetçisi — Vrask | `bolge §3.1, §3.6, §3.7, §10` + `09 §2` (gerçek Başkumandan tutuluyor) + `08 §1` (Lucian'ın eli) |
+| Votumar | **Ocak Ustası — Torvun** · **Şato Kâtibi — Nerion** · **Kıyı Kardeşleri — Kessa, Bram ve Tomas** · **Gözcü Yüzbaşısı — Drahan** | `bolge §3.3` (işaret hattı) · `bolge §3.4` (cüce ocakları, kütüphanede elf/gnome) · `bolge §3.5` (kıyıya çiçek, taşa rün) + `bolge §3.6` (yazılı emir yokluğu) |
 | Ravenhall | En Yaşlı Druid · Patika Gözcüsü | `bolge §4.5–4.6, §10` |
 
 ## monster — 4 · creature-action — 3 · trait — 4 · curse — 1
@@ -287,7 +290,7 @@ Kaynak kısaltmaları:
 | Acıyı Tanımaz · Durmayan Adım · Kesik Kesik · Erken Güçlenme | `act1 §5.3` |
 | Blight — Enfeksiyon | `act1 §4.1–4.6` + `mek §6` (Yozlaşma) + `mek §7` (yapanın bedeli, şerbet) + `mek §12` |
 
-## scene — 14 · encounter — 1 · quest — 3
+## scene — 14 · encounter — 1 · quest — 4
 
 | Entity | Kaynak |
 |---|---|
@@ -308,6 +311,7 @@ Kaynak kısaltmaları:
 | Şafak Çatışması | `act1 §5, §5.1` + `mek §8, §12` + `bolge §6.1` |
 | Söylentinin Peşinde | `act1 §1, §5, §6, §6.1` |
 | Nereden Geldiler | `act1 §3.1–3.3, §7.5` + `lonca §6.2–6.3, §7` + `liste §4` iki taşıyıcı kuralı |
+| **Yazılmayan Emir** | `bolge §3.3, §3.6, §3.7` + `RM §3.1` karar A4 (Başkumandan şatoda değil, bilgi eğimi paladin geçmişine bağlı) |
 
 `lonca §8`'in *Adı tanıyan üye* sahnesi ayrı kart değil (`liste §8` on bir sahne
 sayıyor): içerik `Meclis Oturumu` beat 3'e ve Orvan Sancar'ın `secrets`'ına girdi.

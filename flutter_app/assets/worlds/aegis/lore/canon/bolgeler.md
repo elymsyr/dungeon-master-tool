@@ -442,6 +442,21 @@ gerekçe (mızrağın kayıp parçası) README §1 tarafından Act 1'den çıkar
 şey konmadı ve **uydurulmadı.** Kartın `secrets` alanı bu yüzden şimdilik ince: koltuk
 ele geçirilmiş, sebebi açık.
 
+**Başkumandan iki aydır şatoda değil.** Ordugahtan çıkmayan bir adam olarak bilinirdi;
+iki ay önce iki yardımcısından yalnız birini yanına aldı ve başkente gitti. O gün bu gün
+şatoya uğramadı, hastalık söylentileriyle ilgilenmedi, ve şatoya emirleri **ağızdan**
+ulaşıyor. Şatoyu geride bıraktığı yardımcı çeviriyor.
+
+**Askerler bundan açıkça şikayetçi**, ve bu şikayet fısıltı değil: yokluk herkesin
+gördüğü bir şey, ve bir komutanın yokluğundan yakınmak iftira sayılmaz. Fısıltı olan
+şey, yokluğun *sebebine* dair olandır. İkisini karıştırma — biri avluda konuşulur,
+öteki kapalı kapı ardında.
+
+**Bilgi eğimi burada kişiye bağlı.** Başkumandan'ın yokluğu Nişan'ın içinde konuşulan
+bir şeydir: **Paladin Askeri** ya da **Paladin Rütbelisi** geçmişi olan bir karakter
+bunu Votumar'a varmadan bilir. Böyle bir geçmişi olmayan bir masanın bunu duyma ihtimali
+çok düşüktür — şatonun derdi şatonun içinde kalır.
+
 **Çatlaklar var ve yalnız fısıltı düzeyinde.** Bazı yüksek rütbeli subaylar
 Başkumandan'ın emirlerindeki mantık hatalarını ve insani duygularını kaybetmiş soğuk
 tavrını fark etmeye başladı. Kimse yüksek sesle söylemiyor — söyleyen kişi, halkın
@@ -457,16 +472,26 @@ saldırmama emri Başkumandan'dan gelir ve askerler bunu *stratejik deha* diye
 yorumlamaya çalışır. Karar verilmeden bölge sakin; verildikten sonra bu bölüm
 perdenin en gergin yeri.
 
-### 3.7 NPC ihtiyacı — 4
+### 3.7 NPC kadrosu — 8
 
-`act1.md` §6'nın taslak satırları burada kanona dönüştü. Adlar ikinci turda.
+`act1.md` §6'nın taslak satırları burada kanona dönüştü. **Adlar kondu** (2026-09-17),
+ve kadro dörtten sekize çıktı: yazılı emrin kesilmesi tek bir subayın bildiği bir şey
+olmaktan çıkıp şatonun her katında ayrı ayrı görülen bir eksiğe döndü.
 
 | Rol | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **Başkumandan** *(= Suretsiz — `secrets`)* | İtaat ve zaman | **Kim olduğunu.** Ne aradığı yazılmadı (§9 açık 3) | Şatonun her kapısı; ve hiçbiri | 🟡 ad |
-| **Kapı komutanı** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda kaç emrin sözlü geldiğini — yazılı hiçbiri yok | Şatoya giriş; ve **yazılı emir yokluğu** — kayıt evreninde en ağır kanıt | 🟡 ad |
-| **Şüpheci rütbeli** *(insan ya da ejderdoğan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini | Çatlak. Masaya inanılacak ilk kurum içi ses | 🟡 ad |
-| **Gözcü kulesi nöbetçisi** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** (§3.3) | 🟡 ad |
+| **Başkumandan — Varhan** *(= Suretsiz — `secrets`)* | İtaat ve zaman | **Kim olduğunu.** Ne aradığı yazılmadı (§9 açık 3) | Şatonun her kapısı; ve hiçbiri. **İki aydır şatoda değil, başkentte** | ✅ |
+| **Başkumandan Yardımcısı — Aren** *(insan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; ve şüphesinin bir kısmının **geride bırakılmış olmaktan** geldiğinden korktuğunu | Çatlak. Masaya inanılacak ilk kurum içi ses, ve şatonun kalemi: iki aydır fiilen şatoyu o yürütüyor | ✅ |
+| **Kapı Komutanı — Nevra** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda kaç emrin sözlü geldiğini — yazılı hiçbiri yok; ve defterde Başkumandan'ın çıkış satırının olup dönüş satırının olmadığını | Şatoya giriş; ve **yazılı emir yokluğu** — kayıt evreninde en ağır kanıt | ✅ |
+| **Ocak Ustası — Torvun** *(cüce)* | Ocakların durmaması, ikmalin gelmesi | İkmal emirlerinin de iki aydır ağızdan geldiğini — ve bunu kendi kusuru sandığını | Aynı eksiğin ikinci, daha kolay açılan tanığı: bir subay değil bir usta (§3.4) | ✅ |
+| **Şato Kâtibi — Nerion** *(elf)* | Defterin eksiksiz kapanması | Şatoya hiç gelmeyen bir gecenin kaydını **kendi eliyle** doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu (§3.3, §3.4 kütüphane) | ✅ |
+| **Kule Nöbetçisi — Vrask** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** (§3.3) | ✅ |
+| **Gözcü Yüzbaşısı — Drahan** *(ejderdoğan)* | Hattın itibarı | O geceyi deftere geçirmemesinin **ağızdan bir emirle** olduğunu; emri getiren adamı tanımadığını | Hattın şato ucu. Kaybolan rapor bir kaza değil bir karardı — **ama kararı verenin adı hiçbir yerde yazılı değil** | ✅ |
+| **Kıyı Kardeşleri — Kessa, Bram ve Tomas** *(iki insan, bir tiefling; 14–18)* | Teknenin ve birbirlerinin güvende kalması | Aynı gece kıyıdan bir ışık gördüklerini; o saatte orada olmamaları gerektiğini (§3.5 çiçek ve rün) | Susan gecenin **sivil** tanığı: şatoya girmeden, deftere yazılmadan ulaşılır. Üç kardeş tek kart; ortancası zaten anlatmak istiyor | ✅ |
+
+> **Emri kimin verdiği yazılmadı, ve uydurulmayacak.** Drahan'a o geceyi yazmamasını
+> söyleyen adamın adı yok. Votumar'da kanıt yazıdır; bu hattın taşıdığı şey tam olarak
+> yazının yokluğudur.
 
 > **İki taşıyıcı kuralı:** *Başkumandan'da bir terslik var* cümlesi iki bağımsız yerde
 > duruyor — **şüpheci rütbeli** (insan sezgisi) ve **kulesi susturulmuş nöbetçi**
