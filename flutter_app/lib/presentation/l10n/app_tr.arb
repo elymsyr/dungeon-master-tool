@@ -1770,6 +1770,7 @@
   "lblIcon": "Simge",
   "lblDefault": "Varsayılan",
   "openMap": "Haritayı aç",
+  "openCard": "Kartı aç",
   "noMapAssigned": "Harita atanmamış",
   "mapHome": "Ana",
   "pinEditTitle": "İşareti Düzenle",

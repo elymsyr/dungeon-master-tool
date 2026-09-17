@@ -838,6 +838,12 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     notifier.setLocationPinHover(null);
                     notifier.drillIntoLocation(entity.id);
                   },
+                  onOpenCard: widget.onOpenEntity == null
+                      ? null
+                      : () {
+                          notifier.setLocationPinHover(null);
+                          widget.onOpenEntity!(entity.id);
+                        },
                 ),
               ),
             );
@@ -1517,6 +1523,19 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 // Draggable map pin (hold-and-drag to move)
 // ---------------------------------------------------------------------------
 
+/// Hard black outline for pin icon + label — 8 zero-blur shadows around the
+/// glyph. Keeps pins readable on light map backgrounds.
+const _pinOutline = <Shadow>[
+  Shadow(color: Colors.black, offset: Offset(-1, -1)),
+  Shadow(color: Colors.black, offset: Offset(1, -1)),
+  Shadow(color: Colors.black, offset: Offset(-1, 1)),
+  Shadow(color: Colors.black, offset: Offset(1, 1)),
+  Shadow(color: Colors.black, offset: Offset(0, -1.2)),
+  Shadow(color: Colors.black, offset: Offset(0, 1.2)),
+  Shadow(color: Colors.black, offset: Offset(-1.2, 0)),
+  Shadow(color: Colors.black, offset: Offset(1.2, 0)),
+];
+
 class _DraggablePin extends StatefulWidget {
   final MapPin pin;
   final DmToolColors palette;
@@ -1632,7 +1651,7 @@ class _DraggablePinState extends State<_DraggablePin> {
             widget.iconData,
             size: iconSize,
             color: displayColor,
-            shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+            shadows: _pinOutline,
           ),
           Transform.translate(
             offset: const Offset(0, -4),
@@ -1642,10 +1661,7 @@ class _DraggablePinState extends State<_DraggablePin> {
                 fontSize: _fontSize,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
-                shadows: const [
-                  Shadow(color: Colors.black, blurRadius: 3),
-                  Shadow(color: Colors.black, blurRadius: 6),
-                ],
+                shadows: _pinOutline,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1691,7 +1707,7 @@ class _DraggablePinState extends State<_DraggablePin> {
       items.add(
         PopupMenuItem(
           value: 'inspect',
-          child: _menuRow(Icons.open_in_new, 'See Card', palette),
+          child: _menuRow(Icons.open_in_new, L10n.of(context)!.openCard, palette),
         ),
       );
     }

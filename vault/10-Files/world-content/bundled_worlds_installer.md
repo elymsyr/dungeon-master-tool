@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/bundled_worlds_installer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-14
+updated: 2026-09-17
 tags: [file]
 ---
 
@@ -44,6 +44,8 @@ Five things are load-bearing and each fixes a way content used to vanish:
 3. **Failures are reported, not swallowed.** The old `catch (e) { }` per world is why a partially-installed world looked like a success.
 4. **PCs are characters, not entities.** `_installCharacters` wraps each `BlueprintConversion.characters` row in a `Character` with `ownerId: null` (unclaimed → the "Available to Claim" section) and the world's id, then writes it through `CharacterRepository`. Written as world entities they were invisible everywhere: the Database tab drops `player-character` from its category list (`entity_sidebar.dart`), and the Characters tab reads `world_characters`.
 5. **`pinned` / `shared` ref lists ride in the settings blob.** `refIds()` resolves the blueprint's `kategori/isim` refs to entity ids and writes them under `kPinnedEntitiesKey` / `kSharedEntitiesKey` — non-typed top-level keys, so `world_repository_impl` packs them into `world_settings.settings_json` with no migration. `shared` is the DM's share intent (see [[shared_entity_provider]] and [[Share-Broadcast-Flow]]): a packaged world arrives with its player-facing cards already marked, and those exact cards — nothing category-based — go out the moment the world goes multiplayer. A typo'd ref silently marks nothing, so `bundled_worlds_blueprint_test` resolves every ref in both lists against the converted entities.
+
+6. **`map_data` rides along if the blueprint carries one.** A bundled world can ship its own map pins ([[map_editor]] authors them). Era `image_path`s are relative in the package and get rewritten through `_mediaTarget` just like every other media path — `AssetRef` opens a non-scheme'd ref as a `File`, so a relative path renders nothing. On a **reinstall the saved map wins**: `_mapHasContent(prev['map_data'])` keeps whatever the DM moved in-app, blueprint pins only seed an empty map.
 
 Existing worlds are merged (`{...previous, ...converted}`) because `_saveToDb` is full-replace on `entities`; the merge drops any `type == 'player-character'` row an older install left behind, so a reinstall heals the old shape.
 

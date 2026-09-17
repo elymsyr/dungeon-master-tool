@@ -1770,6 +1770,7 @@
   "lblIcon": "Symbol",
   "lblDefault": "Standard",
   "openMap": "Karte öffnen",
+  "openCard": "Eintrag öffnen",
   "noMapAssigned": "Keine Karte zugewiesen",
   "mapHome": "Start",
   "pinEditTitle": "Pin bearbeiten",

@@ -5853,5 +5853,749 @@
       }
     ]
   },
-  "cross_references": []
+  "cross_references": [],
+  "map_data": {
+    "image_path": "media/Maps/Aegis.webp",
+    "pins": [
+      {
+        "id": "2f0bf61e-9ec4-4e65-ac0a-05d22928f7d6",
+        "x": 161,
+        "y": 838,
+        "label": "Lucid Triton",
+        "pinType": "location",
+        "entityId": "928d42d1-2247-52ee-a0fa-916cefb4aba8",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "37188cfe-818b-40ac-a7bc-33e70bf29450",
+        "x": 231,
+        "y": 961,
+        "label": "Gümüşsu",
+        "pinType": "location",
+        "entityId": "1bd8df9f-03c4-5b06-ad51-5e5c6b680154",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "96e70a4d-1eee-4203-9708-64499ad4b7cc",
+        "x": 308,
+        "y": 821,
+        "label": "Votumar",
+        "pinType": "location",
+        "entityId": "8bfa834e-fd45-5e48-aade-d7daad8b4d8b",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "f38e8be7-96db-4478-b76c-564018104e7a",
+        "x": 200,
+        "y": 724,
+        "label": "Cinervik",
+        "pinType": "location",
+        "entityId": "ec6a9012-9b32-5533-81e6-693b1bb9db77",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "cc6aeccc-2001-4f37-ba69-9990d5849cc8",
+        "x": 205,
+        "y": 1058,
+        "label": "Gizli Liman",
+        "pinType": "location",
+        "entityId": "6dc53369-23d2-564f-97a8-ea6ceaa075c7",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "e25323ac-c000-4eb4-803f-7bd5258402ce",
+        "x": 138,
+        "y": 739,
+        "label": "Elymsyr",
+        "pinType": "location",
+        "entityId": "1653014b-ecac-54c8-96cf-6f096e9ae42e",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "1167c32f-1785-45b9-a95b-43a2b223279e",
+        "x": 136,
+        "y": 625,
+        "label": "Ravenhall Avlusu",
+        "pinType": "location",
+        "entityId": "cc1e4be2-64dc-54d7-b7d2-bba46a907caa",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "e423612a-6484-426e-b66d-060abd50f730",
+        "x": 202,
+        "y": 787,
+        "label": "Meridia",
+        "pinType": "location",
+        "entityId": "f12b0f9f-1948-51b3-ab1f-28d83c20f80f",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "59ad7164-d506-4c2c-b0d4-1b4cf977e028",
+        "x": 285,
+        "y": 881,
+        "label": "Argenfon",
+        "pinType": "location",
+        "entityId": "640bb90b-45e1-5eda-9f57-2104b0ef91ac",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      },
+      {
+        "id": "3895479b-7272-4677-bc89-b218afe5ec31",
+        "x": 621,
+        "y": 253,
+        "label": "Vorstrand",
+        "pinType": "location",
+        "entityId": "c6c3921f-a75f-513c-a598-100ff34f9ffc",
+        "note": "",
+        "color": "#42a5f5",
+        "style": {}
+      }
+    ],
+    "timeline": [],
+    "eras": [
+      {
+        "id": "c8845fc2-b404-409f-bf3e-c86bae72e724",
+        "image_path": "media/Maps/Aegis.webp",
+        "pins": [
+          {
+            "id": "2f0bf61e-9ec4-4e65-ac0a-05d22928f7d6",
+            "x": 161,
+            "y": 838,
+            "label": "Lucid Triton",
+            "pinType": "location",
+            "entityId": "928d42d1-2247-52ee-a0fa-916cefb4aba8",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "37188cfe-818b-40ac-a7bc-33e70bf29450",
+            "x": 231,
+            "y": 961,
+            "label": "Gümüşsu",
+            "pinType": "location",
+            "entityId": "1bd8df9f-03c4-5b06-ad51-5e5c6b680154",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "96e70a4d-1eee-4203-9708-64499ad4b7cc",
+            "x": 308,
+            "y": 821,
+            "label": "Votumar",
+            "pinType": "location",
+            "entityId": "8bfa834e-fd45-5e48-aade-d7daad8b4d8b",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "f38e8be7-96db-4478-b76c-564018104e7a",
+            "x": 200,
+            "y": 724,
+            "label": "Cinervik",
+            "pinType": "location",
+            "entityId": "ec6a9012-9b32-5533-81e6-693b1bb9db77",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "cc6aeccc-2001-4f37-ba69-9990d5849cc8",
+            "x": 205,
+            "y": 1058,
+            "label": "Gizli Liman",
+            "pinType": "location",
+            "entityId": "6dc53369-23d2-564f-97a8-ea6ceaa075c7",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "e25323ac-c000-4eb4-803f-7bd5258402ce",
+            "x": 138,
+            "y": 739,
+            "label": "Elymsyr",
+            "pinType": "location",
+            "entityId": "1653014b-ecac-54c8-96cf-6f096e9ae42e",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "1167c32f-1785-45b9-a95b-43a2b223279e",
+            "x": 136,
+            "y": 625,
+            "label": "Ravenhall Avlusu",
+            "pinType": "location",
+            "entityId": "cc1e4be2-64dc-54d7-b7d2-bba46a907caa",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "e423612a-6484-426e-b66d-060abd50f730",
+            "x": 202,
+            "y": 787,
+            "label": "Meridia",
+            "pinType": "location",
+            "entityId": "f12b0f9f-1948-51b3-ab1f-28d83c20f80f",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "59ad7164-d506-4c2c-b0d4-1b4cf977e028",
+            "x": 285,
+            "y": 881,
+            "label": "Argenfon",
+            "pinType": "location",
+            "entityId": "640bb90b-45e1-5eda-9f57-2104b0ef91ac",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          },
+          {
+            "id": "3895479b-7272-4677-bc89-b218afe5ec31",
+            "x": 621,
+            "y": 253,
+            "label": "Vorstrand",
+            "pinType": "location",
+            "entityId": "c6c3921f-a75f-513c-a598-100ff34f9ffc",
+            "note": "",
+            "color": "#42a5f5",
+            "style": {}
+          }
+        ],
+        "timeline_pins": [],
+        "location_maps": {
+          "97bd2da0-5f5f-5126-9c92-9a40ad762943": {
+            "pins": [],
+            "timeline_pins": []
+          },
+          "928d42d1-2247-52ee-a0fa-916cefb4aba8": {
+            "pins": [
+              {
+                "id": "58a2ef7c-c89c-4fc1-8d7e-4b9559ce3844",
+                "x": 1252,
+                "y": 1595,
+                "label": "Aşağı Çarşı",
+                "pinType": "location",
+                "entityId": "3820ce8d-9d24-5262-9036-dd041f98b05b",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "8cc72da8-73e9-4ad9-b334-caab1655b1c5",
+                "x": 1552,
+                "y": 649,
+                "label": "Büyücü Loncası Akademisi",
+                "pinType": "location",
+                "entityId": "1d4b97c2-bb54-5b23-b5e3-f8568dcf6277",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "141b394e-5641-4740-be0e-7ffa9b90ab36",
+                "x": 1314,
+                "y": 808,
+                "label": "Kalem Binası",
+                "pinType": "location",
+                "entityId": "f4f948bd-d066-5428-ab66-2b966bac5f5b",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "05076d72-8040-4663-a0ad-634346747279",
+                "x": 1155,
+                "y": 975,
+                "label": "Karşı-İmza Masası",
+                "pinType": "location",
+                "entityId": "10c94cd9-7e38-5f93-bd89-c5274869d75f",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "12bfe65b-5e5a-481a-90ee-29e0a738f83d",
+                "x": 1204,
+                "y": 951,
+                "label": "Kayıt Salonu",
+                "pinType": "location",
+                "entityId": "3a2f14d0-9996-5e9f-8649-3841d47642e5",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "a0a698de-4c5e-4bd3-9ce8-053067293521",
+                "x": 1117,
+                "y": 1030,
+                "label": "Meclis Binası",
+                "pinType": "location",
+                "entityId": "60033fa0-aa39-580a-9521-98d99fb783af",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "6ff600e6-a7d4-4d5c-97d9-8e140c9745b7",
+                "x": 1151,
+                "y": 1076,
+                "label": "Meclis Salonu",
+                "pinType": "location",
+                "entityId": "ac3d6681-69ce-531e-94bc-b55e2d224876",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "aa8518ad-48f8-45a1-8af6-f01f9bcf65de",
+                "x": 1025,
+                "y": 1050,
+                "label": "Mimar Meydanı",
+                "pinType": "location",
+                "entityId": "0f507fe1-2b61-5882-b0f3-9e3225f38ad1",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "9242667b-dbc7-4a7b-92bd-e7bac00e84e4",
+                "x": 1197,
+                "y": 1112,
+                "label": "Mühür Salonu",
+                "pinType": "location",
+                "entityId": "a39b0874-c08b-539e-8f03-890eeddcb5b5",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "ce910ae7-a6ba-43d8-a5e3-7f033eff89c0",
+                "x": 647,
+                "y": 346,
+                "label": "Nehir Yükleme Alanı",
+                "pinType": "location",
+                "entityId": "afba05e5-655c-5efa-8a58-a166c5594cd9",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "45980273-6c37-45ab-ad1c-23a5187c742f",
+                "x": 1126,
+                "y": 174,
+                "label": "Sessiz Sokak",
+                "pinType": "location",
+                "entityId": "14b81234-3f55-51a9-ab06-ed6a22446c75",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "01877a77-d8d5-456e-89ff-633d02860052",
+                "x": 1464,
+                "y": 856,
+                "label": "Sınır ve Ticaret Loncası Divanhanesi",
+                "pinType": "location",
+                "entityId": "2ab43c29-08ad-56c1-bc30-7ce6fc7c19c6",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "532a4bb6-c894-4f27-bf0d-9db51cc5ef05",
+                "x": 1254,
+                "y": 452,
+                "label": "Yukarı Çarşı",
+                "pinType": "location",
+                "entityId": "0cb257e9-da67-5860-940f-0383e958e6f5",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "f8736140-f3a6-4294-9077-4176fdae38f7",
+                "x": 341,
+                "y": 1021,
+                "label": "Şehir Kapıları",
+                "pinType": "location",
+                "entityId": "9383a40b-af23-5294-9545-0d471d1a1e7f",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "440de4f4-9da9-4e78-8331-b0d0c582243a",
+                "x": 1305,
+                "y": 1392,
+                "label": "Şifacılar Kışlası",
+                "pinType": "location",
+                "entityId": "6301eb9d-aa05-5789-b5c4-587f66d1c868",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "bbdf2cbc-35a4-4be8-8f51-91191f211816",
+                "x": 1305,
+                "y": 1351,
+                "label": "Baş Otacı — Caramip Kalender",
+                "pinType": "npc",
+                "entityId": "49136109-7388-5661-9147-b38b3ee9f763",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "5793a880-1001-4f14-a50f-1cf73eeb57a5",
+                "x": 1276,
+                "y": 1540,
+                "label": "Kandil",
+                "pinType": "npc",
+                "entityId": "5d9360f3-f972-5a34-8350-8c7f44868699",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "792a1a77-1df1-4207-95d5-3f4daf6818df",
+                "x": 1518,
+                "y": 616,
+                "label": "Rektör — Quarion",
+                "pinType": "npc",
+                "entityId": "75a5f5c6-9cb3-5dd2-bc55-aeb292dff9c6",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "3d57a9e1-d3e0-4a28-a40e-3b6b72bf9d24",
+                "x": 1292,
+                "y": 1437,
+                "label": "Sindri",
+                "pinType": "npc",
+                "entityId": "339c0ad8-a803-5aaa-b644-55e64eff3cd0",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "0a7a596e-322d-485e-a1d0-ac6ba2fe7866",
+                "x": 500,
+                "y": 1025,
+                "label": "Çavuş Krusk",
+                "pinType": "npc",
+                "entityId": "a2df2945-7ab3-5482-b784-d0e5a7b39261",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "c3abf453-ca3b-4f0f-9ced-558c0439f29d",
+                "x": 1234,
+                "y": 498,
+                "label": "Ayar Masası",
+                "pinType": "scene",
+                "entityId": "099edd4e-456b-52b1-bc02-f060783b4189",
+                "note": "",
+                "color": "#ab47bc",
+                "style": {}
+              },
+              {
+                "id": "81236eaa-7a69-4dfa-9cb8-1562648c1af1",
+                "x": 1234,
+                "y": 1027,
+                "label": "Dilekçe Avlusu",
+                "pinType": "scene",
+                "entityId": "38335a3a-936f-55dd-be60-9e0269028a41",
+                "note": "",
+                "color": "#ab47bc",
+                "style": {}
+              }
+            ],
+            "timeline_pins": []
+          },
+          "1653014b-ecac-54c8-96cf-6f096e9ae42e": {
+            "pins": [
+              {
+                "id": "b964203e-8078-4310-8599-37bb43fd6b6f",
+                "x": 2191,
+                "y": 1141,
+                "label": "Aşağı Rıhtım",
+                "pinType": "location",
+                "entityId": "67d75e7a-899a-5ce7-aa13-800f966bf09a",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "60d92645-ad67-41b8-bc7e-e28e63b31d33",
+                "x": 906,
+                "y": 500,
+                "label": "Gümrük Binası",
+                "pinType": "location",
+                "entityId": "5878e8a6-bf8d-5497-8787-117b3aa401de",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "09cd1f3b-408c-4c8b-893b-1fc086da4551",
+                "x": 1425,
+                "y": 34,
+                "label": "Kanyon Asansörleri",
+                "pinType": "location",
+                "entityId": "13386847-ba1b-5fab-8bae-47fa8afa2be9",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "254b7c47-a08c-4e4b-b831-8931a0133803",
+                "x": 923,
+                "y": 547,
+                "label": "Gümrük Valisi",
+                "pinType": "npc",
+                "entityId": "2aa492a9-daca-5b1c-81d5-a0e7a1fd8f54",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "1b5a7ebc-b378-4ba4-a469-67beee943a46",
+                "x": 863,
+                "y": 1143,
+                "label": "Vinç Ustası",
+                "pinType": "npc",
+                "entityId": "90673fab-5ef2-5247-a541-df358d53b942",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "d718de83-7740-4156-901c-487d149d44b0",
+                "x": 1935,
+                "y": 932,
+                "label": "Çevirmen",
+                "pinType": "npc",
+                "entityId": "60b27d94-b249-56e0-bdd8-d271c3d825bf",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "72be86a9-4ca5-418f-bb41-c89d7e5053ce",
+                "x": 1173,
+                "y": 885,
+                "label": "Gümrük Rıhtımı",
+                "pinType": "scene",
+                "entityId": "ebb2301e-37fb-5735-84da-a66f8ee822ad",
+                "note": "",
+                "color": "#ab47bc",
+                "style": {}
+              }
+            ],
+            "timeline_pins": []
+          },
+          "6dc53369-23d2-564f-97a8-ea6ceaa075c7": {
+            "pins": [
+              {
+                "id": "bf776aed-21e0-4184-a0ac-85f982c76b52",
+                "x": 1436,
+                "y": 1360,
+                "label": "Rıhtım",
+                "pinType": "location",
+                "entityId": "7ec7fb05-5dce-5142-a8fc-a03278ea8730",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "d08ec7d4-0c62-420b-bb12-395619234d4f",
+                "x": 1797,
+                "y": 608,
+                "label": "Fare",
+                "pinType": "npc",
+                "entityId": "063354be-b8b2-5d69-8a74-8d592f187e94",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "21f2cfbe-191c-4a0e-a657-8f55a25241b6",
+                "x": 953,
+                "y": 663,
+                "label": "Kadife",
+                "pinType": "npc",
+                "entityId": "15ecdbb0-e71f-56ec-8d02-e40988ca0ffb",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "46200f22-55ed-4030-b89d-4c60e802b7e2",
+                "x": 1026,
+                "y": 647,
+                "label": "Kaptan Caelynn",
+                "pinType": "npc",
+                "entityId": "cc6e57b9-fa8c-521d-bcec-15b05fa24a2d",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "031b6da2-f6f3-4416-bafb-2084468552c3",
+                "x": 1546,
+                "y": 1138,
+                "label": "Kaptan Holg",
+                "pinType": "npc",
+                "entityId": "0b0f7b96-826c-5566-bb97-a6cd221be780",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "684e7b68-4b44-498d-871d-021d34797c33",
+                "x": 1397,
+                "y": 786,
+                "label": "Mine",
+                "pinType": "npc",
+                "entityId": "21f24b44-c770-5523-b642-0ac4528c71f8",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "478ad4e1-649d-4c8f-af1a-0e640d0188f1",
+                "x": 1218,
+                "y": 72,
+                "label": "Sicim",
+                "pinType": "npc",
+                "entityId": "1af70410-e471-5ee3-beae-cfc1df972149",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              }
+            ],
+            "timeline_pins": []
+          },
+          "1bd8df9f-03c4-5b06-ad51-5e5c6b680154": {
+            "pins": [
+              {
+                "id": "573e4233-a3ad-463c-bc75-5f2fc3b79745",
+                "x": 1381,
+                "y": 1153,
+                "label": "Goodbarrel'ın Ocak Başı",
+                "pinType": "location",
+                "entityId": "d979e72b-580a-5ecb-b069-e3b36a314b9c",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "d8eb81ee-2c5f-4f1f-8dee-10c0ab91235d",
+                "x": 1769,
+                "y": 1749,
+                "label": "Kulübe",
+                "pinType": "location",
+                "entityId": "2f35c095-5ba6-56a6-be8b-855c4f9d9558",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "a815f3cc-d356-4536-a298-207b21049eca",
+                "x": 1063,
+                "y": 1118,
+                "label": "Duran",
+                "pinType": "npc",
+                "entityId": "096cfb65-cba4-5473-b404-c6050881da7b",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "69215cab-10bd-40d4-8de1-beeb1983cbdc",
+                "x": 1022,
+                "y": 98,
+                "label": "Söylentinin Peşinde",
+                "pinType": "quest",
+                "entityId": "164323ef-d6fb-57be-9a46-54aba3c4bdcf",
+                "note": "",
+                "color": "#ffa726",
+                "style": {}
+              }
+            ],
+            "timeline_pins": []
+          },
+          "8bfa834e-fd45-5e48-aade-d7daad8b4d8b": {
+            "pins": [
+              {
+                "id": "af63bfdc-7460-41bc-8606-d35b5aa1dac1",
+                "x": 1516,
+                "y": 301,
+                "label": "Gözcü Kuleleri Hattı",
+                "pinType": "location",
+                "entityId": "867029cb-b106-59a2-9d0c-bca4865ac2d3",
+                "note": "",
+                "color": "#42a5f5",
+                "style": {}
+              },
+              {
+                "id": "5f15f465-f5fa-4807-8353-2450f4caee68",
+                "x": 925,
+                "y": 259,
+                "label": "Başkumandan",
+                "pinType": "npc",
+                "entityId": "0ad235a6-bee9-5a23-abb8-09e87b1815d9",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              },
+              {
+                "id": "2d45666e-369e-4759-a3c2-f2d900f85f89",
+                "x": 637,
+                "y": 1462,
+                "label": "Kapı Komutanı",
+                "pinType": "npc",
+                "entityId": "1c20fbd7-2d2c-58fe-b73b-8110b4391d97",
+                "note": "",
+                "color": "#66bb6a",
+                "style": {}
+              }
+            ],
+            "timeline_pins": []
+          }
+        }
+      }
+    ],
+    "waypoints": [],
+    "active_era_index": 0,
+    "pin_size": "medium",
+    "era_start_label": "Başlangıç",
+    "era_end_label": "Son"
+  }
 }

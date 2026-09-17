@@ -2440,6 +2440,7 @@
   "lblIcon": "Icon",
   "lblDefault": "Default",
   "openMap": "Open map",
+  "openCard": "Open card",
   "noMapAssigned": "No map assigned",
   "mapHome": "Home",
   "pinEditTitle": "Edit Pin",
