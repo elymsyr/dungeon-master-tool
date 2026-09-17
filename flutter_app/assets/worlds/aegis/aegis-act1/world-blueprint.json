@@ -1005,9 +1005,6 @@
             "şehir"
           ],
           "imagePath": "media/Artwork/Elymsyr-Panorama.webp",
-          "images": [
-            "media/Artwork/Elymsyr.webp"
-          ],
           "danger_level": "Medium",
           "map": "media/Maps/Elymsyr.webp"
         }
