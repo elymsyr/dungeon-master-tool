@@ -4,6 +4,8 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.10.0 — 190 entity** (2026-09-16). **Kapı turu.** Kartlar artık bir karakterin ya da dünyanın ne *yapacağını* yazmıyor; kapı açan **kilit davranışları** yazıyor (doktrin: `lore/canon/act1-kartlar.md` §0). 11 sahnenin hepsine `## Kapı` bloğu yazıldı: *bu sahne ne zaman durur* · *anahtarlar* · *buradan hangi kapılar açılabilir*. **Üç yeni kart, üçü de kilit sahnesi** ve üçü de daha önce bir NPC kartının `dmNotes`'una gömülüydü: `scene/Kapıya En Yakın Masa` (Halim → Orvan Sancar'ın adı; kaynak `act1 §3.5`, `§6.1`), `scene/Dilekçe Avlusu` (Meclis Salonu'na giriş; kaynak `lonca §1`, `act1 §6.1`, `liste §3` Meclis Binası satırı), `scene/Ayar Masası` (Kildrak yüzüğü okur, ad değil yön verir; kaynak `act1 §3.3` iz 3, `lonca §7`). Üç görev kartının `objective` alanı güzergah olmaktan çıkıp açık kapı tablosuna döndü ve her görev **çok kapanışlı** oldu; `quest/İyi Yazı` bir iş değil **kapı mekanizması** olarak yazıldı. İki anahtarsız kilide anahtar yazıldı: gerçek adlar (alyansların iç yüzünde *C. & P. Greenbottle*, ikinci taşıyıcı Orvan'ın tarife de tepki vermesi — `act1 §3.1`) ve Ravenhall patikası (gözcüyü ikna · çürümeden söz etmek — `bolge §4`). 15 kartta tek cümlelik ihlal düzeltildi, ve *"karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (`act1 §4.4`, `§5`).
+
 **Sürüm 0.9.3 — 187 entity** (2026-09-16). **Elymsyr kuşbakışı haritası.** Yeni kart yok. `location/Elymsyr` artık `map: media/Maps/Elymsyr.webp` taşıyor; harita kentin kanon coğrafyasını gösteriyor — iki yakaya birden kurulu kent, kazık üstüne kurulmuş su mahallesi, boğazdaki iki vinç kulesi ile suyun altında yatan zincir, köprüsüz kanal ve mavnalar, kanyon duvarındaki ahşap platformlar. Kaynak `tool/aegis_art/ref/elymsyr-üstten.jpeg`.
 
 **Sürüm 0.9.2 — 187 entity** (2026-09-16). **Elymsyr görselleri, ve bir kart geri çekildi.** `location/Boğaz ve Zincir` silindi — boğaz kendi başına gidilecek bir mekan değil, kentin bir özelliği; kuleler, örtülü balistalar ve kalkmayan zincir `location/Elymsyr`'in yeni **Kapı ve zincir** bölümüne taşındı, `npc/Nehir Muhafızı Çavuşu` şehre bağlandı, `lore/Fihrist` ağacı ve `quest/İyi Yazı`'nın mekan listesi güncellendi. Kalan üç yeni mekanın görseli üretildi (`Gümrük Binası` · `Aşağı Rıhtım` · `Kanyon Asansörleri`), `location/Elymsyr`'in iki görseli de yeni coğrafyaya göre yeniden çizildi — eskisi kanyon ağzını değil düz bir kıyıyı gösteriyordu. Elymsyr'in konusu bir liman değil bir **kent** olacak şekilde yeniden yazıldı: boyalı kiremit çatılar, kubbeler, çarşı tenteleri, han avlusu, merdivenli sokaklar ve farklı ırk/kıyafetten kalabalık — antrepolar yalnız su hizasında. Konu ve ışık metinleri `tool/aegis_art/aegis_polish.py` içindeki 0.9.1 bloğunda. Kuşbakışı `map` henüz yok.
@@ -285,7 +287,7 @@ Kaynak kısaltmaları:
 | Acıyı Tanımaz · Durmayan Adım · Kesik Kesik · Erken Güçlenme | `act1 §5.3` |
 | Blight — Enfeksiyon | `act1 §4.1–4.6` + `mek §6` (Yozlaşma) + `mek §7` (yapanın bedeli, şerbet) + `mek §12` |
 
-## scene — 11 · encounter — 1 · quest — 2
+## scene — 14 · encounter — 1 · quest — 3
 
 | Entity | Kaynak |
 |---|---|
@@ -299,6 +301,9 @@ Kaynak kısaltmaları:
 | Geçiş Divanı'nda Sıra | `liste §2` sayfa 4, 6 + `lonca §7` |
 | Gümrük Rıhtımı | `bolge §2.2–2.7` |
 | Susan Kule | `bolge §3.3, §3.7` |
+| Kapıya En Yakın Masa | `act1 §3.5` (Halim'in işi ve tek bildiği ad) + `§6.1` (doğrudan lonca yolu) |
+| Dilekçe Avlusu | `lonca §1` (Meclis'in işleyişi) + `act1 §6.1` + `liste §3` Meclis Binası satırı |
+| Ayar Masası | `act1 §3.3` iz 3 (damgasız yüzük) + `lonca §7` (ayar masası ve fihrist) |
 | Avluda Karşılanma | `bolge §4.5, §4.6, §10` |
 | Şafak Çatışması | `act1 §5, §5.1` + `mek §8, §12` + `bolge §6.1` |
 | Söylentinin Peşinde | `act1 §1, §5, §6, §6.1` |
