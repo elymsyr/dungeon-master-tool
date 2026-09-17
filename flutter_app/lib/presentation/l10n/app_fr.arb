@@ -1770,6 +1770,7 @@
   "lblIcon": "Icône",
   "lblDefault": "Par défaut",
   "openMap": "Ouvrir la carte",
+  "openCard": "Ouvrir la fiche",
   "noMapAssigned": "Aucune carte assignée",
   "mapHome": "Accueil",
   "pinEditTitle": "Modifier l'épingle",

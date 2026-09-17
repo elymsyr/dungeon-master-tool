@@ -7,11 +7,14 @@ import '../../../widgets/asset_ref_image.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Floating preview card shown when a location-linked map pin is hovered
-/// (desktop) or tapped (mobile). The map thumbnail is the drill-in handle.
+/// (desktop) or tapped (mobile). Shows the location's map when it has one —
+/// with an "open map" drill-in — otherwise its own card image. "Open card"
+/// is always available.
 class LocationPinPreviewCard extends StatelessWidget {
   final Entity location;
   final String? mapRef;
   final VoidCallback onDrillIn;
+  final VoidCallback? onOpenCard;
   final DmToolColors palette;
 
   const LocationPinPreviewCard({
@@ -20,6 +23,7 @@ class LocationPinPreviewCard extends StatelessWidget {
     required this.mapRef,
     required this.onDrillIn,
     required this.palette,
+    this.onOpenCard,
   });
 
   String _shortDescription() {
@@ -30,9 +34,21 @@ class LocationPinPreviewCard extends StatelessWidget {
     return '${clean.substring(0, 140)}…';
   }
 
+  /// Map when there is one, else the location's own card image.
+  String? _imageRef() {
+    if (mapRef != null && mapRef!.isNotEmpty) return mapRef;
+    if (location.imagePath.isNotEmpty) return location.imagePath;
+    return location.images.isNotEmpty ? location.images.first : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
     final desc = _shortDescription();
+    final hasMap = mapRef != null && mapRef!.isNotEmpty;
+    final imageRef = _imageRef();
+    final onImageTap = hasMap ? onDrillIn : onOpenCard;
+
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -74,54 +90,30 @@ class LocationPinPreviewCard extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             InkWell(
-              onTap: onDrillIn,
+              onTap: onImageTap,
               borderRadius: palette.cbr,
               child: ClipRRect(
                 borderRadius: palette.cbr,
                 child: AspectRatio(
                   aspectRatio: 4 / 3,
-                  child: (mapRef != null && mapRef!.isNotEmpty)
-                      ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            AssetRefImage(
-                              ref: AssetRef(mapRef!),
-                              fit: BoxFit.cover,
-                              cacheWidth: 480,
-                              placeholder: Container(color: palette.canvasBg),
-                              errorWidget: Container(
-                                color: palette.canvasBg,
-                                child: const Center(
-                                  child: Icon(Icons.broken_image, size: 18),
-                                ),
-                              ),
+                  child: imageRef != null
+                      ? AssetRefImage(
+                          ref: AssetRef(imageRef),
+                          fit: BoxFit.cover,
+                          cacheWidth: 480,
+                          placeholder: Container(color: palette.canvasBg),
+                          errorWidget: Container(
+                            color: palette.canvasBg,
+                            child: const Center(
+                              child: Icon(Icons.broken_image, size: 18),
                             ),
-                            Positioned(
-                              right: 4,
-                              bottom: 4,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  L10n.of(context)!.openMap,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         )
                       : Container(
                           color: palette.canvasBg,
                           alignment: Alignment.center,
                           child: Text(
-                            L10n.of(context)!.noMapAssigned,
+                            l10n.noMapAssigned,
                             style: TextStyle(
                               color: palette.uiFloatingText.withValues(alpha: 0.6),
                               fontSize: 11,
@@ -131,6 +123,48 @@ class LocationPinPreviewCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (onOpenCard != null || hasMap) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (onOpenCard != null)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onOpenCard,
+                        icon: const Icon(Icons.open_in_new, size: 14),
+                        label: Text(
+                          l10n.openCard,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                      ),
+                    ),
+                  if (onOpenCard != null && hasMap) const SizedBox(width: 6),
+                  if (hasMap)
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: onDrillIn,
+                        icon: const Icon(Icons.map_outlined, size: 14),
+                        label: Text(
+                          l10n.openMap,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

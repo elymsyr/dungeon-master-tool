@@ -441,6 +441,27 @@ class BundledWorldsInstaller {
       if (shares.isNotEmpty) kSharedEntitiesKey: shares,
     };
 
+    // Blueprint'in `map_data` bloğu: paketlenmiş dünya kendi harita pinlerini
+    // (era'lar, root pinler, `location_maps` drill-in pinleri) taşıyabilir.
+    // Media yolları pakette relative durur, `world_map_data` satırı mutlak yol
+    // bekler — era görselleri kurulan dosyaya çevriliyor.
+    final bpMapData = worldBlueprint?['map_data'];
+    if (bpMapData is Map) {
+      final md = Map<String, dynamic>.from(
+          jsonDecode(jsonEncode(bpMapData)) as Map);
+      String abs(Object? rel) => rel is String && rel.isNotEmpty
+          ? _mediaTarget(mediaRoot, worldName, rel).path
+          : '';
+      md['image_path'] = abs(md['image_path']);
+      final eras = md['eras'];
+      if (eras is List) {
+        for (final e in eras) {
+          if (e is Map) e['image_path'] = abs(e['image_path']);
+        }
+      }
+      worldData['map_data'] = md;
+    }
+
     // Var olan dünyanın kullanıcı tarafından eklenmiş satırlarını koru —
     // `_saveToDb` entities için full-replace uyguluyor.
     final existing = await _repo.getAvailable();
@@ -449,6 +470,12 @@ class BundledWorldsInstaller {
       try {
         final prev = await _repo.load(worldName);
         worldId = prev['world_id'] as String?;
+        // Kullanıcı haritayı uygulamada düzenlemişse yeniden kurulum onu
+        // ezmesin — blueprint'teki pinler yalnız boş haritaya tohumlanır.
+        final prevMap = prev['map_data'];
+        if (prevMap is Map && _mapHasContent(prevMap)) {
+          worldData['map_data'] = Map<String, dynamic>.from(prevMap);
+        }
         final prevEntities = prev['entities'];
         if (prevEntities is Map) {
           worldData['entities'] = <String, dynamic>{
@@ -588,6 +615,21 @@ class BundledWorldsInstaller {
   /// Paketlenmiş bir medya yolunun diskteki karşılığı. PDF'ler `_bundled/`
   /// altına değil dünyanın PDF kütüphanesine (`{world}/pdfs/`) düşer — PDF
   /// sekmesi listeyi o klasörden okuyor (bkz. `PdfLibraryService`).
+  /// Kayıtlı haritada kullanıcı içeriği var mı — pin ya da era görseli.
+  static bool _mapHasContent(Map<dynamic, dynamic> md) {
+    if ((md['pins'] as List?)?.isNotEmpty ?? false) return true;
+    final eras = md['eras'];
+    if (eras is List) {
+      for (final e in eras) {
+        if (e is! Map) continue;
+        if ((e['image_path'] as String?)?.isNotEmpty ?? false) return true;
+        if ((e['pins'] as List?)?.isNotEmpty ?? false) return true;
+        if ((e['location_maps'] as Map?)?.isNotEmpty ?? false) return true;
+      }
+    }
+    return false;
+  }
+
   static File _mediaTarget(String root, String worldName, String rel) =>
       p.extension(rel).toLowerCase() == '.pdf'
           ? File(p.join(
