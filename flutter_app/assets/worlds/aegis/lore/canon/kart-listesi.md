@@ -284,7 +284,7 @@ Spellcasting Ability DC 13, başarısızlıkta +1 Hastalık Puanı) ve şifa bü
 bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 `lore/Kural Sapmaları`.
 
-## 8. `scene` — 11
+## 8. `scene` — 14
 
 | Kart | Yer | Ne | Durum |
 |---|---|---|---|
@@ -296,9 +296,12 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Meclis Oturumu** | Meclis Salonu | Altı koltuk, beş inkâr, inkâr etmeyen tek üye | ✅ |
 | **Kapı Önündeki Teklif** | Meclis Salonu | Orvan'ın elindeki teklif, ne zaman yapacağı yazılmaz: "onları geçireni bana getirin" | ✅ |
 | **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur): Orvan'ın imzası elde, Corin ikinciyi vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
-| **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. **Karakterler buradan tayfa olarak biner** (5. tur) | ✅ |
+| **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. İyi yazı buradan da gemiye bindirir (5. tur) | ✅ |
 | **Susan Kule** | Gözcü Kuleleri Hattı | Bir kulenin raporu şatoya ulaşmadı. Sessizlik, yalandan yüksek sesle konuşur | ✅ |
-| **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor** | ✅ |
+| **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor**. Patikanın iki anahtarı: gözcüyü ikna · çürümeden söz etmek | ✅ |
+| **Kapıya En Yakın Masa** | Goodbarrel'ın Ocak Başı | **Kilit sahnesi** (kapı turu): Halim'in kim olduğu → Orvan Sancar'ın adı ve Lucid Triton yolu | ✅ |
+| **Dilekçe Avlusu** | Meclis Binası | **Kilit sahnesi** (kapı turu): Meclis Salonu'na giriş. Lonca hattı · Halim'in anlattıkları · bir koltuğun adı · rüşvet/sabır | ✅ |
+| **Ayar Masası** | Yukarı Çarşı | **Kilit sahnesi** (kapı turu): Kildrak yüzüğü okur, ad değil **yön** verir — limana ikinci kapı | ✅ |
 
 ## 9. `encounter` — 1
 
@@ -310,9 +313,9 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 
 | Kart | Zincir | Durum |
 |---|---|---|
-| **Söylentinin Peşinde** | Giriş kancası: Gümüşsu'da ne olduğunu gör, **bir makama götür** (Meclis ve/veya Votumar); makama götürülünce kapanır | ✅ |
-| **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda biter (*Kader*) | ✅ |
-| **İyi Yazı** | Kıtadan çıkış: karşı-imza yolu ya da para yolu | ✅ |
+| **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · plato. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
+| **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
+| **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
 
 ## 11. `background` — 9
 
@@ -415,7 +418,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `creature-action` | 13 | — | — | 13 |
 | `trait` | 25 | — | — | 25 |
 | `curse` | 1 | — | — | 1 |
-| `scene` | 11 | — | — | 11 |
+| `scene` | 14 | — | — | 14 |
 | `encounter` | 1 | — | — | 1 |
 | `quest` | 3 | — | — | 3 |
 | `background` | 9 | — | — | 9 |
@@ -425,9 +428,14 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **175** | **12** | **—** | **187** |
+| **Toplam** | **178** | **12** | **—** | **190** |
 
-**175/187 ✅, 12 🟡, 0 ⬜** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
+**178/190 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
+`scene/Kapıya En Yakın Masa` · `scene/Dilekçe Avlusu` · `scene/Ayar Masası`;
+187'den 190'a. Aynı turda bütün sahnelere `## Kapı` bloğu, üç görev kartına açık
+kapı listesi ve çoklu kapanış yazıldı.)*
+
+Öncesi: **175/187 ✅** *(2026-09-13, Siper Okulu turu: `subclass/Siper Okulu`,
 dört okul `trait`'i, `creature-action/Siperi Uzat` + `Siperi Ör` ve `pool:siper` —
 164'ten 172'ye. Wizard'a çağrı zarına girmeyen bir destek hattı yazıldı, ve siper
 aynı turda **günde bir / kırılabilir** hâline çekildi;

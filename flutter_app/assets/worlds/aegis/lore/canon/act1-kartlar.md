@@ -48,6 +48,39 @@ Asgari linkleme:
 | `quest` | zincirdeki her sahne ve her taşıyıcı NPC |
 | `monster` | insan hali (`npc` ikizi) |
 
+
+## 0. Kapı doktrini (KARAR, 2026-09-16)
+
+**Kart, bir karakterin ya da dünyanın ne *yapacağını* yazmaz. Kapı açan kilit
+davranışları yazar.**
+
+İzin verilen üç cümle kalıbı:
+
+1. **Durum** — ne var, ne duruyor, kim nerede. *"Kulübede üç hasta var."* Eylem yok.
+2. **Duruş** — bir NPC'nin neyi kabul etmediği, neyi istediği. *"Sicim kefilsiz
+   kimseyi içeri almaz."* Ne yapacağını değil, neye kapalı olduğunu söyler.
+3. **Kilit** — `<koşul> olursa <kapı> açılabilir.` Eylem değil, imkan.
+
+Yasak olan tek kalıp: **`<özne> <fiil>`** — özne karakterse de, NPC'yse de, dünyaysa
+da. *"Karakterler konuşur"*, *"Halim kaçar"*, *"kağıt aynı gün imzalanır"* — hepsi
+aynı hata. NPC'nin ne yapacağı DM'in; kart yalnız kapısını yazar.
+
+**Sahnelerde `## Kapı` bloğu zorunlu.** `beats` alanının ilk başlığı, ve üç şeyi
+söyler:
+
+- **Bu sahne ne zaman durur** — tetikleyen koşul;
+- **Anahtarlar** — o kilidi açan yollar. Kritik bir kilidin **en az iki anahtarı**
+  olur (act1.md §1'in kilitlenme kuralı);
+- **Buradan hangi kapılar açılabilir** — ve kaçırılırsa ne olur.
+
+**Görev kartlarında `objective` bir güzergah değil**, açık kapılar listesidir; ve
+her görevin **birden çok kapanışı** yazılır. Tek kapanışlı bir görev, masa o kapıyı
+kullanmazsa kağıt üstünde askıda kalır.
+
+**Kilit anları sahne olur.** Bir kapının açıldığı an bir NPC kartının `dmNotes`'una
+gömülüyse, o bir sahnedir: kapı turunda üçü çıkarıldı — **Kapıya En Yakın Masa**,
+**Dilekçe Avlusu**, **Ayar Masası**.
+
 ---
 
 ## 1. `location` — 5
