@@ -81,10 +81,20 @@ Future<void> openBattlemapPicker(
 
 enum _PickerSource { device, location }
 
+/// Location'ın Maps grubundaki tüm görseller: `battlemaps` listesi + tekil
+/// `map` + `map_per_era` varyantları. Sıra korunur, tekrar edenler atılır.
 List<String> _battlemapsOf(Entity e) {
-  final raw = e.fields['battlemaps'];
-  if (raw is! List) return const [];
-  return [for (final v in raw) if (v is String && v.isNotEmpty) v];
+  final out = <String>{};
+  void add(Object? v) {
+    if (v is String && v.isNotEmpty) out.add(v);
+  }
+
+  final maps = e.fields['battlemaps'];
+  if (maps is List) maps.forEach(add);
+  add(e.fields['map']);
+  final perEra = e.fields['map_per_era'];
+  if (perEra is Map) perEra.values.forEach(add);
+  return out.toList();
 }
 
 Future<String?> _pickLocationWithBattlemaps(
