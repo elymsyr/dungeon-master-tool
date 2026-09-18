@@ -1,5 +1,72 @@
 # Release Notes
 
+## Dungeon Master Tool v17.1.1 — A Map for Elymsyr (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v17.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A content and map release. Bundled worlds can now ship with their map already drawn and pinned, and Aegis Act 1 uses it: the city of Elymsyr arrives as a top-down map with its quarters marked. Aegis also gets the Votumar pass — the castle's cast is named, five cards are new, and the Commander is no longer there. Map pins read better on light backgrounds, and a pin can now open its card directly. Re-download Aegis Act 1 from **Marketplace → Official** to get all of it.
+
+---
+
+### Maps
+
+#### Bundled worlds arrive with their map ready
+
+A world downloaded from **Marketplace → Official** can now bring its own map, including the pins on it and the drill-in maps behind those pins. Before, every world opened to an empty map you had to place yourself. If you have already edited that world's map, re-downloading it leaves your version alone — the packaged pins are only used to seed a map that is still empty.
+
+#### Pins are easier to read and to follow
+
+Pin icons and labels now carry a hard black outline instead of a soft shadow, so they stay legible over pale maps. Hovering a pin shows the location's own card picture when it has no map of its own, and the preview card gained an **Open card** button — a location that leads somewhere now offers both: open the card, or drill into the map.
+
+---
+
+### Aegis
+
+#### Votumar: the Commander is not in the castle
+
+Aegis Act 1 goes to `0.11.0`. The four existing Votumar cards are named — Commander **Varhan**, Gate Commander **Nevra**, his remaining deputy **Aren**, and tower watchman **Vrask** — and five cards are new: the hearth master Torvun, the castle scribe Nerion, the three Coast Siblings, the watch captain Drahan, and the quest **Yazılmayan Emir**. Varhan left for the capital two months ago and has not been back; orders reach the castle by word of mouth, the soldiers complain about his absence openly, and only a character with a Paladin military background is likely to already know. Every new card ships with artwork.
+
+#### A map of Elymsyr
+
+Elymsyr now has a top-down city map with its districts pinned — the lower wharf, the upper and lower markets, the customs house, the assembly building, the canyon lifts, the guild halls and the silent street — most of them with new artwork of their own. The river that reaches the city is named the Golden River.
+
+---
+
+### Smaller improvements
+
+- **l10n** — one new key, `openCard` ("Open card"), in English, Turkish, German and French. The map pin menu no longer shows an untranslated "See Card".
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `17.1.0` → `17.1.1`.
+- **Aegis:** re-download Aegis Act 1 (`0.11.0`) from **Marketplace → Official** for the new cards and the Elymsyr map. The download is about 3 MB bigger.
+- **Your map edits are safe:** re-installing a bundled world only seeds map pins when that world's map is still empty.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Blueprint `map_data`** — a world blueprint may carry a `map_data` block; `BundledWorldsInstaller` rewrites its relative media paths to installed absolute ones and skips the whole block when the stored map already has pins or era images (`_mapHasContent`).
+- **Map authoring** — `flutter_app/tool/content/map_editor.py` places pins on a bundled world's blueprint map outside the app.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v17.1.0 — Pictures for Every Piece of Gear (Beta)
 
 **Release date:** September 2026
