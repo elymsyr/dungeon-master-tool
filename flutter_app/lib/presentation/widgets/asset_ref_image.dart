@@ -116,8 +116,12 @@ void showAssetRefFullScreen(BuildContext context, String imagePath) {
   showDialog(
     context: context,
     builder: (ctx) => Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: EdgeInsets.zero,
+      backgroundColor: Colors.black87,
+      clipBehavior: Clip.hardEdge,
+      shape: const RoundedRectangleBorder(),
       child: Stack(
+        fit: StackFit.expand,
         children: [
           InteractiveViewer(
             minScale: 0.5,

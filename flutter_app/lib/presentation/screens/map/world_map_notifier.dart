@@ -214,25 +214,8 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   final ValueNotifier<String?> hoveredLocationPinId =
       ValueNotifier<String?>(null);
 
-  /// Delayed-close timer for the location pin preview card — keeps the card
-  /// alive while the mouse transits the gap between the pin and the card.
-  Timer? _locationHoverCloseTimer;
-
   void setLocationPinHover(String? pinId) {
-    _locationHoverCloseTimer?.cancel();
     hoveredLocationPinId.value = pinId;
-  }
-
-  void scheduleClearLocationPinHover({String? onlyIfId}) {
-    _locationHoverCloseTimer?.cancel();
-    _locationHoverCloseTimer = Timer(const Duration(milliseconds: 220), () {
-      if (onlyIfId != null && hoveredLocationPinId.value != onlyIfId) return;
-      hoveredLocationPinId.value = null;
-    });
-  }
-
-  void cancelClearLocationPinHover() {
-    _locationHoverCloseTimer?.cancel();
   }
 
   // Viewport size for fit-to-image calculations
@@ -269,7 +252,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     cullTick.dispose();
     hoveredTimelinePinId.dispose();
     hoveredLocationPinId.dispose();
-    _locationHoverCloseTimer?.cancel();
     disposeUndoRedo();
     super.dispose();
   }

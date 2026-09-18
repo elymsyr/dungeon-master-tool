@@ -4,6 +4,7 @@ import '../../../../domain/entities/entity.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/asset_ref_image.dart';
+import '../../../widgets/expandable_markdown.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Floating preview card shown when a location-linked map pin is hovered
@@ -26,12 +27,14 @@ class LocationPinPreviewCard extends StatelessWidget {
     this.onOpenCard,
   });
 
-  String _shortDescription() {
-    final raw = location.fields['description_long'];
-    if (raw is! String) return '';
-    final clean = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (clean.length <= 140) return clean;
-    return '${clean.substring(0, 140)}…';
+  /// Raw markdown — rendered, not flattened. Locations use
+  /// `description_long`; every other category uses `description`.
+  String _description() {
+    for (final key in const ['description_long', 'description']) {
+      final raw = location.fields[key];
+      if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    }
+    return '';
   }
 
   /// Map when there is one, else the location's own card image.
@@ -44,7 +47,7 @@ class LocationPinPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
-    final desc = _shortDescription();
+    final desc = _description();
     final hasMap = mapRef != null && mapRef!.isNotEmpty;
     final imageRef = _imageRef();
     final onImageTap = hasMap ? onDrillIn : onOpenCard;
@@ -78,14 +81,14 @@ class LocationPinPreviewCard extends StatelessWidget {
             ),
             if (desc.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(
-                desc,
-                style: TextStyle(
+              ExpandableMarkdown(
+                data: desc,
+                collapsedMaxLines: 4,
+                expandedMaxHeight: 180,
+                collapsedTextStyle: TextStyle(
                   color: palette.uiFloatingText.withValues(alpha: 0.8),
                   fontSize: 11,
                 ),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
             const SizedBox(height: 8),

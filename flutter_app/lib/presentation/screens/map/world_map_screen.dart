@@ -289,11 +289,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                         onTap: () {
                           setState(() => _eraBarOpen = !_eraBarOpen);
                           if (_eraBarOpen) {
-                            final waypoints =
-                                ref.read(worldMapProvider).waypoints;
+                            final waypoints = ref
+                                .read(worldMapProvider)
+                                .waypoints;
                             if (waypoints.isEmpty) {
-                              final notifier =
-                                  ref.read(worldMapProvider.notifier);
+                              final notifier = ref.read(
+                                worldMapProvider.notifier,
+                              );
                               _showAddWaypointDialog(0, notifier, palette);
                             }
                           }
@@ -380,7 +382,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           // Pick map image
           _ToolbarButton(
             icon: Icons.map_outlined,
-            label: mapState.imagePath.isEmpty ? L10n.of(context)!.mapLoadMap : L10n.of(context)!.btnChange,
+            label: mapState.imagePath.isEmpty
+                ? L10n.of(context)!.mapLoadMap
+                : L10n.of(context)!.btnChange,
             palette: palette,
             onTap: () => notifier.pickMapImage(context),
           ),
@@ -593,13 +597,14 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     onScaleStart: notifier.onScaleStart,
                     onScaleUpdate: notifier.onScaleUpdate,
                     onScaleEnd: (_) => notifier.onScaleEnd(),
-                    onTapUp: inLinkMode
-                        ? (d) => _handleCanvasTap(
-                            d.localPosition,
-                            notifier,
-                            mapState,
-                          )
-                        : null,
+                    onTapUp: (d) {
+                      if (inLinkMode) {
+                        _handleCanvasTap(d.localPosition, notifier, mapState);
+                      } else {
+                        // Tap on empty canvas closes an open pin preview.
+                        notifier.setLocationPinHover(null);
+                      }
+                    },
                     onDoubleTapDown: mapState.showTimeline
                         ? (details) {
                             final canvasPos = notifier.screenToCanvas(
@@ -766,10 +771,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
         // Map pins
         ...culledPins.map((pin) {
+          // Any entity-linked pin gets the preview card (image + open card);
+          // only location pins can additionally drill into a sub-map.
           final linkedLoc =
               pin.entityId != null &&
-                  ref.read(entityProvider)[pin.entityId!]?.categorySlug ==
-                      'location'
+                  ref.read(entityProvider)[pin.entityId!] != null
               ? pin.entityId
               : null;
           // Resolve display color from category schema if pin has no custom color.
@@ -826,25 +832,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             return Positioned(
               left: pin.x + 12,
               top: pin.y - 24,
-              child: MouseRegion(
-                onEnter: (_) => notifier.cancelClearLocationPinHover(),
-                onExit: (_) =>
-                    notifier.scheduleClearLocationPinHover(onlyIfId: hoveredId),
-                child: LocationPinPreviewCard(
-                  location: entity,
-                  mapRef: mapRef,
-                  palette: palette,
-                  onDrillIn: () {
-                    notifier.setLocationPinHover(null);
-                    notifier.drillIntoLocation(entity.id);
-                  },
-                  onOpenCard: widget.onOpenEntity == null
-                      ? null
-                      : () {
-                          notifier.setLocationPinHover(null);
-                          widget.onOpenEntity!(entity.id);
-                        },
-                ),
+              child: LocationPinPreviewCard(
+                location: entity,
+                mapRef: mapRef,
+                palette: palette,
+                onDrillIn: () {
+                  notifier.setLocationPinHover(null);
+                  notifier.drillIntoLocation(entity.id);
+                },
+                onOpenCard: widget.onOpenEntity == null
+                    ? null
+                    : () {
+                        notifier.setLocationPinHover(null);
+                        widget.onOpenEntity!(entity.id);
+                      },
               ),
             );
           },
@@ -869,7 +870,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               left: hovered.x + half + 6,
               top: hovered.y - half - 4,
               child: IgnorePointer(
-                child: _timelineHoverCard(context,
+                child: _timelineHoverCard(
+                  context,
                   palette,
                   hovered,
                   _entityNameMap(hovered.entityIds),
@@ -974,7 +976,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              L10n.of(context)!.mapEntityNotAllowed(entity.name, entity.categorySlug),
+              L10n.of(
+                context,
+              )!.mapEntityNotAllowed(entity.name, entity.categorySlug),
             ),
           ),
         );
@@ -985,9 +989,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     if (notifier.isRecursiveSelfPin(entityId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(L10n.of(context)!.mapCantPinSelf),
-          ),
+          SnackBar(content: Text(L10n.of(context)!.mapCantPinSelf)),
         );
       }
       return;
@@ -1028,7 +1030,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              L10n.of(context)!.mapEntityNotAllowed(entity.name, entity.categorySlug),
+              L10n.of(
+                context,
+              )!.mapEntityNotAllowed(entity.name, entity.categorySlug),
             ),
           ),
         );
@@ -1164,9 +1168,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     if (notifier.isRecursiveSelfPin(entityId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(L10n.of(context)!.mapCantPinSelf),
-          ),
+          SnackBar(content: Text(L10n.of(context)!.mapCantPinSelf)),
         );
       }
       return;
@@ -1672,15 +1674,9 @@ class _DraggablePinState extends State<_DraggablePin> {
     );
 
     if (isLocation) {
-      // Desktop hover with delayed close — the gap between pin and card is
-      // bridged by a timer; the card's own MouseRegion cancels the timer
-      // when the mouse arrives, so the card stays open.
-      gesture = MouseRegion(
-        onEnter: (_) => widget.notifier.setLocationPinHover(pin.id),
-        onExit: (_) =>
-            widget.notifier.scheduleClearLocationPinHover(onlyIfId: pin.id),
-        child: gesture,
-      );
+      // Click-to-open on every platform (no hover) — the card closes on a
+      // tap elsewhere on the canvas.
+      gesture = MouseRegion(cursor: SystemMouseCursors.click, child: gesture);
     }
 
     return Positioned(
@@ -1707,7 +1703,11 @@ class _DraggablePinState extends State<_DraggablePin> {
       items.add(
         PopupMenuItem(
           value: 'inspect',
-          child: _menuRow(Icons.open_in_new, L10n.of(context)!.openCard, palette),
+          child: _menuRow(
+            Icons.open_in_new,
+            L10n.of(context)!.openCard,
+            palette,
+          ),
         ),
       );
     }
@@ -2032,7 +2032,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
 }
 
 // F4: top-level builder shared by canvas-level hover overlay.
-Widget _timelineHoverCard(BuildContext context,
+Widget _timelineHoverCard(
+  BuildContext context,
   DmToolColors palette,
   TimelinePin pin,
   Map<String, String> entityNames,
@@ -2450,7 +2451,9 @@ class _PinCategoryDropdown extends StatelessWidget {
             Icon(Icons.category, size: 14, color: palette.tabText),
             const SizedBox(width: 4),
             Text(
-              L10n.of(context)!.mapCategoriesCount('$visibleCount', '${pinTypes.length}'),
+              L10n.of(
+                context,
+              )!.mapCategoriesCount('$visibleCount', '${pinTypes.length}'),
               style: TextStyle(fontSize: 10, color: palette.tabText),
             ),
             Icon(Icons.arrow_drop_down, size: 14, color: palette.tabText),
