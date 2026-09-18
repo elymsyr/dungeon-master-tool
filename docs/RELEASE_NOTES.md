@@ -1,5 +1,50 @@
 # Release Notes
 
+## Dungeon Master Tool v17.1.2 — Pins, Pictures and Battlemaps (Beta)
+
+**Release date:** September 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v17.1.2) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A small polish release for the map screen. Pin previews now show the location's real text instead of a clipped one-liner, full-screen pictures actually fill the screen, and picking a battlemap from a location offers every map that location has — including its per-era variants — with no duplicates. Nothing to reinstall.
+
+---
+
+### What's new
+
+#### Pin previews show the whole description
+
+Hovering a map pin used to show the first 140 characters of the location's description with the formatting stripped out. It now renders the text properly — headings, bold, lists — collapsed to four lines with an expand control for the rest. Locations that only have a plain `description` (rather than the long one) finally show it instead of nothing.
+
+#### Full-screen pictures use the full screen
+
+Tapping a picture to enlarge it now opens edge to edge on a dark backdrop, instead of a small floating panel with a margin around it. Zoom and pan are unchanged.
+
+#### Battlemap picking sees every map a location has
+
+When you pick a battlemap from a location, the list now includes the location's main map and its per-era map variants, not just the explicit battlemap list. Repeats are filtered out, so the same image never appears twice.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `17.1.1` → `17.1.2`.
+- No content re-download and no data migration.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v17.1.1 — A Map for Elymsyr (Beta)
 
 **Release date:** September 2026
