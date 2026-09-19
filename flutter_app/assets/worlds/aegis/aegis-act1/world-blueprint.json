@@ -1203,14 +1203,25 @@
         "source_name": "Gelgit Ağzı",
         "mapping": {
           "name": "Gelgit Ağzı",
+          "environment": "Gelgit kayalığındaki yuva ağzı",
+          "description": "@[Argenfon](entity:location/Argenfon)'un bir saat ilerisindeki kayalık. Kayanın altındaki ağız yalnız su çekilince görünür; su yükseldiğinde ortada kapı yoktur.",
+          "description_long": "> Köyden bir saat kadar ileride kıyı yumuşak kumu bırakıp kayalığa dönüyor. Basamak gibi inen siyah taşlar, aralarında kalmış tuzlu su birikintileri, ve her şeyin üstünde kuru bir midye kabuğu tabakası — üstüne basınca çıtırdıyor.\n>\n> Su yüksekken burada bir şey yok: dalga kayanın dibine kadar geliyor ve orada bitiyor.\n>\n> Su çekildiğinde kayanın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** açılıyor. İçerisi görünmüyor. Ağzın kenarları pürüzsüz; bir şey oradan uzun zamandır girip çıkıyor.\n\nKöyün kıyısı bir saat sonra yumuşak kumu bırakıp kayalığa dönüyor. Balıkçı buraya kadar gelmez: kayık çekilecek yer yok, ağ atılacak sığlık yok, ve kabuk tabakası ayağı kesiyor. @[Argenfon](entity:location/Argenfon)'dan bakan biri için burası kıyının bittiği yerdir.\n\n## Genel özellikler\n\n- **Gelgit.** Ağız yalnız suyun en alçak olduğu saatlerde açıkta kalır. Yüksek suda dalga kayanın dibine kadar gelir ve kayalığın altı tamamen kapanır.\n- **Kabuk tabakası.** Siyah taşların üstü kurumuş midye kabuğuyla kaplı; üstüne basan herkes ses çıkarır. Sessiz yaklaşmak isteyen yalaktan yalağa, ıslak taşa basarak ilerler.\n- **Ağzın kenarı.** Omuz genişliğinde, yerden bir karış yüksekte, ve kenarları pürüzsüz aşınmış — bir şey oradan uzun zamandır girip çıkıyor.\n- **Su birikintileri.** Basamak gibi inen taşların arasında tuzlu su yalakları kalıyor. İçlerinde küçük kabuklular, ve yer yer kırılmış kabuk parçaları.\n- **Yol.** Kıyı boyunca yürünür; kayalığa tırmanmak gerekmez. Karanlıkta yolu bulmak ayrı bir iştir.",
           "parent_location_ref": {
             "lookup": "location",
             "match": "name",
             "value": "Argenfon"
           },
-          "description": "> Köyden bir saat kadar ileride kıyı yumuşak kumu bırakıp kayalığa dönüyor. Basamak gibi inen siyah taşlar, aralarında kalmış tuzlu su birikintileri, ve her şeyin üstünde kuru bir midye kabuğu tabakası — üstüne basınca çıtırdıyor.\n>\n> Su yüksekken burada bir şey yok: dalga kayanın dibine kadar geliyor ve orada bitiyor.\n>\n> Su çekildiğinde kayanın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** açılıyor. İçerisi görünmüyor. Ağzın kenarları pürüzsüz; bir şey oradan uzun zamandır girip çıkıyor.",
           "secrets": "Koloni burada. **Otuz kadar** @[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt), yaklaşık on tanesi yeni kabuk atmış **yumuşak**.\n\nAğız yalnız **en alçak gelgitte** geçilir ve dar; zırhlı bir insan giremez, zırhsız biri sürünerek girer. İçeride birkaç metre sonra su alçalıp **hava boşluğuna** açılıyor: koloninin yaşadığı yer orası.\n\nAğzı tutan @[Bırakmayan](entity:monster/Bırakmayan). Kovalamaz, çıkmaz, yerinden oynamaz — ve 2. seviye bir masanın onu aşması beklenmez.\n\n**Devriyenin göremediği tek yer burası:** sahilde yürüyen biri için ortada kapı bile yok.",
-          "imagePath": "media/Artwork/Gelgit-Ağzı.webp"
+          "tags": [
+            "argenfon",
+            "gelgit-ağzı",
+            "hıkka"
+          ],
+          "imagePath": "media/Artwork/Gelgit-Ağzı.webp",
+          "map": "media/Maps/Gelgit-Ağzı.webp",
+          "battlemaps": [
+            "media/Maps/Gelgit-Ağzı-Yuva.webp"
+          ]
         }
       }
     ],

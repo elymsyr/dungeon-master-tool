@@ -411,6 +411,8 @@ bu klasörden gelmeyen ama diskte duran görselleri (`*-Panorama.webp`) korur. S
 eski üretilmiş görsel ikinci (`images`). Sağ-alt köşedeki Gemini filigranı kırpıldı.
 `*-üstten.jpeg` haritaları `media/Maps/<ad>.webp` (2048²) olarak `Votumar`, `Lucid Triton`,
 `Gümüşsu`, `Gizli Liman` (2816×1536) kartlarının **`map`** alanında — ana görsel değil.
+`Gelgit Ağzı` ikisini birden taşıyor: `geçit-üstten.jpeg` (2752×1536) → `map`, `mağara-iç.jpeg`
+(2048²) → **`battlemaps`** (yuvanın içi).
 
 ---
 
