@@ -959,5 +959,58 @@ SUBJECT.update({
  "with a single paladin in a white cloak on watch and the courtyard empty behind him",
 })
 
+
+# ---------------------------------------------------------------------------
+# 0.13.0 — Votumar'in iki isi: iki gorev karti + muhurlu yazi.
+# Gemini'nin cache konulari kanonla celisiyordu (kartal armasi, kirmizi mum,
+# tartili kasa defteri); ucu de elle yeniden yazildi.
+# ---------------------------------------------------------------------------
+
+LIGHT.update({
+"quest|Son Yazılı Emir":
+ "cold grey daylight through one shuttered window falling across the table and the folded page, "
+ "the rest of the chamber in deep shadow, a single candle burning low beside the wax",
+"quest|Sayım Açığı":
+ "one lantern hung low in a dark vaulted cellar, warm light on sacking and flagstone, "
+ "the far end of the vault going black",
+"adventuring-gear|Mühürlü Yazı":
+ "one low candle from the left, the white wax the brightest thing in the frame, "
+ "deep shadow lying along the fold",
+})
+
+SUBJECT.update({
+"quest|Son Yazılı Emir":
+ "A tall tiefling woman officer in her mid thirties standing behind a writing table in a bare "
+ "white limestone chamber, dark red skin, two horns curving back from her brow, glossy black hair "
+ "drawn tightly back at the nape, a faint old sword scar on her chin, wearing finely engraved "
+ "plate armour under a spotless white cloak with the long grip of a greatsword rising over her "
+ "left shoulder, holding out a small letter packet folded shut and closed with a thick oval of "
+ "white sealing wax, the packet still sealed and compact in her red fingers, two travellers "
+ "reaching weathered hands for it across the table, a slender male elf clerk in his middle years "
+ "seated at the table end with close cut hair and the side of his right hand greyed with ink, "
+ "blotting a second page with a quill still in his hand, a brass seal matrix and a stub of white "
+ "sealing wax and a candle on the boards between them, a soldier in plain undyed civilian clothes "
+ "pulling a travelling cloak over his shoulders in the doorway at the back, the door behind her shut",
+"quest|Sayım Açığı":
+ "A castle supply cellar under low pale limestone vaults, grain sacks stacked in neat courses "
+ "against the wall, the stack ending early on one side so the top two courses step down to bare "
+ "wall and a clean pale patch of swept flagstone lies in front of that end, wicker baskets of "
+ "charcoal with coal dust trodden out in bootprints across the floor, a coiled roll of strap "
+ "leather on a trestle with its cut end hanging loose, a slate tally board on the wall carrying "
+ "rows of chalk strokes, a stocky broad-shouldered dwarf in his sixties standing before the "
+ "stack with an open ledger in one hand, a weathered craggy face with heavy brows and a broad "
+ "blunt nose, a thick red beard split into two braids gathered in leather rings, soot on the "
+ "lower half of his face, a leather apron pitted with small burn holes, a stub of chalk in his "
+ "free hand, a lantern hung from the vault above him",
+"adventuring-gear|Mühürlü Yazı":
+ "A small letter packet of thick cream castle paper folded shut into a compact rectangle and "
+ "lying closed on dark oak boards, the creases pressed sharp and the edges trimmed straight, the "
+ "loose flap held down by a thick oval of pure white sealing wax with a tower shield pressed deep "
+ "into it, a smaller second stamp bitten into the lower rim of that wax, the wax bridging the "
+ "flap and the body of the packet in one unbroken piece, one short line of handwritten dark ink "
+ "script across the closed face, a brass seal matrix and a stub of white wax with a softened end "
+ "lying beside it, a goose quill and a shallow ink horn at the edge of the boards",
+})
+
 if __name__ == "__main__":
     main()
