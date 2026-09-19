@@ -447,6 +447,23 @@ iki ay önce iki yardımcısından yalnız birini yanına aldı ve başkente git
 şatoya uğramadı, hastalık söylentileriyle ilgilenmedi, ve şatoya emirleri **ağızdan**
 ulaşıyor. Şatoyu geride bıraktığı yardımcı çeviriyor.
 
+**Giderken yardımcısına yazılı bir emir bıraktı** (KARAR, 2026-09-19). Mühürlü, iki
+maddelik, ve yalnız **Aren**'de: *uzak yerlere benden izinsiz asker gönderilmeyecek* ·
+*hastalık söylentisi çıkarsa doğrudan bana bildirilecek.* Şatoda bunu başka kimse bilmiyor.
+
+İki ayın **başında** verildi, yani "son iki aydır yazılı emir yok" cümlesiyle çelişmiyor —
+o cümlenin sınırı tam olarak budur: elinden çıkan **son** yazılı şey.
+
+**Emir savunulabilir, ve önemi burada.** Bir sınır valisinin sınır emri gibi okunur; Aren
+de böyle okuyor ve harfiyen uyuyor. Masa *"bu adam hastalığı önceden biliyordu"* diyemez —
+yalnız rahatsız olur. Hastalık Meridia'ya emirden sonra geldi (`act1.md` §3.1), ama bunu
+gösterecek bir kayıt hiçbir yerde yok. Fısıltı eğimi bozulmuyor: bilgi var, kanıt yok.
+
+İşlevi bir kapaktır. Birinci madde şatonun elini bağlar, ikinci madde haberi kuruma değil
+doğrudan Suretsiz'e getirir. İkisi birlikte Votumar'ı **sağır bir kule** yapıyor — ve
+birinci madde, Aren bir şey yollamak istediğinde taşıyıcı olarak elinde yalnız **sivilleri**
+bırakıyor.
+
 **Askerler bundan açıkça şikayetçi**, ve bu şikayet fısıltı değil: yokluk herkesin
 gördüğü bir şey, ve bir komutanın yokluğundan yakınmak iftira sayılmaz. Fısıltı olan
 şey, yokluğun *sebebine* dair olandır. İkisini karıştırma — biri avluda konuşulur,
@@ -496,6 +513,51 @@ olmaktan çıkıp şatonun her katında ayrı ayrı görülen bir eksiğe dönd�
 > **İki taşıyıcı kuralı:** *Başkumandan'da bir terslik var* cümlesi iki bağımsız yerde
 > duruyor — **şüpheci rütbeli** (insan sezgisi) ve **kulesi susturulmuş nöbetçi**
 > (fiziksel iz). Biri kaçırılırsa diğeri hattı taşır.
+
+
+### 3.8 Votumar'ın iki işi (KARAR, 2026-09-19)
+
+Şatonun masaya verebileceği iş, **neden bir yabancıya verildiğini** kendi içinde
+söylemek zorunda. Votumar'da bunun üç geçerli sebebi var, ve her iş en az birini
+taşır: **emir yok** (asker emirle hareket eder, emri imzalayacak makam iki aydır
+şatoda değil) · **onur pahalı** (§3.1 — bir şeyi fark eden onu bildirmek zorundadır,
+ve bildirilen deftere girer; yabancı defter tutmaz) · **zırhla konuşulmaz** (§3.4–3.5
+— halk paladinlere bağlı olduğu için onlara *anlatmaz*).
+
+**`quest/Son Yazılı Emir` — hikaye zinciri.** Masa Gümüşsu'da gördüğünü şatoya
+anlatırsa açılır; sıra şartı yoktur, Meclis'in ne bildiği Aren'i bağlamaz. Kapıdan
+**Nevra** geçirir, muhatap **Aren**'dir. İkna elde bir şey varsa zarsızdır (beden izi ·
+`trinket/Mühürsüz Yüzük` · köyden imzalı bir ifade — Votumar'da kağıt karizmayı yener),
+yoksa Persuasion DC 15. İkna olmazsa duvar yok: Aren dinler, deftere geçirmez, ve
+**emrin ikinci maddesi işler.**
+
+İkna olursa iki şey yapabilir, biri ya da ikisi:
+
+- **Yazı.** Nerion'a raporu yazdırır, vekaleten imzalar, mühürler
+  (`adventuring-gear/Mühürlü Yazı`) ve **masaya verir** — çünkü asker yollayamaz
+  (birinci madde; Lucid Triton 2 gün uzak, §1.7). Yazı başkentte kapı açar, yani
+  lonca hattına buradan da girilir.
+- **Asker.** Güvendiği birini **sivil kıyafetle** Gümüşsu'ya yollar. Emrin lafzına uyar,
+  ruhuna uymaz; duyulursa İradeye İhanet'tir ve bunu bilerek yapıyor. Askerin **adı
+  yoktur ve yazılmayacak** — döner mi, ne getirir, DM'in (karar A3).
+
+`secrets`: yazı **Varhan'a** ulaşırsa masa bildiğini ve kim olduğunu düşmanın eline
+teslim eder, ve altında Aren'in adı vardır. **İkinci taşıyıcı** Aren kaçırılırsa
+**Nerion**'dur: dilekçe deftere geçer, kuruma yazıyla girilir — müttefiksiz ve yavaş,
+ama hat ölmez.
+
+**`quest/Sayım Açığı` — yan iş, arka plan istemez.** İkmal ambarının sayımı tutmuyor;
+eksik küçük ve iki aya yayılmış. **Torvun** verir, çünkü kendisi arayamaz: arayan
+bildirir (sebep 2). Üç defteri yan yana koymak (Torvun · Nerion · Nevra) Investigation
+DC 13; gerisi sohbet. **Cevap ikili ve ikisi de doğru:** bir çırak gerçekten küçük
+miktarlarda alıyor (kim olduğu ve ailesi **DM'in**, ad yazılmadı), ve iki aydır ağızdan
+verilip hiçbir deftere geçmeyen bir mal çıkışı bunu görünmez tutuyor. Masanın kararı
+**insanı mı, boşluğu mu bildireceğidir**; susmak da bir karardır. Nakit ödül yok (§3.4);
+ödül ocak ve bir kefalet.
+
+Bu iki iş birbirinin ön koşulu değil. `Sayım Açığı` sessiz bir ön provadır: masa
+*"burada iki aydır hiçbir şey yazılmıyor"*u bir çuval un üzerinden, kimse söylemeden
+öğrenir.
 
 ---
 
@@ -781,6 +843,10 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 10. **Votumar yazıldı** (§3): askeri valilik · **Gümüş Kalkan Nişanı** · Sahil Savunma
     Hattı ve **işaret ağı** · garnizon toplumu · Başkumandan = Suretsiz (`secrets`) ·
     **sessiz çatlaklar.**
+10a. **Votumar'ın iki işi yazıldı** (§3.8, 2026-09-19): `quest/Son Yazılı Emir` ve
+    `quest/Sayım Açığı`. Yeni kanon, **Varhan'ın giderken bıraktığı iki maddelik yazılı
+    emir** (§3.6) — savunulabilir, gizli, ve yalnız Aren'de. Şatonun bir yabancıya iş
+    vermesinin üç geçerli sebebi de burada kural olarak yazıldı.
 11. **Ravenhall yazıldı** (§4): **Kuzeyin Gözcüleri**, Avlu'nun rünlü taşları, tek dar
     patika, takas ekonomisi. Bölgenin tamamı **Yazısız** — ve bu bir eksiklik değil bir
     tercih.

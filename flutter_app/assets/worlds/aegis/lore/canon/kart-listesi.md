@@ -318,7 +318,7 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 4
+## 10. `quest` — 6
 
 | Kart | Zincir | Durum |
 |---|---|---|
@@ -326,6 +326,8 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
 | **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
 | **Gelgit Gecesi** | Argenfon'un sehpalarını boşaltan Hıkka kolonisi. **Amaç: yuvayı bulmak.** Yalnız köye uğrayan masaya açılır; dört kapanış (yer bulundu · şatoya bildirildi · baskın durdu · köy arkada bırakıldı) | ✅ |
+| **Son Yazılı Emir** | Votumar'ın kapı kartı: Gümüşsu'da görüleni şatoya anlatmak. Muhatap **Aren**, ikna elde yazı varsa zarsız. İki kapı — mühürlü yazı (masa taşır, başkentte kapı açar) ya da sivil kıyafetli bir asker. Varhan'ın giderken bıraktığı iki maddelik emir `secrets`'ta | ✅ |
+| **Sayım Açığı** | Şato ambarının sayımı tutmuyor. **Torvun** verir, çünkü kendisi arayamaz (arayan bildirir). Cevap ikili: bir çırak alıyor **ve** iki aydır yazılmayan bir çıkış onu gizliyor. Karar: insanı mı, boşluğu mu bildireceksin | ✅ |
 
 ## 11. `background` — 9
 
@@ -345,7 +347,7 @@ Hepsinin zorunlu alanı SRD ref'i: `granted_skill_refs` · `ability_score_option
 | **Paladin Askeri** | Athletics · Intimidation | Smith's Tools | Savage Attacker | Kışla Künyesi (+ SRD Spear) | 10 | ✅ |
 | **Paladin Rütbelisi** | Religion · Persuasion | Calligrapher's Supplies | Healer | Emir Mührü | 20 | ✅ |
 
-## 12. Eşya — 15
+## 12. Eşya — 16
 
 Kart evrenin adıyla yazılır; SRD muadili yalnız `description`'da anılır, ayrıca
 ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
@@ -360,6 +362,7 @@ ref'lenmez. `default_inventory_refs` SRD'ye değil **bu kartlara** ref verir.
 | **Yük Kancası** | `adventuring-gear` | Grappling Hook | Kaçak yollar ve işçi ağı | ✅ |
 | **Seyir Defteri** | `adventuring-gear` | Book | Rota ve yanaşma hakkı; limanda kimlik yerine geçer | ✅ |
 | **Direnç Şerbeti** | `adventuring-gear` | — (yeni nesne) | Hastalığa karşı **tek** savunma: 24 saat, Blight kurtarma zarlarına **+8**. Ruhsatlı bir otacı, Druid bilgisi ya da Simya Seti üretir (`mekanikler.md` §7) | 🟡 |
+| **Mühürlü Yazı** | `adventuring-gear` | — (yeni nesne) | Aren'in vekaleten imzalayıp mühürlediği rapor. Başkentte sıra beklemeden kapı açar; mühür bir kez kırılır | ✅ |
 | **Lonca Mührü** | `trinket` | Signet Ring | Barınma, kredi, isim sorma hakkı | ✅ |
 | **Lonca Rozeti** | `trinket` | — (yeni nesne) | Görünür üyelik: kapıda tartışma bitirir | ✅ |
 | **Aile Mührü** | `trinket` | Signet Ring | Kapılar isimle açılır, isim yükümlülük getirir | ✅ |
@@ -430,17 +433,22 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `curse` | 1 | — | — | 1 |
 | `scene` | 15 | — | — | 15 |
 | `encounter` | 1 | — | — | 1 |
-| `quest` | 4 | — | — | 4 |
+| `quest` | 6 | — | — | 6 |
 | `background` | 9 | — | — | 9 |
-| `adventuring-gear` | 7 | 1 | — | 8 |
+| `adventuring-gear` | 8 | 1 | — | 9 |
 | `trinket` | 7 | — | — | 7 |
 | `species` | — | — | 0 | 0 (bloke) |
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **200** | **12** | **—** | **212** |
+| **Toplam** | **203** | **12** | **—** | **215** |
 
-**200/212 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
+**203/215 ✅, 12 🟡, 0 ⬜** *(2026-09-19, Votumar'ın iki işi: `quest/Son Yazılı Emir` ·
+`quest/Sayım Açığı` · `adventuring-gear/Mühürlü Yazı`; 212'den 215'e. Yeni kanon
+[`bolgeler.md` §3.6, §3.8](bolgeler.md) — Varhan'ın giderken bıraktığı iki maddelik
+yazılı emir, ve şatonun bir yabancıya iş vermesinin üç geçerli sebebi.)*
+
+Öncesi: **200/212 ✅** *(2026-09-16, kapı turu: üç kilit sahnesi —
 `scene/Kapıya En Yakın Masa` · `scene/Dilekçe Avlusu` · `scene/Ayar Masası`;
 187'den 190'a. Aynı turda bütün sahnelere `## Kapı` bloğu, üç görev kartına açık
 kapı listesi ve çoklu kapanış yazıldı.)*
