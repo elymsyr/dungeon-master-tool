@@ -67,10 +67,10 @@ uygulamaya giren dünya
 | `aegis_generate.py` | `art_jobs_final.jsonl` | `out/{uuid}.webp` |
 | `pick.py` | `art_jobs_final.jsonl` + `kategori|ad` | `one.jsonl` (tek kart yeniden üretimi) |
 | `aegis_pick.py` | `out*/` görselleri | `--outdir` klasörü: seçimler + `picks.json` |
-| `aegis_missing.py` | `out_choosen/000art_jobs_chosen.jsonl` | `art_jobs_final_missing.jsonl` (yorumlu kartlar) |
+| `aegis_missing.py` | `out_aegis/art_jobs.jsonl` | `art_jobs_final_missing.jsonl` (yorumlu kartlar) |
 | `aegis_bg.py` | (elle yazılmış tablo) | `art_bg_jobs.jsonl` |
 | `aegis_bg_compare.py` | kart + BG görselleri | `compare_*.jpg` |
-| `aegis_integrate.py` | `out_artwork_choosen/` | `media/Artwork/` + blueprint + manifest |
+| `aegis_integrate.py` | `out_aegis/` | `media/Artwork/` + blueprint + manifest |
 
 > ⚠️ **`aegis_merge.py` çalıştırırsan `art_jobs_final.jsonl`'i ezer ve
 > `aegis_polish.py`'nin bütün elle düzeltmeleri gider.** Merge'den sonra sıra
@@ -206,7 +206,7 @@ python3 aegis_pick.py \
 
 İkinci tur bitince seçimler `out_choosen`'a katılır — görseller kopyalanır,
 `picks.json` kayıtları `comments.jsonl`'e eklenir (yedek alarak, aynı dosya iki
-kez yazılmadan). Birleştirmeden sonra `000art_jobs_chosen.jsonl`'in yeni satırları
+kez yazılmadan). Birleştirmeden sonra `out_aegis/art_jobs.jsonl`'in yeni satırları
 da eklenmelidir, yoksa düzeltme turu o kartları görmez:
 
 ```bash
@@ -233,7 +233,7 @@ PY
 ## 3.5 `aegis_missing.py` — yorumlara göre düzeltme turu
 
 `aegis_pick.py` ile seçim yapılırken bırakılan yorumlar seçilen görsellerin yanına,
-`out_choosen/000art_jobs_chosen.jsonl`'e yazılır. Her satırda **o görseli üreten**
+`out_aegis/art_jobs.jsonl`'e yazılır. Her satırda **o görseli üreten**
 prompt + seed, `source_dir` ve `comment` birlikte durur — bu dosya tek başına yeterli,
 üretim turlarının `art_jobs` dosyalarına ihtiyaç yok.
 
@@ -260,13 +260,15 @@ ya da karşılığı olmayan bir anahtar — hata verir, sessizce yutulmaz.
 
 | Klasör / dosya | İçinde | Taşıyıcı mı |
 |---|---|---|
-| `out_artwork_choosen/` | **Nihai 146 görsel** + `000out_choosen-art_jobs_chosen.jsonl` | **Evet** — `aegis_integrate.py` buradan okur |
-| `out_choosen/` | Seçim turlarının 146 görseli + `000art_jobs_chosen.jsonl` (prompt + seed + yorum) + `comments.jsonl` | **Evet** — `aegis_missing.py` buradan okur |
+| `out_aegis/` | **Tek arşiv:** evrende kullanılan her görselin `{uuid}.webp`'si + `art_jobs.jsonl` (prompt + seed + yorum + `media`) | **Evet** — `aegis_integrate.py` ve `aegis_missing.py` buradan okur |
 | `out/` | Bir üretim turunun ham çıktısı; seçilmeyen alternatifler | Hayır |
 | `out_fix/` | Düzeltme turunun çıktısı (`art_jobs_final_missing.jsonl`) | Karşılaştırma bitene kadar |
 
+Üretim/seçim turlarının geçici `out_*` klasörleri iş bitince `out_aegis`'e katılır ve
+silinir; arşiv olarak yalnız `out_aegis/` kalır (içinde sadece `art_jobs.jsonl` + `.webp`).
+
 Bütün `out*` klasörleri gitignore'da — silinirlerse geri dönüş yeniden üretimdir
-(~15 sn/görsel). Pipeline'ın tek taşıyıcı girdisi `out_choosen/000art_jobs_chosen.jsonl`;
+(~15 sn/görsel). Pipeline'ın tek taşıyıcı girdisi `out_aegis/art_jobs.jsonl`;
 seçilen her görselin prompt'u, seed'i ve yorumu orada durduğu için üretim turlarının
 `art_jobs*.jsonl` dosyaları silinse de düzeltme turu çalışır.
 
@@ -354,13 +356,16 @@ python3 aegis_bg_compare.py --category location --out compare_location.jpg --col
 
 ## 6. `aegis_integrate.py` — uygulamaya alma
 
-`out_artwork_choosen/{uuid}.webp` dosyalarını `aegis-act1/media/Artwork/` altına okunur adlarla
+`out_aegis/{uuid}.webp` dosyalarını `aegis-act1/media/Artwork/` altına okunur adlarla
 kopyalar, `world-blueprint.json`'daki `imagePath` alanlarını ve `manifest.json`'u
 günceller.
 
-> ⚠️ **Kaynak klasör `out_artwork_choosen/` olarak sabit — `--out` bayrağı yok.**
-> Ad/kategori eşleşmesi de o klasörün kendi
-> `000out_choosen-art_jobs_chosen.jsonl`'inden okunur.
+> Varsayılan kaynak `out_aegis/` + `out_aegis/art_jobs.jsonl`; başka bir parti için
+> `--out` / `--jobs` bayrakları var.
+>
+> Hedef dosya adı job'un `media` alanından okunur (varsa); kart adı üretimden sonra
+> değiştiyse eski adla ikinci bir kopya yazılmasın diye. `media: []` olan satır
+> "arşivde duruyor, evrende kullanılmıyor" demektir ve kopyalanmaz.
 
 ```bash
 python3 aegis_integrate.py                 # kuru çalıştır — hiçbir şey yazmaz
@@ -391,7 +396,7 @@ Konuları Gemini yerine elle yazılıp `aegis_subject_cache.json`'a eklendi; job
 ```bash
 cd tool/aegis_art
 python3 aegis_generate.py --jobs art_jobs_069_missing.jsonl --out out_fix
-# out_fix/*.webp → out_artwork_choosen/, job satırlarını 000out_choosen-art_jobs_chosen.jsonl'e ekle
+# out_fix/*.webp → out_aegis/, job satırlarını out_aegis/art_jobs.jsonl'e ekle
 python3 aegis_integrate.py --apply --check
 ```
 

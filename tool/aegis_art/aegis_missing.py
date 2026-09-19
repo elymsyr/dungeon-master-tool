@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Yorumu olan secilmis kartlar icin duzeltilmis bir job dosyasi yazar.
 
-Tek girdi: `out_choosen/000art_jobs_chosen.jsonl` — secilen 146 gorselin her
+Tek girdi: `out_aegis/art_jobs.jsonl` — secilen 146 gorselin her
 biri icin o gorseli URETEN prompt+seed, yaninda `source_dir` ve `comment`.
 
 Yorumsuz kartlara dokunulmaz. Yorumlu olan her kart icin taban, kartin kendi
@@ -18,7 +18,7 @@ import argparse, json, sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-CHOSEN = BASE / "out_choosen" / "000art_jobs_chosen.jsonl"
+CHOSEN = BASE / "out_aegis" / "art_jobs.jsonl"
 OUT = BASE / "art_jobs_final_missing.jsonl"
 
 # ---------------------------------------------------------------------------

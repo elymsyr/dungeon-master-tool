@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""out_artwork_choosen/{uuid}.webp → aegis-act1/media/Artwork/ kopyala + blueprint + manifest güncelle.
+"""out_aegis/{uuid}.webp → aegis-act1/media/Artwork/ kopyala + blueprint + manifest güncelle.
 
 Kullanım:
     python3 aegis_integrate.py                # kuru çalıştır (değişiklik yok)
@@ -14,9 +14,9 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 REPO = BASE.parent.parent
-JOBS_FILE = BASE / "out_artwork_choosen" / "000out_choosen-art_jobs_chosen.jsonl"
+JOBS_FILE = BASE / "out_aegis" / "art_jobs.jsonl"
 # Secilen gorseller — art_jobs_final.jsonl'in ham ciktisi (out/) degil.
-OUT_DIR = BASE / "out_artwork_choosen"
+OUT_DIR = BASE / "out_aegis"
 BP_DIR = REPO / "flutter_app" / "assets" / "worlds" / "aegis" / "aegis-act1"
 BP_FILE = BP_DIR / "world-blueprint.json"
 MANIFEST_FILE = BP_DIR / "manifest.json"
@@ -53,7 +53,7 @@ def main() -> None:
     p.add_argument("--check", action="store_true",
                    help="Uygulamadan sonra dart --check çalıştır")
     p.add_argument("--out", type=Path, default=OUT_DIR,
-                   help="görsellerin bulunduğu klasör (varsayılan: out_artwork_choosen)")
+                   help="görsellerin bulunduğu klasör (varsayılan: out_aegis)")
     p.add_argument("--jobs", type=Path, default=JOBS_FILE,
                    help="uuid→ad/kategori eşlemesini veren jobs jsonl")
     args = p.parse_args()
@@ -95,6 +95,9 @@ def main() -> None:
     for uuid, job in job_by_uuid.items():
         if uuid not in existing:
             continue
+        # media: [] → arşivde duruyor ama evrende kullanılmıyor (emekli görsel)
+        if "media" in job and not job["media"]:
+            continue
 
         name = job["name"]
         cat = job["category"]
@@ -105,9 +108,12 @@ def main() -> None:
         if name in dupe_names:
             fname = sanitize(f"{cat}-{name}") + ".webp"
 
-        dst = MEDIA_DIR / fname
-        rel_path = f"media/Artwork/{fname}"
-        file_list.append(rel_path)
+        # Kart adı üretimden sonra değiştiyse job["media"] gerçek dosya adını tutar;
+        # onu kullanmazsak integrate eski adla ikinci bir kopya yazar.
+        rel_paths = [m for m in job.get("media", []) if m.startswith("media/Artwork/")]
+        rel_paths = rel_paths or [f"media/Artwork/{fname}"]
+        rel_path = rel_paths[0]
+        file_list.extend(rel_paths)
 
         # Blueprint'te imagePath ekle
         if name in bp_index and cat in bp_index[name]:
@@ -126,7 +132,8 @@ def main() -> None:
 
         if not dry:
             MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
+            for rp in rel_paths:
+                shutil.copy2(src, BP_DIR / rp)
         copied += 1
 
     # Manifest'i güncelle
