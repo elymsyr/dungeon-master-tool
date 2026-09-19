@@ -7,7 +7,7 @@
     "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
     "game_system": "dnd5e",
     "source": "Aegis — Meridia: Birinci Perde",
-    "pack_version": "0.13.0",
+    "pack_version": "0.13.1",
     "counts": {
       "campaign": 1,
       "lore": 23,
@@ -1391,19 +1391,29 @@
       "name": "Gelgit Ağzı",
       "type": "location",
       "source": "Aegis — Meridia: Birinci Perde, dnd5e",
-      "description": "> Köyden bir saat kadar ileride kıyı yumuşak kumu bırakıp kayalığa dönüyor. Basamak gibi inen siyah taşlar, aralarında kalmış tuzlu su birikintileri, ve her şeyin üstünde kuru bir midye kabuğu tabakası — üstüne basınca çıtırdıyor.\n>\n> Su yüksekken burada bir şey yok: dalga kayanın dibine kadar geliyor ve orada bitiyor.\n>\n> Su çekildiğinde kayanın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** açılıyor. İçerisi görünmüyor. Ağzın kenarları pürüzsüz; bir şey oradan uzun zamandır girip çıkıyor.",
+      "description": "@[Argenfon](entity:640bb90b-45e1-5eda-9f57-2104b0ef91ac)'un bir saat ilerisindeki kayalık. Kayanın altındaki ağız yalnız su çekilince görünür; su yükseldiğinde ortada kapı yoktur.",
       "image_path": "media/Artwork/Gelgit-Ağzı.webp",
       "images": [],
-      "tags": [],
+      "tags": [
+        "argenfon",
+        "gelgit-ağzı",
+        "hıkka"
+      ],
       "dm_notes": "",
       "pdfs": [],
       "location_id": null,
       "attributes": {
+        "environment": "Gelgit kayalığındaki yuva ağzı",
+        "description_long": "> Köyden bir saat kadar ileride kıyı yumuşak kumu bırakıp kayalığa dönüyor. Basamak gibi inen siyah taşlar, aralarında kalmış tuzlu su birikintileri, ve her şeyin üstünde kuru bir midye kabuğu tabakası — üstüne basınca çıtırdıyor.\n>\n> Su yüksekken burada bir şey yok: dalga kayanın dibine kadar geliyor ve orada bitiyor.\n>\n> Su çekildiğinde kayanın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** açılıyor. İçerisi görünmüyor. Ağzın kenarları pürüzsüz; bir şey oradan uzun zamandır girip çıkıyor.\n\nKöyün kıyısı bir saat sonra yumuşak kumu bırakıp kayalığa dönüyor. Balıkçı buraya kadar gelmez: kayık çekilecek yer yok, ağ atılacak sığlık yok, ve kabuk tabakası ayağı kesiyor. @[Argenfon](entity:640bb90b-45e1-5eda-9f57-2104b0ef91ac)'dan bakan biri için burası kıyının bittiği yerdir.\n\n## Genel özellikler\n\n- **Gelgit.** Ağız yalnız suyun en alçak olduğu saatlerde açıkta kalır. Yüksek suda dalga kayanın dibine kadar gelir ve kayalığın altı tamamen kapanır.\n- **Kabuk tabakası.** Siyah taşların üstü kurumuş midye kabuğuyla kaplı; üstüne basan herkes ses çıkarır. Sessiz yaklaşmak isteyen yalaktan yalağa, ıslak taşa basarak ilerler.\n- **Ağzın kenarı.** Omuz genişliğinde, yerden bir karış yüksekte, ve kenarları pürüzsüz aşınmış — bir şey oradan uzun zamandır girip çıkıyor.\n- **Su birikintileri.** Basamak gibi inen taşların arasında tuzlu su yalakları kalıyor. İçlerinde küçük kabuklular, ve yer yer kırılmış kabuk parçaları.\n- **Yol.** Kıyı boyunca yürünür; kayalığa tırmanmak gerekmez. Karanlıkta yolu bulmak ayrı bir iştir.",
         "parent_location_ref": {
           "_ref": "location",
           "name": "Argenfon"
         },
-        "secrets": "Koloni burada. **Otuz kadar** @[Hıkka — Kitaplardaki Kayıt](entity:8c51d139-99a2-5a6d-8e4b-87e934d68516), yaklaşık on tanesi yeni kabuk atmış **yumuşak**.\n\nAğız yalnız **en alçak gelgitte** geçilir ve dar; zırhlı bir insan giremez, zırhsız biri sürünerek girer. İçeride birkaç metre sonra su alçalıp **hava boşluğuna** açılıyor: koloninin yaşadığı yer orası.\n\nAğzı tutan @[Bırakmayan](entity:73a717b2-ed8a-5dbe-9bc3-28aedf099a05). Kovalamaz, çıkmaz, yerinden oynamaz — ve 2. seviye bir masanın onu aşması beklenmez.\n\n**Devriyenin göremediği tek yer burası:** sahilde yürüyen biri için ortada kapı bile yok."
+        "secrets": "Koloni burada. **Otuz kadar** @[Hıkka — Kitaplardaki Kayıt](entity:8c51d139-99a2-5a6d-8e4b-87e934d68516), yaklaşık on tanesi yeni kabuk atmış **yumuşak**.\n\nAğız yalnız **en alçak gelgitte** geçilir ve dar; zırhlı bir insan giremez, zırhsız biri sürünerek girer. İçeride birkaç metre sonra su alçalıp **hava boşluğuna** açılıyor: koloninin yaşadığı yer orası.\n\nAğzı tutan @[Bırakmayan](entity:73a717b2-ed8a-5dbe-9bc3-28aedf099a05). Kovalamaz, çıkmaz, yerinden oynamaz — ve 2. seviye bir masanın onu aşması beklenmez.\n\n**Devriyenin göremediği tek yer burası:** sahilde yürüyen biri için ortada kapı bile yok.",
+        "map": "media/Maps/Gelgit-Ağzı.webp",
+        "battlemaps": [
+          "media/Maps/Gelgit-Ağzı-Yuva.webp"
+        ]
       }
     },
     "096cfb65-cba4-5473-b404-c6050881da7b": {
