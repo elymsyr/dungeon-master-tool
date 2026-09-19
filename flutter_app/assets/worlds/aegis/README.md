@@ -355,6 +355,8 @@ cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis
 
 ### 4.8 Yazılan kartlar (0.11.0)
 
+**0.12.0 (2026-09-19) — Hıkka ve `quest/Gelgit Gecesi`.** Argenfon'a, şatodan bağımsız ve arka plan istemeyen bir yan zincir eklendi: kıyı köyünün kurutma sehpalarını boşaltan, Öte'den kaçmış kabuk değiştiren küçük bir ırk. **19 yeni kart** — ırk kartı, `location/Gelgit Ağzı`, iki Argenfon NPC'si, üç kademeli canavar (`Yumuşak` · `Kavkı` · `Bırakmayan`) ve statblok parçaları, iki sahne, bir görev. **Amaç: yuvayı bulmak**; dört kapanışı var ve zincir atlanabilir. Kanon: [`bolgeler.md` §5.3](lore/canon/bolgeler.md).
+
 **0.11.2 (2026-09-19) — Aren ve Nerion'un ırkı değişti.** `npc/Başkumandan Yardımcısı — Aren` insan → **tiefling kadın** ve ellilerinden **otuzlarının ortasına** indi; sırtında büyük kılıç, zarif plaka zırh, `npc/Şato Kâtibi — Nerion` elf → **ejderdoğan kadın**. `species_ref` ve `appearance` yeniden yazıldı; Nerion'un saç betimi ejderdoğanda karşılığı olmadığı için pula çevrildi. İkisi de [`bolgeler.md` §1.6](lore/canon/bolgeler.md)'nın *eğilim, kural değil* maddesine dayanıyor. `Varhan` · `Aren` · `Nerion` görselleri yeniden üretildi (Varhan'ın yalnız görseli).
 
 **0.11.1 (2026-09-19) — Yazılmayan Emir kaldırıldı.** `quest/Yazılmayan Emir` ve doğrudan ona bağlı `scene/Susan Kule` silindi. **Votumar'ın sekiz NPC'si kaldı** — adları ve `secrets` içerikleri dahil; silinen yalnız iki kart ve onlara giden bağlar (`location/Votumar` · `location/Gözcü Kuleleri Hattı` `secrets` kapanışları, yedi NPC'nin `dmNotes` zincir satırı, `quest/Söylentinin Peşinde`'nin sahne listesi, `lore/Fihrist` 8. sayfası). Karar A4 ve [`bolgeler.md` §3.6–3.7](lore/canon/bolgeler.md) yerinde duruyor.
