@@ -481,10 +481,10 @@ olmaktan çıkıp şatonun her katında ayrı ayrı görülen bir eksiğe dönd�
 | Rol | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
 | **Başkumandan — Varhan** *(= Suretsiz — `secrets`)* | İtaat ve zaman | **Kim olduğunu.** Ne aradığı yazılmadı (§9 açık 3) | Şatonun her kapısı; ve hiçbiri. **İki aydır şatoda değil, başkentte** | ✅ |
-| **Başkumandan Yardımcısı — Aren** *(insan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; ve şüphesinin bir kısmının **geride bırakılmış olmaktan** geldiğinden korktuğunu | Çatlak. Masaya inanılacak ilk kurum içi ses, ve şatonun kalemi: iki aydır fiilen şatoyu o yürütüyor | ✅ |
+| **Başkumandan Yardımcısı — Aren** *(tiefling, kadın)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; ve şüphesinin bir kısmının **geride bırakılmış olmaktan** geldiğinden korktuğunu | Çatlak. Masaya inanılacak ilk kurum içi ses, ve şatonun kalemi: iki aydır fiilen şatoyu o yürütüyor | ✅ |
 | **Kapı Komutanı — Nevra** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda kaç emrin sözlü geldiğini — yazılı hiçbiri yok; ve defterde Başkumandan'ın çıkış satırının olup dönüş satırının olmadığını | Şatoya giriş; ve **yazılı emir yokluğu** — kayıt evreninde en ağır kanıt | ✅ |
 | **Ocak Ustası — Torvun** *(cüce)* | Ocakların durmaması, ikmalin gelmesi | İkmal emirlerinin de iki aydır ağızdan geldiğini — ve bunu kendi kusuru sandığını | Aynı eksiğin ikinci, daha kolay açılan tanığı: bir subay değil bir usta (§3.4) | ✅ |
-| **Şato Kâtibi — Nerion** *(elf)* | Defterin eksiksiz kapanması | Şatoya hiç gelmeyen bir gecenin kaydını **kendi eliyle** doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu (§3.3, §3.4 kütüphane) | ✅ |
+| **Şato Kâtibi — Nerion** *(ejderdoğan, kadın)* | Defterin eksiksiz kapanması | Şatoya hiç gelmeyen bir gecenin kaydını **kendi eliyle** doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu (§3.3, §3.4 kütüphane) | ✅ |
 | **Kule Nöbetçisi — Vrask** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** (§3.3) | ✅ |
 | **Gözcü Yüzbaşısı — Drahan** *(ejderdoğan)* | Hattın itibarı | O geceyi deftere geçirmemesinin **ağızdan bir emirle** olduğunu; emri getiren adamı tanımadığını | Hattın şato ucu. Kaybolan rapor bir kaza değil bir karardı — **ama kararı verenin adı hiçbir yerde yazılı değil** | ✅ |
 | **Kıyı Kardeşleri — Kessa, Bram ve Tomas** *(iki insan, bir tiefling; 14–18)* | Teknenin ve birbirlerinin güvende kalması | Aynı gece kıyıdan bir ışık gördüklerini; o saatte orada olmamaları gerektiğini (§3.5 çiçek ve rün) | Susan gecenin **sivil** tanığı: şatoya girmeden, deftere yazılmadan ulaşılır. Üç kardeş tek kart; ortancası zaten anlatmak istiyor | ✅ |
@@ -691,7 +691,7 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 | `location` | **Cinervik** *(üst: Meridia)* — yol köyü (§5.1) | ✅ |
 | `location` | **Argenfon** *(üst: Meridia)* — kıyı köyü (§5.2) | ✅ |
 | `npc` | Elymsyr'in dördü (§2.7) · Votumar'ın dördü (§3.7) · Ravenhall'ın ikisi (§4.6) — **10 kart** | 🟡 ad |
-| `scene` | **Gümrük Rıhtımı** (§2.2) · **Susan Kule** (§3.3, §3.7) · **Avluda Karşılanma** (§4.5) | ✅ |
+| `scene` | **Gümrük Rıhtımı** (§2.2) · **Avluda Karşılanma** (§4.5) | ✅ |
 
 **Toplam 24 kart** — 7 `lore` · 7 `location` · 10 `npc` (adları bekliyor) · 3 `scene`.
 

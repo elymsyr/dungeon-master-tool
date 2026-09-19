@@ -217,10 +217,10 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
 | **Başkumandan — Varhan** *(insan görünümünde)* | İtaat ve zaman | **Suretsiz olduğunu** (`secrets`). Ne aradığı yazılmadı. **İki aydır şatoda değil** — başkentte, yanında iki yardımcısından biri | Şatonun her kapısı; ve hiçbiri | ✅ |
-| **Başkumandan Yardımcısı — Aren** *(insan)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; şüphesinin bir kısmının geride bırakılmaktan geldiğinden korktuğunu | Çatlak — inanılacak ilk kurum içi ses, ve şatonun kalemi | ✅ |
+| **Başkumandan Yardımcısı — Aren** *(tiefling, kadın)* | Yanıldığının kanıtlanması | Başkumandan'ın soğukluğunu fark ettiğini; şüphesinin bir kısmının geride bırakılmaktan geldiğinden korktuğunu | Çatlak — inanılacak ilk kurum içi ses, ve şatonun kalemi | ✅ |
 | **Kapı Komutanı — Nevra** *(insan)* | Nöbetinin temiz kapanması | Son iki ayda **hiçbir emrin yazılı gelmediğini**; defterde çıkış satırı var, dönüş satırı yok | Şatoya giriş; ve kayıt evreninde en ağır kanıt: yazılı emir yokluğu | ✅ |
 | **Ocak Ustası — Torvun** *(cüce)* | Ocakların durmaması | İkmal emirlerinin de iki aydır ağızdan geldiğini; bunu kendi kusuru sandığını | Aynı eksiğin ikinci, daha kolay açılan tanığı | ✅ |
-| **Şato Kâtibi — Nerion** *(elf)* | Defterin eksiksiz kapanması | Gelmeyen bir gece kaydının boşluğunu kendi eliyle doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu | ✅ |
+| **Şato Kâtibi — Nerion** *(ejderdoğan, kadın)* | Defterin eksiksiz kapanması | Gelmeyen bir gece kaydının boşluğunu kendi eliyle doldurduğunu | Kayıt ucu: işaretin şatoda nerede durduğu | ✅ |
 | **Kule Nöbetçisi — Vrask** *(ejderdoğan)* | Gördüğünü rapor edebilmek | Bir gece raporunun şatoya ulaşmadığını | İşaret hattı: neyin görüldüğü ve neyin **silindiği** | ✅ |
 | **Gözcü Yüzbaşısı — Drahan** *(ejderdoğan)* | Hattın itibarı | O geceyi yazmamasının ağızdan bir emirle olduğunu; emri getireni tanımadığını | Hattın şato ucu: kaza değil karar — **ama kararı verenin adı hiçbir yerde yok** | ✅ |
 | **Kıyı Kardeşleri — Kessa, Bram ve Tomas** *(iki insan, bir tiefling)* | Teknenin ve birbirlerinin güvende kalması | Aynı gece kıyıdan bir ışık gördüklerini; o saatte orada olmamaları gerektiğini | Susan gecenin **sivil** tanığı; şatoya girmeden ulaşılır. **Üç kardeş, tek kart** | ✅ |
@@ -242,8 +242,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 > ~~*kim ödedi* üç yerde (Sicim · Geçiş Memuru · Ayar
 > Ustası). *Kaydı kim sildirdi* iki yerde (Sicim · Mine). *Kayıtsız geçiş nasıl
 > satın alınır* iki limanda birden (Sicim · Vinç Ustası). *Başkumandan'da bir
-> terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi). *Votumar turunda bu hat
-> yediye çıktı — bkz. `quest/Yazılmayan Emir`.*
+> terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi).
 
 **Adı bekleyen 6 NPC** (🟡): Elymsyr'in dördü, Ravenhall'ın ikisi. *(Votumar'ın kadrosu 2026-09-17'de adlandırıldı ve sekize çıktı.)*
 Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
@@ -289,7 +288,7 @@ Spellcasting Ability DC 13, başarısızlıkta +1 Hastalık Puanı) ve şifa bü
 bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 `lore/Kural Sapmaları`.
 
-## 8. `scene` — 14
+## 8. `scene` — 13
 
 | Kart | Yer | Ne | Durum |
 |---|---|---|---|
@@ -302,7 +301,6 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Kapı Önündeki Teklif** | Meclis Salonu | Orvan'ın elindeki teklif, ne zaman yapacağı yazılmaz: "onları geçireni bana getirin" | ✅ |
 | **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur): Orvan'ın imzası elde, Corin ikinciyi vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
 | **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. İyi yazı buradan da gemiye bindirir (5. tur) | ✅ |
-| **Susan Kule** | Gözcü Kuleleri Hattı | Bir kulenin raporu şatoya ulaşmadı. Sessizlik, yalandan yüksek sesle konuşur | ✅ |
 | **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor**. Patikanın iki anahtarı: gözcüyü ikna · çürümeden söz etmek | ✅ |
 | **Kapıya En Yakın Masa** | Goodbarrel'ın Ocak Başı | **Kilit sahnesi** (kapı turu): Halim'in kim olduğu → Orvan Sancar'ın adı ve Lucid Triton yolu | ✅ |
 | **Dilekçe Avlusu** | Meclis Binası | **Kilit sahnesi** (kapı turu): Meclis Salonu'na giriş. Lonca hattı · Halim'in anlattıkları · bir koltuğun adı · rüşvet/sabır | ✅ |
@@ -314,14 +312,13 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 4
+## 10. `quest` — 3
 
 | Kart | Zincir | Durum |
 |---|---|---|
 | **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · plato. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
 | **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
-| **Yazılmayan Emir** | Votumar'ın kapı kartı: iki aydır yazılı emir yok, ve Başkumandan şatoda değil. Yedi taşıyıcı, üç hat (yazı yok · kayıt eksik · gören var); ikisi bir araya gelirse kurum içi ilk ses açılır | ✅ |
 
 ## 11. `background` — 9
 
@@ -424,7 +421,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `creature-action` | 13 | — | — | 13 |
 | `trait` | 25 | — | — | 25 |
 | `curse` | 1 | — | — | 1 |
-| `scene` | 14 | — | — | 14 |
+| `scene` | 13 | — | — | 13 |
 | `encounter` | 1 | — | — | 1 |
 | `quest` | 3 | — | — | 3 |
 | `background` | 9 | — | — | 9 |
@@ -434,9 +431,9 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **178** | **12** | **—** | **190** |
+| **Toplam** | **177** | **12** | **—** | **189** |
 
-**178/190 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
+**177/189 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
 `scene/Kapıya En Yakın Masa` · `scene/Dilekçe Avlusu` · `scene/Ayar Masası`;
 187'den 190'a. Aynı turda bütün sahnelere `## Kapı` bloğu, üç görev kartına açık
 kapı listesi ve çoklu kapanış yazıldı.)*
