@@ -629,6 +629,28 @@ bağlılık yaratmış.
 > bilgi değil bir **refleks** — ve o refleksin kimin işine yaradığını oyuncu kendi
 > görür (§3.6).
 
+### 5.3 Argenfon'un bugünkü derdi — Hıkka kolonisi (KARAR, 2026-09-19)
+
+Köyün biraz ilerisindeki kayalığın altında, **yalnız su çekildiğinde görünen** bir ağız var
+(`location/Gelgit Ağzı`) ve içinde otuz kadar **Hıkka** yaşıyor — Öte'nin sığ sularının kabuk
+değiştiren küçük ırkı. Kıtada yaşayan tanığı yok; bilgi yalnız kitaplarda (`lore/Hıkka —
+Kitaplardaki Kayıt`).
+
+**Son birkaç haftadır bazı geceler karaya çıkıp kurutma sehpalarını ve ağları boşaltıyorlar.**
+Sebep yavruların çoğunun aynı dönemde kabuk değiştirmesi: bir anda beslenemeyen on küçük var, ve
+karaya çıkanlar onlara yiyecek taşıyor. Yumuşaklar sertleşince baskın **kendiliğinden** biter.
+
+**Şato baktı ve bulamadı**, ve dördü de yöntem hatası değil yapı sorunu: yuva kıyıda değil kıyının
+altında · her gece başka koy · **devriye olan gece karaya çıkmıyorlar** (zırh sesi ve meşale sudan
+belli, yani devriyenin raporu her zaman *"sakin"*) · ve **ne aradıklarını bilmiyorlar**.
+
+**Kimse taşıyıcı değil.** Vorstrand'dan kaçtılar — Blight orada kabuk değişimine dokundu ve
+kaçabilenler hâlâ değişebilenlerdi. Votumar'a hastalık değmedi; §3.6 değişmiyor. Bu bağ `secrets`
+alanında durur, Act 1'de kanıtlanmaz (ortak dil yok).
+
+Zincir: `quest/Gelgit Gecesi`. **Yalnız köye uğrayan bir masaya açılır**, hiçbir şeyin ön koşulu
+değildir, ve atlanabilir.
+
 ---
 
 ## 6. Gümüşsu ve Gizli Liman'a eklenenler
@@ -692,8 +714,16 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 | `location` | **Argenfon** *(üst: Meridia)* — kıyı köyü (§5.2) | ✅ |
 | `npc` | Elymsyr'in dördü (§2.7) · Votumar'ın dördü (§3.7) · Ravenhall'ın ikisi (§4.6) — **10 kart** | 🟡 ad |
 | `scene` | **Gümrük Rıhtımı** (§2.2) · **Avluda Karşılanma** (§4.5) | ✅ |
+| `lore` | **Hıkka — Kitaplardaki Kayıt** — ırk, kabuk, ses, baharat, History kademeleri (§5.3) | ✅ |
+| `location` | **Gelgit Ağzı** *(üst: Argenfon)* — su çekilince görünen yuva ağzı (§5.3) | ✅ |
+| `npc` | **Sevran** · **Iraz** — Argenfon'un ilk iki kartı (§5.3) | ✅ |
+| `monster` | **Yumuşak** · **Kavkı** · **Bırakmayan** (§5.3) | ✅ |
+| `scene` | **Boş Sehpalar** · **Çekilen Su** (§5.3) | ✅ |
+| `quest` | **Gelgit Gecesi** (§5.3) | ✅ |
 
 **Toplam 24 kart** — 7 `lore` · 7 `location` · 10 `npc` (adları bekliyor) · 3 `scene`.
+
+**2026-09-19 eki (§5.3):** +12 kart — 1 `lore` · 1 `location` · 2 `npc` · 3 `monster` · 3 `creature-action` · 6 `trait` · 2 `scene` · 1 `quest`.
 
 **Var olan kartlara giren:**
 

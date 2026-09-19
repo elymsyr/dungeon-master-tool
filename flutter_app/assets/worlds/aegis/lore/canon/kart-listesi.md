@@ -248,7 +248,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
 `npc/Konsey Aracısı`'nın **Kadife** olmadan önceki hali gibi.
 
-## 5. `monster` — 4
+## 5. `monster` — 7
 
 | Kart | Ne | Durum |
 |---|---|---|
@@ -257,7 +257,13 @@ Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'
 | **Dönüşmüş Merla** | Halfling, Small, AC 9, HP 12, CR 1/8 | ✅ |
 | **Dönüşmüş Kromanna** | Tiefling, AC 11, HP 16, ateşe direnç, CR 1/4 | ✅ |
 
-Üçü de jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
+| **Yumuşak** | Hıkka, yeni kabuk atmış yavru. Small, AC 11, HP 7, CR 1/8. Fiziksel hasara zayıf, dövüşmez | ✅ |
+| **Kavkı** | Hıkka, yetişkin. Small, AC 14, HP 13, CR 1/4. Karaya çıkan bu; kışkırtılınca eşik yok | ✅ |
+| **Bırakmayan** | Kabuk değiştirmeyi bırakmış yaşlı. Small, AC 18, HP 44, CR 2, büyüsüz fiziksele dirençli. Sudan çıkmaz, kovalamaz | ✅ |
+
+Son üçü `location/Gelgit Ağzı` kolonisi — `bolge §5.3`, ırk kartı `lore/Hıkka — Kitaplardaki Kayıt`.
+
+İlk üçü jenerik gövdeden türer ve `npc` ikizine linklidir. SRD'de birebir adı olan
 hiçbir yaratık tekrar yazılmaz, ref verilir.
 
 ## 6. `creature-action` — 3 · `trait` — 4 (+ alt sınıf trait'leri §14)
@@ -288,7 +294,7 @@ Spellcasting Ability DC 13, başarısızlıkta +1 Hastalık Puanı) ve şifa bü
 bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 `lore/Kural Sapmaları`.
 
-## 8. `scene` — 13
+## 8. `scene` — 15
 
 | Kart | Yer | Ne | Durum |
 |---|---|---|---|
@@ -312,13 +318,14 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 3
+## 10. `quest` — 4
 
 | Kart | Zincir | Durum |
 |---|---|---|
 | **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · plato. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
 | **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
 | **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
+| **Gelgit Gecesi** | Argenfon'un sehpalarını boşaltan Hıkka kolonisi. **Amaç: yuvayı bulmak.** Yalnız köye uğrayan masaya açılır; dört kapanış (yer bulundu · şatoya bildirildi · baskın durdu · köy arkada bırakıldı) | ✅ |
 
 ## 11. `background` — 9
 
@@ -414,16 +421,16 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | Kategori | ✅ | 🟡 | ⬜ | Toplam |
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
-| `lore` | 21 | 1 | — | 22 |
-| `location` | 33 | — | — | 33 |
-| `npc` | 25 | 10 | — | 35 |
-| `monster` | 4 | — | — | 4 |
-| `creature-action` | 13 | — | — | 13 |
-| `trait` | 25 | — | — | 25 |
+| `lore` | 22 | 1 | — | 23 |
+| `location` | 34 | — | — | 34 |
+| `npc` | 31 | 10 | — | 41 |
+| `monster` | 7 | — | — | 7 |
+| `creature-action` | 16 | — | — | 16 |
+| `trait` | 31 | — | — | 31 |
 | `curse` | 1 | — | — | 1 |
-| `scene` | 13 | — | — | 13 |
+| `scene` | 15 | — | — | 15 |
 | `encounter` | 1 | — | — | 1 |
-| `quest` | 3 | — | — | 3 |
+| `quest` | 4 | — | — | 4 |
 | `background` | 9 | — | — | 9 |
 | `adventuring-gear` | 7 | 1 | — | 8 |
 | `trinket` | 7 | — | — | 7 |
@@ -431,9 +438,9 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **177** | **12** | **—** | **189** |
+| **Toplam** | **200** | **12** | **—** | **212** |
 
-**177/189 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
+**200/212 ✅, 12 🟡, 0 ⬜** *(2026-09-16, kapı turu: üç kilit sahnesi —
 `scene/Kapıya En Yakın Masa` · `scene/Dilekçe Avlusu` · `scene/Ayar Masası`;
 187'den 190'a. Aynı turda bütün sahnelere `## Kapı` bloğu, üç görev kartına açık
 kapı listesi ve çoklu kapanış yazıldı.)*
