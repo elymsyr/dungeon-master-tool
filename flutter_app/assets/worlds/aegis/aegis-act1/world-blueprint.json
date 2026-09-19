@@ -490,7 +490,8 @@
             "öte"
           ],
           "description": "Öte'nin sığ sularında yaşayan, kabuk değiştiren küçük bir ırk. Meridia kıyılarında yaşayan tanığı yok; bilgi yalnız **kitaplarda** duruyor — kıtanın izolasyonu coğrafi değil arşivsel.\n\n**Görünüş.** En irisi bir insanın beline geliyor. Toplu ve yuvarlak: kısa kollar, kısa bacaklar, geniş gövde, alçak ağırlık merkezi. Deri turkuaz — ıslakken parlak, kuruyunca mat. Kabuk tek parça ve sırttan yarılıyor; mavi ile yeşil arasında başlayıp kenarlara doğru turuncuya kaçıyor. Gözler büyük ve tamamen koyu, akı yok.\n\n**Karada ve suda.** Suda gövdeyi yuvarlayan bir hareketle hızlı; karada koşmuyorlar, ıslak kayanın üstünde kısa hamlelerle seğirtiyorlar. Ateş ışığında görmüyorlar — meşaleden kaçmaları korkudan değil, kör olmalarından.\n\n**Ses.** Boyun yanlarındaki solungaç yarıkları karada tam kapanmıyor. Konuşurken çıkan ses bu yüzden ağırlıklı olarak **hıçkırığa** benziyor: kendi dilleri, ama karada yanlış nefesle söylenmiş hâli. Sudayken böyle konuşmuyorlar. Bir insan kulağına bu ses ağlamaya benziyor.\n\n**Kabuk değiştirme.** Düzenli aralıklarla kabuk atıyorlar. Geride sırttan yarılmış, içi boş ama **şekli tam** bir kabuk kalıyor; kıyıya vurduğunda uzaktan çömelmiş bir gövdeye benziyor. Taze kabuk renkli, eskisi güneş ve tuzla solmuş olur.\n\n**Değişimden sonraki birkaç gün.** Yeni kabuk atmış olan **yumuşaktır**: savunmasız, yavaş, avlanamaz. Koloninin bütün düzeni bu birkaç güne göre kurulmuş — kimin kimi koruyacağı, kimin kime yiyecek getireceği. Rütbe yok, sıra var.\n\n**Yaşlananlar.** Kabuk değiştirmeyi bırakan biri artık büyümez; kabuğu yıllar içinde kat kat kalınlaşır, rengini kaybeder. Boyu aynı kalır, sertliği katlanır. Sudan çıkmaz.",
-          "dmNotes": "## Davranış\n\nÇatışma aramazlar: ışık görünce çekilir, ses duyunca suya döner, karada kimseyi kovalamazlar. **Ama eşik çok alçak.** Ani bir hamle, kesilen bir kaçış yolu, üstlerine yürüyen biri — anında ve **topluca** saldırganlaşırlar. Yuvaya yaklaşıldığında bu eşik neredeyse sıfırdır: orada uyarı, mesafe ya da çekilme beklentisi yoktur.\n\nMasaya verilecek denge budur: kıyıda karşılaşmak yönetilebilir, **yuva ağzına dayanmak otuz tanesinin aynı anda üstüne gelmesi** demektir.\n\n## Baharat\n\nKarada açık kalan solungaç zarı keskin kokuya dayanmaz. **Baharattan kaçarlar.** Meridia'da baharat @[Elymsyr](entity:location/Elymsyr)'den girer ve pahalıdır — ama gereken iyisi değil: tezgâh dibi, elenmiş toz, acılaşmış eski parti, kimsenin almadığı kırık kök. Ucuzundan bir karışım yapılıp kıyı şeridine serpilir.\n\n**Ne yapar:** serpilen şeridi birkaç gece kullanılmaz hâle getirir; sehpalar kurtulur.\n**Ne yapmaz:** koloniyi çözmez, yuvayı bulmaz, açlığı bitirmez. Başka bir koya geçerler, ve kıyı uzundur.\n\nYani bir kapanış değil, bir **soluklanma**.\n\n## History — ne biliniyor\n\n| DC | Ne verir |\n|---|---|\n| **8** | Bu kıtanın hayvanı değil. Meridia kıyılarında böyle bir şey yok |\n| **12** | Öte'nin sığ sularının ırkı; kabuk değiştirirler, sesleri budur, ve **kışkırtılmadıkça** insana zarar verdiklerine dair tek bir kayıt yok |\n| **15** | Kitaptaki adları — **Hıkka** — ve eski kıyı halklarının onları **keskin kokuyla** uzak tuttuğu |\n\nKitaptaki ad, bir doğa tarihçisinin o hıçkırık sesini yazıya geçirme denemesidir; yani kendi adlarının bozulmuş hâli. Gerçek adları Act 1'de öğrenilmez.\n\n## DM — neden buradalar (oyuncuya verilmez)\n\nVorstrand'dan kaçtılar. @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) orada kabuk değişimine dokundu: yavrular yeni kabuğu tutturamaz oldu, değişim yarıda kaldı. **Kaçabilenler hâlâ değişebilenlerdi** — yani buraya varanların hiçbiri taşıyıcı değil, ve Votumar'a hastalık değmedi.\n\nBunu masaya anlatacak kimse yok: ortak dil yok, ve taşıdıkları şey ifade değil **kanıt**. Masa *'bunlar bir şeyden kaçmış'* sonucuna varabilir; *neden*ini Act 1'de alamaz.\n\nÜçlünün @[Vorstrand](entity:location/Vorstrand)'dan gelişiyle (`act1 §3.1`) aynı denizin iki ayrı hikâyesi. Kart bu bağı hiçbir yerde kurmaz; kuran masa kurar."
+          "dmNotes": "## Davranış\n\nÇatışma aramazlar: ışık görünce çekilir, ses duyunca suya döner, karada kimseyi kovalamazlar. **Ama eşik çok alçak.** Ani bir hamle, kesilen bir kaçış yolu, üstlerine yürüyen biri — anında ve **topluca** saldırganlaşırlar. Yuvaya yaklaşıldığında bu eşik neredeyse sıfırdır: orada uyarı, mesafe ya da çekilme beklentisi yoktur.\n\nMasaya verilecek denge budur: kıyıda karşılaşmak yönetilebilir, **yuva ağzına dayanmak otuz tanesinin aynı anda üstüne gelmesi** demektir.\n\n## Baharat\n\nKarada açık kalan solungaç zarı keskin kokuya dayanmaz. **Baharattan kaçarlar.** Meridia'da baharat @[Elymsyr](entity:location/Elymsyr)'den girer ve pahalıdır — ama gereken iyisi değil: tezgâh dibi, elenmiş toz, acılaşmış eski parti, kimsenin almadığı kırık kök. Ucuzundan bir karışım yapılıp kıyı şeridine serpilir.\n\n**Ne yapar:** serpilen şeridi birkaç gece kullanılmaz hâle getirir; sehpalar kurtulur.\n**Ne yapmaz:** koloniyi çözmez, yuvayı bulmaz, açlığı bitirmez. Başka bir koya geçerler, ve kıyı uzundur.\n\nYani bir kapanış değil, bir **soluklanma**.\n\n## History — ne biliniyor\n\n| DC | Ne verir |\n|---|---|\n| **8** | Bu kıtanın hayvanı değil. Meridia kıyılarında böyle bir şey yok |\n| **12** | Öte'nin sığ sularının ırkı; kabuk değiştirirler, sesleri budur, ve **kışkırtılmadıkça** insana zarar verdiklerine dair tek bir kayıt yok |\n| **15** | Kitaptaki adları — **Hıkka** — ve eski kıyı halklarının onları **keskin kokuyla** uzak tuttuğu |\n\nKitaptaki ad, bir doğa tarihçisinin o hıçkırık sesini yazıya geçirme denemesidir; yani kendi adlarının bozulmuş hâli. Gerçek adları Act 1'de öğrenilmez.\n\n## DM — neden buradalar (oyuncuya verilmez)\n\nVorstrand'dan kaçtılar. @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) orada kabuk değişimine dokundu: yavrular yeni kabuğu tutturamaz oldu, değişim yarıda kaldı. **Kaçabilenler hâlâ değişebilenlerdi** — yani buraya varanların hiçbiri taşıyıcı değil, ve Votumar'a hastalık değmedi.\n\nBunu masaya anlatacak kimse yok: ortak dil yok, ve taşıdıkları şey ifade değil **kanıt**. Masa *'bunlar bir şeyden kaçmış'* sonucuna varabilir; *neden*ini Act 1'de alamaz.\n\nÜçlünün @[Vorstrand](entity:location/Vorstrand)'dan gelişiyle (`act1 §3.1`) aynı denizin iki ayrı hikâyesi. Kart bu bağı hiçbir yerde kurmaz; kuran masa kurar.",
+          "imagePath": "media/Artwork/Hıkka-Kitaplardaki-Kayıt.webp"
         }
       }
     ],
@@ -1208,7 +1209,8 @@
             "value": "Argenfon"
           },
           "description": "> Köyden bir saat kadar ileride kıyı yumuşak kumu bırakıp kayalığa dönüyor. Basamak gibi inen siyah taşlar, aralarında kalmış tuzlu su birikintileri, ve her şeyin üstünde kuru bir midye kabuğu tabakası — üstüne basınca çıtırdıyor.\n>\n> Su yüksekken burada bir şey yok: dalga kayanın dibine kadar geliyor ve orada bitiyor.\n>\n> Su çekildiğinde kayanın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** açılıyor. İçerisi görünmüyor. Ağzın kenarları pürüzsüz; bir şey oradan uzun zamandır girip çıkıyor.",
-          "secrets": "Koloni burada. **Otuz kadar** @[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt), yaklaşık on tanesi yeni kabuk atmış **yumuşak**.\n\nAğız yalnız **en alçak gelgitte** geçilir ve dar; zırhlı bir insan giremez, zırhsız biri sürünerek girer. İçeride birkaç metre sonra su alçalıp **hava boşluğuna** açılıyor: koloninin yaşadığı yer orası.\n\nAğzı tutan @[Bırakmayan](entity:monster/Bırakmayan). Kovalamaz, çıkmaz, yerinden oynamaz — ve 2. seviye bir masanın onu aşması beklenmez.\n\n**Devriyenin göremediği tek yer burası:** sahilde yürüyen biri için ortada kapı bile yok."
+          "secrets": "Koloni burada. **Otuz kadar** @[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt), yaklaşık on tanesi yeni kabuk atmış **yumuşak**.\n\nAğız yalnız **en alçak gelgitte** geçilir ve dar; zırhlı bir insan giremez, zırhsız biri sürünerek girer. İçeride birkaç metre sonra su alçalıp **hava boşluğuna** açılıyor: koloninin yaşadığı yer orası.\n\nAğzı tutan @[Bırakmayan](entity:monster/Bırakmayan). Kovalamaz, çıkmaz, yerinden oynamaz — ve 2. seviye bir masanın onu aşması beklenmez.\n\n**Devriyenin göremediği tek yer burası:** sahilde yürüyen biri için ortada kapı bile yok.",
+          "imagePath": "media/Artwork/Gelgit-Ağzı.webp"
         }
       }
     ],
@@ -2511,11 +2513,12 @@
             "balıkçı"
           ],
           "description": "Argenfon'da kurutma sehpalarının yarısı onun hanesinin. Son birkaç haftada en çok o kaybetti, ve kaybettiği şey para değil **kış**: kurutulmuş balık, köyün şubatta yiyeceği şey.",
-          "appearance": "Kırklarında, güneşten çatlamış elleri ve kalıcı olarak kısılmış gözleriyle bir balıkçı. Konuşurken elindeki ipi ya da ağı bırakmaz; anlatırken düğüm atmaya devam eder.",
+          "appearance": "Kırklarında, güneşten çatlamış elleri ve kalıcı olarak kısılmış gözleriyle bir balıkçı. Yüzü dikey çizgilere kesilmiş, kaşları ve kirpikleri güneşten renksiz, sakalı tuzdan sertleşmiş; başında hiç çıkarmadığı örme yün başlık, bileğinde katranlı bir ip parçası, bir elinde eksik parmak ucu — yıllar önce bir misina kesmiş. Konuşurken elindeki ipi ya da ağı bırakmaz; bakmadan, kemik ağ iğnesiyle düğüm atmaya devam eder.",
           "mannerisms": "Bir şeyi anlatırken önce sayısını söyler: *\"On dört sehpa. Dokuzu boş. Dördüncü gece.\"*\n\nŞatodan söz ederken sesi hiç değişmez, ve cümlesi hep aynı yerde biter: *\"Geldiler. Baktılar. Sakin dediler.\"* Sitem yok; şövalyelere kızmak Argenfon'da kimsenin aklına gelmez.",
           "goals": "Kışlık balığın kalanını kurtarmak.",
           "secrets": "Yok. Bildiği her şeyi sorulmadan anlatır.\n\nTek eksiği bir bağlantı: komşusu @[Iraz](entity:npc/Iraz)'ın sehpasına hiç dokunulmadığını **biliyor**, ama bunu bir ipucu saymamış — *\"onunki uzakta kalıyor\"* diye düşünmüş.",
-          "dmNotes": "**Görevi veren o, ama iş vermez.** Derdini anlatır; masadan bir şey istemez. İstenirse yol gösterir, kayık verir, yemek verir. Para veremez — köyün nakdi yok.\n\n**Şatoya neden gitmiyorlar:** gittiler. Devriye geldi, iki gece kaldı, bir şey görmedi, *\"gözümüz üstünde\"* dedi. Argenfon'un refleksi zaten bu (`bolge §5.2`): kaygı konuşulur, cümlenin sonu hep *\"halledilir\"*dir. Balık için şövalyeleri ikinci kez rahatsız etmek kimsenin içinden gelmiyor.\n\nZincir: @[Gelgit Gecesi](entity:quest/Gelgit Gecesi)."
+          "dmNotes": "**Görevi veren o, ama iş vermez.** Derdini anlatır; masadan bir şey istemez. İstenirse yol gösterir, kayık verir, yemek verir. Para veremez — köyün nakdi yok.\n\n**Şatoya neden gitmiyorlar:** gittiler. Devriye geldi, iki gece kaldı, bir şey görmedi, *\"gözümüz üstünde\"* dedi. Argenfon'un refleksi zaten bu (`bolge §5.2`): kaygı konuşulur, cümlenin sonu hep *\"halledilir\"*dir. Balık için şövalyeleri ikinci kez rahatsız etmek kimsenin içinden gelmiyor.\n\nZincir: @[Gelgit Gecesi](entity:quest/Gelgit Gecesi).",
+          "imagePath": "media/Artwork/Sevran.webp"
         }
       },
       {
@@ -2525,7 +2528,7 @@
           "species_ref": {
             "lookup": "species",
             "match": "name",
-            "value": "Human"
+            "value": "Halfling"
           },
           "location_ref": {
             "lookup": "location",
@@ -2543,11 +2546,12 @@
             "argenfon"
           ],
           "description": "Balığını tuzlarken baharatlayan tek hane. Köyde bu bir zenginlik işareti değil, bir alışkanlık: kayınvalidesi öyle yaparmış, o da öyle yapıyor.\n\n**Sehpasına hiç dokunulmadı.**",
-          "appearance": "Ellilerinde, kısa boylu, hızlı konuşan bir kadın. Üstünde sürekli tuz ve kimyon kokusu var; kendisi kokuyu almadığını söylüyor.",
+          "appearance": "Ellilerinde, hızlı konuşan bir halfling kadın. Daha uzun boylulara göre yapılmış tuzlama masasına yetişmek için yıllardır aynı eskimiş tabureye çıkıyor. Koyu kırmızı başörtüsünden kaçan kırlaşmış kıvırcık saçlar, iki kulağında küçük altın halkalar; parmakları ve tırnak diplerine kadar elleri baharattan kalıcı olarak kiremit rengi. Üstünde sürekli tuz ve kimyon kokusu var; kendisi kokuyu almadığını söylüyor.",
           "mannerisms": "Sorulmadan tarif verir. Konu ne olursa olsun bir noktada kayınvalidesinin ne yaptığına gelir.",
           "goals": "Kimsenin onun sehpasına da dadanmaması.",
           "secrets": "Yok — ve farkında olduğu bir şey de yok. **Sehpasının neden atlandığını bilmiyor**, şansına veriyor.",
-          "dmNotes": "**Zarsız ipucu.** Köyde kim kaybetti diye sorulduğunda Iraz'ın adı *kaybetmeyenler* tarafında geçer. Sehpasına bakan biri farkı görür: on dört sehpa boşalmış, bu dolu.\n\n**Baharat kapısının birinci taşıyıcısı budur** (@[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt)); ikincisi kitaplar (History DC 15). Biri yeter.\n\nIraz sorulursa baharatladığını söyler, çünkü bunun bir sır olduğu aklına gelmez."
+          "dmNotes": "**Zarsız ipucu.** Köyde kim kaybetti diye sorulduğunda Iraz'ın adı *kaybetmeyenler* tarafında geçer. Sehpasına bakan biri farkı görür: on dört sehpa boşalmış, bu dolu.\n\n**Baharat kapısının birinci taşıyıcısı budur** (@[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt)); ikincisi kitaplar (History DC 15). Biri yeter.\n\nIraz sorulursa baharatladığını söyler, çünkü bunun bir sır olduğu aklına gelmez.",
+          "imagePath": "media/Artwork/Iraz.webp"
         }
       }
     ],
@@ -3118,7 +3122,8 @@
         "mapping": {
           "name": "Hıçkırık",
           "source": "Hıkka",
-          "description": "Karada, boyun yanlarındaki solungaç yarıkları tam kapanmaz; havayı dışarı atarken hıçkırığa benzer bir ses çıkar. Bu yaratık karada nefes aldığı sürece **sessiz kalamaz.**\n\n**Masadaki karşılığı:** karadayken Gizlenme (Stealth) kontrollerinde dezavantajlıdır, ve onu **duyan** bir karakter göremese bile yönünü bilir. Suda bu özellik işlemez."
+          "description": "Karada, boyun yanlarındaki solungaç yarıkları tam kapanmaz; havayı dışarı atarken hıçkırığa benzer bir ses çıkar. Bu yaratık karada nefes aldığı sürece **sessiz kalamaz.**\n\n**Masadaki karşılığı:** karadayken Gizlenme (Stealth) kontrollerinde dezavantajlıdır, ve onu **duyan** bir karakter göremese bile yönünü bilir. Suda bu özellik işlemez.",
+          "imagePath": "media/Artwork/Hıçkırık.webp"
         }
       },
       {
@@ -3126,7 +3131,8 @@
         "mapping": {
           "name": "Suya Bağlı",
           "source": "Hıkka",
-          "description": "Sudan uzun süre uzak kalamaz. Kesintisiz **10 dakikadan** fazla karada kalırsa, her ilave 10 dakikada bir **Constitution DC 10** kurtarma zarı atar; başarısızlıkta 1 seviye Exhaustion alır. Suya girmek bu şekilde kazanılan Exhaustion'ı bir saat içinde temizler.\n\n**Sonucu:** baskınlar kısadır ve su hattından uzaklaşmaz. Karaya çıkan bir Hıkka içeri doğru kovalanamaz — kovalayan kazanır, ve kazandığı şey yorgun bir hayvandır."
+          "description": "Sudan uzun süre uzak kalamaz. Kesintisiz **10 dakikadan** fazla karada kalırsa, her ilave 10 dakikada bir **Constitution DC 10** kurtarma zarı atar; başarısızlıkta 1 seviye Exhaustion alır. Suya girmek bu şekilde kazanılan Exhaustion'ı bir saat içinde temizler.\n\n**Sonucu:** baskınlar kısadır ve su hattından uzaklaşmaz. Karaya çıkan bir Hıkka içeri doğru kovalanamaz — kovalayan kazanır, ve kazandığı şey yorgun bir hayvandır.",
+          "imagePath": "media/Artwork/Suya-Bağlı.webp"
         }
       },
       {
@@ -3134,7 +3140,8 @@
         "mapping": {
           "name": "Yumuşak Kabuk",
           "source": "Yumuşak",
-          "description": "Kabuğunu yeni atmış; yenisi henüz sertleşmedi. **Bütün fiziksel hasara karşı zayıftır** (vulnerable: bludgeoning, piercing, slashing), ve Constitution kurtarma zarlarında dezavantajlıdır.\n\nBirkaç gün içinde bu geçer ve yaratık bir @[Kavkı](entity:monster/Kavkı) olur. Kart bir tür değil, bir **hâl** yazıyor."
+          "description": "Kabuğunu yeni atmış; yenisi henüz sertleşmedi. **Bütün fiziksel hasara karşı zayıftır** (vulnerable: bludgeoning, piercing, slashing), ve Constitution kurtarma zarlarında dezavantajlıdır.\n\nBirkaç gün içinde bu geçer ve yaratık bir @[Kavkı](entity:monster/Kavkı) olur. Kart bir tür değil, bir **hâl** yazıyor.",
+          "imagePath": "media/Artwork/Yumuşak-Kabuk.webp"
         }
       },
       {
@@ -3142,7 +3149,8 @@
         "mapping": {
           "name": "Eşik Yok",
           "source": "Kavkı",
-          "description": "Kendisi ya da görüş alanındaki bir Hıkka tehdit edildiğinde — ani bir hamle, kesilen bir kaçış yolu, üstüne yürüyen biri — **anında saldırıya geçer** ve o tur boyunca geri çekilmez.\n\n**Yuvasının 30 ft'i içinde** bu koşul aranmaz: orada her giren tehdittir.\n\nAyrıca saldırdığı yaratığın 5 ft'inde başka bir Hıkka varsa saldırı zarında **avantajlıdır.** Otuz tanesinin aynı anda üstüne gelmesinin mekanik hâli budur."
+          "description": "Kendisi ya da görüş alanındaki bir Hıkka tehdit edildiğinde — ani bir hamle, kesilen bir kaçış yolu, üstüne yürüyen biri — **anında saldırıya geçer** ve o tur boyunca geri çekilmez.\n\n**Yuvasının 30 ft'i içinde** bu koşul aranmaz: orada her giren tehdittir.\n\nAyrıca saldırdığı yaratığın 5 ft'inde başka bir Hıkka varsa saldırı zarında **avantajlıdır.** Otuz tanesinin aynı anda üstüne gelmesinin mekanik hâli budur.",
+          "imagePath": "media/Artwork/Eşik-Yok.webp"
         }
       },
       {
@@ -3150,7 +3158,8 @@
         "mapping": {
           "name": "Kat Kat Kabuk",
           "source": "Bırakmayan",
-          "description": "Yıllardır kabuk değiştirmedi; üstündeki katman kat kat kalınlaştı ve rengini kaybetti. **Büyülü olmayan** ezici, delici ve kesici hasara karşı **dirençlidir.**\n\n**Masadaki karşılığı:** vuruyorsun, bir şey olmuyor. Tehdidi verdiği hasar değil, **aşılamaz** olmasıdır — ve kovalamadığı için ondan kaçmak her zaman mümkündür."
+          "description": "Yıllardır kabuk değiştirmedi; üstündeki katman kat kat kalınlaştı ve rengini kaybetti. **Büyülü olmayan** ezici, delici ve kesici hasara karşı **dirençlidir.**\n\n**Masadaki karşılığı:** vuruyorsun, bir şey olmuyor. Tehdidi verdiği hasar değil, **aşılamaz** olmasıdır — ve kovalamadığı için ondan kaçmak her zaman mümkündür.",
+          "imagePath": "media/Artwork/Kat-Kat-Kabuk.webp"
         }
       },
       {
@@ -3158,7 +3167,8 @@
         "mapping": {
           "name": "Kıyıya Çıkmaz",
           "source": "Bırakmayan",
-          "description": "Ağırlığı ve kalınlaşmış kabuğu yüzünden karada işe yaramaz hâle gelir. **Su hattının dışına çıkmaz** — kovalamaz, takip etmez, sudan iki adım öteye gelmez.\n\n**Sonucu:** ondan kaçmak her zaman mümkündür. Tuttuğu şey bir alan değil, bir **ağız**."
+          "description": "Ağırlığı ve kalınlaşmış kabuğu yüzünden karada işe yaramaz hâle gelir. **Su hattının dışına çıkmaz** — kovalamaz, takip etmez, sudan iki adım öteye gelmez.\n\n**Sonucu:** ondan kaçmak her zaman mümkündür. Tuttuğu şey bir alan değil, bir **ağız**.",
+          "imagePath": "media/Artwork/Kıyıya-Çıkmaz.webp"
         }
       }
     ],
@@ -3377,7 +3387,8 @@
             "match": "name",
             "value": "Slashing"
           },
-          "description": "Yakın silahlı saldırı: **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d4 kesici hasar (ort. 2).\n\nBir saldırıdan çok bir **kapış**: perdeli el uzanır, tırnak deriyi yırtar, ve yaratık aynı hamlede geri çekilir. Elinde taşınabilir bir şey olan bir hedefe karşı bunu yemeyi tercih eder — asıl istediği kavga değil, **eldeki şey.**"
+          "description": "Yakın silahlı saldırı: **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d4 kesici hasar (ort. 2).\n\nBir saldırıdan çok bir **kapış**: perdeli el uzanır, tırnak deriyi yırtar, ve yaratık aynı hamlede geri çekilir. Elinde taşınabilir bir şey olan bir hedefe karşı bunu yemeyi tercih eder — asıl istediği kavga değil, **eldeki şey.**",
+          "imagePath": "media/Artwork/Kapmak.webp"
         }
       },
       {
@@ -3393,7 +3404,8 @@
             "match": "name",
             "value": "Bludgeoning"
           },
-          "description": "Yakın silahlı saldırı: **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 ezici hasar (ort. 3).\n\nGövdesini yuvarlayıp sert kabuğun omuz hizasındaki kalın kenarını vurur. Toplu ve alçak bir şeyin bütün ağırlığı tek noktaya biner; ses tahtaya vurulmuş gibidir."
+          "description": "Yakın silahlı saldırı: **+4** isabet, erişim 5 ft, tek hedef. **Vuruş:** 1d6 ezici hasar (ort. 3).\n\nGövdesini yuvarlayıp sert kabuğun omuz hizasındaki kalın kenarını vurur. Toplu ve alçak bir şeyin bütün ağırlığı tek noktaya biner; ses tahtaya vurulmuş gibidir.",
+          "imagePath": "media/Artwork/Kabuk-Vuruşu.webp"
         }
       },
       {
@@ -3409,7 +3421,8 @@
             "match": "name",
             "value": "Bludgeoning"
           },
-          "description": "Yakın silahlı saldırı: **+5** isabet, erişim 5 ft, tek hedef. **Vuruş:** 2d6+3 ezici hasar (ort. 10), ve hedef **Strength DC 13** kurtarma zarı atar; başarısızlıkta **prone** düşer.\n\nHamle yok, hız yok. Öne devrilir ve kat kat kabuğun bütün ağırlığını üstüne bırakır. Dar bir ağızda düşen biri kalkamaz."
+          "description": "Yakın silahlı saldırı: **+5** isabet, erişim 5 ft, tek hedef. **Vuruş:** 2d6+3 ezici hasar (ort. 10), ve hedef **Strength DC 13** kurtarma zarı atar; başarısızlıkta **prone** düşer.\n\nHamle yok, hız yok. Öne devrilir ve kat kat kabuğun bütün ağırlığını üstüne bırakır. Dar bir ağızda düşen biri kalkamaz.",
+          "imagePath": "media/Artwork/Ağırlığını-Verme.webp"
         }
       }
     ],
@@ -3915,7 +3928,8 @@
               "match": "name",
               "value": "Slashing"
             }
-          ]
+          ],
+          "imagePath": "media/Artwork/Yumuşak.webp"
         }
       },
       {
@@ -3991,7 +4005,8 @@
           ],
           "description": "> Bele gelen boyda, toplu, alçak bir gövde. Turkuaz deri ıslakken parlıyor; sırtındaki tek parça kabuk mavi ile yeşil arasında, kenarlara doğru turuncuya kaçıyor. Kısa kolların ucundaki eller gövdeye göre fazla iri ve perdeli.\n>\n> Islak kayanın üstünde koşmuyor — kısa hamlelerle seğirtiyor, her hamlenin sonunda duruyor ve bakıyor. Nefesiyle birlikte o kesik kesik ses geliyor.",
           "traits_md": "Yetişkin bir Hıkka. Koloninin yürüyen, taşıyan, koruyan hâli.\n\nKıyıya çıkan ve sehpaları boşaltan bunlardır — ve taşıdıkları yiyecek kendilerine değil, yuvadaki @[Yumuşak](entity:monster/Yumuşak)lara gidiyor.\n\nKışkırtılmadıkça saldırmaz. Kışkırtıldığında ya da yuvasına yaklaşıldığında @[Eşik Yok](entity:trait/Eşik Yok) devreye girer ve geri adım diye bir şey kalmaz.",
-          "dmNotes": "**Kıyıda karşılaşma.** İlk tepkisi suya dönmektir. Yolu kesilmediği sürece kavga çıkmaz; kesilirse çıkar, ve yalnız çıkmaz — yakında her zaman iki üç tane daha vardır.\n\n**Yuvada karşılaşma.** Tamamen başka bir şey. Otuz kadarı var, @[Eşik Yok](entity:trait/Eşik Yok) hepsinde, ve dar bir ağızda avantaj onlarda.\n\n**Tempo notu.** Kıyıda **iki üç tane** 1.–2. seviye bir masa için doğru ölçü. Yuvada sayı vermeye kalkma; orası bir çatışma değil bir **karar**."
+          "dmNotes": "**Kıyıda karşılaşma.** İlk tepkisi suya dönmektir. Yolu kesilmediği sürece kavga çıkmaz; kesilirse çıkar, ve yalnız çıkmaz — yakında her zaman iki üç tane daha vardır.\n\n**Yuvada karşılaşma.** Tamamen başka bir şey. Otuz kadarı var, @[Eşik Yok](entity:trait/Eşik Yok) hepsinde, ve dar bir ağızda avantaj onlarda.\n\n**Tempo notu.** Kıyıda **iki üç tane** 1.–2. seviye bir masa için doğru ölçü. Yuvada sayı vermeye kalkma; orası bir çatışma değil bir **karar**.",
+          "imagePath": "media/Artwork/Kavkı.webp"
         }
       },
       {
@@ -4085,7 +4100,8 @@
               "value": "Slashing"
             }
           ],
-          "resistance_note": "Yalnız büyülü olmayan saldırılara karşı."
+          "resistance_note": "Yalnız büyülü olmayan saldırılara karşı.",
+          "imagePath": "media/Artwork/Bırakmayan.webp"
         }
       }
     ],
@@ -4731,7 +4747,8 @@
           },
           "description": "> Köyün rüzgâr alan yamacında sıra sıra kurutma sehpası var, ve çoğu boş. İpler kesilmemiş, **koparılmış**: uçları lif lif dağılmış, birkaçı hâlâ sallanıyor. Altlarındaki kumda iki sıra yayvan, perdeli iz duruyor; ikisi de denize dönüyor ve su çizgisinde bitiyor.\n>\n> Sehpaların arasında yaşlıca bir adam elindeki ağı düğümlemeye devam ederek konuşuyor. Size bakmıyor, sehpalara bakıyor:\n>\n> *\"On dört sehpa. Dokuzu boş. Dördüncü gece.\"*",
           "beats": "## Kapı\n\n**Bu sahne ne zaman durur.** Karakterler @[Argenfon](entity:location/Argenfon)'a uğradığında. **Görev başka hiçbir yerden duyulmaz** — şatoda sorulursa alınacak cevap dürüsttür: *\"Baktık. Sakin.\"*\n\n**Buradan hangi kapılar açılabilir.** Hiçbiri zorunlu değil.\n\n| Kapı | Anahtarı |\n|---|---|\n| Zararın ne olduğu | @[Sevran](entity:npc/Sevran) — zar yok, sorulmadan anlatır |\n| *\"Karadan gelmemişler\"* | Kumdaki izler denize dönüyor; bakan görür |\n| Boş kabuk | Kıyıda bir yerde duruyor. Perception ya da kıyıda yürümek |\n| Ne oldukları | Boş kabuğa ya da ize bakıp **History DC 8 / 12 / 15** (@[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt)) |\n| Baharat | @[Iraz](entity:npc/Iraz)'ın dokunulmamış sehpası — zarsız, köyde duruyor |\n| Ne zaman geldikleri | Köyde kim hangi gece kaybettiğini sayar. Cevap gelgitte |\n\n**Kaçırılırsa kilitlenme yok.** Masa köye hiç uğramazsa bu zincir hiç açılmaz, ve perdede hiçbir şey eksilmez.\n\n## Sehpalar\n\nKurutulmuş balık köyün kışlık yiyeceği; kayıp para değil **şubat**. Kesilen değil koparılan ipler, yayvan perdeli izler, ve hiçbir yerde kan olmaması — hiçbiri zar istemez.\n\n## Köyün hâli\n\nKaygı var ve açıkça konuşuluyor, ama her cümlenin sonu aynı yere bağlanıyor: *\"halledilir.\"* Şatoya gidildi, devriye geldi, iki gece kaldı, bir şey görmedi. Balık için şövalyeleri ikinci kez rahatsız etmek kimsenin içinden gelmiyor (`bolge §5.2`).\n\nKimse masadan bir şey istemiyor. Sevran derdini anlatır ve orada bırakır.\n\n## Gelgit\n\nKayıpların hangi geceler olduğu köyde **sayılabilir** durumda — kimse iki listeyi yan yana koymamış. Koyan görür: baskınlar **suyun en çok çekildiği** gecelerde oluyor.\n\nÜç taşıyıcısı var, biri yeter: balıkçıya sormak (zarsız) · iki gece beklemek (zar yok, vakit var) · **Nature ya da Survival DC 12**.",
-          "dmNotes": "**Bu sahne bir iş verme sahnesi değil.** Kimse görevlendirmiyor; ortada bir zarar duruyor ve masa isterse alıyor.\n\n**Paladinler neden bulamadı — dördü birden, ve hiçbiri onları aptal göstermiyor:**\n\n1. Yuva kıyıda değil, **kıyının altında** (@[Gelgit Ağzı](entity:location/Gelgit Ağzı)); devriye sahilde yürüyor.\n2. Her gece başka koy — tek bir patika yok.\n3. **Devriye olan gece karaya çıkmıyorlar.** Zırh sesi ve meşale sudan belli; yani devriyenin raporu her zaman *\"sakin\"* çıkıyor. Yöntem, aradığı şeyi göremeyecek biçimde kurulu.\n4. **Ne aradıklarını bilmiyorlar** — bu ırkın Meridia'da yaşayan tanığı yok.\n\nZincir: @[Gelgit Gecesi](entity:quest/Gelgit Gecesi)."
+          "dmNotes": "**Bu sahne bir iş verme sahnesi değil.** Kimse görevlendirmiyor; ortada bir zarar duruyor ve masa isterse alıyor.\n\n**Paladinler neden bulamadı — dördü birden, ve hiçbiri onları aptal göstermiyor:**\n\n1. Yuva kıyıda değil, **kıyının altında** (@[Gelgit Ağzı](entity:location/Gelgit Ağzı)); devriye sahilde yürüyor.\n2. Her gece başka koy — tek bir patika yok.\n3. **Devriye olan gece karaya çıkmıyorlar.** Zırh sesi ve meşale sudan belli; yani devriyenin raporu her zaman *\"sakin\"* çıkıyor. Yöntem, aradığı şeyi göremeyecek biçimde kurulu.\n4. **Ne aradıklarını bilmiyorlar** — bu ırkın Meridia'da yaşayan tanığı yok.\n\nZincir: @[Gelgit Gecesi](entity:quest/Gelgit Gecesi).",
+          "imagePath": "media/Artwork/Boş-Sehpalar.webp"
         }
       },
       {
@@ -4745,7 +4762,8 @@
           },
           "description": "> Su saatlerdir çekiliyor. Kayalığın dibinde daha önce hiç görünmemiş bir şerit açıldı: ıslak, siyah, midye kabuğuyla kaplı taş.\n>\n> Ve en alttaki basamağın altında, yerden bir karış yüksekte, **omuz genişliğinde bir ağız** var. Kenarları pürüzsüz — bir şey oradan uzun zamandır girip çıkıyor. İçerisi görünmüyor.\n>\n> Ağzın gerisindeki suda bir şey duruyor ve kıpırdamıyor. Sonra o kesik kesik ses geliyor, ve kayanın nefes aldığını anlıyorsunuz.",
           "beats": "## Kapı\n\n**Bu sahne ne zaman durur.** Masa doğru koyda, **suyun en çok çekildiği** saatte olduğunda. Yanlış saatte gelen için ortada kapı bile yoktur — dalga kayanın dibine kadar gelir ve orada biter.\n\n**Anahtarlar** (biri yeter): gelgit hattını çözmek (@[Boş Sehpalar](entity:scene/Boş Sehpalar)) · bir gece kıyıda bir Hıkka'yı **takip etmek** · @[Sevran](entity:npc/Sevran)'ın kayığıyla kıyıyı taramak.\n\n**Buradan hangi kapılar açılabilir.**\n\n| Kapı | Ne oluyor |\n|---|---|\n| Yuvanın yeri bulundu | Görevin amacı burada tamamlanıyor. Gerisi ne yapılacağı |\n| İçeri girmek | Ağız dar; **zırhlı bir insan giremez**, zırhsız biri sürünerek girer. Ve ağzı @[Bırakmayan](entity:monster/Bırakmayan) tutuyor |\n| Geri dönmek | Her zaman açık, her zaman ücretsiz — o şey kovalamıyor |\n\n## Ağız\n\nOmuz genişliğinde, yerden bir karış yüksekte, yalnız en alçak gelgitte geçilir. Birkaç metre sonra su alçalıp bir **hava boşluğuna** açılıyor; koloni orada.\n\nİçeri girmek bir tercih, bir zorunluluk değil — ve girmek, otuz tanesinin aynı anda üstüne gelmesi demek (@[Eşik Yok](entity:trait/Eşik Yok)).\n\n## Ağzı tutan\n\n@[Bırakmayan](entity:monster/Bırakmayan) sudan çıkmıyor, kovalamıyor, yerinden oynamıyor. Vurulduğunda bir şey olmuyor. 2. seviye bir masanın onu aşması beklenmiyor, ve aşmak zorunda da değil.\n\n## Burada kavga çıkmak zorunda değil\n\nAğzın önünde durup geri dönen bir masa görevini **tamamlamış** olur: aranan şey yuvanın yeriydi, ve yer bulundu.",
-          "dmNotes": "**Amaç burada biter, karar burada başlar.** Kart kimseye içeri girmesini söylemiyor; @[Gelgit Gecesi](entity:quest/Gelgit Gecesi)'nin dört kapanışından üçü bu ağzın dışında gerçekleşiyor.\n\n**Işık uyarısı.** Meşaleyle gelen bir masa görülmez — çünkü onlar ateş ışığında zaten görmüyorlar. Ama duyulur. Ve @[Hıçkırık](entity:trait/Hıçkırık) iki yönlü çalışır: masa da onları duyar.\n\n**Saldırgan olmaları için bir sebep gerekmiyor burada.** Yuvanın 30 ft'i içinde eşik yoktur."
+          "dmNotes": "**Amaç burada biter, karar burada başlar.** Kart kimseye içeri girmesini söylemiyor; @[Gelgit Gecesi](entity:quest/Gelgit Gecesi)'nin dört kapanışından üçü bu ağzın dışında gerçekleşiyor.\n\n**Işık uyarısı.** Meşaleyle gelen bir masa görülmez — çünkü onlar ateş ışığında zaten görmüyorlar. Ama duyulur. Ve @[Hıçkırık](entity:trait/Hıçkırık) iki yönlü çalışır: masa da onları duyar.\n\n**Saldırgan olmaları için bir sebep gerekmiyor burada.** Yuvanın 30 ft'i içinde eşik yoktur.",
+          "imagePath": "media/Artwork/Çekilen-Su.webp"
         }
       }
     ],
@@ -4853,7 +4871,8 @@
           "status": "Not Started",
           "description": "Argenfon'un kurutma sehpaları birkaç haftadır bazı geceler boşalıyor. İzler denize dönüyor, ve şatonun devriyesi dört kez bakıp bir şey görmedi. Aranan şey bir hırsız değil, bir **yuva**.",
           "objective": "**Amaç: yuvayı bulmak.** Bulunduktan sonra ne yapılacağı masanın.\n\nBu iş yalnız @[Argenfon](entity:location/Argenfon)'a uğrayan bir masaya açılır (@[Boş Sehpalar](entity:scene/Boş Sehpalar)). Kimse kimseyi görevlendirmiyor; ortada bir zarar duruyor, alınır ya da alınmaz.\n\n## Açık kapılar\n\n| Kapı | Anahtarları |\n|---|---|\n| **Ne olduklarını öğrenmek** | Kıyıya vurmuş boş kabuk · kumdaki izler → **History DC 8 / 12 / 15** (@[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt)) |\n| **Ne zaman geldiklerini çözmek** | Köyde kim hangi gece kaybetti · iki gece beklemek · **Nature/Survival DC 12**. Cevap: suyun en çok çekildiği geceler |\n| **Nereye gittiklerini görmek** | Bir gece kıyıda beklemek — meşalesiz, zırh sesi olmadan; ya da bir tanesini takip etmek |\n| **Yuva** | @[Çekilen Su](entity:scene/Çekilen Su) → @[Gelgit Ağzı](entity:location/Gelgit Ağzı) |\n| **Baharat** | @[Iraz](entity:npc/Iraz)'ın dokunulmamış sehpası (zarsız) ya da kitaplar (DC 15). @[Elymsyr](entity:location/Elymsyr)'in ucuz baharatı kıyıya serpilir |\n\n## Bu iş ne zaman masadan kalkar\n\nTek bir kapanışı yok. Şunlardan biri olduğunda kapanmış sayılır:\n\n- **Yuvanın yeri bulunduğunda** — içeri girilsin girilmesin. Amaç buydu;\n- **Yeri şatoya bildirildiğinde** — paladinler devralır, masaya iş kalmaz, itibar kalır;\n- **Baskınlar durduğunda** — baharat şeridiyle, ya da gelgit gecelerinde kıyıya balık bırakarak. Yumuşaklar birkaç hafta içinde sertleşir ve baskın kendiliğinden biter;\n- **Masa köyü arkasında bıraktığında.** Köy kışı daha aç geçirir, kimse masayı suçlamaz.\n\n## Ne vaat edilmiyor\n\nArgenfon'un nakdi yok. Verebilecekleri şey yatak, yemek, kayık ve **konuşma**. Bu iş bir ödül için değil, önünde durduğu için yapılır.\n\n---\n\n## Bu görevde geçen kartlar\n\n**Sahneler:** @[Boş Sehpalar](entity:scene/Boş Sehpalar) · @[Çekilen Su](entity:scene/Çekilen Su)\n\n**Mekanlar:** @[Argenfon](entity:location/Argenfon) · @[Gelgit Ağzı](entity:location/Gelgit Ağzı) · @[Votumar](entity:location/Votumar)\n\n**NPC:** @[Sevran](entity:npc/Sevran) · @[Iraz](entity:npc/Iraz)\n\n**Yaratıklar:** @[Yumuşak](entity:monster/Yumuşak) · @[Kavkı](entity:monster/Kavkı) · @[Bırakmayan](entity:monster/Bırakmayan)\n\n**Irk kartı:** @[Hıkka — Kitaplardaki Kayıt](entity:lore/Hıkka — Kitaplardaki Kayıt)\n\n**Komşu görev:** yok. Bu zincir hiçbir şeyin ön koşulu değil, ve hiçbir şey onu açmıyor.",
-          "secrets": "**Neden buradalar (oyuncuya verilmez).** Vorstrand'dan kaçtılar; @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) orada kabuk değişimine dokundu. **Kaçabilenler hâlâ değişebilenlerdi** — hiçbiri taşıyıcı değil, ve Votumar'a hastalık değmedi.\n\nOrtak dil yok; bunu masaya anlatacak kimse yok. Masanın ulaşabileceği en uç katman *\"bunlar bir şeyden kaçmış\"*tır.\n\n**Neden şimdi.** Bir süredir buradalar ve kimse fark etmedi. Sonra yavruların çoğu aynı dönemde kabuk değiştirdi — bir anda beslenemeyen on küçük. Karaya çıkanlar avcı değil, @[Yumuşak](entity:monster/Yumuşak)lara yemek taşıyan @[Kavkı](entity:monster/Kavkı)lar.\n\nŞiddetsiz kapanışın ağırlığı burada: yumuşaklar sertleşince baskın **kendiliğinden** biter."
+          "secrets": "**Neden buradalar (oyuncuya verilmez).** Vorstrand'dan kaçtılar; @[Blight — Enfeksiyon](entity:curse/Blight — Enfeksiyon) orada kabuk değişimine dokundu. **Kaçabilenler hâlâ değişebilenlerdi** — hiçbiri taşıyıcı değil, ve Votumar'a hastalık değmedi.\n\nOrtak dil yok; bunu masaya anlatacak kimse yok. Masanın ulaşabileceği en uç katman *\"bunlar bir şeyden kaçmış\"*tır.\n\n**Neden şimdi.** Bir süredir buradalar ve kimse fark etmedi. Sonra yavruların çoğu aynı dönemde kabuk değiştirdi — bir anda beslenemeyen on küçük. Karaya çıkanlar avcı değil, @[Yumuşak](entity:monster/Yumuşak)lara yemek taşıyan @[Kavkı](entity:monster/Kavkı)lar.\n\nŞiddetsiz kapanışın ağırlığı burada: yumuşaklar sertleşince baskın **kendiliğinden** biter.",
+          "imagePath": "media/Artwork/Gelgit-Gecesi.webp"
         }
       }
     ],

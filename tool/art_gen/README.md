@@ -196,7 +196,7 @@ python3 tool/art_gen/prompts.py --sample 3
 
 **Çıktı:** `art_jobs.jsonl` — her satır bir JSON:
 ```json
-{"uuid": "uuidv5-...", "package": "dnd5e-srd", "type": "monster", "name": "Aboleth", "prompt": "large three-eyed fish-like aberration... oil painting on canvas...", "seed": 25264934}
+{"uuid": "uuidv5-...", "package": "dnd5e-srd", "type": "monster", "name": "Aboleth", "prompt": "large three-eyed fish-like aberration... oil painting, thick oil-painted texture...", "seed": 25264934}
 ```
 
 **Sıralama:** Pack'ler alfabetik (`sorted(glob("*.pkg.json"))`), entity'ler JSON dict
@@ -383,6 +383,11 @@ bunlar silinirse modeller yeniden indirilmek zorunda kalır.
 ## Öğrenilenler
 
 - **Flux'ta negasyon kullanma.** cfg 1.0 distilled model, negatif prompt yok.
+  `no border`, `no frame`, `no vignette`, `no margins` yazmak kenarlığı
+  ENGELLEMEZ, çağırır — Gemini/Imagen'de de aynısı. İstemediğini yazma,
+  istediğini olumlu tarif et (`the scene runs off all four edges and is cropped
+  by them`). Aynı tuzak: `hand-drawn edges` (kenar çizdirir) ve `oil painting on
+  canvas` (tuvali nesne olarak çizip çerçeveler).
   "no text, no watermark" filigranı önlemiyor, aksine tetikliyor.
 - **Canavarlarda `description` yok.** Prompt yapısal alanlardan sentezleniyor.
 - **Yapısal sentez isim sadakati için yetmiyor.** Çözen: LLM'e görsel subject

@@ -438,11 +438,16 @@ eski üretilmiş görsel ikinci (`images`). Sağ-alt köşedeki Gemini filigran�
 
 Bütün kartlarda ortak:
 
-- **Yağlı boya**: `hand-painted oil painting on canvas, expressive painterly
-  brushstrokes, matte finish`
+- **Yağlı boya**: `hand-painted oil painting, thick oil-painted texture,
+  expressive painterly brushstrokes, matte finish` — `on canvas` YAZMA, model
+  tuvali bir nesne olarak çizip etrafına kenarlık koyuyor.
 - **Anti-AI iskeleti**: `digital art`, `concept art`, `render`, `masterpiece`
   gibi kelimeler **yasak** — tetikleyici, görüntüyü plastikleştiriyor.
-- **Full-bleed kare**: kenarlık, çerçeve, vinyet yok; sahne dört kenara taşar.
+- **Full-bleed kare**: talimat hep OLUMLU verilir — `the scene runs off all
+  four edges and is cropped by them`. `no border / no frame / no vignette / no
+  margins` YAZMA: negasyonu olmayan modellerde (Flux cfg 1.0, Z-Image, Gemini)
+  bu kelimeler tam da o nesneleri çağırıyor. Aynı sebeple `hand-drawn edges` ve
+  `on canvas` da yasak — ikisi de kenar/çerçeve üretiyor.
 - **Dönem çapası**: çevre gören kartlarda `medieval fantasy world of timber,
   stone, sail and horse`. Bu olmadan model limanlara buharlı gemi ve lokomotif,
   atölyelere çelik kule vinci koyuyor.

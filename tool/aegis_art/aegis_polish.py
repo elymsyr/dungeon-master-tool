@@ -32,12 +32,12 @@ DND = "Dungeons & Dragons 5th edition tabletop roleplaying game illustration"
 # kartlara takilir; yakin plan bir yuzuge "sail and horse" demenin anlami yok.
 ERA = "medieval fantasy world of timber, stone, sail and horse"
 ERA_CATEGORIES = {"campaign", "location", "scene", "quest", "encounter", "lore", "background"}
-STYLE = ("hand-painted oil painting on canvas, expressive painterly brushstrokes, "
+STYLE = ("hand-painted oil painting, thick oil-painted texture, expressive painterly brushstrokes, "
          "matte finish")
-TAIL = ("subtle tonal variation across surfaces, slightly uneven hand-drawn edges, "
+TAIL = ("subtle tonal variation across surfaces, visible brush texture in the paint, "
         "irregular handmade pigment density, classic fantasy tabletop roleplaying game art")
-FULL_BLEED = ("full-bleed square artwork, edge-to-edge composition, no margins, "
-              "no border, no frame, no vignette, environment extends to all edges")
+FULL_BLEED = ("full-bleed square artwork, the scene runs off all four edges and is "
+              "cropped by them, every pixel out to the corners is part of the scene itself")
 FLAVOR = ["bold confident strokes", "loose sketchy marks", "soft blended edges",
           "crisp detailed lines", "gritty worn texture"]
 
