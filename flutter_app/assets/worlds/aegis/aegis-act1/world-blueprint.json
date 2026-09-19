@@ -7169,23 +7169,12 @@
                 "style": {}
               },
               {
-                "id": "5f15f465-f5fa-4807-8353-2450f4caee68",
-                "x": 925,
-                "y": 259,
-                "label": "Başkumandan",
-                "pinType": "npc",
-                "entityId": "0ad235a6-bee9-5a23-abb8-09e87b1815d9",
-                "note": "",
-                "color": "#66bb6a",
-                "style": {}
-              },
-              {
                 "id": "2d45666e-369e-4759-a3c2-f2d900f85f89",
                 "x": 637,
                 "y": 1462,
-                "label": "Kapı Komutanı",
+                "label": "Kapı Komutanı — Nevra",
                 "pinType": "npc",
-                "entityId": "1c20fbd7-2d2c-58fe-b73b-8110b4391d97",
+                "entityId": "3f3451c4-3238-5b39-8e2f-ef0f69f16550",
                 "note": "",
                 "color": "#66bb6a",
                 "style": {}
