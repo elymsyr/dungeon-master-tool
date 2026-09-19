@@ -33,15 +33,15 @@ def entity_uuid(category: str, source_name: str) -> str:
 # ---------------------------------------------------------------------------
 STYLE_TAIL = (
     "subtle tonal variation across surfaces, "
-    "slightly uneven hand-drawn edges, "
+    "visible brush texture in the paint, "
     "irregular handmade pigment density, "
     "classic fantasy tabletop roleplaying game art"
 )
 
 FULL_BLEED = (
-    "full-bleed square artwork, edge-to-edge composition, "
-    "no margins, no border, no frame, no vignette, "
-    "environment extends to all edges"
+    "full-bleed square artwork, the scene runs off all four edges "
+    "and is cropped by them, every pixel out to the corners is part "
+    "of the scene itself"
 )
 
 DND_CONTEXT = "Dungeons & Dragons 5th edition tabletop roleplaying game illustration"
@@ -51,7 +51,7 @@ DND_CONTEXT = "Dungeons & Dragons 5th edition tabletop roleplaying game illustra
 # D&D 5e SRD oil painting tarzı aynen kullanılır.
 # ---------------------------------------------------------------------------
 AEGIS_STYLE = (
-    "hand-painted oil painting on canvas, "
+    "hand-painted oil painting, thick oil-painted texture, "
     "expressive painterly brushstrokes, matte finish"
 )
 

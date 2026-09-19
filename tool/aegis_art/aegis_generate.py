@@ -11,7 +11,7 @@ Kullanım:
     python3 aegis_generate.py --loader checkpoint --ckpt flux1-schnell-fp8.safetensors
     python3 aegis_generate.py --host http://192.168.1.12:8188
 """
-import argparse, json, shutil, sys, time, urllib.parse, urllib.request
+import argparse, json, mimetypes, shutil, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -120,7 +120,8 @@ def upload_ref(host: str, path: str) -> str:
     data = Path(path).read_bytes()
     b = b"--X\r\n"
     b += b'Content-Disposition: form-data; name="image"; filename="'
-    b += Path(path).name.encode() + b'"\r\nContent-Type: image/webp\r\n\r\n'
+    mime = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    b += Path(path).name.encode() + b'"\r\nContent-Type: ' + mime.encode() + b'\r\n\r\n'
     b += data + b"\r\n--X\r\nContent-Disposition: form-data; name=\"overwrite\"\r\n\r\ntrue\r\n--X--\r\n"
     req = urllib.request.Request(
         f"{host}/upload/image", data=b,
@@ -240,11 +241,15 @@ def main() -> None:
     t0, done = time.time(), 0
     for i, job in enumerate(todo, 1):
         try:
-            model = args.model if args.loader == "diffusion" else args.ckpt
-            png = run_job(args.host, job, model, args.text_encoder, args.vae,
-                          args.size, args.timeout, args.loader)
+            if job.get("copy"):              # hazır ref: üretme, doğrudan kullan
+                png, crop = Path(job["copy"]).read_bytes(), 0.0
+            else:
+                model = args.model if args.loader == "diffusion" else args.ckpt
+                png = run_job(args.host, job, model, args.text_encoder, args.vae,
+                              args.size, args.timeout, args.loader)
+                crop = args.crop
             (args.out / f"{job['uuid']}.webp").write_bytes(
-                to_webp(png, args.quality, args.crop))
+                to_webp(png, args.quality, crop))
             done += 1
         except Exception as e:
             print(f"HATA {job['uuid']} {job['name']}: {e}", file=sys.stderr)

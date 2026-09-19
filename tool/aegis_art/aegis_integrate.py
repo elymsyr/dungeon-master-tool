@@ -5,6 +5,9 @@ Kullanım:
     python3 aegis_integrate.py                # kuru çalıştır (değişiklik yok)
     python3 aegis_integrate.py --apply        # uygula
     python3 aegis_integrate.py --apply --check # uygula + dart --check çalıştır
+
+Başka bir partiyi almak için --out / --jobs:
+    python3 aegis_integrate.py --out out_kavki --jobs kavki_jobs.jsonl --apply
 """
 import argparse, json, re, shutil, subprocess, sys
 from pathlib import Path
@@ -32,8 +35,8 @@ def sanitize(name: str) -> str:
     return s.strip("-") or "unknown"
 
 
-def load_jobs() -> list[dict]:
-    return [json.loads(l) for l in JOBS_FILE.read_text().splitlines() if l.strip()]
+def load_jobs(path: Path) -> list[dict]:
+    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
 def load_blueprint() -> dict:
@@ -49,13 +52,19 @@ def main() -> None:
     p.add_argument("--apply", action="store_true", help="Değişiklikleri uygula")
     p.add_argument("--check", action="store_true",
                    help="Uygulamadan sonra dart --check çalıştır")
+    p.add_argument("--out", type=Path, default=OUT_DIR,
+                   help="görsellerin bulunduğu klasör (varsayılan: out_artwork_choosen)")
+    p.add_argument("--jobs", type=Path, default=JOBS_FILE,
+                   help="uuid→ad/kategori eşlemesini veren jobs jsonl")
     args = p.parse_args()
+    out_dir = args.out if args.out.is_absolute() else BASE / args.out
+    jobs_file = args.jobs if args.jobs.is_absolute() else BASE / args.jobs
 
     dry = not args.apply
     if dry:
         print("=== KURU ÇALIŞTIRMA (--apply olmadan) ===\n", file=sys.stderr)
 
-    jobs = load_jobs()
+    jobs = load_jobs(jobs_file)
     bp = load_blueprint()
     manifest = load_manifest()
 
@@ -63,7 +72,7 @@ def main() -> None:
     job_by_uuid = {j["uuid"]: j for j in jobs}
 
     # out/ içindeki mevcut dosyalar
-    existing = {p.stem: p for p in OUT_DIR.glob("*.webp")}
+    existing = {p.stem: p for p in out_dir.glob("*.webp")}
 
     # blueprint'te source_name → (category, index) haritası
     bp_index: dict[str, dict[str, int]] = {}

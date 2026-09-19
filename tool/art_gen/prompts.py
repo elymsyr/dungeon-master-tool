@@ -42,7 +42,7 @@ PLAIN_LIGHT = ("warm natural light with soft cast shadows, richly painted detail
 # ---------------------------------------------------------------------------
 STYLE_TAIL = (
     "subtle tonal variation across surfaces, "
-    "slightly uneven hand-drawn edges, "
+    "visible brush texture in the paint, "
     "irregular handmade pigment density, "
     "classic fantasy tabletop roleplaying game art"
 )
@@ -51,12 +51,10 @@ STYLE_TAIL = (
 # kelimeleri edge-to-edge talimatından güçlü yorumlayabiliyor, bu yüzden
 # kompozisyonu subject'ten hemen sonra,olareksiz ve net veriyoruz.
 FULL_BLEED = (
-    "full-bleed square artwork, edge-to-edge composition, the illustration "
-    "extends continuously to all four edges of the image, background reaches "
-    "and touches every edge and corner of the canvas, no empty margins, no "
-    "white space, no blank border, no frame, no vignette, no isolated "
-    "character on a plain background, character and environment composition "
-    "naturally cropped by the image boundaries"
+    "full-bleed square artwork, the scene runs off all four edges and is "
+    "cropped by them, background and subject continue past every edge and "
+    "corner, every pixel out to the corners is part of the scene itself, "
+    "the subject stands in a real place that fills the whole image"
 )
 
 # Her prompt'un başına eklenen D&D bağlamı — modelin bu görselin bir masa üstü
@@ -66,7 +64,7 @@ DND_CONTEXT = ("Dungeons & Dragons 5th edition tabletop roleplaying game illustr
 # Paket başına çizim tarzı. Medya somut adlandırılır; hepsi geleneksel araçlar
 # olduğundan AI-default parlaklığına düşmez. Paket kimliği = tarz.
 # "dnd uygun olmalı" istenen paketler DND_STYLE'a bağlanır.
-DND_STYLE = ("hand-painted oil painting on canvas, expressive painterly "
+DND_STYLE = ("hand-painted oil painting, thick oil-painted texture, expressive painterly "
              "brushstrokes, matte finish")
 PACKAGE_STYLE = {
     "dnd5e-srd": DND_STYLE,
