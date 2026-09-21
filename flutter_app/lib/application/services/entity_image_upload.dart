@@ -21,7 +21,7 @@ const int kMaxEntityImages = 5;
 /// kartın görseli buluta ancak DM onu paylaştığında ve bir oyuncu eksik
 /// bildirdiğinde çıkar (`SharedMediaCourier`). Ham seçici yolu (`Downloads/`)
 /// hiçbir zaman saklanmaz — veri kökünün dışında kaldığı için LAN eşlemesi
-/// taşıyamıyor (`LanSyncSession._mediaFor`) ve kullanıcı dosyayı taşırsa
+/// taşıyamıyor (`ContentCodec._mediaFor`) ve kullanıcı dosyayı taşırsa
 /// resim kayboluyor.
 Future<List<String>> localizeEntityImages(
   WidgetRef ref,

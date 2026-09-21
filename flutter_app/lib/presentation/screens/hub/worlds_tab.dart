@@ -33,6 +33,8 @@ import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
 import '../../widgets/world_packages_section.dart';
+import '../../../application/services/content_transfer/content_item.dart';
+import '../../widgets/content_archive_menu.dart';
 
 class WorldsTab extends ConsumerStatefulWidget {
   const WorldsTab({super.key});
@@ -90,6 +92,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
   /// Filtered campaign list as seen by the UI right now — read from providers
   /// so the Load/Delete handlers index into the same list the user sees.
+  /// Seçili dünya — `.dmtz` menüsü kimlik ve isim istiyor.
+  CampaignInfo? get _selectedWorld {
+    final campaigns = _currentFiltered();
+    if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) {
+      return null;
+    }
+    return campaigns[_selectedIndex];
+  }
+
   List<CampaignInfo> _currentFiltered() {
     final all = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
     final filter = ref.read(worldsFilterProvider);
@@ -392,6 +403,11 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     onPressed: _selectedIndex >= 0 ? _copyWorld : null,
                     icon: const Icon(Icons.content_copy, size: 18),
                     label: Text(L10n.of(context)!.charCopyToWorldAction),
+                  ),
+                  ContentArchiveMenu(
+                    type: ContentItemType.world,
+                    selectedId: _selectedWorld?.id,
+                    selectedName: _selectedWorld?.name,
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(

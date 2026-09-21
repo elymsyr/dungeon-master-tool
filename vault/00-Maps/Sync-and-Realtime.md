@@ -1,16 +1,18 @@
 ---
 type: moc
 domain: sync
-updated: 2026-08-24
+updated: 2026-09-21
 tags: [moc]
 ---
 
 # Sync & Realtime — Map of Content
 
 > [!summary] Scope
-> İki kol var ve ikisi de **buluta dünya kopyalamaz.**
+> Üç kol var ve üçü de **buluta dünya kopyalamaz.**
 >
-> **LAN** — cihazdan cihaza taşımanın tek yolu. Aynı ağdaki iki cihaz arasında manuel, kalıcı eşleşmeli, buluta hiç uğramayan senkron.
+> **LAN** — aynı ağdaki iki cihaz arasında manuel, kalıcı eşleşmeli, buluta hiç uğramayan senkron.
+>
+> **`.dmtz` dosya aktarımı** — hesapsız, internetsiz: dünya/paket/karakter zip'e girer, başka bir kurulumda açılır. LAN ile **aynı codec'i** kullanır ([[content_codec]]); aradaki tek fark blob'un telden mi dosyadan mı geldiği.
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
 >
@@ -21,12 +23,17 @@ tags: [moc]
 
 ## Key Files
 
+**Ortak codec** (hem LAN hem `.dmtz` — `application/services/content_transfer/`):
+- [[content_codec]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
+- [[content_item]] — veri sözleşmesi: `ContentItemRef` / `ContentItemPayload` / `ContentMediaEntry`.
+- [[world_merge]] — bölüm bazlı birleştirme; aynı id iki tarafta da varsa çakışma çözümü.
+- [[content_archive]] — `.dmtz` zip yazma/okuma; hub sekmeleri ve karakter düzenleyicideki dışa/içe aktarma menüsü.
+
 **LAN kolu** (bulutu atlar, manuel, kalıcı cihaz eşleşmesi — [[LAN-Sync-Flow]]):
 - [[lan_sync_protocol]] — tel formatı, LWW diff, HMAC, QR daveti, presence paketi.
 - [[lan_device_store]] — cihaz kimliği + `lan_paired_devices` kayıtları.
 - [[lan_sync_server]] — host: HttpServer + presence beacon + eşleşme uçları.
 - [[lan_sync_client]] — `/pair` el sıkışması, imzalı çağrılar, presence dinleyici.
-- [[lan_sync_session]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):
 - [[world_sync_service]] — beş tabloya Realtime abonelik + birleşik CDC event stream'i.
@@ -42,6 +49,8 @@ tags: [moc]
 **Yerel yazma:** Edit → [[pending_write_buffer]] debounce → Drift. Bitti. Kuyruk yok, bulut yok.
 
 **Paylaşım:** DM "Paylaş" → görseller `AssetRef`'e → `entity_shares` satırı **gövdesiyle** → CDC → oyuncunun [[world_mirror_applier]]'ı blob'a yazar. Adımlar: [[Share-Broadcast-Flow]].
+
+**`.dmtz`:** Dışa aktar → `ContentCodec.loadItem` → zip (manifest + payload + extras + medya, diskten akıtılarak). İçe aktar → format kontrolü → medya sha doğrulamasıyla diske → `ContentCodec.applyItem` (aynı id varsa [[world_merge]] ile birleştirir). Yol taşınabilirliği `manifest.data_root` + `rewriteRoots` — LAN'daki mekanizmanın aynısı.
 
 **LAN:** QR okut (ya da IP+PIN) → `/pair` el sıkışması → iki tarafta kalıcı kayıt. Sonra tek tuş: her eşleşmiş cihazla manifest → `diffManifests` (LWW) → item item `repository.load`/`save` + medya. Aynı hesap zorunlu. Adımlar: [[LAN-Sync-Flow]].
 

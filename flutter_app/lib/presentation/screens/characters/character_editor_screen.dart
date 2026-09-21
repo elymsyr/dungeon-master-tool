@@ -66,6 +66,8 @@ import '../../widgets/save_info_section.dart';
 import '../../widgets/section_jump_pad.dart';
 
 import '../database/entity_card.dart';
+import '../../../application/services/content_transfer/content_item.dart';
+import '../../widgets/content_archive_menu.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
@@ -493,6 +495,17 @@ class _CharacterEditorScreenState
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
+            // `.dmtz` dışa aktarma — karakteri hesapsız yedeklemek ya da
+            // başka bir kuruluma taşımak için. İçe aktarma burada YOK:
+            // kullanıcı kuralı "karakteri yalnızca dünya içinden import
+            // edebiliriz".
+            if (!embedded)
+              ContentArchiveMenu(
+                type: ContentItemType.character,
+                selectedId: character.id,
+                selectedName: character.entity.name,
+                showImport: false,
+              ),
             // Cloud save & sync — desktop/tablet only. On phone the entry
             // moves into the overflow menu below to free AppBar space.
             if (getScreenType(context) != ScreenType.phone)

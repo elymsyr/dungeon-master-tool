@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import 'lan_device_store.dart';
 import 'lan_sync_protocol.dart';
-import 'lan_sync_session.dart';
+import '../content_transfer/content_codec.dart';
 
 /// LAN sync host'u — uygulama açıkken yaşayan sunucu.
 ///
@@ -31,14 +31,14 @@ import 'lan_sync_session.dart';
 /// replay, `/pair` için IP başına deneme sayacı.
 class LanSyncServer {
   LanSyncServer({
-    required LanSyncSession session,
+    required ContentCodec session,
     required LanDeviceStore store,
     required Future<String?> Function() currentUid,
   })  : _session = session,
         _store = store,
         _currentUid = currentUid;
 
-  final LanSyncSession _session;
+  final ContentCodec _session;
   final LanDeviceStore _store;
   final Future<String?> Function() _currentUid;
 
@@ -434,17 +434,17 @@ class LanSyncServer {
     return chunks;
   }
 
-  static ({LanItemType type, String id})? _parseItemPath(String path) {
+  static ({ContentItemType type, String id})? _parseItemPath(String path) {
     final parts = path.split('/').where((s) => s.isNotEmpty).toList();
     if (parts.length != 3 || parts[0] != 'item') return null;
-    final type = lanItemTypeFromWire(parts[1]);
+    final type = contentItemTypeFromWire(parts[1]);
     if (type == null) return null;
     return (type: type, id: Uri.decodeComponent(parts[2]));
   }
 
   Future<void> _sendItem(
     HttpResponse response,
-    ({LanItemType type, String id}) target,
+    ({ContentItemType type, String id}) target,
   ) async {
     final ref = (await _session.buildManifest())
         .firstWhereOrNull((r) => r.type == target.type && r.id == target.id);
@@ -466,7 +466,7 @@ class LanSyncServer {
       await _reject(response, HttpStatus.badRequest, 'bad payload');
       return;
     }
-    final item = LanItemPayload.fromJson(decoded.cast<String, dynamic>());
+    final item = ContentItemPayload.fromJson(decoded.cast<String, dynamic>());
     if (item == null) {
       await _reject(response, HttpStatus.badRequest, 'bad item');
       return;
@@ -484,7 +484,7 @@ class LanSyncServer {
     final missing = <String>[];
     for (final e in raw ?? const []) {
       if (e is! Map) continue;
-      final entry = LanMediaEntry.fromJson(e.cast<String, dynamic>());
+      final entry = ContentMediaEntry.fromJson(e.cast<String, dynamic>());
       if (entry == null) continue;
       if (!await _session.hasMedia(entry)) missing.add(entry.path);
     }
@@ -497,7 +497,7 @@ class LanSyncServer {
       await _reject(response, HttpStatus.badRequest, 'bad media');
       return;
     }
-    final entry = LanMediaEntry.fromJson(decoded.cast<String, dynamic>());
+    final entry = ContentMediaEntry.fromJson(decoded.cast<String, dynamic>());
     final data = decoded['data'];
     if (entry == null || data is! String) {
       await _reject(response, HttpStatus.badRequest, 'bad media');

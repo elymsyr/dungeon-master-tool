@@ -2152,5 +2152,12 @@
   "removeMemberBody": "Retirer {name} du monde ?",
   "thisPlayer": "ce joueur",
   "charsYours": "{count, plural, =1{Votre personnage} other{Vos personnages}}",
-  "pendingChoicesTooltip": "{count, plural, =1{1 choix de niveau en attente — ouvrez le personnage pour le résoudre.} other{{count} choix de niveau en attente — ouvrez le personnage pour les résoudre.}}"
+  "pendingChoicesTooltip": "{count, plural, =1{1 choix de niveau en attente — ouvrez le personnage pour le résoudre.} other{{count} choix de niveau en attente — ouvrez le personnage pour les résoudre.}}",
+  "contentArchiveExport": "Exporter vers un fichier (.dmtz)",
+  "contentArchiveImport": "Importer depuis un fichier (.dmtz)",
+  "contentArchiveExported": "Enregistré : {path}",
+  "contentArchiveImported": "{name} importé",
+  "contentArchiveImportedWithSkips": "{name} importé — {count} fichiers multimédias ignorés",
+  "contentArchiveFailed": "Échec du transfert : {error}",
+  "contentArchiveUnsupported": "Ce fichier a été créé par une version plus récente. Mets l'application à jour."
 }

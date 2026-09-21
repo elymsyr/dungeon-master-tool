@@ -2152,5 +2152,12 @@
   "removeMemberBody": "{name} aus der Welt entfernen?",
   "thisPlayer": "diesen Spieler",
   "charsYours": "{count, plural, =1{Dein Charakter} other{Deine Charaktere}}",
-  "pendingChoicesTooltip": "{count, plural, =1{1 offene Stufenaufstiegs-Entscheidung — öffne den Charakter zum Auflösen.} other{{count} offene Stufenaufstiegs-Entscheidungen — öffne den Charakter zum Auflösen.}}"
+  "pendingChoicesTooltip": "{count, plural, =1{1 offene Stufenaufstiegs-Entscheidung — öffne den Charakter zum Auflösen.} other{{count} offene Stufenaufstiegs-Entscheidungen — öffne den Charakter zum Auflösen.}}",
+  "contentArchiveExport": "In Datei exportieren (.dmtz)",
+  "contentArchiveImport": "Aus Datei importieren (.dmtz)",
+  "contentArchiveExported": "Gespeichert: {path}",
+  "contentArchiveImported": "{name} importiert",
+  "contentArchiveImportedWithSkips": "{name} importiert — {count} Mediendateien übersprungen",
+  "contentArchiveFailed": "Übertragung fehlgeschlagen: {error}",
+  "contentArchiveUnsupported": "Diese Datei wurde mit einer neueren Version erstellt. Bitte aktualisiere die App."
 }

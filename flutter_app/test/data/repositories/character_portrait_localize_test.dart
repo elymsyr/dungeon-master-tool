@@ -2,7 +2,7 @@
 //
 // `CharacterRepository.save` tek çıkış kapısı — editör, oluşturma sihirbazı ve
 // içe aktarma yollarının hepsi buradan geçiyor. Ham seçici yolu kaydedilirse
-// portre ne LAN eşlemesinde taşınır (`LanSyncSession._mediaFor` karakter
+// portre ne LAN eşlemesinde taşınır (`ContentCodec._mediaFor` karakter
 // dosyalarını `{id}_` önekiyle süzüyor) ne de kullanıcı dosyayı taşıdığında
 // açılır.
 //

@@ -2,7 +2,7 @@
 //
 // Kural: seçilen her medya kopyalanır — bulut yüklemesi başarılı olsun ya da
 // olmasın. Ham bir yol (`.../Downloads/map.png`) LAN eşlemesinde taşınmıyor
-// (`LanSyncSession._mediaFor` yalnız içeriğin kendi klasörünü tarıyor) ve
+// (`ContentCodec._mediaFor` yalnız içeriğin kendi klasörünü tarıyor) ve
 // kullanıcı dosyayı taşırsa büsbütün kayboluyor.
 //
 //   cd flutter_app && flutter test test/application/services/local_media_localizer_test.dart

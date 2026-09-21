@@ -18,7 +18,7 @@ typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);
 ///
 /// Buluta yükleme YOK (Phase D — sayılan katman kaldırıldı): seçicinin verdiği
 /// ham yol (`.../Downloads/map.png`) veri kökünün dışında kalıyor, LAN
-/// eşlemesi yalnız veri kökü altını taşıyor (`LanSyncSession._mediaFor`).
+/// eşlemesi yalnız veri kökü altını taşıyor (`ContentCodec._mediaFor`).
 /// Harita görselinin buluta çıktığı tek yer projeksiyon
 /// (`WorldMapNotifier.ensureMapImageProjectable` → transient).
 Future<String> localizeMapImage(ProviderReader read, String path) async {

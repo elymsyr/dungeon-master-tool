@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/lan_sync/lan_sync_protocol.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-20
+updated: 2026-09-21
 tags: [file]
 ---
 
@@ -19,19 +19,20 @@ tags: [file]
 - Yok (saf Dart; yalnız `package:crypto`).
 
 **Outputs**
-- Public API: `LanItemType`, `LanItemRef`, `LanMediaEntry`, `LanItemPayload`, `LanSyncPlan`, `diffManifests`, `LanAuth`, `LanPairInvite`, `LanPairRequest`, `LanPairResponse`, `deriveSharedSecret`, `uidFingerprint`, `LanAnnounce`.
+- Public API: `LanSyncPlan`, `diffManifests`, `LanAuth`, `LanPairInvite`, `LanPairRequest`, `LanPairResponse`, `deriveSharedSecret`, `uidFingerprint`, `LanAnnounce`.
 
 ## Dependencies & Links
+- Re-export: [[content_item]] (`ContentItemType` / `ContentItemRef` / `ContentMediaEntry` / `ContentItemPayload`) — DTO'lar 2026-09-21'de `content_transfer/`'e taşındı, bu dosya `export` ederek eski import'ları bozmadı.
 - Depends on: —
-- Used by: [[lan_sync_server]], [[lan_sync_client]], [[lan_sync_session]]
+- Used by: [[lan_sync_server]], [[lan_sync_client]], [[content_codec]]
 - Domain map: [[Sync-and-Realtime]]
 - System flow: [[LAN-Sync-Flow]]
 
 ## Key Logic / Variables
-- `LanItemRef.updatedAt` **milisaniyeye yuvarlanır** — JSON round-trip'te mikrosaniye farkı iki tarafın "aynı" içeriği farklı sanmasına yol açardı. Kimlik `key = "<type>:<id>"`.
+- `ContentItemRef.updatedAt` **milisaniyeye yuvarlanır** — JSON round-trip'te mikrosaniye farkı iki tarafın "aynı" içeriği farklı sanmasına yol açardı. Kimlik `key = "<type>:<id>"`.
 - `diffManifests(local:, peer:)` → `LanSyncPlan(pull, push, skipped)`. Peer-only → pull; local-only → push; ikisinde de varsa `effectiveUpdatedAt` yeni olan kazanır; eşitse `skipped++`. **Silme yayılmaz.**
-- `LanItemRef.viewUpdatedAt` (yalnız world, opsiyonel) — "o an ne açıktı" görünümünün son değişme anı. `effectiveUpdatedAt = max(updatedAt, viewUpdatedAt)`; ayrı taşınır ki alıcı içerik zaman damgasını kirletmesin. Alan yoksa (eski sürüm) davranış eskisiyle aynı.
-- `LanItemPayload.extras` — blob'un dışında kalan dünya parçaları (`installed_packages`, `ui_view`). Opsiyonel: yoksa boş map, eski sürümle uyumlu. Alıcıda payload ile aynı `rewriteRoots`'tan geçirilir.
+- `ContentItemRef.viewUpdatedAt` (yalnız world, opsiyonel) — "o an ne açıktı" görünümünün son değişme anı. `effectiveUpdatedAt = max(updatedAt, viewUpdatedAt)`; ayrı taşınır ki alıcı içerik zaman damgasını kirletmesin. Alan yoksa (eski sürüm) davranış eskisiyle aynı.
+- `ContentItemPayload.extras` — blob'un dışında kalan dünya parçaları (`installed_packages`, `ui_view`). Opsiyonel: yoksa boş map, eski sürümle uyumlu. Alıcıda payload ile aynı `rewriteRoots`'tan geçirilir.
 - **İki anahtar kaynağı:** eşleşme anında `LanAuth.deriveSessionKey(secret, nonce) = sha256("dmt-lan:$secret:$nonce")` (QR token'ı ya da PIN); eşleşme sonrası `LanAuth.fromSharedSecret(base64)` — kalıcı sır.
 - `deriveSharedSecret(clientHalf:, hostHalf:) = base64(sha256("$clientHalf|$hostHalf"))`. Sıra **sabit** (önce istemci) — iki taraf aynı sonucu bulur.
 - `LanPairInvite.toQrText()` = `dmt2:` + base64url(json). Anahtarlar tek harfli (`i n a p t u`) — QR yoğunluğu düşük kalsın. `fromQrText` ön eki tutmayan ya da eksik alanlı her şeyi eler.

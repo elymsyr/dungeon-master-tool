@@ -3211,5 +3211,43 @@
         "type": "int"
       }
     }
-  }
+  },
+  "contentArchiveExport": "Export to file (.dmtz)",
+  "contentArchiveImport": "Import from file (.dmtz)",
+  "contentArchiveExported": "Saved: {path}",
+  "@contentArchiveExported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "contentArchiveImported": "{name} imported",
+  "@contentArchiveImported": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contentArchiveImportedWithSkips": "{name} imported — {count} media files skipped",
+  "@contentArchiveImportedWithSkips": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contentArchiveFailed": "Transfer failed: {error}",
+  "@contentArchiveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "contentArchiveUnsupported": "This file was created by a newer version. Update the app."
 }

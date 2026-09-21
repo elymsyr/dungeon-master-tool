@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-08-24
+updated: 2026-09-21
 tags: [moc, architecture]
 ---
 
@@ -10,7 +10,7 @@ tags: [moc, architecture]
 > [!summary] The whole system in one note
 > Flutter client (clean architecture, **local-first**) + Supabase (auth, membership, marketplace, DM'in paylaşım kanalı) + Cloudflare R2 worker (media/catalog). Content is built offline from Open5e by a Dart pipeline and shipped as packages. Multi-platform: desktop / mobile / web + a second-screen projection target.
 >
-> Yerel Drift kaynak-doğru. Buluta dünya kopyalanmaz; cihazdan cihaza taşıma LAN sync'in işi, oyuncuya giden ise yalnızca DM'in bilinçli paylaşımları.
+> Yerel Drift kaynak-doğru. Buluta dünya kopyalanmaz; cihazdan cihaza taşıma LAN sync'in ya da `.dmtz` dosya aktarımının işi (ikisi de `application/services/content_transfer/` altındaki aynı codec'i kullanır), oyuncuya giden ise yalnızca DM'in bilinçli paylaşımları.
 
 ## Clean-architecture layers
 The Flutter app (`flutter_app/lib/`) is layered; dependencies point inward.
@@ -53,7 +53,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
                           Content-Pipeline ──builds──> packages ──install──> World-and-Content
 ```
 
-- **Sync-and-Realtime** has two independent arms: LAN (cihazdan cihaza, bulutsuz) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a).
+- **Sync-and-Realtime** has three independent arms: LAN (cihazdan cihaza, bulutsuz), `.dmtz` dosya aktarımı ([[content_archive]] — hesapsız, internetsiz) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a). İlk ikisi aynı codec'i paylaşır ([[content_codec]]).
 - **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]]. Packages may [[Package-Links|link]] each other instead of duplicating content.
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
 

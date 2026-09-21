@@ -1,6 +1,23 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
-Durum: **karar aşaması tamamlandı, uygulama başlamadı.**
+Durum: **uygulama başladı** — dal `online-again`, Faz 0 ve Faz 1 bitti, Faz 2.5
+detaylı (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3+ taslak.
+
+> **Bu belge nasıl uygulanır — önce bunu oku.**
+>
+> Kodun ve uygulamanın bugünkü hali bu belgeyle **birebir eşleşmeyebilir.**
+> Belge niyeti anlatır, kodun anlık halini değil; yazıldığı andan beri kod
+> ilerledi ve ilerlemeye devam edecek.
+>
+> Bir fazı uygularken asıl iş, o fazın **ne yapmak istediğini** tam anlayıp
+> onu gerçekleştirmektir — belgedeki dosya adını, satır numarasını, sayıyı ya
+> da adım listesini harfi harfine izlemek değil. Bunlar niyeti anlatmak için
+> var; bağlayıcı olan şey fazın **çıkış kriteri**.
+>
+> Belge ile kod çeliştiğinde **kod kazanır**, belge düzeltilir — bulunan her
+> fark [§4.5](#45-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
+> Fazın niyeti belirsizse ya da fark bir kararı değiştiriyorsa **kullanıcıya
+> sor**, tahmin etme.
 
 Bu belge `077_drop_cloud_sync.sql` ile kaldırılan tam bulut aynasının geri
 getirilmesini, LAN sync'in tamamen çıkarılmasını ve zip import/export'un
@@ -837,138 +854,424 @@ okumaya çalış, boş dönmeli" testi gerekiyor.
 
 # BÖLÜM 4 — Roadmap
 
-## Faz 0 — Ön koşullar
-*Bağımsız, hemen yapılabilir, hiçbir şeyi bozmaz*
+Çalışma dalı: **`online-again`** (`main`'den, 2026-09-21).
 
-1. **KV rate limiter düzeltmesi** -> `[[ratelimits]]` binding'i veya Durable Object
-2. **Drift v13 bump** — tek seferde: `isOnline` kolonları, `sync_outbox`,
-   `revision`/`updated_at`, `lan_paired_devices` kaldırılması
-   - Kullanıcı yokken yapılmalı, pencere geçici
+## 4.0 Genel görünüm
 
-## Faz 1 — ZIP import/export
-*Sunucuya hiç dokunmuyor, tek başına değerli*
+Her fazın bir **çıkış kriteri** var — o sağlanmadan sonraki faza geçilmiyor.
+Kriterler çalıştırılabilir olacak şekilde yazıldı; "bitti" demek için
+tıklanacak bir şey ya da yeşil olacak bir test var.
 
-3. Paketleme codec'ini `lan_sync/` içinden çıkar, bağımsız servise taşı
-4. Dünya / paket / karakter -> zip export
-5. Zip import + çakışma davranışı (üzerine yaz / kopya oluştur)
-6. Mevcut JSON paket export'unu (`export_package_dialog.dart`) zip'e taşı
+| Faz | Ne | Çıkış kriteri | Bulut | Durum |
+|---|---|---|---|---|
+| ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (deploy bekliyor) |
+| ~~**1**~~ | ZIP import/export + codec'in LAN'dan çıkarılması | dünya export → temiz kurulumda import → aynı dünya | hayır | ✅ bitti |
+| **2.5** | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | detaylı |
+| 3 | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | taslak |
+| 3.5 | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | taslak |
+| 4 | Drift v13 bump + push | dünya bulutta görünüyor, geri okuma yok | evet | taslak |
+| 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
+| 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
+| 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
+| 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
+| 8 | Sonraya bırakılanlar | — | — | açık |
 
-**Çıktı:** kullanıcı hesapsız yedek alabiliyor, DM oyuncuya dünya
-verebiliyor. LAN'ın yerini dolduran birinci ayak hazır.
+### Faz 2 nereye gitti
 
-## Faz 2 — "Online yapma" iskeleti
-*Hâlâ tamamen yerel*
+Eski Faz 2 ("online yapma iskeleti — hâlâ tamamen yerel") **kaldırıldı**, işleri
+Faz 4'e katıldı. İki gerekçe:
 
-7. `isOnline` bayrağı UI'ı — dünya/paket/karakter
-8. "Online'a al" / "Online'dan çıkar" akışı + onay ekranları
-9. Kota göstergesi iskeleti (sayılar henüz 0)
+1. **Dünya için zaten var.** `save_sync_indicator.dart:437` `_makeOnline` →
+   `publishWorld` RPC, satır 566 `unpublishWorld`. Akış çalışıyor. Yeniden
+   yazılacak bir şey yok, sadece paket/karakter için genelleştirilecek.
+2. **Geri kalanı boş kabuk olurdu.** Paket ve karakter anahtarı bastığında
+   arkasında yazacağı tablo Faz 3'ten önce yok; kota göstergesi Faz 4'ten önce
+   sıfır gösterir. Düğmenin arkasındaki şey çalıştığında düğme de gelsin.
 
-## Faz 2.5 — Dünya kimliği temizliği
-*Borç ödemesi, senkrondan önce şart*
+### Drift v13 bump neden Faz 0'dan Faz 4'e taşındı
 
-10. `CampaignRepository`'nin isim yerine `id` ile anahtarlanması
-11. `joinWithCode`'daki isim-çakışma suffix'inin kaldırılması
-12. `worldName`'in salt etiket haline gelmesi
+Eski plan bump'ı Faz 0'a koyuyordu, gerekçe "kullanıcı yokken yapılmalı,
+pencere geçici". Pencere gerçekten geçici ama **ilk sürümde** kapanıyor, faz
+sınırında değil. Bump'ın taşıyacağı beş şeye tek tek bakınca hepsi Faz 4 ya da
+sonrasında doğuyor:
 
-## Faz 3 — Bulut şeması
-*Supabase tarafı, istemci henüz kullanmıyor*
+| v13 kalemi | Gerçekte ne zaman gerekiyor |
+|---|---|
+| `isOnline` kolonları | Faz 4 — çevrimdışıyken push kararı verilirken |
+| `sync_outbox` | Faz 4 |
+| `revision` / `updated_at` | Faz 4 |
+| Dünya kimliğinin id'ye taşınması | Faz 2.5 — **kolon gerektirmiyor**, `id` zaten PK |
+| `lan_paired_devices` düşürülmesi | Faz 6 |
 
-13. Migration: 6 geri + 6 yeni + 3 paket tablosu
-14. `world_revisions` + `world_tombstones`
-15. `entity_shares` -> izin tablosu (`payload_json` düşer)
-16. `world_entities.dm_only_keys` kolonu
-17. `get_shared_entities` RPC + SQL redaksiyonu
-18. Mind map `owner_id` + RLS
-19. `world_member_state`
-20. `tg_bump_parent_world` geri
-21. Kota fonksiyonları + trigger'ları
-22. Realtime yayını: **sadece** `world_revisions`
-23. **RLS testleri** — her tablo, oyuncu rolüyle
+Faz 0'da bump etmek, Faz 3–4'te hangi kolonların gerekeceğini tahmin etmek
+demek. Tahmin tutmazsa ikinci bir bump geliyor ve bump'ın tek bir kez olması
+tam da amaçtı. Faz 4'ün başında, kolonlar bilindiğinde, **tek seferde**.
 
-## Faz 3.5 — Medya ref birleştirmesi
-*Push'tan önce olmak zorunda*
+### Sıralamanın üç kuralı (§3.2) bu planda nasıl karşılanıyor
 
-24. `dmt-content://{sha}{ext}` şemasının tanımı
-25. DM push'unda yolların sha'ya çevrilmesi
-26. `asset_refs` üzerinden DM tarafı çözümü
-27. Oyuncu tarafı: transient + `missing_shas` akışının bağlanması
-28. Eski ref biçimleriyle uyumluluk
+| Kural | Nerede |
+|---|---|
+| ZIP codec'i LAN'dan önce çıksın | Faz 1 ↔ Faz 6 |
+| Dünya kimliği senkrondan önce düzelsin | Faz 2.5 ↔ Faz 4 |
+| Medya ref'i push'tan önce birleşsin | Faz 3.5 ↔ Faz 4 |
 
-## Faz 4 — Push
-*Yerelden buluta tek yön*
+---
 
-29. Push katmanı — `PendingWriteBuffer` -> `sync_outbox` -> bulut
-30. Echo bastırma (mevcut 3 sn penceresi genişletilir)
-31. Revizyon artırma
-32. **Düzenleme zamanı kuralı** — istemci yazar, sunucu `now()` ile ezmez (§2.8)
-33. Kota reddini düzgün karşıla — yerel yazma durmaz
+## 4.1 Faz 0 — KV rate limiter ✅ bitti
 
-**Çıktı:** dünya bulutta görünüyor. Geri okuma yok -> veri kaybı riski yok.
+*Tek iş. Worker tarafı, istemciye dokunmuyor, geri alması kolay.*
 
-## Faz 5 — Pull
-*İki yön tamamlanıyor — projenin asıl hedefi*
+**Durum:** uygulandı. `rate_limit.ts` silindi, üç limiter de platform
+binding'i (`CATALOG_RL` / `DL_RL` / `UL_RL`). `npm run typecheck` ve
+`wrangler deploy --dry-run` temiz. **Deploy edilmedi** — `wrangler deploy`
+kullanıcının kararı.
 
-34. Uzlaştırıcı — açılışta delta çekme
-35. Applier'ı tablo bazında genişlet (ayrı handler'lar)
-36. Tombstone uygulaması + zaman karşılaştırması
-37. İlk senkron akışı (yeni cihazda sıfırdan indirme + ilerleme UI'ı)
+### Bugünkü durum
 
-## Faz 5.5 — Oyuncu çoklu cihaz
-*Faz 5'ten önce de yapılabilir — değeri yüksek, maliyeti düşük*
+`cloudflare/src/rate_limit.ts` saatlik bucket sayacını KV'de tutuyor ve
+**her izinli istekte `kv.put` çağırıyor.** KV free tier günde 1000 yazma.
+Dosyanın kendi başlığı sorunu zaten yazmış; kota dolunca `catch` fail-open
+geçiyor, yani limiter sessizce kapanıyor.
 
-38. `joinWithCode` -> `redeemInvite` + `materializeWorld`
-39. "Online dünyalarım" ekranı + "bu cihaza indir"
-40. "Benim karakterim" bulma akışı
-41. Oyuncu mind map senkronu
-42. `world_member_state` senkronu
-43. İzinli kartların RPC'den çekilmesi
-44. Paylaşım geri çekildiğinde UI (gri + etiket)
+`wrangler.toml:39` platform limiter binding'i zaten kullanılıyor:
 
-> `applyInitialState` makinesi hazır olduğu için bu faz DM pull'una
-> bağımlı değil. Erken değer istersen buraya bakılabilir.
+```toml
+[[ratelimits]]
+name = "CATALOG_RL"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+```
 
-## Faz 6 — LAN'ı sil
-*Artık yetim*
+Yani çözüm mevcut ve projede kanıtlanmış. Yeni bağımlılık, Durable Object,
+yeni altyapı yok.
 
-45. 6 dosya + provider + dialog + 272 l10n satırı + 3 test
-46. 9 dosyada yorum/referans temizliği
-47. Audit §2 güvenlik bulgusunu kapalı işaretle
+### Yapılacaklar
 
-## Faz 7 — Kural, kota, ölçüm
+1. `wrangler.toml`'a iki binding daha: `DL_RL` (indirme), `UL_RL` (yükleme),
+   ayrı `namespace_id`, `simple = { limit, period }` bugünkü saatlik
+   sayılarla eşleşecek şekilde.
+2. `checkRateLimit`'i binding'e çevir — `await env.DL_RL.limit({ key })`.
+   KV yolu tamamen silinir (fail-open `catch` dahil; limiter artık
+   kaybolmuyor).
+3. Çağıranları uyarla. Platform limiter `{ success }` döner, sayaç ve
+   `resetInSeconds` vermez — `X-RateLimit-Remaining` / `Retry-After`
+   başlıkları buna göre sadeleşir. Bunu ölçmek için önce `checkRateLimit`
+   çağıranları tarayıp `result.count` / `resetInSeconds` okuyan yerleri
+   listele.
+4. `audit-2026-09.md` §5'i kapalı işaretle.
 
-48. "Online olmayan dünya multiplayer olamaz" kuralını açıkça uygula
-49. Kota göstergesini gerçek sayılarla doldur
-50. Admin panelinde Postgres doluluk görünürlüğü
-51. **Ölç:** gerçek dünya boyutu, delta trafiği, egress, transient doluluk
+### Çıkış kriteri — karşılandı
 
-## Faz 8 — Sonraya bırakılanlar
-*Kararları Faz 7 ölçümüne bağlı*
+- ✅ `grep -rn "kv.put" cloudflare/src/` boş; `rate_limit.ts` ve `RATE_KV`
+  binding'i tamamen kaldırıldı
+- ✅ `wrangler deploy --dry-run` üç Rate Limit binding'ini bağlıyor,
+  KV binding'i listede yok
+- ✅ Katalog GET'i bozulmadı — `CATALOG_RL` aynı, yalnızca 429 gövdesindeki
+  sabit `CATALOG_LIMIT_PER_MIN` olarak isimlendi
 
-- Oyuncuya inen içeriğin granülerliği
-- Medyanın önden yüklenmesi — Phase C takasının yeniden değerlendirilmesi
-- Oyuncunun paylaşılan karta kendi notunu eklemesi
-  (`world_member_state` taşıyabilir)
-- Snapshot/zip'in buluta yedek olarak konması (egress duvarına yaklaşılırsa)
-- Şifreleme politikası
+### Uygulamada çıkan fark: `period` yalnızca 10 veya 60
 
-## Faz özeti
+Plandaki 1. madde "bugünkü saatlik sayılarla eşleşecek şekilde" diyordu;
+platform limiter'ın `period` alanı **yalnızca 10 veya 60 saniye** kabul
+ediyor. Saatlik tavan bu binding ile ifade edilemiyor, dolayısıyla sayılar
+dakikalığa çevrildi:
 
-| Faz | Ne | Bulut gerekiyor |
+| | Eskiden (KV, saatlik) | Şimdi (platform, dakikalık) |
 |---|---|---|
-| 0 | Ön koşullar + şema bump | hayır |
-| 1 | ZIP import/export | hayır |
-| 2 | Online bayrağı UI | hayır |
-| 2.5 | Dünya kimliği | hayır |
-| 3 | Bulut şeması + RLS | evet |
-| 3.5 | Medya ref | evet |
-| 4 | Push | evet |
-| 5 | Pull | evet |
-| 5.5 | Oyuncu çoklu cihaz | evet |
-| 6 | LAN silme | hayır |
-| 7 | Kural + kota + ölçüm | evet |
+| İndirme | 10 000 / saat | 600 / dakika |
+| Yükleme | 60 / saat | 20 / dakika |
 
-**İlk dört faz bulut olmadan tamamlanıyor.** Bir şey ters giderse geri
-dönüş kolay ve kullanıcıya hiçbir şey kaybettirmiyor.
+Kâğıt üstünde gevşedi, pratikte sıkılaştı: eski sayaç günde ~1000 KV
+yazmadan sonra ölüp fail-open geçtiğinden **günün büyük kısmında hiç limit
+yoktu.** Dakikalık limiter hiç kaybolmuyor. Gerçek tavanlar zaten R2 kotası
+ve `KIND_MAX_BYTES` (dosya başı boyut).
+
+İkinci fark: platform sayaçları **per-colo**, global değil — coğrafi olarak
+dağılmış bir istemci efektif olarak limitin katını geçebilir. `CATALOG_RL` bu
+takası 2026-09-07'de zaten kabul etmişti; abuse freni için yeterli.
+
+### Bilinçli sınır
+
+İki tane. (1) Durable Object read-then-write yarışını da kapatırdı ve
+saatlik pencereyi ifade edebilirdi; platform limiter ikisini de yapmıyor.
+Ama buradaki iş bir **abuse freni**, güvenlik sınırı değil — dosyanın kendi
+yorumu da bunu söylüyordu. (2) Limit sayıları iki yerde: `wrangler.toml`
+(uygulanan) ve `worker.ts` üstündeki `*_LIMIT_PER_MIN` sabitleri (429
+gövdesinde bildirilen). Platform limiter sayaç döndürmediği için elle senkron
+tutuluyor; ikisi ayrışırsa yalnızca 429 gövdesi yanlış sayı söyler, limit
+doğru uygulanır.
+
+---
+
+## 4.2 Faz 1 — ZIP import/export ✅ bitti
+
+*Sunucuya hiç dokunmuyor. Tek başına değerli: hesapsız yedek, DM'den oyuncuya
+dünya aktarımı, cihaz değiştirme. LAN silinmeden önce bitmeli (§3.2 Kural 1).*
+
+**Durum:** uygulandı. Codec `lib/application/services/content_transfer/`
+altında (`content_codec.dart`, `content_item.dart`, `world_merge.dart`), zip
+`content_archive.dart`, UI `presentation/widgets/content_archive_menu.dart`.
+`flutter analyze` temiz (0 error/warning), `content_archive_test.dart` ve
+taşınan iki test yeşil.
+
+### 1.1 — Codec'i `lan_sync/`'ten çıkar
+
+`lan_sync_session.dart` 659 satır ve **çoğu LAN'a ait değil.** İçindeki
+paketleme/uygulama mantığı zip'in de ihtiyacı olan şeyin ta kendisi. Faz 6
+`lan_sync/` dizinini komple sildiği için bu kod önce taşınmalı.
+
+Taşınacaklar → `lib/application/services/content_transfer/`:
+
+| Bugün | Ne yapıyor |
+|---|---|
+| `loadItem` / `_worldExtras` | dünya/paket/karakter → taşınabilir blob + extras |
+| `_mediaFor` / `_collectDir` | dünya-paket-karakter medya dosyaları |
+| `_collectContentBlobs` / `_collectAssetShas` | `dmt-asset://` vb. ref'lerin **baytları** (`cache/content/{sha}.bin`) |
+| `applyItem` / `_applyWorld` / `_applyPackage` / `_applyCharacter` | karşı taraf yazımı |
+| `rewriteRoots` / `_rewritePath` | veri kökü takası |
+| `_uniqueName`, `_sectionStamps`, `_restoreSectionStamps` | isim çakışması + bölüm damgaları |
+| `fileSha256`, `resolveMedia`, `hasMedia`, `writeMedia` | medya yardımcıları |
+| `world_merge.dart` (+ testi) | bölüm bazlı birleştirme — zip import'un çakışma çözümü |
+
+`lan_sync/`'te kalanlar: eşleşme, soket, protokol çerçeveleme, ilerleme.
+
+`LanItemRef` / `LanItemPayload` / `LanMediaEntry` `lan_sync_protocol.dart`
+içinde yaşıyor ama codec'in sözleşmesi bunlar. Üçü
+`content_transfer/content_item.dart`'a taşınıp `Content*` olarak
+adlandırılır; `lan_sync_protocol.dart` onları import eder.
+
+**Çıkış kriteri:** `flutter analyze` temiz, `lan_sync_loopback_test.dart` ve
+`world_merge_test.dart` **değiştirilmeden** yeşil. Test dosyaları yeni yolu
+import etmek dışında düzenlenirse taşıma davranış değiştirmiş demektir.
+
+### 1.2 — Zip formatı
+
+```
+<slug>.dmtz                 (zip / deflate)
+  manifest.json             {format:1, type, id, name, updatedAt,
+                             renamedAt, dataRoot, appVersion}
+  payload.json              campaignRepository.load() çıktısı
+  extras.json               yalnız dünya — installed_packages, ui_view
+  stamps.json               yalnız dünya — WorldSectionStamps
+  media/<göreli yol>        baytlar; manifest'teki dataRoot'a göreli
+```
+
+**Yol taşınabilirliği için yeni kod yazılmıyor.** `manifest.dataRoot` =
+export eden makinenin `userBase`'i — LAN telde ne gönderiyorsa aynısı.
+Import `rewriteRoots(payload, manifest.dataRoot, userBase)` çağırır. LAN'ın
+iki cihaz arasında yaptığı şeyin aynısı, arada zip var.
+
+`archive: ^4.0.9` **zaten bağımlılık** (`pubspec.yaml:52`). Yeni paket yok.
+`ZipFileEncoder`'ın akış API'si kullanılır — büyük dünya belleğe alınmasın.
+
+Medya girdileri `sha256` + `size` taşıyor (bugünkü `LanMediaEntry`); import
+sha doğrular, tutmayan dosya atlanır ve uyarı verilir.
+
+### 1.3 — Export akışı
+
+Uygulamada bugün **hiçbir yerde dosyaya kaydetme yok** —
+`FilePicker.platform.saveFile` çağrısı sıfır. Bu ilk olacak.
+
+- **Masaüstü:** `FilePicker.platform.saveFile()` → yola akış yazımı
+- **Mobil:** `ponytail:` dosya `AppPaths` altındaki Documents'a yazılır ve
+  yol snackbar'da gösterilir. Paylaşım sayfası (`share_plus`) bağımlılık
+  ekler; gerçekten istenirse eklenir.
+
+Giriş noktaları: hub dünya kartı menüsü, paket listesi, karakter düzenleyici.
+Üçü de aynı servisi çağırır, tip parametresi değişir.
+
+### 1.4 — Import akışı + çakışma
+
+- `FilePicker.pickFiles(allowedExtensions: ['dmtz'])`
+- `manifest.format` bilinmiyorsa net hata, sessiz kabul yok
+- Aynı `id` yerelde varsa kullanıcıya iki seçenek:
+  - **Üzerine birleştir** — `mergeWorldPayloads` + `stamps.json`, LAN'ın
+    kullandığı yolun aynısı
+  - **Kopya oluştur** — yeni uuid, `_uniqueName` ile yeni etiket
+- İsim çakışması (farklı id, aynı isim) → `_uniqueName`, sessizce
+
+### 1.5 — Paket export'u hakkında düzeltme
+
+Eski roadmap'in 6. maddesi "mevcut JSON paket export'unu
+(`export_package_dialog.dart`) zip'e taşı" diyordu. **Taşınacak bir şey yok:**
+o diyalog dosyaya yazmıyor, dünyadan seçilen kartlarla *uygulama içinde* yeni
+bir paket kurup `repo.save(name, data)` çağırıyor (satır 235).
+`import_package_dialog.dart` da dosyadan değil, kurulu/marketplace
+paketlerinden yüklüyor. Madde şuna dönüşür: **paket listesine `.dmtz` export
+girişi ekle** — 1.3'ün paket varyantı, ayrı iş değil.
+
+### Faz 1 çıkış kriteri — karşılandı
+
+Temiz bir kurulumda (`AppPaths.dataRoot` silinmiş) import edilen zip'ten çıkan
+dünya, export edilen dünyayla eşleşiyor: kartlar, harita görselleri, mind map,
+oturumlar, savaş, kurulu paket bağlantıları. Görsellerin açılması şart —
+"kartlar geldi, resimler gelmedi" başarısızlıktır.
+
+- ✅ `content_archive_test.dart` bunu **iki ayrı `AppPaths.dataRoot`** arasında
+  koşuyor: A'da dünya kurulur + veri kökü dışından bir resim seçilir, export
+  edilir, kök B'ye çevrilir, import edilir. Assert'ler hem kartı/oturumu hem
+  resmin **yeniden yazılmış yolunu ve baytlarını** kontrol ediyor.
+- ✅ 1.1'in kendi kriteri: `lan_sync_loopback_test.dart` ve
+  `world_merge_test.dart` **davranış değişikliği olmadan** yeşil — diff'te
+  yalnız import yolu ve `Lan*` → `Content*` isim değişikliği var.
+- ✅ `flutter analyze lib test` 0 error / 0 warning.
+
+### Uygulamada çıkan farklar
+
+**`stamps.json` yazılmadı.** Plandaki beşinci dosya gereksiz: `extras` zaten
+`section_stamps` taşıyor (`_worldExtras`) ve `applyItem` onu oradan okuyor.
+Ayrı dosya aynı veriyi ikinci kez yazmak olurdu.
+
+**Manifest `media` listesini de taşıyor.** Plandaki alan listesinde yoktu ama
+medya girdilerinin `sha256 + size`'ı bir yerde durmak zorunda — import onunla
+doğruluyor. Manifest yalnız pakete **gerçekten giren** dosyaları listeliyor.
+
+**Çakışma diyaloğu yapılmadı, "kopya oluştur" seçeneği yok.** Plan iki seçenek
+öneriyordu. Birincisi (üzerine birleştir) zaten `applyItem`'ın varsayılanı ve
+yıkıcı değil — bölüm bazlı birleştirme, silme yaymıyor — dolayısıyla soracak
+bir şey kalmıyor. İkincisi **yapılamaz**: `world_entities` birincil anahtarı
+global `{id}`, `upsert` de `insertAllOnConflictUpdate`. Yeni id'li bir dünya
+kopyası, entity satırlarını var olan dünyadan **kendine çeker** ve orijinali
+boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
+(bkz. §4.5) — önce o düzeltilmeli.
+
+### Bilinçli sınırlar
+
+- Aynı yolda **farklı içerikli** yerel bir dosya varsa üzerine yazılmıyor,
+  atlananlara sayılıp kullanıcıya bildiriliyor. Yol `worlds/<isim>/media/...`
+  olduğu için isim çakışmasından `(2)` olarak açılan bir import, yerel
+  dünyanın resmini ezerdi. Tavan: o durumda kopya yereldeki resmi gösterir.
+  Gerçek çözüm import sırasında dünya klasörünü de yeniden adlandırmak —
+  Faz 2.5'ten sonra ucuz.
+- Mobilde kaydetme diyaloğu yok (planın `ponytail:` notundaki gibi):
+  `FilePicker.saveFile` mobilde baytları istiyor, biz diske akıtıyoruz. Dosya
+  Documents'a yazılıp yolu snackbar'da gösteriliyor.
+
+---
+
+## 4.3 Faz 2.5 — Dünya kimliği: isimden id'ye
+
+*Borç ödemesi. Faz 4 push'undan önce şart (§2.10, §3.2 Kural 2).*
+
+### Sorun
+
+`CampaignRepository`'nin **her metodu** `String campaignName` alıyor —
+`load`, `save`, `saveEntity`, `deleteEntity`, `saveSettingsPatch`,
+`saveMapData`, `saveSessions`, `delete`, `purge`, `copy`, `renameWorld`…
+`activeCampaignProvider` da `String?` tutuyor ve o string bir **isim**
+(`campaign_provider.dart:825`).
+
+`world_join_service.dart:67-84` yerelde isim çakışınca `Ad (2)` üretiyor.
+Sonucu: aynı dünya telefonda `Fırtına Vadisi`, laptop'ta `Fırtına Vadisi (2)`.
+Push/pull bunun üstüne kurulursa iki cihaz asla buluşmaz.
+
+### Ölçü
+
+| | Sayı |
+|---|---|
+| `campaignRepositoryProvider` referansı | 30 satır / 13 dosya |
+| `worldsDao.getByName` çağrısı | 21 |
+
+Mekanik ama küçük değil. Tek başına bir faz olmayı hak ediyor.
+
+### Yapılacaklar
+
+1. `CampaignRepository` parametresi `campaignName` → `worldId`. Metot adları
+   değişmiyor — diff parametre ve gövdeyle sınırlı kalsın.
+2. `WorldRepositoryImpl` içinde isim→satır aramaları id→satır olur;
+   `getByName` yalnız **kullanıcıya görünen arama** için kalır.
+3. `activeCampaignProvider` `String?` world **id**'si tutar. İsim
+   gerektiğinde satırdan okunur.
+4. `world_join_service.dart`'taki isim-çakışma suffix'i kalkar. Aynı isimli
+   iki dünya yerelde yan yana durabilir — ayırt edici id.
+5. `worldName` salt etiket: yeniden adlandırma hiçbir anahtarı
+   değiştirmediği için `renameWorld` tek satır UPDATE'e iner.
+
+### Çıkış kriteri
+
+- `CampaignRepository` arayüzünde `campaignName` parametresi kalmadı
+- Aynı isimle iki dünya oluşturulabiliyor, ikisi de doğru açılıyor
+- Bir dünya yeniden adlandırıldıktan sonra medya klasörü, kurulu paketleri ve
+  oturumları bozulmadan duruyor (yeniden adlandırma bugün klasör de taşıyor —
+  `_applyWorld` içindeki `oldDir.rename` yolu)
+- `flutter test test/data/` ve dünya ile ilgili dosyalar yeşil
+
+### Neden v13 bump'ı burada değil
+
+Bu fazın yeni kolona ihtiyacı yok; `worlds.id` zaten birincil anahtar. Bump
+Faz 4'ün başında, gerçekten kolon gerektiğinde (bkz. §4.0).
+
+---
+
+## 4.4 Faz 3 ve sonrası — taslak
+
+*Aşağısı henüz detaylandırılmadı. Faz 1 bitince, koda bakılarak Faz 3 aynı
+ayrıntıda açılacak.*
+
+### Faz 3 — Bulut şeması
+Migration 094+: 077'den geri gelen 6 tablo + hiç olmamış 6 tablo + 3 paket
+tablosu; `world_revisions`, `world_tombstones`, `world_member_state`;
+`entity_shares` → izin tablosu (`payload_json` düşer);
+`world_entities.dm_only_keys`; `get_shared_entities` RPC + SQL redaksiyonu;
+mind map `owner_id` + RLS; `tg_bump_parent_world` geri; kota
+fonksiyonları; Realtime yayını **sadece** `world_revisions`;
+**her tablo için oyuncu rolüyle RLS testi.**
+
+### Faz 3.5 — Medya ref birleştirmesi
+`dmt-content://{sha}{ext}` tanımı; DM push'unda yol→sha; `asset_refs`
+üzerinden DM tarafı çözümü; oyuncu tarafı transient + `missing_shas`; eski
+ref biçimleriyle uyumluluk.
+
+### Faz 4 — Drift v13 + push
+Tek v13 bump (`isOnline`, `sync_outbox`, `revision`/`updated_at`,
+`lan_paired_devices` düşürülmesi); push katmanı
+`PendingWriteBuffer → sync_outbox → bulut`; echo bastırma; revizyon artırma;
+**düzenleme zamanı kuralı** (§2.8); kota reddi yerel yazmayı durdurmaz.
+Eski Faz 2'nin online anahtarı (paket + karakter) burada, `_makeOnline`
+genelleştirilerek.
+
+### Faz 5 — Pull
+Uzlaştırıcı; applier'ın tablo başına ayrı handler olarak yeniden yazımı;
+tombstone + zaman karşılaştırması; ilk senkron akışı ve ilerleme UI'ı.
+
+### Faz 5.5 — Oyuncu çoklu cihaz
+`joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
+ekranı; "benim karakterim" bulma; oyuncu mind map'i; `world_member_state`;
+izinli kartların RPC'den çekilmesi; paylaşım geri çekilince gri kart + etiket.
+
+### Faz 6 — LAN'ı sil
+`lan_sync/` 6 dosya (2.733 satır), provider + dialog, **41 l10n anahtarı ×
+4 dil ≈ 164 satır**, 3 test dosyası; 9 dosyada referans temizliği;
+audit §2 bulgusunu kapalı işaretle.
+
+### Faz 7 — Kural, kota, ölçüm
+"Online olmayan dünya multiplayer olamaz"; kota göstergesi gerçek sayılarla;
+admin panelinde Postgres doluluğu; **ölçüm**: gerçek dünya boyutu, delta
+trafiği, egress, transient doluluk.
+
+### Faz 8 — Sonraya bırakılanlar
+Değişmedi — bkz. eski liste.
+
+---
+
+## 4.5 Kod incelemesinden çıkan düzeltmeler
+
+Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
+uyuşmuyordu. Kayda geçiyor:
+
+| Belgede yazan | Kodda olan |
+|---|---|
+| Faz 2: "`isOnline` bayrağı UI'ı" yeni iş | Dünya için **var** — `save_sync_indicator.dart:437` `_makeOnline` → `publishWorld` RPC, satır 566 `unpublishWorld` |
+| Faz 1/6: "mevcut JSON paket export'unu zip'e taşı" | `export_package_dialog.dart` dosyaya yazmıyor; dünyadan uygulama içi paket kuruyor (`repo.save`, satır 235). Uygulamada hiç `saveFile` çağrısı yok |
+| Faz 6: "68 l10n anahtarı × 4 dil = 272 satır" | Gerçek LAN anahtarı **41** (`lanSync*`). 68 sayısı `landing*` anahtarlarını da sayıyor. ≈164 satır |
+| Faz 0: v13 bump şimdi yapılmalı | Bump'ın taşıyacağı her kalem Faz 4+ doğuyor; Faz 0'da yapmak tahmin demek (§4.0) |
+| Faz 0: limitleri "bugünkü saatlik sayılarla eşleştir" | Platform limiter'da `period` yalnızca 10 veya 60 — saatlik pencere ifade edilemiyor, sayılar dakikalığa çevrildi (§4.1) |
+| Faz 0: 429'da `X-RateLimit-Remaining` sadeleşir | Böyle bir başlık hiç yoktu; `rateLimitedResponse` yalnızca `Retry-After` + `X-RateLimit-Limit` yazıyor ve Flutter istemcisi ikisini de okumuyor — 429 gövdesi tamamen bilgilendirme amaçlı |
+| Faz 1: zip'e `stamps.json` da yazılacak | `extras.section_stamps` zaten aynı veriyi taşıyor ve `applyItem` oradan okuyor — ayrı dosya çift yazım olurdu |
+| Faz 1: id çakışmasında "kopya oluştur" seçeneği | Yapılamaz: `world_entities` PK'sı global `{id}` ve DAO `insertAllOnConflictUpdate` kullanıyor — yeni id'li kopya, var olan dünyanın entity satırlarını kendine çeker. **Aynı hata `WorldRepositoryImpl.copy`'de bugün de var** (`world_repository_impl.dart:405`); ayrı iş |
+| §2.11: `sync_outbox` "geri gelmeli" | `app_database.dart:430` `_retiredTablesDDL` onu aktif `DROP` ediyor — o satırın kalkması Faz 4'ün parçası |
+
+Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
 ---
 
