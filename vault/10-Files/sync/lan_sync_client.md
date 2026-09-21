@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/lan_sync/lan_sync_client.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-20
+updated: 2026-09-21
 tags: [file]
 ---
 

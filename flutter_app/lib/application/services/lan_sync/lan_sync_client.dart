@@ -107,35 +107,35 @@ class LanSyncClient {
     await _text(response);
   }
 
-  Future<List<LanItemRef>> fetchManifest() async {
+  Future<List<ContentItemRef>> fetchManifest() async {
     final response = await _send('GET', '/manifest');
     if (response.statusCode != HttpStatus.ok) await _fail(response);
     final body = jsonDecode(await _text(response));
     final items = (body as Map)['items'] as List? ?? const [];
     return [
       for (final raw in items)
-        if (raw is Map) ?LanItemRef.fromJson(raw.cast<String, dynamic>()),
+        if (raw is Map) ?ContentItemRef.fromJson(raw.cast<String, dynamic>()),
     ];
   }
 
-  Future<LanItemPayload> fetchItem(LanItemRef ref) async {
+  Future<ContentItemPayload> fetchItem(ContentItemRef ref) async {
     final response = await _send(
       'GET',
-      '/item/${lanItemTypeToWire(ref.type)}/${Uri.encodeComponent(ref.id)}',
+      '/item/${contentItemTypeToWire(ref.type)}/${Uri.encodeComponent(ref.id)}',
     );
     if (response.statusCode != HttpStatus.ok) await _fail(response);
     final body = jsonDecode(await _text(response));
-    final item = LanItemPayload.fromJson((body as Map).cast<String, dynamic>());
+    final item = ContentItemPayload.fromJson((body as Map).cast<String, dynamic>());
     if (item == null) {
       throw LanSyncException(HttpStatus.badRequest, 'bozuk item payload');
     }
     return item;
   }
 
-  Future<void> pushItem(LanItemPayload item) async {
+  Future<void> pushItem(ContentItemPayload item) async {
     final response = await _send(
       'POST',
-      '/item/${lanItemTypeToWire(item.ref.type)}/'
+      '/item/${contentItemTypeToWire(item.ref.type)}/'
           '${Uri.encodeComponent(item.ref.id)}',
       body: utf8.encode(jsonEncode(item.toJson())),
     );
@@ -144,7 +144,7 @@ class LanSyncClient {
   }
 
   /// Peer'da hangi medya dosyaları eksik — yalnız onları yüklemek için.
-  Future<Set<String>> missingMediaOnPeer(List<LanMediaEntry> entries) async {
+  Future<Set<String>> missingMediaOnPeer(List<ContentMediaEntry> entries) async {
     if (entries.isEmpty) return const {};
     final response = await _send(
       'POST',
@@ -165,7 +165,7 @@ class LanSyncClient {
   /// ponytail: gövde base64 — %33 şişme, LAN hızında sorun değil ve tek kod
   /// yolu bırakıyor. Büyük harita dosyalarında darboğaz olursa multipart ya da
   /// ham gövde + imzalı başlık yoluna geçilir.
-  Future<void> uploadMedia(LanMediaEntry entry, List<int> bytes) async {
+  Future<void> uploadMedia(ContentMediaEntry entry, List<int> bytes) async {
     final response = await _send(
       'POST',
       '/media/put',

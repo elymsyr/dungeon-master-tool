@@ -24,6 +24,8 @@ import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../../application/services/content_transfer/content_item.dart';
+import '../../widgets/content_archive_menu.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -64,6 +66,16 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   }
 
   /// Filtered package list as seen by the UI right now.
+  /// Seçili paket — `.dmtz` menüsü için. `PackageInfo` id taşımıyor,
+  /// isimle eşleşiyoruz (paket isimleri benzersiz).
+  PackageInfo? get _selectedPackage {
+    final packages = _currentFiltered();
+    if (_selectedIndex < 0 || _selectedIndex >= packages.length) {
+      return null;
+    }
+    return packages[_selectedIndex];
+  }
+
   List<PackageInfo> _currentFiltered() {
     final all = ref.read(packageListProvider).valueOrNull ?? const [];
     return _applyFilter(all, ref.read(packagesFilterProvider));
@@ -297,6 +309,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     onPressed: _selectedIndex >= 0 ? _copyPackage : null,
                     icon: const Icon(Icons.content_copy, size: 18),
                     label: Text(L10n.of(context)!.charCopyToWorldAction),
+                  ),
+                  ContentArchiveMenu(
+                    type: ContentItemType.package,
+                    selectedName: _selectedPackage?.name,
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(

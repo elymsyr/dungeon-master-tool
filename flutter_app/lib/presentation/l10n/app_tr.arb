@@ -2152,5 +2152,12 @@
   "removeMemberBody": "{name} dünyadan çıkarılsın mı?",
   "thisPlayer": "bu oyuncu",
   "charsYours": "{count, plural, =1{Karakterin} other{Karakterlerin}}",
-  "pendingChoicesTooltip": "{count, plural, other{{count} bekleyen seviye seçimi — çözmek için karakteri aç.}}"
+  "pendingChoicesTooltip": "{count, plural, other{{count} bekleyen seviye seçimi — çözmek için karakteri aç.}}",
+  "contentArchiveExport": "Dosyaya aktar (.dmtz)",
+  "contentArchiveImport": "Dosyadan al (.dmtz)",
+  "contentArchiveExported": "Kaydedildi: {path}",
+  "contentArchiveImported": "{name} içe aktarıldı",
+  "contentArchiveImportedWithSkips": "{name} içe aktarıldı — {count} medya dosyası atlandı",
+  "contentArchiveFailed": "Aktarım başarısız: {error}",
+  "contentArchiveUnsupported": "Bu dosya daha yeni bir sürümle oluşturulmuş. Uygulamayı güncelle."
 }

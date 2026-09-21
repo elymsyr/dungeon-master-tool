@@ -21,21 +21,22 @@ import '../content_store.dart';
 import '../local_media_localizer.dart';
 import '../pending_write_buffer.dart';
 import '../srd_core_package_bootstrap.dart';
-import 'lan_sync_protocol.dart';
+import 'content_item.dart';
 import 'world_merge.dart';
 
-/// LAN sync'in yerel yarısı: manifest üretimi, item okuma, item uygulama.
+/// İçerik aktarımının yerel yarısı: manifest üretimi, item okuma, item
+/// uygulama.
 ///
-/// Taşıma katmanından ([LanSyncServer] / [LanSyncClient]) tamamen bağımsızdır —
-/// her iki taraf da aynı [LanSyncSession]'ı kullanır, biri sunucu içinden biri
-/// istemci içinden.
+/// **Taşıma katmanını bilmez.** Aynı codec'i LAN eşlemesi (soket) ve `.dmtz`
+/// zip export/import'u kullanır; ikisi de buradan okuyup buraya yazar.
+/// Aradaki tek fark, blob'un tel üzerinden mi yoksa dosyadan mı geldiğidir.
 ///
 /// Yazımlar `campaign/package/character` repository'leri üzerinden gider.
 /// `lib/data/repositories/` içinde tek bir `enqueue`/`syncEngine` çağrısı
-/// yoktur, dolayısıyla LAN'dan gelen içerik **Supabase outbox'ına düşmez** —
-/// kullanıcının istediği "yerel eşleme bulutu atlar" davranışı budur.
-class LanSyncSession {
-  LanSyncSession(this._ref);
+/// yoktur, dolayısıyla buradan gelen içerik **Supabase outbox'ına düşmez** —
+/// aktarım buluta sızmaz.
+class ContentCodec {
+  ContentCodec(this._ref);
 
   final Ref _ref;
 
@@ -64,15 +65,15 @@ class LanSyncSession {
   ///
   /// Built-in SRD paketi dışarıda: her açılışta koddan yeniden üretiliyor,
   /// taşınması anlamsız (`PackageRepositoryImpl.save` de onu no-op'luyor).
-  Future<List<LanItemRef>> buildManifest() async {
+  Future<List<ContentItemRef>> buildManifest() async {
     await _flushPending();
-    final out = <LanItemRef>[];
+    final out = <ContentItemRef>[];
 
     final ui = _ref.read(uiStateProvider);
     for (final w in await _db.worldsDao.getAll()) {
       final touched = ui.viewTouchedByWorld[w.worldName];
-      out.add(LanItemRef(
-        type: LanItemType.world,
+      out.add(ContentItemRef(
+        type: ContentItemType.world,
         id: w.id,
         name: w.worldName,
         updatedAt: w.updatedAt,
@@ -85,8 +86,8 @@ class LanSyncSession {
 
     for (final pkg in await _db.packagesDao.getAll()) {
       if (pkg.name == srdCorePackageName) continue;
-      out.add(LanItemRef(
-        type: LanItemType.package,
+      out.add(ContentItemRef(
+        type: ContentItemType.package,
         id: pkg.id,
         name: pkg.name,
         updatedAt: pkg.updatedAt,
@@ -95,8 +96,8 @@ class LanSyncSession {
     }
 
     for (final c in await _db.worldCharactersDao.getAllChars()) {
-      out.add(LanItemRef(
-        type: LanItemType.character,
+      out.add(ContentItemRef(
+        type: ContentItemType.character,
         id: c.id,
         name: c.templateName,
         updatedAt: c.updatedAt,
@@ -111,12 +112,12 @@ class LanSyncSession {
 
   /// Bir item'ı tel formatına çevirir: blob + medya listesi + veri kökü.
   /// Item bulunamazsa null.
-  Future<LanItemPayload?> loadItem(LanItemRef ref) async {
+  Future<ContentItemPayload?> loadItem(ContentItemRef ref) async {
     await _flushPending();
     final Map<String, dynamic> payload;
     var extras = const <String, dynamic>{};
     switch (ref.type) {
-      case LanItemType.world:
+      case ContentItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
         if (row == null) return null;
         payload = await _ref
@@ -135,7 +136,7 @@ class LanSyncSession {
               .save(row.worldName, payload);
         }
         extras = await _worldExtras(row.id, row.worldName);
-      case LanItemType.package:
+      case ContentItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return null;
         payload = await _ref.read(packageRepositoryProvider).load(row.name);
@@ -145,13 +146,13 @@ class LanSyncSession {
         )) {
           await _ref.read(packageRepositoryProvider).save(row.name, payload);
         }
-      case LanItemType.character:
+      case ContentItemType.character:
         final row = await _db.worldCharactersDao.getById(ref.id);
         if (row == null) return null;
         payload = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     }
 
-    return LanItemPayload(
+    return ContentItemPayload(
       ref: ref,
       payload: payload,
       dataRoot: userBase,
@@ -237,12 +238,12 @@ class LanSyncSession {
 
   // ── Uygulama ──────────────────────────────────────────────────────────
 
-  /// Peer'dan gelen item'ı yerel'e yazar.
+  /// Kaynaktan (peer ya da zip) gelen item'ı yerel'e yazar.
   ///
   /// Medya dosyaları çağıran tarafından önceden indirilip [writeMedia] ile
   /// yerleştirilmiş olmalıdır; burada yalnız payload içindeki yollar
   /// gönderenin kökünden bizimkine çevrilir.
-  Future<void> applyItem(LanItemPayload item) async {
+  Future<void> applyItem(ContentItemPayload item) async {
     await _flushPending();
     final payload = rewriteRoots(item.payload, item.dataRoot, userBase)
         as Map<String, dynamic>;
@@ -250,17 +251,17 @@ class LanSyncSession {
         as Map<String, dynamic>;
 
     switch (item.ref.type) {
-      case LanItemType.world:
+      case ContentItemType.world:
         await _applyWorld(item.ref, payload, extras);
-      case LanItemType.package:
+      case ContentItemType.package:
         await _applyPackage(item.ref, payload);
-      case LanItemType.character:
+      case ContentItemType.character:
         await _applyCharacter(item.ref, payload);
     }
   }
 
   Future<void> _applyWorld(
-    LanItemRef ref,
+    ContentItemRef ref,
     Map<String, dynamic> payload,
     Map<String, dynamic> extras,
   ) async {
@@ -359,7 +360,7 @@ class LanSyncSession {
   /// ekleme/güncelleme var: peer'da olmayan bir paket bağlantısı yerelde
   /// kalır.
   Future<void> _applyWorldExtras(
-    LanItemRef ref,
+    ContentItemRef ref,
     String worldName,
     Map<String, dynamic> extras,
   ) async {
@@ -404,7 +405,7 @@ class LanSyncSession {
   }
 
   Future<void> _applyPackage(
-    LanItemRef ref,
+    ContentItemRef ref,
     Map<String, dynamic> payload,
   ) async {
     if (ref.name == srdCorePackageName) return;
@@ -444,7 +445,7 @@ class LanSyncSession {
   }
 
   Future<void> _applyCharacter(
-    LanItemRef ref,
+    ContentItemRef ref,
     Map<String, dynamic> payload,
   ) async {
     // Yeniden adlandırma senkronizasyonu: peer'ın `renamedAt`'i local'den
@@ -489,13 +490,13 @@ class LanSyncSession {
   /// [LocalMediaLocalizer] ile önce dünya klasörüne alınıyor — eskiden
   /// alınmadığı için battle map ve mindmap resimleri karşı cihaza hiç
   /// gitmiyordu.
-  Future<List<LanMediaEntry>> _mediaFor(
-    LanItemRef ref,
+  Future<List<ContentMediaEntry>> _mediaFor(
+    ContentItemRef ref,
     List<Object?> payloadTrees,
   ) async {
-    final entries = <LanMediaEntry>[];
+    final entries = <ContentMediaEntry>[];
     switch (ref.type) {
-      case LanItemType.world:
+      case ContentItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
         if (row == null) return entries;
         // `dirSafe`: medyayı buraya kopyalayan `LocalMediaLocalizer` adı
@@ -505,14 +506,14 @@ class LanSyncSession {
           Directory(LocalMediaLocalizer.worldDir(row.worldName)),
           entries,
         );
-      case LanItemType.package:
+      case ContentItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return entries;
         await _collectDir(
           Directory(LocalMediaLocalizer.packageDir(row.name)),
           entries,
         );
-      case LanItemType.character:
+      case ContentItemType.character:
         // Karakter medyası düz dizinde, `{id}_*` adlandırmasıyla duruyor.
         await _collectDir(
           Directory(AppPaths.charactersDir),
@@ -539,7 +540,7 @@ class LanSyncSession {
   /// dosya adındaki sha zaten içeriğin hash'i.
   Future<void> _collectContentBlobs(
     List<Object?> trees,
-    List<LanMediaEntry> out,
+    List<ContentMediaEntry> out,
   ) async {
     final shas = <String>{};
     for (final tree in trees) {
@@ -550,7 +551,7 @@ class LanSyncSession {
     for (final sha in shas) {
       final file = store.binFor(sha);
       if (!await file.exists()) continue;
-      out.add(LanMediaEntry(
+      out.add(ContentMediaEntry(
         path: _relToBase(file.path),
         sha256: sha,
         size: (await file.stat()).size,
@@ -578,7 +579,7 @@ class LanSyncSession {
 
   Future<void> _collectDir(
     Directory dir,
-    List<LanMediaEntry> out, {
+    List<ContentMediaEntry> out, {
     bool Function(String path)? nameFilter,
   }) async {
     if (!await dir.exists()) return;
@@ -587,13 +588,13 @@ class LanSyncSession {
       if (nameFilter != null && !nameFilter(e.path)) continue;
       try {
         final stat = await e.stat();
-        out.add(LanMediaEntry(
+        out.add(ContentMediaEntry(
           path: _relToBase(e.path),
           sha256: await fileSha256(e),
           size: stat.size,
         ));
       } catch (err) {
-        debugPrint('[LanSync] medya atlandı ${e.path}: $err');
+        debugPrint('[ContentCodec] medya atlandı ${e.path}: $err');
       }
     }
   }
@@ -605,8 +606,8 @@ class LanSyncSession {
   static Future<String> fileSha256(File f) async =>
       (await sha256.bind(f.openRead()).first).toString();
 
-  /// Peer'dan gelen bir medya dosyası bizde zaten aynı içerikle var mı?
-  Future<bool> hasMedia(LanMediaEntry entry) async {
+  /// Gelen bir medya dosyası bizde zaten aynı içerikle var mı?
+  Future<bool> hasMedia(ContentMediaEntry entry) async {
     final file = resolveMedia(entry.path);
     if (file == null || !await file.exists()) return false;
     if ((await file.stat()).size != entry.size) return false;
@@ -614,10 +615,10 @@ class LanSyncSession {
   }
 
   /// İndirilen medya baytlarını kendi veri kökümüze yazar.
-  Future<void> writeMedia(LanMediaEntry entry, List<int> bytes) async {
+  Future<void> writeMedia(ContentMediaEntry entry, List<int> bytes) async {
     final file = resolveMedia(entry.path);
     if (file == null) {
-      throw ArgumentError('LAN sync: geçersiz medya yolu ${entry.path}');
+      throw ArgumentError('ContentCodec: geçersiz medya yolu ${entry.path}');
     }
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes, flush: true);
@@ -655,5 +656,5 @@ class LanSyncSession {
   }
 }
 
-final lanSyncSessionProvider =
-    Provider<LanSyncSession>((ref) => LanSyncSession(ref));
+final contentCodecProvider =
+    Provider<ContentCodec>((ref) => ContentCodec(ref));

@@ -56,7 +56,7 @@ class CharacterRepository {
   /// olarak kopyalanır — tek çıkış kapısı burası olduğu için editör, sihirbaz
   /// ve içe aktarma yollarının hepsi kapsanıyor.
   ///
-  /// Neden: `LanSyncSession._mediaFor` karakter medyasını `{id}_` önekiyle
+  /// Neden: `ContentCodec._mediaFor` karakter medyasını `{id}_` önekiyle
   /// tarıyor; veri kökü dışındaki bir yol ne eşlenebiliyor ne de kullanıcı
   /// orijinali taşıdığında açılabiliyor.
   Future<void> save(Character character) async {

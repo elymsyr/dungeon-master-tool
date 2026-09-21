@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/lan_sync/lan_sync_server.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-20
+updated: 2026-09-21
 tags: [file]
 ---
 
@@ -22,10 +22,10 @@ tags: [file]
 **Outputs**
 - Public API: `start()`, `stop()`, `openForPairing()`, `closeForPairing()`, `pairInvite()`, `pairPin`, `pairNonce`, `port`, `isRunning`, `isOpenForPairing`, `localAddresses()`.
 - Route'lar: `GET /hello` + `POST /pair` (imzasız/geçici anahtar), sonra kalıcı sır isteyenler: `GET /ping`, `POST /unpair`, `GET /manifest`, `GET|POST /item/{type}/{id}`, `POST /media`, `POST /media/have`, `POST /media/put`.
-- Yazımlar: `/item` POST ve `/media/put` → [[lan_sync_session]] üzerinden yerel Drift + medya dizini; `/pair` ve `/unpair` → [[lan_device_store]].
+- Yazımlar: `/item` POST ve `/media/put` → [[content_codec]] üzerinden yerel Drift + medya dizini; `/pair` ve `/unpair` → [[lan_device_store]].
 
 ## Dependencies & Links
-- Depends on: [[lan_sync_protocol]], [[lan_sync_session]], [[lan_device_store]]
+- Depends on: [[lan_sync_protocol]], [[content_codec]], [[lan_device_store]]
 - Used by: `lan_sync_provider.dart` (`LanSyncController.syncHostLifecycle`), [[startup_sync_gate]]
 - Domain map: [[Sync-and-Realtime]]
 - System flow: [[LAN-Sync-Flow]]
@@ -44,5 +44,5 @@ tags: [file]
 
 ## Notes
 - `localAddresses()` yalnız private IPv4 döndürür; UI bunları `ip:port` olarak gösterip kopyalatır.
-- Yol geçişi savunması sunucuda değil `LanSyncSession.resolveMedia`'da — tek yerde, iki yön için.
+- Yol geçişi savunması sunucuda değil `ContentCodec.resolveMedia`'da — tek yerde, iki yön için.
 - `/hello` `pairing: bool` de döner; istemci bunu `pairing_closed` hatasına çevirir, yoksa kullanıcıya yanıltıcı "cihaz yok" derdi.

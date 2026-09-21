@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-LanItemRef _ref(String id, DateTime ts, {LanItemType type = LanItemType.world}) =>
-    LanItemRef(type: type, id: id, name: id, updatedAt: ts);
+ContentItemRef _ref(String id, DateTime ts,
+        {ContentItemType type = ContentItemType.world}) =>
+    ContentItemRef(type: type, id: id, name: id, updatedAt: ts);
 
 void main() {
   final t0 = DateTime.utc(2026, 8, 20, 10);
@@ -43,15 +44,15 @@ void main() {
     test('aynı id farklı türde ayrı item sayılır', () {
       final plan = diffManifests(
         local: [_ref('a', t0)],
-        peer: [_ref('a', t0, type: LanItemType.package)],
+        peer: [_ref('a', t0, type: ContentItemType.package)],
       );
-      expect(plan.pull.single.type, LanItemType.package);
-      expect(plan.push.single.type, LanItemType.world);
+      expect(plan.pull.single.type, ContentItemType.package);
+      expect(plan.push.single.type, ContentItemType.world);
     });
 
     test('JSON round-trip ref kimliğini korur', () {
       final ref = _ref('a', t0);
-      final back = LanItemRef.fromJson(
+      final back = ContentItemRef.fromJson(
         jsonDecode(jsonEncode(ref.toJson())) as Map<String, dynamic>,
       )!;
       expect(back.key, ref.key);
@@ -61,8 +62,8 @@ void main() {
 
     test('içerik aynıyken yalnız görünüm değiştiyse de taşınır', () {
       final mine = _ref('a', t0);
-      final theirs = LanItemRef(
-        type: LanItemType.world,
+      final theirs = ContentItemRef(
+        type: ContentItemType.world,
         id: 'a',
         name: 'a',
         updatedAt: t0,
@@ -74,8 +75,8 @@ void main() {
     });
 
     test('görünüm zaman damgası içerikten eskiyse LWW\'yi değiştirmez', () {
-      final mine = LanItemRef(
-        type: LanItemType.world,
+      final mine = ContentItemRef(
+        type: ContentItemType.world,
         id: 'a',
         name: 'a',
         updatedAt: t1,
@@ -87,14 +88,14 @@ void main() {
     });
 
     test('view_updated_at JSON round-trip\'te korunur', () {
-      final ref = LanItemRef(
-        type: LanItemType.world,
+      final ref = ContentItemRef(
+        type: ContentItemType.world,
         id: 'a',
         name: 'a',
         updatedAt: t0,
         viewUpdatedAt: t1,
       );
-      final back = LanItemRef.fromJson(
+      final back = ContentItemRef.fromJson(
         jsonDecode(jsonEncode(ref.toJson())) as Map<String, dynamic>,
       )!;
       expect(back.viewUpdatedAt, t1);
@@ -103,9 +104,9 @@ void main() {
     });
   });
 
-  group('LanItemPayload extras', () {
+  group('ContentItemPayload extras', () {
     test('extras JSON round-trip\'te korunur', () {
-      final item = LanItemPayload(
+      final item = ContentItemPayload(
         ref: _ref('w1', t0),
         payload: const {'world_name': 'Test'},
         dataRoot: '/home/dm/DMT',
@@ -119,7 +120,7 @@ void main() {
           },
         },
       );
-      final back = LanItemPayload.fromJson(
+      final back = ContentItemPayload.fromJson(
         jsonDecode(jsonEncode(item.toJson())) as Map<String, dynamic>,
       )!;
       expect(
@@ -133,7 +134,7 @@ void main() {
     });
 
     test('extras yoksa boş map olur (eski sürümle uyum)', () {
-      final back = LanItemPayload.fromJson({
+      final back = ContentItemPayload.fromJson({
         'ref': _ref('w1', t0).toJson(),
         'payload': const <String, dynamic>{},
         'data_root': '/x',

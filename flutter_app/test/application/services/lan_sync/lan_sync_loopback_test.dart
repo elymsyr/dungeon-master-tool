@@ -24,7 +24,7 @@ import 'package:dungeon_master_tool/application/services/lan_sync/lan_device_sto
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_client.dart';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_protocol.dart';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_server.dart';
-import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_session.dart';
+import 'package:dungeon_master_tool/application/services/content_transfer/content_codec.dart';
 import 'package:dungeon_master_tool/core/config/app_paths.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/database/database_provider.dart';
@@ -76,7 +76,7 @@ void main() {
     peerStore = peer.read(lanDeviceStoreProvider);
 
     server = LanSyncServer(
-      session: host.read(lanSyncSessionProvider),
+      session: host.read(contentCodecProvider),
       store: hostStore,
       currentUid: () async => _hostUid,
     );
@@ -300,7 +300,7 @@ void main() {
       });
 
       final client = await pairedClient();
-      final peerSession = peer.read(lanSyncSessionProvider);
+      final peerSession = peer.read(contentCodecProvider);
       final plan = diffManifests(
         local: await peerSession.buildManifest(),
         peer: await client.fetchManifest(),
@@ -330,7 +330,7 @@ void main() {
     test('host\'taki world peer\'a pull edilir', () async {
       await host.read(campaignRepositoryProvider).save('Barovia', _worldBlob());
       final client = await pairedClient();
-      final peerSession = peer.read(lanSyncSessionProvider);
+      final peerSession = peer.read(contentCodecProvider);
 
       final plan = diffManifests(
         local: await peerSession.buildManifest(),
@@ -352,7 +352,7 @@ void main() {
           .read(packageRepositoryProvider)
           .save('Ev Kuralları', <String, dynamic>{});
       final client = await pairedClient();
-      final peerSession = peer.read(lanSyncSessionProvider);
+      final peerSession = peer.read(contentCodecProvider);
 
       final plan = diffManifests(
         local: await peerSession.buildManifest(),
@@ -372,7 +372,7 @@ void main() {
     test('ikinci tur hiçbir şey taşımaz — LWW restamp tutuyor', () async {
       await host.read(campaignRepositoryProvider).save('Barovia', _worldBlob());
       final client = await pairedClient();
-      final peerSession = peer.read(lanSyncSessionProvider);
+      final peerSession = peer.read(contentCodecProvider);
 
       Future<LanSyncPlan> currentPlan() async => diffManifests(
             local: await peerSession.buildManifest(),
@@ -412,7 +412,7 @@ void main() {
 
       final client = await pairedClient();
       final ref = (await client.fetchManifest())
-          .firstWhere((r) => r.type == LanItemType.world);
+          .firstWhere((r) => r.type == ContentItemType.world);
       final item = await client.fetchItem(ref);
 
       final entry = item.media.where((m) => m.sha256 == sha);
@@ -455,7 +455,7 @@ void main() {
 
       final client = await pairedClient();
       final ref = (await client.fetchManifest())
-          .firstWhere((r) => r.type == LanItemType.world);
+          .firstWhere((r) => r.type == ContentItemType.world);
       final item = await client.fetchItem(ref);
 
       // Payload artık dünya klasöründeki kopyayı gösteriyor.
@@ -474,7 +474,7 @@ void main() {
         (path: nodePath['imageUrl'] as String, bytes: await node.readAsBytes()),
       ]) {
         final rel = p
-            .relative(expected.path, from: LanSyncSession.userBase)
+            .relative(expected.path, from: ContentCodec.userBase)
             .replaceAll(r'\', '/');
         final entry = item.media.where((m) => m.path == rel);
         expect(entry, hasLength(1),
@@ -513,7 +513,7 @@ void main() {
           as Map)['attributes'] as Map;
       final rel = p
           .relative(copied['imagePath'] as String,
-              from: LanSyncSession.userBase)
+              from: ContentCodec.userBase)
           .replaceAll(r'\', '/');
       expect(item.media.where((m) => m.path == rel), hasLength(1),
           reason: '$rel medya listesinde yok: ${item.media}');
@@ -540,7 +540,7 @@ void main() {
 
       final client = await pairedClient();
       final ref = (await client.fetchManifest())
-          .firstWhere((r) => r.type == LanItemType.world);
+          .firstWhere((r) => r.type == ContentItemType.world);
       final item = await client.fetchItem(ref);
 
       expect((item.payload['mind_maps'] as Map)['m1'], 'EN GÜNCEL',
@@ -572,9 +572,9 @@ void main() {
       });
 
       final client = await pairedClient();
-      final peerSession = peer.read(lanSyncSessionProvider);
+      final peerSession = peer.read(contentCodecProvider);
       final ref = (await client.fetchManifest())
-          .firstWhere((r) => r.type == LanItemType.world);
+          .firstWhere((r) => r.type == ContentItemType.world);
       await peerSession.applyItem(await client.fetchItem(ref));
 
       final got = await repoPeer.load('Barovia');
@@ -596,12 +596,12 @@ void main() {
 
   group('yol güvenliği', () {
     test('medya yolu veri kökünün dışına kaçamaz', () {
-      expect(LanSyncSession.resolveMedia('../../etc/passwd'), isNull);
-      expect(LanSyncSession.resolveMedia('worlds/x/media/a.png'), isNotNull);
+      expect(ContentCodec.resolveMedia('../../etc/passwd'), isNull);
+      expect(ContentCodec.resolveMedia('worlds/x/media/a.png'), isNotNull);
     });
 
     test('rewriteRoots yalnız gönderenin kökü altındaki yolları çevirir', () {
-      final out = LanSyncSession.rewriteRoots(
+      final out = ContentCodec.rewriteRoots(
         {
           'image_path': '/home/a/data/worlds/W/media/x.png',
           'cloud': 'dmt-asset://abc',
@@ -626,7 +626,7 @@ void main() {
     });
 
     test('Windows kökünden POSIX köküne yol çevrilir', () {
-      final out = LanSyncSession.rewriteRoots(
+      final out = ContentCodec.rewriteRoots(
         {'image_path': r'C:\Users\eren\DMT\worlds\W\media\x.png'},
         r'C:\Users\eren\DMT',
         '/home/eren/DMT',

@@ -7,7 +7,7 @@ import '../services/lan_sync/lan_device_store.dart';
 import '../services/lan_sync/lan_sync_client.dart';
 import '../services/lan_sync/lan_sync_protocol.dart';
 import '../services/lan_sync/lan_sync_server.dart';
-import '../services/lan_sync/lan_sync_session.dart';
+import '../services/content_transfer/content_codec.dart';
 import 'auth_provider.dart';
 
 enum LanSyncPhase { idle, syncing, done, error }
@@ -119,7 +119,7 @@ class LanSyncController extends StateNotifier<LanSyncState> {
   /// Panel açık mı — kapanınca eşleşme uçları da kapanır.
   bool _panelOpen = false;
 
-  LanSyncSession get _session => _ref.read(lanSyncSessionProvider);
+  ContentCodec get _session => _ref.read(contentCodecProvider);
   LanDeviceStore get _store => _ref.read(lanDeviceStoreProvider);
 
   /// Eşleşme kimliği. Hesap varsa Supabase uid'si, yoksa sabit 'guest' —
@@ -399,16 +399,16 @@ class LanSyncController extends StateNotifier<LanSyncState> {
     // idempotent olduğu için iki taraf da aynı sonuca yakınsıyor.
     final shared = <String>{
       for (final ref in local)
-        if (ref.type == LanItemType.world) ref.id,
+        if (ref.type == ContentItemType.world) ref.id,
     }.intersection({
       for (final ref in peer)
-        if (ref.type == LanItemType.world) ref.id,
+        if (ref.type == ContentItemType.world) ref.id,
     });
     var done = 0;
 
     // Çekmeler önce: yerel birleştirme tamamlansın ki karşıya **birleşmiş**
     // hâli gönderelim.
-    final toPush = <LanItemRef>[];
+    final toPush = <ContentItemRef>[];
     for (final ref in plan.pull) {
       state = state.copyWith(progressLabel: '${ref.name} ← ${device.name}');
       await _pullOne(client, ref);
@@ -439,7 +439,7 @@ class LanSyncController extends StateNotifier<LanSyncState> {
     return done;
   }
 
-  Future<void> _pullOne(LanSyncClient client, LanItemRef ref) async {
+  Future<void> _pullOne(LanSyncClient client, ContentItemRef ref) async {
     final item = await client.fetchItem(ref);
     for (final media in item.media) {
       if (await _session.hasMedia(media)) continue;
@@ -448,13 +448,13 @@ class LanSyncController extends StateNotifier<LanSyncState> {
     await _session.applyItem(item);
   }
 
-  Future<void> _pushOne(LanSyncClient client, LanItemRef ref) async {
+  Future<void> _pushOne(LanSyncClient client, ContentItemRef ref) async {
     final item = await _session.loadItem(ref);
     if (item == null) return;
     final missing = await client.missingMediaOnPeer(item.media);
     for (final media in item.media) {
       if (!missing.contains(media.path)) continue;
-      final file = LanSyncSession.resolveMedia(media.path);
+      final file = ContentCodec.resolveMedia(media.path);
       if (file == null || !await file.exists()) continue;
       await client.uploadMedia(media, await file.readAsBytes());
     }

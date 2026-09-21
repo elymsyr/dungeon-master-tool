@@ -105,7 +105,7 @@ class LocalMediaLocalizer {
       ];
 
   /// Karakter portresi / kapağı — karakter medyası `{charactersDir}` altında
-  /// **düz** duruyor ve `LanSyncSession._mediaFor` dosyaları `{id}_` önekiyle
+  /// **düz** duruyor ve `ContentCodec._mediaFor` dosyaları `{id}_` önekiyle
   /// ayırt ediyor. Dolayısıyla hem klasör hem ad önemli: doğru klasörde ama
   /// öneksiz duran bir dosya da kopyalanır.
   static Future<String> localizeCharacterImage(
@@ -196,7 +196,7 @@ class LocalMediaLocalizer {
   /// duran bir dosya — yani [ownerDir] altında (LAN eşlemesi item'ın kendi
   /// klasörünü tarıyor) veya içerik-adresli önbellekte (bulut ref'lerinin
   /// baytları oradan ayrıca taşınıyor, bkz.
-  /// `LanSyncSession._collectContentBlobs`).
+  /// `ContentCodec._collectContentBlobs`).
   ///
   /// Dikkat: "veri kökünün altında" olmak **yetmez**. Veri kökü altındaki
   /// rastgele bir klasör (ör. `cache/tmp/`) hiçbir item taramasına girmiyor.

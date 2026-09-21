@@ -44,7 +44,7 @@ class AssetImporter {
   ///
   /// [subDir] boşsa dosyalar doğrudan [campaignPath] altına gider — karakter
   /// medyası düz dizinde durduğu için gerekli. [namePrefix] hedef dosya adının
-  /// başına eklenir (karakterlerde `{id}_`, çünkü `LanSyncSession._mediaFor`
+  /// başına eklenir (karakterlerde `{id}_`, çünkü `ContentCodec._mediaFor`
   /// karakter dosyalarını bu önekle ayırt ediyor).
   ///
   /// Idempotent: kaynak zaten hedef klasördeyse ya da hedefte aynı ad **ve**
