@@ -163,7 +163,7 @@ class _PackageAsCampaignRepo implements CampaignRepository {
   _PackageAsCampaignRepo(this._packageNotifier);
 
   @override
-  Future<List<String>> getAvailable() async => [];
+  Future<List<({String id, String name})>> listWorlds() async => const [];
 
   @override
   Future<Map<String, dynamic>> load(String name) async =>
@@ -240,13 +240,13 @@ class _PackageAsCampaignRepo implements CampaignRepository {
 
   @override
   Future<String> copy({
-    required String sourceName,
+    required String sourceId,
     required String destinationName,
   }) async =>
       destinationName;
 
   @override
-  Future<void> renameWorld(String oldName, String newName) async {}
+  Future<void> renameWorld(String worldId, String newName) async {}
 }
 
 /// Paket düzenleme ekranının asıl içeriği — ProviderScope içinde çalışır.

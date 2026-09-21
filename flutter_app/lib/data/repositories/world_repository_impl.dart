@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../application/services/srd_core_bootstrap.dart';
-import '../../application/services/local_media_localizer.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../database/util/builtin_synth.dart';
 import '../schema/auto_grant_inversion.dart';
@@ -52,24 +50,17 @@ class WorldRepositoryImpl implements CampaignRepository {
   };
 
   @override
-  Future<List<String>> getAvailable() async {
+  Future<List<({String id, String name})>> listWorlds() async {
     final worlds = await _db.worldsDao.getAll();
-    final names = worlds.map((w) => w.worldName).toSet().toList()..sort();
-    return names;
+    return [for (final w in worlds) (id: w.id, name: w.worldName)];
   }
 
   @override
-  Future<Map<String, dynamic>> load(String campaignName) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) {
-      throw StateError('World not found: $campaignName');
-    }
-    return _loadFromDb(existing.id);
-  }
+  Future<Map<String, dynamic>> load(String worldId) => _loadFromDb(worldId);
 
   @override
-  Future<Map<String, dynamic>> loadMetadata(String campaignName) async {
-    final existing = await _findByName(campaignName);
+  Future<Map<String, dynamic>> loadMetadata(String worldId) async {
+    final existing = await _db.worldsDao.getById(worldId);
     if (existing == null) return <String, dynamic>{};
     // `metadata`, `_typedTopKeys` dışında kaldığı için settings blob'una
     // paketleniyor (bkz. `_saveToDb`). Entity satırlarına ve builtin synth'e
@@ -88,11 +79,10 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
-  Future<List<Map<String, String>>> installedPackages(
-      String campaignName) async {
-    final existing = await _findByName(campaignName);
+  Future<List<Map<String, String>>> installedPackages(String worldId) async {
+    final existing = await _db.worldsDao.getById(worldId);
     if (existing == null) return const [];
-    final rows = await _db.installedPackagesDao.getByWorld(existing.id);
+    final rows = await _db.installedPackagesDao.getByWorld(worldId);
     return [
       for (final r in rows)
         if (r.packageName.isNotEmpty)
@@ -105,26 +95,27 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
-  Future<void> save(String campaignName, Map<String, dynamic> data) async {
-    final existing = await _findByName(campaignName);
-    if (existing != null) {
-      await _saveToDb(existing.id, campaignName, data);
-      return;
+  Future<void> save(String worldId, Map<String, dynamic> data) async {
+    final existing = await _db.worldsDao.getById(worldId);
+    // Satır yoksa payload'dan kur — trash restore bu yoldan geçiyor.
+    // Etiket var olan satırdan okunur; `data` eski bir adı taşıyor olabilir.
+    final name = existing?.worldName ??
+        (data['world_name'] as String?) ??
+        worldId;
+    if (existing == null) {
+      await _db.worldsDao.upsert(WorldsCompanion.insert(
+        id: worldId,
+        worldName: name,
+      ));
     }
-    final worldId = data['world_id'] as String? ?? _uuid.v4();
     data['world_id'] = worldId;
-    await _db.worldsDao.upsert(WorldsCompanion.insert(
-      id: worldId,
-      worldName: campaignName,
-    ));
-    await _saveToDb(worldId, campaignName, data);
+    await _saveToDb(worldId, name, data);
   }
 
   @override
-  Future<void> delete(String campaignName) async {
-    final existing = await _findByName(campaignName);
+  Future<void> delete(String worldId) async {
+    final existing = await _db.worldsDao.getById(worldId);
     if (existing == null) return;
-    final worldId = existing.id;
 
     // Snapshot for trash row before cascade wipe.
     final snapshot = await _loadFromDb(worldId);
@@ -139,19 +130,14 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
-  Future<void> purge(String campaignName) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) return;
-    await _purgeWorld(existing.id);
+  Future<void> purge(String worldId) async {
+    if (await _db.worldsDao.getById(worldId) == null) return;
+    await _purgeWorld(worldId);
   }
 
   @override
   Future<String> create(String worldName,
       {domain.WorldSchema? template, bool includeSrd = true}) async {
-    final existing = await _findByName(worldName);
-    if (existing != null) {
-      throw StateError('Campaign already exists: $worldName');
-    }
     if (template == null) {
       throw StateError('Cannot create world without a template');
     }
@@ -189,20 +175,16 @@ class WorldRepositoryImpl implements CampaignRepository {
       );
     }
 
-    return worldName;
+    return worldId;
   }
 
   @override
   Future<void> saveEntity(
-    String campaignName,
+    String worldId,
     String entityId,
     Map<String, dynamic> row,
   ) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) {
-      throw StateError('World not found: $campaignName');
-    }
-    final worldId = existing.id;
+    await _requireWorld(worldId);
     await _db.transaction(() async {
       await _db.worldEntitiesDao.upsert(_entityCompanion(worldId, entityId, row));
       await _touchWorld(worldId);
@@ -210,10 +192,8 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
-  Future<void> deleteEntity(String campaignName, String entityId) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) return;
-    final worldId = existing.id;
+  Future<void> deleteEntity(String worldId, String entityId) async {
+    if (await _db.worldsDao.getById(worldId) == null) return;
     await _db.transaction(() async {
       await _db.worldEntitiesDao.deleteById(entityId);
       await _touchWorld(worldId);
@@ -222,16 +202,12 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<void> saveSettingsPatch(
-    String campaignName,
+    String worldId,
     Map<String, dynamic> patch, {
     bool touchWorld = true,
   }) async {
     if (patch.isEmpty) return;
-    final existing = await _findByName(campaignName);
-    if (existing == null) {
-      throw StateError('World not found: $campaignName');
-    }
-    final worldId = existing.id;
+    await _requireWorld(worldId);
     await _db.transaction(() async {
       final row = await _db.worldSettingsDao.get(worldId);
       final merged = <String, dynamic>{};
@@ -257,14 +233,10 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<void> saveMapData(
-    String campaignName,
+    String worldId,
     Map<String, dynamic> mapData,
   ) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) {
-      throw StateError('World not found: $campaignName');
-    }
-    final worldId = existing.id;
+    await _requireWorld(worldId);
     await _db.transaction(() async {
       await _db.worldMapDataDao.upsert(WorldMapDataCompanion(
         worldId: Value(worldId),
@@ -277,15 +249,11 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<void> saveSessions(
-    String campaignName,
+    String worldId,
     List<Map<String, dynamic>> sessions,
   ) async {
     if (sessions.isEmpty) return;
-    final existing = await _findByName(campaignName);
-    if (existing == null) {
-      throw StateError('World not found: $campaignName');
-    }
-    final worldId = existing.id;
+    await _requireWorld(worldId);
     final companions = _sessionCompanions(worldId, sessions);
     if (companions.isEmpty) return;
     await _db.transaction(() async {
@@ -296,19 +264,18 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<void> saveSession(
-    String campaignName,
+    String worldId,
     Map<String, dynamic> session,
   ) async {
-    await saveSessions(campaignName, [session]);
+    await saveSessions(worldId, [session]);
   }
 
   @override
-  Future<void> deleteSession(String campaignName, String sessionId) async {
-    final existing = await _findByName(campaignName);
-    if (existing == null) return;
+  Future<void> deleteSession(String worldId, String sessionId) async {
+    if (await _db.worldsDao.getById(worldId) == null) return;
     await _db.transaction(() async {
       await _db.worldSessionsDao.deleteById(sessionId);
-      await _touchWorld(existing.id);
+      await _touchWorld(worldId);
     });
   }
 
@@ -381,15 +348,15 @@ class WorldRepositoryImpl implements CampaignRepository {
     if (trash == null || trash.kind != 'world') return false;
     try {
       final payload = jsonDecode(trash.payloadJson) as Map<String, dynamic>;
-      final restoredName =
-          (payload['world_name'] as String?) ?? trash.sourceId;
-      // Conflict — skip restore if a world with that name already exists.
-      final clash = await _findByName(restoredName);
-      if (clash != null) {
+      // `sourceId` dünyanın kendi id'si — geri yükleme onunla yapılır, isimle
+      // değil. Aynı id hâlâ duruyorsa trash satırı bayattır: sessizce düşür,
+      // yoksa `save` yaşayan dünyanın üstüne eski bir anlık görüntü yazar.
+      final worldId = trash.sourceId;
+      if (await _db.worldsDao.getById(worldId) != null) {
         await _db.trashDao.deleteById(trashId);
         return false;
       }
-      await save(restoredName, payload);
+      await save(worldId, payload);
       await _db.trashDao.deleteById(trashId);
       return true;
     } catch (_) {
@@ -403,19 +370,15 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   @override
   Future<String> copy({
-    required String sourceName,
+    required String sourceId,
     required String destinationName,
   }) async {
-    final src = await _findByName(sourceName);
+    final src = await _db.worldsDao.getById(sourceId);
     if (src == null) {
-      throw StateError('Source world not found: $sourceName');
-    }
-    final existing = await _findByName(destinationName);
-    if (existing != null) {
-      throw StateError('World already exists: $destinationName');
+      throw StateError('Source world not found: $sourceId');
     }
 
-    final srcData = await _loadFromDb(src.id);
+    final srcData = await _loadFromDb(sourceId);
     final newId = _uuid.v4();
 
     srcData['world_id'] = newId;
@@ -429,40 +392,33 @@ class WorldRepositoryImpl implements CampaignRepository {
       templateOriginalHash: Value(src.templateOriginalHash),
     ));
     await _saveToDb(newId, destinationName, srcData);
-    return destinationName;
+    return newId;
   }
 
-  /// World adını değiştir — DB kolonunu güncelle.
+  /// World etiketini değiştir — tek UPDATE.
+  ///
+  /// Medya klasörü `worldDir(worldId)` ile anahtarlı, yani yeniden adlandırma
+  /// diskte hiçbir şeye dokunmuyor. Eskiden klasör taşınıyordu ama gövdedeki
+  /// **mutlak** yollar eski klasörü göstermeye devam ettiği için yeniden
+  /// adlandırılan her dünyanın resimleri kırılıyordu.
   @override
-  Future<void> renameWorld(String oldName, String newName) async {
-    final existing = await _findByName(oldName);
-    if (existing == null) {
-      throw StateError('World not found: $oldName');
-    }
-    final clash = await _findByName(newName);
-    if (clash != null) {
-      throw StateError('World already exists: $newName');
-    }
+  Future<void> renameWorld(String worldId, String newName) async {
     final now = DateTime.now();
-    await (_db.update(_db.worlds)..where((t) => t.id.equals(existing.id)))
+    await (_db.update(_db.worlds)..where((t) => t.id.equals(worldId)))
         .write(WorldsCompanion(
       worldName: Value(newName),
       updatedAt: Value(now),
       renamedAt: Value(now),
     ));
-    // Dünya klasörünü de yeniden adlandır.
-    final oldDir = Directory(LocalMediaLocalizer.worldDir(oldName));
-    final newDir = Directory(LocalMediaLocalizer.worldDir(newName));
-    if (await oldDir.exists() && !await newDir.exists()) {
-      await oldDir.rename(newDir.path);
-    }
   }
 
   // ── Internal helpers ─────────────────────────────────────────────────────
 
-  // SS-1/DB-3: use the indexed name lookup instead of getAll() + linear scan
-  // on every debounced row write (12 call sites).
-  Future<World?> _findByName(String name) => _db.worldsDao.getByName(name);
+  Future<void> _requireWorld(String worldId) async {
+    if (await _db.worldsDao.getById(worldId) == null) {
+      throw StateError('World not found: $worldId');
+    }
+  }
 
   Future<Map<String, dynamic>> _loadFromDb(String worldId) async {
     final world = await _db.worldsDao.getById(worldId);

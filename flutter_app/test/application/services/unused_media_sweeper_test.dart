@@ -26,7 +26,7 @@ void main() {
   late AppDatabase db;
   late UnusedMediaSweeper sweeper;
 
-  const worldName = 'Barovia';
+  const worldId = 'w-barovia';
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('unused_media_sweeper');
@@ -48,7 +48,7 @@ void main() {
   /// [fresh] false ise dosya grace window'un dışına taşınır (süpürülebilir).
   Future<String> media(String name, {bool fresh = false, String sub = 'media'}) async {
     final f = File(
-      p.join(LocalMediaLocalizer.worldDir(worldName), sub, name),
+      p.join(LocalMediaLocalizer.worldDir(worldId), sub, name),
     );
     await f.create(recursive: true);
     await f.writeAsString('x');
@@ -61,7 +61,7 @@ void main() {
   }
 
   Future<int> sweep(Map<String, dynamic> payload) =>
-      sweeper.sweepWorld(worldName: worldName, payload: payload);
+      sweeper.sweepWorld(worldId: worldId, payload: payload);
 
   test('referanssız dosya silinir, referanslı kalır', () async {
     final used = await media('kullanilan.png');
@@ -149,7 +149,7 @@ void main() {
 
   test('klasör yoksa hata vermez', () async {
     expect(
-      await sweeper.sweepWorld(worldName: 'Yok', payload: const {}),
+      await sweeper.sweepWorld(worldId: 'yok', payload: const {}),
       0,
     );
   });

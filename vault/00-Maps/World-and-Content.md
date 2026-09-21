@@ -10,6 +10,12 @@ tags: [moc]
 > [!summary] Scope
 > The campaign container (worlds), the schema-driven entity system (NPCs/monsters/locations), content packages (personal + world + first-party), and the marketplace. Where installed content lives and how worlds are configured.
 
+> [!important] Dünyanın kimliği `worldId` (Faz 2.5, 2026-09-21)
+> `worldName` salt **etiket**: değişebilir, benzersiz değil, hiçbir şeyi anahtarlamaz. [[world_repository_impl]]'in her metodu, `activeCampaignProvider`'ın state'i, medya klasörü (`worlds/<id>/`), `ui_state` dünya görünümleri ve marketplace `localId` id ile anahtarlı. Görünen ad `activeWorldNameProvider`'dan okunur. **Paketler hâlâ adla anahtarlı** — bu fazın kapsamı değil.
+
+> [!note] Paketler hâlâ isimle anahtarlı
+> `PackageRepository.getAvailable()`/`load(name)`/`packagesDao.getByName` duruyor ve paket medya klasörü `packages/<ad>/`. Paket kimliği ayrı bir iş.
+
 ## Key Files
 - [[campaign_provider]] — active world notifier; entity/character/settings queries.
 - [[world_repository_impl]] · [[worlds_dao]] — world CRUD + membership-scoped queries.

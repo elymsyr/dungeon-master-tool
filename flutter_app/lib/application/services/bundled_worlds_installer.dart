@@ -315,11 +315,10 @@ class BundledWorldsInstaller {
 
   /// `metadata.installed_from == 'assets'` damgalı her dünyayı kaldırır.
   Future<int> uninstallAll() async {
-    final names = await _repo.getAvailable();
     var n = 0;
-    for (final name in names) {
+    for (final w in await _repo.listWorlds()) {
       try {
-        final data = await _repo.load(name);
+        final data = await _repo.load(w.id);
         final meta = data['metadata'];
         // Katalogdan kurulan dünya da bu toggle'la kalkabilmeli — aynı içerik,
         // sadece farklı kaynak.
@@ -334,7 +333,7 @@ class BundledWorldsInstaller {
             if (c.worldId == worldId) await _chars.dropLocal(c.id);
           }
         }
-        await _repo.delete(name);
+        await _repo.delete(w.id);
         n++;
       } catch (_) {
         // best-effort
@@ -359,9 +358,10 @@ class BundledWorldsInstaller {
     var worldName = manifest['title'] as String;
     // Katalogdan elle indirme her seferinde yeni bir dünya açsın; silinip
     // tekrar indirilen ya da ikinci kez indirilen dünya üstüne yazmasın.
+    final worlds = await _repo.listWorlds();
     if (asCopy) {
       worldName =
-          uniqueCopyName(worldName, (await _repo.getAvailable()).toSet());
+          uniqueCopyName(worldName, {for (final w in worlds) w.name});
     }
 
     if (worldBlueprint == null && characterBlueprint == null) {
@@ -464,12 +464,16 @@ class BundledWorldsInstaller {
 
     // Var olan dünyanın kullanıcı tarafından eklenmiş satırlarını koru —
     // `_saveToDb` entities için full-replace uyguluyor.
-    final existing = await _repo.getAvailable();
-    String? worldId;
-    if (existing.contains(worldName)) {
+    //
+    // Paketlenmiş dünya hâlâ **adıyla** eşleşiyor: doğrusu bundle dizininden
+    // türetilmiş deterministik bir id olurdu, ama o zaman bugün kurulu olan
+    // dünyalar (v4 id'li) eşleşmez ve bir sonraki kurulum kullanıcının
+    // dünyasını güncellemek yerine ikinci bir kopya açardı.
+    String? worldId =
+        worlds.where((w) => w.name == worldName).firstOrNull?.id;
+    if (worldId != null) {
       try {
-        final prev = await _repo.load(worldName);
-        worldId = prev['world_id'] as String?;
+        final prev = await _repo.load(worldId);
         // Kullanıcı haritayı uygulamada düzenlemişse yeniden kurulum onu
         // ezmesin — blueprint'teki pinler yalnız boş haritaya tohumlanır.
         final prevMap = prev['map_data'];
@@ -494,10 +498,9 @@ class BundledWorldsInstaller {
       }
     }
 
-    await _repo.save(worldName, worldData);
-    // `save` yeni dünya açarken ürettiği id'yi map'e geri yazıyor; var olan
-    // dünyada yazmıyor, o yüzden yukarıdaki `load`'dan alındı.
-    worldId ??= worldData['world_id'] as String?;
+    worldId ??= const Uuid().v4();
+    worldData['world_name'] = worldName;
+    await _repo.save(worldId, worldData);
     await _installCharacters(worldId, result.characters, build, report,
         worldName: worldName, freshIds: asCopy);
     report.installed.add(worldName);

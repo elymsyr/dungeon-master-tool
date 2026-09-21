@@ -32,10 +32,8 @@ void main() {
     final repo = container.read(campaignRepositoryProvider);
     // NB: `create` returns the world *name*, not its id — the same trap that
     // produced the bug this test guards.
-    await repo.create('Doomed World',
+    final worldId = await repo.create('Doomed World',
         template: generateBuiltinDnd5eV2Schema().schema);
-    final worldId =
-        (await repo.load('Doomed World'))['world_id'] as String;
 
     final now = DateTime.now().toUtc().toIso8601String();
     await container.read(characterRepositoryProvider).save(Character(
@@ -51,7 +49,7 @@ void main() {
     await pumpUntil(() => chars.state.hasValue);
     expect(chars.state.value!.single.worldId, worldId);
 
-    await container.read(activeCampaignProvider.notifier).delete('Doomed World');
+    await container.read(activeCampaignProvider.notifier).delete(worldId);
 
     expect(chars.state.value!.single.worldId, isNull);
     final reloaded =

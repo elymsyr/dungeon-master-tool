@@ -4007,10 +4007,10 @@ class _PdfFieldWidget extends StatelessWidget {
       if (svc == null) return;
       final sha = asset.contentSha;
       if (sha == null) return;
-      final worldName = r?.read(activeCampaignProvider);
+      final worldId = r?.read(activeCampaignProvider);
       File? local;
-      if (worldName != null) {
-        local = File(p.join(LocalMediaLocalizer.worldDir(worldName),
+      if (worldId != null) {
+        local = File(p.join(LocalMediaLocalizer.worldDir(worldId),
             LocalMediaLocalizer.filesSubDir, '$sha.pdf'));
       }
       try {

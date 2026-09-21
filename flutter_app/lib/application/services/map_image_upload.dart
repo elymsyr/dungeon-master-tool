@@ -22,11 +22,11 @@ typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);
 /// Harita görselinin buluta çıktığı tek yer projeksiyon
 /// (`WorldMapNotifier.ensureMapImageProjectable` → transient).
 Future<String> localizeMapImage(ProviderReader read, String path) async {
-  final worldName = read(activeCampaignProvider);
-  if (worldName == null || worldName.isEmpty) return path;
+  final worldId = read(activeCampaignProvider);
+  if (worldId == null || worldId.isEmpty) return path;
   return LocalMediaLocalizer.localize(
     path,
-    ownerDir: LocalMediaLocalizer.worldDir(worldName),
+    ownerDir: LocalMediaLocalizer.worldDir(worldId),
   );
 }
 

@@ -25,7 +25,7 @@ void main() {
       worldName: 'Joined World',
     ));
 
-    final data = await WorldRepositoryImpl(db).load('Joined World');
+    final data = await WorldRepositoryImpl(db).load('w-joined');
     final schema = data['world_schema'] as Map<String, dynamic>?;
     expect(schema!['schemaId'], builtinDnd5eV2SchemaId);
     final slugs = {

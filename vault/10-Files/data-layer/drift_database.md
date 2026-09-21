@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/app_database.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-08-24
+updated: 2026-09-21
 tags: [file]
 ---
 
@@ -46,10 +46,15 @@ tags: [file]
   - Combat/map (local-only): `Encounters, Combatants, CombatConditions, MapPins, TimelinePins` ([[tables-combat]]).
 - **DAOs** registered: Worlds, WorldMembers, WorldInvites, WorldEntities, WorldCharacters, WorldMindMap, WorldSessions, WorldMapData, WorldSettings, WorldPackages, EntityShares, CharacterClaimPool, Packages, InstalledPackages, Trash, Combat, MapPins, TimelinePins.
 - **Side tables** (`_sideTablesDDL`, raw SQL, `CREATE TABLE IF NOT EXISTS`, run in `beforeOpen`, no schema bump): `asset_refs` (AssetRef→owner-row graph for eviction sweeper), `migration_progress` (F11 raw-path migrator resume state, also gates one-time repairs), `lan_paired_devices` (kalıcı LAN cihaz eşleşmeleri).
+- **Katman notu:** bu dosya `beforeOpen` geçişi için `application/services/local_media_localizer.dart`'ı import ediyor (klasör adı kuralı orada). Data→application yönü ideal değil ama tek seferlik geçiş mekanizması (`migration_progress` kapısı + `replaceInEveryTextColumn`) burada yaşıyor ve ikinci bir mekanizma kurmak daha pahalı olurdu; aynı yönde [[world_repository_impl]] de üç application servisi import ediyor.
 - **Retired tables** (`_retiredTablesDDL`, `DROP TABLE IF EXISTS`, same `beforeOpen` pass): `sync_outbox`, `sync_telemetry`, `bm_mark_ops_local`, `personal_packages` — bulut sync ile birlikte gittiler. Listeye eklemek serbest; bir satır ÇIKARMAK eski kurulumlarda tabloyu geri getirmez, sadece temizliği durdurur.
 - **PRAGMA tuning** (every open): `journal_mode=WAL`, `synchronous=NORMAL`, `temp_store=MEMORY`, `mmap_size=64MB`, **`foreign_keys=OFF`** — lets CDC apply land out-of-order events without parent-first ordering; parent-exists checks are done at app level on apply.
 - **Index block** `_v12Indexes` (S1 perf): hot-path indexes incl. `idx_world_entities_world`, `idx_world_entities_category (world_id, category_slug)`, `idx_world_characters_owner/updated`, `idx_outbox_next_attempt (next_attempt_at, created_at)`, `idx_outbox_table_pk (target_table, target_pk, op_type)` for outbox coalescing, `idx_trash_kind_deleted`.
 - **`beforeOpen` one-time repairs** (gated via `migration_progress`): `subspecies_reclassify_v1` promotes legacy `species` rows whose description starts `*Subspecies of X.*` to `category_slug='subspecies'` + injects `parent_species_ref` softRef via `json_set`; plus best-effort `trashDao.purgeOlderThan(now-30d)`.
+- **`world_media_dir_by_id_v1`** (Faz 2.5, 2026-09-21): dünya medya klasörünü `worlds/<dirSafe(ad)>`'den `worlds/<id>`'ye taşır ve gövdedeki **mutlak** yolları `replaceInEveryTextColumn` + `pathSpellings` ile çevirir. Şema değişmiyor, kolon eklenmiyor — bump yok.
+  - Neden: klasör isimle anahtarlıyken iki dünya aynı adı taşıyamıyordu (aynı klasörü paylaşır, [[unused_media_sweeper]] birini açıp kapatınca ötekinin dosyalarını silerdi) ve yeniden adlandırma klasörü taşıyıp yolları bırakıyordu (her rename resimleri kırıyordu).
+  - **Eşleştirmeye ayıraç dahil** (`$oldPath${p.separator}`): yoksa "Ad" dünyasının yolu "Ad2" dünyasının yollarının öneki olur ve ikincisinin bütün resimleri bozuk bir yola çevrilir. `test/data/database/world_media_dir_migration_test.dart` tam olarak bunu bekliyor.
+  - Bütün çiftler **tek** `replaceInEveryTextColumn` çağrısında uygulanır — dünya başına tam tablo taraması olmasın.
 - **DB file path / fresh-cut** (`_openConnectionForUser`): `AppPaths.dataRoot/db/dmt.sqlite` (or `.../users/{userId}/db/dmt.sqlite`). Legacy `getApplicationSupportDirectory/DungeonMasterTool/...` file copied once (marked `.moved_to_dataroot`). Any pre-v12 file is renamed to `dmt.sqlite.legacy.<unix-ms>` (marker `.v12_cut_applied`), kept 30 days then purged. Uses `NativeDatabase.createInBackground`.
 - **⚠️ Fresh-cut kesİmİ (O4, 2026-08-15 düzeltildi) — veri kaybettiriyordu.** İşaretçi (`.v12_cut_applied`) yalnızca *kesim sırasında* yazılıyordu; sıfırdan yaratılan bir DB için hiç yazılmıyordu. Sonuç: yeni dosya bir sonraki açılışta "işaretsiz" görünüyor ve kesim **onun üstünde** çalışıyordu. Ölçüm: `AppDatabase.forUser('u1')` — ilk oturum **1 satır**, ikinci oturum **0 satır**. Aynı tuzak [[guest_promotion_service]]'in terfisini de yiyordu (kopyalanan DB işaretçisiz geliyor). Düzeltme: dosya yokken de (yani Drift'in birazdan yaratacağı dosya tanım gereği v12 iken) işaretçi hemen yazılıyor; gerçekten pre-v12 olan dosyalar için kesim aynen duruyor. Test: `test/application/services/guest_account_switch_test.dart` — iki vaka doğrudan bunu tutuyor ve **gerçek açılış yolundan** (`AppDatabase.forUser`) geçiyor; `forTesting` bu fonksiyonu atladığı için O3'ün testleri hatayı göremiyordu.
 

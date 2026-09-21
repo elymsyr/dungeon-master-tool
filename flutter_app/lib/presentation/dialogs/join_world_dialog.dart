@@ -54,7 +54,6 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
       final res = await svc.joinWithCode(code);
       ref.read(onlineWorldIdsProvider.notifier).add(res.worldId);
       // Hub listesini ve metadata cache'lerini invalidate et.
-      ref.invalidate(campaignListProvider);
       ref.invalidate(campaignInfoListProvider);
       if (!mounted) return;
       Navigator.of(context).pop();

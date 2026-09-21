@@ -356,7 +356,6 @@ class _DashboardTab extends ConsumerWidget {
                   'content issue(s) — see logs.';
         },
       );
-      ref.invalidate(campaignListProvider);
       // Worlds sekmesi listeyi `campaignInfoListProvider`'dan, kartın
       // banner/açıklamasını `campaignMetadataProvider`'dan okuyor. Yalnız
       // campaignListProvider'ı tazelemek, üstüne kurulan dünyanın kartını
@@ -406,7 +405,6 @@ class _DashboardTab extends ConsumerWidget {
       );
       // Dünyalar Worlds sekmesinde listeleniyor — paket listesini tazelemek
       // yetmiyor, yeni kurulan dünya yenilenene kadar görünmüyordu.
-      ref.invalidate(campaignListProvider);
       ref.invalidate(packageListProvider);
       // PC'ler artık world_characters'a yazılıyor — liste tazelenmezse
       // Characters sekmesi kurulumdan sonra boş görünüyor.

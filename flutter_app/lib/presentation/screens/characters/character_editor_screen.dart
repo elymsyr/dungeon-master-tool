@@ -1018,7 +1018,7 @@ class _CharacterEditorScreenState
       ref.read(globalLoadingProvider.notifier),
       'open-world-$worldId',
       'Opening world "$worldName"...',
-      () => ref.read(activeCampaignProvider.notifier).load(worldName),
+      () => ref.read(activeCampaignProvider.notifier).load(worldId),
     );
     if (!success || !mounted) return;
     context.go('/main');

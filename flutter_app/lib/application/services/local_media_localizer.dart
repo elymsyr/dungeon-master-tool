@@ -10,8 +10,8 @@ import '../../domain/value_objects/asset_ref.dart';
 /// Ham dosya yollarını **veri kökünün içine** alan yerel taşıyıcı.
 ///
 /// [RawPathMigrator]'ın çevrimdışı karşılığı: bulut servisi gerektirmez,
-/// ref'e çevirmez — dosyayı `{worldsDir}/{ad}/media/` (ya da paketler için
-/// `{packagesDir}/{ad}/media/`) altına kopyalar, o kadar.
+/// ref'e çevirmez — dosyayı `{worldsDir}/{worldId}/media/` (ya da paketler
+/// için `{packagesDir}/{ad}/media/`) altına kopyalar, o kadar.
 ///
 /// **Kural: seçilen her dosya kopyalanır** — bulut yüklemesi başarılı olsa da
 /// olmasa da, ham yol hiçbir zaman saklanmaz. Kopya eskiden yalnız yükleme
@@ -34,9 +34,14 @@ class LocalMediaLocalizer {
   /// PDF kütüphanesinin `pdfs/` klasörüne karışmasın diye ayrı.
   static const String filesSubDir = 'files';
 
-  /// Dünya içeriğinin kendi klasörü.
-  static String worldDir(String worldName) =>
-      p.join(AppPaths.worldsDir, dirSafe(worldName));
+  /// Dünya içeriğinin kendi klasörü — **dünya id'si ile** anahtarlı.
+  ///
+  /// İsimle değil, çünkü isim değişebilir ve benzersiz değil: iki dünya aynı
+  /// adı taşıyabildiği anda aynı klasörü paylaşırlardı ve [UnusedMediaSweeper]
+  /// birini açıp kapatmak diğerinin dosyalarını referanssız sayıp silerdi.
+  /// id'yle anahtarlı olduğu için yeniden adlandırma da klasöre dokunmuyor.
+  static String worldDir(String worldId) =>
+      p.join(AppPaths.worldsDir, dirSafe(worldId));
 
   /// Paket içeriğinin kendi klasörü.
   static String packageDir(String packageName) =>
@@ -132,7 +137,7 @@ class LocalMediaLocalizer {
     }
   }
 
-  /// Dünya payload'ındaki bütün ham yolları `{worldsDir}/{ad}/media/` altına
+  /// Dünya payload'ındaki bütün ham yolları `{worldsDir}/{id}/media/` altına
   /// alır ve ağacı **yerinde** günceller. Bir şey değiştiyse true döner —
   /// çağıran dünyayı kaydetmelidir.
   ///
@@ -142,9 +147,9 @@ class LocalMediaLocalizer {
   /// `entities[].images[]`.
   static Future<bool> localizeWorldPayload(
     Map<String, dynamic> payload,
-    String worldName,
+    String worldId,
   ) =>
-      _walk(payload, worldDir(worldName));
+      _walk(payload, worldDir(worldId));
 
   /// Paket payload'ının karşılığı — hedef `{packagesDir}/{ad}`.
   static Future<bool> localizePackagePayload(

@@ -19,16 +19,16 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
   void setTags(List<String> tags) => state = state.copyWith(tags: tags);
   /// Picks a world. Clears any package-source selection — world and
   /// standalone packages are mutually exclusive content sources.
-  void setWorld(String name) => state = state.copyWith(
-        worldName: name,
-        sourcePackages: name.isEmpty ? state.sourcePackages : const [],
+  void setWorld(String worldId) => state = state.copyWith(
+        worldId: worldId,
+        sourcePackages: worldId.isEmpty ? state.sourcePackages : const [],
       );
 
   /// Selects standalone content packages as extra entity sources. Clears
-  /// [worldName] so the wizard runs in built-in + packages mode.
+  /// [worldId] so the wizard runs in built-in + packages mode.
   void setSourcePackages(List<String> names) => state = state.copyWith(
         sourcePackages: List.unmodifiable(names),
-        worldName: names.isEmpty ? state.worldName : '',
+        worldId: names.isEmpty ? state.worldId : '',
       );
   void setLevel(int v) => state = state.copyWith(level: v.clamp(1, 20));
   void setAlignment(String v) => state = state.copyWith(alignment: v);

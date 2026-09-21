@@ -255,7 +255,6 @@ class FirstPartyInstallNotifier
       final report = await _ref
           .read(bundledWorldsInstallerProvider)
           .installFromCatalog(entry, _ref.read(firstPartyCatalogServiceProvider));
-      _ref.invalidate(campaignListProvider);
       // Worlds tab campaignInfoListProvider'ı okuyor — bunu yenilemezsek
       // inen dünya elle refresh edilene kadar listede görünmüyor.
       _ref.invalidate(campaignInfoListProvider);

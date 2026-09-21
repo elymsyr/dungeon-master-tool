@@ -26,6 +26,7 @@ void main() {
 
   late Directory tmp;
   late String zipPath;
+  const worldId = 'w-barovia';
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('dmtz_test');
@@ -55,7 +56,8 @@ void main() {
     await artwork.parent.create(recursive: true);
     await artwork.writeAsBytes(utf8.encode('strahd-portresi'));
 
-    await a.read(campaignRepositoryProvider).save('Barovia', {
+    await a.read(campaignRepositoryProvider).save(worldId, {
+      'world_name': 'Barovia',
       'entities': {
         'e1': {
           'id': 'e1',
@@ -69,7 +71,6 @@ void main() {
         {'id': 's1', 'name': 'Birinci Oturum', 'sort_order': 0},
       ],
     });
-    final worldId = (await dbA.worldsDao.getByName('Barovia'))!.id;
 
     expect(
       await exportContentArchive(
@@ -100,7 +101,7 @@ void main() {
     expect(result.mediaSkipped, 0, reason: 'medya kaybı: $result');
     expect(result.mediaWritten, greaterThan(0));
 
-    final got = await b.read(campaignRepositoryProvider).load('Barovia');
+    final got = await b.read(campaignRepositoryProvider).load(worldId);
     expect((got['sessions'] as List).single['name'], 'Birinci Oturum');
 
     final imagePath = ((got['entities'] as Map)['e1'] as Map)['attributes']
@@ -117,10 +118,10 @@ void main() {
       a.dispose();
       await dbA.close();
     });
-    await a.read(campaignRepositoryProvider).save('Barovia', {
+    await a.read(campaignRepositoryProvider).save(worldId, {
+      'world_name': 'Barovia',
       'entities': <String, dynamic>{},
     });
-    final worldId = (await dbA.worldsDao.getByName('Barovia'))!.id;
     await exportContentArchive(
       codec: a.read(contentCodecProvider),
       type: ContentItemType.world,

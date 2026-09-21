@@ -290,10 +290,8 @@ class _OnlineWorldPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final campaignName = ref.watch(activeCampaignProvider);
-    if (campaignName == null) return const SizedBox.shrink();
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final worldId = ref.watch(activeCampaignProvider);
+    if (worldId == null) return const SizedBox.shrink();
     final onlineIds = ref.watch(onlineWorldIdsProvider);
     if (!onlineIds.contains(worldId)) return const SizedBox.shrink();
     final role =
@@ -337,15 +335,15 @@ class _ActionsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final campaignName = ref.watch(activeCampaignProvider);
+    final worldId = ref.watch(activeCampaignProvider);
     final packageName = ref.watch(activePackageProvider);
-    final hasActive = campaignName != null || packageName != null;
+    final hasActive = worldId != null || packageName != null;
     if (!hasActive) return const SizedBox.shrink();
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (campaignName != null && hasCloud)
+        if (worldId != null && hasCloud)
           _MakeOnlineButton(palette: palette),
       ],
     );
@@ -368,10 +366,8 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
-    final campaignName = ref.watch(activeCampaignProvider);
-    if (campaignName == null) return const SizedBox.shrink();
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final worldId = ref.watch(activeCampaignProvider);
+    if (worldId == null) return const SizedBox.shrink();
     final onlineIds = ref.watch(onlineWorldIdsProvider);
     final isOnline = onlineIds.contains(worldId);
     final role =
@@ -434,12 +430,12 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     return _ActionButton(
       icon: Icons.cloud_upload,
       label: _busy ? L10n.of(context)!.publishingEllipsis : L10n.of(context)!.multiplayerOn,
-      onPressed: _busy ? null : () => _makeOnline(campaignName, worldId),
+      onPressed: _busy ? null : () => _makeOnline(worldId),
       palette: palette,
     );
   }
 
-  Future<void> _makeOnline(String campaignName, String worldId) async {
+  Future<void> _makeOnline(String worldId) async {
     // Online oynamak hesap ister; beta kapısı kalktı.
     if (!ref.read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -464,13 +460,13 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       // paylaşımı / projeksiyon) R2'ya çıkar; DM'in paylaşmadığı medyayı
       // önden yüklemek gereksiz kota harcamasıydı.
       final repo = ref.read(campaignRepositoryProvider);
-      final data = await repo.load(campaignName);
+      final data = await repo.load(worldId);
       final templateId =
           (data['world_schema'] as Map?)?['schemaId'] as String?;
       final templateHash = data['template_hash'] as String?;
       await ref.read(worldMembershipServiceProvider).publishWorld(
             worldId: worldId,
-            worldName: campaignName,
+            worldName: (data['world_name'] as String?) ?? worldId,
             templateId: templateId,
             templateHash: templateHash,
           );
@@ -610,18 +606,14 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
 
   Future<({String name, String id, String type, DateTime? updatedAt})?>
       _resolveActive() async {
-    final campaignName = ref.read(activeCampaignProvider);
+    final worldId = ref.read(activeCampaignProvider);
     final packageName = ref.read(activePackageProvider);
 
-    if (campaignName != null && !widget.isPackage) {
-      final row = await ref
-          .read(appDatabaseProvider)
-          .worldsDao
-          .getByName(campaignName);
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final worldId = (data?['world_id'] as String?) ?? campaignName;
+    if (worldId != null && !widget.isPackage) {
+      final row =
+          await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
       return (
-        name: campaignName,
+        name: row?.worldName ?? worldId,
         id: worldId,
         type: 'world',
         updatedAt: row?.updatedAt,

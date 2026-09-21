@@ -58,11 +58,6 @@ final campaignRepositoryProvider = Provider<CampaignRepository>(
   (ref) => WorldRepositoryImpl(ref.watch(appDatabaseProvider)),
 );
 
-/// Mevcut kampanya listesi.
-final campaignListProvider = FutureProvider<List<String>>((ref) {
-  return ref.watch(campaignRepositoryProvider).getAvailable();
-});
-
 /// True while an active-campaign open/swap is in flight (after the
 /// optimistic state flip, before `_data` is populated). UI surfaces a
 /// skeleton/spinner while this is `true` and the underlying providers
@@ -143,7 +138,7 @@ final worldPackageNamesProvider =
 final campaignMetadataProvider =
     FutureProvider.family<Map<String, dynamic>, String>((
       ref,
-      campaignName,
+      worldId,
     ) async {
       try {
         // `loadMetadata` yalnız `world_settings` satırını okur. Eskiden burada
@@ -152,7 +147,7 @@ final campaignMetadataProvider =
         // demekti (liste açılışındaki asıl donma kaynağı).
         return await ref
             .read(campaignRepositoryProvider)
-            .loadMetadata(campaignName);
+            .loadMetadata(worldId);
       } catch (_) {
         return <String, dynamic>{};
       }
@@ -162,17 +157,15 @@ final campaignMetadataProvider =
 /// dokunmaz. Ayarlar dialog'undan çağrılır.
 Future<void> updateCampaignMetadata(
   WidgetRef ref,
-  String campaignName,
+  String worldId,
   Map<String, dynamic> newMetadata,
 ) async {
   final repo = ref.read(campaignRepositoryProvider);
   // Kapak değiştirildiyse eski cloud resmini silmek için eski ref'i
   // patch'ten ÖNCE yakala.
   String? oldCover;
-  String? worldId;
   try {
-    final prev = await repo.load(campaignName);
-    worldId = prev['world_id'] as String?;
+    final prev = await repo.load(worldId);
     final prevMeta = prev['metadata'];
     if (prevMeta is Map) oldCover = prevMeta['cover_image_path'] as String?;
   } catch (_) {/* ignore */}
@@ -180,13 +173,13 @@ Future<void> updateCampaignMetadata(
   // alanını güncelle. `metadata` typed top key değil — settings blob'una
   // ait. Tüm world'ü (entities dahil) yeniden yazan `save()` yerine
   // surgical patch.
-  await repo.saveSettingsPatch(campaignName, {'metadata': newMetadata});
-  ref.invalidate(campaignMetadataProvider(campaignName));
+  await repo.saveSettingsPatch(worldId, {'metadata': newMetadata});
+  ref.invalidate(campaignMetadataProvider(worldId));
   ref.invalidate(campaignInfoListProvider);
 
   // Açık dünya ise notifier'ın `_data` kopyası bayatladı — diskten tazele
   // ki sonraki in-world settings push'u güncel metadata göndersin.
-  if (ref.read(activeCampaignProvider) == campaignName) {
+  if (ref.read(activeCampaignProvider) == worldId) {
     await ref.read(activeCampaignProvider.notifier).reload();
   }
 
@@ -211,7 +204,7 @@ Future<void> updateCampaignMetadata(
       coverSync
           .syncCover(
             itemType: 'world',
-            localId: campaignName,
+            localId: worldId,
             oldRef: oldCover,
             newRef: newMetadata['cover_image_path'] as String?,
           )
@@ -228,14 +221,18 @@ Future<void> updateCampaignMetadata(
   // Tek istisna kartın görünen yüzü: dünya online ise açıklama/etiket/kapak
   // `worlds.meta_json`'a gider, yoksa katılan oyuncunun hub'ında isimden
   // ibaret boş bir kart kalırdı. Non-DM'de RLS reddeder, push sessizce yutar.
-  if (worldId != null && ref.read(onlineWorldIdsProvider).contains(worldId)) {
+  if (ref.read(onlineWorldIdsProvider).contains(worldId)) {
     await ref
         .read(worldMetaSyncProvider)
         ?.push(worldId: worldId, metadata: newMetadata);
   }
 }
 
-/// Aktif kampanya adı. null = henüz seçilmedi.
+/// Aktif dünyanın **id**'si. null = henüz seçilmedi.
+///
+/// Paket ekranı bu provider'ı kendi ProviderScope'unda paket adıyla override
+/// ediyor (bkz. `package_screen.dart`) — orada değer "açık içeriğin anahtarı"
+/// anlamına geliyor ve adapter repo onu paket adı olarak okuyor.
 class ActiveCampaignNotifier extends StateNotifier<String?> {
   final CampaignRepository _repo;
   final Ref _ref;
@@ -246,13 +243,13 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Map<String, dynamic>? get data => _data;
 
   /// Dışarıdan veri ile önceden yükle (paket ProviderScope override için).
-  void preload(String name, Map<String, dynamic> data) {
+  void preload(String key, Map<String, dynamic> data) {
     _data = data;
-    state = name;
+    state = key;
   }
 
   /// Optimistic state flip: synchronously points the active campaign at
-  /// [name] and clears `_data`, so route + dependent providers can update
+  /// [worldId] and clears `_data`, so route + dependent providers can update
   /// in the same frame as the tap. The heavy file IO + flush runs in
   /// [completeLoad], which the caller awaits separately.
   ///
@@ -260,10 +257,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// `_data == null` as a transient state — schema falls back to default,
   /// entities to an empty map — until `completeLoad` lands and bumps
   /// `campaignRevisionProvider` to trigger a reparse.
-  void beginLoad(String name) {
+  void beginLoad(String worldId) {
     _data = null;
     _ref.read(activeCampaignLoadingProvider.notifier).state = true;
-    state = name;
+    state = worldId;
   }
 
   /// Async tail of [beginLoad]. Flushes pending writes for the prior
@@ -275,8 +272,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// cloud snapshot battlemap/mindmap notifier'ı geç güncellediği için
   /// "battlemap resmi+içeriği kayboluyor" görüntüsü oluşur.
   Future<bool> completeLoad() async {
-    final name = state;
-    if (name == null) {
+    final worldId = state;
+    if (worldId == null) {
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       return false;
     }
@@ -284,16 +281,15 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       // Önceki world'ün pending row yazımlarını drain et — yeni world
       // yüklenmeden eski edit'ler kayba uğramasın.
       await _ref.read(pendingWriteBufferProvider).flush();
-      _data = await _repo.load(name);
-      // `state` already equals `name` from beginLoad — bump revision so
+      _data = await _repo.load(worldId);
+      // `state` already equals `worldId` from beginLoad — bump revision so
       // schema + entity providers re-read `_data` (state didn't change so
       // they wouldn't otherwise see the new content).
       _ref.read(campaignRevisionProvider.notifier).state++;
       // Online dünya açılışında roster + invite cache'lerini temizle —
       // kapalıyken kaçırılan join'ler ya da offline iken null cache'lenmiş
       // invite kodu reopen ile kurtarılsın.
-      final worldId = _data?['world_id'] as String?;
-      if (worldId != null) {
+      {
         _ref.invalidate(worldMembersProvider(worldId));
         _ref.invalidate(worldActiveInviteCodeProvider(worldId));
         // F6: kritik medya pre-warm (portre + aktif encounter + cover).
@@ -345,12 +341,12 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// [UnusedMediaSweeper] olmadan sonsuza kadar kalır ve LAN eşlemesiyle her
   /// cihaza yayılır.
   Future<int> sweepUnusedMedia() async {
-    final name = state;
+    final worldId = state;
     final data = _data;
-    if (name == null || data == null) return 0;
+    if (worldId == null || data == null) return 0;
     return _ref
         .read(unusedMediaSweeperProvider)
-        .sweepWorld(worldName: name, payload: data);
+        .sweepWorld(worldId: worldId, payload: data);
   }
 
   /// World mirror applier provider'ını warm up edip `applyInitialState`'i
@@ -365,17 +361,19 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     await applier.applyInitialState(worldId);
   }
 
-  Future<bool> load(String name) async {
-    beginLoad(name);
+  Future<bool> load(String worldId) async {
+    beginLoad(worldId);
     return completeLoad();
   }
 
+  /// Yeni dünya kurar ve açar. [worldName] yalnız etiket — aynı adda başka
+  /// bir dünya varsa yenisi yine de oluşur.
   Future<bool> create(String worldName,
       {WorldSchema? template, bool includeSrd = true}) async {
     try {
-      await _repo.create(worldName,
+      final worldId = await _repo.create(worldName,
           template: template, includeSrd: includeSrd);
-      return load(worldName);
+      return load(worldId);
     } catch (e, st) {
       debugPrint('Campaign create error: $e\n$st');
       return false;
@@ -550,18 +548,19 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     await _repo.save(state!, _data!);
   }
 
-  Future<void> delete(String campaignName) async {
+  Future<void> delete(String worldId) async {
     // Karakter bağını kopar (önce orphan): bkz. eski yorum bloğu.
     Map<String, dynamic>? data;
     try {
-      if (state == campaignName && _data != null) {
+      if (state == worldId && _data != null) {
         data = _data;
       } else {
-        data = await _repo.load(campaignName);
+        data = await _repo.load(worldId);
       }
     } catch (e, st) {
       debugPrint('orphan-before-delete load error: $e\n$st');
     }
+    final worldName = (data?['world_name'] as String?) ?? worldId;
     final entitiesRaw = data?['entities'];
     final entitiesMap = entitiesRaw is Map<String, dynamic>
         ? entitiesRaw
@@ -569,29 +568,26 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       await _ref
           .read(characterListProvider.notifier)
-          .orphanForWorld(data?['world_id'] as String? ?? '', entitiesMap);
+          .orphanForWorld(worldId, entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-delete error: $e\n$st');
     }
     // Yeni sıra: cloud önce, sonra lokal. Cloud silinmezse rethrow et —
     // UI lokal silmeyi iptal eder, refresh ile dünyanın geri gelmesini
     // önler.
-    await _cloudDeleteWorld(
-      worldId: data?['world_id'] as String?,
-      campaignName: campaignName,
-    );
-    await _repo.delete(campaignName);
-    if (state == campaignName) {
+    await _cloudDeleteWorld(worldId);
+    await _repo.delete(worldId);
+    if (state == worldId) {
       _data = null;
       state = null;
     }
     _cleanupCloudMedia(
-      worldId: data?['world_id'] as String?,
-      campaignName: campaignName,
+      worldId: worldId,
+      worldName: worldName,
       worldData: data,
     );
-    _cleanupMarketplace(campaignName);
-    _ref.read(uiStateProvider.notifier).forgetWorld(campaignName);
+    _cleanupMarketplace(worldId);
+    _ref.read(uiStateProvider.notifier).forgetWorld(worldId);
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -606,17 +602,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// stable v5 id derived from that pair re-anchors the character's refs
   /// to a map that survives the purge. Custom DM-authored entities have
   /// no builtin counterpart and are left as unresolvable orphans.
-  Future<void> purge(String campaignName) async {
+  Future<void> purge(String worldId) async {
     Map<String, dynamic>? data;
     try {
-      if (state == campaignName && _data != null) {
+      if (state == worldId && _data != null) {
         data = _data;
       } else {
-        data = await _repo.load(campaignName);
+        data = await _repo.load(worldId);
       }
     } catch (e, st) {
       debugPrint('orphan-before-purge load error: $e\n$st');
     }
+    final worldName = (data?['world_name'] as String?) ?? worldId;
     final entitiesRaw = data?['entities'];
     final entitiesMap = entitiesRaw is Map<String, dynamic>
         ? entitiesRaw
@@ -624,23 +621,23 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       await _ref
           .read(characterListProvider.notifier)
-          .orphanForWorld(data?['world_id'] as String? ?? '', entitiesMap);
+          .orphanForWorld(worldId, entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-purge error: $e\n$st');
     }
-    await _repo.purge(campaignName);
-    if (state == campaignName) {
+    await _repo.purge(worldId);
+    if (state == worldId) {
       _data = null;
       state = null;
     }
-    await _cloudDeleteWorld(worldId: data?['world_id'] as String?, campaignName: campaignName);
+    await _cloudDeleteWorld(worldId);
     _cleanupCloudMedia(
-      worldId: data?['world_id'] as String?,
-      campaignName: campaignName,
+      worldId: worldId,
+      worldName: worldName,
       worldData: data,
     );
-    _cleanupMarketplace(campaignName);
-    _ref.read(uiStateProvider.notifier).forgetWorld(campaignName);
+    _cleanupMarketplace(worldId);
+    _ref.read(uiStateProvider.notifier).forgetWorld(worldId);
   }
 
   // ── CDC self-contained world-removal entry points ────────────────────
@@ -651,22 +648,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   // assertion). So world-removal driven by CDC must run through *this*
   // notifier's ref (`activeCampaignProvider` is a stable top-level provider
   // that does not watch the role/list providers, so its ref survives).
-
-  /// Resolves a world UUID to its local campaign name. Null if this device
-  /// holds no local mirror of that world.
-  Future<String?> _resolveWorldName(String worldId) async {
-    try {
-      final list = await _ref.read(campaignInfoListProvider.future);
-      return list.where((c) => c.id == worldId).firstOrNull?.name;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Public: dünya UUID'sini lokal kampanya adına çözer (lokal mirror yoksa
-  /// null). CDC applier'ları synced settings'i Drift'e yazarken kullanır.
-  Future<String?> resolveWorldName(String worldId) =>
-      _resolveWorldName(worldId);
 
   /// Refreshes role + hub-list caches after a membership/world change.
   ///
@@ -683,10 +664,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// (cover/metadata) Drift'e yazıldıktan sonra cover'ın canlı görünmesi
   /// için. `refreshWorldCaches`'ten farkı: rol provider'larına dokunmaz
   /// (CDC applier host'unu teardown etmesin).
-  void refreshWorldMetadataCaches(String worldId, String worldName) {
+  void refreshWorldMetadataCaches(String worldId) {
     _ref.invalidate(campaignInfoListProvider);
-    _ref.invalidate(campaignListProvider);
-    _ref.invalidate(campaignMetadataProvider(worldName));
+    _ref.invalidate(campaignMetadataProvider(worldId));
   }
 
   /// Cached role snapshot for [worldId] (synchronous, no network).
@@ -729,9 +709,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// the server, or membership lost as a player). Self-contained — safe to
   /// drive from a short-lived CDC applier.
   Future<bool> purgeWorldById(String worldId) async {
-    final name = await _resolveWorldName(worldId);
-    if (name == null) return false;
-    await purge(name);
+    final db = _ref.read(appDatabaseProvider);
+    if (await db.worldsDao.getById(worldId) == null) return false;
+    await purge(worldId);
     _afterWorldRemoved(worldId);
     return true;
   }
@@ -739,9 +719,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// CDC entry point: soft-delete (trash) the local mirror of [worldId] —
   /// the DM cross-device delete echo, so the user can still restore.
   Future<bool> trashWorldById(String worldId) async {
-    final name = await _resolveWorldName(worldId);
-    if (name == null) return false;
-    await delete(name);
+    await delete(worldId);
     _afterWorldRemoved(worldId);
     return true;
   }
@@ -751,8 +729,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// kullandığı ref'ler korunur; local cache silinmez. Bkz.
   /// [EntityMediaCleanupService].
   void _cleanupCloudMedia({
-    required String? worldId,
-    required String campaignName,
+    required String worldId,
+    required String worldName,
     Map<String, dynamic>? worldData,
   }) {
     if (_ref.read(authProvider) == null) return;
@@ -761,8 +739,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     // ignore: discarded_futures
     svc
         .cleanupWorld(
-          worldId: worldId ?? campaignName,
-          campaignName: campaignName,
+          worldId: worldId,
+          // Eski `asset_refs` satırlarının scope'u dünya ADI olabiliyor —
+          // isim hâlâ ikinci scope olarak geçiyor ki bırakılmasınlar.
+          campaignName: worldName,
           worldData: worldData,
         )
         .catchError(
@@ -772,13 +752,13 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   /// Best-effort: dünya silindiğinde bu dünyadan publish edilmiş tüm
   /// marketplace listing'lerini siler. Bkz. [MarketplaceCleanupService].
-  void _cleanupMarketplace(String campaignName) {
+  void _cleanupMarketplace(String worldId) {
     if (_ref.read(authProvider) == null) return;
     final svc = _ref.read(marketplaceCleanupServiceProvider);
     if (svc == null) return;
     // ignore: discarded_futures
     svc
-        .cleanupItem(itemType: 'world', localId: campaignName)
+        .cleanupItem(itemType: 'world', localId: worldId)
         .catchError(
           (Object e) => debugPrint('world marketplace cleanup error: $e'),
         );
@@ -789,12 +769,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// enqueues a `cloud_backup_world` delete so the manual snapshot (if
   /// any) is removed too. Best-effort — failures don't block the local
   /// delete that already happened.
-  Future<void> _cloudDeleteWorld({
-    required String? worldId,
-    required String campaignName,
-  }) async {
+  Future<void> _cloudDeleteWorld(String wid) async {
     if (_ref.read(authProvider) == null) return;
-    final wid = worldId ?? campaignName;
     final wasOnline = _ref.read(onlineWorldIdsProvider).contains(wid);
     // Cloud row var mı diye kontrol et — wasOnline set'i stale olabilir
     // (publish edildi ama set güncellenmedi). Cloud'da satır varsa
@@ -827,6 +803,23 @@ final activeCampaignProvider =
       return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
     });
 
+/// Aktif dünyanın **görünen adı**. `activeCampaignProvider` kimlik tutuyor,
+/// bu da etiket: başlıkta/menüde ad gösteren her yer buradan okur.
+///
+/// Yüklenmiş payload'daki ad hızlı yol; dünya henüz açılmadıysa (paket
+/// ekranının override'ı dahil, orada anahtar zaten paket adıdır) hub
+/// listesinden çözülür.
+final activeWorldNameProvider = FutureProvider<String?>((ref) async {
+  final key = ref.watch(activeCampaignProvider);
+  if (key == null) return null;
+  ref.watch(campaignRevisionProvider);
+  final loaded =
+      ref.read(activeCampaignProvider.notifier).data?['world_name'];
+  if (loaded is String && loaded.isNotEmpty) return loaded;
+  final list = await ref.watch(campaignInfoListProvider.future);
+  return list.where((c) => c.id == key).firstOrNull?.name ?? key;
+});
+
 /// Ref-holder used purely to invalidate role/hub caches from CDC-driven
 /// flows. `ActiveCampaignNotifier`'s own ref belongs to `activeCampaignProvider`,
 /// which `currentWorldRoleProvider` transitively depends on — invalidating it
@@ -838,7 +831,6 @@ final _worldCacheInvalidatorProvider = Provider<void Function(String)>((ref) {
     ref.invalidate(worldRoleProvider(worldId));
     ref.invalidate(currentWorldRoleProvider);
     ref.invalidate(campaignInfoListProvider);
-    ref.invalidate(campaignListProvider);
   };
 });
 

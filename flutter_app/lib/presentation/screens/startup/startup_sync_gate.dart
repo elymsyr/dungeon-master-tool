@@ -61,7 +61,6 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     );
     if (!mounted) return;
     ref.invalidate(campaignInfoListProvider);
-    ref.invalidate(campaignListProvider);
     ref.invalidate(packageListProvider);
     try {
       await ref.read(characterListProvider.notifier).refresh();
@@ -135,7 +134,6 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     // edelim ki hub açılışında taze veri okunsun.
     if (mounted) {
       ref.invalidate(campaignInfoListProvider);
-      ref.invalidate(campaignListProvider);
       ref.invalidate(packageListProvider);
       // characterListProvider StateNotifier — refresh() metoduyla _load yenile.
       try {

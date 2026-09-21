@@ -215,7 +215,7 @@ final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
   // every keystroke into name/description/backstory invalidates this
   // provider and spreads ~7 K entries downstream.
   final world = ref.watch(
-    characterDraftProvider.select((d) => d.worldName),
+    characterDraftProvider.select((d) => d.worldId),
   );
   final builtin = ref.watch(builtinSrdEntitiesProvider);
   if (world.isEmpty) {
