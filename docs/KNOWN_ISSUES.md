@@ -6,8 +6,9 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 14 September 2026 (v17.0.0) — `flutter test` 1509 passing / 0 failing,
-`flutter analyze` 0 errors / 0 warnings, worker `npm run typecheck` clean.
+**Last reviewed:** 21 September 2026 — world-copy entry added; everything else unchanged
+since v17.0.0 (14 September 2026), when `flutter test` was 1509 passing / 0 failing,
+`flutter analyze` 0 errors / 0 warnings and the worker `npm run typecheck` clean.
 
 ---
 
@@ -18,6 +19,17 @@ Anything fixed in an earlier release lives in that release's notes, not here.
   Low risk: the signature is still verified against Supabase's JWKS and a token without
   `sub` is refused, so forging one needs Supabase's signing key. The fix is one line —
   `if (payload.iss !== expectedIss)`. (September 2026 audit §6.)
+- **Copying a world empties the original** (data loss) — `WorldRepositoryImpl.copy`
+  ([world_repository_impl.dart:405](../flutter_app/lib/data/repositories/world_repository_impl.dart#L405))
+  reuses the source payload verbatim, so every entity keeps its **source id**. `world_entities`
+  has a global primary key (`{id}`, not `{worldId, id}`) and `worldEntitiesDao.upsertAll` runs
+  `insertAllOnConflictUpdate`, so each row is *updated in place* with the new `world_id` instead
+  of being inserted alongside the old one. Verified: a source world with one card ends the copy
+  with **0 cards**, the copy with 1. The same trap blocks a "duplicate instead of merge" mode on
+  `.dmtz` import, which is why that option was cut from Faz 1
+  ([online-sync-redesign.md](online-sync-redesign.md) §4.5). Fix: remap entity ids (and every
+  intra-world reference to them) while copying, or widen the primary key to `{worldId, id}` —
+  the latter is a schema change, so it belongs to the world-identity phase.
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
 
