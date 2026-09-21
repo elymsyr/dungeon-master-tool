@@ -61,7 +61,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     setState(() => _refreshing = true);
     // Bulut çekme yok — yenileme yerel listeyi tazeler.
     if (!mounted) return;
-    ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     ref.invalidate(worldPackageNamesProvider);
     setState(() => _refreshing = false);
@@ -308,7 +307,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                             final info = filtered[index];
                             final isSelected = index == _selectedIndex;
                             final metaAsync = ref.watch(
-                              campaignMetadataProvider(info.name),
+                              campaignMetadataProvider(info.id),
                             );
                             final meta =
                                 metaAsync.valueOrNull ??
@@ -329,7 +328,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                               borderRadius: palette.br,
                               onTap: () =>
                                   setState(() => _selectedIndex = index),
-                              onDoubleTap: () => _loadCampaign(info.name),
+                              onDoubleTap: () => _loadCampaign(info),
                               child: Container(
                                 clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
@@ -361,7 +360,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                   palette: palette,
                                   layout: MetadataTileLayout.topBanner,
                                   onSettings: () =>
-                                      _showCampaignSettings(info.name, palette),
+                                      _showCampaignSettings(info, palette),
                                   topRightOverlay: isOnlineMember
                                       ? [
                                           _OnlineRoleBadge(
@@ -391,7 +390,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                           ? () {
                               final campaigns = _currentFiltered();
                               if (_selectedIndex < campaigns.length)
-                                _loadCampaign(campaigns[_selectedIndex].name);
+                                _loadCampaign(campaigns[_selectedIndex]);
                             }
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
@@ -584,7 +583,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       try {
         final ids = await ref
             .read(marketplaceLinksLocalDsProvider)
-            .getOwnedListingIds('world', name);
+            .getOwnedListingIds('world', worldId);
         hasListings = ids.isNotEmpty;
       } catch (_) {
         /* ignore */
@@ -617,9 +616,11 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   .contains(worldId);
               try {
                 if (isPlayer) {
-                  await _leaveOnlineAndPurge(worldId, name);
+                  await _leaveOnlineAndPurge(worldId);
                 } else {
-                  await ref.read(activeCampaignProvider.notifier).delete(name);
+                  await ref
+                      .read(activeCampaignProvider.notifier)
+                      .delete(worldId);
                   ref.invalidate(trashListProvider);
                 }
               } catch (e) {
@@ -632,7 +633,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 );
                 return;
               }
-              ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -670,6 +670,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final allCampaigns =
         ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
+    final sourceId = campaigns[_selectedIndex].id;
     final source = campaigns[_selectedIndex].name;
 
     String dest = '$source (Copy)';
@@ -710,21 +711,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     controller.dispose();
     focusNode.dispose();
     if (newName == null || newName.isEmpty) return;
-    if (existingNames.contains(newName)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.of(context)!.worldNameExists(newName))),
-        );
-      }
-      return;
-    }
 
     try {
       await ref.read(campaignRepositoryProvider).copy(
-            sourceName: source,
+            sourceId: sourceId,
             destinationName: newName,
           );
-      ref.invalidate(campaignListProvider);
       ref.invalidate(campaignInfoListProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -743,7 +735,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   /// Player-side "delete world" path: leave online membership (server-side
   /// trigger releases owned characters back to the claim pool), then purge
   /// the local mirror without going through `.trash/`.
-  Future<void> _leaveOnlineAndPurge(String worldId, String name) async {
+  Future<void> _leaveOnlineAndPurge(String worldId) async {
     try {
       await ref.read(worldMembershipServiceProvider).leaveWorld(worldId);
     } catch (e) {
@@ -754,11 +746,11 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
     ref.invalidate(currentWorldRoleProvider);
     ref.invalidate(worldRoleProvider(worldId));
-    await ref.read(activeCampaignProvider.notifier).purge(name);
+    await ref.read(activeCampaignProvider.notifier).purge(worldId);
     ref.invalidate(packageListProvider);
   }
 
-  Future<void> _loadCampaign(String name) async {
+  Future<void> _loadCampaign(CampaignInfo info) async {
     // Optimistic two-phase open: synchronously flip the active campaign +
     // navigate so the route change happens in the same frame as the tap,
     // then run the heavy flush + file IO in [completeLoad]. Skeletons in
@@ -768,23 +760,13 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // Açılış-anı rol ipucunu seed et: worlds listesi kartı online world
     // için `worldRoleProvider(id)`'ı zaten watch etmiş → cache hazır.
     // MainScreen ilk frame'de bu ipucuyla player/DM shell seçer.
-    final campaigns =
-        ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-    CampaignInfo? info;
-    for (final c in campaigns) {
-      if (c.name == name) {
-        info = c;
-        break;
-      }
-    }
-    final onlineIds = ref.read(onlineWorldIdsProvider);
-    final isOnline = info != null && onlineIds.contains(info.id);
+    final isOnline = ref.read(onlineWorldIdsProvider).contains(info.id);
     // Online world: kartın watch ettiği cache'lenmiş rol (dm/player).
     // Lokal world: kesin DM modu → ipucu dm, splash gösterme.
     ref.read(worldRoleHintProvider.notifier).state = isOnline
         ? ref.read(worldRoleProvider(info.id)).valueOrNull
-        : (info != null ? WorldRole.dm : null);
-    notifier.beginLoad(name);
+        : WorldRole.dm;
+    notifier.beginLoad(info.id);
     if (!mounted) return;
     context.go('/main');
     final success = await notifier.completeLoad();
@@ -792,7 +774,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       final l10n = L10n.of(context)!;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.worldsOpenFailed(name))));
+      ).showSnackBar(SnackBar(content: Text(l10n.worldsOpenFailed(info.name))));
     }
   }
 
@@ -878,15 +860,16 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   Future<void> _showCampaignSettings(
-    String campaignName,
+    CampaignInfo info,
     DmToolColors palette,
   ) async {
     final l10n = L10n.of(context)!;
+    final worldId = info.id;
 
     // Load campaign data and check drift against its source template.
     Map<String, dynamic> data;
     try {
-      data = await ref.read(campaignRepositoryProvider).load(campaignName);
+      data = await ref.read(campaignRepositoryProvider).load(worldId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -897,12 +880,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     }
 
     // Fetch local updatedAt from the DB row for SaveInfoSection.
-    final campaignRow = await ref
-        .read(appDatabaseProvider)
-        .worldsDao
-        .getByName(campaignName);
+    final campaignRow =
+        await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
     final localUpdatedAt = campaignRow?.updatedAt;
-    final worldId = data['world_id'] as String? ?? campaignName;
 
     if (!mounted) return;
 
@@ -918,13 +898,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     workingMeta['description'] ??= '';
     workingMeta['tags'] ??= <String>[];
     workingMeta['cover_image_path'] ??= '';
-    var workingName = campaignName;
+    var workingName = info.name;
+    var savedName = info.name;
 
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.worldsSettingsTitle(campaignName)),
+          title: Text(l10n.worldsSettingsTitle(savedName)),
           content: SizedBox(
             width: 440,
             child: SingleChildScrollView(
@@ -949,7 +930,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       () => workingMeta['cover_image_path'] = v,
                     ),
                     coverKind: MediaKind.worldCover,
-                    coverScopeId: campaignName,
+                    coverScopeId: worldId,
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: palette.featureCardBorder),
@@ -978,15 +959,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   const SizedBox(height: 12),
                   MarketplacePanel(
                     itemType: 'world',
-                    localId: campaignName,
-                    title: campaignName,
+                    localId: worldId,
+                    title: savedName,
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: palette.featureCardBorder),
                   const SizedBox(height: 12),
                   OnlineWorldSection(
                     campaignId: worldId,
-                    campaignName: campaignName,
+                    campaignName: savedName,
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: palette.featureCardBorder),
@@ -1003,13 +984,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             ),
             FilledButton(
               onPressed: () async {
-                // Ad değiştiyse adı yeniden adlandır.
-                if (workingName != campaignName) {
+                // Ad değiştiyse etiketi güncelle. Kimlik değişmiyor, yani
+                // açık dünyayı yeniden yüklemeye gerek yok — yalnız
+                // gövdedeki etiket tazeleniyor.
+                if (workingName != savedName) {
                   try {
-                    await ref.read(campaignRepositoryProvider).renameWorld(
-                          campaignName,
-                          workingName,
-                        );
+                    await ref
+                        .read(campaignRepositoryProvider)
+                        .renameWorld(worldId, workingName);
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1018,22 +1000,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     }
                     return;
                   }
-                  // Aktif dünya yeniden adlandırıldıysa provider'ı güncelle.
-                  if (ref.read(activeCampaignProvider) == campaignName) {
-                    final freshData = await ref
-                        .read(campaignRepositoryProvider)
-                        .load(workingName);
-                    ref.read(activeCampaignProvider.notifier).preload(
-                          workingName,
-                          freshData,
-                        );
+                  if (ref.read(activeCampaignProvider) == worldId) {
+                    await ref.read(activeCampaignProvider.notifier).reload();
                   }
-                  campaignName = workingName;
+                  savedName = workingName;
                   if (ctx.mounted) {
                     setDialogState(() {});
                   }
                 }
-                await updateCampaignMetadata(ref, campaignName, workingMeta);
+                await updateCampaignMetadata(ref, worldId, workingMeta);
                 ref.invalidate(campaignInfoListProvider);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1053,15 +1028,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final l10n = L10n.of(context)!;
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
-    final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
-    if (campaigns.any((c) => c.name == name)) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.worldsAlreadyExists)));
-      return;
-    }
-
     final templateFinal = _selectedTemplate;
     if (templateFinal == null) {
       if (mounted) {

@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../application/services/local_media_localizer.dart';
 import '../../core/config/app_paths.dart';
 import 'daos/character_claim_pool_dao.dart';
 import 'daos/combat_dao.dart';
@@ -182,6 +184,49 @@ class AppDatabase extends _$AppDatabase {
               }
             }
           } catch (_) {}
+          // Dünya medya klasörü isimden id'ye (Faz 2.5). Klasör isimle
+          // anahtarlıyken iki dünya aynı adı taşıyamıyordu: taşısalardı aynı
+          // klasörü paylaşır, birini açıp kapatmak `UnusedMediaSweeper`
+          // üzerinden ötekinin dosyalarını silerdi. Yeniden adlandırma da
+          // klasörü taşıyıp gövdedeki **mutlak** yolları olduğu gibi
+          // bıraktığı için her yeniden adlandırma resimleri kırıyordu.
+          //
+          // Tek geçiş: klasörleri `worlds/<id>`'ye taşı, sonra bütün
+          // yazımları tek `replaceInEveryTextColumn` çağrısında çevir.
+          // Ayıraç eşleştirmeye dahil — yoksa "A" dünyası "AB" dünyasının
+          // yollarının önekiyle eşleşirdi.
+          try {
+            final done = await customSelect(
+              "SELECT 1 FROM migration_progress WHERE "
+              "migration_name = 'world_media_dir_by_id_v1' AND completed = 1",
+            ).get();
+            if (done.isEmpty) {
+              final pairs = <(String, String)>[];
+              for (final w in await worldsDao.getAll()) {
+                final oldPath = p.join(AppPaths.worldsDir,
+                    LocalMediaLocalizer.dirSafe(w.worldName));
+                final newPath = LocalMediaLocalizer.worldDir(w.id);
+                if (oldPath == newPath) continue;
+                final oldDir = Directory(oldPath);
+                if (oldDir.existsSync() && !Directory(newPath).existsSync()) {
+                  oldDir.renameSync(newPath);
+                }
+                pairs.addAll(pathSpellings(
+                    '$oldPath${p.separator}', '$newPath${p.separator}'));
+              }
+              if (pairs.isNotEmpty) {
+                await replaceInEveryTextColumn(this, pairs);
+              }
+              await customStatement(
+                "INSERT OR REPLACE INTO migration_progress "
+                "(migration_name, world_id, completed, updated_at) "
+                "VALUES ('world_media_dir_by_id_v1', '', 1, ?)",
+                [DateTime.now().millisecondsSinceEpoch],
+              );
+            }
+          } catch (e) {
+            debugPrint('world_media_dir_by_id_v1: $e');
+          }
           // LAN sync: yeniden adlandırma zamanı — tablolara kolon ekle.
           // ALTER TABLE IF NOT EXISTS SQLite'da desteklenmiyor; hata yutulur.
           for (final stmt in _renamedAtColumnsDDL) {

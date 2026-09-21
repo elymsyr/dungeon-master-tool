@@ -36,8 +36,13 @@ import '../../../support/test_database.dart';
 
 /// `create()` şablon zorunlu kılıyor; LAN sync şablondan bağımsız çalıştığı
 /// için testte doğrudan blob yazılıyor.
-Map<String, dynamic> _worldBlob() =>
-    <String, dynamic>{'entities': <String, dynamic>{}};
+/// Dünya kimliği id — isim yalnız etiket (bkz. `CampaignRepository`).
+const _worldId = 'w-barovia';
+
+Map<String, dynamic> _worldBlob() => <String, dynamic>{
+      'world_name': 'Barovia',
+      'entities': <String, dynamic>{},
+    };
 
 const _hostUid = 'user-aaa';
 const _peerDeviceId = 'peer-device-1';
@@ -254,18 +259,18 @@ void main() {
         () async {
       const worldId = 'w-shared-1';
       final repoPeer = peer.read(campaignRepositoryProvider);
-      await repoPeer.save('Barovia', {
-        'world_id': worldId,
+      await repoPeer.save(worldId, {
+        'world_name': 'Barovia',
         'entities': <String, dynamic>{},
       });
       // Gerçek kullanımdaki yazım yolları: harita ve oturumlar granular
       // tablolara, notlar settings patch'ine gider.
-      await repoPeer.saveMapData('Barovia', {'image_path': 'ESKI/peer.png'});
-      await repoPeer.saveSessions('Barovia', [
+      await repoPeer.saveMapData(worldId, {'image_path': 'ESKI/peer.png'});
+      await repoPeer.saveSessions(worldId, [
         {'id': 'peer-s', 'name': 'PEER OTURUMU', 'is_active': true,
           'sort_order': 0},
       ]);
-      await repoPeer.saveSettingsPatch('Barovia', {
+      await repoPeer.saveSettingsPatch(worldId, {
         'combat_state': {'session_notes': 'ESKİ NOT'},
       });
 
@@ -273,8 +278,8 @@ void main() {
       // görmesi için aynı saniyeye düşmemeleri gerekiyor.
       await Future<void>.delayed(const Duration(milliseconds: 1100));
 
-      await host.read(campaignRepositoryProvider).save('Barovia', {
-        'world_id': worldId,
+      await host.read(campaignRepositoryProvider).save(worldId, {
+        'world_name': 'Barovia',
         'entities': <String, dynamic>{},
         'combat_state': {
           'session_notes': 'YENİ NOT',
@@ -310,7 +315,7 @@ void main() {
         await peerSession.applyItem(await client.fetchItem(ref));
       }
 
-      final got = await repoPeer.load('Barovia');
+      final got = await repoPeer.load(worldId);
       // Granular tablolardan okunanlar — asıl regresyon.
       expect((got['map_data'] as Map)['image_path'], 'YENİ/host.png');
       // Bölüm bazlı birleştirme: çakışan bölümlerde host (yeni olan) kazanır,
@@ -328,7 +333,7 @@ void main() {
     });
 
     test('host\'taki world peer\'a pull edilir', () async {
-      await host.read(campaignRepositoryProvider).save('Barovia', _worldBlob());
+      await host.read(campaignRepositoryProvider).save(_worldId, _worldBlob());
       final client = await pairedClient();
       final peerSession = peer.read(contentCodecProvider);
 
@@ -342,7 +347,8 @@ void main() {
         await peerSession.applyItem(await client.fetchItem(ref));
       }
       expect(
-        await peer.read(campaignRepositoryProvider).getAvailable(),
+        (await peer.read(campaignRepositoryProvider).listWorlds())
+            .map((w) => w.name),
         contains('Barovia'),
       );
     });
@@ -370,7 +376,7 @@ void main() {
     });
 
     test('ikinci tur hiçbir şey taşımaz — LWW restamp tutuyor', () async {
-      await host.read(campaignRepositoryProvider).save('Barovia', _worldBlob());
+      await host.read(campaignRepositoryProvider).save(_worldId, _worldBlob());
       final client = await pairedClient();
       final peerSession = peer.read(contentCodecProvider);
 
@@ -399,7 +405,7 @@ void main() {
       await blob.parent.create(recursive: true);
       await blob.writeAsBytes(bytes, flush: true);
 
-      await host.read(campaignRepositoryProvider).save('Barovia', {
+      await host.read(campaignRepositoryProvider).save(_worldId, {
         'entities': {
           'e1': {
             'id': 'e1',
@@ -437,7 +443,7 @@ void main() {
       await battle.writeAsBytes(utf8.encode('battle-map-baytlari'));
       await node.writeAsBytes(utf8.encode('mindmap-node-baytlari'));
 
-      await host.read(campaignRepositoryProvider).save('Barovia', {
+      await host.read(campaignRepositoryProvider).save(_worldId, {
         'entities': <String, dynamic>{},
         'combat_state': {
           'encounters': [
@@ -526,13 +532,13 @@ void main() {
     /// deyip taze veriyi eziyordu.
     test('bekleyen debounce yazımı eşlemeden önce boşaltılır', () async {
       final repo = host.read(campaignRepositoryProvider);
-      await repo.save('Barovia', _worldBlob());
+      await repo.save(_worldId, _worldBlob());
 
       // Henüz diske inmemiş bir düzenleme bırak.
       host.read(pendingWriteBufferProvider).schedule(
             key: 'settings:w:mind_maps',
             kind: WriteKind.spatial,
-            action: () => repo.saveSettingsPatch('Barovia', {
+            action: () => repo.saveSettingsPatch(_worldId, {
               'mind_maps': {'m1': 'EN GÜNCEL'},
             }),
           );
@@ -556,18 +562,18 @@ void main() {
       final repoHost = host.read(campaignRepositoryProvider);
 
       for (final repo in [repoHost, repoPeer]) {
-        await repo.save('Barovia', {
-          'world_id': worldId,
+        await repo.save(worldId, {
+          'world_name': 'Barovia',
           'entities': <String, dynamic>{},
         });
       }
       // Peer mindmap'i düzenler, host savaş notunu — sonra host daha yeni
       // olsun diye saniye sınırını geçiyoruz (worlds.updatedAt çözünürlüğü).
-      await repoPeer.saveSettingsPatch('Barovia', {
+      await repoPeer.saveSettingsPatch(worldId, {
         'mind_maps': {'m1': 'PEER MINDMAP'},
       });
       await Future<void>.delayed(const Duration(milliseconds: 1100));
-      await repoHost.saveSettingsPatch('Barovia', {
+      await repoHost.saveSettingsPatch(worldId, {
         'combat_state': {'session_notes': 'HOST NOT'},
       });
 
@@ -577,7 +583,7 @@ void main() {
           .firstWhere((r) => r.type == ContentItemType.world);
       await peerSession.applyItem(await client.fetchItem(ref));
 
-      final got = await repoPeer.load('Barovia');
+      final got = await repoPeer.load(worldId);
       expect((got['combat_state'] as Map)['session_notes'], 'HOST NOT');
       expect((got['mind_maps'] as Map)['m1'], 'PEER MINDMAP',
           reason: 'peer mindmap düzenlemesi ezilmiş');

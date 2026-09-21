@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import '../../data/services/asset_importer.dart';
 import 'local_media_localizer.dart';
 
-/// World'ün PDF kütüphanesi: `{worldsDir}/{worldName}/pdfs/` klasörü.
+/// World'ün PDF kütüphanesi: `{worldsDir}/{worldId}/pdfs/` klasörü (id ile).
 ///
 /// **Tamamen yerel** (Phase D — sayılan katman kaldırıldı). Liste kaynağı
 /// klasörün kendisi; buluta yükleme, manifest ve oyuncu indirmesi yok. PDF'ler
@@ -15,12 +15,12 @@ import 'local_media_localizer.dart';
 class PdfLibraryService {
   const PdfLibraryService();
 
-  static String libraryDir(String worldName) =>
-      p.join(LocalMediaLocalizer.worldDir(worldName), AssetImporter.pdfSubDir);
+  static String libraryDir(String worldId) =>
+      p.join(LocalMediaLocalizer.worldDir(worldId), AssetImporter.pdfSubDir);
 
   /// Klasördeki PDF'ler, en son değiştirilen başta.
-  static Future<List<File>> localFiles(String worldName) async {
-    final dir = Directory(libraryDir(worldName));
+  static Future<List<File>> localFiles(String worldId) async {
+    final dir = Directory(libraryDir(worldId));
     if (!await dir.exists()) return const [];
     final files = <File>[];
     await for (final entry in dir.list()) {
@@ -36,16 +36,16 @@ class PdfLibraryService {
   }
 
   /// Bir PDF'i kütüphaneye kopyalar (idempotent) ve kopyanın yolunu döndürür.
-  Future<String?> import(String worldName, String sourcePath) =>
+  Future<String?> import(String worldId, String sourcePath) =>
       AssetImporter.importOne(
-        LocalMediaLocalizer.worldDir(worldName),
+        LocalMediaLocalizer.worldDir(worldId),
         AssetImporter.pdfSubDir,
         sourcePath,
       );
 
   /// Kütüphaneden siler.
-  Future<void> remove(String worldName, String fileName) async {
-    final file = File(p.join(libraryDir(worldName), fileName));
+  Future<void> remove(String worldId, String fileName) async {
+    final file = File(p.join(libraryDir(worldId), fileName));
     if (await file.exists()) await file.delete();
   }
 }

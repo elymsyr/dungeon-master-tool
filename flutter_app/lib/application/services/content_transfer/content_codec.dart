@@ -71,7 +71,7 @@ class ContentCodec {
 
     final ui = _ref.read(uiStateProvider);
     for (final w in await _db.worldsDao.getAll()) {
-      final touched = ui.viewTouchedByWorld[w.worldName];
+      final touched = ui.viewTouchedByWorld[w.id];
       out.add(ContentItemRef(
         type: ContentItemType.world,
         id: w.id,
@@ -120,22 +120,16 @@ class ContentCodec {
       case ContentItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
         if (row == null) return null;
-        payload = await _ref
-            .read(campaignRepositoryProvider)
-            .load(row.worldName);
+        payload =
+            await _ref.read(campaignRepositoryProvider).load(row.id);
         // Veri kökünün dışında kalmış ham yollar (eski sürümde seçilmiş
         // battle map / mindmap resimleri) burada dünya klasörüne alınır —
         // aksi hâlde `_mediaFor` onları göremiyor ve karşı cihazda resim hiç
         // açılmıyor. Kalıcı olsun diye dünyayı da geri yazıyoruz.
-        if (await LocalMediaLocalizer.localizeWorldPayload(
-          payload,
-          row.worldName,
-        )) {
-          await _ref
-              .read(campaignRepositoryProvider)
-              .save(row.worldName, payload);
+        if (await LocalMediaLocalizer.localizeWorldPayload(payload, row.id)) {
+          await _ref.read(campaignRepositoryProvider).save(row.id, payload);
         }
-        extras = await _worldExtras(row.id, row.worldName);
+        extras = await _worldExtras(row.id);
       case ContentItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return null;
@@ -171,10 +165,7 @@ class ContentCodec {
   /// - `ui_view`: "o an ne açıktı" — açık kartlar, panel filtreleri, açık
   ///   PDF sekmeleri, sağ sidebar (PDF / Soundpad / karakterler), session
   ///   sekmesi. Bkz. [exportWorldUiView].
-  Future<Map<String, dynamic>> _worldExtras(
-    String worldId,
-    String worldName,
-  ) async {
+  Future<Map<String, dynamic>> _worldExtras(String worldId) async {
     final links = await _db.installedPackagesDao.getByWorld(worldId);
     return {
       'installed_packages': [
@@ -185,7 +176,7 @@ class ContentCodec {
             'version': l.packageVersion,
           },
       ],
-      'ui_view': exportWorldUiView(_ref.read(uiStateProvider), worldName),
+      'ui_view': exportWorldUiView(_ref.read(uiStateProvider), worldId),
       'section_stamps': (await _sectionStamps(worldId)).toJson(),
     };
   }
@@ -269,40 +260,27 @@ class ContentCodec {
     var name = existing?.worldName ?? ref.name;
 
     // Yeniden adlandırma senkronizasyonu: peer'ın `renamedAt`'i local'den
-    // daha yeniyse ismi güncelle — hem DB'yi hem dosya sistemini.
-    if (existing != null && ref.renamedAt != null) {
-      final localRenamedAt = existing.renamedAt;
-      if (localRenamedAt == null ||
-          ref.renamedAt!.isAfter(localRenamedAt)) {
-        // Eski klasörü yeniden adlandır.
-        final oldDir = Directory(LocalMediaLocalizer.worldDir(name));
-        final newDir = Directory(LocalMediaLocalizer.worldDir(ref.name));
-        if (await oldDir.exists() && !await newDir.exists()) {
-          await oldDir.rename(newDir.path);
-        }
-        // DB'de ismi ve renamedAt'i güncelle.
-        await (_db.update(_db.worlds)..where((t) => t.id.equals(ref.id)))
-            .write(WorldsCompanion(
-          worldName: Value(ref.name),
-          renamedAt: Value(ref.renamedAt),
-        ));
-        name = ref.name;
-      }
-    }
-
-    if (existing == null && await _db.worldsDao.getByName(name) != null) {
-      name = await _uniqueName(
-        name,
-        (n) async => await _db.worldsDao.getByName(n) != null,
-      );
+    // daha yeniyse etiketi güncelle. Medya klasörü id ile anahtarlı olduğu
+    // için diskte taşınacak bir şey yok; isim çakışması da sorun değil.
+    if (existing != null &&
+        ref.renamedAt != null &&
+        (existing.renamedAt == null ||
+            ref.renamedAt!.isAfter(existing.renamedAt!))) {
+      await (_db.update(_db.worlds)..where((t) => t.id.equals(ref.id)))
+          .write(WorldsCompanion(
+        worldName: Value(ref.name),
+        renamedAt: Value(ref.renamedAt),
+      ));
+      name = ref.name;
     }
     payload['world_id'] = ref.id;
+    payload['world_name'] = name;
 
     // Dünya burada da varsa: tam değiştirme değil, **bölüm bazlı birleştirme**.
     var effectiveUpdatedAt = ref.updatedAt;
     if (existing != null) {
       final localPayload =
-          await _ref.read(campaignRepositoryProvider).load(name);
+          await _ref.read(campaignRepositoryProvider).load(ref.id);
       final localStamps = await _sectionStamps(ref.id);
       final remoteStamps =
           WorldSectionStamps.fromJson(extras['section_stamps']);
@@ -315,7 +293,8 @@ class ContentCodec {
         remoteFallback: ref.updatedAt.toUtc(),
       );
       merged['world_id'] = ref.id;
-      await _ref.read(campaignRepositoryProvider).save(name, merged);
+      merged['world_name'] = name;
+      await _ref.read(campaignRepositoryProvider).save(ref.id, merged);
       await _restoreSectionStamps(
         ref.id,
         mergeSectionStamps(local: localStamps, remote: remoteStamps),
@@ -324,16 +303,15 @@ class ContentCodec {
         effectiveUpdatedAt = existing.updatedAt;
       }
     } else {
-      await _ref.read(campaignRepositoryProvider).save(name, payload);
+      await _ref.read(campaignRepositoryProvider).save(ref.id, payload);
     }
     await _db.worldsDao.setUpdatedAt(ref.id, effectiveUpdatedAt);
-    await _applyWorldExtras(ref, name, extras);
-    if (_ref.read(activeCampaignProvider) == name) {
+    await _applyWorldExtras(ref, ref.id, extras);
+    if (_ref.read(activeCampaignProvider) == ref.id) {
       await _ref.read(activeCampaignProvider.notifier).reload();
     }
-    _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
-    _ref.invalidate(campaignMetadataProvider(name));
+    _ref.invalidate(campaignMetadataProvider(ref.id));
   }
 
   /// Birleştirme sonrası granüler satır damgalarını geri yazar.
@@ -359,9 +337,11 @@ class ContentCodec {
   /// [_worldExtras]'ın karşılığı. Silme yayılmadığı için burada da yalnız
   /// ekleme/güncelleme var: peer'da olmayan bir paket bağlantısı yerelde
   /// kalır.
+  /// [worldKey] = dünyanın id'si; `ui_state` dünya görünümlerini bu anahtarla
+  /// saklıyor ve `activeCampaignProvider` de aynı anahtarı tutuyor.
   Future<void> _applyWorldExtras(
     ContentItemRef ref,
-    String worldName,
+    String worldKey,
     Map<String, dynamic> extras,
   ) async {
     final links = extras['installed_packages'];
@@ -384,20 +364,20 @@ class ContentCodec {
     final view = extras['ui_view'];
     if (view is! Map) return;
     final viewMap = view.cast<String, dynamic>();
-    final isActive = _ref.read(activeCampaignProvider) == worldName;
+    final isActive = _ref.read(activeCampaignProvider) == worldKey;
     _ref.read(uiStateProvider.notifier).update((s) {
-      var next = importWorldUiView(s, worldName, viewMap);
+      var next = importWorldUiView(s, worldKey, viewMap);
       // Açık dünyada global alanlar (sağ sidebar, açık PDF'ler, session
       // sekmesi) o dünyanın görünümü demek — LWW'yi orada da uygula, yoksa
       // bir sonraki kayıt yerel ekranı peer'ın üzerine geri yazardı.
       if (isActive) {
-        next = WorldViewState.stored(next, worldName)?.applyTo(next) ?? next;
+        next = WorldViewState.stored(next, worldKey)?.applyTo(next) ?? next;
       }
       final viewTs = ref.viewUpdatedAt;
       if (viewTs != null) {
         next = next.copyWith(viewTouchedByWorld: {
           ...next.viewTouchedByWorld,
-          worldName: viewTs.millisecondsSinceEpoch,
+          worldKey: viewTs.millisecondsSinceEpoch,
         });
       }
       return next;
@@ -499,11 +479,8 @@ class ContentCodec {
       case ContentItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
         if (row == null) return entries;
-        // `dirSafe`: medyayı buraya kopyalayan `LocalMediaLocalizer` adı
-        // sanitize ediyor (`:` → `_`). Ham adla taranınca adında `:` olan
-        // dünyanın `media/` klasörü hiç bulunamıyor, resimler taşınmıyordu.
         await _collectDir(
-          Directory(LocalMediaLocalizer.worldDir(row.worldName)),
+          Directory(LocalMediaLocalizer.worldDir(row.id)),
           entries,
         );
       case ContentItemType.package:

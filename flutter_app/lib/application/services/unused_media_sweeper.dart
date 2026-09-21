@@ -50,10 +50,10 @@ class UnusedMediaSweeper {
   /// Çağırmadan önce bekleyen yazımlar boşaltılmalı ([PendingWriteBuffer]),
   /// yoksa henüz diske inmemiş bir seçim referanssız görünür.
   Future<int> sweepWorld({
-    required String worldName,
+    required String worldId,
     required Map<String, dynamic> payload,
   }) async {
-    if (worldName.isEmpty) return 0;
+    if (worldId.isEmpty) return 0;
     try {
       final referenced = <String>{};
       _collect(payload, referenced);
@@ -63,7 +63,7 @@ class UnusedMediaSweeper {
       var removed = 0;
       for (final subDir in _sweptSubDirs) {
         final dir = Directory(
-          p.join(LocalMediaLocalizer.worldDir(worldName), subDir),
+          p.join(LocalMediaLocalizer.worldDir(worldId), subDir),
         );
         if (!await dir.exists()) continue;
         await for (final entry in dir.list(recursive: true)) {
@@ -81,7 +81,7 @@ class UnusedMediaSweeper {
         }
       }
       if (removed > 0) {
-        debugPrint('UnusedMediaSweeper: $worldName — $removed dosya silindi');
+        debugPrint('UnusedMediaSweeper: $worldId — $removed dosya silindi');
       }
       return removed;
     } catch (e, st) {

@@ -17,7 +17,7 @@ class PdfSidebar extends StatelessWidget {
   final List<String> openPaths;
   final int activeIndex;
   final DmToolColors palette;
-  final String worldName;
+  final String worldId;
   final ValueChanged<int> onTabSelect;
   final ValueChanged<int> onTabClose;
   final ValueChanged<String> onOpenFile;
@@ -27,7 +27,7 @@ class PdfSidebar extends StatelessWidget {
     required this.openPaths,
     required this.activeIndex,
     required this.palette,
-    required this.worldName,
+    required this.worldId,
     required this.onTabSelect,
     required this.onTabClose,
     required this.onOpenFile,
@@ -71,7 +71,7 @@ class PdfSidebar extends StatelessWidget {
                 )
               : PdfLibraryPanel(
                   palette: palette,
-                  worldName: worldName,
+                  worldId: worldId,
                   openPaths: openPaths,
                   onOpenFile: onOpenFile,
                   onCloseTab: onTabClose,
@@ -236,13 +236,13 @@ class _PdfTabBar extends StatelessWidget {
   }
 }
 
-/// Kütüphane paneli — `{worldsDir}/{worldName}/pdfs/` klasörünü listeler.
+/// Kütüphane paneli — `{worldsDir}/{worldId}/pdfs/` klasörünü listeler.
 /// Dünya online ise DM'in paylaştığı, henüz indirilmemiş PDF'ler de görünür.
 class PdfLibraryPanel extends ConsumerStatefulWidget {
   const PdfLibraryPanel({
     super.key,
     required this.palette,
-    required this.worldName,
+    required this.worldId,
     required this.openPaths,
     required this.onOpenFile,
     required this.onCloseTab,
@@ -250,7 +250,7 @@ class PdfLibraryPanel extends ConsumerStatefulWidget {
   });
 
   final DmToolColors palette;
-  final String worldName;
+  final String worldId;
   final List<String> openPaths;
   final ValueChanged<String> onOpenFile;
   final ValueChanged<int> onCloseTab;
@@ -275,7 +275,7 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
     // Yeni bir PDF import edilince tab listesi büyür — panel state'i korunduğu
     // için future'ı tazelemezsek kütüphaneye dönen kullanıcı yeni dosyayı
     // göremezdi.
-    if (old.worldName != widget.worldName ||
+    if (old.worldId != widget.worldId ||
         old.openPaths.length != widget.openPaths.length) {
       _refresh();
     }
@@ -290,7 +290,7 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
   }
 
   Future<List<_LibraryRow>> _load() async {
-    final local = await PdfLibraryService.localFiles(widget.worldName);
+    final local = await PdfLibraryService.localFiles(widget.worldId);
     return [
       for (final f in local)
         _LibraryRow(
@@ -328,7 +328,7 @@ class _PdfLibraryPanelState extends ConsumerState<PdfLibraryPanel> {
     if (idx != -1) widget.onCloseTab(idx);
     await ref
         .read(pdfLibraryServiceProvider)
-        .remove(widget.worldName, row.name);
+        .remove(widget.worldId, row.name);
     if (mounted) _refresh();
   }
 

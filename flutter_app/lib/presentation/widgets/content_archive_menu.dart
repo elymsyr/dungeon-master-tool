@@ -100,7 +100,6 @@ class ContentArchiveMenu extends ConsumerWidget {
       // olmak zorunda değil.
       switch (result.ref.type) {
         case ContentItemType.world:
-          ref.invalidate(campaignListProvider);
           ref.invalidate(campaignInfoListProvider);
         case ContentItemType.package:
           ref.invalidate(packageListProvider);

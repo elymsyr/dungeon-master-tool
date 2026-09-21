@@ -11,6 +11,8 @@ tags: [moc, architecture]
 > Flutter client (clean architecture, **local-first**) + Supabase (auth, membership, marketplace, DM'in paylaşım kanalı) + Cloudflare R2 worker (media/catalog). Content is built offline from Open5e by a Dart pipeline and shipped as packages. Multi-platform: desktop / mobile / web + a second-screen projection target.
 >
 > Yerel Drift kaynak-doğru. Buluta dünya kopyalanmaz; cihazdan cihaza taşıma LAN sync'in ya da `.dmtz` dosya aktarımının işi (ikisi de `application/services/content_transfer/` altındaki aynı codec'i kullanır), oyuncuya giden ise yalnızca DM'in bilinçli paylaşımları.
+>
+> **Dünyanın kimliği `worldId`** (2026-09-21): isim salt etiket. Repository, aktif dünya provider'ı, medya klasörü (`worlds/<id>/`) ve UI durumu id ile anahtarlı — aynı dünya iki cihazda aynı kimliği taşısın diye. Bkz. [[World-and-Content]]. Paketler hâlâ adla anahtarlı.
 
 ## Clean-architecture layers
 The Flutter app (`flutter_app/lib/`) is layered; dependencies point inward.

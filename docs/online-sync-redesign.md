@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
-Durum: **uygulama başladı** — dal `online-again`, Faz 0 ve Faz 1 bitti, Faz 2.5
-detaylı (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3+ taslak.
+Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1 ve Faz 2.5 bitti
+(bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3+ taslak.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -866,7 +866,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 |---|---|---|---|---|
 | ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (deploy bekliyor) |
 | ~~**1**~~ | ZIP import/export + codec'in LAN'dan çıkarılması | dünya export → temiz kurulumda import → aynı dünya | hayır | ✅ bitti |
-| **2.5** | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | detaylı |
+| ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
 | 3 | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | taslak |
 | 3.5 | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | taslak |
 | 4 | Drift v13 bump + push | dünya bulutta görünüyor, geri okuma yok | evet | taslak |
@@ -1149,9 +1149,16 @@ boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
 
 ---
 
-## 4.3 Faz 2.5 — Dünya kimliği: isimden id'ye
+## 4.3 Faz 2.5 — Dünya kimliği: isimden id'ye ✅ bitti
 
 *Borç ödemesi. Faz 4 push'undan önce şart (§2.10, §3.2 Kural 2).*
+
+**Durum:** bitti. `CampaignRepository`'nin her metodu `worldId` alıyor,
+`activeCampaignProvider` id tutuyor, medya klasörü `worlds/<id>/` oldu ve
+mevcut kurulumları taşıyan tek seferlik geçiş `app_database.dart`'ın
+`beforeOpen`'ında (`world_media_dir_by_id_v1`). Yeni testler:
+`test/data/database/world_media_dir_migration_test.dart` ve
+`world_srd_opt_out_test.dart`'a eklenen iki kimlik testi.
 
 ### Sorun
 
@@ -1187,18 +1194,70 @@ Mekanik ama küçük değil. Tek başına bir faz olmayı hak ediyor.
 5. `worldName` salt etiket: yeniden adlandırma hiçbir anahtarı
    değiştirmediği için `renameWorld` tek satır UPDATE'e iner.
 
-### Çıkış kriteri
+### Faz 2.5 çıkış kriteri — karşılandı
 
-- `CampaignRepository` arayüzünde `campaignName` parametresi kalmadı
-- Aynı isimle iki dünya oluşturulabiliyor, ikisi de doğru açılıyor
-- Bir dünya yeniden adlandırıldıktan sonra medya klasörü, kurulu paketleri ve
-  oturumları bozulmadan duruyor (yeniden adlandırma bugün klasör de taşıyor —
-  `_applyWorld` içindeki `oldDir.rename` yolu)
-- `flutter test test/data/` ve dünya ile ilgili dosyalar yeşil
+- ✅ **`CampaignRepository` arayüzünde `campaignName` parametresi kalmadı.**
+  Her metot `worldId` alıyor. `_findByName` silindi; `worldsDao.getByName`'in
+  `lib/` içinde tek bir çağıranı kalmadı.
+- ✅ **Aynı isimle iki dünya oluşturulabiliyor, ikisi de doğru açılıyor.**
+  `world_srd_opt_out_test.dart` → "aynı isimde iki dünya yan yana durabilir":
+  iki `create` farklı id veriyor, ikisi de kendi payload'unu yüklüyor,
+  `listWorlds()` ikisini de o adla listeliyor.
+- ✅ **Yeniden adlandırma sonrası medya, paketler ve oturumlar duruyor.**
+  Aynı dosyada "yeniden adlandırma kimliği değiştirmez". Klasör artık id ile
+  anahtarlı olduğu için `oldDir.rename` yolu tamamen kalktı.
+- ✅ **Testler yeşil.** `flutter test`: 1513 geçti, tek kırık
+  `bundled_pack_resolve_test` — Faz 1'den beri var, temiz ağaçta da düşüyor.
+  `flutter analyze lib test`: 0 error / 0 warning.
+
+### Uygulamada çıkan farklar
+
+- **Medya klasörü de id'ye taşındı** — planda yoktu. Zorunluydu: klasör
+  `worlds/<dirSafe(ad)>/media/` idi, yani aynı adlı iki dünya aynı klasörü
+  paylaşır ve `UnusedMediaSweeper` birini açıp kapatınca ötekinin dosyalarını
+  referanssız sayıp silerdi. Mevcut kurulumlar `beforeOpen`'daki
+  `world_media_dir_by_id_v1` ile taşınıyor: klasörler yeniden adlandırılıp
+  gövdedeki **mutlak** yollar `replaceInEveryTextColumn` + `pathSpellings` ile
+  çevriliyor, hepsi tek tablo taramasında. Eşleştirmeye **ayıraç dahil** —
+  yoksa "Ad" dünyasının yolu "Ad2"nin yollarının öneki olur ve ikincisinin
+  bütün resimleri bozulur (test tam olarak bunu bekliyor).
+- **Bir hata kapandı:** `renameWorld` klasörü taşıyıp gövdedeki mutlak yolları
+  olduğu gibi bırakıyordu — yani yeniden adlandırılan her dünyanın resimleri
+  kırılıyordu. Klasör id ile anahtarlı olunca taşıma da hata da kalktı.
+- **`campaignListProvider` ve `getAvailable()` silindi.** İsim listesi aynı
+  adı taşıyan iki dünyada belirsiz; yerine `listWorlds()` → `(id, name)`.
+- **`CharacterDraft.worldName` → `worldId`.** Sihirbazın dünya seçicisi
+  değeri id, etiketi ad tutuyor; `DropdownButton` değerin tam olarak bir kez
+  eşleşmesini şart koştuğu için aynı adlı iki dünya eski haliyle assertion
+  atardı.
+- **`campaign_selector_screen.dart` silindi** — hiçbir yerden referans
+  almıyordu (ölü ekran), ama isimle `load`/`create` eden iki çağrı yeri daha
+  taşıyordu.
+- **`world_join_service`'teki "Ad (2)" suffix'i kalktı** (planlıydı): artık
+  yerelde aynı adı taşıyan başka bir dünya varsa bile isim olduğu gibi kalıyor.
+
+### Bilinçli sınırlar
+
+- **Paketler hâlâ isimle anahtarlı.** `PackageRepository.load(name)`,
+  `packagesDao.getByName`, `packages/<ad>/media/`. Bu fazın kapsamı dünya;
+  paket kimliği ayrı bir iş.
+- **Paketlenmiş dünyalar yeniden kurulurken hâlâ adla eşleşiyor.** Doğrusu
+  bundle dizininden türetilmiş deterministik bir id olurdu, ama o zaman bugün
+  kurulu olan (v4 id'li) dünyalar eşleşmez ve bir sonraki kurulum kullanıcının
+  dünyasını güncellemek yerine ikinci bir kopya açardı.
+- **Marketplace listing bağları taşınmadı.** `marketplace_links` yerel JSON
+  dosyası `world|<ad>` ile anahtarlıydı, artık `world|<id>` yazılıyor; daha
+  önce yayınlanmış bir dünyanın bağı eşleşmiyor ("yayınlanmamış" görünür,
+  silinince listing'i temizlenmez). §3.1'e göre kullanıcı yok, o yüzden bu
+  dosya için ayrı bir geçiş yazılmadı.
+- **`ui_state` dünya görünümleri** (açık kartlar, panel filtreleri, açık PDF
+  sekmeleri) de ad yerine id ile anahtarlanıyor; eski kayıtlar eşleşmiyor ve
+  bu tercihler bir kez sıfırlanıyor. Veri değil, tercih.
 
 ### Neden v13 bump'ı burada değil
 
-Bu fazın yeni kolona ihtiyacı yok; `worlds.id` zaten birincil anahtar. Bump
+Bu fazın yeni kolona ihtiyacı yok; `worlds.id` zaten birincil anahtar, medya
+geçişi de şemaya dokunmuyor (`migration_progress` satırıyla kapılı). Bump
 Faz 4'ün başında, gerçekten kolon gerektiğinde (bkz. §4.0).
 
 ---
@@ -1268,7 +1327,10 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 0: limitleri "bugünkü saatlik sayılarla eşleştir" | Platform limiter'da `period` yalnızca 10 veya 60 — saatlik pencere ifade edilemiyor, sayılar dakikalığa çevrildi (§4.1) |
 | Faz 0: 429'da `X-RateLimit-Remaining` sadeleşir | Böyle bir başlık hiç yoktu; `rateLimitedResponse` yalnızca `Retry-After` + `X-RateLimit-Limit` yazıyor ve Flutter istemcisi ikisini de okumuyor — 429 gövdesi tamamen bilgilendirme amaçlı |
 | Faz 1: zip'e `stamps.json` da yazılacak | `extras.section_stamps` zaten aynı veriyi taşıyor ve `applyItem` oradan okuyor — ayrı dosya çift yazım olurdu |
-| Faz 1: id çakışmasında "kopya oluştur" seçeneği | Yapılamaz: `world_entities` PK'sı global `{id}` ve DAO `insertAllOnConflictUpdate` kullanıyor — yeni id'li kopya, var olan dünyanın entity satırlarını kendine çeker. **Aynı hata `WorldRepositoryImpl.copy`'de bugün de var** (`world_repository_impl.dart:405`); ayrı iş |
+| Faz 1: id çakışmasında "kopya oluştur" seçeneği | Yapılamaz: `world_entities` PK'sı global `{id}` ve DAO `insertAllOnConflictUpdate` kullanıyor — yeni id'li kopya, var olan dünyanın entity satırlarını kendine çeker. **Aynı hata `WorldRepositoryImpl.copy`'de bugün de var**; probe testiyle doğrulandı (1 kartlı kaynak → kaynak 0 / kopya 1) ve `docs/KNOWN_ISSUES.md`'e alındı. Ayrı iş |
+| Faz 2.5: çıkış kriteri "aynı isimle iki dünya" | Tek başına repository katmanı yetmiyordu: medya klasörü de isimle anahtarlıydı (`worlds/<ad>/media/`), yani aynı adlı iki dünya aynı klasörü paylaşır ve `UnusedMediaSweeper` birini açıp kapatınca ötekinin dosyalarını silerdi. Klasör de id'ye taşındı; `beforeOpen`'da tek seferlik `world_media_dir_by_id_v1` geçişi |
+| Faz 2.5: "`renameWorld` tek satır UPDATE'e iner" | Doğru çıktı ama gerekçesi eksikti: rename **bugün klasörü taşıyıp gövdedeki mutlak yolları bırakıyordu**, yani yeniden adlandırılan her dünyanın resimleri kırılıyordu. Klasör id'ye geçince taşıma tamamen kalktı ve hata da kalktı |
+| Faz 2.5: `activeCampaignProvider` yalnız dünya adı tutar | Paket ekranı bu provider'ı kendi `ProviderScope`'unda **paket adıyla** override ediyor (`package_screen.dart:112`). Değer "açık içeriğin anahtarı" — dünyada id, pakette paket adı |
 | §2.11: `sync_outbox` "geri gelmeli" | `app_database.dart:430` `_retiredTablesDDL` onu aktif `DROP` ediyor — o satırın kalkması Faz 4'ün parçası |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.

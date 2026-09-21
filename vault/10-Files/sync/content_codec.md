@@ -25,7 +25,7 @@ tags: [file]
 **Outputs**
 - Public API: `buildManifest()`, `loadItem(ref)`, `applyItem(item)`, `openMedia`, `resolveMedia`, `hasMedia`, `writeMedia`, `fileSha256`, `rewriteRoots`, `userBase`.
 - Writes: `campaignRepository.save`, `packageRepository.save`, `characterRepository.save`, `worldsDao.setUpdatedAt`, `packagesDao.setUpdatedAt`; medya dosyaları.
-- Invalidations: `campaignListProvider`, `campaignInfoListProvider`, `packageListProvider`, `characterListProvider.refresh()`.
+- Invalidations: `campaignInfoListProvider`, `campaignMetadataProvider(worldId)`, `packageListProvider`, `characterListProvider.refresh()`.
 
 ## Dependencies & Links
 - Depends on: [[content_item]], [[world_merge]], [[worlds_dao]], [[packages_dao]], `ui_state_provider.dart` (`exportWorldUiView` / `importWorldUiView`)
@@ -41,7 +41,7 @@ tags: [file]
 - **Restamp:** `repository.save` her yazımda `DateTime.now()` basar; `setUpdatedAt(id, ref.updatedAt)` olmasa çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi. Karakterlerde gerekmez — `updatedAt` payload'ın içinde taşınır.
 - `rewriteRoots(node, fromBase, toBase)` recursive, **alan adı bilmez**: gönderenin kökü altındaki her string yeniden yazılır, `dmt-asset://` / `dmt-public://` ref'lerine dokunulmaz. `\` ve `/` normalize edilir (Windows ↔ POSIX).
 - `_worldExtras / _applyWorldExtras` — blob'da olmayan dünya parçaları: `installed_packages` bağlantıları ve `ui_view` (açık kartlar, filtreler, açık PDF sekmeleri, sağ sidebar, session sekmesi). `extras` da `rewriteRoots`'tan geçer. Apply tarafında da yalnız ekleme/güncelleme — peer'da olmayan paket bağlantısı yerelde kalır.
-- `buildManifest()` world satırına `viewUpdatedAt` ekler (`UiState.viewTouchedByWorld[worldName]`) — içerik değişmeden sadece görünüm değiştiğinde de eşleme tetiklensin diye. Alıcı bunu world satırının içerik `updatedAt`'ine yazmaz, UI state'e stamp'ler.
+- `buildManifest()` world satırına `viewUpdatedAt` ekler (`UiState.viewTouchedByWorld[worldId]` — Faz 2.5'ten beri anahtar id) — içerik değişmeden sadece görünüm değiştiğinde de eşleme tetiklensin diye. Alıcı bunu world satırının içerik `updatedAt`'ine yazmaz, UI state'e stamp'ler.
 - Uygulanan dünya **açık dünyaysa** `activeCampaignProvider.reload()` çağrılır — `_data` bayat kalırsa bir sonraki otomatik kayıt senkronize edilen içeriği geri eziyordu (cloud restore'un "açık dünyanın içine geri yükle" yolunun aynısı).
 - `resolveMedia` `p.isWithin` ile veri kökü dışına çıkan yolu **null** döndürür — yol geçişi savunması.
 - **`_flushPending()`** — `buildManifest` / `loadItem` / `applyItem` girişinde `PendingWriteBuffer.flush()`. `combat_state` 500 ms, `mind_maps` 1000 ms, viewport 2000 ms gecikmeyle yazılıyor; eşleme o pencerede başlarsa payload da `worlds.updatedAt` de bayat okunuyor ve karşı cihaz taze veriyi eziyordu. Apply tarafında da gerekli — bekleyen yerel yazım apply'dan sonra fire edip geleni geri yazardı.

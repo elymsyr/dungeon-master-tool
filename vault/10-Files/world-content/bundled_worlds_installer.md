@@ -23,7 +23,7 @@ tags: [file]
 **Inputs**
 - `rootBundle` assets: `assets/worlds/manifest.json`, then per world `manifest.json`, `world-blueprint.json`, `blueprint.json`, and every path listed in the world manifest's `files` block.
 - Or a `CatalogEntry` + `FirstPartyCatalogService`: the R2 envelope at `r2_path`, one object per `media[]`, and `external_files[]` fetched from the publisher.
-- `CampaignRepository` (`getAvailable`, `load`, `save`, `delete`).
+- `CampaignRepository` (`listWorlds`, `load`, `save`, `delete`) — hepsi **worldId** ile (Faz 2.5). Paketlenmiş dünya yine de **adıyla** eşleştiriliyor (`listWorlds().where((w) => w.name == worldName)`): doğrusu bundle dizininden türetilmiş deterministik bir id olurdu ama o zaman bugün kurulu olan v4 id'li dünyalar eşleşmez ve bir sonraki kurulum kullanıcının dünyasını güncellemek yerine ikinci bir kopya açardı.
 - `CharacterRepository` (`exists`, `save`, `loadAll`, `dropLocal`) — the blueprint's PCs.
 
 **Outputs**

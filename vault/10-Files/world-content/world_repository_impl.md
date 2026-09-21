@@ -14,6 +14,9 @@ tags: [file]
 > [!abstract] Primary Purpose
 > The v12 Drift-backed implementation of `CampaignRepository`. Translates the legacy `Map<String,dynamic>` world blob into normalized rows across `worlds`, `world_entities`, `world_settings`, `world_map_data`, `world_sessions`, and back. Handles create (with built-in SRD bootstrap), load (with built-in synthesis + schema overlay), row-level + bulk save, trash/restore, and the full cascade purge.
 
+> [!important] Kimlik `worldId` (Faz 2.5, 2026-09-21)
+> **Her metot artık dünya id'si alıyor, isim değil.** `worldName` salt etiket: değişebilir, benzersiz değil, hiçbir şeyi anahtarlamaz. `_findByName` kalktı — her arama `worldsDao.getById`. `create` artık **yeni id'yi** döndürüyor, `copy` `sourceId` alıyor ve kopyanın id'sini döndürüyor, `renameWorld(worldId, newName)` tek UPDATE. `restoreFromTrash` `trash.sourceId` (= dünyanın id'si) ile geri yüklüyor ve aynı id yaşıyorsa bayat trash satırını sessizce düşürüyor.
+
 ## Inputs / Outputs
 **Inputs**
 - Constructor deps: `AppDatabase _db`.
@@ -21,7 +24,7 @@ tags: [file]
 - Built-in bootstrap: `SrdCorePackageBootstrap`, `SrdCoreBootstrap`, `generateBuiltinDnd5eV2Schema()`, `synthesizeWorldBuiltins`.
 
 **Outputs**
-- Public API: implements `CampaignRepository` — `getAvailable`, `load`, `create`, `save`, `saveEntity`, `deleteEntity`, `saveSettingsPatch`, `saveMapData`, `saveSessions`/`saveSession`/`deleteSession`, `delete`, `purge`, `restoreFromTrash`, `permanentlyDelete`, `installedPackages`.
+- Public API: implements `CampaignRepository` — `listWorlds` (`(id, name)` çiftleri; eski `getAvailable` isim listesi kalktı), `load`, `create`, `save`, `saveEntity`, `deleteEntity`, `saveSettingsPatch`, `saveMapData`, `saveSessions`/`saveSession`/`deleteSession`, `delete`, `purge`, `restoreFromTrash`, `permanentlyDelete`, `copy`, `renameWorld`, `installedPackages`. **Hepsi `worldId` ile anahtarlı.**
 - Writes (Drift): `worlds`, `world_settings`, `world_entities`, `world_map_data`, `world_sessions`, `trash_items` (+ cascade deletes across membership/share/pin/package-link tables on purge).
 
 ## Dependencies & Links
@@ -41,6 +44,7 @@ tags: [file]
 - **`save` (`_saveToDb`)**: bulk path — full-replace `world_entities` ONLY when payload contains the `entities` key (PR-B5 beta-enter wipe defense: a metadata-only payload must NOT wipe rows). Same key-presence rule for `map_data` (upsert into `world_map_data`) and `sessions` (full-replace `world_sessions`: rows absent from the incoming list are deleted). **These granular writes are mandatory, not a nicety** — `_loadFromDb` PREFERS those rows over the settings blob, so writing only the blob left incoming map/sessions silently shadowed on any target that already had rows; LAN sync and cloud restore both looked like "the map never arrived". Entries flagged `synthFlagKey` (built-in synth) are never persisted. `_touchWorld` is UPDATE-only (INSERT path needs NOT-NULL worldName).
 - **`saveSessions`** strips typed columns (id/name/is_active/sort_order) from the inner blob and writes them to dedicated `world_sessions` columns.
 - **`_purgeWorld`** (cascade): captures package links first, deletes entities/settings/map_data/sessions/installed-packages, then drops any materialized package whose only home was this world (skips `srdCorePackageName`; survives if `countWorldsForPackage > 0`), then clears shares/members/invites/world-packages/map-pins/timeline-pins, finally the `worlds` row.
+- **`renameWorld` tek UPDATE.** Eskiden medya klasörünü de taşıyordu ama gövdedeki **mutlak** yolları olduğu gibi bırakıyordu — yani yeniden adlandırılan her dünyanın resimleri kırılıyordu. Klasör artık `worldDir(worldId)` ile anahtarlı, taşınacak bir şey yok.
 - **`copy` VERİ KAYBETTİRİYOR — kullanmadan önce `docs/KNOWN_ISSUES.md`'e bak.** Kaynak payload'u olduğu gibi yeniden yazıyor, yani entity'ler **kaynak id'lerini** koruyor. `world_entities` birincil anahtarı global (`{id}`, `{worldId, id}` değil) ve `upsertAll` `insertAllOnConflictUpdate` kullanıyor: satırlar eklenmiyor, var olan satırın `world_id`'si kopyanınkiyle **güncelleniyor**. Sonuç: kopya dolu, kaynak boş. Doğrulandı (1 kart → kaynak 0 / kopya 1). Çözüm entity id'lerini (ve dünya içi referanslarını) yeniden haritalamak ya da PK'yı genişletmek.
 - `_builtinCategoryJsonCache` caches the generated built-in category JSON (generator is deterministic except timestamps).
 

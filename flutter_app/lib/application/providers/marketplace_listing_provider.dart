@@ -450,8 +450,14 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
           meta['cover_image_path'] = cover;
           payload['metadata'] = meta;
         }
-        await _ref.read(campaignRepositoryProvider).save(name, payload);
-        return name;
+        // İndirilen dünya YENİ bir kimlik alır — payload yayıncının
+        // `world_id`'sini taşıyor ve kendi dünyasını indiren biri onu
+        // kendi kopyasının üstüne yazardı.
+        final worldId = newId();
+        payload['world_id'] = worldId;
+        payload['world_name'] = name;
+        await _ref.read(campaignRepositoryProvider).save(worldId, payload);
+        return worldId;
       case 'package':
         final name = await _uniquePackageName(title);
         final cover =
@@ -513,10 +519,12 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     );
   }
 
+  /// Aynı adı taşıyan iki dünya artık teknik olarak sorun değil (kimlik id),
+  /// ama hub'da iki özdeş satır kafa karıştırıyor — indirilen dünya yine de
+  /// "(imported)" ile ayrışıyor.
   Future<String> _uniqueCampaignName(String desired) async {
-    final repo = _ref.read(campaignRepositoryProvider);
-    final existing = await repo.getAvailable();
-    return _suffixIfTaken(desired, existing.toSet());
+    final worlds = await _ref.read(campaignRepositoryProvider).listWorlds();
+    return _suffixIfTaken(desired, {for (final w in worlds) w.name});
   }
 
   Future<String> _uniquePackageName(String desired) async {

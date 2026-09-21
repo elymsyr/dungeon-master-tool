@@ -228,7 +228,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
         await ref.read(activeCampaignProvider.notifier).sweepUnusedMedia();
       },
     );
-    ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     ref.read(soundpadStateProvider.notifier).stopAll();
     if (mounted) context.go('/hub');
@@ -251,11 +250,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
   /// Hem file picker hem `pdfNavigationProvider` (entity PDF field'ı) bu
   /// kapıdan geçtiği için kopyalama tek yerde duruyor.
   Future<void> _openPdfTab(String sourcePath) async {
-    final worldName = ref.read(activeCampaignProvider);
+    final worldId = ref.read(activeCampaignProvider);
     final svc = ref.read(pdfLibraryServiceProvider);
-    final path = worldName == null
+    final path = worldId == null
         ? sourcePath
-        : (await svc.import(worldName, sourcePath) ?? sourcePath);
+        : (await svc.import(worldId, sourcePath) ?? sourcePath);
     if (!mounted) return;
 
     // Zaten açıksa o tab'a geç
@@ -558,7 +557,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final campaignName = ref.read(activeCampaignProvider) ?? '';
+    final worldId = ref.read(activeCampaignProvider) ?? '';
+    // Başlıkta etiket, dosya yollarında kimlik.
+    final worldTitle = ref.watch(activeWorldNameProvider).valueOrNull ?? '';
 
     ref.listen(activeCampaignSyncProvider, (_, _) {});
     // U1: keep-alive only — sync state değişimi shell'i rebuild ettirmesin.
@@ -683,7 +684,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             openPaths: _pdfOpenPaths,
             activeIndex: activeIdx,
             palette: palette,
-            worldName: campaignName,
+            worldId: worldId,
             onTabSelect: (i) {
               _pdfActiveIndexNotifier.value = i;
               _persistUiState();
@@ -727,7 +728,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                campaignName,
+                worldTitle,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 softWrap: false,
                 overflow: TextOverflow.fade,
@@ -1134,7 +1135,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                     openPaths: _pdfOpenPaths,
                                     activeIndex: idx,
                                     palette: palette,
-                                    worldName: campaignName,
+                                    worldId: worldId,
                                     onTabSelect: (i) {
                                       _pdfActiveIndexNotifier.value = i;
                                       _persistUiState();

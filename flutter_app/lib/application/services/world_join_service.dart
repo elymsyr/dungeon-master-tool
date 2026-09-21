@@ -64,36 +64,12 @@ class WorldJoinService {
     }
 
     final now = DateTime.now().toUtc();
-    // Resolve local name — repository.save keys by worldName, so if the
-    // player already has a different campaign with the same name we must
-    // pick a unique local label to avoid overwriting their local data.
-    final existingById =
-        await (db.select(db.worlds)..where((t) => t.id.equals(res.worldId)))
-            .getSingleOrNull();
-    String localName = existingById?.worldName ?? res.worldName;
+    // Dünya kimliği id — isim yalnız etiket. Eskiden burada isim çakışması
+    // "Ad (2)" ile çözülüyordu, çünkü `repository.save` isimle anahtarlıyordu;
+    // sonucu, aynı dünyanın telefonda ve laptop'ta farklı ada sahip olmasıydı.
+    final existingById = await db.worldsDao.getById(res.worldId);
+    final localName = existingById?.worldName ?? res.worldName;
     if (existingById == null) {
-      final clash =
-          await (db.select(db.worlds)..where((t) => t.worldName.equals(localName)))
-              .getSingleOrNull();
-      if (clash != null) {
-        // Suffix until unique.
-        var attempt = 2;
-        while (true) {
-          final candidate = '$localName ($attempt)';
-          final c = await (db.select(db.worlds)
-                ..where((t) => t.worldName.equals(candidate)))
-              .getSingleOrNull();
-          if (c == null) {
-            localName = candidate;
-            break;
-          }
-          attempt++;
-          if (attempt > 99) {
-            localName = '$localName-${res.worldId.substring(0, 8)}';
-            break;
-          }
-        }
-      }
       await db.worldsDao.upsert(
         WorldsCompanion.insert(
           id: res.worldId,
@@ -109,7 +85,7 @@ class WorldJoinService {
 
     if (meta != null) {
       try {
-        await repository.saveSettingsPatch(localName, {'metadata': meta});
+        await repository.saveSettingsPatch(res.worldId, {'metadata': meta});
       } catch (e, st) {
         debugPrint('joinWithCode meta apply error: $e\n$st');
       }

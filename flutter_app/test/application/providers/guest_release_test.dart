@@ -33,10 +33,8 @@ void main() {
     expect(container.read(authProvider), isNull, reason: 'test runs as guest');
 
     final repo = container.read(campaignRepositoryProvider);
-    await repo.create('Keep on the Borderlands',
+    final worldId = await repo.create('Keep on the Borderlands',
         template: generateBuiltinDnd5eV2Schema().schema);
-    final worldId =
-        (await repo.load('Keep on the Borderlands'))['world_id'] as String;
 
     final now = DateTime.now().toUtc().toIso8601String();
     await container.read(characterRepositoryProvider).save(Character(

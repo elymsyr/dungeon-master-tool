@@ -383,7 +383,6 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       await ref
           .read(activeCampaignProvider.notifier)
           .purge(widget.campaignName);
-      ref.invalidate(campaignListProvider);
       ref.invalidate(campaignInfoListProvider);
       ref.invalidate(packageListProvider);
       if (mounted) {

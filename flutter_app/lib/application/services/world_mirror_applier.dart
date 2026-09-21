@@ -753,10 +753,8 @@ class WorldMirrorApplier {
   ) async {
     try {
       final repo = ref.read(campaignRepositoryProvider); // await ÖNCESİ
-      final name = await _campaign.resolveWorldName(worldId);
-      if (name == null) return;
-      await repo.saveSettingsPatch(name, decoded);
-      _campaign.refreshWorldMetadataCaches(worldId, name);
+      await repo.saveSettingsPatch(worldId, decoded);
+      _campaign.refreshWorldMetadataCaches(worldId);
     } catch (err) {
       debugPrint('_persistSettingsToDrift error: $err');
     }

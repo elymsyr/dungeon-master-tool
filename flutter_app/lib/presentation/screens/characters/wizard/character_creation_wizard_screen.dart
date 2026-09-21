@@ -85,32 +85,20 @@ class _CharacterCreationWizardScreenState
     // here makes the behavior deterministic.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.invalidate(campaignListProvider);
       ref.invalidate(campaignInfoListProvider);
       _pickActiveWorldIfAny();
     });
   }
 
-  /// Reads activeCampaignProvider; falls back to `activeCampaignIdProvider`
-  /// + `campaignInfoListProvider` to handle the cold-open race where the
-  /// campaign name notifier hasn't propagated yet but the id is already
-  /// resolved. Without the fallback, hitting "Create Character" on the
-  /// first frame after opening a world produced a worldless draft.
+  /// Taslağa açık dünyanın id'sini yazar. Kullanıcı elle bir dünya
+  /// seçtiyse dokunmaz.
   void _pickActiveWorldIfAny() {
     if (_userPickedWorld) return;
     final draft = ref.read(characterDraftProvider);
-    if (draft.worldName.isNotEmpty) return;
+    if (draft.worldId.isNotEmpty) return;
     final activeWorld = ref.read(activeCampaignProvider);
-    if (activeWorld != null && activeWorld.isNotEmpty) {
-      ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
-      return;
-    }
-    final activeId = ref.read(activeCampaignIdProvider).valueOrNull;
-    if (activeId == null) return;
-    final infos = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-    final match = infos.where((i) => i.id == activeId).firstOrNull;
-    if (match == null) return;
-    ref.read(characterDraftProvider.notifier).setWorld(match.name);
+    if (activeWorld == null || activeWorld.isEmpty) return;
+    ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
   }
 
   /// Entity source the wizard reads from. Active campaign's entities when
@@ -118,17 +106,17 @@ class _CharacterCreationWizardScreenState
   /// class / background pickers stay populated without any DB write.
   Map<String, Entity> _wizardEntities() => ref.read(wizardEntitiesProvider);
 
-  Future<void> _activateWorld(String name) async {
-    if (_lastActivatedWorld == name) return;
+  Future<void> _activateWorld(String worldId) async {
+    if (_lastActivatedWorld == worldId) return;
     final current = ref.read(activeCampaignProvider);
-    if (current == name) {
-      _lastActivatedWorld = name;
+    if (current == worldId) {
+      _lastActivatedWorld = worldId;
       return;
     }
     setState(() => _activatingWorld = true);
     try {
-      await ref.read(activeCampaignProvider.notifier).load(name);
-      _lastActivatedWorld = name;
+      await ref.read(activeCampaignProvider.notifier).load(worldId);
+      _lastActivatedWorld = worldId;
     } finally {
       if (mounted) setState(() => _activatingWorld = false);
     }
@@ -147,17 +135,11 @@ class _CharacterCreationWizardScreenState
     final draft = ref.watch(characterDraftProvider);
     final notifier = ref.read(characterDraftProvider.notifier);
     final templatesAsync = ref.watch(allTemplatesProvider);
-    final campaignsAsync = ref.watch(campaignListProvider);
+    final campaignsAsync = ref.watch(campaignInfoListProvider);
     // Cold-open race: activeCampaignProvider may arrive after initState's
-    // postFrame. Watch both name + id providers and re-pick whenever they
-    // settle, as long as the user hasn't explicitly picked a world yet.
+    // postFrame. Re-pick whenever it settles, as long as the user hasn't
+    // explicitly picked a world yet.
     ref.listen<String?>(activeCampaignProvider, (_, _) {
-      if (mounted) _pickActiveWorldIfAny();
-    });
-    ref.listen<AsyncValue<String?>>(activeCampaignIdProvider, (_, _) {
-      if (mounted) _pickActiveWorldIfAny();
-    });
-    ref.listen(campaignInfoListProvider, (_, _) {
       if (mounted) _pickActiveWorldIfAny();
     });
 
@@ -582,19 +564,13 @@ class _CharacterCreationWizardScreenState
       // Empty world is intentional — the character runs against the
       // bundled SRD entity map. Editor falls back to
       // [builtinSrdEntitiesProvider] when worldId is null.
-      final worldName = draft.worldName;
-      String? resolvedWorldId;
-      if (worldName.isNotEmpty) {
-        final infos =
-            ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-        resolvedWorldId =
-            infos.where((i) => i.name == worldName).firstOrNull?.id;
-      }
-      // Cold-open fallback: draft.worldName may still be empty if the user
+      String? resolvedWorldId =
+          draft.worldId.isEmpty ? null : draft.worldId;
+      // Cold-open fallback: draft.worldId may still be empty if the user
       // hit Create before activeCampaignProvider populated. Use the
       // canonical id directly so the new char binds to the open world
       // instead of becoming orphan. Skip when the user explicitly picked
-      // "Built-in SRD" — empty worldName then is a deliberate choice.
+      // "Built-in SRD" — empty worldId then is a deliberate choice.
       if (!_userPickedWorld) {
         resolvedWorldId ??= ref.read(activeCampaignIdProvider).valueOrNull;
       }
@@ -1668,7 +1644,7 @@ int _hpPerLevel(RuleConfig config, int faces) {
 class _IdentityStep extends StatelessWidget {
   final CharacterDraft draft;
   final CharacterDraftNotifier notifier;
-  final List<String> worlds;
+  final List<CampaignInfo> worlds;
   final List<WorldSchema> templates;
   final List<String> alignments;
   final bool activatingWorld;
@@ -1699,13 +1675,13 @@ class _IdentityStep extends StatelessWidget {
         );
       });
     }
-    if (draft.worldName.isNotEmpty) {
+    if (draft.worldId.isNotEmpty) {
       // Make sure the picked world's entities are loaded so race/class/
       // background steps see them. Idempotent — `_activateWorld` no-ops
-      // when already active. Empty `worldName` is the SRD-default mode
+      // when already active. Empty `worldId` is the SRD-default mode
       // and intentionally activates no campaign.
       WidgetsBinding.instance
-          .addPostFrameCallback((_) => onWorldPicked(draft.worldName));
+          .addPostFrameCallback((_) => onWorldPicked(draft.worldId));
     }
 
     return Column(
@@ -1758,15 +1734,13 @@ class _IdentityStep extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Builder(builder: (_) {
-                // Dedupe — getAvailable() can return duplicates if a world
-                // was created twice in past sessions. DropdownButton asserts
-                // exactly-one match for its value, so we collapse duplicates.
-                // Empty string is the sentinel for "Built-in SRD" — that's
-                // the default; picking a campaign loads its entities on top.
-                final uniqueWorlds = <String>{...worlds}.toList();
-                final pickerValue = draft.worldName.isNotEmpty &&
-                        uniqueWorlds.contains(draft.worldName)
-                    ? draft.worldName
+                // Değer id, etiket ad: aynı adı taşıyan iki dünya artık
+                // mümkün ve DropdownButton değerin tam olarak bir kez
+                // eşleşmesini şart koşuyor. Boş string "Built-in SRD"
+                // sentinel'i — varsayılan bu.
+                final pickerValue = draft.worldId.isNotEmpty &&
+                        worlds.any((w) => w.id == draft.worldId)
+                    ? draft.worldId
                     : '';
                 return DropdownButtonFormField<String>(
                   initialValue: pickerValue,
@@ -1794,11 +1768,11 @@ class _IdentityStep extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    ...uniqueWorlds.map(
+                    ...worlds.map(
                       (w) => DropdownMenuItem(
-                        value: w,
+                        value: w.id,
                         child: Text(
-                          w,
+                          w.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1901,7 +1875,7 @@ class _SourcePackagePicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // A world overrides package sources — disable the picker while one is set.
-    final worldActive = draft.worldName.isNotEmpty;
+    final worldActive = draft.worldId.isNotEmpty;
     final packagesAsync = ref.watch(packageListProvider);
     final selected = draft.sourcePackages.toSet();
 
@@ -2664,6 +2638,12 @@ class _ReviewStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final entities = ref.watch(wizardEntitiesProvider);
+    final worldLabel = (ref.watch(campaignInfoListProvider).valueOrNull ??
+                const <CampaignInfo>[])
+            .where((w) => w.id == draft.worldId)
+            .firstOrNull
+            ?.name ??
+        '—';
     String nameOf(String? id) =>
         id == null ? '—' : (entities[id]?.name ?? '—');
     String namesOf(Iterable<String> ids) {
@@ -2766,7 +2746,7 @@ class _ReviewStep extends ConsumerWidget {
       children: [
         heading('Identity'),
         row('Name', draft.name),
-        row('World', draft.worldName),
+        row('World', worldLabel),
         row('Template', draft.templateName),
         row('Level', '${draft.level}'),
         row('Alignment', draft.alignment.isEmpty ? '—' : draft.alignment),

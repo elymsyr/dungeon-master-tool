@@ -131,7 +131,6 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
         await ref.read(pendingWriteBufferProvider).flush();
       },
     );
-    ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     ref.read(soundpadStateProvider.notifier).stopAll();
     if (mounted) context.go('/hub');
@@ -145,7 +144,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     }
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final campaignName = ref.read(activeCampaignProvider) ?? '';
+    final worldTitle = ref.watch(activeWorldNameProvider).valueOrNull ?? '';
     // Auto-sync: worldMirrorApplierProvider _MainScreenState'te (MainScreen
     // build) watch edilir — realtime subscribe + applyInitialState player
     // için de otomatik çalışır. Sync butonu yalnızca manuel "Retry".
@@ -212,7 +211,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  campaignName,
+                  worldTitle,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                   overflow: TextOverflow.ellipsis,
@@ -667,7 +666,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                 openPaths: _pdfOpenPaths,
                                 activeIndex: _pdfActiveIndex,
                                 palette: palette,
-                                worldName:
+                                worldId:
                                     ref.read(activeCampaignProvider) ?? '',
                                 onTabSelect: (i) =>
                                     setState(() => _pdfActiveIndex = i),
@@ -773,12 +772,12 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   /// kopyalanır (bkz. MainScreen._openPdfTab). Oyuncu paylaşım yapmaz —
   /// kopya yalnızca kendi kütüphanesinde durur.
   Future<void> _openPdfTab(String sourcePath) async {
-    final worldName = ref.read(activeCampaignProvider);
-    final path = worldName == null
+    final worldId = ref.read(activeCampaignProvider);
+    final path = worldId == null
         ? sourcePath
         : (await ref
                 .read(pdfLibraryServiceProvider)
-                .import(worldName, sourcePath) ??
+                .import(worldId, sourcePath) ??
             sourcePath);
     if (!mounted) return;
 

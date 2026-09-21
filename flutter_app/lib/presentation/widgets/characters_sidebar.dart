@@ -140,12 +140,12 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         return;
       }
       final active = ref.read(activeCampaignProvider);
-      if (active != worldName) {
+      if (active != worldId) {
         final ok = await withLoading(
           ref.read(globalLoadingProvider.notifier),
           'open-world-$worldId',
           'Opening world "$worldName"...',
-          () => ref.read(activeCampaignProvider.notifier).load(worldName),
+          () => ref.read(activeCampaignProvider.notifier).load(worldId),
         );
         if (!mounted) return;
         if (!ok) {

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/unused_media_sweeper.dart
 layer: application
 language: dart
 status: active
-updated: 2026-08-21
+updated: 2026-09-21
 tags: [file]
 ---
 
@@ -21,7 +21,8 @@ tags: [file]
 - Triggers: dünya **açılışı** (`ActiveCampaignNotifier.completeLoad`, fire-and-forget) ve **kapanışı** (`main_screen._exitToHub`, pending flush'tan sonra await'li).
 
 **Outputs**
-- Public API: `sweepWorld({worldName, payload})` → silinen dosya sayısı; `unusedMediaSweeperProvider`; `UnusedMediaSweeper.graceWindow`.
+- Public API: `sweepWorld({worldId, payload})` → silinen dosya sayısı; `unusedMediaSweeperProvider`; `UnusedMediaSweeper.graceWindow`.
+  - **`worldId`, ad değil** (Faz 2.5): klasör isimle anahtarlıyken aynı adı taşıyan iki dünya aynı klasörü paylaşırdı ve burası ötekinin dosyalarını referanssız sayıp silerdi. Bkz. [[local_media_localizer]].
 - Writes: `{worldsDir}/{ad}/media/` ve `{worldsDir}/{ad}/files/` altında dosya **silme**. Başka hiçbir yere dokunmaz.
 
 ## Dependencies & Links

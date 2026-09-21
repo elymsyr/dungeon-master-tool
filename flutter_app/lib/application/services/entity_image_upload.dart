@@ -53,9 +53,9 @@ String? _ownerDir(WidgetRef ref, String? packageName) {
   if (packageName != null && packageName.isNotEmpty) {
     return LocalMediaLocalizer.packageDir(packageName);
   }
-  final worldName = ref.read(activeCampaignProvider);
-  if (worldName == null || worldName.isEmpty) return null;
-  return LocalMediaLocalizer.worldDir(worldName);
+  final worldId = ref.read(activeCampaignProvider);
+  if (worldId == null || worldId.isEmpty) return null;
+  return LocalMediaLocalizer.worldDir(worldId);
 }
 
 Future<List<String>> _localizeAll(List<String> paths, String? ownerDir) async {

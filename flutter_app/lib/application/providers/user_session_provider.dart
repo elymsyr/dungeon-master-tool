@@ -93,7 +93,6 @@ class UserSessionNotifier extends StateNotifier<bool> {
   }
 
   void _invalidateAll() {
-    _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
     _ref.invalidate(allTemplatesProvider);
   }
