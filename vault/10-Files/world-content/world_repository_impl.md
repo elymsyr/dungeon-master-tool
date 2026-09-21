@@ -5,7 +5,7 @@ path: flutter_app/lib/data/repositories/world_repository_impl.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-09-21
 tags: [file]
 ---
 
@@ -41,6 +41,7 @@ tags: [file]
 - **`save` (`_saveToDb`)**: bulk path — full-replace `world_entities` ONLY when payload contains the `entities` key (PR-B5 beta-enter wipe defense: a metadata-only payload must NOT wipe rows). Same key-presence rule for `map_data` (upsert into `world_map_data`) and `sessions` (full-replace `world_sessions`: rows absent from the incoming list are deleted). **These granular writes are mandatory, not a nicety** — `_loadFromDb` PREFERS those rows over the settings blob, so writing only the blob left incoming map/sessions silently shadowed on any target that already had rows; LAN sync and cloud restore both looked like "the map never arrived". Entries flagged `synthFlagKey` (built-in synth) are never persisted. `_touchWorld` is UPDATE-only (INSERT path needs NOT-NULL worldName).
 - **`saveSessions`** strips typed columns (id/name/is_active/sort_order) from the inner blob and writes them to dedicated `world_sessions` columns.
 - **`_purgeWorld`** (cascade): captures package links first, deletes entities/settings/map_data/sessions/installed-packages, then drops any materialized package whose only home was this world (skips `srdCorePackageName`; survives if `countWorldsForPackage > 0`), then clears shares/members/invites/world-packages/map-pins/timeline-pins, finally the `worlds` row.
+- **`copy` VERİ KAYBETTİRİYOR — kullanmadan önce `docs/KNOWN_ISSUES.md`'e bak.** Kaynak payload'u olduğu gibi yeniden yazıyor, yani entity'ler **kaynak id'lerini** koruyor. `world_entities` birincil anahtarı global (`{id}`, `{worldId, id}` değil) ve `upsertAll` `insertAllOnConflictUpdate` kullanıyor: satırlar eklenmiyor, var olan satırın `world_id`'si kopyanınkiyle **güncelleniyor**. Sonuç: kopya dolu, kaynak boş. Doğrulandı (1 kart → kaynak 0 / kopya 1). Çözüm entity id'lerini (ve dünya içi referanslarını) yeniden haritalamak ya da PK'yı genişletmek.
 - `_builtinCategoryJsonCache` caches the generated built-in category JSON (generator is deterministic except timestamps).
 
 ## Notes

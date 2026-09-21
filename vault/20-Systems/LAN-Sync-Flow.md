@@ -28,7 +28,7 @@ kayıt" yolu yeniden kullanıldı; yeni merge mantığı yazılmadı.
 - [[lan_device_store]] — bu cihazın kimliği + kalıcı eşleşme kayıtları.
 - [[lan_sync_server]] — host: `HttpServer` + presence beacon + eşleşme uçları.
 - [[lan_sync_client]] — imzalı çağrılar, `/pair` el sıkışması, presence dinleyici.
-- [[lan_sync_session]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
+- [[content_codec]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
 - `lan_sync_provider.dart` — durum makinesi; `syncAll()` ve eşleşme aksiyonları.
 - `lan_sync_dialog.dart` — tek ekran: QR + cihaz listesi + **Eşle** / **Cihaz ekle**.
 
@@ -100,12 +100,12 @@ Medya olarak iki kaynak taranır:
    için yol yeniden yazımı ona dokunmuyor. Baytlar taşınmadığı sürece karşı
    cihaz resmi ancak internete çıkıp indirebiliyordu — LAN eşlemesinin vaadi
    ise tam tersi. Blob içerik-adresli olduğu için yeniden hash'lenmez; dosya
-   adındaki sha zaten `LanMediaEntry.sha256`'dır.
+   adındaki sha zaten `ContentMediaEntry.sha256`'dır.
 
 Alıcıda `AssetRefResolver` önce `ContentStore`'a bakar (servis katmanına hiç
 uğramadan), böylece eşlenen resim giriş yapılmamış / offline durumda da açılır.
 
-Blob'un **dışında** kalan ama dünyaya ait olan iki şey `LanItemPayload.extras`
+Blob'un **dışında** kalan ama dünyaya ait olan iki şey `ContentItemPayload.extras`
 ile taşınır — blob cloud-backup kontratı olduğu için genişletilmedi:
 - `installed_packages` — dünya ↔ paket bağlantıları. Taşınmazsa karşı cihaz
   dünyayı paketlerinden kopuk görür (built-in SRD sentezi boş kalır);
@@ -136,14 +136,14 @@ edilen içeriğin üzerine yazıyordu.
 
 ### Görünümün zaman damgası
 İçerik hiç değişmeden yalnız "ne açık" değiştiğinde de eşleme tetiklensin diye
-manifest satırında ikinci bir alan var: `LanItemRef.viewUpdatedAt`
+manifest satırında ikinci bir alan var: `ContentItemRef.viewUpdatedAt`
 (`UiState.viewTouchedByWorld[worldName]`). LWW karşılaştırması
 `effectiveUpdatedAt = max(updatedAt, viewUpdatedAt)` üzerinden yapılır; alıcı
 world satırının **içerik** zaman damgasını kirletmez (aksi hâlde sırf sekme
 açmak buluta yeniden yükleme tetiklerdi).
 
 ### Yeniden adlandırma zaman damgası
-`LanItemRef.renamedAt` — world, package ve character item'larında taşınır.
+`ContentItemRef.renamedAt` — world, package ve character item'larında taşınır.
 `renameWorld()` / `renamePackage()` çağrıldığında ilgili tablonun
 `renamed_at` kolonu `DateTime.now()` ile damgalanır; klasör de yeniden
 adlandırılır. Karakterlerde `renamed_at`, `CharacterRepository.save()`
@@ -172,7 +172,7 @@ kendi damgasıyla ayrı yarıştırıyor:
 | settings üst anahtarları (`combat_state`, `mind_maps`, `map_view`, …) | blob içindeki `_section_updated_at` haritası |
 | `world_schema`, `template_*` | item seviyesi `updatedAt` (bölüm damgası yok) |
 
-Damgalar `LanItemPayload.extras.section_stamps` ile taşınıyor; alanı olmayan
+Damgalar `ContentItemPayload.extras.section_stamps` ile taşınıyor; alanı olmayan
 (eski sürüm) eşten gelen item'da harita boş kalır ve karşılaştırma item
 seviyesindeki `updatedAt`'e — yani eski davranışa — düşer. Eşitlikte **yerel**
 kazanır, böylece iki cihaz arasında ping-pong olmuyor.
@@ -230,7 +230,7 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 - `/pair`'e IP başına 3 deneme → 30 sn blok + QR/PIN yakılır. **Kurulmuş
   eşleşmeler etkilenmez** — üçüncü bir cihaz süren eşlemeyi düşüremesin.
 - Protokolde query string yok; parametreler gövdede, imza ayrışamaz.
-- `LanSyncSession.resolveMedia` veri kökü dışına çıkan yolu reddeder; yüklenen
+- `ContentCodec.resolveMedia` veri kökü dışına çıkan yolu reddeder; yüklenen
   medya sha256 doğrulanmadan diske yazılmaz.
 - **Şifreleme yok, kimlik doğrulama var.** v1'deki 6 haneli PIN yerine artık
   256-bit kalıcı sır kullanıldığı için eşik yükseldi. Üst yol: TLS ya da AES
