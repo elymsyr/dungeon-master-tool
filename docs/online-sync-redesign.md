@@ -864,7 +864,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 
 | Faz | Ne | Çıkış kriteri | Bulut | Durum |
 |---|---|---|---|---|
-| ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (deploy bekliyor) |
+| ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (2026-09-21 deploy edildi) |
 | ~~**1**~~ | ZIP import/export + codec'in LAN'dan çıkarılması | dünya export → temiz kurulumda import → aynı dünya | hayır | ✅ bitti |
 | ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
 | 3 | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | taslak |
@@ -921,10 +921,13 @@ tam da amaçtı. Faz 4'ün başında, kolonlar bilindiğinde, **tek seferde**.
 
 *Tek iş. Worker tarafı, istemciye dokunmuyor, geri alması kolay.*
 
-**Durum:** uygulandı. `rate_limit.ts` silindi, üç limiter de platform
-binding'i (`CATALOG_RL` / `DL_RL` / `UL_RL`). `npm run typecheck` ve
-`wrangler deploy --dry-run` temiz. **Deploy edilmedi** — `wrangler deploy`
-kullanıcının kararı.
+**Durum:** uygulandı ve **2026-09-21'de deploy edildi**. `rate_limit.ts`
+silindi, üç limiter de platform binding'i (`CATALOG_RL` / `DL_RL` / `UL_RL`).
+`npm run typecheck` ve `wrangler deploy --dry-run` temiz.
+
+Limitler dakikalık ve **per-colo**: `DL_RL` 600/60s, `UL_RL` 20/60s,
+`CATALOG_RL` değişmedi. Yükleme tavanı dar görünüyorsa tek dokunuş
+`wrangler.toml` + yeniden deploy.
 
 ### Bugünkü durum
 
