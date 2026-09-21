@@ -25,31 +25,40 @@ bucket_name = "dmt-assets"
 [triggers]
 crons = ["0 * * * *"]
 
-# ── KV namespace (rate limit counter) ────────────────────────────────────────
-# Önce oluştur: wrangler kv:namespace create RATE_KV
-# Çıkan id'yi aşağıya yapıştır.
-[[kv_namespaces]]
-binding = "RATE_KV"
-id = "c7108c256a5342389b036d5bfa80cc7a"
-
-# ── Rate limiting binding (public catalog GET) ───────────────────────────────
-# Katalog GET'i KV sayacı kullanamaz: tek paket kurulumu ~1000 görsel çekiyor,
-# her istek bir KV write demek ve free tier günde 1000 write veriyor. Platformun
-# yerleşik limiter'ı sayacı edge'de tutuyor — kota yok, maliyet yok.
+# ── Rate limiting binding'leri ───────────────────────────────────────────────
+# Hiçbiri KV sayacı kullanmaz: tek paket kurulumu ~1000 görsel çekiyor, her
+# istek bir KV write demek ve free tier günde 1000 write veriyor — sayaç günün
+# ortasında ölüp fail-open geçiyordu. Platformun yerleşik limiter'ı sayacı
+# edge'de tutuyor: kota yok, maliyet yok, kaybolmuyor.
+#
+# ponytail: `period` yalnızca 10 veya 60 olabiliyor, yani saatlik tavan bu
+# binding ile ifade edilemez — eski DOWNLOAD/UPLOAD_LIMIT_PER_HOUR sayıları
+# dakikalığa çevrildi. Burası bir abuse freni; gerçek tavanlar R2 kotası ve
+# `KIND_MAX_BYTES` (dosya başı boyut). Saatlik tavan gerçekten gerekirse
+# Durable Object gerekir.
 [[ratelimits]]
-name = "CATALOG_RL"
+name = "CATALOG_RL"             # public /catalog GET, IP başına
 namespace_id = "1001"
 simple = { limit = 300, period = 60 }
+
+[[ratelimits]]
+name = "DL_RL"                  # /assets GET, kullanıcı başına
+namespace_id = "1002"
+simple = { limit = 600, period = 60 }
+
+[[ratelimits]]
+name = "UL_RL"                  # /assets PUT, kullanıcı başına
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
 
 # ── Public env vars ──────────────────────────────────────────────────────────
 # Not: supabase_url client tarafında da görünür, secret değildir.
 [vars]
 SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"
 MAX_UPLOAD_BYTES = "20971520"           # 20 MB per item
-# 20 idi — talep-üzerine medya (Phase C) ile bir oyuncunun dünyaya ilk
-# katılışı paylaşılmış her kart görselini tek tek çekiyor ve 20'de 429 yiyordu.
-# İçerik-adresli oldukları için her dosya bir kez inip kalıcı cache'leniyor,
-# yani burst meşru. Bu sayı bir abuse freni; asıl tavan `transient_max_file_bytes`
-# (dosya başı 100 MB) ve havuz LRU'su.
-DOWNLOAD_LIMIT_PER_HOUR = "10000"
-UPLOAD_LIMIT_PER_HOUR = "60"
+# İndirme/yükleme limitleri artık burada değil, yukarıdaki [[ratelimits]]
+# bloklarında. Talep-üzerine medya (Phase C) ile bir oyuncunun dünyaya ilk
+# katılışı paylaşılmış her kart görselini tek tek çekiyor; içerik-adresli
+# oldukları için her dosya bir kez inip kalıcı cache'leniyor, yani burst meşru
+# ve DL limiti ona göre geniş. Asıl tavan `transient_max_file_bytes` (dosya
+# başı 100 MB) ve havuz LRU'su.
