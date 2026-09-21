@@ -24,18 +24,27 @@ npx wrangler r2 bucket create dmt-assets
 Dashboard > R2 > `dmt-assets` > Settings: **public access KAPALI** kalmalı.
 Custom domain bağlama. Erişim sadece Worker üzerinden.
 
-### 3. KV namespace (rate limit counter)
-```bash
-npx wrangler kv:namespace create RATE_KV
-```
-Çıktıdaki `id` değerini [wrangler.toml](wrangler.toml) içindeki
-`REPLACE_WITH_KV_NAMESPACE_ID` yerine yaz.
+### 3. Rate limit
+Ayrı bir kurulum adımı yok — üç limiter de platformun `[[ratelimits]]`
+binding'i ([wrangler.toml](wrangler.toml)), `wrangler deploy` ile gelir.
+Sayaç edge'de tutulur; KV kotası harcamaz.
+
+| Binding | Kapsam | Anahtar | Varsayılan |
+|---|---|---|---|
+| `CATALOG_RL` | `GET /catalog/*` | IP | 300 / 60 s |
+| `DL_RL` | `GET /assets/*` | userId | 600 / 60 s |
+| `UL_RL` | `PUT /assets/*` | userId | 20 / 60 s |
+
+Limiti değiştirirken [src/worker.ts](src/worker.ts) başındaki
+`*_LIMIT_PER_MIN` sabitlerini de güncelle — 429 gövdesinde bildirilen
+sayılar oradan gelir. `period` yalnızca `10` veya `60` olabilir.
 
 ### 4. Environment değişkenleri
 
 **Public (`[vars]`):** [wrangler.toml](wrangler.toml) içinde düzenle.
 - `SUPABASE_URL` → `https://<project-ref>.supabase.co`
-- Limitler (download/upload/hour, max upload bytes) istersen ayarla.
+- `MAX_UPLOAD_BYTES` istersen ayarla. Rate limitler `[vars]`'ta değil,
+  yukarıdaki [[ratelimits]] bloklarında.
 
 **Secret:**
 ```bash
@@ -61,12 +70,11 @@ npx wrangler deploy
 `--dart-define=DMT_WORKER_URL=...` olarak kullanacaksın.
 
 ### 7. Maliyet izleme
-Dashboard > Workers > Analytics → KV ops ve request count'u izle.
+Dashboard > Workers > Analytics → request count ve R2 ops'u izle.
 
-ONLINE_REPORT §10.2: KV free tier **1k write/gün**. Saatlik bucket pattern'i
-sayesinde ortalama bir kullanıcı saatte 1 write yapar, ama 20+ aktif
-paralel kullanıcıda limit tehlikeye girer. Bu noktada Workers Paid ($5/ay)
-plana geç.
+Rate limit artık KV kotası harcamıyor (bkz. A.3), yani free tier'ın 1k
+write/gün sınırı Worker'ı sınırlamıyor. İzlenecek tavanlar R2 depolama +
+Class A/B operasyon sayıları.
 
 ---
 
@@ -144,7 +152,9 @@ curl -i "$WORKER_URL/assets/$USER_ID/test-campaign/$SHA.png" \
 ```
 
 ### 7. Rate limit testi
-Yukarıdaki GET'i arka arkaya 21 defa çağır → 21. istekte **429** + `Retry-After` header.
+Yukarıdaki GET'i bir dakika içinde `DL_RL` limitinden (600) fazla çağır →
+**429** + `Retry-After: 60`. Denemesi kolay olsun diye
+[wrangler.toml](wrangler.toml)'daki `DL_RL` limitini geçici olarak küçült.
 
 ---
 

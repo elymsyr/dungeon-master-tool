@@ -8,14 +8,13 @@ tags: [moc]
 # Backend Infra — Map of Content
 
 > [!summary] Scope
-> Server side: Supabase Postgres (79 numbered migrations, RLS policies, RPC functions) + the Cloudflare R2 worker (asset/catalog/admin routes, JWT verify, RLS calls, rate limiting). The "Camera Host Services" analogue — everything the client talks to over the network.
+> Server side: Supabase Postgres (79 numbered migrations, RLS policies, RPC functions) + the Cloudflare R2 worker (asset/catalog/admin routes, JWT verify, RLS calls, platform rate limiting). The "Camera Host Services" analogue — everything the client talks to over the network.
 
 ## Key Files
 - [[worker]] (`cloudflare/src/worker.ts`) — routes: `/assets/*`, `/catalog/*`, `/transient/*`, `/admin/*`.
 - [[worker_jwt]] (`jwt.ts`) — Supabase token verification.
 - [[worker_rls]] (`rls.ts`) — RPC calls for access/quota checks.
-- [[worker_rate_limit]] (`rate_limit.ts`) — KV-backed leaky-bucket limits.
-- [[wrangler_config]] (`wrangler.toml`) — R2 bucket, KV, env vars, limits.
+- [[wrangler_config]] (`wrangler.toml`) — R2 bucket, `[[ratelimits]]` binding'leri, env vars. Tüm rate limiting burada; KV sayacı 2026-09-21'de kaldırıldı.
 - [[migrations-auth-social]] — 001–005 backups/assets/social/marketplace.
 - [[migrations-online-worlds]] — 026 shared worlds + invites + realtime mirror.
 - [[migrations-media-storage]] — 053/065 free-media bucket + transient LRU pool.

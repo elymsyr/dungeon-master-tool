@@ -22,7 +22,6 @@
 // ============================================================================
 
 import { JwtError, verifyJwt } from './jwt';
-import { checkRateLimit } from './rate_limit';
 import {
   checkAssetAccess,
   checkPubUploadAllowed,
@@ -30,16 +29,20 @@ import {
   popTransientEvictQueue,
 } from './rls';
 
+/// Platform rate limiter binding'i. Sayaç edge'de tutulur — KV write
+/// harcamaz, kota dolunca kaybolmaz. Limitler wrangler.toml'da.
+interface RateLimiter {
+  limit(o: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface Env {
   R2_BUCKET: R2Bucket;
-  RATE_KV: KVNamespace;
-  /// Platform rate limiter — public catalog GET'i için. Bkz. wrangler.toml.
-  CATALOG_RL: { limit(o: { key: string }): Promise<{ success: boolean }> };
+  CATALOG_RL: RateLimiter; // public /catalog GET, IP başına
+  DL_RL: RateLimiter; // /assets GET, kullanıcı başına
+  UL_RL: RateLimiter; // /assets PUT, kullanıcı başına
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   MAX_UPLOAD_BYTES: string;
-  DOWNLOAD_LIMIT_PER_HOUR: string;
-  UPLOAD_LIMIT_PER_HOUR: string;
   // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep +
   // /catalog/* write gate.
   ADMIN_TOKEN?: string;
@@ -57,6 +60,13 @@ const CORS_HEADERS: Record<string, string> = {
 // Bilinmeyen/eksik kind MAX_UPLOAD_BYTES ceiling'ine düşer (eski client uyumu).
 // Ücretsiz kind'ler (character_portrait/world_cover/package_cover) normalde
 // Worker'a hiç gelmez — Supabase Storage'a gider — ama savunma için listede.
+// 429 gövdesinde/başlığında bildirilen sayılar. Platform limiter yalnızca
+// { success } döndürüyor, sayaç ya da reset vermiyor — bu yüzden limitler
+// wrangler.toml'daki [[ratelimits]] blokları ile elle senkron tutulur.
+const CATALOG_LIMIT_PER_MIN = 300;
+const DL_LIMIT_PER_MIN = 600;
+const UL_LIMIT_PER_MIN = 20;
+
 const KIND_MAX_BYTES: Record<string, number> = {
   character_portrait: 4 * 1024 * 1024,
   world_cover: 4 * 1024 * 1024,
@@ -167,14 +177,8 @@ async function handleDownload(
   userId: string,
   r2Key: string,
 ): Promise<Response> {
-  const rl = await checkRateLimit(
-    env.RATE_KV,
-    userId,
-    'dl',
-    parseInt(env.DOWNLOAD_LIMIT_PER_HOUR, 10),
-  );
-  if (!rl.allowed) {
-    return rateLimitedResponse(rl.limit, rl.resetInSeconds);
+  if (!(await env.DL_RL.limit({ key: userId })).success) {
+    return rateLimitedResponse(DL_LIMIT_PER_MIN, 60);
   }
 
   let allowed: boolean;
@@ -246,14 +250,8 @@ async function handleUpload(
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
 
-  const rl = await checkRateLimit(
-    env.RATE_KV,
-    userId,
-    'ul',
-    parseInt(env.UPLOAD_LIMIT_PER_HOUR, 10),
-  );
-  if (!rl.allowed) {
-    return rateLimitedResponse(rl.limit, rl.resetInSeconds);
+  if (!(await env.UL_RL.limit({ key: userId })).success) {
+    return rateLimitedResponse(UL_LIMIT_PER_MIN, 60);
   }
 
   // Effective limit = per-kind limit; bilinmeyen/eksik kind MAX_UPLOAD_BYTES
@@ -408,7 +406,7 @@ async function handleCatalogGet(
   // browsing + installing a catalog issues many GETs.
   const ip = request.headers.get('CF-Connecting-IP') ?? 'anon';
   if (!(await env.CATALOG_RL.limit({ key: ip })).success) {
-    return rateLimitedResponse(300, 60);
+    return rateLimitedResponse(CATALOG_LIMIT_PER_MIN, 60);
   }
 
   const object = await env.R2_BUCKET.get(r2Key);
