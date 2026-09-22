@@ -16,7 +16,7 @@ tags: [moc]
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
 >
-> **Bulut aynası push'u** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir. Kuyruk yok: `updated_at > son push damgası` taraması. Geri okuma henüz yok (Faz 5).
+> **Bulut aynası** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir; Faz 5a'dan beri dünyayı geri de okur. Kuyruk yok, CDC yok: giderken `updated_at > son push damgası` taraması, gelirken `get_world_delta(world, since)` tek çağrısı.
 >
 > Supabase şemasının kendisi ([[Backend-Infra]]) ve tablo tanımları ([[Data-Layer]]) bu domainin değil.
 
@@ -38,9 +38,11 @@ tags: [moc]
 - [[lan_sync_server]] — host: HttpServer + presence beacon + eşleşme uçları.
 - [[lan_sync_client]] — `/pair` el sıkışması, imzalı çağrılar, presence dinleyici.
 
-**Bulut aynası push'u** (Faz 4a–4b — `docs/online-sync-redesign.md` §4.6–§4.7):
-- [[cloud_push_service]] — watermark taraması, satır eşlemesi, tombstone'lar, reddedilen satır kuralı. İki kapsam: dünya (`pushWorld`) ve paket (`pushPackage`, `owner_id` kapsamlı).
-- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici; `tick` → dünya turu → paket turu.
+**Bulut aynası** (Faz 4a–5a — `docs/online-sync-redesign.md` §4.6–§4.8):
+- [[cloud_mirror_tables]] — yerel ↔ bulut kolon eşlemesinin **tek** bildirimi; iki servis de bunu okuyor.
+- [[cloud_push_service]] — giden yön: watermark taraması, tombstone'lar, reddedilen satır kuralı. İki kapsam: dünya (`pushWorld`) ve paket (`pushPackage`, `owner_id` kapsamlı).
+- [[cloud_pull_service]] — gelen yön: `get_world_delta` sayfaları, LWW uzlaştırması, tombstone uygulaması, `dmt-content://` → yerel yol.
+- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici; `tick` → dünya turu → paket turu, dünya açılışında bir kez `syncOnOpen` (**önce push, sonra pull**).
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):
 - [[world_sync_service]] — beş tabloya Realtime abonelik + birleşik CDC event stream'i.
@@ -54,6 +56,8 @@ tags: [moc]
 ## Data Flow
 
 **Yerel yazma:** Edit → [[pending_write_buffer]] debounce → Drift. Bitti. Kuyruk yok, bulut yok.
+
+**Bulut aynası:** dünya açılışı → `syncOnOpen` → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihazın değişikliğini canlı haber veren bir sinyal **henüz yok** (Realtime `world_revisions` Faz 5b).
 
 **Paylaşım:** DM "Paylaş" → görseller `AssetRef`'e → `entity_shares` satırı **gövdesiyle** → CDC → oyuncunun [[world_mirror_applier]]'ı blob'a yazar. Adımlar: [[Share-Broadcast-Flow]].
 

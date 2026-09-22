@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'cloud_mirror_tables.dart';
 import 'shared_media_courier.dart';
 
 /// Faz 4 — yereldeki dünya satırlarını bulut aynasına gönderir.
@@ -189,7 +190,7 @@ class CloudPushService {
   /// Tombstone yazıldıktan sonra aynı satır yerelde geri geldi mi? Geldiyse
   /// damgası tazelenir ve `true` döner.
   Future<bool> _resurrected(String cloudTable, String id, String scopeId) async {
-    final local = _localTableOf[cloudTable];
+    final local = localTableOf[cloudTable];
     if (local == null) return false;
     final where = cloudTable == 'world_installed_packages'
         ? 'world_id = ? AND package_id = ?'
@@ -219,7 +220,7 @@ class CloudPushService {
     Map<String, List<String>> dmOnlyKeys,
   ) async {
     final out = <CloudPushBatch>[];
-    for (final t in _mirrorTables) {
+    for (final t in mirrorTables) {
       final rows = await _collectTable(t, worldId, since, dmOnlyKeys);
       if (rows.isNotEmpty) out.add(CloudPushBatch(t.cloud, rows));
     }
@@ -237,7 +238,7 @@ class CloudPushService {
     String ownerId,
   ) async {
     final out = <CloudPushBatch>[];
-    for (final t in _packageTables) {
+    for (final t in packageTables) {
       final rows = await _collectTable(t, packageId, since, const {},
           ownerId: ownerId);
       if (rows.isNotEmpty) out.add(CloudPushBatch(t.cloud, rows));
@@ -246,7 +247,7 @@ class CloudPushService {
   }
 
   Future<List<Map<String, dynamic>>> _collectTable(
-    _MirrorTable t,
+    MirrorTable t,
     String scopeId,
     DateTime since,
     Map<String, List<String>> dmOnlyKeys, {
@@ -296,13 +297,13 @@ class CloudPushService {
         if (m.containsKey(e.key)) m[e.value] = m.remove(e.key);
       }
       switch (t.owner) {
-        case _Owner.own:
+        case MirrorOwner.own:
           break;
         // Mind map: DM'in satırında NULL, oyuncununkinde dolu (§2.9).
-        case _Owner.nul:
+        case MirrorOwner.nul:
           m['owner_id'] = null;
         // Paket tabloları kullanıcı kapsamlı; RLS tek kolona bakıyor.
-        case _Owner.self:
+        case MirrorOwner.self:
           m['owner_id'] = ownerId;
       }
       if (t.cloud == 'world_entities') {
@@ -464,189 +465,3 @@ class CloudPushResult {
 
   bool get ok => !skipped && error == null;
 }
-
-/// Yerel tablo → bulut tablosu eşlemesi. Kolon adları iki tarafta da aynı
-/// (Drift SQL'i snake_case üretiyor), o yüzden eşleme bir isim listesi.
-class _MirrorTable {
-  const _MirrorTable(
-    this.local,
-    this.cloud, {
-    required this.cols,
-    this.dateCols = const ['updated_at'],
-    this.mediaCols = const [],
-    this.boolCols = const [],
-    this.jsonCols = const [],
-    this.rename = const {},
-    this.scope = 'world_id',
-    this.owner = _Owner.own,
-    this.sinceAll = false,
-  });
-
-  final String local;
-  final String cloud;
-  final List<String> cols;
-  final List<String> dateCols;
-
-  /// Yerel yol taşıyabilen kolonlar — gönderilirken içerik ref'ine çevrilir.
-  final List<String> mediaCols;
-
-  /// SQLite'ta 0/1 int, Postgres'te `boolean` olan kolonlar.
-  final List<String> boolCols;
-
-  /// Yerelde TEXT, bulutta `jsonb` olan kolonlar.
-  final List<String> jsonCols;
-
-  /// Yerel kolon adı → bulut kolon adı; ikisi ayrıştığında.
-  final Map<String, String> rename;
-
-  /// Taramanın kapsam kolonu: dünya tablolarında `world_id`, paket
-  /// çocuklarında `package_id`, paketin kendi satırında `id`.
-  final String scope;
-
-  /// `owner_id` nereden geliyor.
-  final _Owner owner;
-
-  /// Damga yok sayılsın mı — FK hedefi olan tek satırlık ebeveyn tablo.
-  final bool sinceAll;
-}
-
-/// `owner_id` kolonunun kaynağı.
-enum _Owner {
-  /// Yerel satırda zaten var, ya da bulut tablosunda kolon yok.
-  own,
-
-  /// Buluta NULL yazılır — mind map'te "DM'in nüshası" demek.
-  nul,
-
-  /// Oturumdaki kullanıcı.
-  self,
-}
-
-/// Bulut tablosu → yerel tablo. Tombstone'un yalan söyleyip söylemediğini
-/// (satır geri geldi mi) sormak için gerekiyor.
-final Map<String, String> _localTableOf = {
-  for (final t in _mirrorTables) t.cloud: t.local,
-  for (final t in _packageTables) t.cloud: t.local,
-  'world_combatants': 'combatants',
-};
-
-/// Paketin ayna tabloları (§2.2 BÖLÜM D). Ebeveyn **önce** gider: çocukların
-/// FK'sı `user_packages`'a bakıyor.
-const List<_MirrorTable> _packageTables = [
-  _MirrorTable(
-    'packages',
-    'user_packages',
-    cols: ['id', 'name', 'state_json'],
-    dateCols: ['created_at', 'updated_at'],
-    mediaCols: ['state_json'],
-    scope: 'id',
-    owner: _Owner.self,
-    sinceAll: true,
-  ),
-  _MirrorTable(
-    'package_schemas',
-    'user_package_schemas',
-    cols: [
-      'id', 'package_id', 'name', 'version', 'base_system', 'description',
-      'categories_json', 'encounter_config_json', 'encounter_layouts_json',
-      'metadata_json', 'template_id', 'template_hash',
-      'template_original_hash',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    scope: 'package_id',
-    owner: _Owner.self,
-  ),
-  _MirrorTable(
-    'package_entities',
-    'user_package_entities',
-    cols: [
-      'id', 'package_id', 'category_slug', 'name', 'source', 'description',
-      'image_path', 'images_json', 'tags_json', 'dm_notes', 'pdfs_json',
-      'location_id', 'fields_json',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    mediaCols: ['image_path', 'images_json', 'fields_json'],
-    scope: 'package_id',
-    owner: _Owner.self,
-  ),
-];
-
-const List<_MirrorTable> _mirrorTables = [
-  _MirrorTable(
-    'world_entities',
-    'world_entities',
-    cols: [
-      'id', 'world_id', 'category_slug', 'name', 'source', 'description',
-      'image_path', 'images_json', 'tags_json', 'dm_notes', 'pdfs_json',
-      'location_id', 'fields_json', 'package_id', 'package_entity_id',
-      'linked',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    mediaCols: ['image_path', 'images_json', 'fields_json'],
-    boolCols: ['linked'],
-  ),
-  _MirrorTable('world_settings', 'world_settings',
-      cols: ['world_id', 'settings_json'], mediaCols: ['settings_json']),
-  _MirrorTable('world_map_data', 'world_map_data',
-      cols: ['world_id', 'data_json'], mediaCols: ['data_json']),
-  _MirrorTable('world_sessions', 'world_sessions',
-      cols: ['id', 'world_id', 'name', 'data_json', 'is_active', 'sort_order'],
-      mediaCols: ['data_json'],
-      boolCols: ['is_active']),
-  _MirrorTable(
-    'world_mind_map_nodes',
-    'world_mind_map_nodes',
-    cols: [
-      'id', 'world_id', 'map_id', 'label', 'node_type', 'x', 'y', 'width',
-      'height', 'entity_id', 'image_url', 'content', 'style_json', 'color',
-    ],
-    mediaCols: ['image_url'],
-    owner: _Owner.nul,
-  ),
-  _MirrorTable(
-    'world_mind_map_edges',
-    'world_mind_map_edges',
-    cols: ['id', 'world_id', 'map_id', 'source_id', 'target_id', 'label',
-        'style_json'],
-    owner: _Owner.nul,
-  ),
-  _MirrorTable(
-    'encounters',
-    'world_encounters',
-    cols: [
-      'id', 'world_id', 'session_id', 'name', 'map_path', 'token_size',
-      'grid_size', 'grid_visible', 'grid_snap', 'feet_per_cell', 'fog_data',
-      'annotation_data', 'encounter_layout_id', 'turn_index', 'round',
-      'token_positions_json', 'token_size_multipliers_json', 'sort_order',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    mediaCols: ['map_path'],
-    boolCols: ['grid_visible', 'grid_snap'],
-  ),
-  _MirrorTable('map_pins', 'world_map_pins',
-      cols: ['id', 'world_id', 'x', 'y', 'label', 'pin_type', 'entity_id',
-          'note', 'color', 'style_json']),
-  _MirrorTable('timeline_pins', 'world_timeline_pins',
-      cols: ['id', 'world_id', 'x', 'y', 'day', 'note', 'entity_ids_json',
-          'session_id', 'parent_ids_json', 'color']),
-  // Karakterler: bugün `WorldMirrorService.pushCharacter` anında yazıyor,
-  // ama o yol tek atış — çevrimdışı yapılan düzenleme buluta hiç çıkmıyordu.
-  // Tur bunu kapatıyor; iki yol da aynı satıra idempotent upsert yapıyor.
-  // `payload_json` **medya çevirisine girmiyor**: blob'un byte-for-byte
-  // korunması kuralı (world_characters_dao) jsonDecode/encode turundan ağır
-  // basıyor; karakter görselleri bugünkü gibi mutlak yolla gidiyor.
-  _MirrorTable(
-    'world_characters',
-    'world_characters',
-    cols: [
-      'id', 'world_id', 'owner_id', 'template_id', 'template_name',
-      'payload_json', 'referenced_entity_ids_json',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    jsonCols: ['referenced_entity_ids_json'],
-    rename: {'referenced_entity_ids_json': 'referenced_entity_ids'},
-  ),
-  _MirrorTable('installed_packages', 'world_installed_packages',
-      cols: ['world_id', 'package_id', 'package_name', 'package_version'],
-      dateCols: ['installed_at', 'last_synced_at', 'updated_at']),
-];

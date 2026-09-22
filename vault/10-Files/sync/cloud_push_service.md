@@ -31,15 +31,16 @@ tags: [file]
 - Public API: `pushWorld(worldId, {dmOnlyKeys, full})` / `pushPackage(packageId, {full})` → `CloudPushResult`; `unpublishPackage(packageId)`; `collect(worldId, since, dmOnlyKeys)` ve `collectPackage(packageId, since, ownerId)` → `List<CloudPushBatch>` (**ağsız** ara adım, testin girdiği kapı).
 
 ## Dependencies & Links
-- Depends on: [[drift_database]], [[shared_media_courier]] (`refFor` → `dmt-content://`), `isOfflineError`.
+- Depends on: [[cloud_mirror_tables]] (tablo eşlemesi), [[drift_database]], [[shared_media_courier]] (`refFor` → `dmt-content://`), `isOfflineError`.
 - Used by: [[cloud_push_provider]], [[save_sync_indicator]].
+- Karşı yön (gelen): [[cloud_pull_service]].
 - Damga/tombstone sözleşmesi: `sync_stamp.dart` — DAO'lar `stampedNow` ile upsert damgalar, `recordTombstone(s)` ile silme kaydeder.
 - Domain map: [[Sync-and-Realtime]]
 - Spec / reference: `docs/online-sync-redesign.md` §2.3 (CDC değil artımlı çekme), §2.8 (düzenleme zamanı), §4.6 (Faz 4a), §4.7 (Faz 4b).
 
 ## Key Logic / Variables
 - **Turun sırası:** `cutoff = now()` taramadan **önce** alınır (tur sürerken düzenlenen satır bir sonraki tura kalsın) → tombstone'lar → tablo tablo upsert → damga `cutoff`'a çekilir. Hata çıkarsa damga **ilerlemez**: aynı satırlar bir sonraki turda yeniden gider, upsert idempotent olduğu için zararsız.
-- **`_mirrorTables` / `_packageTables`:** yerel→bulut eşlemesi bildirimsel iki liste. Kolon adları çoğunlukla iki tarafta aynı (Drift SQL'i snake_case üretiyor), o yüzden eşleme bir isim listesi + dönüşüm bayrakları: `dateCols` (unix saniye → ISO), `boolCols` (SQLite 0/1 → `boolean`), `mediaCols` (yerel yol → `dmt-content://`), `jsonCols` (TEXT → `jsonb`), `rename` (ayrışan kolon adı), `scope` (tarama kolonu: `world_id` / `package_id` / `id`), `owner` (`owner_id`'nin kaynağı: satırın kendisi / NULL / oturumdaki kullanıcı), `sinceAll` (damgayı yok say).
+- **`mirrorTables` / `packageTables`:** yerel→bulut eşlemesi bildirimsel iki liste, Faz 5a'da [[cloud_mirror_tables]]'a taşındı (pull aynı bildirimi ters yönde okuyor). Kolon adları çoğunlukla iki tarafta aynı (Drift SQL'i snake_case üretiyor), o yüzden eşleme bir isim listesi + dönüşüm bayrakları: `dateCols` (unix saniye → ISO), `boolCols` (SQLite 0/1 → `boolean`), `mediaCols` (yerel yol → `dmt-content://`), `jsonCols` (TEXT → `jsonb`), `rename` (ayrışan kolon adı), `scope` (tarama kolonu: `world_id` / `package_id` / `id`), `owner` (`owner_id`'nin kaynağı: satırın kendisi / NULL / oturumdaki kullanıcı), `sinceAll` (damgayı yok say).
 - **Paket ebeveyni her tur gider:** `user_packages` satırı çocukların FK hedefi. Damgaya baksaydı, yalnız bir kart değişen turda ebeveyn gitmez ve bulutta satır yoksa çocuklar reddedilirdi. Tek satır, ihmal edilebilir maliyet.
 - **Karakterin blob'u açılmıyor:** `payload_json` `mediaCols`'ta **yok** — byte-for-byte koruma kuralı (bkz. `world_characters_dao`) medya çevirisine ağır basıyor. `referenced_entity_ids_json` ise `jsonCols` + `rename` ile `referenced_entity_ids` (jsonb) olarak gidiyor.
 - **Combatant ayrı:** yerel `combatants`'ta `world_id` yok (encounter üzerinden gelir) ve durum etkileri bulutta ayrı satır değil, `conditions_json` kolonu. `_collectCombatants` JOIN'li sorguyu ve koşul katlamasını yapar.
@@ -51,5 +52,5 @@ tags: [file]
 ## Notes
 - Test: `test/application/services/cloud_push_collect_test.dart` (15 test) — `collect` / `collectPackage` üzerinden, ağsız.
 - Bilinçli sınırlar (§4.6, §4.7): `revision` istemcide yazılmıyor, reddedilen satır kullanıcıya gösterilmiyor, uygulama kapanırken "son tur" yok, `updated_at` için ayrı indeks yok, paketin **silinmesi** buluta gitmiyor (bulut kopyasını düşüren tek yol "Yerele al"), `world_characters.is_online` kolonu okunmuyor (Faz 5.5).
-- **Gerçek projede uçtan uca doğrulama bekliyor** ve migration `095` (karakterin sunucu damgasını düşüren trigger) henüz deploy edilmedi — koşulacak adımlar `docs/online-sync-redesign.md` §4.7 "Bekleyen doğrulama".
+- Migration `095` (karakterin sunucu damgasını düşüren trigger) ve `096` (echo guard) **2026-09-22'de deploy edildi**; **gerçek projede uçtan uca doğrulama hâlâ bekliyor** — koşulacak adımlar `docs/online-sync-redesign.md` §4.7 "Bekleyen doğrulama".
 - `sync_tombstones.world_id` artık "kapsam id'si" demek: dünya turunda dünya, paket turunda paket. Kolonu yeniden adlandırmak yan tablonun idempotent DDL'ini kırardı.
