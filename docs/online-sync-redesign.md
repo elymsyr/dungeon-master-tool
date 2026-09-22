@@ -2,6 +2,8 @@
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
 Faz 3.5, 4a ve 4b bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 5+ taslak.
+4a/4b'nin **elle doğrulaması ve migration 095'in deploy'u bekliyor** — koşulacak
+adımlar [§4.7](#47-faz-4b--paket--karakter-pushu--bitti) sonundaki listede.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -871,8 +873,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
 | ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
 | ~~**3.5**~~ | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | ✅ bitti |
-| ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti |
-| ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti |
+| ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti (elle doğrulama bekliyor) |
+| ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy + elle doğrulama bekliyor) |
 | 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
@@ -1511,6 +1513,14 @@ damga = cutoff                      ← yalnız tur temiz bittiyse
 - Geri okuma **yok**: servis hiçbir yerde `select` etmiyor, applier'a
   dokunulmadı. Pull Faz 5.
 
+**Gerçek projede kısmi kanıt (2026-09-22).** Aegis dünyası
+(`47272f9a-baf7-4eb6-acdf-267f8dfc6b4e`) uygulamadan online yapıldı ve
+yereldeki `worlds.last_cloud_push_at` **yazıldı**. Damga yalnız tur ağ hatası
+almadan bittiğinde ilerlediği için bu, oturumun + RLS'in + upsert yolunun
+gerçek Supabase'de çalıştığını gösteriyor. Göstermediği şey satır satır
+doğruluk: reddedilen satır sessizce atlanıp damga yine ilerliyor (aşağıdaki
+"bilinçli sınırlar"). Bulut tarafındaki sayım kontrolü §4.7 sonundaki listede.
+
 ### Uygulamada çıkan farklar
 
 | Belgede yazan | Uygulanan |
@@ -1579,7 +1589,7 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
 | **Pompa iki turlu** | `tick` → dünya turu → paket turu. İkisi sıralı koşuyor, tek `_guarded` kapısından geçiyor |
 | **Paket ekranında anahtar** | `SaveSyncIndicator(isPackage: true)` diyaloğunda "Paketi Online Yap / Yerele Al" (4 dilde 6 yeni l10n anahtarı). Paket ekranı pompayı `MainScreen` ile aynı keep-alive kalıbıyla canlı tutuyor |
 
-### Faz 4b çıkış kriteri — karşılandı
+### Faz 4b çıkış kriteri — testlerle karşılandı
 
 > **paket/karakter de buluta çıkıyor**
 
@@ -1620,6 +1630,69 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
   EXISTS` DDL'ini kırardı; adın yalanı yorumla kapatıldı.
 - **Paket turu yalnız paket açıkken koşuyor.** Hub'dan paketi online yapmak
   yok; anahtar paketin içindeki Save & Sync diyaloğunda.
+### Bekleyen doğrulama
+
+4a ve 4b'nin testleri yeşil ama **ikisi de gerçek projede uçtan uca
+koşturulmadı.** Faz 3 ve 3.5'te olduğu gibi (§4.4, §4.5) burada da elle
+doğrulama yapılana kadar faz "kapandı" sayılmaz. Sırasıyla:
+
+**1. Migration 095 deploy edilmeli.** Tek satır, Supabase SQL editor:
+
+```sql
+DROP TRIGGER IF EXISTS trg_chars_bump_updated ON public.world_characters;
+```
+
+Bu yapılmadan karakter testi yanıltır: sunucu `updated_at`'i kendi saatiyle
+ezmeye devam eder ve §2.8 ihlali gizli kalır.
+
+**2. Dünya turu (4a).** Aegis dünyası zaten online ve damgası yazılmış;
+bulut tarafındaki sayım kontrolü yapılmadı:
+
+```sql
+select count(*) from world_entities
+  where world_id = '47272f9a-baf7-4eb6-acdf-267f8dfc6b4e';   -- yerelde 189
+select revision from world_revisions
+  where world_id = '47272f9a-baf7-4eb6-acdf-267f8dfc6b4e';   -- > 0
+select substr(image_path,1,14), dm_only_keys from world_entities
+  where world_id = '47272f9a-baf7-4eb6-acdf-267f8dfc6b4e'
+    and image_path <> '' limit 5;                            -- dmt-content://
+```
+
+Sayı tutmuyorsa suçlu, sessizce atlanan reddedilmiş satırlardır — `rejected`
+bugün yalnız `debugPrint`'e düşüyor. Yereldeki `image_path`'in `/home/...`
+kalması **doğru**: çeviri yalnız giden kopyada (§4.5).
+
+**3. Paket turu (4b).** Yerelde tek paket var — SRD 5.2.1 Core,
+`d95e214e-ff70-4bb7-9071-222ceb3abaa9`, **2721 kart**, `is_online = 0`. İlk
+tur ~14 parça sürer; daha hızlı bir tur için birkaç kartlık yeni bir paket
+açmak yeterli. Paketi aç → Save & Sync → "Paketi Online Yap":
+
+```sql
+select id, name, revision, updated_at from user_packages;
+select count(*) from user_package_entities where package_id = '<id>';
+select count(*) from user_package_schemas  where package_id = '<id>';
+```
+
+`owner_id` her satırda oturumun uid'i olmalı; RLS başkasına döndürmüyor, boş
+sonuç "yanlış hesapla bakıyorsun" demek olabilir. Ardından artımlı tur (bir
+kartın adını değiştir → 4 sn → satır güncellendi mi), silme (kart sil → 4 sn
+→ satır bulutta yok mu) ve "Yerele al" (ebeveyn gitti mi, çocuklar cascade
+ile gitti mi).
+
+**4. Karakter (4b'nin asıl kazancı).** Bir karakteri düzenle → 4 sn:
+
+```sql
+select id, template_name, owner_id, updated_at, referenced_entity_ids
+from world_characters where world_id = '47272f9a-baf7-4eb6-acdf-267f8dfc6b4e';
+```
+
+`updated_at` **düzenleme saati** olmalı (sunucu saati geldiyse 095
+uygulanmamış), `referenced_entity_ids` gerçek bir dizi olmalı (tırnaklı
+string değil). Asıl senaryo çevrimdışı: internet kapalıyken karakteri düzenle
+→ interneti aç → herhangi bir kartı kurcalayıp turu tetikle → satır buluta
+çıkmalı. Eski doğrudan push yolunda o düzenleme sessizce kayboluyordu; bu
+fazın kapattığı delik tam olarak bu, dolayısıyla **atlanmaması gereken tek
+test** bu.
 
 ---
 
