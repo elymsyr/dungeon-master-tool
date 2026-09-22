@@ -57,6 +57,26 @@ class WorldsDao extends DatabaseAccessor<AppDatabase> with _$WorldsDaoMixin {
     );
   }
 
+  /// Faz 4 push damgası — "bu ana kadarki her satır bulutta". Bir sonraki
+  /// tur yalnızca bundan sonra düzenlenmiş satırları tarar.
+  Future<void> setCloudPushAt(String id, DateTime pushedAt) async {
+    await (update(worlds)..where((t) => t.id.equals(id)))
+        .write(WorldsCompanion(lastCloudPushAt: Value(pushedAt)));
+  }
+
+  /// Faz 4 — dünyanın bulut aynası açık/kapalı. Push kararı çevrimdışıyken de
+  /// verilebilsin diye yerelde duruyor.
+  Future<void> setOnline(String id, bool online) async {
+    await (update(worlds)..where((t) => t.id.equals(id))).write(
+      WorldsCompanion(
+        isOnline: Value(online),
+        // Kapatılan dünya yeniden açıldığında her şey bir kez daha gitsin:
+        // kapalıyken yapılan düzenlemeler damgadan eski kalırdı.
+        lastCloudPushAt: online ? const Value.absent() : const Value(null),
+      ),
+    );
+  }
+
   /// LAN sync: uygulanan item'ın zaman damgasını peer'ınkine sabitler.
   /// Repository `save()` her yazımda `DateTime.now()` basar; restamp olmazsa
   /// çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi.

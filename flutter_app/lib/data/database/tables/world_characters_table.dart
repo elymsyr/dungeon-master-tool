@@ -26,6 +26,9 @@ class WorldCharacters extends Table {
       dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get renamedAt => dateTime().nullable()();
 
+  /// Faz 4 — karakterin bulut aynası açık mı. Multiplayer'da zorunlu (§1.2).
+  BoolColumn get isOnline => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

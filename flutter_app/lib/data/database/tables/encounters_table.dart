@@ -29,6 +29,10 @@ class Encounters extends Table {
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime)();
 
+  /// Faz 4 — **düzenlemenin istemcideki zamanı** (§2.8). Push taramasının
+  /// ("watermark'tan sonra değişenler") tek girdisi; DAO upsert'i damgalar.
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

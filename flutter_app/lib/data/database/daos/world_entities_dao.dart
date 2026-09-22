@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../sync_stamp.dart';
 import '../tables/world_entities_table.dart';
 
 part 'world_entities_dao.g.dart';
@@ -40,16 +41,33 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<int> deleteById(String id) =>
-      (delete(worldEntities)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteById(String id) async {
+    final row = await getById(id);
+    if (row != null) {
+      await recordTombstone('world_entities', id, worldId: row.worldId);
+    }
+    return (delete(worldEntities)..where((t) => t.id.equals(id))).go();
+  }
 
-  Future<int> deleteByIds(List<String> ids) {
-    if (ids.isEmpty) return Future.value(0);
+  Future<int> deleteByIds(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    final rows = await (select(worldEntities)..where((t) => t.id.isIn(ids)))
+        .get();
+    for (final r in rows) {
+      await recordTombstone('world_entities', r.id, worldId: r.worldId);
+    }
     return (delete(worldEntities)..where((t) => t.id.isIn(ids))).go();
   }
 
-  Future<int> deleteByWorld(String worldId) =>
-      (delete(worldEntities)..where((t) => t.worldId.equals(worldId))).go();
+  /// Dünyanın bütün kartlarını düşürür — `save()`'in full-replace yolu ve
+  /// dünya silme. Tombstone yazılır; delete+reinsert durumunda push satırın
+  /// yerelde geri geldiğini görüp tombstone'u atar (bkz. [CloudPushService]).
+  Future<int> deleteByWorld(String worldId) async {
+    final ids = (await getByWorld(worldId)).map((e) => e.id);
+    await recordTombstones('world_entities', ids, worldId: worldId);
+    return (delete(worldEntities)..where((t) => t.worldId.equals(worldId)))
+        .go();
+  }
 
   /// LAN sync: birleştirme sonrası satır damgasını kazanan tarafınkine
   /// sabitler. Bulk `save()` yolu satırları silip yeniden eklediği için

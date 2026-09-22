@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../sync_stamp.dart';
 import '../tables/world_mind_map_edges_table.dart';
 import '../tables/world_mind_map_nodes_table.dart';
 
@@ -35,8 +36,14 @@ class WorldMindMapDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<int> deleteNode(String id) =>
-      (delete(worldMindMapNodes)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteNode(String id) async {
+    final row = await (select(worldMindMapNodes)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (row != null) {
+      await recordTombstone('world_mind_map_nodes', id, worldId: row.worldId);
+    }
+    return (delete(worldMindMapNodes)..where((t) => t.id.equals(id))).go();
+  }
 
   // ── Edges ────────────────────────────────────────────────────────────────
 
@@ -62,8 +69,14 @@ class WorldMindMapDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<int> deleteEdge(String id) =>
-      (delete(worldMindMapEdges)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteEdge(String id) async {
+    final row = await (select(worldMindMapEdges)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (row != null) {
+      await recordTombstone('world_mind_map_edges', id, worldId: row.worldId);
+    }
+    return (delete(worldMindMapEdges)..where((t) => t.id.equals(id))).go();
+  }
 
   Future<void> replaceMap(
     String worldId,
