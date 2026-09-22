@@ -13,6 +13,7 @@ import '../../application/services/content_transfer/content_archive.dart';
 import '../../application/services/content_transfer/content_codec.dart';
 import '../../application/services/content_transfer/content_item.dart';
 import '../l10n/app_localizations.dart';
+import 'compactable_button.dart';
 
 /// `.dmtz` dışa/içe aktarma düğmesi — hub'ın sekmeleri aynısını kullanır,
 /// yalnız [type] değişir.
@@ -62,10 +63,10 @@ class ContentArchiveMenu extends ConsumerWidget {
       );
     }
 
-    return OutlinedButton.icon(
+    return CompactableButton(
       onPressed: () => _openMenu(context, ref, canExport: canExport),
       icon: const Icon(Icons.import_export, size: 18),
-      label: Text(l10n.contentArchiveMenu),
+      label: l10n.contentArchiveMenu,
     );
   }
 

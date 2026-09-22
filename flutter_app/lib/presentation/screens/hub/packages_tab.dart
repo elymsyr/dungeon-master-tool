@@ -26,6 +26,7 @@ import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
 import '../../../application/services/content_transfer/content_item.dart';
 import '../../widgets/content_archive_menu.dart';
+import '../../widgets/compactable_button.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -305,10 +306,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton.icon(
+                  CompactableButton(
                     onPressed: _selectedIndex >= 0 ? _copyPackage : null,
                     icon: const Icon(Icons.content_copy, size: 18),
-                    label: Text(L10n.of(context)!.charCopyToWorldAction),
+                    label: L10n.of(context)!.charCopyToWorldAction,
                   ),
                   const SizedBox(width: 8),
                   ContentArchiveMenu(
@@ -316,12 +317,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     selectedName: _selectedPackage?.name,
                   ),
                   const SizedBox(width: 8),
-                  FilledButton.icon(
+                  CompactableButton(
+                    filled: true,
                     onPressed: _selectedIndex >= 0 && !_isBuiltinSelected()
                         ? () => _deletePackage()
                         : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    label: Text(l10n.btnDelete),
+                    label: l10n.btnDelete,
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.dangerBtnBg,
                       foregroundColor: palette.dangerBtnText,
