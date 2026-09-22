@@ -2153,6 +2153,7 @@
   "thisPlayer": "ce joueur",
   "charsYours": "{count, plural, =1{Votre personnage} other{Vos personnages}}",
   "pendingChoicesTooltip": "{count, plural, =1{1 choix de niveau en attente — ouvrez le personnage pour le résoudre.} other{{count} choix de niveau en attente — ouvrez le personnage pour les résoudre.}}",
+  "contentArchiveMenu": "Transférer",
   "contentArchiveExport": "Exporter vers un fichier (.dmtz)",
   "contentArchiveImport": "Importer depuis un fichier (.dmtz)",
   "contentArchiveExported": "Enregistré : {path}",

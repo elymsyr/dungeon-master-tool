@@ -3212,6 +3212,10 @@
       }
     }
   },
+  "contentArchiveMenu": "Transfer",
+  "@contentArchiveMenu": {
+    "description": "Label on the button that opens the .dmtz export/import menu"
+  },
   "contentArchiveExport": "Export to file (.dmtz)",
   "contentArchiveImport": "Import from file (.dmtz)",
   "contentArchiveExported": "Saved: {path}",

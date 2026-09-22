@@ -21,7 +21,7 @@ tags: [file]
 **Inputs**
 - Providers watched / constructor deps: **yok** — hepsi `static`, yalnız `AppPaths` + `AssetImporter` okur.
 - Reads: dosya sistemi (`File.exists`, kopyalama `AssetImporter` üzerinden).
-- Triggers: her medya seçimi (bkz. *Used by*) ve `LanSyncSession.loadItem` onarım geçişi.
+- Triggers: her medya seçimi (bkz. *Used by*) ve `ContentCodec.loadItem` onarım geçişi.
 
 **Outputs**
 - Public API: `localize(path, {ownerDir, subDir, imagesOnly})`, `localizeAll(...)`, `localizeCharacterImage(path, {characterId})`, `localizeWorldPayload(payload, worldId)`, `localizePackagePayload(payload, packageName)`, `worldDir(worldId)`, `packageDir(name)`, sabitler `mediaSubDir = 'media'` / `filesSubDir = 'files'`.

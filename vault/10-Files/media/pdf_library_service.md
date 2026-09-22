@@ -12,11 +12,11 @@ tags: [file]
 # `pdf_library_service.dart`
 
 > [!abstract] Primary Purpose
-> Bir dünyanın PDF kütüphanesi: açılan her PDF `{worldsDir}/{worldName}/pdfs/` altına kopyalanır ve liste kaynağı **klasörün kendisi**dir. **Tamamen yerel** — Phase D'de bulut paylaşımı (R2 upload + `settings_json['pdf_library']` manifest'i + oyuncu indirmesi) kaldırıldı. PDF'ler cihazdan cihaza LAN sync ile taşınır; veri kökü altında oldukları için `LanSyncSession._mediaFor` onları zaten kapsıyor.
+> Bir dünyanın PDF kütüphanesi: açılan her PDF `{worldsDir}/{worldId}/pdfs/` altına kopyalanır ve liste kaynağı **klasörün kendisi**dir. Klasör Faz 2.5'ten beri dünya **id**'si ile anahtarlı, yani yeniden adlandırma kütüphaneyi taşımıyor. **Tamamen yerel** — Phase D'de bulut paylaşımı (R2 upload + `settings_json['pdf_library']` manifest'i + oyuncu indirmesi) kaldırıldı. PDF'ler cihazdan cihaza LAN sync ile taşınır; veri kökü altında oldukları için `ContentCodec._mediaFor` onları zaten kapsıyor.
 
 ## Inputs / Outputs
 **Inputs**
-- Filesystem: `{AppPaths.worldsDir}/{worldName}/pdfs/`
+- Filesystem: `{AppPaths.worldsDir}/{worldId}/pdfs/`
 - Providers: yok (servis `const`).
 
 **Outputs**

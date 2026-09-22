@@ -1014,8 +1014,8 @@ dünya aktarımı, cihaz değiştirme. LAN silinmeden önce bitmeli (§3.2 Kural
 **Durum:** uygulandı. Codec `lib/application/services/content_transfer/`
 altında (`content_codec.dart`, `content_item.dart`, `world_merge.dart`), zip
 `content_archive.dart`, UI `presentation/widgets/content_archive_menu.dart`.
-`flutter analyze` temiz (0 error/warning), `content_archive_test.dart` ve
-taşınan iki test yeşil.
+`flutter analyze` temiz (0 error/warning); `content_archive_test.dart`,
+`content_archive_menu_test.dart` ve taşınan iki test yeşil.
 
 ### 1.1 — Codec'i `lan_sync/`'ten çıkar
 
@@ -1080,8 +1080,19 @@ Uygulamada bugün **hiçbir yerde dosyaya kaydetme yok** —
   yol snackbar'da gösterilir. Paylaşım sayfası (`share_plus`) bağımlılık
   ekler; gerçekten istenirse eklenir.
 
-Giriş noktaları: hub dünya kartı menüsü, paket listesi, karakter düzenleyici.
-Üçü de aynı servisi çağırır, tip parametresi değişir.
+Giriş noktaları: hub Dünyalar ve Paketler sekmelerindeki buton satırı, bir de
+karakter düzenleyicinin araç çubuğu. Üçü de aynı servisi çağırır, tip
+parametresi değişir.
+
+**Düğmenin biçimi** (2026-09-22 düzeltmesi): hub'da tetikleyici gerçek bir
+`OutlinedButton.icon` — yani yanındaki "Kopyala" ile aynı widget türü, dolayısıyla
+yükseklik/kenarlık/zemin/köşe yarıçapı/dolgu `outlinedButtonTheme`'den geliyor ve
+widget'ta tek bir sabit değer yok. Menü `showMenu` ile açılıyor, uygulamanın öbür
+dokuz menüsü gibi `popupMenuTheme`'e uyuyor. İlk sürüm çıplak bir
+`PopupMenuButton`'dı: içeride `IconButton` üretiyor, yani 48×48 kenarlıksız bir
+kutu olarak satırda sırıtıyordu (komşusu 137×48). Karakter düzenleyicide tek
+eylem (dışa aktarma) kaldığı için menü hiç açılmıyor — oradaki düğme doğrudan
+`IconButton`, geri/ileri düğmeleriyle aynı ölçüde.
 
 ### 1.4 — Import akışı + çakışma
 

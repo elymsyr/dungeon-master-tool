@@ -36,7 +36,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - **`kMaxEntityImages = 5`** — cap per entity image collection (portrait gallery `entity.images` and each schema image field).
-- **Seçilen dosyalar her koşulda önce kopyalanır** — yükleme kararından ÖNCE `LocalMediaLocalizer` ile dünyanın (`{worldsDir}/{ad}/media/`) ya da paketin (`{packagesDir}/{ad}/media/`) klasörüne alınır ve yükleme o kopyalardan yapılır. Ham `Downloads/` yolu asla saklanmaz: LAN eşlemesi taşıyamıyor (`LanSyncSession._mediaFor`) ve kullanıcı orijinali taşırsa resim kayboluyor. Aktif dünya/paket bilinmiyorsa (`_ownerDir` null) kopyalama atlanır.
+- **Seçilen dosyalar her koşulda önce kopyalanır** — yükleme kararından ÖNCE `LocalMediaLocalizer` ile dünyanın (`{worldsDir}/{worldId}/media/`, Faz 2.5'ten beri **id** ile) ya da paketin (`{packagesDir}/{ad}/media/`, paketler hâlâ adla) klasörüne alınır ve yükleme o kopyalardan yapılır. Ham `Downloads/` yolu asla saklanmaz: LAN eşlemesi taşıyamıyor (`ContentCodec._mediaFor`) ve kullanıcı orijinali taşırsa resim kayboluyor. Aktif dünya/paket bilinmiyorsa (`_ownerDir` null) kopyalama atlanır.
 - **`localizeEntityFiles(ref, paths)`** — schema `file`/`pdf` alanlarının resim olmayan ekleri için aynı iş, hedef `{ownerDir}/files/` (PDF kütüphanesinin `pdfs/` klasörüne karışmasın diye ayrı).
 - **`localizeEntityImages(ref, paths)`** — tek işi kopyalama; hedef `_ownerDir` (paket varsa paketin, yoksa aktif dünyanın klasörü). Bulut, oturum ve online-dünya kapıları **kalktı**: hiçbir yükleme yapılmıyor (Phase D).
 - **`cleanupRemovedEntityImageRef` no-ops** when: `readOnly` (built-in/read-only pack), ref not `dmt-asset://` (counted), ref still in `remaining` (dup in same entity), not signed in, non-beta package, or no cleanup service configured.

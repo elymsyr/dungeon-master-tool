@@ -14,11 +14,19 @@ import '../../application/services/content_transfer/content_codec.dart';
 import '../../application/services/content_transfer/content_item.dart';
 import '../l10n/app_localizations.dart';
 
-/// `.dmtz` dışa/içe aktarma menüsü — hub'ın üç sekmesi de aynısını kullanır,
+/// `.dmtz` dışa/içe aktarma düğmesi — hub'ın sekmeleri aynısını kullanır,
 /// yalnız [type] değişir.
 ///
 /// İçe aktarma seçili öğeden bağımsız: dosyanın manifest'i ne tür olduğunu
 /// zaten söylüyor, bu yüzden hangi sekmeden açılırsa açılsın çalışır.
+///
+/// **Görünüm komşularından geliyor, burada sabit değer yok.** Tetikleyici
+/// gerçek bir [OutlinedButton] — yükseklik, kenarlık, köşe yarıçapı, dolgu ve
+/// hover/press renkleri `outlinedButtonTheme`'den okunuyor, yani yanındaki
+/// "Kopyala" düğmesiyle her temada birebir aynı. Menü `showMenu` ile
+/// açılıyor; uygulamanın öbür dokuz menüsü gibi `popupMenuTheme`'e uyuyor.
+/// (`PopupMenuButton`'ın kendi tetikleyicisi bir `IconButton`'dır: kenarlıksız,
+/// zeminsiz ve farklı yükseklikte — satırda sırıtıyordu.)
 class ContentArchiveMenu extends ConsumerWidget {
   const ContentArchiveMenu({
     super.key,
@@ -40,21 +48,64 @@ class ContentArchiveMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
     final canExport = selectedId != null || selectedName != null;
-    return PopupMenuButton<bool>(
-      icon: const Icon(Icons.import_export, size: 20),
-      tooltip: l10n.contentArchiveExport,
-      onSelected: (isExport) =>
-          isExport ? _export(context, ref) : _import(context, ref),
-      itemBuilder: (_) => [
+
+    // Tek eylem kalınca menü açmak gereksiz — karakter düzenleyicide düğme
+    // doğrudan dışa aktarıyor ve yanındaki geri/ileri `IconButton`'larının
+    // ölçülerini alıyor.
+    if (!showImport) {
+      return IconButton(
+        icon: const Icon(Icons.file_upload_outlined, size: 18),
+        tooltip: l10n.contentArchiveExport,
+        onPressed: canExport ? () => _export(context, ref) : null,
+        iconSize: 18,
+        visualDensity: VisualDensity.compact,
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () => _openMenu(context, ref, canExport: canExport),
+      icon: const Icon(Icons.import_export, size: 18),
+      label: Text(l10n.contentArchiveMenu),
+    );
+  }
+
+  /// Menüyü düğmenin tam altına açar. Konum hesabı `PopupMenuButton`'ın
+  /// kendi içinde yaptığının aynısı; tek fark tetikleyicinin bizim düğmemiz
+  /// olması.
+  Future<void> _openMenu(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool canExport,
+  }) async {
+    final l10n = L10n.of(context)!;
+    final button = context.findRenderObject() as RenderBox?;
+    final overlay =
+        Navigator.of(context).overlay?.context.findRenderObject() as RenderBox?;
+    if (button == null || overlay == null) return;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+    final isExport = await showMenu<bool>(
+      context: context,
+      position: position,
+      items: [
         PopupMenuItem(
           value: true,
           enabled: canExport,
           child: Text(l10n.contentArchiveExport),
         ),
-        if (showImport)
-          PopupMenuItem(value: false, child: Text(l10n.contentArchiveImport)),
+        PopupMenuItem(value: false, child: Text(l10n.contentArchiveImport)),
       ],
     );
+    if (!context.mounted || isExport == null) return;
+    isExport ? await _export(context, ref) : await _import(context, ref);
   }
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {

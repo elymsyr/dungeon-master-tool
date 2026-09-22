@@ -403,6 +403,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     icon: const Icon(Icons.content_copy, size: 18),
                     label: Text(L10n.of(context)!.charCopyToWorldAction),
                   ),
+                  const SizedBox(width: 8),
                   ContentArchiveMenu(
                     type: ContentItemType.world,
                     selectedId: _selectedWorld?.id,

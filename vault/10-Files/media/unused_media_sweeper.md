@@ -23,7 +23,7 @@ tags: [file]
 **Outputs**
 - Public API: `sweepWorld({worldId, payload})` → silinen dosya sayısı; `unusedMediaSweeperProvider`; `UnusedMediaSweeper.graceWindow`.
   - **`worldId`, ad değil** (Faz 2.5): klasör isimle anahtarlıyken aynı adı taşıyan iki dünya aynı klasörü paylaşırdı ve burası ötekinin dosyalarını referanssız sayıp silerdi. Bkz. [[local_media_localizer]].
-- Writes: `{worldsDir}/{ad}/media/` ve `{worldsDir}/{ad}/files/` altında dosya **silme**. Başka hiçbir yere dokunmaz.
+- Writes: `{worldsDir}/{worldId}/media/` ve `{worldsDir}/{worldId}/files/` altında dosya **silme**. Başka hiçbir yere dokunmaz.
 
 ## Dependencies & Links
 - Depends on: [[local_media_localizer]] (klasör adları), `trash_dao.dart`

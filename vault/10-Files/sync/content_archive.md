@@ -33,7 +33,7 @@ media/<yol>     baytlar; manifest.data_root'a göreli
 
 ## Dependencies & Links
 - Depends on: [[content_codec]], [[content_item]], `archive: ^4.0.9` (zaten bağımlılık), [[local_media_localizer]] (`dirSafe` → dosya adı)
-- Used by: `lib/presentation/widgets/content_archive_menu.dart` — hub Dünyalar/Paketler sekmeleri ve karakter düzenleyici
+- Used by: [[content_archive_menu]] — hub Dünyalar/Paketler sekmeleri ve karakter düzenleyici
 - Domain map: [[Sync-and-Realtime]]
 - System flow: [[LAN-Sync-Flow]] (aynı codec)
 
@@ -42,7 +42,8 @@ media/<yol>     baytlar; manifest.data_root'a göreli
 - Export medyayı **diskten akıtır** (`ZipFileEncoder.addFile`), belleğe almaz. Manifest yalnız gerçekten pakete giren dosyaları listeler; kaybolmuş bir dosya import tarafında "eksik" sayılmasın.
 - `manifest.format` bilinmiyorsa **sessiz kabul yok** — `unsupportedFormat` atar. `kContentArchiveFormat = 1`.
 - Import her medya için: veri kökü dışıysa atla (yol geçişi savunması) → aynı içerik zaten varsa atla → yazıp **sha doğrula**, tutmazsa dosyayı sil ve atlananlara say.
-- Çakışma çözümü ayrı kod değil: `ContentCodec.applyItem` yerelde aynı id varsa `mergeWorldPayloads` ile **bölüm bazlı birleştiriyor** (silme yaymıyor), aynı isimde başka içerik varsa `(2)` ekliyor. Yani import yıkıcı değil ve import diyaloğu gerekmiyor.
+- Çakışma çözümü ayrı kod değil: `ContentCodec.applyItem` yerelde aynı id varsa `mergeWorldPayloads` ile **bölüm bazlı birleştiriyor** (silme yaymıyor). Yani import yıkıcı değil ve import diyaloğu gerekmiyor.
+  - **Dünyada isim çakışması artık çözülmüyor** (Faz 2.5): kimlik id, iki dünya aynı adı taşıyabilir. `(2)` ekleme yalnız **paketlerde** kaldı — paket hâlâ adla anahtarlı.
 
 ## Notes
 - **ponytail:** aynı yolda farklı içerikli yerel bir dosya varsa üzerine yazılmıyor. Yol `worlds/<isim>/media/...` olduğu için, isim çakışmasından `(2)` olarak açılan bir import yerel dünyanın resmini ezerdi. Tavan: o durumda import edilen kopya yereldeki resmi gösterir. Gerçek çözüm import sırasında dünya klasörünü de yeniden adlandırmak — dünya kimliği işiyle (Faz 2.5) ucuzluyor.

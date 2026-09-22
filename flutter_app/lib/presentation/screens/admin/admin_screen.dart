@@ -357,9 +357,9 @@ class _DashboardTab extends ConsumerWidget {
         },
       );
       // Worlds sekmesi listeyi `campaignInfoListProvider`'dan, kartın
-      // banner/açıklamasını `campaignMetadataProvider`'dan okuyor. Yalnız
-      // campaignListProvider'ı tazelemek, üstüne kurulan dünyanın kartını
-      // eski (çoğu zaman boş) metadata'yla bırakıyordu.
+      // banner/açıklamasını `campaignMetadataProvider`'dan okuyor. İkisi
+      // birden tazelenmezse üstüne kurulan dünyanın kartı eski (çoğu zaman
+      // boş) metadata'yla kalıyordu.
       ref.invalidate(campaignInfoListProvider);
       ref.invalidate(campaignMetadataProvider);
       ref.invalidate(packageListProvider);

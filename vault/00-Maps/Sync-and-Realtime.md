@@ -27,7 +27,8 @@ tags: [moc]
 - [[content_codec]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
 - [[content_item]] — veri sözleşmesi: `ContentItemRef` / `ContentItemPayload` / `ContentMediaEntry`.
 - [[world_merge]] — bölüm bazlı birleştirme; aynı id iki tarafta da varsa çakışma çözümü.
-- [[content_archive]] — `.dmtz` zip yazma/okuma; hub sekmeleri ve karakter düzenleyicideki dışa/içe aktarma menüsü.
+- [[content_archive]] — `.dmtz` zip yazma/okuma.
+- [[content_archive_menu]] — hub sekmelerindeki "Aktar" düğmesi ve karakter düzenleyicideki dışa aktarma düğmesi.
 
 **LAN kolu** (bulutu atlar, manuel, kalıcı cihaz eşleşmesi — [[LAN-Sync-Flow]]):
 - [[lan_sync_protocol]] — tel formatı, LWW diff, HMAC, QR daveti, presence paketi.
