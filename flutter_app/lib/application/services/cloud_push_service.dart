@@ -95,16 +95,61 @@ class CloudPushService {
         pushed: pushed, deleted: deleted, rejected: rejected);
   }
 
+  /// [packageId]'nin bulut aynasını günceller — aynı watermark, kapsam dünya
+  /// değil **kullanıcı**: satırlar `owner_id`'ye bağlı, revizyon sayacı
+  /// paketin kendi satırında (§2.2 BÖLÜM D).
+  ///
+  /// Pakette `dm_only_keys` yok: paket oyuncuyla paylaşılmıyor, sahibinden
+  /// başkası RLS'e takılıyor.
+  Future<CloudPushResult> pushPackage(String packageId, {bool full = false}) async {
+    final pkg = await _db.packagesDao.getById(packageId);
+    final ownerId = _client.auth.currentUser?.id;
+    if (pkg == null || !pkg.isOnline || ownerId == null) {
+      return const CloudPushResult(skipped: true);
+    }
+    final cutoff = DateTime.now();
+    final since = full
+        ? DateTime.fromMillisecondsSinceEpoch(0)
+        : (pkg.lastCloudPushAt ?? DateTime.fromMillisecondsSinceEpoch(0));
+
+    var pushed = 0;
+    var deleted = 0;
+    final rejected = <String>[];
+    try {
+      deleted = await _sendTombstones(packageId);
+      for (final batch in await collectPackage(packageId, since, ownerId)) {
+        await _upsert(batch.table, batch.rows, rejected);
+        pushed += batch.rows.length;
+      }
+    } catch (e) {
+      debugPrint('CloudPushService.pushPackage($packageId) aborted: '
+          '${isOfflineError(e) ? 'offline' : e}');
+      return CloudPushResult(
+          pushed: pushed, deleted: deleted, rejected: rejected, error: e);
+    }
+    await _db.packagesDao.setCloudPushAt(packageId, cutoff);
+    return CloudPushResult(
+        pushed: pushed, deleted: deleted, rejected: rejected);
+  }
+
+  /// Paketi buluttan kaldırır. Çocuk satırlar `ON DELETE CASCADE` ile gider;
+  /// bekleyen tombstone'lar da anlamsızlaştığı için düşer.
+  Future<void> unpublishPackage(String packageId) async {
+    await _client.from('user_packages').delete().eq('id', packageId);
+    await _db.customStatement(
+        'DELETE FROM sync_tombstones WHERE world_id = ?', [packageId]);
+  }
+
   // ── Silmeler ─────────────────────────────────────────────────────────────
 
   /// Bekleyen tombstone'ları buluta uygular ve yerel kaydı düşürür.
   ///
   /// Silmeler upsert'lerden ÖNCE gider: aynı id silinip yeniden yaratıldıysa
   /// (full-replace import yolu) önce bulut satırı düşer, sonra tazesi yazılır.
-  Future<int> _sendTombstones(String worldId) async {
+  Future<int> _sendTombstones(String scopeId) async {
     final rows = await _db.customSelect(
       'SELECT table_name, row_id FROM sync_tombstones WHERE world_id = ?',
-      variables: [Variable<String>(worldId)],
+      variables: [Variable<String>(scopeId)],
     ).get();
     var n = 0;
     for (final r in rows) {
@@ -116,7 +161,7 @@ class CloudPushService {
       // damgalanır** ki bu turun taramasına düşsün. Damgalamadan sadece
       // atlamak yetmez: geri gelen satır eski `updated_at` taşıyor olabilir
       // (LAN restamp, zaman koruyan import) ve taramaya hiç girmezdi.
-      if (await _resurrected(table, id, worldId)) {
+      if (await _resurrected(table, id, scopeId)) {
         await _db.customStatement(
           'DELETE FROM sync_tombstones WHERE table_name = ? AND row_id = ?',
           [table, id],
@@ -127,7 +172,7 @@ class CloudPushService {
         await _client
             .from(table)
             .delete()
-            .eq('world_id', worldId)
+            .eq('world_id', scopeId)
             .eq('package_id', id);
       } else {
         await _client.from(table).delete().eq('id', id);
@@ -143,14 +188,14 @@ class CloudPushService {
 
   /// Tombstone yazıldıktan sonra aynı satır yerelde geri geldi mi? Geldiyse
   /// damgası tazelenir ve `true` döner.
-  Future<bool> _resurrected(String cloudTable, String id, String worldId) async {
+  Future<bool> _resurrected(String cloudTable, String id, String scopeId) async {
     final local = _localTableOf[cloudTable];
     if (local == null) return false;
     final where = cloudTable == 'world_installed_packages'
         ? 'world_id = ? AND package_id = ?'
         : 'id = ?';
     final args = cloudTable == 'world_installed_packages'
-        ? <Object?>[worldId, id]
+        ? <Object?>[scopeId, id]
         : <Object?>[id];
     final hit = await _db
         .customSelect('SELECT 1 FROM $local WHERE $where',
@@ -185,19 +230,37 @@ class CloudPushService {
     return out;
   }
 
+  /// Paketin gönderilecek satırları — **ağ yok**, `collect`'in eşi.
+  Future<List<CloudPushBatch>> collectPackage(
+    String packageId,
+    DateTime since,
+    String ownerId,
+  ) async {
+    final out = <CloudPushBatch>[];
+    for (final t in _packageTables) {
+      final rows = await _collectTable(t, packageId, since, const {},
+          ownerId: ownerId);
+      if (rows.isNotEmpty) out.add(CloudPushBatch(t.cloud, rows));
+    }
+    return out;
+  }
+
   Future<List<Map<String, dynamic>>> _collectTable(
     _MirrorTable t,
-    String worldId,
+    String scopeId,
     DateTime since,
-    Map<String, List<String>> dmOnlyKeys,
-  ) async {
+    Map<String, List<String>> dmOnlyKeys, {
+    String? ownerId,
+  }) async {
     final cols = [...t.cols, ...t.dateCols];
+    // `sinceAll` tabloyu damgadan bağımsız her tur gönderir: paketin kendi
+    // satırı çocuklarının FK hedefi, bulutta yoksa çocuklar reddedilirdi.
     final rows = await _db.customSelect(
       'SELECT ${cols.join(', ')} FROM ${t.local} '
-      'WHERE world_id = ? AND updated_at > ?',
+      'WHERE ${t.scope} = ?${t.sinceAll ? '' : ' AND updated_at > ?'}',
       variables: [
-        Variable<String>(worldId),
-        Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
+        Variable<String>(scopeId),
+        if (!t.sinceAll) Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
       ],
     ).get();
     if (rows.isEmpty) return const [];
@@ -223,7 +286,25 @@ class CloudPushService {
         final v = m[c];
         if (v is String && v.isNotEmpty) m[c] = await _contentRefs(v);
       }
-      if (t.ownerNull) m['owner_id'] = null;
+      for (final c in t.jsonCols) {
+        // Yerelde TEXT, bulutta jsonb — string gitseydi jsonb'ye tırnaklı
+        // bir skaler olarak yazılırdı.
+        final v = m[c];
+        if (v is String) m[c] = v.isEmpty ? null : jsonDecode(v);
+      }
+      for (final e in t.rename.entries) {
+        if (m.containsKey(e.key)) m[e.value] = m.remove(e.key);
+      }
+      switch (t.owner) {
+        case _Owner.own:
+          break;
+        // Mind map: DM'in satırında NULL, oyuncununkinde dolu (§2.9).
+        case _Owner.nul:
+          m['owner_id'] = null;
+        // Paket tabloları kullanıcı kapsamlı; RLS tek kolona bakıyor.
+        case _Owner.self:
+          m['owner_id'] = ownerId;
+      }
       if (t.cloud == 'world_entities') {
         final slug = r.data['category_slug'] as String? ?? '';
         m['dm_only_keys'] = dmOnlyKeys[slug];
@@ -394,7 +475,11 @@ class _MirrorTable {
     this.dateCols = const ['updated_at'],
     this.mediaCols = const [],
     this.boolCols = const [],
-    this.ownerNull = false,
+    this.jsonCols = const [],
+    this.rename = const {},
+    this.scope = 'world_id',
+    this.owner = _Owner.own,
+    this.sinceAll = false,
   });
 
   final String local;
@@ -408,16 +493,83 @@ class _MirrorTable {
   /// SQLite'ta 0/1 int, Postgres'te `boolean` olan kolonlar.
   final List<String> boolCols;
 
-  /// Mind map: DM'in satırında `owner_id` NULL, oyuncununkinde dolu (§2.9).
-  final bool ownerNull;
+  /// Yerelde TEXT, bulutta `jsonb` olan kolonlar.
+  final List<String> jsonCols;
+
+  /// Yerel kolon adı → bulut kolon adı; ikisi ayrıştığında.
+  final Map<String, String> rename;
+
+  /// Taramanın kapsam kolonu: dünya tablolarında `world_id`, paket
+  /// çocuklarında `package_id`, paketin kendi satırında `id`.
+  final String scope;
+
+  /// `owner_id` nereden geliyor.
+  final _Owner owner;
+
+  /// Damga yok sayılsın mı — FK hedefi olan tek satırlık ebeveyn tablo.
+  final bool sinceAll;
+}
+
+/// `owner_id` kolonunun kaynağı.
+enum _Owner {
+  /// Yerel satırda zaten var, ya da bulut tablosunda kolon yok.
+  own,
+
+  /// Buluta NULL yazılır — mind map'te "DM'in nüshası" demek.
+  nul,
+
+  /// Oturumdaki kullanıcı.
+  self,
 }
 
 /// Bulut tablosu → yerel tablo. Tombstone'un yalan söyleyip söylemediğini
 /// (satır geri geldi mi) sormak için gerekiyor.
 final Map<String, String> _localTableOf = {
   for (final t in _mirrorTables) t.cloud: t.local,
+  for (final t in _packageTables) t.cloud: t.local,
   'world_combatants': 'combatants',
 };
+
+/// Paketin ayna tabloları (§2.2 BÖLÜM D). Ebeveyn **önce** gider: çocukların
+/// FK'sı `user_packages`'a bakıyor.
+const List<_MirrorTable> _packageTables = [
+  _MirrorTable(
+    'packages',
+    'user_packages',
+    cols: ['id', 'name', 'state_json'],
+    dateCols: ['created_at', 'updated_at'],
+    mediaCols: ['state_json'],
+    scope: 'id',
+    owner: _Owner.self,
+    sinceAll: true,
+  ),
+  _MirrorTable(
+    'package_schemas',
+    'user_package_schemas',
+    cols: [
+      'id', 'package_id', 'name', 'version', 'base_system', 'description',
+      'categories_json', 'encounter_config_json', 'encounter_layouts_json',
+      'metadata_json', 'template_id', 'template_hash',
+      'template_original_hash',
+    ],
+    dateCols: ['created_at', 'updated_at'],
+    scope: 'package_id',
+    owner: _Owner.self,
+  ),
+  _MirrorTable(
+    'package_entities',
+    'user_package_entities',
+    cols: [
+      'id', 'package_id', 'category_slug', 'name', 'source', 'description',
+      'image_path', 'images_json', 'tags_json', 'dm_notes', 'pdfs_json',
+      'location_id', 'fields_json',
+    ],
+    dateCols: ['created_at', 'updated_at'],
+    mediaCols: ['image_path', 'images_json', 'fields_json'],
+    scope: 'package_id',
+    owner: _Owner.self,
+  ),
+];
 
 const List<_MirrorTable> _mirrorTables = [
   _MirrorTable(
@@ -449,14 +601,14 @@ const List<_MirrorTable> _mirrorTables = [
       'height', 'entity_id', 'image_url', 'content', 'style_json', 'color',
     ],
     mediaCols: ['image_url'],
-    ownerNull: true,
+    owner: _Owner.nul,
   ),
   _MirrorTable(
     'world_mind_map_edges',
     'world_mind_map_edges',
     cols: ['id', 'world_id', 'map_id', 'source_id', 'target_id', 'label',
         'style_json'],
-    ownerNull: true,
+    owner: _Owner.nul,
   ),
   _MirrorTable(
     'encounters',
@@ -477,6 +629,23 @@ const List<_MirrorTable> _mirrorTables = [
   _MirrorTable('timeline_pins', 'world_timeline_pins',
       cols: ['id', 'world_id', 'x', 'y', 'day', 'note', 'entity_ids_json',
           'session_id', 'parent_ids_json', 'color']),
+  // Karakterler: bugün `WorldMirrorService.pushCharacter` anında yazıyor,
+  // ama o yol tek atış — çevrimdışı yapılan düzenleme buluta hiç çıkmıyordu.
+  // Tur bunu kapatıyor; iki yol da aynı satıra idempotent upsert yapıyor.
+  // `payload_json` **medya çevirisine girmiyor**: blob'un byte-for-byte
+  // korunması kuralı (world_characters_dao) jsonDecode/encode turundan ağır
+  // basıyor; karakter görselleri bugünkü gibi mutlak yolla gidiyor.
+  _MirrorTable(
+    'world_characters',
+    'world_characters',
+    cols: [
+      'id', 'world_id', 'owner_id', 'template_id', 'template_name',
+      'payload_json', 'referenced_entity_ids_json',
+    ],
+    dateCols: ['created_at', 'updated_at'],
+    jsonCols: ['referenced_entity_ids_json'],
+    rename: {'referenced_entity_ids_json': 'referenced_entity_ids'},
+  ),
   _MirrorTable('installed_packages', 'world_installed_packages',
       cols: ['world_id', 'package_id', 'package_name', 'package_version'],
       dateCols: ['installed_at', 'last_synced_at', 'updated_at']),

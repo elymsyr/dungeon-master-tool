@@ -1,0 +1,22 @@
+-- ============================================================================
+-- 095_chars_client_timestamp.sql — Faz 4b: karakterin zamanı istemcinin
+-- ============================================================================
+-- Bkz. docs/online-sync-redesign.md §2.8, §4.7 (Faz 4b).
+--
+-- 094'ün başlığında yazan borç: `trg_chars_bump_updated` (026) duruyordu ve
+-- her UPDATE'te `updated_at`'i `now()` ile eziyordu. §2.8 kuralı bunun tersi:
+-- zamanı **istemci, düzenleme anında** yazar. Sunucu ezerse geç gelen
+-- çevrimdışı bir yazma, başka cihazın daha yeni verisinden daha yeni görünür
+-- ve onu ezer.
+--
+-- Karakterler bu fazda push turuna katıldığı için borç şimdi kapanıyor.
+-- İstemci tarafı: `CloudPushService` satırı `updated_at` ile gönderiyor,
+-- `WorldMirrorService.pushCharacter` de aynı anahtarı ekledi — trigger
+-- düşerken yazan kimse kalmasın diye ikisi birlikte gitmeli.
+--
+-- Diğer ayna tablolarında yapacak iş yok: 094 onlara `tg_bump_updated_at`
+-- hiç bağlamadı (094 satır 100). Geriye kalan bump trigger'ları ayna ailesinin
+-- dışındaki tablolarda (`world_projection`, `world_packages`) ve oraya push
+-- turu yazmıyor — dokunulmuyor.
+
+DROP TRIGGER IF EXISTS trg_chars_bump_updated ON public.world_characters;

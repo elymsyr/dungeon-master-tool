@@ -1,7 +1,7 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/094_cloud_mirror_schema.sql, supabase/scripts/verify_094.sql
+path: supabase/migrations/094_cloud_mirror_schema.sql, supabase/migrations/095_chars_client_timestamp.sql, supabase/scripts/verify_094.sql
 layer: backend
 language: sql
 status: active
@@ -29,14 +29,14 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[migrations-online-worlds]], [[migrations-security]]
-- Used by: (henüz yok — istemci Faz 4/5'te bağlanır)
+- Used by: [[cloud_push_service]] (Faz 4a dünya tabloları, Faz 4b `user_package*` + `world_characters`); okuma yolu Faz 5'te.
 - Domain map: [[Backend-Infra]]
 - System flow: [[Sync-and-Realtime]]
 - Spec / reference: `docs/online-sync-redesign.md` §2.2–§2.6, §4.4
 
 ## Key Logic / Variables
 - **CDC değil, artımlı çekme.** Realtime'a giren tek tablo `world_revisions` (dünya başına bir satır: `revision`, `updated_at`, `updated_by`). Dünyadaki her satır yazması `next_world_revision()` ile sayacı artırır ve yazılan satırı aynı numarayla damgalar; istemci sinyali alıp `since_revision`'dan sonrasını çeker. 26 tabloya abonelik ~1000 mesaj/saat ederdi, bu ~1.
-- **`updated_at` sunucu tarafından EZİLMEZ.** Yeni tabloların hiçbirine `tg_bump_updated_at` bağlı değil — değer istemcinin düzenleme anıdır. Varış zamanına bakılırsa geç gelen çevrimdışı kuyruk her seferinde yeni veriyi ezer (`redesign` §2.8). Mevcut `trg_chars_bump_updated` (026) bilerek duruyor; düşmesi Faz 4'ün işi.
+- **`updated_at` sunucu tarafından EZİLMEZ.** Yeni tabloların hiçbirine `tg_bump_updated_at` bağlı değil — değer istemcinin düzenleme anıdır. Varış zamanına bakılırsa geç gelen çevrimdışı kuyruk her seferinde yeni veriyi ezer (`redesign` §2.8). Mevcut `trg_chars_bump_updated` (026) Faz 4b'de **düştü** — `095_chars_client_timestamp.sql`. Karakterler push turuna katıldığı an borç kapandı; aynı commit'te `WorldMirrorService.pushCharacter` de `updated_at` göndermeye başladı, yoksa satır ilk INSERT'teki saatte donardı.
 - **Tombstone.** `tg_world_tombstone(<id kolonu>)` AFTER DELETE; dünya CASCADE'inde erken çıkar (tombstone da CASCADE ile düşerdi). `owner_id` oyuncunun kendi satırından (mind map, member_state) gelir ve RLS'te oyuncunun göreceği tek tombstone odur — DM'in sildiği kart id'leri oyuncuya sızmaz. **050'nin tuzağı yok**: eski `tg_bump_parent_world` `worlds` satırının kendisini UPDATE ettiği için dünya silinemiyordu; yeni sayaç ayrı tabloya yazar.
 - **Tek okuma kapısı.** Oyuncunun `world_entities` üzerinde policy'si **yoktur** (tabloda tek policy var: `world_entities: dm all`; `verify_094` bunu sayarak doğrular). Oyuncu kartlara yalnız `get_shared_entities()` ile ulaşır: `v_shared_entities` görünümü izinli + `dm_only_keys IS NOT NULL` satırları verir, fonksiyon `dm_notes`'u **hiç seçmez** ve `fields_json::jsonb - dm_only_keys` ile DM'e özel alanları çıkarır.
 - **Emniyet kuralı.** `dm_only_keys` NULL = "sır listesi bilinmiyor", "sır yok" **değil** → kart hiç dönmez. Kararı (hangi alan gizli) Dart verir, uygulamayı SQL yapar; PL/pgSQL'e ikinci bir şema yorumlayıcısı yazılmaz.
@@ -49,4 +49,4 @@ tags: [file]
 ## Notes
 - `verify_094.sql` rol taklidi için `set_config('role', 'authenticated', true)` + `request.jwt.claims` kullanır — tablo sahibi `postgres` RLS'i bypass ettiği için testler mutlaka `authenticated` rolünde koşar. `ROLLBACK` ile biter, iz bırakmaz.
 - Doğrulama iki ortamda yapıldı: temiz Postgres 16'da (docker + minimal Supabase iskeleti, migration arka arkaya iki kez uygulanarak) ve **2026-09-22'de gerçek Supabase projesinde** — 094 hatasız uygulandı, `verify_094.sql` `094 OK` döndü.
-- Sonraki adımlar: `dmt-content://` medya ref birleştirmesi (Faz 3.5), Drift v13 + push (Faz 4), pull + uzlaştırıcı (Faz 5), `entity_shares.payload_json`'ın düşmesi ve Realtime budaması (Faz 5.5).
+- Sonraki adımlar: pull + uzlaştırıcı (Faz 5), `entity_shares.payload_json`'ın düşmesi ve Realtime budaması (Faz 5.5). Tamamlananlar: `dmt-content://` (3.5), Drift v13 + dünya push'u (4a), paket + karakter push'u (4b, migration 095).

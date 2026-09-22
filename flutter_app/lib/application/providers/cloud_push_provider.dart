@@ -14,6 +14,7 @@ import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import '../../data/database/database_provider.dart';
 import 'entity_provider.dart';
+import 'package_provider.dart' show activePackageProvider;
 import 'role_provider.dart';
 
 /// Faz 4 push servisi. Supabase yapılandırılmamışsa ya da oturum yoksa null —
@@ -50,21 +51,23 @@ class CloudPushPump {
 
   void _onTick() {
     _timer?.cancel();
-    _timer = Timer(_idle, () => unawaited(push()));
+    _timer = Timer(_idle, () => unawaited(_round()));
+  }
+
+  /// Açık olan ne varsa bir tur: dünya ve/veya paket. İkisi aynı anda açık
+  /// olmuyor ama hangisinin açık olduğunu sormak yerine ikisini de denemek
+  /// daha ucuz — kapalı olan satırı bulamayıp atlıyor.
+  Future<void> _round() async {
+    await push();
+    await pushActivePackage();
   }
 
   /// Aktif dünyanın turunu koşturur. [full] ilk yayın / "yeniden gönder".
-  ///
-  /// Tur sürerken gelen istekler tek bir ek tura toplanır — üst üste binen
-  /// turlar aynı satırları iki kez göndermekten başka bir şey yapmaz.
   Future<CloudPushResult> push({bool full = false, String? worldId}) async {
-    if (_running) {
-      _pendingRound = true;
-      return const CloudPushResult(skipped: true);
-    }
     final svc = _ref.read(cloudPushServiceProvider);
     // `activeCampaignProvider` "açık içeriğin anahtarı" — pakette paket adı
-    // tutuyor (§4.7). Dünya değilse servis satırı bulamaz ve tur atlanır.
+    // tutuyor. Dünya değilse servis satırı bulamaz ve tur atlanır; paketin
+    // turu `pushActivePackage` ile ayrı gidiyor.
     final id = worldId ?? _ref.read(activeCampaignProvider);
     if (svc == null || id == null || id.isEmpty) {
       return const CloudPushResult(skipped: true);
@@ -74,9 +77,52 @@ class CloudPushPump {
     if (_ref.read(currentWorldRoleProvider).valueOrNull != WorldRole.dm) {
       return const CloudPushResult(skipped: true);
     }
+    return _guarded(
+        () => svc.pushWorld(id, dmOnlyKeys: _dmOnlyKeys(), full: full));
+  }
+
+  /// Faz 4b — açık paketin turu. Rol kontrolü yok: paket kullanıcı kapsamlı,
+  /// RLS `owner_id`'ye bakıyor.
+  ///
+  /// [packageName] verilmezse açık paket alınır (`activePackageProvider` adı
+  /// tutuyor, id'yi tablodan buluyoruz).
+  Future<CloudPushResult> pushPackage({
+    bool full = false,
+    String? packageName,
+    String? packageId,
+  }) async {
+    final svc = _ref.read(cloudPushServiceProvider);
+    if (svc == null) return const CloudPushResult(skipped: true);
+    var id = packageId;
+    if (id == null) {
+      final name = packageName ?? _ref.read(activePackageProvider);
+      if (name == null || name.isEmpty) {
+        return const CloudPushResult(skipped: true);
+      }
+      id = (await _ref.read(appDatabaseProvider).packagesDao.getByName(name))?.id;
+      if (id == null) return const CloudPushResult(skipped: true);
+    }
+    final pid = id;
+    return _guarded(() => svc.pushPackage(pid, full: full));
+  }
+
+  Future<CloudPushResult> pushActivePackage() =>
+      _ref.read(activePackageProvider) == null
+          ? Future.value(const CloudPushResult(skipped: true))
+          : pushPackage();
+
+  /// Tek seferde tek tur. Tur sürerken gelen istekler tek bir ek tura
+  /// toplanır — üst üste binen turlar aynı satırları iki kez göndermekten
+  /// başka bir şey yapmaz.
+  Future<CloudPushResult> _guarded(
+      Future<CloudPushResult> Function() body) async {
+    if (_running) {
+      _pendingRound = true;
+      return const CloudPushResult(skipped: true);
+    }
     _running = true;
     try {
-      final res = await svc.pushWorld(id, dmOnlyKeys: _dmOnlyKeys(), full: full);
+      final res = await body();
       if (res.rejected.isNotEmpty) {
         debugPrint('CloudPushPump: ${res.rejected.length} satır buluta '
             'yazılamadı: ${res.rejected.take(5).join(", ")}');
@@ -86,7 +132,7 @@ class CloudPushPump {
       _running = false;
       if (_pendingRound) {
         _pendingRound = false;
-        unawaited(push());
+        unawaited(_round());
       }
     }
   }

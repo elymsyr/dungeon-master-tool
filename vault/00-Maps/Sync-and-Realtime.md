@@ -8,7 +8,7 @@ tags: [moc]
 # Sync & Realtime — Map of Content
 
 > [!summary] Scope
-> Dört kol var. Üçü buluta dünya kopyalamaz; dördüncüsü (Faz 4a) **kullanıcı isterse** kopyalar.
+> Dört kol var. Üçü buluta içerik kopyalamaz; dördüncüsü (Faz 4a–4b) **kullanıcı isterse** kopyalar.
 >
 > **LAN** — aynı ağdaki iki cihaz arasında manuel, kalıcı eşleşmeli, buluta hiç uğramayan senkron.
 >
@@ -16,7 +16,7 @@ tags: [moc]
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
 >
-> **Bulut aynası push'u** — DM "Online yap" dediği dünyanın satırlarını Supabase'e gönderir. Kuyruk yok: `updated_at > son push damgası` taraması. Geri okuma henüz yok (Faz 5).
+> **Bulut aynası push'u** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir. Kuyruk yok: `updated_at > son push damgası` taraması. Geri okuma henüz yok (Faz 5).
 >
 > Supabase şemasının kendisi ([[Backend-Infra]]) ve tablo tanımları ([[Data-Layer]]) bu domainin değil.
 
@@ -38,9 +38,9 @@ tags: [moc]
 - [[lan_sync_server]] — host: HttpServer + presence beacon + eşleşme uçları.
 - [[lan_sync_client]] — `/pair` el sıkışması, imzalı çağrılar, presence dinleyici.
 
-**Bulut aynası push'u** (Faz 4a — `docs/online-sync-redesign.md` §4.6):
-- [[cloud_push_service]] — watermark taraması, satır eşlemesi, tombstone'lar, reddedilen satır kuralı.
-- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici.
+**Bulut aynası push'u** (Faz 4a–4b — `docs/online-sync-redesign.md` §4.6–§4.7):
+- [[cloud_push_service]] — watermark taraması, satır eşlemesi, tombstone'lar, reddedilen satır kuralı. İki kapsam: dünya (`pushWorld`) ve paket (`pushPackage`, `owner_id` kapsamlı).
+- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici; `tick` → dünya turu → paket turu.
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):
 - [[world_sync_service]] — beş tabloya Realtime abonelik + birleşik CDC event stream'i.

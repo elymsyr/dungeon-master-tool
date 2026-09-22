@@ -56,7 +56,10 @@ extension SyncStamp on DatabaseConnectionUser {
 
 /// `updated_at`'i şimdiyle damgalar — çağıran açıkça bir değer vermişse ona
 /// dokunmaz (import / LAN / bulut uygulaması kendi zamanını taşır).
-Value<DateTime?> stampedNow(Value<DateTime?> existing) =>
+///
+/// Jenerik: v13'te eklenen kolonlar nullable, eskiden beri var olanlar
+/// (`packages`, `package_entities`, `world_characters`, …) değil.
+Value<T> stampedNow<T extends DateTime?>(Value<T> existing) =>
     existing.present && existing.value != null
         ? existing
-        : Value(DateTime.now());
+        : Value<T>(DateTime.now() as T);

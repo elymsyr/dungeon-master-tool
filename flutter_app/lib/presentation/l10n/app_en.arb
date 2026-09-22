@@ -2869,6 +2869,12 @@
     }
   },
   "publishingEllipsis": "Publishing...",
+  "packageOnlineOn": "Take Package Online",
+  "packageOnlineOff": "Take Package Offline",
+  "packageIsOnline": "Package is online",
+  "packageNowOnline": "Package is now online",
+  "packageNowOffline": "Package is now local only",
+  "packageOfflineBody": "This removes the package from the cloud. Local data is preserved. Continue?",
   "nowPlaying": "Now playing",
   "soundPlaying": "Playing",
   "soundStopped": "Stopped",
