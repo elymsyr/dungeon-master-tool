@@ -57,7 +57,7 @@ tags: [moc]
 
 **Yerel yazma:** Edit → [[pending_write_buffer]] debounce → Drift. Bitti. Kuyruk yok, bulut yok.
 
-**Bulut aynası:** dünya açılışı → `syncOnOpen` → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihazın değişikliğini canlı haber veren bir sinyal **henüz yok** (Realtime `world_revisions` Faz 5b).
+**Bulut aynası:** dünya açılışı → `syncOnOpen` → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet) → satır indiyse `ActiveCampaignNotifier.reload()` (blob'u Drift'ten tazeler, yoksa inen veri ekrana çıkmaz). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihazın değişikliğini canlı haber veren bir sinyal **henüz yok** (Realtime `world_revisions` Faz 5b).
 
 **Paylaşım:** DM "Paylaş" → görseller `AssetRef`'e → `entity_shares` satırı **gövdesiyle** → CDC → oyuncunun [[world_mirror_applier]]'ı blob'a yazar. Adımlar: [[Share-Broadcast-Flow]].
 

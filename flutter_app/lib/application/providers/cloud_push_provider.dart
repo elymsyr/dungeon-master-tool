@@ -134,7 +134,17 @@ class CloudPushPump {
     if (_ref.read(currentWorldRoleProvider).valueOrNull != WorldRole.dm) {
       return const CloudPullResult(skipped: true);
     }
-    return svc.pullWorld(id, full: full);
+    final res = await svc.pullWorld(id, full: full);
+    // Pull Drift satırlarına yazdı, ama açık dünyanın UI'ı Drift'ten değil
+    // `ActiveCampaignNotifier`'ın bellekteki blob'undan okuyor
+    // (`EntityNotifier._loadFromCampaign`). `reload()` blob'u depodan
+    // tazeleyip `campaignRevisionProvider`'ı bump ediyor — notifier zinciri
+    // yeniden kurulmadan inen satırlar görünür oluyor.
+    if ((res.applied > 0 || res.removed > 0) &&
+        id == _ref.read(activeCampaignProvider)) {
+      await _ref.read(activeCampaignProvider.notifier).reload();
+    }
+    return res;
   }
 
   /// Dünya açılışındaki tek senkron turu: **önce push, sonra pull.**

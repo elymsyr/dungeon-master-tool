@@ -30,7 +30,7 @@ tags: [file]
 - `cloudPullServiceProvider` → [[cloud_pull_service]] (aynı null kapısı).
 
 ## Dependencies & Links
-- Depends on: [[cloud_push_service]], [[cloud_pull_service]], [[pending_write_buffer]], [[shared_media_courier]], [[content_ref_index]].
+- Depends on: [[cloud_push_service]], [[cloud_pull_service]], [[pending_write_buffer]], [[shared_media_courier]], [[content_ref_index]], [[campaign_provider]] (`reload()`).
 - Used by: `main_screen.dart` ve `package_screen.dart` (açıkken keep-alive `ref.watch`), [[save_sync_indicator]] (dünya/paket ilk yayınında `full: true`).
 - Domain map: [[Sync-and-Realtime]]
 - Spec / reference: `docs/online-sync-redesign.md` §4.6 (Faz 4a), §4.7 (Faz 4b), §4.8 (Faz 5a).
@@ -40,5 +40,7 @@ tags: [file]
 - **Keep-alive kalıbı:** `MainScreen` `ref.watch(cloudPushPumpProvider)` ile pompayı dünya açıkken hayatta tutuyor; aynı kalıp [[world_mirror_applier]] için de kullanılıyor.
 - **Rol kapısı yalnız dünyada:** ayna tabloları RLS'te DM-only, o yüzden dünya turu rol çözülene kadar atlanır (bir sonraki tick yeniden dener, tarama idempotent). Paket turunda rol kontrolü **yok** — paket kullanıcı kapsamlı, RLS `owner_id`'ye bakıyor.
 - **Tek kapı, iki tur:** `_guarded` aynı anda tek tur koşmasını sağlıyor; `_round()` dünyayı ve paketi sıra sıra deniyor, açık olmayan kendiliğinden atlanıyor.
+- **Pull'dan sonra açık dünya tazeleniyor.** `pull()` tur satır uyguladıysa (`applied > 0 || removed > 0`) ve çekilen dünya hâlâ açık dünyaysa `ActiveCampaignNotifier.reload()` çağrılıyor. Bu şart olmadan 5a kullanıcıya **tamamen görünmezdi**: `EntityNotifier._loadFromCampaign` Drift'ten değil bellekteki blob'dan okuyor, dolayısıyla inen satırlar ancak bir sonraki açılışta belirirdi. `reload()` blob'u `_repo.load()` ile yerinde değiştirip `campaignRevisionProvider`'ı bump ediyor — yalnız bump etmek yetmez, aynı bayat blob yeniden okunur. `installed_packages` Drift `StreamProvider`'ı üstünden zaten canlı; `worldCharactersProvider` bulut kaynaklı, bu yoldan etkilenmiyor.
+- **Pull'dan önce `flush()` yok — bilerek.** Pull bugün yalnız `syncOnOpen`'dan koşuyor ve `completeLoad` zaten tamponu boşaltmış oluyor. Üstelik `PendingWriteBuffer.flush()` koşulsuz `_bumpTick()` atıyor, yani pompayı boş bir push turuna sokardı. Pull Realtime sinyaline bağlanınca (Faz 5b) gerekecek.
 - **`syncOnOpen` — önce push, sonra pull.** Rol DM'e çözülür çözülmez (`ref.listen(currentWorldRoleProvider, fireImmediately: true)`) bir kez koşuyor; pompa dünya kapanınca dispose olduğu için bayrak da onunla gidiyor. Sıranın gerekçesi [[cloud_pull_service]]'te: ters sırada her pull kendi getirdiği satırları buluta geri göndertirdi.
 - **Periyodik pull yok.** Tampon tick'i yalnız **yerel** yazmada çıkıyor, yani pull'u tetikleyen şey değil. Karşı cihazın değişikliğini öğrenmenin yolu bugün dünyayı yeniden açmak; Realtime `world_revisions` sinyali Faz 5b.

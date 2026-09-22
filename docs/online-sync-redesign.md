@@ -1783,10 +1783,11 @@ olmadan tek bir 10 MB'lık jsonb yanıtı demekti — telefonda bellek sorunu.
 - **Realtime sinyali yok.** Pull dünya açılışında bir kez koşuyor. Karşı
   cihazın değişikliğini canlı görmenin yolu bugün dünyayı yeniden açmak.
   `world_revisions` zaten publication'da (094), abone olan yok — Faz 5b.
-- **Açık dünyanın bellekteki hali tazelenmiyor.** Pull Drift'e yazıyor;
-  `activeCampaignProvider` blob'u uygulama yeniden açılana kadar eski
-  kalıyor. Açılışta koştuğu için bugünkü akışta görünmüyor, ama 5b'nin canlı
-  sinyali bunu zorunlu kılacak.
+- ~~**Açık dünyanın bellekteki hali tazelenmiyor.**~~ **Kapandı** — bkz.
+  aşağıdaki "Sonradan eklendi". Pull Drift'e yazıyor ama
+  `EntityNotifier._loadFromCampaign` Drift'ten değil `ActiveCampaignNotifier`'ın
+  **bellekteki blob'undan** okuyor; inen satırlar o açılışta değil bir
+  sonrakinde görünüyordu.
 - **Paket pull'u yok.** `get_package_delta` yazılmadı; iskelet dünyayla birebir
   aynı, kapsam kolonu `package_id`. Faz 5b.
 - **Pull'dan sonra bir tur fazla push olabilir.** `syncOnOpen` push'u önce
@@ -1800,6 +1801,28 @@ olmadan tek bir 10 MB'lık jsonb yanıtı demekti — telefonda bellek sorunu.
 - **`_maxRounds = 200`** — sayfa döngüsünün güvenlik freni. Tablo başına 500
   satırla 100.000 satırlık bir dünyayı tek çağrıda bitirir; sunucu `complete`
   demeyi beceremezse sonsuza kadar dönmesin diye.
+
+### Sonradan eklendi: açık dünyanın tazelenmesi
+
+Yukarıdaki sınır 5a'yı **kullanıcıya tamamen görünmez** kılıyordu, o yüzden
+5b'ye bırakılmadı. Yeni kod yok — depoda hazır olan yol kullanıldı:
+`ActiveCampaignNotifier.reload()` zaten `_repo.load()` ile blob'u **yerinde**
+değiştirip `campaignRevisionProvider`'ı bump ediyor (cloud restore bu yoldan
+geçiyor). `CloudPushPump.pull()` artık tur satır uyguladıysa ve çekilen dünya
+hâlâ açık dünyaysa onu çağırıyor.
+
+Kapsam kontrolü: `_loadFromDb` pull'un yazdığı granüler tabloların hepsini
+(kartlar, ayarlar, `map_data`, oturumlar, mind map, savaş, pinler) blob'a
+topluyor. `installed_packages` zaten Drift `StreamProvider`'ı üstünden canlı.
+`worldCharactersProvider` bulut kaynaklı, pull'un yazdığı yerel satırı
+okumuyor — tazeleme gerekmiyor.
+
+Bilerek yapılmadı: **pull'dan önce `PendingWriteBuffer.flush()`.** Pull bugün
+yalnız dünya açılışında koşuyor ve `completeLoad` zaten flush etmiş oluyor —
+bekleyen yazım yok. Üstelik `flush()` koşulsuz `_bumpTick()` atıyor, yani
+pompayı boş bir push turuna sokardı. Pull sinyale bağlanınca (5b) gerekecek:
+o zaman yerel düzenleme tampondayken inen satır LWW'de bayat Drift satırıyla
+karşılaştırılır.
 
 ### Bekleyen doğrulama
 
@@ -1838,9 +1861,10 @@ de senkronla: **sonra düzenlenen** kazanmalı — varış sırası değil (§2.
 ayrıntıda açılıyor (bkz. §4.4–§4.8).*
 
 ### Faz 5b — Canlı sinyal
-`world_revisions` Realtime aboneliği → pull tetikleme; açık dünyanın
-bellekteki halinin tazelenmesi (`activeCampaignProvider` + revizyon bump);
-`get_package_delta` + paket pull'u; ilk senkron akışı ve ilerleme UI'ı.
+`world_revisions` Realtime aboneliği → pull tetikleme (ve tetikten önce
+`PendingWriteBuffer.flush()`, bkz. §4.8 "Sonradan eklendi"); `get_package_delta`
++ paket pull'u; ilk senkron akışı ve ilerleme UI'ı. Açık dünyanın tazelenmesi
+5a'ya çekildi — bitti.
 
 ### Faz 5.5 — Oyuncu çoklu cihaz
 `joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
@@ -1888,6 +1912,7 @@ uyuşmuyordu. Kayda geçiyor:
 | §2.3: revizyon trigger'ı yeterli | **Değildi.** 094'ün `trg_*_stamp_rev`'i şartsız `BEFORE INSERT OR UPDATE`; aynı gövdenin yeniden yazılması da sayacı artırıyor. Push tek yönlüyken yalnız israf (`user_packages` her tur), pull açılınca iki cihaz arasında kapanmayan tur. 096 `WHEN (OLD.* IS DISTINCT FROM NEW.*)` ile kapattı (§4.8) |
 | Faz 5: "applier'ın tablo başına ayrı handler olarak yeniden yazımı" | Gerekmedi: `world_mirror_applier` paylaşım yayınının tüketicisi, ayna pull'unun değil. Pull'un dönüşümleri `cloud_mirror_tables.dart` bildiriminden geliyor; elle yazılan tek özel durum combatant (§4.8) |
 | §2.3: `get_world_delta(world_id, since_revision)` | Üçüncü parametre `limit` + yanıtta `complete`. Belgenin kendi "ilk açılış ~10 MB" satırı kırpmayı zorunlu kılıyor; kırpmasız tek jsonb telefonda bellek sorunu (§4.8) |
+| Faz 5b: açık dünyayı tazelemek için "revizyon bump" yeter | Yetmez — `campaignRevisionProvider` bump'ı aynı bayat blob'u yeniden okutur. Blob'un **depodan** yeniden yüklenmesi gerekiyor; `ActiveCampaignNotifier.reload()` zaten ikisini birden yapıyordu. İş 5a'ya çekildi (§4.8) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
