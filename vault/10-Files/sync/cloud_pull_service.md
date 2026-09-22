@@ -51,5 +51,6 @@ tags: [file]
 
 ## Notes
 - Test: `test/application/services/cloud_pull_apply_test.dart` (14 test) — `apply` üzerinden, ağsız. Sonuncusu **round-trip**: pull edilen satır push'a verildiğinde bayt bayt aynı gövdeyi üretiyor; echo guard'ın çalışması buna bağlı.
-- Bilinçli sınırlar (§4.8): paket pull'u yok (Faz 5b), Realtime sinyali yok — pull dünya açılışında bir kez koşuyor, bellekteki dünyayı tazeleyen bir şey yok (uygulama yeniden açılınca görülür), ilerleme UI'ı yok, oyuncu tarafı yok (Faz 5.5).
+- Bilinçli sınırlar (§4.8): paket pull'u yok (Faz 5b), Realtime sinyali yok, ilerleme UI'ı yok, oyuncu tarafı yok (Faz 5.5).
+- **İnen satırların görünür olması [[cloud_push_provider]]'a bağlı.** Bu servis yalnız Drift'e yazıyor; açık dünyanın UI'ı `ActiveCampaignNotifier`'ın bellekteki blob'undan okuyor. `CloudPushPump.pull` tur satır uyguladıysa `ActiveCampaignNotifier.reload()` çağırıyor — blob depodan tazeleniyor ve `campaignRevisionProvider` bump'lanıyor. Bump tek başına yetmez: aynı bayat blob'u yeniden okutur.
 - Migration **096 2026-09-22'de deploy edildi**, yani `get_world_delta` yerinde. (Deploy edilmeseydi `pullWorld` sessizce hata döner ve damga ilerlemezdi.) Uçtan uca elle doğrulama bekliyor: `docs/online-sync-redesign.md` §4.8 "Bekleyen doğrulama".
