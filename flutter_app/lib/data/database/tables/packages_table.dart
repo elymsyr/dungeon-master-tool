@@ -14,6 +14,10 @@ class Packages extends Table {
   TextColumn get lastPushedHash => text().nullable()();
   DateTimeColumn get renamedAt => dateTime().nullable()();
 
+  /// Faz 4 — paketin bulut aynası açık mı (dünyayla aynı mantık, §1.2).
+  BoolColumn get isOnline => boolean().withDefault(const Constant(false))();
+  IntColumn get cloudRevision => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

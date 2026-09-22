@@ -780,6 +780,11 @@ class WorldRepositoryImpl implements CampaignRepository {
       await _db.mapPinsDao.deleteByWorld(worldId);
       await _db.timelinePinsDao.deleteByWorld(worldId);
       await _db.worldsDao.deleteById(worldId);
+      // Dünya gitti → tombstone'ların gideceği bulut satırı da yok (dünya
+      // satırı CASCADE ile hepsini düşürür). Silinmezlerse push hiç
+      // koşmayacağı için sonsuza kadar birikirlerdi.
+      await _db.customStatement(
+          'DELETE FROM sync_tombstones WHERE world_id = ?', [worldId]);
     });
     // Dunya ile birlikte dusen paketlerin kart gorselleri de cache'te
     // kalmasin. Transaction disinda: dosya IO'su DB kilidini tutmasin.

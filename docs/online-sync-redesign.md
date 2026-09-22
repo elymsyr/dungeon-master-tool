@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
-Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3
-ve Faz 3.5 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4+ taslak.
+Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
+Faz 3.5 ve Faz 4a bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4b+ taslak.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -15,7 +15,7 @@ ve Faz 3.5 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4+ taslak.
 > var; bağlayıcı olan şey fazın **çıkış kriteri**.
 >
 > Belge ile kod çeliştiğinde **kod kazanır**, belge düzeltilir — bulunan her
-> fark [§4.7](#47-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
+> fark [§4.8](#48-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
 > Fazın niyeti belirsizse ya da fark bir kararı değiştiriyorsa **kullanıcıya
 > sor**, tahmin etme.
 
@@ -871,7 +871,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
 | ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
 | ~~**3.5**~~ | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | ✅ bitti |
-| 4 | Drift v13 bump + push | dünya bulutta görünüyor, geri okuma yok | evet | taslak |
+| ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti |
+| 4b | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | taslak |
 | 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
@@ -1149,7 +1150,7 @@ bir şey kalmıyor. İkincisi **yapılamaz**: `world_entities` birincil anahtar�
 global `{id}`, `upsert` de `insertAllOnConflictUpdate`. Yeni id'li bir dünya
 kopyası, entity satırlarını var olan dünyadan **kendine çeker** ve orijinali
 boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
-(bkz. §4.7) — önce o düzeltilmeli.
+(bkz. §4.8) — önce o düzeltilmeli.
 
 ### Bilinçli sınırlar
 
@@ -1305,7 +1306,7 @@ faz bitmiş sayılmaz.
 | H | Kota sabitleri, kart satırı 256 KB, dünya başına 20.000 satır, kişi başı 20 paket |
 | I | Realtime: `world_revisions` **eklenir**, hiçbir şey çıkarılmaz |
 
-Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.7).
+Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.8).
 
 ### Faz 3 çıkış kriteri — karşılandı
 
@@ -1420,7 +1421,7 @@ resim yazıldığında oyuncuya **eski resim servis edilmedi**.
 | Belgede yazan | Uygulanan |
 |---|---|
 | §2.7: "DM `asset_refs` tablosundan sha → yerel dosya" | Yapılamaz: `ReferenceIndexer._isAssetRef` ham yolları **kasten** indekslemiyor ("silinen path'ler false-orphan verir"), yani o tabloda yerel dosya diye bir satır hiç yok. Ayrı bir yan tablo açıldı: `content_paths` |
-| §4.6 taslağı: "DM push'unda yol→sha" | Dönüşüm noktası doğru ama push henüz yok. Bugün aynı dönüşümü paylaşım ve projeksiyon yolları çağırıyor (`SharedMediaCourier.refFor`); Faz 4 push'u aynı fonksiyonu çağıracak, yeni bir yol yazmayacak |
+| §4.7 taslağı: "DM push'unda yol→sha" | Dönüşüm noktası doğru ama push henüz yok. Bugün aynı dönüşümü paylaşım ve projeksiyon yolları çağırıyor (`SharedMediaCourier.refFor`); Faz 4 push'u aynı fonksiyonu çağıracak, yeni bir yol yazmayacak |
 | §2.7: "ref'i tier'dan ayır" tek başına yeterli | Yetmedi — ref'i tanıyan **dört** yer daha var: `ReferenceIndexer` (tanımazsa `EvictionSweeper` indirilen baytı orphan sanıp siler), `PublishMediaPinner`, `EvictionSweeper`'ın kendisi, `MissingMediaReporter`. Yeni bir şema eklemek bu listeyi gezmek demek |
 
 ### Bilinçli sınırlar
@@ -1443,18 +1444,123 @@ resim yazıldığında oyuncuya **eski resim servis edilmedi**.
 
 ---
 
-## 4.6 Faz 4 ve sonrası — taslak
+## 4.6 Faz 4a — Drift v13 + dünya push'u ✅ bitti
+
+*İki iş: şemanın tek seferlik bump'ı ve yereldeki satırların buluta çıkması.*
+
+### Sorun
+
+Faz 3 bulut tablolarını kurdu ama istemci tek satır yazmıyordu. Yazabilmesi
+için üç şey eksikti: dünyanın online olduğunu **çevrimdışıyken de** bilecek
+yerel bir bayrak, beş tabloda (`encounters`, `combatants`, `map_pins`,
+`timeline_pins`, `installed_packages`) hiç olmayan `updated_at`, ve silinen
+satırı hatırlayan bir kayıt — silme taramada görünmez.
+
+### Verilen karar: kuyruk değil, watermark
+
+Belge (§2.11) `sync_outbox`'ın geri gelmesini söylüyordu. Kod okunduktan
+sonra **kullanıcıya soruldu ve watermark taraması seçildi.** İkisi de aynı
+işi yapıyor, farkları ne hatırladıkları:
+
+| | Outbox | Watermark |
+|---|---|---|
+| Hatırlanan şey | yapılacak işlerin listesi | tek tarih: nereye kadar gidildi |
+| Yazma noktaları | her birine `enqueue` serpilir (~20 yer) | **hiçbirine dokunulmaz** |
+| Aynı karta 20 düzenleme | 20 kuyruk satırı (ya da ayrı birleştirme mantığı) | tek satır, kendiliğinden birleşik |
+| Çevrimdışı birikim | kuyruk diskte büyür | satırlar zaten yerinde |
+| Yarıda kalan tur | gidenler kuyruktan düşer | damga ilerlemez, tur baştan gider (upsert idempotent) |
+| Eski gerçekleşmesi | `sync_engine.dart` 998 satır | `cloud_push_service.dart` ~330 satır |
+
+Watermark'ın bedeli iki yerde ödendi ve ikisi de kapatıldı: kalıcı reddedilen
+bir satır damgayı sonsuza kadar kilitleyebilirdi (→ satır atlanır, damga
+ilerler), ve silme taramada görünmez (→ `sync_tombstones`).
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Drift v13** | `worlds.is_online` + `cloud_revision`, `packages.is_online` + `cloud_revision`, `world_characters.is_online`, beş tabloya `updated_at`. Tek bump — v13'te ne gerekeceği artık tahmin değil |
+| **`onUpgrade` 12→13** | Gerçek geçiş adımı: `addColumn` × 10 + mevcut satırların `updated_at` backfill'i. v12 dosyası **korunur** (aşağıdaki fark tablosuna bak) |
+| **`sync_tombstones`** | Yan tablo (raw DDL, bump yok): `(table_name, row_id, world_id, deleted_at)`. DAO silme yollarında yazılır |
+| **`sync_stamp.dart`** | İki satırlık sözleşme: `stampedNow` (upsert damgası) + `recordTombstone(s)`. DAO'lar bunu çağırıyor, başka kimse |
+| **`CloudPushService`** | Tarama + gönderim. 10 tablo bildirimsel bir listede (`_mirrorTables`), combatant ayrı (dünyası encounter'dan gelir, koşulları JSON kolona iner) |
+| **`CloudPushPump`** | `PendingWriteBuffer.tick` → 3 sn sessizlik → tur. Dünya açıkken `MainScreen`'in keep-alive kalıbıyla yaşıyor |
+| **`_makeOnline` / `_confirmOffline`** | Yerel bayrağı yazıyor; online yapınca **tam tur** koşuyor. Offline yapınca damga sıfırlanır — yeniden açılırsa kapalıyken yapılan düzenlemeler de gider |
+
+Turun anatomisi:
+
+```
+cutoff = now()                      ← taramadan ÖNCE alınır
+tombstone'lar  → bulutta DELETE     ← upsert'ten ÖNCE (sil+yeniden yarat doğru çalışsın)
+her tablo      → updated_at > damga → 200'lük parçalar hâlinde upsert
+damga = cutoff                      ← yalnız tur temiz bittiyse
+```
+
+### Faz 4a çıkış kriteri — karşılandı
+
+> **dünya bulutta görünüyor, geri okuma yok**
+
+- `cloud_push_collect_test.dart` (8 test) turun satır üretimini ağsız
+  doğruluyor: watermark penceresi, SQLite 0/1 → `boolean`, unix saniye → ISO,
+  `dm_only_keys`'in bilinmeyen kategoride **NULL** kalması, combatant'ın
+  dünyasının encounter'dan gelmesi, koşul değişiminin ebeveyni damgalaması,
+  silmenin tombstone bırakması, yeniden yaratılan satırın **öldürülmemesi**.
+- `v13_schema_smoke_test.dart` kolonları ve yan tabloyu doğruluyor.
+- `flutter analyze` temiz; tam `flutter test` 1541 yeşil / 1 kırmızı ve o tek
+  kırmızı (`bundled_pack_resolve_test`) temiz ağaçta da kırmızı.
+- Geri okuma **yok**: servis hiçbir yerde `select` etmiyor, applier'a
+  dokunulmadı. Pull Faz 5.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §2.11: `sync_outbox` geri gelmeli | Gelmedi — watermark taraması seçildi (yukarıdaki karar tablosu). `_retiredTablesDDL`'deki `DROP TABLE IF EXISTS sync_outbox` **duruyor** |
+| §4.0: "v13'e çıkmak her kullanıcının DB'sini `.legacy` yapar" | Yapmıyor. `_openConnectionForUser`'daki kesim `user_version < 12` diyor; v12 dosyası kesime takılmaz, Drift `onUpgrade(12→13)` koşar. Yani bump'ın bedeli sıfır değil — **gerçek bir geçiş adımı yazmak** gerekti (eski `onUpgrade` `createAll()` çağırıyordu, o kolon eklemez) |
+| §2.3: her ayna tablosunda `revision` + `updated_at`, delta sorgusu bunun üzerinden | Bulut tarafı öyle; **istemci** tarafında `revision` yazılmıyor, yazılmamalı — sayaç `next_world_revision` ile sunucuda artıyor. Yerel `worlds.cloud_revision` Faz 5'in okuyacağı boş kolon olarak duruyor |
+| §2.2: `world_combat_conditions` | Yerel `combat_conditions` PK'sı autoincrement int; push onu combatant'ın `conditions_json`'ına katlıyor. Koşul eklemek/silmek ebeveyni damgalıyor, yoksa değişiklik taramaya hiç girmezdi |
+| §4.5: "Faz 4 push'u satırı gönderirken çevirir" | Çevirdi ve **çevirici genişledi**: `refFor` yalnız entity'nin görsel alanlarında değil, `settings_json` / `data_json` / `map_path` / mind map `image_url` içinde de çalışıyor — gövdeler şemasız gezilip mutlak yol taşıyan her string dönüştürülüyor |
+
+### Bilinçli sınırlar
+
+- **Reddedilen satır sessizce atlanır.** Bir parça reddedilirse suçlu satır
+  tek tek denenerek bulunur, atlanır ve damga yine de ilerler — tek bir dev
+  kart bütün dünyanın senkronunu kilitlemesin. Bugün sonucu yalnız
+  `debugPrint` görüyor; kullanıcıya "şu kart buluta sığmadı" demek Faz 7'nin
+  kota göstergesiyle gelecek.
+- **`revision` istemcide boş.** `worlds.cloud_revision` kolonu var, kimse
+  yazmıyor. Faz 5 pull'u dolduracak.
+- **Karakterler ve paketler bu turda yok.** `world_characters` bugünkü
+  doğrudan push yoluyla gitmeye devam ediyor; `isOnline` kolonları v13'te
+  hazır ama anahtar Faz 4b.
+- **Tur yalnız yazma tamponunun tick'iyle başlar.** Uygulama kapanırken ayrı
+  bir "son tur" yok — gerek de yok: gitmeyen satırlar yerinde duruyor ve
+  damga ilerlemediği için bir sonraki açılışta ilk düzenlemede giderler.
+  Kaybolan bir şey olmuyor, yalnız gecikme.
+- **Mind map tabloları boş gidiyor.** `world_mind_map_nodes/_edges` yerelde
+  kayıtlı ama uygulama mind map'i bugün `world_settings.settings_json`
+  içindeki `mind_maps` anahtarında tutuyor — yani push'a ayarlarla birlikte,
+  medya çevirisi dahil, giriyor. Bulut tabloları o veri kendi satırlarına
+  ayrılana kadar boş kalır.
+- **Tam tarama, indekssiz.** Tur her tabloda `world_id = ? AND updated_at > ?`
+  koşuyor; `world_id` indeksleri var, `updated_at` için ayrı indeks yok.
+  20.000 satırlık dünyada ölçülebilir bir gecikme çıkarsa doğru yükseltme
+  `(world_id, updated_at)` bileşik indeksi — ölçülmeden eklenmedi.
+
+---
+
+## 4.7 Faz 4b ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4, §4.5).*
+ayrıntıda açılıyor (bkz. §4.4, §4.5, §4.6).*
 
-### Faz 4 — Drift v13 + push
-Tek v13 bump (`isOnline`, `sync_outbox`, `revision`/`updated_at`,
-`lan_paired_devices` düşürülmesi); push katmanı
-`PendingWriteBuffer → sync_outbox → bulut`; echo bastırma; revizyon artırma;
-**düzenleme zamanı kuralı** (§2.8); kota reddi yerel yazmayı durdurmaz.
-Eski Faz 2'nin online anahtarı (paket + karakter) burada, `_makeOnline`
-genelleştirilerek.
+### Faz 4b — Paket + karakter online anahtarı
+Eski Faz 2'nin online anahtarı, `_makeOnline` genelleştirilerek: `packages` ve
+`world_characters` üstündeki `isOnline` bayrağı (v13'te geldi) + `user_packages`
+/ `user_package_entities` / `user_package_schemas` push'u. Dünya push'unun
+`collect` + watermark iskeleti olduğu gibi kullanılacak; yeni olan tek şey
+kapsamın dünya değil **kullanıcı** olması (`owner_id` kolonu, paketin kendi
+revizyon sayacı).
 
 ### Faz 5 — Pull
 Uzlaştırıcı; applier'ın tablo başına ayrı handler olarak yeniden yazımı;
@@ -1480,7 +1586,7 @@ Değişmedi — bkz. eski liste.
 
 ---
 
-## 4.7 Kod incelemesinden çıkan düzeltmeler
+## 4.8 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
 uyuşmuyordu. Kayda geçiyor:
@@ -1500,7 +1606,8 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 2.5: `activeCampaignProvider` yalnız dünya adı tutar | Paket ekranı bu provider'ı kendi `ProviderScope`'unda **paket adıyla** override ediyor (`package_screen.dart:112`). Değer "açık içeriğin anahtarı" — dünyada id, pakette paket adı |
 | §2.7: "DM `asset_refs`'ten sha → yerel dosya" | `asset_refs` ham yol tutmuyor ve tutmamalı (false-orphan). `content_paths` yan tablosu açıldı (§4.5) |
 | §2.2: "Toplam ~26 tablo" | 25. `world_combat_conditions` tablo olmadı — `world_combatants.conditions_json` kolonu oldu (§4.4) |
-| §2.11: `sync_outbox` "geri gelmeli" | `app_database.dart:430` `_retiredTablesDDL` onu aktif `DROP` ediyor — o satırın kalkması Faz 4'ün parçası |
+| §2.11: `sync_outbox` "geri gelmeli" | Gelmedi: Faz 4a push'u kuyruk tutmuyor, watermark tarıyor (§4.6). `_retiredTablesDDL`'deki `DROP` satırı **kalıyor** |
+| §4.0: v13 bump'ı her kullanıcının DB'sini sıfırlar | Sıfırlamıyor — legacy kesimi `user_version < 12`'ye bakıyor, v12 dosyası `onUpgrade(12→13)`'e düşüyor. Bedel sıfırlama değil, gerçek bir geçiş adımı yazmak oldu (§4.6) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 

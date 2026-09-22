@@ -1,7 +1,7 @@
-// PR-D0 smoke test — verifies v12 schema creates all tables + S1 indexes.
+// PR-D0 smoke test — verifies v13 schema creates all tables + S1 indexes.
 //
 // Run with:
-//   cd flutter_app && flutter test test/database/v12_schema_smoke_test.dart
+//   cd flutter_app && flutter test test/database/v13_schema_smoke_test.dart
 //
 // Asserts:
 //   1. AppDatabase opens against an in-memory NativeDatabase.
@@ -15,7 +15,7 @@ import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('v12 schema (PR-D0)', () {
+  group('v13 schema (PR-D0)', () {
     late AppDatabase db;
 
     setUp(() {
@@ -26,8 +26,39 @@ void main() {
       await db.close();
     });
 
-    test('schemaVersion is 12', () {
-      expect(db.schemaVersion, 12);
+    test('schemaVersion is 13', () {
+      expect(db.schemaVersion, 13);
+    });
+
+    test('Faz 4 kolonları yerinde', () async {
+      Future<Set<String>> cols(String table) async => {
+            for (final r
+                in await db.customSelect('PRAGMA table_info($table)').get())
+              r.read<String>('name'),
+          };
+      expect(await cols('worlds'),
+          containsAll(['is_online', 'cloud_revision', 'last_cloud_push_at']));
+      expect(await cols('packages'), containsAll(['is_online']));
+      expect(await cols('world_characters'), containsAll(['is_online']));
+      // Push taramasının tek girdisi (§2.8) — beşi de v13'te geldi.
+      for (final t in const [
+        'encounters',
+        'combatants',
+        'map_pins',
+        'timeline_pins',
+        'installed_packages',
+      ]) {
+        expect(await cols(t), contains('updated_at'), reason: t);
+      }
+    });
+
+    test('sync_tombstones yan tablosu açılışta kurulur', () async {
+      await db.customSelect('SELECT 1').get();
+      final rows = await db.customSelect(
+        "SELECT name FROM sqlite_master WHERE type='table' "
+        "AND name = 'sync_tombstones'",
+      ).get();
+      expect(rows, isNotEmpty);
     });
 
     test('all expected tables exist', () async {
@@ -116,10 +147,8 @@ void main() {
     });
 
     test('retired cloud-sync tables are dropped on open', () async {
-      // Bulut sync kaldırıldı. Eski v12 dosyalarında bu tablolar duruyor;
-      // `beforeOpen` içindeki `_retiredTablesDDL` onları düşürüyor. Şema
-      // sürümü 12'de kalıyor — v13'e çıkmak her kullanıcının DB'sini
-      // `.legacy` yapıp sıfırlardı.
+      // Eski bulut sync'in ölü tabloları. Faz 4 push'u kuyruk tutmadığı için
+      // (watermark taraması) `sync_outbox` geri gelmiyor — liste duruyor.
       final rows = await db.customSelect(
         "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
         "('sync_outbox','sync_telemetry','bm_mark_ops_local','personal_packages')",

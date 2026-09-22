@@ -21,6 +21,14 @@ class Worlds extends Table {
   TextColumn get lastPushedHash => text().nullable()();
   DateTimeColumn get renamedAt => dateTime().nullable()();
 
+  /// Faz 4 — dünyanın bulut aynası açık mı. Bulut `world_members` satırından
+  /// türetilebilir ama push kararı **çevrimdışıyken de** verilebilmeli.
+  BoolColumn get isOnline => boolean().withDefault(const Constant(false))();
+
+  /// Faz 4 — bu cihazın gördüğü son bulut revizyonu (`world_revisions`).
+  /// Push yazmaz, Faz 5 pull'u okur.
+  IntColumn get cloudRevision => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

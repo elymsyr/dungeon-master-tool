@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../sync_stamp.dart';
 import '../tables/world_sessions_table.dart';
 
 part 'world_sessions_dao.g.dart';
@@ -36,11 +37,24 @@ class WorldSessionsDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<int> deleteById(String id) =>
-      (delete(worldSessions)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteById(String id) async {
+    final row = await (select(worldSessions)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (row != null) {
+      await recordTombstone('world_sessions', id, worldId: row.worldId);
+    }
+    return (delete(worldSessions)..where((t) => t.id.equals(id))).go();
+  }
 
-  Future<int> deleteByWorld(String worldId) =>
-      (delete(worldSessions)..where((t) => t.worldId.equals(worldId))).go();
+  Future<int> deleteByWorld(String worldId) async {
+    final ids = (await (select(worldSessions)
+              ..where((t) => t.worldId.equals(worldId)))
+            .get())
+        .map((e) => e.id);
+    await recordTombstones('world_sessions', ids, worldId: worldId);
+    return (delete(worldSessions)..where((t) => t.worldId.equals(worldId)))
+        .go();
+  }
 
   /// LAN sync birleştirmesi sonrası satır damgası — bkz.
   /// `WorldEntitiesDao.setUpdatedAt`.

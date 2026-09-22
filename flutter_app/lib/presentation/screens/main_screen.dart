@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
@@ -542,6 +543,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // U1: .select((_) => 0) → keep-alive ama applier resolve/rebuild'i shell'i
     // rebuild ETTİRMEZ (dönüş değeri burada kullanılmıyor).
     ref.watch(worldMirrorApplierProvider.select((_) => 0));
+
+    // Faz 4 push pompası — aynı keep-alive kalıbı. Pompa yazma tamponunun
+    // tick'ini dinler, 3 sn sessizlikten sonra online dünyanın değişen
+    // satırlarını buluta gönderir. Dünya offline'sa tur satır bulamadan
+    // döner, yani offline kullanıcı için maliyeti yok.
+    ref.watch(cloudPushPumpProvider);
 
     if (role == null) {
       // Rol henüz çözülmedi ve ipucu yok — nötr splash, DM flash etme.

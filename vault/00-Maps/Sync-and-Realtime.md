@@ -1,20 +1,22 @@
 ---
 type: moc
 domain: sync
-updated: 2026-09-21
+updated: 2026-09-22
 tags: [moc]
 ---
 
 # Sync & Realtime — Map of Content
 
 > [!summary] Scope
-> Üç kol var ve üçü de **buluta dünya kopyalamaz.**
+> Dört kol var. Üçü buluta dünya kopyalamaz; dördüncüsü (Faz 4a) **kullanıcı isterse** kopyalar.
 >
 > **LAN** — aynı ağdaki iki cihaz arasında manuel, kalıcı eşleşmeli, buluta hiç uğramayan senkron.
 >
 > **`.dmtz` dosya aktarımı** — hesapsız, internetsiz: dünya/paket/karakter zip'e girer, başka bir kurulumda açılır. LAN ile **aynı codec'i** kullanır ([[content_codec]]); aradaki tek fark blob'un telden mi dosyadan mı geldiği.
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
+>
+> **Bulut aynası push'u** — DM "Online yap" dediği dünyanın satırlarını Supabase'e gönderir. Kuyruk yok: `updated_at > son push damgası` taraması. Geri okuma henüz yok (Faz 5).
 >
 > Supabase şemasının kendisi ([[Backend-Infra]]) ve tablo tanımları ([[Data-Layer]]) bu domainin değil.
 
@@ -35,6 +37,10 @@ tags: [moc]
 - [[lan_device_store]] — cihaz kimliği + `lan_paired_devices` kayıtları.
 - [[lan_sync_server]] — host: HttpServer + presence beacon + eşleşme uçları.
 - [[lan_sync_client]] — `/pair` el sıkışması, imzalı çağrılar, presence dinleyici.
+
+**Bulut aynası push'u** (Faz 4a — `docs/online-sync-redesign.md` §4.6):
+- [[cloud_push_service]] — watermark taraması, satır eşlemesi, tombstone'lar, reddedilen satır kuralı.
+- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici.
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):
 - [[world_sync_service]] — beş tabloya Realtime abonelik + birleşik CDC event stream'i.

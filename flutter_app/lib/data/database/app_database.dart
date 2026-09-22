@@ -117,7 +117,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -130,9 +130,38 @@ class AppDatabase extends _$AppDatabase {
           }
         },
         onUpgrade: (m, from, to) async {
-          // v12 is a fresh cut. Anything older was handled by the legacy
-          // rename in _openConnectionForUser; this branch should not run.
-          // Defensive: if it does, treat as fresh create.
+          // v12 öncesi dosyalar `_openConnectionForUser`'daki legacy rename ile
+          // zaten elenir (user_version < 12 → `.legacy`), yani buraya yalnızca
+          // **v12 → v13** düşer. v12 dosyası korunur: Faz 4'ün eklediği şey
+          // kolon, tablo değil — sıfırlamak kullanıcının dünyasını silmek olurdu.
+          if (from == 12) {
+            await m.addColumn(worlds, worlds.isOnline);
+            await m.addColumn(worlds, worlds.cloudRevision);
+            await m.addColumn(packages, packages.isOnline);
+            await m.addColumn(packages, packages.cloudRevision);
+            await m.addColumn(worldCharacters, worldCharacters.isOnline);
+            await m.addColumn(encounters, encounters.updatedAt);
+            await m.addColumn(combatants, combatants.updatedAt);
+            await m.addColumn(mapPins, mapPins.updatedAt);
+            await m.addColumn(timelinePins, timelinePins.updatedAt);
+            await m.addColumn(installedPackages, installedPackages.updatedAt);
+            // `updated_at` NULL = "hiç düzenlenmedi" ve push taraması onu
+            // görmez. Mevcut satırlar geçiş anıyla damgalanır: ilk push turu
+            // hepsini birden gönderir, sonraki turlar yalnızca değişeni.
+            final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            for (final t in const [
+              'encounters',
+              'combatants',
+              'map_pins',
+              'timeline_pins',
+              'installed_packages',
+            ]) {
+              await customStatement(
+                  'UPDATE $t SET updated_at = $now WHERE updated_at IS NULL');
+            }
+            return;
+          }
+          // Beklenmeyen sürüm — defansif olarak eksik tabloları kur.
           await m.createAll();
           for (final stmt in _v12Indexes) {
             await customStatement(stmt);
@@ -234,10 +263,9 @@ class AppDatabase extends _$AppDatabase {
               await customStatement(stmt);
             } catch (_) {}
           }
-          // Bulut sync kaldırıldı: outbox/telemetry/personal-package tabloları
-          // artık yok. Mevcut v12 DB'lerde artık satırlar duruyor; burada
-          // düşürülür. schemaVersion 12'de KALIR — v13'e çıkmak her kullanıcının
-          // DB'sini `.legacy` yapıp sıfırlardı, oysa kaybolan tek şey ölü tablo.
+          // Eski bulut sync'in ölü tabloları. Faz 4 push'u kuyruk tutmuyor
+          // (watermark taraması — bkz. [CloudPushService]), yani `sync_outbox`
+          // geri gelmiyor; liste olduğu gibi kalıyor.
           for (final stmt in _retiredTablesDDL) {
             await customStatement(stmt);
           }
@@ -421,6 +449,7 @@ const List<String> _v12Indexes = <String>[
 /// - `migration_progress` (F11): raw-path migrator resume state.
 /// - `lan_paired_devices` (LAN sync v2): kalıcı cihaz eşleşmeleri. DB zaten
 ///   `users/{uid}/` altında olduğu için kayıtlar doğal olarak hesaba bağlı.
+/// - `sync_tombstones` (Faz 4): buluta bildirilecek silmeler.
 const List<String> _sideTablesDDL = <String>[
   // asset_refs
   'CREATE TABLE IF NOT EXISTS asset_refs ('
@@ -465,6 +494,21 @@ const List<String> _sideTablesDDL = <String>[
       'updated_at INTEGER NOT NULL, '
       'PRIMARY KEY (migration_name, world_id)'
       ')',
+
+  // sync_tombstones — Faz 4: yerelde silinen satırın kaydı.
+  // Push taraması silinen satırı göremez (Drift'te artık yok), bu yüzden
+  // silme ayrı hatırlanır. Bulut satırı DELETE edilince oradaki
+  // `tg_world_tombstone` trigger'ı `world_tombstones`'a yazar — yani bu tablo
+  // yalnızca "buluta haber verilecek silme" listesi, gönderilince satır düşer.
+  'CREATE TABLE IF NOT EXISTS sync_tombstones ('
+      'table_name TEXT NOT NULL, '
+      'row_id TEXT NOT NULL, '
+      'world_id TEXT NOT NULL DEFAULT \'\', '
+      'deleted_at INTEGER NOT NULL, '
+      'PRIMARY KEY (table_name, row_id)'
+      ')',
+  'CREATE INDEX IF NOT EXISTS idx_sync_tombstones_world '
+      'ON sync_tombstones (world_id)',
 
   // lan_paired_devices — LAN sync v2 (bkz. [[LAN-Sync-Flow]])
   // `shared_secret` iki cihazda aynıdır; `/pair` el sıkışmasında iki tarafın

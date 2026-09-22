@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/account_gate.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart' show activePackageProvider;
@@ -503,6 +504,14 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       // to `dm` on the same tick the publish succeeds.
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(worldId));
+      // Faz 4 — bayrak yerelde de duruyor: push kararı çevrimdışıyken de
+      // verilebilmeli. Ardından ilk tam tur: dünyanın tamamı buluta çıkar.
+      await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, true);
+      final res = await ref
+          .read(cloudPushPumpProvider)
+          .push(full: true, worldId: worldId);
+      debugPrint('makeOnline ilk push: ${res.pushed} satır, '
+          '${res.rejected.length} red, hata: ${res.error}');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context)!.worldNowOnline)),
@@ -560,6 +569,9 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       await ref
           .read(worldMembershipServiceProvider)
           .unpublishWorld(worldId);
+      // Push durur. Damga da sıfırlanır: dünya yeniden online yapılırsa
+      // kapalıyken yapılan düzenlemeler de dahil her şey bir kez daha gider.
+      await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, false);
       ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
       ref.invalidate(worldOnlineStatusProvider(worldId));
       if (!mounted) return;
