@@ -130,6 +130,10 @@ class WorldMirrorService {
         'template_name': character.templateName,
         'payload_json': jsonEncode(character.toJson()),
         'referenced_entity_ids': referencedEntityIds.toList(),
+        // Faz 4b: 095 `trg_chars_bump_updated`'ı düşürdü (§2.8 — zamanı
+        // istemci yazar). Damga buradan gitmezse satır ilk INSERT'teki
+        // saatte donar ve push taramasıyla ayrışırdı.
+        'updated_at': character.updatedAt,
       });
     } catch (e) {
       _logMirrorError('pushCharacter', e);

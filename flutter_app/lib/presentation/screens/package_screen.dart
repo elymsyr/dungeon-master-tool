@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/account_gate.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
@@ -49,6 +50,9 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
     // override below is re-parsed from the freshly persisted world_schema
     // instead of staying stale until the screen remounts.
     ref.watch(campaignRevisionProvider);
+    // Faz 4b — paket açıkken push pompası hayatta kalsın; yazma tamponunun
+    // tick'ini dinleyen tek şey o.
+    ref.watch(cloudPushPumpProvider);
     final packageNotifier = ref.read(activePackageProvider.notifier);
     final data = packageNotifier.data;
 

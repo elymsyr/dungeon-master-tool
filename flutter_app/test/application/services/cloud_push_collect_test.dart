@@ -9,6 +9,7 @@
 //   3. Redaksiyon anahtarı: bilinmeyen kategori NULL ("sır yok" DEĞİL).
 //   4. Combatant: dünya encounter'dan gelir, koşullar JSON kolona iner.
 //   5. Tombstone: DAO silme yolunda yazılır.
+//   6. Faz 4b — paket (kullanıcı kapsamlı) ve karakter satırları.
 
 import 'dart:convert';
 
@@ -184,4 +185,135 @@ void main() {
     final res = await svc.pushWorld('w2');
     expect(res.skipped, true);
   });
+  // ── Faz 4b ────────────────────────────────────────────────────────────
+
+  test('karakter: referans listesi jsonb olur, kolon adı değişir', () async {
+    await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
+      id: 'ch1',
+      worldId: 'w1',
+      templateId: 'dnd5e',
+      templateName: 'Fighter',
+      payloadJson: const Value('{"name":"Kael"}'),
+      referencedEntityIdsJson: const Value('["e1","e2"]'),
+      updatedAt: Value(DateTime(2026, 6, 1)),
+    ));
+    final row = (await svc.collect('w1', epoch, const {}))
+        .firstWhere((b) => b.table == 'world_characters')
+        .rows
+        .single;
+    expect(row['referenced_entity_ids'], ['e1', 'e2']);
+    expect(row.containsKey('referenced_entity_ids_json'), false);
+    // Blob'a dokunulmuyor — byte-for-byte kuralı (world_characters_dao).
+    expect(row['payload_json'], '{"name":"Kael"}');
+  });
+
+  test('karakter silinince tombstone dünyaya yazılır', () async {
+    await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
+      id: 'ch1',
+      worldId: 'w1',
+      templateId: 'dnd5e',
+      templateName: 'Fighter',
+    ));
+    await db.worldCharactersDao.deleteById('ch1');
+    final row = (await db
+            .customSelect('SELECT table_name, row_id, world_id '
+                'FROM sync_tombstones')
+            .get())
+        .single;
+    expect(row.read<String>('table_name'), 'world_characters');
+    expect(row.read<String>('world_id'), 'w1');
+  });
+
+  test('paket: ebeveyn her tur gider, çocuklar damgaya bakar', () async {
+    await db.packagesDao.upsertPackage(PackagesCompanion.insert(
+      id: 'p1',
+      name: 'Kanun Kitabı',
+      isOnline: const Value(true),
+      updatedAt: Value(DateTime(2026, 1, 1)),
+    ));
+    await db.packagesDao.upsertEntity(PackageEntitiesCompanion.insert(
+      id: 'pe-old',
+      packageId: 'p1',
+      categorySlug: 'spell',
+      name: 'Eski',
+      updatedAt: Value(DateTime(2026, 1, 1)),
+    ));
+    await db.packagesDao.upsertEntity(PackageEntitiesCompanion.insert(
+      id: 'pe-new',
+      packageId: 'p1',
+      categorySlug: 'spell',
+      name: 'Yeni',
+      updatedAt: Value(DateTime(2026, 6, 1)),
+    ));
+
+    final batches =
+        await svc.collectPackage('p1', DateTime(2026, 3, 1), 'u-1');
+    final parent =
+        batches.firstWhere((b) => b.table == 'user_packages').rows.single;
+    // Damgadan eski olmasına rağmen gidiyor: çocukların FK hedefi.
+    expect(parent['id'], 'p1');
+    expect(parent['owner_id'], 'u-1');
+
+    final kids =
+        batches.firstWhere((b) => b.table == 'user_package_entities').rows;
+    expect(kids.map((r) => r['id']), ['pe-new']);
+    expect(kids.single['owner_id'], 'u-1');
+  });
+
+  test('paket kartı silinince tombstone paket kapsamına yazılır', () async {
+    await db.packagesDao
+        .upsertPackage(PackagesCompanion.insert(id: 'p1', name: 'K'));
+    await db.packagesDao.upsertEntity(PackageEntitiesCompanion.insert(
+      id: 'pe1',
+      packageId: 'p1',
+      categorySlug: 'spell',
+      name: 'Ateş Topu',
+    ));
+    await db.packagesDao.deleteEntity('pe1');
+    final row = (await db
+            .customSelect('SELECT table_name, row_id, world_id '
+                'FROM sync_tombstones')
+            .get())
+        .single;
+    expect(row.read<String>('table_name'), 'user_package_entities');
+    expect(row.read<String>('row_id'), 'pe1');
+    // Kapsam kolonunun adı `world_id` ama paket turunda paketin id'si durur.
+    expect(row.read<String>('world_id'), 'p1');
+  });
+
+  test('paket silinince bekleyen tombstone kalmaz', () async {
+    await db.packagesDao
+        .upsertPackage(PackagesCompanion.insert(id: 'p1', name: 'K'));
+    await db.packagesDao.upsertEntity(PackageEntitiesCompanion.insert(
+      id: 'pe1',
+      packageId: 'p1',
+      categorySlug: 'spell',
+      name: 'Ateş Topu',
+    ));
+    await db.packagesDao.deleteEntity('pe1');
+    await db.packagesDao.deletePackage('p1');
+    // Paket satırı gidince `pushPackage` koşamaz; kayıtlar birikmemeli.
+    expect(
+        await db.customSelect('SELECT 1 FROM sync_tombstones').get(), isEmpty);
+  });
+
+  test('offline paket push edilmez', () async {
+    await db.packagesDao
+        .upsertPackage(PackagesCompanion.insert(id: 'p2', name: 'Kapalı'));
+    expect((await svc.pushPackage('p2')).skipped, true);
+  });
+
+  test('paket damgası: offline alınca sıfırlanır', () async {
+    await db.packagesDao.upsertPackage(PackagesCompanion.insert(
+        id: 'p1', name: 'K', isOnline: const Value(true)));
+    await db.packagesDao.setCloudPushAt('p1', DateTime(2026, 6, 1));
+    expect((await db.packagesDao.getById('p1'))!.lastCloudPushAt,
+        DateTime(2026, 6, 1));
+    // Yeniden açılırsa her şey bir kez daha gitsin.
+    await db.packagesDao.setOnline('p1', false);
+    final row = (await db.packagesDao.getById('p1'))!;
+    expect(row.isOnline, false);
+    expect(row.lastCloudPushAt, isNull);
+  });
 }
+

@@ -189,6 +189,16 @@ class _SaveSyncDialog extends ConsumerWidget {
                   _OnlineWorldPanel(palette: palette),
                 ],
 
+                // ── Paket online anahtarı (Faz 4b) ──
+                // Paket multiplayer olmuyor; buradaki tek şey "bulutta bir
+                // kopyası dursun mu" — dünyanınkiyle aynı watermark push'u.
+                if (!compact && isPackage) ...[
+                  _SectionLabel('Actions', palette),
+                  const SizedBox(height: 8),
+                  _PackageOnlineRow(palette: palette),
+                  const SizedBox(height: 16),
+                ],
+
                 // ── Local Sync ──
                 // İçerik buluta çıkmıyor, LAN'da kalıyor: hesapsız da açık.
                 _LocalSyncSection(palette: palette),
@@ -686,3 +696,179 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
 }
 
 
+
+
+/// Paketin "bulutta dursun" anahtarı — dünyanın `_makeOnline`'ının paket
+/// karşılığı (Faz 4b). Davet/üyelik yok: paket kullanıcı kapsamlı, RLS
+/// `owner_id`'ye bakıyor.
+class _PackageOnlineRow extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  const _PackageOnlineRow({required this.palette});
+
+  @override
+  ConsumerState<_PackageOnlineRow> createState() => _PackageOnlineRowState();
+}
+
+class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
+  bool _busy = false;
+  Future<({String id, bool online})?>? _row;
+
+  @override
+  void initState() {
+    super.initState();
+    _row = _load();
+  }
+
+  Future<({String id, bool online})?> _load() async {
+    final name = ref.read(activePackageProvider);
+    if (name == null || name.isEmpty) return null;
+    final row =
+        await ref.read(appDatabaseProvider).packagesDao.getByName(name);
+    return row == null ? null : (id: row.id, online: row.isOnline);
+  }
+
+  void _reload() => setState(() => _row = _load());
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    return FutureBuilder<({String id, bool online})?>(
+      future: _row,
+      builder: (context, snap) {
+        final row = snap.data;
+        if (row == null) return const SizedBox.shrink();
+        if (row.online) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: widget.palette.successBtnBg.withValues(alpha: 0.15),
+                  borderRadius: widget.palette.br,
+                  border: Border.all(color: widget.palette.successBtnBg),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_done,
+                        size: 14, color: widget.palette.successBtnBg),
+                    const SizedBox(width: 6),
+                    Text(
+                      l10n.packageIsOnline,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: widget.palette.successBtnBg,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: l10n.packageOnlineOff,
+                icon: const Icon(Icons.cloud_off, size: 16),
+                onPressed: _busy ? null : () => _makeOffline(row.id),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+            ],
+          );
+        }
+        return _ActionButton(
+          icon: Icons.cloud_upload,
+          label: _busy ? l10n.publishingEllipsis : l10n.packageOnlineOn,
+          onPressed: _busy ? null : () => _makeOnline(row.id),
+          palette: widget.palette,
+        );
+      },
+    );
+  }
+
+  /// Bulut yazımı: hesap + internet şart. Bayrak yerelde tutuluyor ki push
+  /// kararı çevrimdışıyken de verilebilsin.
+  Future<void> _makeOnline(String packageId) async {
+    final l10n = L10n.of(context)!;
+    if (!ref.read(hasAccountProvider)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.accountRequiredBody)));
+      return;
+    }
+    if (!(ref.read(connectivityStreamProvider).valueOrNull ?? true)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.internetRequiredRetry)));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(appDatabaseProvider).packagesDao.setOnline(packageId, true);
+      final res = await ref
+          .read(cloudPushPumpProvider)
+          .pushPackage(full: true, packageId: packageId);
+      debugPrint('paket online ilk push: ${res.pushed} satır, '
+          '${res.rejected.length} red, hata: ${res.error}');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.packageNowOnline)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.publishDialogFailed('$e'))));
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        _reload();
+      }
+    }
+  }
+
+  Future<void> _makeOffline(String packageId) async {
+    final l10n = L10n.of(context)!;
+    if (!(ref.read(connectivityStreamProvider).valueOrNull ?? true)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.internetRequiredOffline)));
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.packageOnlineOff),
+        content: Text(l10n.packageOfflineBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.btnCancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.packageOnlineOff)),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(cloudPushServiceProvider)?.unpublishPackage(packageId);
+      // Damga da sıfırlanır: yeniden açılırsa her şey bir kez daha gider.
+      await ref
+          .read(appDatabaseProvider)
+          .packagesDao
+          .setOnline(packageId, false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.packageNowOffline)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.unpublishFailed('$e'))));
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        _reload();
+      }
+    }
+  }
+}

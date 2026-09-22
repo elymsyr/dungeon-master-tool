@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../sync_stamp.dart';
 import '../tables/world_characters_table.dart';
 
 part 'world_characters_dao.g.dart';
@@ -52,23 +53,41 @@ class WorldCharactersDao extends DatabaseAccessor<AppDatabase>
           .distinct();
 
   Future<void> upsert(WorldCharactersCompanion row) =>
-      into(worldCharacters).insertOnConflictUpdate(row);
+      into(worldCharacters).insertOnConflictUpdate(
+          row.copyWith(updatedAt: stampedNow(row.updatedAt)));
 
   Future<void> upsertAll(List<WorldCharactersCompanion> rows) async {
     await batch((b) {
-      b.insertAllOnConflictUpdate(worldCharacters, rows);
+      b.insertAllOnConflictUpdate(worldCharacters, [
+        for (final r in rows) r.copyWith(updatedAt: stampedNow(r.updatedAt)),
+      ]);
     });
   }
 
-  Future<int> deleteById(String id) =>
-      (delete(worldCharacters)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteById(String id) async {
+    final row = await getById(id);
+    if (row != null) {
+      await recordTombstone('world_characters', id, worldId: row.worldId);
+    }
+    return (delete(worldCharacters)..where((t) => t.id.equals(id))).go();
+  }
 
-  Future<int> deleteByWorld(String worldId) =>
-      (delete(worldCharacters)..where((t) => t.worldId.equals(worldId))).go();
+  Future<int> deleteByWorld(String worldId) async {
+    final ids = (await (select(worldCharacters)
+              ..where((t) => t.worldId.equals(worldId)))
+            .get())
+        .map((e) => e.id);
+    await recordTombstones('world_characters', ids, worldId: worldId);
+    return (delete(worldCharacters)..where((t) => t.worldId.equals(worldId)))
+        .go();
+  }
 
+  /// Sahipliği düşürmek buluta da gitmeli (RLS `owner_id`'ye bakıyor), o
+  /// yüzden satır damgalanıyor — damgasız kalsa push taramasına girmezdi.
   Future<int> dropOwnership(String id) =>
-      (update(worldCharacters)..where((t) => t.id.equals(id)))
-          .write(const WorldCharactersCompanion(ownerId: Value(null)));
+      (update(worldCharacters)..where((t) => t.id.equals(id))).write(
+          WorldCharactersCompanion(
+              ownerId: const Value(null), updatedAt: Value(DateTime.now())));
 
   /// LAN sync: yeniden adlandırma zamanını kaydet.
   Future<void> setRenamedAt(String id, DateTime renamedAt) async {

@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5 ve Faz 4a bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4b+ taslak.
+Faz 3.5, 4a ve 4b bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 5+ taslak.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -15,7 +15,7 @@ Faz 3.5 ve Faz 4a bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4b+ taslak.
 > var; bağlayıcı olan şey fazın **çıkış kriteri**.
 >
 > Belge ile kod çeliştiğinde **kod kazanır**, belge düzeltilir — bulunan her
-> fark [§4.8](#48-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
+> fark [§4.9](#49-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
 > Fazın niyeti belirsizse ya da fark bir kararı değiştiriyorsa **kullanıcıya
 > sor**, tahmin etme.
 
@@ -872,7 +872,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
 | ~~**3.5**~~ | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | ✅ bitti |
 | ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti |
-| 4b | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | taslak |
+| ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti |
 | 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
@@ -1150,7 +1150,7 @@ bir şey kalmıyor. İkincisi **yapılamaz**: `world_entities` birincil anahtar�
 global `{id}`, `upsert` de `insertAllOnConflictUpdate`. Yeni id'li bir dünya
 kopyası, entity satırlarını var olan dünyadan **kendine çeker** ve orijinali
 boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
-(bkz. §4.8) — önce o düzeltilmeli.
+(bkz. §4.9) — önce o düzeltilmeli.
 
 ### Bilinçli sınırlar
 
@@ -1306,7 +1306,7 @@ faz bitmiş sayılmaz.
 | H | Kota sabitleri, kart satırı 256 KB, dünya başına 20.000 satır, kişi başı 20 paket |
 | I | Realtime: `world_revisions` **eklenir**, hiçbir şey çıkarılmaz |
 
-Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.8).
+Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.9).
 
 ### Faz 3 çıkış kriteri — karşılandı
 
@@ -1421,7 +1421,7 @@ resim yazıldığında oyuncuya **eski resim servis edilmedi**.
 | Belgede yazan | Uygulanan |
 |---|---|
 | §2.7: "DM `asset_refs` tablosundan sha → yerel dosya" | Yapılamaz: `ReferenceIndexer._isAssetRef` ham yolları **kasten** indekslemiyor ("silinen path'ler false-orphan verir"), yani o tabloda yerel dosya diye bir satır hiç yok. Ayrı bir yan tablo açıldı: `content_paths` |
-| §4.7 taslağı: "DM push'unda yol→sha" | Dönüşüm noktası doğru ama push henüz yok. Bugün aynı dönüşümü paylaşım ve projeksiyon yolları çağırıyor (`SharedMediaCourier.refFor`); Faz 4 push'u aynı fonksiyonu çağıracak, yeni bir yol yazmayacak |
+| Eski §4.7 taslağı: "DM push'unda yol→sha" | Dönüşüm noktası doğru ama push henüz yok. Bugün aynı dönüşümü paylaşım ve projeksiyon yolları çağırıyor (`SharedMediaCourier.refFor`); Faz 4 push'u aynı fonksiyonu çağıracak, yeni bir yol yazmayacak |
 | §2.7: "ref'i tier'dan ayır" tek başına yeterli | Yetmedi — ref'i tanıyan **dört** yer daha var: `ReferenceIndexer` (tanımazsa `EvictionSweeper` indirilen baytı orphan sanıp siler), `PublishMediaPinner`, `EvictionSweeper`'ın kendisi, `MissingMediaReporter`. Yeni bir şema eklemek bu listeyi gezmek demek |
 
 ### Bilinçli sınırlar
@@ -1530,9 +1530,8 @@ damga = cutoff                      ← yalnız tur temiz bittiyse
   kota göstergesiyle gelecek.
 - **`revision` istemcide boş.** `worlds.cloud_revision` kolonu var, kimse
   yazmıyor. Faz 5 pull'u dolduracak.
-- **Karakterler ve paketler bu turda yok.** `world_characters` bugünkü
-  doğrudan push yoluyla gitmeye devam ediyor; `isOnline` kolonları v13'te
-  hazır ama anahtar Faz 4b.
+- ~~**Karakterler ve paketler bu turda yok.**~~ Faz 4b kapattı: ikisi de
+  turda (§4.7). `pushCharacter` doğrudan yolu güvenlik ağı olarak duruyor.
 - **Tur yalnız yazma tamponunun tick'iyle başlar.** Uygulama kapanırken ayrı
   bir "son tur" yok — gerek de yok: gitmeyen satırlar yerinde duruyor ve
   damga ilerlemediği için bir sonraki açılışta ilk düzenlemede giderler.
@@ -1549,18 +1548,85 @@ damga = cutoff                      ← yalnız tur temiz bittiyse
 
 ---
 
-## 4.7 Faz 4b ve sonrası — taslak
+## 4.7 Faz 4b — Paket + karakter push'u ✅ bitti
+
+*Aynı watermark iskeleti, iki yeni kapsam: kullanıcının paketi ve dünyanın
+karakterleri.*
+
+### Sorun
+
+Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
+
+- **Paket hiç buluta çıkmıyordu.** §1.2 "paket online olabilir" diyor,
+  `user_packages` / `user_package_entities` / `user_package_schemas` Faz 3'te
+  kuruldu, `packages.is_online` v13'te geldi — ama yazan kimse yoktu.
+- **Karakterin çevrimdışı düzenlemesi kayboluyordu.**
+  `WorldMirrorService.pushCharacter` tek atışlık doğrudan yazma: ağ yoksa
+  yazma düşüyor, yeniden deneyen bir şey yok. Kart için Faz 4a bunu kapatmıştı
+  (satır yerinde durur, damga ilerlemez, sonraki tur bulur), karakter için
+  kapatmamıştı.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **`_MirrorTable` genelleşti** | Tarama artık kapsam kolonunu tablodan okuyor (`scope`: dünyada `world_id`, paket çocuklarında `package_id`, paketin kendi satırında `id`). Üstüne üç küçük alan: `rename` (yerel ↔ bulut kolon adı), `jsonCols` (TEXT → `jsonb`), `owner` (satırın `owner_id`'si nereden geliyor) |
+| **`pushPackage` + `collectPackage`** | `pushWorld`/`collect` ile bire bir aynı iskelet; damga `packages.last_cloud_push_at`, `dm_only_keys` yok (paket oyuncuyla paylaşılmıyor, RLS tek kolona bakıyor) |
+| **`unpublishPackage`** | "Yerele al" yolu: bulut satırı silinir, çocuklar FK cascade'iyle gider, bekleyen tombstone'lar düşer |
+| **Karakterler ayna ailesine katıldı** | `world_characters` `_mirrorTables`'ta. `referenced_entity_ids_json` → `referenced_entity_ids` (yeniden adlandırma + `jsonb` çözümü) |
+| **Migration 095** | `trg_chars_bump_updated` düştü — 094'ün başlığında "Faz 4'te" diye yazılı olan borç. Zamanı artık istemci yazıyor (§2.8); `pushCharacter` de aynı anahtarı göndermeye başladı ki trigger düşerken damgayı yazan biri kalsın |
+| **DAO'lar** | `packages` / `package_entities` / `package_schemas` / `world_characters` upsert'leri `stampedNow` ile damgalanıyor, silme yolları tombstone bırakıyor. `dropOwnership` de damgalanıyor — `owner_id` RLS girdisi, damgasız kalsa taramaya girmezdi |
+| **Pompa iki turlu** | `tick` → dünya turu → paket turu. İkisi sıralı koşuyor, tek `_guarded` kapısından geçiyor |
+| **Paket ekranında anahtar** | `SaveSyncIndicator(isPackage: true)` diyaloğunda "Paketi Online Yap / Yerele Al" (4 dilde 6 yeni l10n anahtarı). Paket ekranı pompayı `MainScreen` ile aynı keep-alive kalıbıyla canlı tutuyor |
+
+### Faz 4b çıkış kriteri — karşılandı
+
+> **paket/karakter de buluta çıkıyor**
+
+- `cloud_push_collect_test.dart` 8 → **15 test**: karakterin referans
+  listesinin `jsonb`'ye çevrilip yeniden adlandırılması, payload blob'una
+  dokunulmaması, karakter silmesinin tombstone bırakması, paketin ebeveyn
+  satırının damgadan bağımsız gitmesi, çocukların damgaya bakması,
+  `owner_id`'nin her satıra yazılması, paket kartı silmesinin tombstone'u
+  **paket kapsamına** yazması, paket silinince kayıt birikmemesi, offline
+  paketin atlanması, damganın offline'da sıfırlanması.
+- `flutter analyze` temiz (30 önceden var olan info); tam `flutter test`
+  **1549 yeşil / 1 kırmızı**, o tek kırmızı (`bundled_pack_resolve_test`)
+  temiz ağaçta da kırmızı.
+- Geri okuma yine **yok** — pull Faz 5.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| Eski §4.7 taslağı: "`world_characters` üstündeki `isOnline` bayrağı" | Kolon duruyor ama **kimse okumuyor**. Dünya başına bir anahtar var, karakter başına ikincisinin bugün anlamı yok: dünyanın karakterleri dünya online'sa gider. Kolon `cloud_revision` gibi Faz 5.5'i bekliyor — oyuncunun dünyaya bağlı olmayan karakteri ortaya çıkınca kullanılacak |
+| Eski §4.7 taslağı: "paketin kendi revizyon sayacı" | Sayaç bulutta (`next_package_revision`), istemci yine yazmıyor — dünyadaki kuralın aynısı |
+| Faz 4a: "`pushCharacter` doğrudan yolu duruyor" | Duruyor ve **duracak**. Tur onun yerine geçmiyor, güvenlik ağı: doğrudan yol anında yazıyor (oyuncu canlı oyunda beklemesin), tur 3 sn sonra aynı satıra idempotent upsert yapıyor. Doğrudan yolun emekliliği Faz 5.5'te, oyuncu RPC'ye geçince |
+
+### Bilinçli sınırlar
+
+- **Paketin silinmesi buluta gitmiyor.** Paket yerelden silinince
+  `pushPackage` bir daha koşamaz (satır yok), o yüzden `deletePackage`
+  bekleyen tombstone'ları temizliyor ve bulut satırı yerinde kalıyor. Bulut
+  kopyasını düşüren tek yol bugün "Yerele al". Dünyada da aynı yapı var
+  (`deleteWorld` + `unpublishWorld`); doğru kapanışı Faz 5'in uzlaştırıcısı.
+- **Karakter görselleri mutlak yolla gidiyor.** `payload_json` medya
+  çevirisine sokulmadı: blob'un byte-for-byte korunması kuralı
+  (`world_characters_dao`) jsonDecode/encode turundan ağır basıyor. Bugünkü
+  `pushCharacter` de aynısını yapıyor, yani gerileme yok — `dmt-content://`
+  çevirisi karakterler için ayrı bir iş.
+- **Paket kapsamı `sync_tombstones.world_id` kolonunda taşınıyor.** Kolon adı
+  artık "kapsam" demek. Yeniden adlandırmak yan tablonun `CREATE TABLE IF NOT
+  EXISTS` DDL'ini kırardı; adın yalanı yorumla kapatıldı.
+- **Paket turu yalnız paket açıkken koşuyor.** Hub'dan paketi online yapmak
+  yok; anahtar paketin içindeki Save & Sync diyaloğunda.
+
+---
+
+## 4.8 Faz 5 ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4, §4.5, §4.6).*
-
-### Faz 4b — Paket + karakter online anahtarı
-Eski Faz 2'nin online anahtarı, `_makeOnline` genelleştirilerek: `packages` ve
-`world_characters` üstündeki `isOnline` bayrağı (v13'te geldi) + `user_packages`
-/ `user_package_entities` / `user_package_schemas` push'u. Dünya push'unun
-`collect` + watermark iskeleti olduğu gibi kullanılacak; yeni olan tek şey
-kapsamın dünya değil **kullanıcı** olması (`owner_id` kolonu, paketin kendi
-revizyon sayacı).
+ayrıntıda açılıyor (bkz. §4.4, §4.5, §4.6, §4.7).*
 
 ### Faz 5 — Pull
 Uzlaştırıcı; applier'ın tablo başına ayrı handler olarak yeniden yazımı;
@@ -1586,7 +1652,7 @@ Değişmedi — bkz. eski liste.
 
 ---
 
-## 4.8 Kod incelemesinden çıkan düzeltmeler
+## 4.9 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
 uyuşmuyordu. Kayda geçiyor:

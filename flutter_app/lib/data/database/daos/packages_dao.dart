@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../sync_stamp.dart';
 import '../tables/package_entities_table.dart';
 import '../tables/package_schemas_table.dart';
 import '../tables/packages_table.dart';
@@ -31,11 +32,35 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
           .watch()
           .distinct();
 
-  Future<void> upsertPackage(PackagesCompanion row) =>
-      into(packages).insertOnConflictUpdate(row);
+  Future<void> upsertPackage(PackagesCompanion row) => into(packages)
+      .insertOnConflictUpdate(row.copyWith(updatedAt: stampedNow(row.updatedAt)));
 
-  Future<int> deletePackage(String id) =>
-      (delete(packages)..where((t) => t.id.equals(id))).go();
+  /// Paket yerelden silinirken bekleyen tombstone'ları da düşürür: paket
+  /// satırı gidince `pushPackage` bir daha koşamaz, kayıtlar sonsuza kadar
+  /// birikirdi. Bulut satırının silinmesi "Online kapat" yolundan geçiyor.
+  Future<int> deletePackage(String id) async {
+    await customStatement(
+        'DELETE FROM sync_tombstones WHERE world_id = ?', [id]);
+    return (delete(packages)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Faz 4b push damgası — "bu ana kadarki her satır bulutta".
+  Future<void> setCloudPushAt(String id, DateTime pushedAt) async {
+    await (update(packages)..where((t) => t.id.equals(id)))
+        .write(PackagesCompanion(lastCloudPushAt: Value(pushedAt)));
+  }
+
+  /// Faz 4b — paketin bulut aynası açık/kapalı. Dünyadaki eşiyle aynı kural:
+  /// kapatılan paket yeniden açıldığında damga sıfırdan başlar ki kapalıyken
+  /// yapılan düzenlemeler de bir kez daha gitsin.
+  Future<void> setOnline(String id, bool online) async {
+    await (update(packages)..where((t) => t.id.equals(id))).write(
+      PackagesCompanion(
+        isOnline: Value(online),
+        lastCloudPushAt: online ? const Value.absent() : const Value(null),
+      ),
+    );
+  }
 
   Future<void> updateCloudPush(
     String id, {
@@ -87,11 +112,15 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<void> upsertSchema(PackageSchemasCompanion row) =>
-      into(packageSchemas).insertOnConflictUpdate(row);
+      into(packageSchemas).insertOnConflictUpdate(
+          row.copyWith(updatedAt: stampedNow(row.updatedAt)));
 
-  Future<int> deleteSchemasByPackage(String packageId) =>
-      (delete(packageSchemas)..where((t) => t.packageId.equals(packageId)))
-          .go();
+  Future<int> deleteSchemasByPackage(String packageId) async {
+    final ids = (await getSchemas(packageId)).map((e) => e.id);
+    await recordTombstones('user_package_schemas', ids, worldId: packageId);
+    return (delete(packageSchemas)..where((t) => t.packageId.equals(packageId)))
+        .go();
+  }
 
   // ── Package entities ─────────────────────────────────────────────────────
 
@@ -131,18 +160,31 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
           .distinct();
 
   Future<void> upsertEntity(PackageEntitiesCompanion row) =>
-      into(packageEntities).insertOnConflictUpdate(row);
+      into(packageEntities).insertOnConflictUpdate(
+          row.copyWith(updatedAt: stampedNow(row.updatedAt)));
 
   Future<void> upsertEntities(List<PackageEntitiesCompanion> rows) async {
     await batch((b) {
-      b.insertAllOnConflictUpdate(packageEntities, rows);
+      b.insertAllOnConflictUpdate(packageEntities, [
+        for (final r in rows) r.copyWith(updatedAt: stampedNow(r.updatedAt)),
+      ]);
     });
   }
 
-  Future<int> deleteEntity(String id) =>
-      (delete(packageEntities)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteEntity(String id) async {
+    final row = await (select(packageEntities)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (row != null) {
+      await recordTombstone('user_package_entities', id,
+          worldId: row.packageId);
+    }
+    return (delete(packageEntities)..where((t) => t.id.equals(id))).go();
+  }
 
-  Future<int> deleteEntitiesByPackage(String packageId) =>
-      (delete(packageEntities)..where((t) => t.packageId.equals(packageId)))
-          .go();
+  Future<int> deleteEntitiesByPackage(String packageId) async {
+    final ids = (await getEntities(packageId)).map((e) => e.id);
+    await recordTombstones('user_package_entities', ids, worldId: packageId);
+    return (delete(packageEntities)..where((t) => t.packageId.equals(packageId)))
+        .go();
+  }
 }
