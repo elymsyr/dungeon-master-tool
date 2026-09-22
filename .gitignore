@@ -69,3 +69,6 @@ build/
 
 # Separate GitHub Pages repo (elymsyr.github.io) — has its own git remote, do not embed
 /elymsyr.github.io/
+
+# Kişisel çalışma notu — makineye özel, paylaşılmaz
+/docs/HOW-TO.md
