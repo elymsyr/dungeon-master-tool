@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// belli olmaz.
 void main() {
   Future<String?> fakePublish(String path) async =>
-      'dmt-transient://${path.hashCode.abs()}.png';
+      'dmt-content://${path.hashCode.abs()}.png';
 
   test('ağaçtaki her yerel medya yolu ref ile değişir', () async {
     final out = await withPublishedMedia({
@@ -31,9 +31,9 @@ void main() {
     }, fakePublish) as Map<String, dynamic>;
 
     final snap = (out['items'] as List).first['snapshot'] as Map;
-    expect(snap['mapPath'], startsWith('dmt-transient://'));
+    expect(snap['mapPath'], startsWith('dmt-content://'));
     expect((snap['tokens'] as List).first['imagePath'],
-        startsWith('dmt-transient://'));
+        startsWith('dmt-content://'));
     // Fog blob'u ve sayısal alanlar dokunulmadan geçmeli.
     expect(snap['fogDataBase64'], 'iVBORw0KGgoAAAANSUhEUg/////AAAA');
     expect(snap['gridSize'], 50);
@@ -44,19 +44,21 @@ void main() {
     final calls = <String>[];
     final out = await withPublishedMedia(
       {
-        'a': 'dmt-transient://abc.png',
+        'a': 'dmt-content://abc.png',
+        'e': 'dmt-transient://abc.png',
         'b': 'dmt-asset://u/c/def.png',
         'c': 'dmt-public://u/ghi.png',
         'd': 'dmt-art://jkl.webp',
       },
       (p) async {
         calls.add(p);
-        return 'dmt-transient://x.png';
+        return 'dmt-content://x.png';
       },
     ) as Map<String, dynamic>;
 
     expect(calls, isEmpty);
-    expect(out['a'], 'dmt-transient://abc.png');
+    expect(out['a'], 'dmt-content://abc.png');
+    expect(out['e'], 'dmt-transient://abc.png');
     expect(out['b'], 'dmt-asset://u/c/def.png');
   });
 
@@ -73,6 +75,7 @@ void main() {
     expect(isProjectableLocalMedia('/w/media/a.png'), isTrue);
     expect(isProjectableLocalMedia(r'C:\w\media\a.JPEG'), isTrue);
     expect(isProjectableLocalMedia('dmt-transient://a.png'), isFalse);
+    expect(isProjectableLocalMedia('dmt-content://a.png'), isFalse);
     expect(isProjectableLocalMedia('Kara Şövalye'), isFalse);
     expect(isProjectableLocalMedia(''), isFalse);
     // Fog base64 blob'u: uzun, uzantısız — regex'e hiç girmemeli.

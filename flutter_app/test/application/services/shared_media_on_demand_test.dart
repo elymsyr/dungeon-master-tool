@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Talep-üzerine medya akışının iki ucu tek testte:
 ///
-///   DM: yerel yollar → payload'da `dmt-transient://{sha}{ext}`
+///   DM: yerel yollar → payload'da `dmt-content://{sha}{ext}`
 ///   Oyuncu: payload → eksik SHA listesi
 ///
 /// Bu ikisi ayrışırsa oyuncu ya hiç bildiremez (resim asla gelmez) ya da
@@ -49,12 +49,16 @@ void main() {
     });
 
     test('bulut ref taşıyan kartta yerel yol yok', () {
-      final e = entityWith(portrait: 'dmt-transient://${'a' * 64}.png');
-      expect(localMediaPathsOf(e, imageKeys), isEmpty);
+      for (final ref in [
+        'dmt-transient://${'a' * 64}.png',
+        'dmt-content://${'a' * 64}.png',
+      ]) {
+        expect(localMediaPathsOf(entityWith(portrait: ref), imageKeys), isEmpty);
+      }
     });
   });
 
-  group('remapEntityMedia → collectTransientRefs', () {
+  group('remapEntityMedia → collectContentRefs', () {
     test('paylaşım gövdesindeki her yerel yol tam olarak bir SHA olur', () {
       final shaA = 'a' * 64;
       final shaB = 'b' * 64;
@@ -69,9 +73,9 @@ void main() {
         },
       );
       final remap = {
-        '/w/media/a.png': AssetRef.formatTransientUri(shaA, '.png'),
-        '/w/media/b.jpg': AssetRef.formatTransientUri(shaB, '.jpg'),
-        '/w/media/e.webp': AssetRef.formatTransientUri(shaE, '.webp'),
+        '/w/media/a.png': AssetRef.formatContentUri(shaA, '.png'),
+        '/w/media/b.jpg': AssetRef.formatContentUri(shaB, '.jpg'),
+        '/w/media/e.webp': AssetRef.formatContentUri(shaE, '.webp'),
       };
 
       // DM tarafı: kopya üzerinde remap, sonra gerçek yol (JSON kolonu).
@@ -80,11 +84,11 @@ void main() {
           jsonDecode(jsonEncode(entityToRaw(remapped))) as Map<String, dynamic>;
 
       // Oyuncu tarafı: gövdeyi tara.
-      final found = collectTransientRefs({'e1': payload});
+      final found = collectContentRefs({'e1': payload});
 
       expect(found.keys.toSet(), {shaA, shaB, shaE});
-      expect(found[shaA], 'dmt-transient://$shaA.png');
-      expect(found[shaE], 'dmt-transient://$shaE.webp');
+      expect(found[shaA], 'dmt-content://$shaA.png');
+      expect(found[shaE], 'dmt-content://$shaE.webp');
       // Yerel yollardan hiçbiri gövdede kalmadı.
       expect(jsonEncode(payload), isNot(contains('/w/media/')));
     });
@@ -93,21 +97,27 @@ void main() {
       final e = entityWith(portrait: '/w/media/a.png');
       remapEntityMedia(
         e,
-        {'/w/media/a.png': AssetRef.formatTransientUri('c' * 64, '.png')},
+        {'/w/media/a.png': AssetRef.formatContentUri('c' * 64, '.png')},
         imageKeys,
       );
       expect(e.imagePath, '/w/media/a.png');
     });
 
-    test('transient olmayan ref\'ler eksik listesine girmez', () {
-      final found = collectTransientRefs({
+    test('içerik-adresli olmayan ref\'ler eksik listesine girmez', () {
+      final found = collectContentRefs({
         'p': 'dmt-asset://u/c/${'f' * 64}.png',
         'q': 'dmt-public://u/${'f' * 64}.png',
         'r': 'dmt-art://abc.webp',
         's': '/local/path.png',
-        't': 'dmt-transient://short.png',
+        't': 'dmt-content://short.png',
       });
       expect(found, isEmpty);
+    });
+
+    test('Faz 3.5 öncesi dmt-transient:// gövdeleri hâlâ taranıyor', () {
+      final sha = 'd' * 64;
+      final found = collectContentRefs({'old': 'dmt-transient://$sha.png'});
+      expect(found[sha], 'dmt-transient://$sha.png');
     });
   });
 }

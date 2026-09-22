@@ -1,18 +1,18 @@
 ---
 type: file-note
 domain: data-layer
-path: flutter_app/lib/data/database/tables/trash_items_table.dart + raw side tables in app_database.dart (asset_refs, migration_progress, lan_paired_devices)
+path: flutter_app/lib/data/database/tables/trash_items_table.dart + raw side tables in app_database.dart (asset_refs, content_paths, migration_progress, lan_paired_devices)
 layer: data
 language: dart
 status: stable
-updated: 2026-08-24
+updated: 2026-09-22
 tags: [file]
 ---
 
 # Tables — Trash & raw side tables
 
 > [!abstract] Primary Purpose
-> **`trash_items`** is the soft-delete store (replaces the legacy `/trash/` directory). Three **raw side tables** (created with `CREATE TABLE IF NOT EXISTS` in [[drift_database]]'s `beforeOpen`, no Drift codegen, no schema bump) sit alongside it: `asset_refs`, `migration_progress`, `lan_paired_devices`.
+> **`trash_items`** is the soft-delete store (replaces the legacy `/trash/` directory). Four **raw side tables** (created with `CREATE TABLE IF NOT EXISTS` in [[drift_database]]'s `beforeOpen`, no Drift codegen, no schema bump) sit alongside it: `asset_refs`, `content_paths`, `migration_progress`, `lan_paired_devices`.
 
 > [!warning] `sync_outbox` kaldırıldı (2026-08-24)
 > Bulut sync ile birlikte `sync_outbox`, `sync_telemetry`, `bm_mark_ops_local` ve `personal_packages` düştü. Mevcut v12 DB'lerinde artık satırlar duruyordu; `beforeOpen` içindeki `_retiredTablesDDL` onları `DROP TABLE IF EXISTS` ile temizliyor. **`schemaVersion` 12'de kaldı** — v13'e çıkmak her kullanıcının DB'sini `.legacy` yapıp sıfırlardı, oysa kaybolan tek şey ölü tablo.
@@ -36,6 +36,7 @@ tags: [file]
 - **`TrashItems`** (replaces legacy `/trash/` dir): PK `id`. Cols: `kind` (`entity`/`character`/`package`/…), `sourceId` (original row id), `payloadJson`, `deletedAt`. Indexed by `(kind, deleted_at)`. `TrashDao.existsBySource(kind, sourceId)` is the "user already deleted this" gate against resurrection; `purgeOlderThan(now-30d)` runs in `beforeOpen`.
 - **Raw side tables** (defined in `_sideTablesDDL` in [[drift_database]]):
   - `asset_refs` — PK `(uri, owner_table, owner_id, owner_field)` + `world_id?`, `last_seen_at`. AssetRef→owner-row graph for the eviction sweeper's orphan detection. Indexed by uri / owner / world.
+  - `content_paths` — PK `(sha, path)` + `size`, `mtime`, `updated_at`, `path` INDEX. sha256 → bu cihazdaki özgün dosya; `dmt-content://{sha}{ext}` ref'inin yerel çözümü ([[content_ref_index]], Faz 3.5). `asset_refs`'ten **ayrı olmak zorunda**: o graf ham yolları kasten indekslemiyor (silinen yol = false-orphan). `size`+`mtime` her okumada doğrulanır — bayat satır oyuncuya yanlış baytları servis ederdi. Cihaz-yereldir, senkronlanmaz.
   - `migration_progress` — PK `(migration_name, world_id)` + `last_id?`, `completed`, `updated_at`. F11 raw-path migrator resume state; also gates one-time repairs like `subspecies_reclassify_v1`.
   - `lan_paired_devices` — PK `device_id` + `name`, `last_address`, `shared_secret`, `paired_at`, `last_seen_at`. Kalıcı LAN cihaz eşleşmeleri; `shared_secret` iki cihazda aynıdır (bkz. [[LAN-Sync-Flow]]).
 
