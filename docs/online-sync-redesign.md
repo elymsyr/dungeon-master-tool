@@ -1,9 +1,11 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a ve 4b bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 5+ taslak.
-4a/4b'nin **elle doğrulaması ve migration 095'in deploy'u bekliyor** — koşulacak
-adımlar [§4.7](#47-faz-4b--paket--karakter-pushu--bitti) sonundaki listede.
+Faz 3.5, 4a, 4b ve 5a bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 5b+ taslak.
+Migration 095 ve 096 **2026-09-22'de deploy edildi**; 4a/4b/5a'nın **uçtan uca
+elle doğrulaması bekliyor** — koşulacak adımlar
+[§4.7](#47-faz-4b--paket--karakter-pushu--bitti) ve
+[§4.8](#48-faz-5a--dünya-pullu--bitti) sonundaki listelerde.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -874,8 +876,9 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
 | ~~**3.5**~~ | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | ✅ bitti |
 | ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti (elle doğrulama bekliyor) |
-| ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy + elle doğrulama bekliyor) |
-| 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
+| ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy edildi; elle doğrulama bekliyor) |
+| ~~**5a**~~ | Dünya pull'u + echo guard + uzlaştırıcı | bulutta değişen satır yerele iniyor, döngü yok | evet | ✅ bitti (096 deploy edildi; elle doğrulama bekliyor) |
+| 5b | Realtime sinyali + paket pull'u + açık dünyanın tazelenmesi | iki cihaz aynı dünyada **canlı** buluşuyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -1636,7 +1639,7 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
 koşturulmadı.** Faz 3 ve 3.5'te olduğu gibi (§4.4, §4.5) burada da elle
 doğrulama yapılana kadar faz "kapandı" sayılmaz. Sırasıyla:
 
-**1. Migration 095 deploy edilmeli.** Tek satır, Supabase SQL editor:
+**1. Migration 095 — deploy edildi** (2026-09-22). Tek satırdı:
 
 ```sql
 DROP TRIGGER IF EXISTS trg_chars_bump_updated ON public.world_characters;
@@ -1696,14 +1699,148 @@ test** bu.
 
 ---
 
-## 4.8 Faz 5 ve sonrası — taslak
+## 4.8 Faz 5a — Dünya pull'u ✅ bitti
+
+*Aynanın ikinci yönü. Push'un bildirimi ters okunuyor; yeni olan tek şey
+okuma kapısı ve uzlaştırma kuralı.*
+
+### Sorun
+
+Faz 4a/4b aynayı tek yönlü kurdu: dünya buluta çıkıyor, geri okuyan yok.
+§1.3'ün vaadi ("laptop'ta hazırlık, tablette devam") tam olarak eksik olan
+yön.
+
+Koda bakınca ikinci, **daha ciddi** bir sorun çıktı: 094'ün trigger'ı pull'u
+imkânsız kılıyordu.
+
+```
+trg_*_stamp_rev  BEFORE INSERT OR UPDATE ... EXECUTE tg_stamp_world_revision()
+                 ↑ WHEN şartı yok
+```
+
+Pull satırı bulutun `updated_at`'i ile yerele yazar. O zaman satır push
+damgasından yeni görünür, push onu geri gönderir, trigger revizyonu **yine**
+artırır, karşı cihaz sinyal alır, o da pull eder… iki cihaz arasında kapanmayan
+bir tur. Aynı hata bugün bile para yakıyor: `user_packages` satırı push'ta
+`sinceAll` (her tur gider, çocukların FK hedefi), yani hiçbir şey değişmese
+bile her tur revizyonu bir artırıyor.
+
+### Verilen karar: kırpmalı tek RPC, per-tablo select değil
+
+İki seçenek vardı. Tablo başına PostgREST select **sıfır yeni SQL** isterdi —
+RLS zaten DM'e açık, `revision` kolonu her tabloda var, istemcide harita hazır.
+Bedeli pull başına 13 HTTP isteği. Sinyal başına 13 gidiş-geliş, kalıcı bir
+maliyet; RPC'nin bedeli ise tek seferlik ~100 satır SQL. §2.3'ün kararı da
+buydu, korundu.
+
+Belgede olmayıp eklenen tek şey **sayfalama**: tablo başına `limit`, bir tablo
+dolduysa turun kesme noktası o tablonun son satırına çekilir ve tüm tablolar
+oradan kırpılır. §2.3'ün "yeni cihazda ilk açılış ~10 MB" satırı, kırpma
+olmadan tek bir 10 MB'lık jsonb yanıtı demekti — telefonda bellek sorunu.
+İlerleme garantili: kesme noktası her zaman `since`'ten büyük.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Migration 096 — echo guard** | 16 tablonun `trg_*_stamp_rev`'i ikiye bölündü: `_ins` şartsız, `_upd` yalnız `WHEN (OLD.* IS DISTINCT FROM NEW.*)`. Upsert yalnız gönderilen kolonları yazdığı için içerik aynıysa `NEW = OLD` ve sayaç kıpırdamaz. Satır yine UPDATE edilir (boşa yazma) ama sinyal çıkmaz |
+| **Migration 096 — `get_world_delta`** | `(world, since, limit)` → `{revision, head, complete, tables, tombstones}`. SECURITY **INVOKER**: RLS çağıranın rolüyle işliyor, oyuncu bu kapıdan DM kartı alamıyor. 12 ayna tablosu + tombstone'lar, kırpmalı |
+| **`cloud_mirror_tables.dart`** | `_MirrorTable` + iki liste `cloud_push_service.dart`'tan çıktı. Tek bildirim, push soldan sağa pull sağdan sola okuyor. Pull için eklenen tek alan: `key` (yerel PK — `id`, 1:1'de `world_id`, `installed_packages`'ta bileşik) |
+| **`CloudPullService`** | `pullWorld` (sayfa döngüsü + damga) ve `apply` (**ağsız**, testin girdiği kapı). Ters dönüşümler: ISO → unix saniye, `boolean` → 0/1, `jsonb` → TEXT, `rename` tersine, `dmt-content://` → `ContentRefIndex.fileForSha` |
+| **Uzlaştırma** | Son düzenleyen kazanır: yerel `updated_at` gelenden büyük **ya da eşitse** satır atılır. Tombstone'un `deleted_at`'i yerel düzenlemeden eskiyse satır silinmez — sonraki push onu buluta geri koyar |
+| **`syncOnOpen`** | Rol DM'e çözülünce bir kez: **önce push, sonra pull**. Sıra bağlayıcı, gerekçe aşağıda |
+
+### Faz 5a çıkış kriteri — testlerle karşılandı
+
+> **bulutta değişen satır yerele iniyor, döngü yok**
+
+- `cloud_pull_apply_test.dart` **14 test**: tip dönüşümleri, bulut-yalnızı
+  kolonların (`revision`, `dm_only_keys`) sızmaması, LWW'nin iki yönü,
+  tombstone'un iki yönü, pull silmesinin yerel tombstone bırakmaması,
+  combatant koşullarının açılması, encounter silmesinin elle cascade'i,
+  karakterin `jsonb` dizisi + aynalanmayan `is_online`'ın korunması, 1:1 ve
+  bileşik anahtar, damganın yazılması.
+- Sonuncusu **round-trip**: pull edilen satır push'a verildiğinde bayt bayt
+  aynı gövdeyi üretiyor. Echo guard'ın çalışması tam buna bağlı — tek kolon
+  farklı çıksa `OLD.* IS DISTINCT FROM NEW.*` doğru olur ve döngü kapanmaz.
+- `verify_096.sql`: echo guard'ın iki yönü (aynı gövde artırmamalı, gerçek
+  değişiklik artırmalı), delta penceresi, tombstone, kırpmanın satır
+  kaybetmemesi, sayfalamanın sonlanması, "oyuncu bu kapıdan DM kartı göremez".
+- `flutter analyze` temiz (30 önceden var olan info); `cloud_push_collect_test`
+  15/15 yeşil (bildirim taşınması push'u bozmadı).
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| Eski §4.8 taslağı: "applier'ın tablo başına ayrı handler olarak yeniden yazımı" | Yapılmadı ve **gerekmiyor**. `world_mirror_applier.dart` paylaşım yayınının tüketicisi, ayna pull'unun değil; ikisi ayrı kanallar. Pull'un tablo başına handler'a ihtiyacı yok çünkü `cloud_mirror_tables.dart` bildirimi zaten tablo başına dönüşümü tarif ediyor — elle yazılan tek özel durum combatant |
+| §2.3: "tek RPC `get_world_delta(world_id, since_revision)`" | Üçüncü parametre `limit` eklendi ve yanıt `complete` taşıyor. Sebebi §2.3'ün kendi cümlesi: ilk açılış ~10 MB, tek jsonb olarak telefonda bellek sorunu |
+| §2.3: "her ayna tablosunda `revision` + `updated_at`" | Doğru ve yeterliydi; ama trigger'ın **şartsız** olması pull'u imkânsız kılıyordu. Belgede hiç geçmeyen delik; 096 kapattı |
+| Eski §4.8 taslağı: "ilk senkron akışı ve ilerleme UI'ı" | Faz 5b'ye kaydı. 5a'nın kapsamı motor + uzlaştırıcı; tetikleyici bugün dünya açılışı |
+
+### Bilinçli sınırlar
+
+- **Realtime sinyali yok.** Pull dünya açılışında bir kez koşuyor. Karşı
+  cihazın değişikliğini canlı görmenin yolu bugün dünyayı yeniden açmak.
+  `world_revisions` zaten publication'da (094), abone olan yok — Faz 5b.
+- **Açık dünyanın bellekteki hali tazelenmiyor.** Pull Drift'e yazıyor;
+  `activeCampaignProvider` blob'u uygulama yeniden açılana kadar eski
+  kalıyor. Açılışta koştuğu için bugünkü akışta görünmüyor, ama 5b'nin canlı
+  sinyali bunu zorunlu kılacak.
+- **Paket pull'u yok.** `get_package_delta` yazılmadı; iskelet dünyayla birebir
+  aynı, kapsam kolonu `package_id`. Faz 5b.
+- **Pull'dan sonra bir tur fazla push olabilir.** `syncOnOpen` push'u önce
+  koşturuyor ve damgayı `now()`'a çekiyor, dolayısıyla ondan **önce**
+  düzenlenmiş uzak satırlar bir sonraki taramaya düşmez. Saat kayması olan
+  cihazın satırları düşebilir; echo guard sayesinde bedeli bir kerelik boşa
+  upsert, sinyal değil.
+- **Reddedilen satır pull tarafında yok.** Push'taki "suçluyu bul, atla"
+  mekanizmasının karşılığı gelen yönde gerekmedi: yerel yazma kotaya takılmaz.
+  Şema uyuşmazlığı çıkarsa tur patlar ve damga ilerlemez — doğru davranış.
+- **`_maxRounds = 200`** — sayfa döngüsünün güvenlik freni. Tablo başına 500
+  satırla 100.000 satırlık bir dünyayı tek çağrıda bitirir; sunucu `complete`
+  demeyi beceremezse sonsuza kadar dönmesin diye.
+
+### Bekleyen doğrulama
+
+**1. Migration 096 — deploy edildi** (2026-09-22, 095 ile birlikte).
+`supabase/scripts/verify_096.sql` henüz koşturulmadı; `096 OK` dönmeli.
+
+**2. Echo guard'ın tek başına ölçülmesi.** 096'dan **sonra**, hiçbir şey
+düzenlemeden uygulamayı açıp kapatarak birkaç push turu koşturun:
+
+```sql
+select revision from world_revisions
+  where world_id = '47272f9a-baf7-4eb6-acdf-267f8dfc6b4e';
+select revision from user_packages;
+```
+
+İki sayı da **sabit kalmalı.** Artıyorsa guard tutmuyor demektir ve pull'u
+açmak iki cihazı birbirine kilitler — 5b'ye geçmeden önce durulacak nokta.
+
+**3. Pull'un kendisi — iki cihaz.** A'da bir kartın adını değiştir, dünyayı
+kapat. B'de aynı dünyayı aç: kart yeni adıyla gelmeli. Sonra A'da bir kart
+sil, B'yi yeniden aç: kart gitmeli. Tersi de: B'de düzenle, A'da aç.
+
+**4. Asıl senaryo — savaş (§1.3).** A'da savaşı yarıda bırak (sıra, HP,
+durum etkileri), kapat. B'de aç: `world_combatants` satırları inmiş,
+`combat_conditions` yeniden kurulmuş olmalı. Bu, pull'un tek elle yazılmış
+özel durumu, dolayısıyla **atlanmaması gereken test** bu.
+
+**5. Çatışma.** Aynı kartı A ve B'de farklı zamanlarda düzenle, sonra ikisini
+de senkronla: **sonra düzenlenen** kazanmalı — varış sırası değil (§2.8).
+
+---
+
+## 4.8.1 Faz 5b ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4, §4.5, §4.6, §4.7).*
+ayrıntıda açılıyor (bkz. §4.4–§4.8).*
 
-### Faz 5 — Pull
-Uzlaştırıcı; applier'ın tablo başına ayrı handler olarak yeniden yazımı;
-tombstone + zaman karşılaştırması; ilk senkron akışı ve ilerleme UI'ı.
+### Faz 5b — Canlı sinyal
+`world_revisions` Realtime aboneliği → pull tetikleme; açık dünyanın
+bellekteki halinin tazelenmesi (`activeCampaignProvider` + revizyon bump);
+`get_package_delta` + paket pull'u; ilk senkron akışı ve ilerleme UI'ı.
 
 ### Faz 5.5 — Oyuncu çoklu cihaz
 `joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
@@ -1747,6 +1884,10 @@ uyuşmuyordu. Kayda geçiyor:
 | §2.2: "Toplam ~26 tablo" | 25. `world_combat_conditions` tablo olmadı — `world_combatants.conditions_json` kolonu oldu (§4.4) |
 | §2.11: `sync_outbox` "geri gelmeli" | Gelmedi: Faz 4a push'u kuyruk tutmuyor, watermark tarıyor (§4.6). `_retiredTablesDDL`'deki `DROP` satırı **kalıyor** |
 | §4.0: v13 bump'ı her kullanıcının DB'sini sıfırlar | Sıfırlamıyor — legacy kesimi `user_version < 12`'ye bakıyor, v12 dosyası `onUpgrade(12→13)`'e düşüyor. Bedel sıfırlama değil, gerçek bir geçiş adımı yazmak oldu (§4.6) |
+
+| §2.3: revizyon trigger'ı yeterli | **Değildi.** 094'ün `trg_*_stamp_rev`'i şartsız `BEFORE INSERT OR UPDATE`; aynı gövdenin yeniden yazılması da sayacı artırıyor. Push tek yönlüyken yalnız israf (`user_packages` her tur), pull açılınca iki cihaz arasında kapanmayan tur. 096 `WHEN (OLD.* IS DISTINCT FROM NEW.*)` ile kapattı (§4.8) |
+| Faz 5: "applier'ın tablo başına ayrı handler olarak yeniden yazımı" | Gerekmedi: `world_mirror_applier` paylaşım yayınının tüketicisi, ayna pull'unun değil. Pull'un dönüşümleri `cloud_mirror_tables.dart` bildiriminden geliyor; elle yazılan tek özel durum combatant (§4.8) |
+| §2.3: `get_world_delta(world_id, since_revision)` | Üçüncü parametre `limit` + yanıtta `complete`. Belgenin kendi "ilk açılış ~10 MB" satırı kırpmayı zorunlu kılıyor; kırpmasız tek jsonb telefonda bellek sorunu (§4.8) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 

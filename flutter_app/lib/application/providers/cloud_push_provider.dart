@@ -7,8 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/field_schema.dart';
+import '../services/cloud_pull_service.dart';
 import '../services/cloud_push_service.dart';
 import '../services/pending_write_buffer.dart';
+import '../services/content_ref_index.dart';
 import '../services/shared_media_courier.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
@@ -29,7 +31,20 @@ final cloudPushServiceProvider = Provider<CloudPushService?>((ref) {
   );
 });
 
-/// Yazma tamponu sustuğunda push turunu tetikler.
+/// Faz 5a pull servisi. Push ile aynı kapıdan geçer: yapılandırma ve oturum
+/// yoksa null.
+final cloudPullServiceProvider = Provider<CloudPullService?>((ref) {
+  if (!SupabaseConfig.isConfigured) return null;
+  if (ref.watch(authProvider) == null) return null;
+  return CloudPullService(
+    db: ref.watch(appDatabaseProvider),
+    client: Supabase.instance.client,
+    index: ref.read(contentRefIndexProvider),
+  );
+});
+
+/// Yazma tamponu sustuğunda push turunu tetikler; dünya açılışında bir kez de
+/// pull koşar.
 ///
 /// Tampon zaten 750–2000 ms debounce ediyor; buradaki [_idle] onun üstüne
 /// binen ikinci bir sessizlik penceresi — kart düzenlerken her tuş vuruşunda
@@ -106,6 +121,37 @@ class CloudPushPump {
     return _guarded(() => svc.pushPackage(pid, full: full));
   }
 
+  /// Faz 5a — aktif dünyanın bulut aynasını yerele çeker.
+  ///
+  /// [full] true ise damga yok sayılır: yeni cihazdaki ilk senkron.
+  Future<CloudPullResult> pull({bool full = false, String? worldId}) async {
+    final svc = _ref.read(cloudPullServiceProvider);
+    final id = worldId ?? _ref.read(activeCampaignProvider);
+    if (svc == null || id == null || id.isEmpty) {
+      return const CloudPullResult(skipped: true);
+    }
+    // Ayna tabloları DM'e ait; oyuncunun kapısı `get_shared_entities` (Faz 5.5).
+    if (_ref.read(currentWorldRoleProvider).valueOrNull != WorldRole.dm) {
+      return const CloudPullResult(skipped: true);
+    }
+    return svc.pullWorld(id, full: full);
+  }
+
+  /// Dünya açılışındaki tek senkron turu: **önce push, sonra pull.**
+  ///
+  /// Sıra rastgele değil. Pull satırı bulutun `updated_at`'i ile yazıyor;
+  /// push'un damgası tur başında `now()`'a çekildiği için ondan önce
+  /// düzenlenmiş uzak satırlar bir sonraki push taramasına düşmez. Ters sırada
+  /// her pull, kendi getirdiği satırları buluta geri göndertirdi.
+  Future<void> syncOnOpen() async {
+    if (_opened) return;
+    _opened = true;
+    await push();
+    await pull();
+  }
+
+  bool _opened = false;
+
   Future<CloudPushResult> pushActivePackage() =>
       _ref.read(activePackageProvider) == null
           ? Future.value(const CloudPushResult(skipped: true))
@@ -159,8 +205,18 @@ class CloudPushPump {
 }
 
 /// Dünya açıkken hayatta tutulur (`MainScreen` watch eder).
+///
+/// Rol DM'e çözülür çözülmez açılış senkronu bir kez koşar; pompa dünya
+/// kapanınca dispose olduğu için bayrak da onunla gider.
 final cloudPushPumpProvider = Provider<CloudPushPump>((ref) {
   final pump = CloudPushPump(ref);
+  ref.listen<AsyncValue<WorldRole?>>(
+    currentWorldRoleProvider,
+    (_, next) {
+      if (next.valueOrNull == WorldRole.dm) unawaited(pump.syncOnOpen());
+    },
+    fireImmediately: true,
+  );
   ref.onDispose(pump.dispose);
   return pump;
 });
