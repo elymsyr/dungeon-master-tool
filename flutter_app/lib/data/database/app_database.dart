@@ -416,6 +416,8 @@ const List<String> _v12Indexes = <String>[
 ///
 /// - `asset_refs` (F2): AssetRef → owner satır grafı; eviction sweeper
 ///   orphan tespiti için.
+/// - `content_paths` (Faz 3.5): sha256 → yerel özgün dosya; `dmt-content://`
+///   ref'inin cihaz-yerel çözümü.
 /// - `migration_progress` (F11): raw-path migrator resume state.
 /// - `lan_paired_devices` (LAN sync v2): kalıcı cihaz eşleşmeleri. DB zaten
 ///   `users/{uid}/` altında olduğu için kayıtlar doğal olarak hesaba bağlı.
@@ -434,6 +436,25 @@ const List<String> _sideTablesDDL = <String>[
   'CREATE INDEX IF NOT EXISTS idx_asset_refs_owner '
       'ON asset_refs (owner_table, owner_id)',
   'CREATE INDEX IF NOT EXISTS idx_asset_refs_world ON asset_refs (world_id)',
+
+  // content_paths — Faz 3.5: sha256 -> bu cihazdaki özgün dosya.
+  // `dmt-content://{sha}{ext}` ref'ini ağa çıkmadan çözmenin tek yolu.
+  // `asset_refs` bu işi yapamaz: [ReferenceIndexer] ham yolları KASTEN
+  // indekslemiyor (silinen yollar false-orphan üretirdi), dolayısıyla orada
+  // yerel dosya diye bir satır hiç yok.
+  //
+  // PK (sha, path): aynı baytlar iki yolda durabilir, aynı yol zamanla farklı
+  // baytlar taşıyabilir. size+mtime satırın hâlâ doğru olduğunu yeniden
+  // hash'lemeden söyler — tutmuyorsa satır atılır ve dosya yeniden hash'lenir.
+  'CREATE TABLE IF NOT EXISTS content_paths ('
+      'sha TEXT NOT NULL, '
+      'path TEXT NOT NULL, '
+      'size INTEGER NOT NULL, '
+      'mtime INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL, '
+      'PRIMARY KEY (sha, path)'
+      ')',
+  'CREATE INDEX IF NOT EXISTS idx_content_paths_path ON content_paths (path)',
 
   // migration_progress — F11
   'CREATE TABLE IF NOT EXISTS migration_progress ('

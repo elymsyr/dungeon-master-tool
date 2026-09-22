@@ -36,6 +36,31 @@ void main() {
       expect(AssetRef('/a/b'), isNot(equals(AssetRef('/a/c'))));
     });
 
+    test('content ref parses and is NOT treated as a local path', () {
+      const sha =
+          '3b1f8e2d4c5a6970bb8c1d2e3f405162738495a6b7c8d9e0f1a2b3c4d5e6f708';
+      final ref = AssetRef(AssetRef.formatContentUri(sha, '.png'));
+      expect(ref.raw, 'dmt-content://$sha.png');
+      expect(ref.isContent, isTrue);
+      expect(ref.contentSha, sha);
+      expect(ref.contentExt, '.png');
+      // Local sayılırsa resolver onu File('dmt-content://…') diye açar; ne
+      // yerel dosya ne indirme denenir, kart sessizce görselsiz kalır.
+      expect(ref.isLocal, isFalse);
+      expect(ref.localPath, isNull);
+      expect(ref.isTransient, isFalse);
+      expect(ref.transientSha, isNull);
+    });
+
+    test('content ve transient ref\'leri aynı sha\'yı verir', () {
+      const sha =
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      expect(
+        AssetRef(AssetRef.formatContentUri(sha, '.webp')).contentSha,
+        AssetRef(AssetRef.formatTransientUri(sha, '.webp')).contentSha,
+      );
+    });
+
     test('first-party art ref parses and is NOT treated as a local path', () {
       const uuid = '1fbea976-fb6a-524f-b0f7-d7202406dc52';
       final ref = AssetRef(AssetRef.formatArtUri(uuid));

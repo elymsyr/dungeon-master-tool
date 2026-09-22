@@ -241,7 +241,7 @@ Future<void> shareEntityWithPlayers(
     // paketinden geliyor; payload göndermek kopya olurdu.
     payloads[id] = e.linked
         ? null
-        : await _payloadWithTransientRefs(
+        : await _payloadWithContentRefs(
             courier,
             e,
             imageKeys[e.categorySlug] ?? const [],
@@ -264,12 +264,12 @@ Future<void> shareEntityWithPlayers(
   }
 }
 
-/// [e]'nin paylaşım gövdesi — yerel medya yolları `dmt-transient://{sha}{ext}`
+/// [e]'nin paylaşım gövdesi — yerel medya yolları `dmt-content://{sha}{ext}`
 /// ile değiştirilmiş hâlde. Yükleme YOK, kalıcı yazma YOK: DM'in kendi satırı
 /// yerel yollarını korur, baytlar [SharedMediaCourier.serve] ile talep üzerine
 /// çıkar. Okunamayan bir dosya olduğu gibi bırakılır (oyuncuda çözülemez —
 /// zaten kopyası olmayan bir dosyaydı).
-Future<Map<String, dynamic>> _payloadWithTransientRefs(
+Future<Map<String, dynamic>> _payloadWithContentRefs(
   SharedMediaCourier courier,
   Entity e,
   List<String> imageFieldKeys,

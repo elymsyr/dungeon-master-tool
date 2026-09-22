@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-09-08
+updated: 2026-09-22
 tags: [system]
 ---
 
@@ -23,6 +23,7 @@ tags: [system]
 - [[free_media_service]] — free tier reads.
 - [[entity_image_upload]] — seçilen resmin yerelleştirilmesi (yükleme yok).
 - [[shared_media_courier]] — transient'e talep-üzerine + projeksiyon yüklemesi.
+- [[content_ref_index]] — `dmt-content://` ref'inin cihaz-yerel çözümü (`content_paths`).
 - [[media_bundler]] — karakter medyası (portre free, ek resim pinned).
 - [[worker]] / [[worker_rls]] — R2 routes + quota/access checks.
 - [[entity_media_cleanup_service]] — GC on delete.
@@ -70,7 +71,7 @@ tags: [system]
 Paylaşım anında hiçbir bayt yüklenmez. Havuza yalnızca **o an gerçekten birine
 eksik olan** dosya girer:
 
-1. DM paylaşırken payload'daki yerel yollar `dmt-transient://{sha}{ext}`'e
+1. DM paylaşırken payload'daki yerel yollar `dmt-content://{sha}{ext}`'e
    çevrilir ([[shared_media_courier]]) — baytlar DM'in diskinde kalır.
 2. Oyuncu çözemediği sha'ları `world_members.missing_shas`'e yazar
    ([[missing_media_reporter]] → `report_missing_shas`, migration 092).
@@ -91,3 +92,24 @@ Kart / harita / mindmap projeksiyonunda eksik bildirme turu yoktur (oyuncu
 transient ref **kalıcı satıra yazılmaz** — LRU atarsa DM kendi resmini
 kaybederdi. Giriş noktaları: `prepareEntityImagesForProjection`,
 `projectableMapImage`, `WorldMapNotifier.ensureMapImageProjectable`.
+
+
+## Ref artık tier adlandırmıyor (2026-09-22, Faz 3.5)
+
+Paylaşım ve projeksiyon payload'ları `dmt-transient://` yerine
+**`dmt-content://{sha}{ext}`** taşıyor. Fark isimden ibaret değil: eski biçim
+baytların transient havuzda olduğunu iddia ediyordu, yani LRU atınca ref
+ölüyordu ve bu yüzden kalıcı bir satıra **yazılamıyordu** (vault'un
+"dönen transient ref kalıcı satıra yazılmaz" kuralı). Yeni biçim hiçbir katman
+adlandırmıyor, dolayısıyla her okuyan kendi yolundan çözüyor:
+
+| Kim | Yol |
+|---|---|
+| Baytları üreten cihaz | [[content_ref_index]] → `content_paths` → yerel dosya, **ağ yok** |
+| Başka cihaz | içerik store'u → `transient_shares` → transient indirme |
+| Hiçbir yerde yoksa | sha `missing_shas`'e, DM dönünce iner ([[missing_media_reporter]]) |
+
+Havuz mekaniği, kota ve LRU **değişmedi** — transient hâlâ baytların tek
+bulut yolu. Değişen tek şey satıra yazılabilir bir ref biçiminin doğmuş
+olması; Faz 4 push'u bunu gerektiriyordu. Eski `dmt-transient://` gövdeleri
+okunmaya devam ediyor. Detay: `docs/online-sync-redesign.md` §2.7 + §4.5.

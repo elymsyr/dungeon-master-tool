@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
-Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5 ve Faz 3
-bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3.5+ taslak.
+Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3
+ve Faz 3.5 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 4+ taslak.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -15,7 +15,7 @@ bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3.5+ taslak.
 > var; bağlayıcı olan şey fazın **çıkış kriteri**.
 >
 > Belge ile kod çeliştiğinde **kod kazanır**, belge düzeltilir — bulunan her
-> fark [§4.6](#46-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
+> fark [§4.7](#47-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
 > Fazın niyeti belirsizse ya da fark bir kararı değiştiriyorsa **kullanıcıya
 > sor**, tahmin etme.
 
@@ -491,15 +491,15 @@ dmt-content://{sha}{ext}    <- "şu bayt yığını, her neredeyse"
 
 | Kim | Nasıl çözüyor |
 |---|---|
-| DM | `asset_refs` tablosundan sha -> yerel dosya |
+| DM | `content_paths` tablosundan sha -> yerel dosya |
 | Oyuncu | transient'ten indir; bulamazsa `missing_shas`'e yaz |
 
 Vault'taki endişe de çözülüyor: ref tier belirtmediği için transient
-LRU'su DM'i etkilemiyor — DM'in çözüm yolu yerel. `asset_refs`
-(sha <-> yol eşlemesi) `app_database.dart`'ta zaten var.
+LRU'su DM'i etkilemiyor — DM'in çözüm yolu yerel.
 
-**Bu çözülmüş değil, tasarım işi** (Faz 3.5). Yoksa link modeli "kartlar
-geliyor, resimler gelmiyor" olarak çıkar.
+**Bitti** (Faz 3.5, bkz. [§4.5](#45-faz-35--medya-ref-birleştirmesi--bitti)).
+Sha <-> yol eşlemesi `asset_refs`'te **yok** — o graf ham yolları kasten
+indekslemiyor; iş için `content_paths` yan tablosu açıldı.
 
 ### Bağlantılı tavan
 
@@ -699,8 +699,10 @@ Ayna **medya taşımıyor** — satırda ref, bayt ayrı yolda.
    tek saatte 600 write." Çözüm: `[[ratelimits]]` binding'i (katalog GET'i
    için `wrangler.toml`'da zaten kullanılıyor, unmetered) ya da Durable
    Object — ikincisi read-then-write yarışını da kapatıyor.
-2. **`dmt-content://` ref birleştirmesi** (§2.7) — worker tarafında sha
-   çözümü.
+2. ~~**`dmt-content://` ref birleştirmesi**~~ (§2.7) — **bitti, worker'a
+   dokunmadan** (§4.5). Sha çözümü zaten `transient_shares` + mevcut
+   transient indirme route'u üzerinden yürüyor; yeni bir worker yolu
+   gerekmedi.
 3. **Transient eviction riski artıyor.** Daha fazla online dünya = daha
    hızlı dolan havuz. `transient_touch` sadece indirmede tetikleniyor,
    herkesin önbelleğindeki görsel atılabiliyor. Admin panelinde doluluk
@@ -868,7 +870,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**1**~~ | ZIP import/export + codec'in LAN'dan çıkarılması | dünya export → temiz kurulumda import → aynı dünya | hayır | ✅ bitti |
 | ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
 | ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
-| 3.5 | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | taslak |
+| ~~**3.5**~~ | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | ✅ bitti |
 | 4 | Drift v13 bump + push | dünya bulutta görünüyor, geri okuma yok | evet | taslak |
 | 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
@@ -1147,7 +1149,7 @@ bir şey kalmıyor. İkincisi **yapılamaz**: `world_entities` birincil anahtar�
 global `{id}`, `upsert` de `insertAllOnConflictUpdate`. Yeni id'li bir dünya
 kopyası, entity satırlarını var olan dünyadan **kendine çeker** ve orijinali
 boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
-(bkz. §4.6) — önce o düzeltilmeli.
+(bkz. §4.7) — önce o düzeltilmeli.
 
 ### Bilinçli sınırlar
 
@@ -1303,7 +1305,7 @@ faz bitmiş sayılmaz.
 | H | Kota sabitleri, kart satırı 256 KB, dünya başına 20.000 satır, kişi başı 20 paket |
 | I | Realtime: `world_revisions` **eklenir**, hiçbir şey çıkarılmaz |
 
-Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.6).
+Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.7).
 
 ### Faz 3 çıkış kriteri — karşılandı
 
@@ -1361,15 +1363,90 @@ En kritik iki assertion — ikisi de sızıntıyı doğrudan yakalar:
 
 ---
 
-## 4.5 Faz 3.5 ve sonrası — taslak
+## 4.5 Faz 3.5 — Medya ref birleştirmesi ✅ bitti
+
+*Tek iş: ref'i tier'dan ayır. İstemci tarafı, bulut şemasına dokunmuyor.*
+
+### Sorun
+
+§2.7: DM'in satırları DM'in kendi diskindeki yolları taşıyor. Bugün sorun
+değil çünkü paylaşım anında payload `dmt-transient://{sha}{ext}`'e çevriliyor
+— taşınabilir ref **sadece kopyada** var. Faz 4 push'u satırın kendisini
+gönderecek; orada `/home/dm/Resimler/ejder.png` oyuncuda anlamsız.
+
+Ama transient ref kalıcı satıra da yazılamıyor: adı baytların transient
+havuzda olduğunu iddia ediyor, LRU her an atabilir ve DM kendi resmini
+kaybeder (vault bunu bilinçli bir karar olarak yazmıştı). Yani push'un
+yazabileceği bir ref biçimi **yoktu**.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Ref biçimi** | `dmt-content://{sha}{ext}` — `AssetRef.contentScheme`, `isContent`, `contentExt`, `formatContentUri`. Hiçbir katman adlandırmıyor; `contentSha` dört şemayı birden çözüyor |
+| **`content_paths` yan tablosu** | sha → bu cihazdaki özgün dosya. `_sideTablesDDL`'de idempotent DDL, şema bump'ı yok. PK `(sha, path)` + `path` INDEX |
+| **`ContentRefIndex`** | `refFor` / `shaFor` / `fileForSha`. `size`+`mtime` tutuyor: değişmemiş dosya yeniden hash'lenmiyor, **değişmiş dosyanın eski satırı atılıyor** |
+| **`SharedMediaCourier`** | Artık `dmt-content://` üretiyor. `serve` önce kalıcı indekse bakıyor; "dünyanın tüm medyasını hash'le" turu yalnızca geri düşüş |
+| **`AssetRefResolver`** | Content dalı: içerik store'u → `ContentRefIndex` (yerel dosya, **ağ yok**) → transient indirme. Transient dalı aynı indirme yoluna indirgendi |
+| **`MissingMediaReporter`** | `collectTransientRefs` → `collectContentRefs`; iki biçimi de topluyor, ikisi de aynı sha'yı veriyor |
+| **Şema listeleri** | `ReferenceIndexer` (yeni şemayı tanımazsa indirilen bayt orphan sanılırdı), `PublishMediaPinner.isMediaRef`, `EvictionSweeper` kardeş-ref kontrolü |
+
+### Faz 3.5 çıkış kriteri — karşılandı
+
+> **ref cihazdan bağımsız çözülüyor**
+
+Ref'in kendisinde cihaz, kullanıcı ya da katman adı yok — yalnız sha. Üç
+çözüm yolu da yerinde:
+
+| Kim | Nasıl | Kanıt |
+|---|---|---|
+| Baytları üreten cihaz | `content_paths` → dosya, ağa hiç çıkmadan | `content_ref_index_test.dart` (6 test) |
+| Baytları olmayan cihaz | içerik store'u → transient indirme | mevcut `missing_shas` turu, ref biçiminden bağımsız |
+| Hiçbir yerde yoksa | sha `missing_shas`'e yazılır, DM dönünce iner | `shared_media_on_demand_test.dart` |
+
+`flutter analyze` temiz; `test/application/services` + `test/database` +
+`test/data` (322 test) ve `asset_ref_test` / `publish_media_pinner_test`
+yeşil. Tek kırmızı `bundled_pack_resolve_test` — temiz ağaçta da kırmızı,
+bu fazla ilgisiz.
+
+**Elle de doğrulandı** (2026-09-22, gerçek DM + oyuncu): resimli kart
+paylaşıldı, oyuncuya resmiyle birlikte gitti; **uygulama kapatılıp yeniden
+açıldıktan sonra** da gitti (eşleme artık `content_paths`'te kalıcı, eskiden
+her açılışta dünya yeniden taranıyordu); DM'in dosyasının üzerine başka bir
+resim yazıldığında oyuncuya **eski resim servis edilmedi**.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §2.7: "DM `asset_refs` tablosundan sha → yerel dosya" | Yapılamaz: `ReferenceIndexer._isAssetRef` ham yolları **kasten** indekslemiyor ("silinen path'ler false-orphan verir"), yani o tabloda yerel dosya diye bir satır hiç yok. Ayrı bir yan tablo açıldı: `content_paths` |
+| §4.6 taslağı: "DM push'unda yol→sha" | Dönüşüm noktası doğru ama push henüz yok. Bugün aynı dönüşümü paylaşım ve projeksiyon yolları çağırıyor (`SharedMediaCourier.refFor`); Faz 4 push'u aynı fonksiyonu çağıracak, yeni bir yol yazmayacak |
+| §2.7: "ref'i tier'dan ayır" tek başına yeterli | Yetmedi — ref'i tanıyan **dört** yer daha var: `ReferenceIndexer` (tanımazsa `EvictionSweeper` indirilen baytı orphan sanıp siler), `PublishMediaPinner`, `EvictionSweeper`'ın kendisi, `MissingMediaReporter`. Yeni bir şema eklemek bu listeyi gezmek demek |
+
+### Bilinçli sınırlar
+
+- **Kalıcı satırlar hâlâ yerel yol taşıyor.** Ref dönüşümü giden kopyada
+  yapılıyor, DM'in Drift satırında değil. Bilinçli: satıra content ref yazmak
+  `UnusedMediaSweeper`'ı (satırlarda yol arıyor) ve `ContentCodec`'i
+  (zip'e dosya toplarken yol arıyor) aynı anda bozardı. Faz 4 push'u satırı
+  gönderirken çevirir — çeviriciyi bu faz hazırladı.
+- **`content_paths` cihaz-yereldir ve senkronlanmaz.** Doğru olan bu: aynı
+  sha her cihazda başka bir yolda duruyor. Tablo silinse maliyet bir kerelik
+  yeniden hash'leme.
+- **Eski sürümdeki oyuncu yeni DM'in paylaştığı resmi göremez** —
+  `dmt-content://` onun istemcisinde bilinmeyen şema, yerel yol sanıp
+  açmaya çalışır. Tersi çalışıyor: yeni istemci eski `dmt-transient://`
+  gövdelerini okumaya devam ediyor.
+- **Hash akış üzerinden ama izolatta değil.** 100 MB'lık bir handout ana
+  isolate'ta hash'leniyor. Ölçülür bir takılma olursa `compute()` doğru
+  yükseltme; şimdilik dosya başına bir kez oluyor ve sonucu tablo tutuyor.
+
+---
+
+## 4.6 Faz 4 ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4).*
-
-### Faz 3.5 — Medya ref birleştirmesi
-`dmt-content://{sha}{ext}` tanımı; DM push'unda yol→sha; `asset_refs`
-üzerinden DM tarafı çözümü; oyuncu tarafı transient + `missing_shas`; eski
-ref biçimleriyle uyumluluk.
+ayrıntıda açılıyor (bkz. §4.4, §4.5).*
 
 ### Faz 4 — Drift v13 + push
 Tek v13 bump (`isOnline`, `sync_outbox`, `revision`/`updated_at`,
@@ -1403,7 +1480,7 @@ Değişmedi — bkz. eski liste.
 
 ---
 
-## 4.6 Kod incelemesinden çıkan düzeltmeler
+## 4.7 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
 uyuşmuyordu. Kayda geçiyor:
@@ -1421,6 +1498,7 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 2.5: çıkış kriteri "aynı isimle iki dünya" | Tek başına repository katmanı yetmiyordu: medya klasörü de isimle anahtarlıydı (`worlds/<ad>/media/`), yani aynı adlı iki dünya aynı klasörü paylaşır ve `UnusedMediaSweeper` birini açıp kapatınca ötekinin dosyalarını silerdi. Klasör de id'ye taşındı; `beforeOpen`'da tek seferlik `world_media_dir_by_id_v1` geçişi |
 | Faz 2.5: "`renameWorld` tek satır UPDATE'e iner" | Doğru çıktı ama gerekçesi eksikti: rename **bugün klasörü taşıyıp gövdedeki mutlak yolları bırakıyordu**, yani yeniden adlandırılan her dünyanın resimleri kırılıyordu. Klasör id'ye geçince taşıma tamamen kalktı ve hata da kalktı |
 | Faz 2.5: `activeCampaignProvider` yalnız dünya adı tutar | Paket ekranı bu provider'ı kendi `ProviderScope`'unda **paket adıyla** override ediyor (`package_screen.dart:112`). Değer "açık içeriğin anahtarı" — dünyada id, pakette paket adı |
+| §2.7: "DM `asset_refs`'ten sha → yerel dosya" | `asset_refs` ham yol tutmuyor ve tutmamalı (false-orphan). `content_paths` yan tablosu açıldı (§4.5) |
 | §2.2: "Toplam ~26 tablo" | 25. `world_combat_conditions` tablo olmadı — `world_combatants.conditions_json` kolonu oldu (§4.4) |
 | §2.11: `sync_outbox` "geri gelmeli" | `app_database.dart:430` `_retiredTablesDDL` onu aktif `DROP` ediyor — o satırın kalkması Faz 4'ün parçası |
 

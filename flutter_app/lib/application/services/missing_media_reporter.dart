@@ -10,12 +10,13 @@ import '../providers/campaign_provider.dart';
 import 'asset_ref_resolver.dart';
 import 'content_store.dart';
 
-/// Oyuncu tarafı: paylaşılan kartlarda çözülemeyen transient SHA'ları DM'e
+/// Oyuncu tarafı: paylaşılan kartlarda çözülemeyen içerik SHA'larını DM'e
 /// bildirir ve geldiklerinde indirir.
 ///
 /// Akış ([SharedMediaCourier]'ın karşı ucu):
-///   1. DM paylaşırken medya YÜKLEMEZ; payload `dmt-transient://{sha}{ext}`
-///      taşır.
+///   1. DM paylaşırken medya YÜKLEMEZ; payload `dmt-content://{sha}{ext}`
+///      taşır (Faz 3.5 öncesi paylaşımlarda `dmt-transient://` — ikisi de
+///      taranır, ikisi de aynı SHA'yı verir).
 ///   2. [sweep] payload'ları tarar, her SHA için önce yerel [ContentStore]'a,
 ///      sonra çözücüye bakar. Çözülemeyenler `report_missing_shas` RPC'si ile
 ///      `world_members.missing_shas`'e yazılır.
@@ -91,14 +92,14 @@ class MissingMediaReporter {
     }
   }
 
-  /// Aktif dünyanın kart gövdelerindeki transient ref'leri tarar; elde
+  /// Aktif dünyanın kart gövdelerindeki içerik ref'lerini tarar; elde
   /// olmayanları indirmeyi dener ve hâlâ çözülemeyenlerin SHA'larını döner.
   Future<Set<String>> _scanAndFetch(String worldId) async {
     final data = _ref.read(activeCampaignProvider.notifier).data;
     final entities = data?['entities'];
     if (entities is! Map) return const {};
 
-    final refs = collectTransientRefs(entities); // sha → tam ref
+    final refs = collectContentRefs(entities); // sha → tam ref
     if (refs.isEmpty) return const {};
 
     final store = _ref.read(contentStoreProvider);
@@ -138,25 +139,29 @@ class MissingMediaReporter {
   }
 }
 
-/// JSON gövdesinde geçen her `dmt-transient://` ref'ini `sha → ref` olarak
-/// toplar. Şemadan bağımsız gezilir: portre, galeri, `image` alanı ya da
-/// ileride eklenecek herhangi bir medya alanı aynı ref şemasını taşıyor, o
-/// yüzden alan listesi tutmak yerine gövde taranır.
-Map<String, String> collectTransientRefs(Object? node,
+/// JSON gövdesinde geçen her içerik-adresli ref'i (`dmt-content://` ve eski
+/// `dmt-transient://`) `sha → ref` olarak toplar. Şemadan bağımsız gezilir:
+/// portre, galeri, `image` alanı ya da ileride eklenecek herhangi bir medya
+/// alanı aynı ref şemasını taşıyor, o yüzden alan listesi tutmak yerine gövde
+/// taranır.
+///
+/// `dmt-asset://` / `dmt-public://` KASTEN dışarıda: onların baytları kendi
+/// kalıcı kovalarında duruyor, DM'den istenecek bir şey yok.
+Map<String, String> collectContentRefs(Object? node,
     [Map<String, String>? into]) {
   final out = into ?? <String, String>{};
   if (node is String) {
     final ref = AssetRef(node);
-    if (!ref.isTransient) return out;
-    final sha = ref.transientSha;
-    if (sha != null && sha.length == 64) out[sha.toLowerCase()] = node;
+    if (!ref.isContent && !ref.isTransient) return out;
+    final sha = ref.contentSha;
+    if (sha != null) out[sha] = node;
   } else if (node is Map) {
     for (final v in node.values) {
-      collectTransientRefs(v, out);
+      collectContentRefs(v, out);
     }
   } else if (node is List) {
     for (final v in node) {
-      collectTransientRefs(v, out);
+      collectContentRefs(v, out);
     }
   }
   return out;

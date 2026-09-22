@@ -18,7 +18,8 @@ tags: [moc]
 - [[first_party_art_service]] — `dmt-art://` kart görselleri (app bundle → R2 catalog).
 - [[entity_image_upload]] — upload entity portrait to media storage.
 - [[shared_media_courier]] — DM tarafı: paylaşılan kartın medyasını talep üzerine transient havuza yükler.
-- [[missing_media_reporter]] — oyuncu tarafı: çözülemeyen transient sha'ları DM'e bildirir, gelince indirir.
+- [[missing_media_reporter]] — oyuncu tarafı: çözülemeyen içerik sha'larını DM'e bildirir, gelince indirir.
+- [[content_ref_index]] — `dmt-content://{sha}{ext}` ↔ bu cihazdaki özgün dosya (`content_paths`); ref'in cihaz-yerel çözümü.
 - [[local_media_localizer]] — seçilen her dosyayı içeriğin kendi klasörüne kopyalar; ham seçici yolu hiçbir zaman saklanmaz.
 - [[unused_media_sweeper]] — dünya açılış/kapanışında referanssız yerel medyayı siler.
 - [[entity_media_cleanup_service]] — GC media on entity/world/package delete.
