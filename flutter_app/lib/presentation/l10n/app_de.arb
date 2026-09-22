@@ -2153,6 +2153,7 @@
   "thisPlayer": "diesen Spieler",
   "charsYours": "{count, plural, =1{Dein Charakter} other{Deine Charaktere}}",
   "pendingChoicesTooltip": "{count, plural, =1{1 offene Stufenaufstiegs-Entscheidung — öffne den Charakter zum Auflösen.} other{{count} offene Stufenaufstiegs-Entscheidungen — öffne den Charakter zum Auflösen.}}",
+  "contentArchiveMenu": "Übertragen",
   "contentArchiveExport": "In Datei exportieren (.dmtz)",
   "contentArchiveImport": "Aus Datei importieren (.dmtz)",
   "contentArchiveExported": "Gespeichert: {path}",

@@ -60,7 +60,7 @@ offline yüzünden sync hiç çalışmasın istenmiyor.
 entity'ler, world schema, `combat_state` (encounter'lar + battlemap + session
 notları), `mind_maps`, `map_data`, `sessions`, `pdf_library` manifest'i.
 Medya olarak iki kaynak taranır:
-1. `{worldsDir}/{worldName}/` altındaki her dosya (haritalar, görseller,
+1. `{worldsDir}/{worldId}/` altındaki her dosya (haritalar, görseller,
    `pdfs/`) — yerel yollu (offline dünya) medya buradadır.
    Buraya **girmesi** de garanti altında: seçicinin verdiği ham yol
    (`.../Downloads/map.png`) veri kökünün dışında kaldığı için taşınamıyordu.

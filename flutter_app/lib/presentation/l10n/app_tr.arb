@@ -2153,6 +2153,7 @@
   "thisPlayer": "bu oyuncu",
   "charsYours": "{count, plural, =1{Karakterin} other{Karakterlerin}}",
   "pendingChoicesTooltip": "{count, plural, other{{count} bekleyen seviye seçimi — çözmek için karakteri aç.}}",
+  "contentArchiveMenu": "Aktar",
   "contentArchiveExport": "Dosyaya aktar (.dmtz)",
   "contentArchiveImport": "Dosyadan al (.dmtz)",
   "contentArchiveExported": "Kaydedildi: {path}",

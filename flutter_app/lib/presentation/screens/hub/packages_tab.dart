@@ -310,6 +310,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     icon: const Icon(Icons.content_copy, size: 18),
                     label: Text(L10n.of(context)!.charCopyToWorldAction),
                   ),
+                  const SizedBox(width: 8),
                   ContentArchiveMenu(
                     type: ContentItemType.package,
                     selectedName: _selectedPackage?.name,
