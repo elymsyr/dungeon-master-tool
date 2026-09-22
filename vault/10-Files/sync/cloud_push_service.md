@@ -51,4 +51,5 @@ tags: [file]
 ## Notes
 - Test: `test/application/services/cloud_push_collect_test.dart` (15 test) — `collect` / `collectPackage` üzerinden, ağsız.
 - Bilinçli sınırlar (§4.6, §4.7): `revision` istemcide yazılmıyor, reddedilen satır kullanıcıya gösterilmiyor, uygulama kapanırken "son tur" yok, `updated_at` için ayrı indeks yok, paketin **silinmesi** buluta gitmiyor (bulut kopyasını düşüren tek yol "Yerele al"), `world_characters.is_online` kolonu okunmuyor (Faz 5.5).
+- **Gerçek projede uçtan uca doğrulama bekliyor** ve migration `095` (karakterin sunucu damgasını düşüren trigger) henüz deploy edilmedi — koşulacak adımlar `docs/online-sync-redesign.md` §4.7 "Bekleyen doğrulama".
 - `sync_tombstones.world_id` artık "kapsam id'si" demek: dünya turunda dünya, paket turunda paket. Kolonu yeniden adlandırmak yan tablonun idempotent DDL'ini kırardı.
