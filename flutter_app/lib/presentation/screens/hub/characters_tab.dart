@@ -27,6 +27,7 @@ import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/compactable_button.dart';
 
 /// View + manage all characters across worlds. Creation also available here;
 /// per-world creation lives in the campaign Characters sidebar.
@@ -358,7 +359,8 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 final isHardDelete = selected != null &&
                     selected.ownerId == null &&
                     selected.worldId == null;
-                final actionButton = FilledButton.icon(
+                final actionButton = CompactableButton(
+                  filled: true,
                   onPressed: selected == null || _releasing
                       ? null
                       : _releaseOrDeleteSelected,
@@ -374,7 +376,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               : Icons.logout,
                           size: 18,
                         ),
-                  label: Text(isHardDelete ? l10n.btnDelete : l10n.charBtnRelease),
+                  label: isHardDelete ? l10n.btnDelete : l10n.charBtnRelease,
                   style: FilledButton.styleFrom(
                     backgroundColor: palette.dangerBtnBg,
                     foregroundColor: palette.dangerBtnText,
@@ -396,10 +398,10 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    OutlinedButton.icon(
+                    CompactableButton(
                       onPressed: selected != null ? _copyCharacter : null,
                       icon: const Icon(Icons.content_copy, size: 18),
-                      label: Text(L10n.of(context)!.charCopyToWorldAction),
+                      label: L10n.of(context)!.charCopyToWorldAction,
                     ),
                     const SizedBox(width: 8),
                     actionButton,
