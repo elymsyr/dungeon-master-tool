@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
-Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1 ve Faz 2.5 bitti
-(bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3+ taslak.
+Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5 ve Faz 3
+bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 3.5+ taslak.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -15,7 +15,7 @@ Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1 ve Faz 2.5 bi
 > var; bağlayıcı olan şey fazın **çıkış kriteri**.
 >
 > Belge ile kod çeliştiğinde **kod kazanır**, belge düzeltilir — bulunan her
-> fark [§4.5](#45-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
+> fark [§4.6](#46-kod-incelemesinden-çıkan-düzeltmeler) tablosuna yazılır.
 > Fazın niyeti belirsizse ya da fark bir kararı değiştiriyorsa **kullanıcıya
 > sor**, tahmin etme.
 
@@ -867,7 +867,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (2026-09-21 deploy edildi) |
 | ~~**1**~~ | ZIP import/export + codec'in LAN'dan çıkarılması | dünya export → temiz kurulumda import → aynı dünya | hayır | ✅ bitti |
 | ~~**2.5**~~ | Dünya kimliğinin isimden id'ye taşınması | `CampaignRepository` ismi anahtar olarak kullanmıyor | hayır | ✅ bitti |
-| 3 | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | taslak |
+| ~~**3**~~ | Bulut şeması + RLS | RLS testleri yeşil, istemci hâlâ kullanmıyor | evet | ✅ bitti (2026-09-22 deploy edildi) |
 | 3.5 | `dmt-content://` medya ref birleştirmesi | ref cihazdan bağımsız çözülüyor | evet | taslak |
 | 4 | Drift v13 bump + push | dünya bulutta görünüyor, geri okuma yok | evet | taslak |
 | 5 | Pull + uzlaştırıcı | iki cihaz aynı dünyada buluşuyor | evet | taslak |
@@ -1147,7 +1147,7 @@ bir şey kalmıyor. İkincisi **yapılamaz**: `world_entities` birincil anahtar�
 global `{id}`, `upsert` de `insertAllOnConflictUpdate`. Yeni id'li bir dünya
 kopyası, entity satırlarını var olan dünyadan **kendine çeker** ve orijinali
 boşaltır. Aynı gizli hata bugün `WorldRepositoryImpl.copy`'de de duruyor
-(bkz. §4.5) — önce o düzeltilmeli.
+(bkz. §4.6) — önce o düzeltilmeli.
 
 ### Bilinçli sınırlar
 
@@ -1276,19 +1276,95 @@ Faz 4'ün başında, gerçekten kolon gerektiğinde (bkz. §4.0).
 
 ---
 
-## 4.4 Faz 3 ve sonrası — taslak
+## 4.4 Faz 3 — Bulut şeması + RLS ✅ bitti
 
-*Aşağısı henüz detaylandırılmadı. Faz 1 bitince, koda bakılarak Faz 3 aynı
-ayrıntıda açılacak.*
+Tek migration: [`094_cloud_mirror_schema.sql`](../supabase/migrations/094_cloud_mirror_schema.sql)
+(~960 satır). Doğrulama: [`verify_094.sql`](../supabase/scripts/verify_094.sql).
 
-### Faz 3 — Bulut şeması
-Migration 094+: 077'den geri gelen 6 tablo + hiç olmamış 6 tablo + 3 paket
-tablosu; `world_revisions`, `world_tombstones`, `world_member_state`;
-`entity_shares` → izin tablosu (`payload_json` düşer);
-`world_entities.dm_only_keys`; `get_shared_entities` RPC + SQL redaksiyonu;
-mind map `owner_id` + RLS; `tg_bump_parent_world` geri; kota
-fonksiyonları; Realtime yayını **sadece** `world_revisions`;
-**her tablo için oyuncu rolüyle RLS testi.**
+### Sorun
+
+077 tam aynayı kaldırırken gerekçesi gizlilikti: oyuncunun cihazına DM'in
+paylaşmadığı içerik de iniyordu. Ayna geri geliyor ama bu sefer **oyuncu
+`world_entities`'e hiç erişmiyor** — tek kapı bir RPC ve redaksiyon sunucuda.
+Bu, §3.4'ün en yüksek şiddetli riski; şemayla birlikte testi de yazılmadan
+faz bitmiş sayılmaz.
+
+### Yapılanlar
+
+| Bölüm | Ne |
+|---|---|
+| A | `world_revisions`, `world_tombstones`, `world_member_state` |
+| B | 077'den geri gelen altı tablo + `revision` kolonu, `dm_only_keys`, mind map `owner_id` |
+| C | Hiç var olmamış beş tablo: encounter, combatant, harita pini, zaman çizelgesi pini, kurulu paket |
+| D | `user_packages` / `user_package_entities` / `user_package_schemas` |
+| E | `next_world_revision` + damgalama/tombstone trigger'ları, paket sayacı |
+| F | RLS + grant'ler (17 tablo) |
+| G | `v_shared_entities` görünümü, `get_shared_entities`, `get_shared_entity_ids` |
+| H | Kota sabitleri, kart satırı 256 KB, dünya başına 20.000 satır, kişi başı 20 paket |
+| I | Realtime: `world_revisions` **eklenir**, hiçbir şey çıkarılmaz |
+
+Toplam ayna yüzeyi **25 tablo** (26 değil — bkz. §4.6).
+
+### Faz 3 çıkış kriteri — karşılandı
+
+> RLS testleri yeşil, istemci hâlâ kullanmıyor.
+
+- `verify_094.sql` yedi bölüm, ~60 assertion: revizyon sayacı, tombstone,
+  kota, politika yüzeyi, **oyuncu rolüyle her ayna tablosundan boş dönüş**,
+  redaksiyon, DM rolü, başkasının paketi. Tek satır döner: `094 OK`.
+- Temiz Postgres 16'da (docker, minimal Supabase iskelesi) çalıştırıldı;
+  094 arka arkaya iki kez uygulandı — **idempotent**; script `ROLLBACK` ile
+  bitiyor ve `worlds`/`auth.users` sayımı sıfır kalıyor.
+- Flutter tarafında tek satır değişmedi.
+
+En kritik iki assertion — ikisi de sızıntıyı doğrudan yakalar:
+
+```
+5.1  OYUNCU world_entities OKUYABILIYOR — gizlilik hatasi
+6.4  DM'E OZEL ALAN OYUNCUYA SIZDI — redaksiyon calismiyor
+```
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §2.5: `entity_shares.payload_json` **düşer**, Realtime yayını **sadece** `world_revisions` | İkisi de **ertelendi**. 094 tamamen eklemeli: yerine geçen şey (istemcinin RPC'den çekmesi) Faz 5.5'te, şimdi düşürmek bugün çalışan paylaşım akışını iki faz boyunca kırardı — §3.3'ün "multiplayer paylaşım akışı bozulmamalı" maddesi. `world_revisions` yayına eklendi, hiçbir şey çıkarılmadı |
+| §2.2: `world_combat_conditions` ayrı tablo | `world_combatants.conditions_json` kolonu. Yereldeki `combat_conditions` PK'sı `autoIncrement` int — cihazlar arası taşınamaz, bulutta id üretmek gerekirdi. Hiçbir zaman combatant'ından ayrı okunmuyorlar |
+| §2.3: `tg_bump_parent_world` geri gelir | Gelmedi, gelmemeli. 050 o fonksiyonu tam da çocuk trigger'ının `worlds` satırını UPDATE etmesi yüzünden budamıştı. Yeni sayaç **ayrı tabloya** (`world_revisions`) yazıyor; aynı tuzak yok. Test 2.3 dünya CASCADE'inde boş tombstone üretilmediğini doğruluyor |
+| §2.6: redaksiyon `fields->'attributes' - keys` | `fields_json` zaten `attributes`'ın kendisi (`entityToRaw`'da `'attributes': e.fields`, tabloda düz kolon). Tek seviye: `fields_json::jsonb - dm_only_keys` |
+| §2.5: 042'nin "member read" politikaları | `world_settings` / `world_map_data` / `world_sessions` artık **DM-only**. §1.3 "bu kopya sadece sahibine ait" diyor; tablolar zaten sıfırdan kuruluyor, member-read'i taşımanın sebebi yoktu |
+| §2.9: mind map `map_id = 'player_<uid>'` konvansiyonu (026) | `owner_id` kolonu. String'e gömülü kimlik yerine kolon; `can_access_map` yeni tablolarda kullanılmıyor |
+| §2.5: paylaşım geri çekilince oyuncu nasıl öğrenir | `get_shared_entity_ids(world)` — güncel görünür kart listesi. Tombstone'dan ucuz ve `get_shared_entities` ile **aynı** predikatı (`v_shared_entities`) kullanıyor |
+
+### Bilinçli sınırlar
+
+- **Paket tombstone'u yok.** `world_tombstones` yalnızca dünya kapsamlı.
+  Paketler tek sahipli ve küçük; silinmiş paket kartı, id listesi
+  karşılaştırmasıyla bulunur. Dünya için aynı şey doğru değildi (çok cihaz +
+  çok kullanıcı), o yüzden orada tombstone ilk migration'da.
+- **`trg_chars_bump_updated` (026) duruyor.** §2.8'in "sunucu `updated_at`'i
+  ezmesin" kuralı yeni tabloların hepsinde geçerli (test 1.5) ama
+  `world_characters` hâlâ yaşayan istemcinin yolunda; trigger'ı düşürmek Faz
+  4'ün, push yazılırken yapacağı iş.
+- **Kota yalnızca sayılabilir olanı zorluyor.** Satır sayısı, satır boyutu ve
+  paket adedi trigger/CHECK ile kapalı; kişi başı 500 MB **sabit olarak
+  tanımlı ama zorlanmıyor** — gerçek dünya boyutu ölçülmeden eşik
+  uydurulamaz (§"Doğrulanmamış tek veri", Faz 7).
+- **`v_shared_entities` istemciye kapalı.** Görünüm `postgres`'e ait, yani
+  `world_entities` RLS'ini atlar. `anon` ve `authenticated` için `REVOKE`
+  edildi ve test 6.7 bunu doğruluyor; tek okuyucusu iki SECURITY DEFINER
+  fonksiyon.
+- **İki ortamda da doğrulandı.** Geliştirme sırasında temiz Postgres 16'da
+  (docker + minimal Supabase iskeleti, iki kez üst üste uygulanarak);
+  ardından **2026-09-22'de gerçek Supabase projesinde**: 094 hatasız
+  uygulandı, `verify_094.sql` orada da `094 OK` döndü.
+
+---
+
+## 4.5 Faz 3.5 ve sonrası — taslak
+
+*Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
+ayrıntıda açılıyor (bkz. §4.4).*
 
 ### Faz 3.5 — Medya ref birleştirmesi
 `dmt-content://{sha}{ext}` tanımı; DM push'unda yol→sha; `asset_refs`
@@ -1327,7 +1403,7 @@ Değişmedi — bkz. eski liste.
 
 ---
 
-## 4.5 Kod incelemesinden çıkan düzeltmeler
+## 4.6 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
 uyuşmuyordu. Kayda geçiyor:
@@ -1345,6 +1421,7 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 2.5: çıkış kriteri "aynı isimle iki dünya" | Tek başına repository katmanı yetmiyordu: medya klasörü de isimle anahtarlıydı (`worlds/<ad>/media/`), yani aynı adlı iki dünya aynı klasörü paylaşır ve `UnusedMediaSweeper` birini açıp kapatınca ötekinin dosyalarını silerdi. Klasör de id'ye taşındı; `beforeOpen`'da tek seferlik `world_media_dir_by_id_v1` geçişi |
 | Faz 2.5: "`renameWorld` tek satır UPDATE'e iner" | Doğru çıktı ama gerekçesi eksikti: rename **bugün klasörü taşıyıp gövdedeki mutlak yolları bırakıyordu**, yani yeniden adlandırılan her dünyanın resimleri kırılıyordu. Klasör id'ye geçince taşıma tamamen kalktı ve hata da kalktı |
 | Faz 2.5: `activeCampaignProvider` yalnız dünya adı tutar | Paket ekranı bu provider'ı kendi `ProviderScope`'unda **paket adıyla** override ediyor (`package_screen.dart:112`). Değer "açık içeriğin anahtarı" — dünyada id, pakette paket adı |
+| §2.2: "Toplam ~26 tablo" | 25. `world_combat_conditions` tablo olmadı — `world_combatants.conditions_json` kolonu oldu (§4.4) |
 | §2.11: `sync_outbox` "geri gelmeli" | `app_database.dart:430` `_retiredTablesDDL` onu aktif `DROP` ediyor — o satırın kalkması Faz 4'ün parçası |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.

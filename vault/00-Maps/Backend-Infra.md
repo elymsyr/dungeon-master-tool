@@ -18,6 +18,7 @@ tags: [moc]
 - [[migrations-auth-social]] — 001–005 backups/assets/social/marketplace.
 - [[migrations-online-worlds]] — 026 shared worlds + invites + realtime mirror.
 - [[migrations-media-storage]] — 053/065 free-media bucket + transient LRU pool.
+- [[migrations-cloud-mirror]] — 094 satır bazlı bulut aynası, revizyon sinyali, tombstone, oyuncunun tek okuma kapısı.
 - [[migrations-security]] — 072/073 RLS hardening + revoke anon execute.
 - [[rpc-reference]] — key RPCs: `transient_reserve/touch/evict_pop`, `get_user_total_storage_used`, `is_admin`, `delete_my_account` (083).
 - Hesap silme: `/admin/purge-user` artık admin token'ın yanında **kendi JWT'siyle** de çağrılabilir; akışın tamamı [[account_deletion_service]].
