@@ -61,7 +61,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 
 ## Key cross-cutting flows
 - [[Share-Broadcast-Flow]] — DM'in paylaştığı → oyuncuda canlı. Beş tablo, doğrudan yazma.
-- [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme.
+- [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme. **Kalkıyor** (`online-again` Faz 6); yerine tam online dönüyor — bulut şeması 094 ile kuruldu ([[migrations-cloud-mirror]]), istemci Faz 4/5'te bağlanacak.
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs transient (R2 LRU) vs pinned (R2 `pub/`, refcount). Sayılan katman emekli (Phase D).
 - [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.

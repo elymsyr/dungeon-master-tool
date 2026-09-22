@@ -29,7 +29,7 @@ since v17.0.0 (14 September 2026), when `flutter test` was 1509 passing / 0 fail
   The same trap applies to **any** path that writes a world payload carrying another world's
   entity ids — notably downloading a marketplace world you already own locally. It is also why
   the "duplicate instead of merge" option was cut from `.dmtz` import
-  ([online-sync-redesign.md](online-sync-redesign.md) §4.5).
+  ([online-sync-redesign.md](online-sync-redesign.md) §4.6).
   Fix: remap entity ids (and every intra-world reference to them) while copying, or widen the
   primary key to `{worldId, id}` — the latter is a schema change, so it rides with the next
   Drift version bump. Copying also leaves the new world's image paths pointing into the *source*

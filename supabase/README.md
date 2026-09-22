@@ -11,6 +11,11 @@ ve operasyonel komutları içerir.
 | 002 | `migrations/002_community_assets.sql` | Sprint 10 — R2 asset metadata + storage RPC'leri |
 | 003 | `migrations/003_social.sql` | Sprint 11 / v3.0.0-beta — sosyal özellikler |
 | 026 | `migrations/026_online_worlds.sql` | Online multiplayer foundation — paylaşılan world + invite + realtime mirror |
+| 094 | `migrations/094_cloud_mirror_schema.sql` | `online-again` Faz 3 — satır bazlı bulut aynası, revizyon sinyali, tombstone, `get_shared_entities` |
+
+094 için doğrulama betiği vardır: `scripts/verify_094.sql` — SQL Editor'da
+çalıştırılır, rol bazlı RLS testlerini koşar, `ROLLBACK` ile biter ve
+başarılıysa tek satır `094 OK` döner.
 
 Her migration **idempotent** yazılmıştır (`IF NOT EXISTS`, `DROP POLICY IF
 EXISTS`, `CREATE OR REPLACE`). Sırayla Supabase Dashboard > SQL Editor > New
