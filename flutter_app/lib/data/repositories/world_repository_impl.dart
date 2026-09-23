@@ -220,6 +220,19 @@ class WorldRepositoryImpl implements CampaignRepository {
           }
         } catch (_) {}
       }
+      // Değişmeyen patch = hiç yazma. `stampSections` her çağrıda
+      // `_section_updated_at`'i `now()` yaptığı için, içerik birebir aynı
+      // olsa bile `settings_json` bayt bayt farklı çıkıyordu; bulut aynasında
+      // UPDATE `IS DISTINCT FROM` oluyor ve `world_revisions` boşuna
+      // artıyordu — echo guard'ın (096) absorbe edemediği tek durum.
+      // `WorldMapScreen.deactivate` harita sekmesinden her çıkışta `map_data`
+      // yazdığı için bu, hiçbir düzenleme yapılmayan her oturumda oluyordu.
+      // Bayt eşitliği tek yönlü güvenli: eşitse içerik kesin aynı, değilse
+      // bugünkü davranış aynen sürüyor.
+      final unchanged = patch.entries.every((e) =>
+          merged.containsKey(e.key) &&
+          jsonEncode(merged[e.key]) == jsonEncode(e.value));
+      if (unchanged) return;
       merged.addAll(patch);
       if (touchWorld) stampSections(merged, patch.keys);
       await _db.worldSettingsDao.upsert(WorldSettingsCompanion(

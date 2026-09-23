@@ -59,4 +59,35 @@ void main() {
     final stamps = readSectionStamps(await repo.load('Barovia'));
     expect(stamps.keys, ['combat_state']);
   });
+
+  // Echo guard'ın buluttaki karşılığı buna bağlı: `WorldMapScreen.deactivate`
+  // harita sekmesinden her çıkışta `map_data`'yı koşulsuz yazıyor. İçerik
+  // aynıyken bile `stampSections` `_section_updated_at`'i `now()` yaptığı
+  // için `settings_json` her seferinde bayt bayt farklı çıkıyor, bulut
+  // UPDATE'i `IS DISTINCT FROM` oluyor ve `world_revisions` boşuna artıyor.
+  test('aynı içerikli patch hiçbir şeyi kirletmez', () async {
+    await repo.saveSettingsPatch('Barovia', {
+      'map_data': {'eras': [], 'scale': 1.0},
+    });
+    final before = await worldUpdatedAt();
+    final json0 = (await db.worldSettingsDao.get('Barovia'))!.settingsJson;
+
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    await repo.saveSettingsPatch('Barovia', {
+      'map_data': {'eras': [], 'scale': 1.0},
+    });
+
+    expect(await worldUpdatedAt(), before, reason: 'dünya damgası oynamamalı');
+    expect((await db.worldSettingsDao.get('Barovia'))!.settingsJson, json0,
+        reason: 'settings_json bayt bayt aynı kalmalı');
+  });
+
+  test('gerçek değişiklik hâlâ yazılıyor', () async {
+    await repo.saveSettingsPatch('Barovia', {'map_data': {'scale': 1.0}});
+    await repo.saveSettingsPatch('Barovia', {'map_data': {'scale': 2.0}});
+    expect(
+      ((await repo.load('Barovia'))['map_data'] as Map)['scale'],
+      2.0,
+    );
+  });
 }
