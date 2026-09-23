@@ -1,11 +1,14 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a, 4b ve 5a bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz 5b+ taslak.
-Migration 095 ve 096 **2026-09-22'de deploy edildi**; 4a/4b/5a'nın **uçtan uca
-elle doğrulaması bekliyor** — koşulacak adımlar
-[§4.7](#47-faz-4b--paket--karakter-pushu--bitti) ve
-[§4.8](#48-faz-5a--dünya-pullu--bitti) sonundaki listelerde.
+Faz 3.5, 4a, 4b, 5a, 5b ve 5c bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz
+5.5+ taslak. Migration 095–097 **deploy edildi** ve 5b'nin elle doğrulaması
+**yapıldı** (2026-09-23). 5c'de dünya indirme ve indirilen dünyada canlı
+düzenleme elle doğrulandı — ikincisi Faz 4a'dan kalan bir damga hatası
+düzeltildikten sonra (§4.9); görseller gelmiyor, karar bekliyor. **098 deploy
+ve paket adımları bekliyor**; liste
+[§4.8.2](#482-faz-5c--ikinci-cihazın-ilk-senkronu--bitti) sonunda. Son faz
+(9) işlem geri bildirimi.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -878,11 +881,13 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**4a**~~ | Drift v13 bump + dünya push'u | dünya bulutta görünüyor, geri okuma yok | evet | ✅ bitti (elle doğrulama bekliyor) |
 | ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy edildi; elle doğrulama bekliyor) |
 | ~~**5a**~~ | Dünya pull'u + echo guard + uzlaştırıcı | bulutta değişen satır yerele iniyor, döngü yok | evet | ✅ bitti (096 deploy edildi; elle doğrulama bekliyor) |
-| 5b | Realtime sinyali + paket pull'u + açık dünyanın tazelenmesi | iki cihaz aynı dünyada **canlı** buluşuyor | evet | taslak |
+| ~~**5b**~~ | Realtime sinyali + uzlaştırma anı + sunucu tarafı LWW | iki cihaz aynı dünyada **canlı** buluşuyor | evet | ✅ bitti (097 deploy edildi, elle doğrulandı) |
+| ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (dünya adımları elle doğrulandı; 098 + paket adımları bekliyor) |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
+| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.3) |
 
 ### Faz 2 nereye gitti
 
@@ -1618,7 +1623,7 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
 
 ### Bilinçli sınırlar
 
-- **Paketin silinmesi buluta gitmiyor.** Paket yerelden silinince
+- ~~**Paketin silinmesi buluta gitmiyor.**~~ Faz 5c kapattı (§4.8.2). Paket yerelden silinince
   `pushPackage` bir daha koşamaz (satır yok), o yüzden `deletePackage`
   bekleyen tombstone'ları temizliyor ve bulut satırı yerinde kalıyor. Bulut
   kopyasını düşüren tek yol bugün "Yerele al". Dünyada da aynı yapı var
@@ -1780,16 +1785,13 @@ olmadan tek bir 10 MB'lık jsonb yanıtı demekti — telefonda bellek sorunu.
 
 ### Bilinçli sınırlar
 
-- **Realtime sinyali yok.** Pull dünya açılışında bir kez koşuyor. Karşı
-  cihazın değişikliğini canlı görmenin yolu bugün dünyayı yeniden açmak.
-  `world_revisions` zaten publication'da (094), abone olan yok — Faz 5b.
+- ~~**Realtime sinyali yok.**~~ Faz 5b kapattı (§4.8.1).
 - ~~**Açık dünyanın bellekteki hali tazelenmiyor.**~~ **Kapandı** — bkz.
   aşağıdaki "Sonradan eklendi". Pull Drift'e yazıyor ama
   `EntityNotifier._loadFromCampaign` Drift'ten değil `ActiveCampaignNotifier`'ın
   **bellekteki blob'undan** okuyor; inen satırlar o açılışta değil bir
   sonrakinde görünüyordu.
-- **Paket pull'u yok.** `get_package_delta` yazılmadı; iskelet dünyayla birebir
-  aynı, kapsam kolonu `package_id`. Faz 5b.
+- ~~**Paket pull'u yok.**~~ Faz 5c kapattı (§4.8.2).
 - **Pull'dan sonra bir tur fazla push olabilir.** `syncOnOpen` push'u önce
   koşturuyor ve damgayı `now()`'a çekiyor, dolayısıyla ondan **önce**
   düzenlenmiş uzak satırlar bir sonraki taramaya düşmez. Saat kayması olan
@@ -1817,12 +1819,9 @@ topluyor. `installed_packages` zaten Drift `StreamProvider`'ı üstünden canlı
 `worldCharactersProvider` bulut kaynaklı, pull'un yazdığı yerel satırı
 okumuyor — tazeleme gerekmiyor.
 
-Bilerek yapılmadı: **pull'dan önce `PendingWriteBuffer.flush()`.** Pull bugün
-yalnız dünya açılışında koşuyor ve `completeLoad` zaten flush etmiş oluyor —
-bekleyen yazım yok. Üstelik `flush()` koşulsuz `_bumpTick()` atıyor, yani
-pompayı boş bir push turuna sokardı. Pull sinyale bağlanınca (5b) gerekecek:
-o zaman yerel düzenleme tampondayken inen satır LWW'de bayat Drift satırıyla
-karşılaştırılır.
+~~Bilerek yapılmadı: **pull'dan önce `PendingWriteBuffer.flush()`.**~~ 5b'de
+geldi: pull artık düzenleme sürerken de koşabiliyor, tampondaki satır Drift'e
+inmeden LWW onu bayat haliyle karşılaştırırdı (§4.8.1).
 
 ### Bekleyen doğrulama
 
@@ -1841,6 +1840,17 @@ select revision from user_packages;
 İki sayı da **sabit kalmalı.** Artıyorsa guard tutmuyor demektir ve pull'u
 açmak iki cihazı birbirine kilitler — 5b'ye geçmeden önce durulacak nokta.
 
+**İlk ölçüm tutmadı (2026-09-22):** hiçbir şey düzenlemeden aç–kapa, sayaç
+55 → 57. Suçlu guard değildi, gönderilen gövdenin **gerçekten** her seferinde
+farklı olmasıydı: `WorldMapScreen.deactivate()` harita sekmesinden her çıkışta
+`map_data`'yı koşulsuz yazıyor ve `saveSettingsPatch` her çağrıda
+`_section_updated_at[bölüm] = now()` damgalıyordu — içerik aynı, `settings_json`
+bayt bayt farklı. Bedeli her dünya kapanışında boşuna giden 773 KB'lık blob.
+a3dbfad2 kapattı: patch'teki her anahtar depodakiyle aynıysa `saveSettingsPatch`
+hiç yazmıyor. Sayacı hangi satırın artırdığını göstermek için
+`supabase/scripts/which_bumped.sql`. **Ölçüm düzeltmeden sonra yeniden
+koşturulmadı** — 5b'nin doğrulamasının ilk adımı bu (§4.8.1).
+
 **3. Pull'un kendisi — iki cihaz.** A'da bir kartın adını değiştir, dünyayı
 kapat. B'de aynı dünyayı aç: kart yeni adıyla gelmeli. Sonra A'da bir kart
 sil, B'yi yeniden aç: kart gitmeli. Tersi de: B'de düzenle, A'da aç.
@@ -1855,16 +1865,326 @@ de senkronla: **sonra düzenlenen** kazanmalı — varış sırası değil (§2.
 
 ---
 
-## 4.8.1 Faz 5b ve sonrası — taslak
+## 4.8.1 Faz 5b — Canlı sinyal ✅ bitti
+
+*Pull'un tetiği dünya açılışından bulut sayacına taşındı. Yolda üç gizli
+hata çıktı; ikisi bulutta, biri istemcide.*
+
+### Sorun
+
+5a'nın pull'u dünya açılışında bir kez koşuyordu. Karşı cihazın değişikliğini
+görmenin yolu dünyayı kapatıp açmaktı — §1.3'ün "hiçbir şey yapmadın,
+kendiliğinden oldu" vaadi eksikti.
+
+Kod okununca iki sorun daha çıktı:
+
+1. **`syncOnOpen` uygulama başına bir kez koşuyordu, dünya başına değil.**
+   `cloudPushPumpProvider` sıradan (autoDispose olmayan) bir `Provider`, kök
+   kapsamda yaşıyor ve dünya kapanınca dispose olmuyor. Yorumdaki "pompa
+   dünya kapanınca dispose olduğu için bayrak da onunla gider" doğru değildi:
+   `_opened` ilk DM dünyasında `true` olup öyle kalıyordu. İkinci açılan
+   dünya — ya da aynı dünyanın ikinci açılışı — hiç pull almıyordu.
+2. **Sunucu "son düzenleyen kazanır"ı uygulamıyordu.** §2.8 istemcide vardı
+   (pull: yerel ≥ gelen → at), bulutta yoktu: push düz upsert, varış sırası
+   kazanıyordu. Belgenin kendi örneği (telefon 14:00, laptop 15:00, telefon
+   16:00'da ağa girer) **kalıcı ayrışma** üretiyordu: bulut ve telefon 14:00,
+   laptop 15:00 — ve laptop'un pull'u 14:00'ü "eski" diye attığı için kimse
+   kimseyi düzeltmiyordu. Silmede de aynısı: çevrimdışı cihazın eski
+   düzenlemesi silinmiş kartı upsert'le yeniden INSERT edip diriltiyordu.
+   Canlı sinyal bunu seyrek bir durumdan her çevrimdışı dönüşe taşırdı.
+3. **096'nın echo guard'ı upsert'te delikti.** PostgREST'in upsert'i
+   `INSERT … ON CONFLICT DO UPDATE` ve Postgres BEFORE INSERT trigger'larını
+   çakışma kontrolünden **önce** koşturuyor: var olan satırın upsert'inde de
+   `trg_*_stamp_rev_ins` sayacı artırıyordu. Aynı gövde bile bir revizyon
+   yakıyordu, değişen gövde **iki** — biri hiçbir satırın taşımadığı ölü bir
+   revizyon. `verify_096` guard'ı düz `UPDATE` ile test ettiği için görmedi;
+   `verify_097`'nin ilk koşusu yakaladı. Bedeli iki katı Realtime mesajı ve
+   aşağıdaki yankı kontrolünün hiç tutmaması (her güncellemede bir boşluk).
+
+### Verilen kararlar
+
+**Sinyal mevcut kanala, yalnız DM'e.** `dmt:world:{id}` kanalı DM'de zaten
+açık ve reconnect/backoff mantığı hazır; ikinci bir kanal o mantığın kopyası
+olurdu. `world_revisions` binding'i yalnız `onRevision` verilince ekleniyor ve
+onu yalnız DM veriyor — oyuncunun ayna kapısı yok (Faz 5.5), sinyal ona her DM
+yazmasında boşa bir mesaj olurdu.
+
+**Uzlaştırma anı = kanalın `SUBSCRIBED` anı.** `syncOnOpen`'ın bayrağı
+düzeltilmedi, kaldırıldı. Kanal zaten ilk bağlanmada, her reconnect'te ve
+uygulama öne geldiğinde (`resumed` → applier invalidate) `SUBSCRIBED`'a
+geçiyor; postgres_changes kesintideki mesajları tekrar etmediği için tam da o
+an telafi gerekiyor. Bayrağa gerek kalmıyor.
+
+**Kendi yankımızı çekmemek: dönen revizyonlar boşluksuzsa damgayı ilerlet.**
+Sayaç her yazmada artıyor ve sinyal yazan cihaza da geliyor. Önlem alınmasa
+DM'in her düzenlemesi kendi pull'unda geri inerdi — `map_data` gibi 773 KB'lık
+bir satırda her harita dokunuşu bir egress. `updated_by` işe yaramıyor (aynı
+hesabın iki cihazı aynı uid). Çözüm push'un kendi elinde: upsert
+`select('revision')` ile satırların aldığı revizyonları döndürüyor; bunlar
+damganın hemen ardından boşluksuz bir diziyse aradaki her yazma bizimdir ve
+yerel zaten o haldedir → damga dizinin sonuna ilerler, sinyal gelince eşik
+altında kalır. Bir boşluk = başka bir yazar (öbür cihaz, oyuncunun karakteri,
+paylaşım) → damga yerinde, pull onu getirir.
+
+**Sunucu LWW: tek migration, iki trigger.** 097 BEFORE UPDATE'e
+`WHEN (NEW.updated_at < OLD.updated_at)` → satırı atla; BEFORE INSERT'e "aynı
+satırın tombstone'u bu düzenlemeden yeniyse atla". Eşitlik bilerek geçiyor:
+`next_package_revision` ve `claim_character` `updated_at`'e dokunmadan
+güncelliyor, `<=` onları yutardı. Adlar `trg_<t>_lww_*` — aynı zamanlamada
+trigger'lar ada göre koşuyor ve `lww` < `stamp_rev`, yani atlanan satır
+revizyon yakmıyor, sinyal çıkmıyor.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Migration 097** | A: 16 tabloya eski-düzenleme guard'ı. B: 13 dünya tablosuna tombstone guard'ı (`tg_skip_buried_insert`, SECURITY DEFINER — oyuncu kendi karakterini yazarken DM'in bıraktığı tombstone'u da görmeli). C: `tg_stamp_world_revision` / `tg_stamp_package_revision` INSERT dalında satır zaten varsa damgalamıyor — kararı UPDATE dalı veriyor; `_ins` trigger'ları PK kolonlarını argüman olarak alıyor |
+| **`WorldSyncService.subscribe(onRevision:)`** | Verilirse kanala `world_revisions` binding'i; callback yeni sayacı alıyor. Resubscribe retry'ı binding'i aynı haritadan yeniden kuruyor |
+| **`worldMirrorApplierProvider`** | Rol DM ise `onRevision` → `pump.onSignal`, `onSubscribed` → `pump.catchUp` |
+| **`CloudPushPump`** | `_guarded`/`_pendingRound` yerine **tek şerit** (`_serial`): push ve pull sırayla, hiçbir istek düşmüyor. `catchUp` = flush → push → pull. `onSignal` 1 sn debounce (karşı cihazın turu satır başına bir sinyal üretiyor), sonra şeridin boşalmasını bekleyip sayacı yerel damgayla karşılaştırıyor |
+| **`CloudPushService`** | Upsert revizyonları topluyor; `ownRunEnd(base, revs)` boşluksuz diziyi buluyor, damga **koşullu** UPDATE ile ilerliyor (`WHERE cloud_revision = base` — tur sürerken bir pull ilerlettiyse dokunmuyor). Silme olan turda ilerleme yok: tombstone'un revizyonu DELETE'ten dönmüyor |
+
+Sinyalin yolu:
+
+```
+A: düzenle → tampon (0.75–2 sn) → 3 sn sessizlik → push
+     └─ her satır sayacı artırır → Realtime → B ve A'nın kendisi
+A: dönen revizyonlar boşluksuz → cloud_revision = son → kendi sinyali eşik altında
+B: 1 sn sessizlik → şerit boş mu → sayaç > cloud_revision
+     → flush → push (B'nin yarım düzenlemesi önce gider) → pull → reload()
+```
+
+### Faz 5b çıkış kriteri — testlerle kısmen, elle bekliyor
+
+> **iki cihaz aynı dünyada canlı buluşuyor**
+
+- `cloud_push_collect_test.dart` 15 → **16 test**: `ownRunEnd`'in kenarları
+  (sırasız dizi, echo guard'ın eski revizyonu, ortadaki boşluk, baştaki boşluk,
+  boş/eski liste). Yanlış bir ilerleme o satırı bir daha hiç indirmez — test
+  bu yüzden tek fonksiyonun üstünde yoğun.
+- `cloud_pull_apply_test.dart` 14/14 yeşil (pull'a dokunulmadı).
+- `verify_097.sql`: eski düzenleme yeniyi ezmiyor ve revizyon yakmıyor; yeni
+  düzenleme yazılıyor; eşit zaman geçiyor ve paket sayacı hâlâ ilerliyor;
+  tombstone'dan eski düzenleme diriltmiyor, yenisi diriltiyor; **upsert**
+  aynı gövdede sayacı yakmıyor, değişen gövdede tam bir artırıyor ve satır o
+  değeri taşıyor (bileşik PK ve paket çocuğu dahil).
+- **Temiz Postgres 16'da** (Supabase'in `auth`/rol iskeleti taklit edilerek)
+  001→097 zinciri hatasız, `verify_094` / `096` / `097` üçü de OK; 097 iki kez
+  üst üste uygulanabiliyor. `verify_094`'ün 1.5'i güncellendi: "sunucu
+  `updated_at`'i ezmesin" testini **daha eski** bir zamanla yapıyordu, 097'den
+  beri o yazma doğru olarak reddediliyor — niyet aynı, tarih ileri.
+- Pompa (debounce, şerit, sinyal eşiği) Riverpod + Realtime'a bağlı
+  yapıştırıcı; testi elle — aşağıdaki liste.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §4.8 taslağı: 5b = sinyal + paket pull'u + ilk senkron UI'ı | Sinyal + uzlaştırma anı + sunucu LWW. Paket pull'u ve "bu cihaza indir" **5c**'ye ayrıldı — ikisi aynı iş (bulutta olup yerelde olmayanı ilk kez indirmek) ve sinyalden bağımsız |
+| §2.3: "Realtime mesajı / saat ~1" | Sayaç **satır başına** artıyor, dolayısıyla mesaj da satır başına × abone: 200 satırlık bir tur 200 mesaj. CDC'ye göre kazanç mesaj **sayısı** değil, mesaj **boyutu** (4 kolon) ve binding sayısı (1). İstemci patlamayı 1 sn debounce ile tek pull'a indiriyor ama mesaj kotası (2M/ay) sayıyı görüyor — Faz 7'de ölçülecek |
+| §2.8: "`updated_at` istemcide yazılır ve sunucuda ezilmez" yeter | Yetmiyordu: ezilmemesi yetmez, **karşılaştırılması** gerekir. 097 |
+| 5a: "`syncOnOpen` rol DM'e çözülünce bir kez" | Uygulama ömründe bir kez koşuyordu (pompa kök kapsamda). Kaldırıldı, yerine kanalın her `SUBSCRIBED`'ı |
+| 5a: "096'nın echo guard'ı aynı gövdenin sayacı artırmasını engelliyor" | Yalnız düz `UPDATE`'te. Upsert'in INSERT dalı çakışmadan önce sayacı yakıyordu; 097 C kapattı |
+
+### Bilinçli sınırlar
+
+- **Aynı saniye, farklı içerik.** Drift `updated_at` saniye hassasiyetinde. İki
+  cihaz aynı satırı aynı saniyede farklı düzenlerse bulut son geleni tutar,
+  ilk gelenin cihazı pull'da eşitliği "yerel kazanır" diye okur → o satır bir
+  sonraki düzenlemeye kadar ayrışık kalır. Eşitlikte içerik karşılaştıran bir
+  kural gerekir; ölçülmeden eklenmedi.
+- **Saat kayması.** Karşılaştırma iki cihazın saatine güveniyor (§2.8'in kendi
+  kabulü). Saati geri kalmış cihaz kendi yeni düzenlemesini "eski" diye
+  kaybeder.
+- **Tombstone zamanı sunucunun.** `deleted_at` silmenin değil push'un zamanı;
+  çevrimdışı yapılıp geç gönderilen silme olduğundan yeni görünür. Belirsizlik
+  silmenin lehine çözülüyor, pull da aynı karşılaştırmayı yaptığı için
+  cihazlar yine **aynı** sonuca varıyor.
+- **Silmeli turda yankı çekilir.** Damga ilerlemiyor, kendi satırlarımız bir
+  pull'da geri iniyor (LWW hepsini atar, `reload()` koşmaz). Bedeli o turun
+  egress'i.
+- **Tazeleme bütün blob'u yeniden yüklüyor.** Karşı cihazın her turu açık
+  dünyada bir `ActiveCampaignNotifier.reload()`. Satır bazlı tazeleme ancak
+  ölçüm isterse.
+- **Oyuncu sinyal almıyor.** Oyuncunun kapısı `get_shared_entities`, Faz 5.5.
+
+### Doğrulama — yapıldı (2026-09-23)
+
+Kullanıcı aşağıdaki listenin tamamını bildirdi: 097 deploy edildi,
+`verify_097` koşturuldu, echo ölçümü yeniden yapıldı, iki cihazlı el testleri
+geçti. Liste kayıt için duruyor.
+
+**1. Migration 097'yi deploy et**, sonra `supabase/scripts/verify_097.sql` →
+`097 OK`. `verify_096.sql` de yeniden `096 OK` dönmeli (097 onun yazdığı
+satırlara dokunmamalı).
+
+**2. Echo ölçümü — a3dbfad2'den sonra hiç koşturulmadı** (§4.8 adım 2).
+Hiçbir şey düzenlemeden dünyayı birkaç kez aç–kapa; `world_revisions.revision`
+sabit kalmalı, artıyorsa `which_bumped.sql` hangi satır olduğunu söyler.
+**Sinyal açıkken bu ölçümün önemi arttı:** artan her revizyon artık öbür
+cihazda bir pull + `reload()` demek; `reload()` içerik değiştiren bir yazma
+tetikliyorsa iki cihaz arasında kapanmayan bir tur olur.
+
+**3. Canlı — asıl kriter.** İki cihaz; ikincisine dünya `.dmtz` ile taşınır ve
+orada "Online yap" denir (097 sayesinde ikinci cihazın ilk tam turu buluttaki
+daha yeni satırları ezemez). İkisinde de aynı dünya açık: A'da kart adı
+değiştir → ~5–7 sn içinde B'de görünmeli, **B'de dünyayı kapatıp açmadan.**
+Sonra ters yönde. Sonra silme.
+
+**4. Yankı.** Tek cihaz açıkken bir kart düzenle; loglarda
+`CloudPullService.pullWorld` görünmemeli (kendi sinyali eşik altında kaldı).
+Bir kart **sil** — bu kez bir pull görünmesi doğru (silmeli tur, sınırlar).
+
+**5. Çevrimdışı dönüş — §2.8'in örneği.** B'nin internetini kes, B'de kartı
+düzenle. A'da aynı kartı **sonra** düzenle. B'yi bağla: B'nin push'u 097'ye
+takılmalı, B pull'da A'nın halini almalı; iki cihaz ve bulut A'nın halinde
+buluşmalı. Aynısı silmeyle: A kartı siler, çevrimdışı B ondan önce
+düzenlemişti → kart geri gelmemeli.
+
+**6. Uzlaştırma anı.** B'de dünya açıkken uygulamayı arka plana al, A'da
+düzenle, B'yi öne getir: `SUBSCRIBED` → `catchUp` değişikliği getirmeli.
+Ayrıca hub'a dön ve **başka** bir DM dünyası aç — onun da açılış pull'u
+koşmalı (eski `_opened` hatası).
+
+---
+
+## 4.8.2 Faz 5c — İkinci cihazın ilk senkronu ✅ bitti
+
+*Bulutta olup bu cihazda olmayanı indirmek: dünya ve paket. Paket tarafı
+ayrıca pull'un ve silmenin eksik yarısını aldı.*
+
+### Sorun
+
+5b iki cihazı canlı buluşturuyordu ama ikinci cihaza dünya **ancak `.dmtz`
+ile** gelebiliyordu; paket için pull hiç yoktu. Koda bakınca paket tarafında
+üç delik daha çıktı:
+
+1. **Paket kartı silmesi bulutta iz bırakmıyordu.** Push satırı siliyordu ama
+   paket tablolarında tombstone trigger'ı yoktu (dünyadakiler 094'te var) —
+   öbür cihaz kartı sonsuza kadar tutardı.
+2. **Buluttan silinen paket geri dirilirdi.** Push paketin kendi satırını her
+   turda upsert ediyor (çocukların FK hedefi). A paketi buluttan silse ("Yerele
+   al" ya da yeni kural gereği yerel silme) B'nin bir sonraki turu onu yeniden
+   yaratırdı. Dünyada bu yok: `worlds` satırını yalnız `publish_world` RPC'si
+   yaratıyor.
+3. **Yerel silme bulutu bırakıyordu.** Dünya silinince bulut kopyası da
+   siliniyordu, paket silinince değil — ve 5c'nin listesi silinen paketi
+   hemen "bulutta, bu cihazda yok" diye geri gösterirdi.
+
+### Verilen kararlar
+
+**Kabuk en son.** Yarım inmiş bir dünya ya da paket hiçbir listede
+görünmemeli: açılabilseydi varsayılan ayarlarını "şimdi" damgasıyla kaydeder,
+LWW'yi kazanır ve buluttaki gerçek ayarları (şema, mind map) ezerdi. Dünyada
+`worlds` satırı bütün sayfalar indikten sonra yazılıyor; pakette paketin kendi
+satırı `get_package_delta`'nın son sayfasında geliyor (sayacı o taşıyor,
+revizyonu hep başa eşit) ve `apply` onu sayfanın en sonunda yazıyor. Yarıda
+kalan indirme ham SQL ile silinir — DAO'dan geçseydi tombstone bırakır ve
+sonraki push buluttaki gerçek satırları silerdi.
+
+**Paket silme = dünya silme.** Online paketi silmek bulut kopyasını da siler,
+önce bulut: silinemezse yerel silme de iptal (dünyadaki kural). Öbür cihazın
+kopyası **diriltmez**: ilk yayından sonra paketin satırı upsert değil UPDATE
+ile yazılıyor; satır yoksa yerel paket offline'a düşüyor. Boş UPDATE iki şey
+olabilir — satır yok ya da 097'nin LWW'si eski hâli atladı — o yüzden bir okuma
+daha ayırıyor.
+
+**Paketin uzlaştırma anı açılış.** Paketin Realtime sinyali yok; paket
+açılmadan önce push → pull (en çok 8 sn beklenir, sonra yerel haliyle açılır).
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Migration 098** | `user_package_tombstones` + kart/şema silmesinde trigger (paket CASCADE ile siliniyorsa atlar); tombstone'dan eski düzenleme silinmiş kartı diriltmez; `get_package_delta` — `get_world_delta`'nın eşi, paketin satırı yalnız son sayfada |
+| **`CloudPullService`** | Sayfa döngüsü dünya/paket ortak (`_pullFrom`), `apply(package:)`. Yeni: `listCloudOnlyWorlds` / `downloadWorld`, `pullPackage` / `listCloudOnlyPackages` / `downloadPackage`. İndirme push damgasını başlangıcına çekiyor: inen satırlar ilk açılışta buluta geri gitmez |
+| **`CloudPushService.pushPackage`** | İlk yayından sonra paketin satırı yalnız güncelleniyor; bulutta yoksa `setOnline(false)` |
+| **Paket silme** | `ActivePackageNotifier.delete` online paketi önce buluttan siliyor; hata hub'da snackbar |
+| **Hub** | Dünyalar ve Paketler sekmelerinde ortak `CloudOnlySection`: bulutta olup burada olmayanlar, satır başına "İndir" + ilerleme çubuğu; tek seferde tek indirme. Paket açılışı `CloudPushPump.syncPackage` |
+| **l10n** | 7 anahtar × 4 dil (`cloudOnly*`, `cloudPackageNameTaken`) |
+
+### Faz 5c çıkış kriteri — testlerle karşılandı, elle bekliyor
+
+> **ikinci cihaz dünyayı/paketi zip'siz alıyor**
+
+- `cloud_download_test.dart` **9 test**, ağ yerine yerel bir sahte PostgREST
+  (`test/support/fake_postgrest.dart`, yeni bağımlılık yok) — RPC, select ve
+  update yolları gerçekten koşuyor: iki sayfalık dünya indirmesinde ikinci
+  sayfa istenirken ilk sayfa yerelde ama kabuk **yok**; kabuğun damgaları;
+  yarıda kalan indirme satır ve tombstone bırakmıyor; görünmeyen dünya boş
+  kabuk yaratmıyor; liste yerelde olanı ve aynası boş olanı elemiş; paket
+  indirmesi; aynı adlı yerel paket varsa ağa hiç çıkılmıyor; paket pull'unda
+  tombstone yerelde siliyor ve buluta geri gitmiyor; buluttan silinmiş paketi
+  push diriltmiyor (POST yok, yalnız PATCH + GET) ve paket offline'a düşüyor;
+  LWW'nin atladığı güncelleme silme sanılmıyor.
+- `verify_098.sql` temiz Postgres 16'da `098 OK` (001→098 zinciri hatasız,
+  098 idempotent, `verify_094/096/097` hâlâ yeşil).
+- Tam `flutter test` **1575 yeşil / 1 kırmızı** (bilinen
+  `bundled_pack_resolve_test`), `flutter analyze` yeni bulgu yok.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| 5c taslağı: "yerel kabuk + `pull(full: true)`" | Kabuk önce yazılsaydı yarım dünya açılabilir ve buluttaki ayarları ezebilirdi. Kabuk **en son**; `pullWorld` değil, kabuk istemeyen ortak döngü |
+| §4.7: "paketin silinmesi buluta gitmiyor" (bilinçli sınır) | Artık gidiyor — dünyadaki kuralla aynı. Sınırın asıl tehlikesi buluta gitmemesi değil, **öbür cihazın diriltmesiydi**; o da kapandı |
+| 094: tombstone "ayna tablolarında" | Yalnız dünya tablolarındaydı; paket çocukları silmeyi hiç yaymıyordu. 098 |
+
+### Bilinçli sınırlar
+
+- ~~**Görseller DM'in öbür cihazı açıkken gelir.**~~ **Yanlıştı — görseller
+  hiç gelmiyor** (el testinde çıktı, 2026-09-23). İnen satırlar
+  `dmt-content://` taşıyor ama talep-üzerine medya yalnız oyuncu için
+  kurulu: `MissingMediaReporter` yalnız paylaşım olaylarında süpürüyor ve DM
+  tarafı `missing_shas` olayını aynı uid'den gelince "kendim" sayıp
+  (`isSelf`) yüklemiyor. §2.7'nin tablosu DM'in ikinci cihazını hiç
+  düşünmemiş ("DM → `content_paths`'ten yerel dosya"). Karar bekliyor.
+- **Paket canlı değil.** Açılışta uzlaşıyor; açıkken öbür cihazın düzenlemesi
+  bir sonraki açılışta gelir. 8 sn'yi aşan pull arka planda biter, satırları
+  yine Drift'e yazar ama açık paket onları görmez.
+- **Aynı adlı paket indirilemez.** Yerelde paket adı UNIQUE; kullanıcıdan
+  yerel olanı yeniden adlandırması isteniyor. Otomatik "(2)" eklemek adı
+  buluta da yayardı.
+- **Buluttan silinen dünya öbür cihazda online görünmeye devam eder.** Rol
+  `none`'a düştüğü için push/pull koşmaz, zarar yok; bayrak yalnız temizlenmiyor.
+- **Paketin kendisinin silinmesinin tombstone'u yok.** Öbür cihaz bunu yalnız
+  o paketi düzenleyip push ettiğinde öğreniyor.
+
+### Bekleyen doğrulama
+
+**1. Migration 098'i deploy et**, sonra `supabase/scripts/verify_098.sql` →
+`098 OK`.
+
+**2. Dünya indirme.** B'de A'nın online dünyası yoksa (sil ya da temiz kurulum)
+hub → Dünyalar → "Bulutta, bu cihazda yok" → İndir. İlerleme çubuğu dolmalı,
+dünya listeye düşmeli; açınca kartlar, harita, oturumlar, mind map, savaş
+orada. Açılışta push loglarında **satır gitmemeli** (damga indirmenin başı).
+
+> **Yapıldı (2026-09-23), görseller hariç.** İçerik indi; görseller gelmedi
+> (bilinçli sınırlarda, karar bekliyor). Aynı testte A'da mevcut kartın
+> düzenlemesi B'ye hiç ulaşmadı, silmeler ulaştı — kök neden Faz 4a'dan
+> kalan damga hatası (§4.9). Düzeltmeden sonra kart düzenlemesi ve harita
+> pini canlı geldi. Teşhis için `CloudSync:` log satırları eklendi (rol,
+> `catchUp`, sinyal, push `↑✕`, pull `+-`); iki cihazlı testte
+> `grep CloudSync` zincirin nerede koptuğunu gösteriyor.
+
+**3. Paket indirme + pull.** Aynısı Paketler sekmesinde. Sonra A'da bir kartı
+düzenle ve bir kartı sil; B'de paketi aç: ikisi de yansımalı.
+
+**4. Silme.** A'da online paketi sil: bulutta satır gitmeli
+(`select * from user_packages where id = '<id>'` boş). B'de o paketi aç,
+bir kartı düzenle → B'nin paketi **offline**'a düşmeli, bulutta yeniden
+belirmemeli.
+
+**5. Yarıda kalan indirme.** İndirme sürerken ağı kes: dünya/paket listede
+**görünmemeli**; ağ gelince yeniden indirilebilmeli.
+
+---
+
+## 4.8.3 Faz 5.5 ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4–§4.8).*
-
-### Faz 5b — Canlı sinyal
-`world_revisions` Realtime aboneliği → pull tetikleme (ve tetikten önce
-`PendingWriteBuffer.flush()`, bkz. §4.8 "Sonradan eklendi"); `get_package_delta`
-+ paket pull'u; ilk senkron akışı ve ilerleme UI'ı. Açık dünyanın tazelenmesi
-5a'ya çekildi — bitti.
+ayrıntıda açılıyor (bkz. §4.4–§4.8.2).*
 
 ### Faz 5.5 — Oyuncu çoklu cihaz
 `joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
@@ -1879,10 +2199,78 @@ audit §2 bulgusunu kapalı işaretle.
 ### Faz 7 — Kural, kota, ölçüm
 "Online olmayan dünya multiplayer olamaz"; kota göstergesi gerçek sayılarla;
 admin panelinde Postgres doluluğu; **ölçüm**: gerçek dünya boyutu, delta
-trafiği, egress, transient doluluk.
+trafiği, egress, transient doluluk, **Realtime mesaj sayısı** (sinyal satır
+başına — §4.8.1; kota zorlarsa sayaç işlem başına bir kez artırılır, ama o
+zaman `get_world_delta`'nın kırpması aynı revizyonlu satırları bölmemeli).
 
 ### Faz 8 — Sonraya bırakılanlar
 Değişmedi — bkz. eski liste.
+
+### Faz 9 — İşlem geri bildirimi (en son)
+
+*Kullanıcının isteği (2026-09-23): "bir işlem yapılırken kullanıcıya
+belirtilmiyor." Bu bölüm analiz; uygulama en son, çünkü Faz 6 (LAN) ve Faz 7
+(kota göstergesi) gösterilecek şeyin kendisini değiştiriyor.*
+
+**Sorun.** Senkron artık arka planda ve sürekli: düzenlemeden 3 sn sonra
+push, açılışta ve sinyalde pull, görüntülenirken görsel indirme. Hiçbiri
+görünmüyor. Kullanıcı ne verinin bulutta olup olmadığını, ne öbür cihazın
+değişikliğinin yolda olduğunu, ne de bir şeyin **başarısız** olduğunu
+biliyor — başarısızlık yalnız `debugPrint`. 5c el testinde bu doğrudan
+maliyet oldu: "hiçbir şey gelmedi" raporunun arkasındaki sebebi ayırmanın tek
+yolu log satırı eklemekti (`CloudSync:`).
+
+**Envanter** (koddan, 2026-09-23):
+
+| İşlem | Nerede | Bugün kullanıcı ne görüyor |
+|---|---|---|
+| Bulut push turu | `CloudPushPump._round` | **Hiçbir şey.** `SaveSyncIndicator` yalnız yerel kaydı anlatıyor ("Auto-saving…" / "Saved"); çevrimdışı birikme, reddedilen satır, kota hatası görünmüyor |
+| Bulut pull (açılış `catchUp`, sinyal) | `CloudPushPump.pull` | **Hiçbir şey.** Önce bayat hal görünüyor, `reload()` sonrası kartlar birden değişiyor |
+| "Online yap" tam push | `_MakeOnlineButton` | Düğme etiketi "Yayımlanıyor..." — ilerleme yok, büyük dünyada uzun |
+| Dünya/paket indirme (5c) | `CloudOnlySection` | ✅ satırda ilerleme çubuğu |
+| Paket açılışı `syncPackage` (≤ 8 sn) | `packages_tab` | Genel overlay "Opening package…" — senkronu söylemiyor; zaman aşımında sessizce yerel halle açılıyor |
+| Görsel çözümü | `AssetRefImage` | Çözülürken spinner ✅; bulunamazsa `broken_image` — **nedeni yok** (DM'den bekleniyor mu, hiç gelmeyecek mi) |
+| Oyuncunun eksik görsel beklemesi | `MissingMediaReporter` | Hiçbir şey — 15 sn'lik yeniden deneme döngüsü görünmüyor |
+| Push'ta medya yükleme | `SharedMediaCourier` | Hiçbir şey |
+| `.dmtz` dışa/içe aktarma | `content_archive_menu` | Dosya seçimiyle son snackbar arası **hiçbir şey**; medyalı büyük dünyada saniyeler sürüyor |
+| Resmi katalog kurulumu | `first_party_catalog_provider` | ✅ kalem başına "done / total" |
+| Misafirden hesaba geçiş | `GuestPromotionService` | Hiçbir şey — veri birleştiriliyor ama kullanıcıya söylenmiyor |
+| Oyuncuya paylaşım push'u | `EntityNotifier._pushIfShared` | Hiçbir şey; hata yalnız log (kuyruk / yeniden deneme yok) |
+| LAN senkronu | `lan_sync_dialog` | ✅ kendi diyaloğu — Faz 6'da zaten gidiyor |
+
+**Var olan altyapı:**
+- `globalLoadingProvider` + `GlobalLoadingOverlay` — **tam ekran, girişi
+  kilitleyen** modal; ilerleme destekli, 13 çağrı yeri. Kullanıcının başlattığı
+  ve sonraki adımı bekleyen iş için doğru (dünya açma, paket yaratma); arka
+  plan senkronu için **yanlış** — her 3 sn'de ekranı kilitlerdi. Mesajları
+  koda gömülü İngilizce (`'Opening package "$name"...'`), l10n kuralının dışında.
+- `SaveSyncIndicator` — araç çubuğundaki simge; bulut durumunun doğal evi.
+- `CloudBackupButton` (`cloud_sync_button.dart`) — boşta / meşgul / bitti /
+  hata durum makinesi hazır, **hiçbir yerde kullanılmıyor**.
+- `CloudSync:` log noktaları — durum geçişlerinin tam yerleri; göstergenin
+  besleneceği yerler aynı.
+
+**Taslak.**
+1. **Tek kural:** kullanıcının başlattığı ve beklediği iş → mevcut overlay;
+   arka plan işi → engellemeyen gösterge, asla overlay; **hata → kalıcı ve
+   görünür durum**, log değil.
+2. **Tek model:** arka plan işlerini tutan bir provider (`id`, tür, etiket,
+   ilerleme?, hata?). Üreticiler pompa (push/pull), görsel çözücü, arşiv
+   aktarımı, misafir geçişi. Yeni bir servis katmanı değil — `globalLoading`'in
+   engellemeyen eşi.
+3. **Tüketiciler:** `SaveSyncIndicator` simgesi dört hal (eşitlendi ·
+   eşitleniyor · çevrimdışı bekliyor · hata N) ve Save & Sync diyaloğunda
+   kısa bir etkinlik listesi; `AssetRefImage`'ın hata hali nedenini söyler
+   ("DM'den bekleniyor" / "bu cihazda yok").
+4. Overlay mesajları l10n'a taşınır.
+
+**Çıkış kriteri:** ağa çıkan ve ~1 sn'yi aşabilen ya da başarısız olabilen her
+iş görünür bir hal taşıyor; senkron hatası log açmadan görülüyor; çevrimdışı
+düzenleme "bekliyor" diye işaretli.
+
+**Karar bekleyen bağlantı:** DM'in ikinci cihazına görsel gelmemesi (§4.8.2
+bilinçli sınırlar) çözülmeden görselin "bekleniyor" hali yalan söyler —
+bekleyen bir şey yok. Faz 9'dan önce karara bağlanmalı.
 
 ---
 
@@ -1913,6 +2301,13 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 5: "applier'ın tablo başına ayrı handler olarak yeniden yazımı" | Gerekmedi: `world_mirror_applier` paylaşım yayınının tüketicisi, ayna pull'unun değil. Pull'un dönüşümleri `cloud_mirror_tables.dart` bildiriminden geliyor; elle yazılan tek özel durum combatant (§4.8) |
 | §2.3: `get_world_delta(world_id, since_revision)` | Üçüncü parametre `limit` + yanıtta `complete`. Belgenin kendi "ilk açılış ~10 MB" satırı kırpmayı zorunlu kılıyor; kırpmasız tek jsonb telefonda bellek sorunu (§4.8) |
 | Faz 5b: açık dünyayı tazelemek için "revizyon bump" yeter | Yetmez — `campaignRevisionProvider` bump'ı aynı bayat blob'u yeniden okutur. Blob'un **depodan** yeniden yüklenmesi gerekiyor; `ActiveCampaignNotifier.reload()` zaten ikisini birden yapıyordu. İş 5a'ya çekildi (§4.8) |
+| §2.8: istemcide yazılan, sunucuda ezilmeyen `updated_at` yeter | Yetmez — sunucu **karşılaştırmıyordu**, varış sırası kazanıyordu ve sonuç kayıp değil kalıcı ayrışmaydı. Silmede de eski düzenleme kartı diriltiyordu. 097 (§4.8.1) |
+| §2.3: sinyal modelinde "Realtime mesajı / saat ~1" | Sayaç satır başına artıyor → mesaj satır başına × abone. Kazanç mesaj boyutu ve binding sayısında, sayıda değil. Faz 7'de ölçülecek (§4.8.1) |
+| 5a: "`syncOnOpen` dünya açılışında bir kez" | Pompa kök kapsamda yaşadığı için **uygulama ömründe** bir kez koşuyordu. Kanalın `SUBSCRIBED`'ına taşındı (§4.8.1) |
+| 096: echo guard aynı gövdenin sayacı artırmasını engelliyor | Upsert'te engellemiyordu — BEFORE INSERT trigger'ı çakışmadan önce koşuyor ve sayacı yakıyordu; değişen gövde iki revizyon (biri ölü). `verify_096` düz UPDATE ile test ediyordu. 097 C (§4.8.1) |
+| §4.7: paketin silinmesi buluta gitmiyor, bulut kopyasını yalnız "Yerele al" düşürüyor | Yerel silme dünyada bulutu da siliyordu, pakette silmiyordu; üstelik push paketin satırını her turda upsert ettiği için buluttan silinen paketi öbür cihaz **diriltiyordu**. 5c: silme buluta gidiyor, ilk yayından sonra paketin satırı yalnız UPDATE (§4.8.2) |
+| 094: silmeler tombstone ile yayılır | Yalnız dünya tablolarında. Paket kartının silmesi öbür cihaza hiç ulaşmıyordu; 098 (§4.8.2) |
+| Faz 4a: DAO upsert'leri `stampedNow` ile damgalanıyor | `world_entities` hariç — 4a damgayı yeni kolon alan tablolara ekledi, eskiden beri `updated_at`'i olan kart tablosu atlandı. ON CONFLICT eski damgayı bırakıyordu: **var olan kartın düzenlemesi buluta hiç çıkmıyordu**, yalnız yeni kartlar ve silmeler gidiyordu. 5c el testinde çıktı (2026-09-23); DAO damgalıyor, `saveEntity` aynı içeriği yazmıyor (yankı) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
