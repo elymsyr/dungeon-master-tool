@@ -10,7 +10,7 @@ class OfflineException implements Exception {
   String toString() => 'OfflineException';
 }
 
-/// True when [error] looks like a transient offline / network failure
+/// True when [error] looks like a passing offline / network failure
 /// (no DNS, no route, TLS handshake failed, socket refused, timeout).
 ///
 /// `package:http`'s `ClientException` and Supabase's

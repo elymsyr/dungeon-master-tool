@@ -503,7 +503,7 @@ class ContentCodec {
   }
 
   /// Payload'daki bulut ref'lerinin (`dmt-asset://`, `dmt-public://`,
-  /// `dmt-transient://`) **baytlarını** da eşlemeye katar.
+  /// `dmt-content://`) **baytlarını** da eşlemeye katar.
   ///
   /// Bunlar dünya klasöründe durmuyor: bir resim yüklendiği anda R2/Storage'a
   /// gidiyor ve yerelde yalnız içerik-adresli önbellekte

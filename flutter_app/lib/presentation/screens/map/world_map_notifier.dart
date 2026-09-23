@@ -1057,9 +1057,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   }
 
   /// Projeksiyon için haritanın görselini uzaktan çözülebilir hâle getirir:
-  /// hâlâ yerel olan yol transient havuza yüklenir ve dönen ref **yalnızca o
-  /// projeksiyonda** kullanılır. Kalıcı satıra yazılmaz — transient obje LRU
-  /// ile atılabilir, ölü ref bırakmak DM'in kendi resmini kaybetmesi olurdu.
+  /// hâlâ yerel olan yolun `dmt-content://` ref'i (bulutta yoksa önce
+  /// yüklenir) **yalnızca o projeksiyonda** kullanılır. Kalıcı satır yerel
+  /// yolunu korur.
   /// Dünya online değilse / yükleme başarısızsa yerel yol aynen döner.
   Future<String> ensureMapImageProjectable() =>
       projectableMapImage(_ref.read, state.imagePath);

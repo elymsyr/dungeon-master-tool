@@ -14,7 +14,8 @@ import '../../domain/value_objects/asset_ref.dart';
 ///
 /// Ref tier adı taşımaz ("şu baytlar, her neredeyse"), dolayısıyla onu çözmek
 /// her cihazda farklı bir iş: baytları yerelde olan DM dosyayı diskinde bulur,
-/// olmayan (oyuncu ya da DM'in ikinci cihazı) transient havuzdan indirir. Bu
+/// olmayan (oyuncu ya da DM'in ikinci cihazı) dünyanın bulut medyasından
+/// indirir (Faz 5d). Bu
 /// sınıf birinci yolu kurar — `content_paths` yan tablosu sha ↔ yol eşlemesini
 /// kalıcı tutar.
 ///

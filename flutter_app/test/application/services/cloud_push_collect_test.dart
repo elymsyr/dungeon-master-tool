@@ -19,6 +19,7 @@ import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../support/fake_postgrest.dart';
 import '../../support/test_database.dart';
 
 void main() {
@@ -177,6 +178,35 @@ void main() {
         .firstWhere((b) => b.table == 'world_entities')
         .rows;
     expect(rows.single['id'], 'e1');
+  });
+
+  test('medya satırlardan önce: beforeRows upsert\'ten önce, turun ref\'leriyle',
+      () async {
+    final sha = 'a' * 64;
+    await db.worldEntitiesDao.upsert(WorldEntitiesCompanion.insert(
+      id: 'e1',
+      worldId: 'w1',
+      categorySlug: 'npc',
+      name: 'e1',
+      imagePath: Value('dmt-content://$sha.webp'),
+      updatedAt: Value(DateTime(2026, 6, 1)),
+    ));
+    final cloud = await FakePostgrest.start(uid: 'u1');
+    addTearDown(cloud.close);
+    final remote = CloudPushService(db: db, client: cloud.client);
+    for (var i = 0; i < 5; i++) {
+      cloud.replies.add(() => (200, <Object>[]));
+    }
+
+    Map<String, Object>? seen;
+    var upsertsBefore = -1;
+    await remote.pushWorld('w1', beforeRows: (refs) async {
+      seen = {for (final e in refs.entries) e.key: e.value.ext};
+      upsertsBefore = cloud.calls.where((c) => c.method == 'POST').length;
+    });
+    expect(seen, {sha: '.webp'});
+    expect(upsertsBefore, 0, reason: 'satır, andığı bayt buluta çıkmadan gitmez');
+    expect(cloud.requests, contains('POST /rest/v1/world_entities'));
   });
 
   test('offline dünya push edilmez', () async {

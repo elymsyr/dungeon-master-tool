@@ -1615,9 +1615,10 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     }
   }
 
-  /// Projects the currently-shown image. Still-local images are pushed to the
-  /// transient pool first so online players resolve a cloud link instead of a
-  /// local path; the remap applies to the projection snapshot only.
+  /// Projects the currently-shown image. Still-local images are put into the
+  /// world's cloud media first so online players resolve a content ref
+  /// instead of a local path; the remap applies to the projection snapshot
+  /// only.
   Future<void> _projectImage() async {
     setState(() => _busy = true);
     try {
@@ -1648,8 +1649,8 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
     }
   }
 
-  /// Projects the entity card. Eager-uploads still-local images first; the
-  /// returned transient remap is applied to the card snapshot only.
+  /// Projects the entity card. Uploads still-local images first; the
+  /// returned content-ref remap is applied to the card snapshot only.
   Future<void> _projectCard() async {
     setState(() => _busy = true);
     try {

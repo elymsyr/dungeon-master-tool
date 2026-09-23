@@ -88,7 +88,7 @@ class FirstPartyCatalogService {
         raw = await _getString(
             Uri.parse('$_workerBaseUrl/catalog/manifest.json'));
       } catch (_) {
-        raw = null; // offline / 404 / transient → bundled fallback
+        raw = null; // offline / 404 / geçici hata → bundled fallback
       }
     }
     raw ??= await _tryBundled(_bundledManifest);

@@ -83,7 +83,7 @@ class CombatNotifier extends StateNotifier<CombatState>
   final bool Function() _isLoadWithoutDataSafe;
 
   // True once _loadFromCampaign consumed real campaign data (or confirmed
-  // truly empty cloud state). Gates write paths so the transient
+  // truly empty cloud state). Gates write paths so the momentary
   // beginLoad → completeLoad + cross-device pre-sync window cannot patch
   // combat_state with the default empty payload (which would propagate via
   // saveSettingsPatch → cloud → all devices).
@@ -221,7 +221,7 @@ class CombatNotifier extends StateNotifier<CombatState>
   // --- Encounter Management ---
 
   void createEncounter(String name) {
-    // Skip during pre-load transient — auto-create-encounter post-frame in
+    // Skip during the pre-load window — auto-create-encounter post-frame in
     // session_screen.dart fires when encounters list is empty; without this
     // guard a fresh world load would land a bogus "Encounter 1" before the
     // real combat_state arrived via revision bump.

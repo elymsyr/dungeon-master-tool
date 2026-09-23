@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/account_deletion_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-27
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 
 **Outputs**
 - Supabase Storage: `avatars`, `post-images`, `shared-payloads`, `free-media` bucket'larında `{uid}/` klasörünün silinmesi (kullanıcının kendi owner-delete RLS'i ile).
-- Worker `POST /admin/purge-user` (kendi JWT'si ile) → R2'de `{uid}/` + `transient/{uid}/`.
+- Worker `POST /admin/purge-user` (kendi JWT'si ile) → R2'de `{uid}/`. Dünya medyası (`worlds/`) hesap silinince worlds CASCADE → `world_media` → `r2_evict_queue` → cron yoluyla gider (099).
 - RPC `delete_my_account()` → `auth.users` satırı.
 - Yerel `dataRoot/users/{uid}/` ağacının **misafir köküne taşınması** (`GuestPromotionService.demoteAccountToGuest`) + oturum kapatma.
 

@@ -5,7 +5,7 @@ path: cloudflare/wrangler.toml
 layer: backend
 language: toml
 status: stable
-updated: 2026-09-21
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -34,7 +34,8 @@ tags: [file]
 - `[vars]`:
   - `SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"` (public, also visible client-side)
   - `MAX_UPLOAD_BYTES = 20971520` (20 MB per item ceiling)
-- `[triggers] crons = ["0 * * * *"]` — saatlik `scheduled()` tetikleyicisi; `transient_evict_queue`'yu boşaltır. Kuyruğu başka hiçbir şey otomatik boşaltmıyordu, `/transient/evict-sweep` yalnızca elle POST ediliyordu ve R2'da yetim obje birikiyordu. Bkz. [[worker]].
+- `[triggers] crons = ["0 * * * *"]` — saatlik `scheduled()` tetikleyicisi; `r2_evict_queue`'yu (099'a kadar `transient_evict_queue`) boşaltır — `pub/` refcount düşüşleri ve satırı silinen dünya medyası. Kuyruğu başka hiçbir şey otomatik boşaltmıyordu, elle tetik (`/admin/evict-sweep`, eski adı `/transient/evict-sweep`) yetmiyordu ve R2'da yetim obje birikiyordu. Bkz. [[worker]].
+- `R2_BUCKET_NAME = "dmt-assets"` (var) + `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (**secret**, Faz 5d) — `/world-media/sign`'ın SigV4 imzası için R2 S3 API token'ı (Object Read & Write, yalnız bu bucket). Biri eksikse uç 503 `presign_not_configured`. Web istemcisi için bucket'ta CORS gerekir (GET/PUT, `content-type`).
 - `[[ratelimits]]` × 3 — **tüm** rate limiting burada, KV yok:
   | binding | namespace_id | limit | kapsam / anahtar |
   |---|---|---|---|

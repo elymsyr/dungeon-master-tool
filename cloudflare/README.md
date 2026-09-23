@@ -53,6 +53,21 @@ npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 Değer: Supabase Dashboard > Settings > API > `service_role` key.
 ⚠️ Bu key **asla** client'a verilmez, sadece Worker secret olarak yaşar.
 
+**Dünya medyası imzası (Faz 5d):** `/world-media/sign` baytları worker'dan
+geçirmez, R2'nin S3 uç noktası için presigned URL üretir. Bunun için R2 →
+Manage API tokens → **Object Read & Write**, yalnız `dmt-assets` bucket'ı:
+```bash
+npx wrangler secret put R2_ACCOUNT_ID          # Cloudflare hesap id'si
+npx wrangler secret put R2_ACCESS_KEY_ID
+npx wrangler secret put R2_SECRET_ACCESS_KEY
+```
+Bucket adı `[vars]`'ta (`R2_BUCKET_NAME`). Biri eksikse uç 503
+`presign_not_configured` döner; imza modülünün kontrolü `npm run check`.
+
+Web istemcisi R2'ye doğrudan gideceği için bucket'ta CORS gerekir (masaüstü ve
+mobil için gerekmez): R2 → bucket → Settings → CORS, `GET` ve `PUT`, izinli
+başlıklar `content-type`.
+
 ### 5. Local test
 ```bash
 npx wrangler dev
@@ -203,9 +218,11 @@ final bytes = await asset.cacheSizeBytes();
 
 | Method | Path | Auth | Açıklama |
 |---|---|---|---|
-| `GET` | `/assets/{key}` | Bearer JWT | RLS check + rate limit + R2 stream |
-| `PUT` | `/assets/{userId}/...` | Bearer JWT | Prefix check + MIME + quota check + R2 put |
+| `GET` | `/assets/{key}` | Bearer JWT | RLS check + rate limit + R2 stream (`pub/`, emekli `{userId}/`) |
+| `PUT` | `/assets/pub/{sha}{ext}` | Bearer JWT | Rezervasyon + MIME + boyut + R2 put |
 | `DELETE` | `/assets/{userId}/...` | Bearer JWT | Prefix check + R2 delete |
+| `POST` | `/world-media/sign` | Bearer JWT | `{op: put\|get, world_id?, shas}` → tek RPC → ≤100 presigned URL (1 sa) |
+| `POST` | `/admin/evict-sweep` | ADMIN_TOKEN | `r2_evict_queue`'yu boşalt (asıl yol saatlik cron) |
 | `OPTIONS` | `/*` | — | CORS preflight |
 
 **Hata kodları:**

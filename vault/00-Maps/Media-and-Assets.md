@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: media
-updated: 2026-09-08
+updated: 2026-09-23
 tags: [moc]
 ---
 
@@ -17,8 +17,7 @@ tags: [moc]
 - [[free_media_service]] — fetch free-tier media (quota-exempt).
 - [[first_party_art_service]] — `dmt-art://` kart görselleri (app bundle → R2 catalog).
 - [[entity_image_upload]] — upload entity portrait to media storage.
-- [[shared_media_courier]] — DM tarafı: paylaşılan kartın medyasını talep üzerine transient havuza yükler.
-- [[missing_media_reporter]] — oyuncu tarafı: çözülemeyen içerik sha'larını DM'e bildirir, gelince indirir.
+- [[world_media_sync]] — multiplayer dünyanın medyası R2'de, dünya başına (Faz 5d): rezervasyon → toplu imza → doğrudan PUT → onay; yetim temizliği. Talep-üzerine akışın (`shared_media_courier` / `missing_media_reporter`, silindi) yerini aldı.
 - [[content_ref_index]] — `dmt-content://{sha}{ext}` ↔ bu cihazdaki özgün dosya (`content_paths`); ref'in cihaz-yerel çözümü.
 - [[local_media_localizer]] — seçilen her dosyayı içeriğin kendi klasörüne kopyalar; ham seçici yolu hiçbir zaman saklanmaz.
 - [[unused_media_sweeper]] — dünya açılış/kapanışında referanssız yerel medyayı siler.
@@ -28,7 +27,7 @@ tags: [moc]
 - [[pdf_library_service]] — dünyanın PDF kütüphanesi: klasöre kopyalama + online dünyada R2 paylaşımı.
 
 ## Data Flow
-Upload → sınıf kararı ([[Media-Storage-Tiers]]): free (Supabase `free-media`, kotasız) vs transient (R2 LRU havuzu, talep üzerine dolar) vs pinned (R2 `pub/`, refcount'lu). Sayılan katman kaldırıldı — dünyanın medyası yerelde kalır, cihazlar arasında LAN sync taşır. Cleanup on delete via [[entity_media_cleanup_service]].
+Upload → sınıf kararı ([[Media-Storage-Tiers]]): free (Supabase `free-media`, kotasız) vs dünya medyası (R2 `worlds/{worldId}/`, multiplayer dünyanın tamamı, kişi başı 1 GB — Faz 5d, [[world_media_sync]]) vs pinned (R2 `pub/`, refcount'lu). Sayılan katman ve transient havuz kalktı. Offline dünyanın medyası yerelde kalır. Cleanup on delete via [[entity_media_cleanup_service]].
 
 ## Related Domains
 - [[Backend-Infra]] (R2 worker, Supabase buckets) · [[World-and-Content]] (what owns media) · [[Projection-Second-Screen]] (displays it).

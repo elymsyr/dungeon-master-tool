@@ -11,8 +11,8 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
-import '../../application/services/world_meta_sync.dart';
 import '../../core/utils/error_format.dart';
+import '../../data/database/database_provider.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../l10n/app_localizations.dart';
@@ -231,33 +231,21 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       // → "World not found: <ad>" demekti. Aşağıdaki `worldName` ise gerçekten
       // ad istiyor, ikisi karışmasın.
       final data = await repo.load(widget.campaignId);
-      final templateId =
-          (data['world_schema'] as Map?)?['schemaId'] as String?;
-      final templateHash = data['template_hash'] as String?;
-      await ref.read(worldMembershipServiceProvider).publishWorld(
-            worldId: widget.campaignId,
-            worldName: widget.campaignName,
-            templateId: templateId,
-            templateHash: templateHash,
-          );
-      // Kart kimliği (açıklama/etiket/kapak) da çıksın — oyuncu dünyaya
-      // katıldığında hub kartı boş görünmesin.
-      final meta = data['metadata'];
-      if (meta is Map) {
-        await ref.read(worldMetaSyncProvider)?.push(
-              worldId: widget.campaignId,
-              metadata: Map<String, dynamic>.from(meta),
-            );
-      }
-      ref.read(onlineWorldIdsProvider.notifier).add(widget.campaignId);
+      if (!mounted) return;
+      final published = await turnMultiplayerOn(
+        context,
+        ref,
+        widget.campaignId,
+        data: data,
+        worldName: widget.campaignName,
+      );
+      if (!published) return;
       // Bu dünyanın yerel karakterlerini aynaya taşı — aksi halde sidebar
       // bulut listesine döndüğünde boş görünür.
       await ref
           .read(characterListProvider.notifier)
           .pushOwnedCharacters(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
-      ref.invalidate(currentWorldRoleProvider);
-      ref.invalidate(worldRoleProvider(widget.campaignId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context)!.worldNowOnline)),
@@ -305,6 +293,13 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       await ref
           .read(worldMembershipServiceProvider)
           .unpublishWorld(widget.campaignId);
+      // Push durur — dünya içi göstergenin kapatmasıyla aynı. Bayrak açık
+      // kalsaydı her tur, bulutta artık olmayan dünyaya satır yazmaya
+      // çalışırdı.
+      await ref
+          .read(appDatabaseProvider)
+          .worldsDao
+          .setOnline(widget.campaignId, false);
       ref.read(onlineWorldIdsProvider.notifier).remove(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);

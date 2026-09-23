@@ -12,7 +12,7 @@ import '../../core/config/app_paths.dart';
 /// Unified content-addressed binary store.
 ///
 /// Tüm cloud kaynaklı binary medya (R2 + Supabase Storage free-media +
-/// transient + offline kullanım için indirilen herhangi bir asset) tek
+/// dünya medyası + offline kullanım için indirilen herhangi bir asset) tek
 /// dizinde toplanır: `AppPaths.cacheDir/content/{sha256}.bin`. Her bayt
 /// blob'un yanında `{sha256}.json` sidecar metadata dosyası bulunur:
 /// kaynağı (`sourceUri`), kind, oluşturma+son erişim zamanı, boyut.
@@ -246,7 +246,7 @@ class ContentMetadata {
   final DateTime lastAccessAt;
 
   /// Hangi AssetRef bu bayt-blob'u temsil ediyor: `dmt-asset://...`,
-  /// `dmt-public://...`, `dmt-transient://...`. F2 ReferenceGraph ile
+  /// `dmt-public://...`, `dmt-content://...`. F2 ReferenceGraph ile
   /// orphan tespiti için. Legacy migrate'de null olabilir.
   final String? sourceUri;
 

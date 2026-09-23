@@ -5,14 +5,14 @@ path: flutter_app/lib/application/services/entity_image_upload.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-08
+updated: 2026-09-23
 tags: [file]
 ---
 
 # `entity_image_upload.dart`
 
 > [!abstract] Primary Purpose
-> Üç top-level helper (sınıf değil): `localizeEntityImages` seçilen resimleri içeriğin `media/` klasörüne kopyalar, `localizeEntityFiles` aynısını PDF/dosya alanları için yapar, `cleanupRemovedEntityImageRef` kaldırılan bir bulut ref'ini best-effort siler. **Buluta yükleme yok** — sayılan katman Phase D'de kaldırıldı; bir kartın görseli buluta ancak DM onu paylaşınca ve bir oyuncu eksik bildirince çıkar ([[shared_media_courier]]).
+> Üç top-level helper (sınıf değil): `localizeEntityImages` seçilen resimleri içeriğin `media/` klasörüne kopyalar, `localizeEntityFiles` aynısını PDF/dosya alanları için yapar, `cleanupRemovedEntityImageRef` kaldırılan bir bulut ref'ini best-effort siler. **Buluta yükleme yok** — sayılan katman Phase D'de kaldırıldı; multiplayer dünyada kopya push turuyla dünyanın bulut medyasına çıkar ([[world_media_sync]], Faz 5d).
 
 ## Inputs / Outputs
 **Inputs**

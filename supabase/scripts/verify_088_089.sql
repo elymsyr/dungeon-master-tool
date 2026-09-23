@@ -6,7 +6,7 @@
 -- ilk başarısız assertion exception olarak patlar.
 --
 -- Kapsam: yalnızca auth.uid() gerektirmeyen yollar — CHECK/trigger katmanı.
--- Cap RPC'leri (transient_reserve / pub_asset_reserve) oturum gerektirdiği
+-- Cap RPC'si (pub_asset_reserve) oturum gerektirdiği
 -- için burada değil; onlar client akışından doğrulanır.
 -- ============================================================================
 
@@ -55,13 +55,8 @@ BEGIN
          'entity_shares satır limiti trigger''ı yok';
 
   -- ── 089.1 — havuz bütçeleri ─────────────────────────────────────────────
-  ASSERT public.transient_pool_cap_bytes()   = 5368709120::bigint, 'transient pool != 5GB';
-  ASSERT public.transient_max_file_bytes()   = 104857600::bigint,  'transient file != 100MB';
-  ASSERT public.pinned_pool_cap_bytes()      = 5368709120::bigint, 'pinned pool != 5GB';
+  -- 099'dan beri iki havuz tavanı yok; tek toplam tavan verify_099'da.
   ASSERT public.pinned_per_user_cap_bytes()  = 524288000::bigint,  'pinned/user != 500MB';
-  ASSERT NOT EXISTS (SELECT 1 FROM pg_proc
-                      WHERE proname = 'transient_per_user_cap_bytes'),
-         'transient_per_user_cap_bytes hâlâ duruyor';
 
   -- ── 089.2 — refcount: son ref gidene kadar obje durur ───────────────────
   INSERT INTO public.pub_assets (sha256, ext, bytes, mime_type)
@@ -72,14 +67,14 @@ BEGIN
   DELETE FROM public.pub_asset_refs WHERE sha256 = v_sha AND ref_key = 'listing-A';
   ASSERT EXISTS (SELECT 1 FROM public.pub_assets WHERE sha256 = v_sha),
          'obje hâlâ referanslıyken silindi';
-  ASSERT NOT EXISTS (SELECT 1 FROM public.transient_evict_queue WHERE sha256 = v_sha),
+  ASSERT NOT EXISTS (SELECT 1 FROM public.r2_evict_queue WHERE sha256 = v_sha),
          'referanslı obje erken kuyruğa atıldı';
 
   -- ── 089.3 — son ref gidince obje düşer + doğru r2_key kuyruğa girer ─────
   DELETE FROM public.pub_asset_refs WHERE sha256 = v_sha AND ref_key = 'listing-B';
   ASSERT NOT EXISTS (SELECT 1 FROM public.pub_assets WHERE sha256 = v_sha),
          'son ref gitti ama obje düşmedi';
-  SELECT r2_key INTO v_key FROM public.transient_evict_queue WHERE sha256 = v_sha;
+  SELECT r2_key INTO v_key FROM public.r2_evict_queue WHERE sha256 = v_sha;
   ASSERT v_key = 'pub/' || v_sha || '.png',
          format('yanlış r2_key kuyruğa girdi: %s', v_key);
 

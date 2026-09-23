@@ -568,6 +568,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Başlıkta etiket, dosya yollarında kimlik.
     final worldTitle = ref.watch(activeWorldNameProvider).valueOrNull ?? '';
 
+    // Faz 5d — limitin üstünde olduğu için buluta çıkmayan yeni dosya.
+    ref.listen<List<String>>(worldMediaNoticeProvider, (_, names) {
+      if (names.isEmpty) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.worldMediaNotSent(names.join(', ')))),
+      );
+    });
     ref.listen(activeCampaignSyncProvider, (_, _) {});
     // U1: keep-alive only — sync state değişimi shell'i rebuild ettirmesin.
     ref.watch(activeCampaignSyncProvider.select((_) => 0));

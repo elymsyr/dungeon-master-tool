@@ -5,6 +5,7 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/relation_value.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/entity_provider.dart';
@@ -13,11 +14,12 @@ import '../providers/online_worlds_provider.dart';
 import '../providers/pinned_entity_provider.dart' show parseEntityIdSet;
 import '../providers/role_provider.dart';
 import '../providers/shared_entity_provider.dart';
-import 'shared_media_courier.dart';
+import 'content_ref_index.dart';
+import 'world_media_sync.dart';
 
 /// Ref köprüsü — paylaşım hem widget'lardan (`WidgetRef`) hem
 /// [EntityNotifier]'dan (`Ref`) tetikleniyor; aradaki tip farkını bu provider
-/// kapatır. `SharedMediaCourier` ile aynı desen.
+/// kapatır.
 final entitySharerProvider = Provider<EntitySharer>(EntitySharer.new);
 
 class EntitySharer {
@@ -160,10 +162,10 @@ Set<String> seedShareIds(
 ///     player sees a card with dangling relation rows.
 ///  2. Rewrites every still-local image (portrait, gallery, and `image`-type
 ///     custom fields) **in the payload only** to a content-addressed
-///     `dmt-transient://{sha}{ext}` ref. Nothing is uploaded here and the
-///     DM's own entity is left untouched — the bytes travel later, and only
-///     for the SHAs a player actually reports missing
-///     ([SharedMediaCourier] / [MissingMediaReporter]).
+///     `dmt-content://{sha}{ext}` ref. Nothing is uploaded here and the DM's
+///     own entity is left untouched — the bytes are already in the world's
+///     cloud media: the push round uploads every image its rows mention
+///     (Faz 5d, [WorldMediaSync]).
 ///  3. Inserts the world-wide `entity_shares` rows.
 ///
 /// Linked (package / built-in) entities are traversed THROUGH (to discover
@@ -227,11 +229,10 @@ Future<void> shareEntityWithPlayers(
   // Insert the share rows. Cascade is limited to non-linked entities; the
   // entry entity is shared regardless.
   //
-  // Her satır kartın kendi JSON'unu taşır: `world_entities` aynası artık yok,
-  // oyuncunun tek içerik kaynağı bu payload. Yerel görseller payload'da
-  // içerik-adresli transient ref'e çevrilir; baytlar DM'in diskinde kalır ve
-  // ancak bir oyuncu eksik bildirince yüklenir.
-  final courier = ref.read(sharedMediaCourierProvider);
+  // Her satır kartın kendi JSON'unu taşır, oyuncunun tek içerik kaynağı bu
+  // payload. Yerel görseller payload'da içerik-adresli ref'e çevrilir; baytlar
+  // dünyanın bulut medyasında (push turu yüklüyor).
+  final index = ref.read(contentRefIndexProvider);
   final payloads = <String, Map<String, dynamic>?>{};
   for (final id in closure) {
     final e = cards[id];
@@ -242,7 +243,7 @@ Future<void> shareEntityWithPlayers(
     payloads[id] = e.linked
         ? null
         : await _payloadWithContentRefs(
-            courier,
+            index,
             e,
             imageKeys[e.categorySlug] ?? const [],
             dmOnlyKeys[e.categorySlug] ?? const [],
@@ -266,18 +267,17 @@ Future<void> shareEntityWithPlayers(
 
 /// [e]'nin paylaşım gövdesi — yerel medya yolları `dmt-content://{sha}{ext}`
 /// ile değiştirilmiş hâlde. Yükleme YOK, kalıcı yazma YOK: DM'in kendi satırı
-/// yerel yollarını korur, baytlar [SharedMediaCourier.serve] ile talep üzerine
-/// çıkar. Okunamayan bir dosya olduğu gibi bırakılır (oyuncuda çözülemez —
-/// zaten kopyası olmayan bir dosyaydı).
+/// yerel yollarını korur. Okunamayan bir dosya olduğu gibi bırakılır (oyuncuda
+/// çözülemez — zaten kopyası olmayan bir dosyaydı).
 Future<Map<String, dynamic>> _payloadWithContentRefs(
-  SharedMediaCourier courier,
+  ContentRefIndex index,
   Entity e,
   List<String> imageFieldKeys,
   List<String> dmOnlyFieldKeys,
 ) async {
   final remap = <String, String>{};
   for (final path in localMediaPathsOf(e, imageFieldKeys)) {
-    final ref = await courier.refFor(path);
+    final ref = await index.refFor(path);
     if (ref != null) remap[path] = ref;
   }
   return redactDmOnly(
@@ -319,13 +319,12 @@ Future<void> unshareEntity(
   await svc.unshareAll(entityId: entityId, worldId: worldId);
 }
 
-/// Bir kartın hâlâ yerel olan görsellerini projeksiyon için transient havuza
-/// yükler ve `{yerelYol: dmt-transient://...}` eşlemesini döndürür.
+/// Bir kartın hâlâ yerel olan görsellerini dünyanın bulut medyasına çıkarır
+/// ve `{yerelYol: dmt-content://...}` eşlemesini döndürür. Kart bir satırda
+/// duruyorsa push turu bunları zaten yüklemiştir; burada yeniden gitmez.
 ///
 /// Eşleme **yalnızca projeksiyon anlık görüntüsüne** uygulanır; DM'in kendi
-/// satırına yazılmaz — transient obje LRU ile atılabilir, kalıcı satırda ölü
-/// ref bırakmak DM'in kendi resmini kaybetmesi demek olurdu (Phase C ile aynı
-/// gerekçe; sayılan katman Phase D'de kaldırıldı).
+/// satırı yerel yollarını korur.
 ///
 /// Dünya online değilse, oturum yoksa ya da kart linked (paket/built-in) ise
 /// boş döner — o durumda projeksiyon yerel yolla çalışır.
@@ -351,11 +350,64 @@ Future<Map<String, String>> prepareEntityImagesForProjection(
           if (f.fieldType == FieldType.image) f.fieldKey,
   ];
 
-  final courier = ref.read(sharedMediaCourierProvider);
+  final media = ref.read(worldMediaSyncProvider);
+  if (media == null) return const {};
   final remap = <String, String>{};
   for (final path in localMediaPathsOf(e, imageFieldKeys)) {
-    final uploaded = await courier.publish(worldId, path);
-    if (uploaded != null) remap[path] = uploaded;
+    try {
+      final uploaded = await media.publish(worldId, path);
+      if (uploaded != null) remap[path] = uploaded;
+    } catch (err) {
+      debugPrint('prepareEntityImagesForProjection: $path: $err');
+    }
   }
   return remap;
+}
+
+/// Entity'nin portre + galeri + `image` alanlarındaki **yerel** yolları
+/// (tekilleştirilmiş, sırası korunmuş).
+List<String> localMediaPathsOf(Entity e, List<String> imageFieldKeys) {
+  final paths = <String>{};
+  void scan(String s) {
+    if (s.isNotEmpty && AssetRef(s).isLocal) paths.add(s);
+  }
+
+  scan(e.imagePath);
+  e.images.forEach(scan);
+  for (final k in imageFieldKeys) {
+    final v = e.fields[k];
+    if (v is List) {
+      for (final x in v) {
+        if (x is String) scan(x);
+      }
+    } else if (v is String) {
+      scan(v);
+    }
+  }
+  return paths.toList();
+}
+
+/// [e]'nin kopyasını, [remap]'teki yerel yollar ref'lerle değiştirilmiş olarak
+/// döner. **Kaydedilmez** — yalnızca paylaşım payload'ı için.
+Entity remapEntityMedia(
+  Entity e,
+  Map<String, String> remap,
+  List<String> imageFieldKeys,
+) {
+  if (remap.isEmpty) return e;
+  String repl(String s) => remap[s] ?? s;
+  final fields = Map<String, dynamic>.from(e.fields);
+  for (final k in imageFieldKeys) {
+    final v = e.fields[k];
+    if (v is List) {
+      fields[k] = v.map((x) => x is String ? repl(x) : x).toList();
+    } else if (v is String && v.isNotEmpty) {
+      fields[k] = repl(v);
+    }
+  }
+  return e.copyWith(
+    imagePath: repl(e.imagePath),
+    images: e.images.map(repl).toList(),
+    fields: fields,
+  );
 }

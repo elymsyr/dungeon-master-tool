@@ -851,6 +851,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       canvasHeight: bg?.height ?? 2048,
     );
     _stampFingerprint(encounter);
+    if (bg == null && encounter.mapPath != null) {
+      unawaited(_retryBackground(encounter.mapPath!));
+    }
 
     // Push rehydrated drawings (strokes/measurements/fog) to any live
     // projection so a reopen mirrors them to players even without a fresh edit.
@@ -1171,7 +1174,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// annotation BITMAP, which clears pre-vector-migration flattened art on the
   /// DM canvas only — that bitmap is never sent to the player projection (the
   /// snapshot ships strokes/measurements/fog, not annotationImage), so this
-  /// step is DM-cosmetic. The transient stroke is discarded, not kept.
+  /// step is DM-cosmetic. The in-progress stroke is discarded, not kept.
   Future<void> commitEraseStroke() async {
     // Flush the coalesced eraseMarksAt dirty state exactly once. Runs in BOTH
     // exit paths so a vector-only erase (no annotation bitmap to bake) still
@@ -2009,6 +2012,29 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// Decodes the background map image. [pathOrRef] may be a local path or a
   /// `dmt-asset://` cloud ref — resolved through [AssetRefResolver] (cloud
   /// refs download + cache on first use) before decoding.
+  /// Harita bulutta henüz yoksa (DM'in öbür cihazı yüklemeyi bitirmedi) arka
+  /// plan [mediaRetryDelay] aralıklarıyla yeniden denenir; ekran açık kaldıkça
+  /// kendiliğinden gelir. Harita o arada değiştiyse bırakılır.
+  Future<void> _retryBackground(String mapRef) async {
+    if (!AssetRef(mapRef).isContent) return;
+    for (var attempt = 0;; attempt++) {
+      await Future<void>.delayed(mediaRetryDelay(attempt));
+      if (!mounted || state.mapPath != mapRef || state.backgroundImage != null) {
+        return;
+      }
+      final img = await _loadImageFromFile(mapRef);
+      if (!mounted || state.mapPath != mapRef) return;
+      if (img != null) {
+        state = state.copyWith(
+          backgroundImage: img,
+          canvasWidth: img.width,
+          canvasHeight: img.height,
+        );
+        return;
+      }
+    }
+  }
+
   Future<ui.Image?> _loadImageFromFile(String pathOrRef) async {
     try {
       final file = await _ref

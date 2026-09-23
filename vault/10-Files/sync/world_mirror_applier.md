@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_applier.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -53,10 +53,8 @@ tags: [file]
 
 ## Notes
 - `_disposed` flag set on `stop()` so in-flight async events bail with a stale ref.
-- Shared-package materialization (`_materializeSharedPackageLocally`) re-runs `PackageSyncService.sync` with Tier-0 lookup resolution; retries once on transient error.
+- Shared-package materialization (`_materializeSharedPackageLocally`) re-runs `PackageSyncService.sync` with Tier-0 lookup resolution; retries once on a one-off error.
 
-## Talep-üzerine medya (2026-09-08)
-- `_applyEntityShareEvent` / `applyInitialState` gövdeyi yazdıktan sonra [[missing_media_reporter]]`.schedule(worldId)` çağırır — oyuncu çözemediği transient sha'ları DM'e bildirir.
-- **Rol DM ise gövde enjeksiyonu tümüyle atlanır** (`_isDm`). Payload artık `dmt-transient://` ref taşıyor; DM'e geri yazmak onun **yerel dosya yollarını ezerdi**. Eskiden zararsızdı, çünkü payload kalıcı bulut ref'i taşıyordu.
-- `_applyMembersEvent`, başka bir üyenin `missing_shas`'i dolduğunda ve `sync.isSessionOpen(worldId)` ise [[shared_media_courier]]`.serve` çağırır. Oturum kapısının **tek okunduğu yer** burası; kapalıysa hiçbir bayt havuza girmez, liste kalıcı olduğu için oturum açılınca karşılanır.
-- Spec: `docs/media-storage-redesign.md` → "Phase C nasıl uygulandı".
+## Medya (2026-09-08 → Faz 5d, 2026-09-23)
+- **Rol DM ise gövde enjeksiyonu tümüyle atlanır** (`_isDm`). Payload `dmt-content://` ref taşıyor; DM'e geri yazmak onun **yerel dosya yollarını ezerdi**.
+- Talep-üzerine medya **kalktı (Faz 5d)**: applier artık ne eksik sha bildiriyor (`MissingMediaReporter`) ne de DM tarafında `missing_shas` → `serve` çağırıyor; oturum kapısı (`isSessionOpen`) da gitti. Baytlar multiplayer açılınca zaten dünyanın bulut medyasında ([[world_media_sync]]); oyuncu görseli çizerken [[asset_ref_resolver]] imzalı URL'le çeker. Bkz. [[Media-Storage-Tiers]].

@@ -14,8 +14,8 @@ class EntitySnapshotBuilder {
   /// field ids to entity names so the projection never shows a raw id.
   ///
   /// [imageRemap] swaps image paths in [EntitySnapshot.imagePaths] — used by
-  /// projection to inject quota-full transient refs (which are deliberately
-  /// not persisted onto the entity) without mutating the entity.
+  /// projection to inject content refs for still-local images (which are
+  /// deliberately not persisted onto the entity) without mutating it.
   static EntitySnapshot build({
     required Entity entity,
     required WorldSchema schema,
@@ -80,7 +80,7 @@ class EntitySnapshotBuilder {
     }
 
     // Image paths — combine legacy imagePath with images list, applying the
-    // projection image remap (transient refs) if any.
+    // projection image remap (content refs) if any.
     final imagePaths = <String>[
       if (entity.imagePath.isNotEmpty)
         imageRemap[entity.imagePath] ?? entity.imagePath,

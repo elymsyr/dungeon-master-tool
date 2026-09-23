@@ -472,8 +472,7 @@ class CloudPullService {
 
   /// Gövdedeki `dmt-content://{sha}` ref'lerini bu cihazdaki dosya yoluna
   /// çevirir. Bayt burada yoksa ref **olduğu gibi kalır** — `AssetRefResolver`
-  /// onu zaten çözüyor ve `MissingMediaReporter` sha'yı indirme kuyruğuna
-  /// yazıyor (Faz 3.5).
+  /// onu dünyanın bulut medyasından indiriyor (Faz 5d).
   Future<String> _localPaths(String raw) async {
     final idx = index;
     if (idx == null || raw.isEmpty) return raw;

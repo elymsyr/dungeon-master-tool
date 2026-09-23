@@ -1522,7 +1522,6 @@
   "adminR2Pool": "CLOUDFLARE R2 HAVUZU",
   "adminPoolPinned": "sabit (marketplace)",
   "adminPoolPinnedSub": "{count} nesne · tekilleştirmeyle {size} tasarruf",
-  "adminPoolTransient": "geçici (paylaşımlar, LRU)",
   "adminStorageSummary": "{buckets} bucket içinde {count} nesne",
   "adminQuotaUnavailable": "Kota sınırı mevcut değil",
   "adminByBucket": "BUCKET BAZINDA",
@@ -2161,7 +2160,6 @@
   "spellsLeveledTitle": "Büyüler (seviye {range})",
   "eraRenameStart": "Başlangıcı Yeniden Adlandır",
   "eraRenameEnd": "Bitişi Yeniden Adlandır",
-  "adminOldest": "en eski {date}",
   "removeMemberBody": "{name} dünyadan çıkarılsın mı?",
   "thisPlayer": "bu oyuncu",
   "charsYours": "{count, plural, =1{Karakterin} other{Karakterlerin}}",
@@ -2173,5 +2171,13 @@
   "contentArchiveImported": "{name} içe aktarıldı",
   "contentArchiveImportedWithSkips": "{name} içe aktarıldı — {count} medya dosyası atlandı",
   "contentArchiveFailed": "Aktarım başarısız: {error}",
-  "contentArchiveUnsupported": "Bu dosya daha yeni bir sürümle oluşturulmuş. Uygulamayı güncelle."
+  "contentArchiveUnsupported": "Bu dosya daha yeni bir sürümle oluşturulmuş. Uygulamayı güncelle.",
+  "adminPoolWorldMedia": "dünya medyası (multiplayer)",
+  "adminPoolWorldMediaSub": "{count} nesne · {worlds} dünya",
+  "multiplayerUploadingMedia": "Dünya medyası yükleniyor {done}/{total}…",
+  "multiplayerQuotaExceeded": "Bu dünyanın medyası {need} yer istiyor, bulutta ise {left} kaldı. Bazı görselleri kaldır ya da başka bir dünyada multiplayer'ı kapat.",
+  "multiplayerTooLargeTitle": "Bazı dosyalar bu cihazda kalıyor",
+  "multiplayerTooLargeBody": "Bu dosyalar boyut limitinin üstünde (harita 10 MB, diğer görseller 5 MB, ses 10 MB, PDF 20 MB), oyuncular onları görmeyecek. Burada çalışmaya devam ederler.",
+  "multiplayerMediaIncomplete": "Dünya multiplayer, ama medyanın tamamı henüz buluta çıkmadı. Kalanı kendiliğinden yüklenecek.",
+  "worldMediaNotSent": "Boyut limitinin üstünde, oyunculara gitmeyecek: {names}"
 }

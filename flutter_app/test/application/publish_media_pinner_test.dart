@@ -49,12 +49,12 @@ void main() {
   });
 
   group('PublishMediaPinner.isMediaRef', () {
-    test('pinlenir: local görsel path, public, transient, sayılan cloud', () {
+    test('pinlenir: local görsel path, public, içerik, sayılan cloud', () {
       expect(PublishMediaPinner.isMediaRef('/home/a/media/x.png'), isTrue);
       expect(PublishMediaPinner.isMediaRef(r'C:\worlds\w\media\x.JPG'), isTrue);
       expect(PublishMediaPinner.isMediaRef('dmt-public://u/${'a' * 64}.png'),
           isTrue);
-      expect(PublishMediaPinner.isMediaRef('dmt-transient://${'a' * 64}.png'),
+      expect(PublishMediaPinner.isMediaRef('dmt-content://${'a' * 64}.png'),
           isTrue);
       expect(
           PublishMediaPinner.isMediaRef('dmt-asset://u/w/${'a' * 64}.png'),

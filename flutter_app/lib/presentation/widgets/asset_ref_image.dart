@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -40,6 +41,8 @@ class AssetRefImage extends ConsumerStatefulWidget {
 
 class _AssetRefImageState extends ConsumerState<AssetRefImage> {
   late Future<File?> _future;
+  Timer? _retry;
+  int _attempt = 0;
 
   @override
   void initState() {
@@ -51,12 +54,36 @@ class _AssetRefImageState extends ConsumerState<AssetRefImage> {
   void didUpdateWidget(AssetRefImage old) {
     super.didUpdateWidget(old);
     if (old.ref != widget.ref) {
+      _retry?.cancel();
+      _attempt = 0;
       _future = _resolve();
     }
   }
 
-  Future<File?> _resolve() {
-    return ref.read(assetRefResolverProvider).resolve(widget.ref);
+  @override
+  void dispose() {
+    _retry?.cancel();
+    super.dispose();
+  }
+
+  /// Bulut medyası bulunamazsa [mediaRetryDelay] aralıklarıyla yeniden
+  /// denenir. Deneme sırasında spinner'a dönülmez: kırık ikon, görsel gelince
+  /// yerini bırakır.
+  Future<File?> _resolve() async {
+    final target = widget.ref;
+    final file = await ref.read(assetRefResolverProvider).resolve(target);
+    if (file == null && target.isContent && mounted && widget.ref == target) {
+      _retry?.cancel();
+      _retry = Timer(mediaRetryDelay(_attempt++), () async {
+        final next = _resolve();
+        if (await next != null && mounted && widget.ref == target) {
+          setState(() {
+            _future = next;
+          });
+        }
+      });
+    }
+    return file;
   }
 
   @override

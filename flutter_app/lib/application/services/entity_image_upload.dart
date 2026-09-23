@@ -65,7 +65,7 @@ Future<List<String>> _localizeAll(List<String> paths, String? ownerDir) async {
 
 /// Best-effort cloud cleanup for an entity image ref that was just removed.
 ///
-/// No-op when the ref is local/transient, still referenced in [remaining],
+/// No-op when the ref is local/content, still referenced in [remaining],
 /// the host is [readOnly], or no cleanup service is configured. Flushes the
 /// `entity:` outbox prefix and forces a sync tick first so the post-removal
 /// row is committed before [EntityMediaCleanupService]'s reference scan runs

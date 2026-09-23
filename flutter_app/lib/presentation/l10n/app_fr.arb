@@ -1522,7 +1522,6 @@
   "adminR2Pool": "POOL CLOUDFLARE R2",
   "adminPoolPinned": "épinglé (marketplace)",
   "adminPoolPinnedSub": "{count} objets · {size} économisés par déduplication",
-  "adminPoolTransient": "transitoire (partages, LRU)",
   "adminStorageSummary": "{count} objets dans {buckets} buckets",
   "adminQuotaUnavailable": "Limite de quota indisponible",
   "adminByBucket": "PAR BUCKET",
@@ -2161,7 +2160,6 @@
   "spellsLeveledTitle": "Sorts (niveau {range})",
   "eraRenameStart": "Renommer le début",
   "eraRenameEnd": "Renommer la fin",
-  "adminOldest": "plus ancien {date}",
   "removeMemberBody": "Retirer {name} du monde ?",
   "thisPlayer": "ce joueur",
   "charsYours": "{count, plural, =1{Votre personnage} other{Vos personnages}}",
@@ -2173,5 +2171,13 @@
   "contentArchiveImported": "{name} importé",
   "contentArchiveImportedWithSkips": "{name} importé — {count} fichiers multimédias ignorés",
   "contentArchiveFailed": "Échec du transfert : {error}",
-  "contentArchiveUnsupported": "Ce fichier a été créé par une version plus récente. Mets l'application à jour."
+  "contentArchiveUnsupported": "Ce fichier a été créé par une version plus récente. Mets l'application à jour.",
+  "adminPoolWorldMedia": "médias des mondes (multijoueur)",
+  "adminPoolWorldMediaSub": "{count} objets · {worlds} mondes",
+  "multiplayerUploadingMedia": "Envoi des médias du monde {done}/{total}…",
+  "multiplayerQuotaExceeded": "Les médias de ce monde nécessitent {need}, mais il ne reste que {left} d'espace cloud. Retirez des images ou désactivez le multijoueur dans un autre monde.",
+  "multiplayerTooLargeTitle": "Certains fichiers restent sur cet appareil",
+  "multiplayerTooLargeBody": "Ces fichiers dépassent la limite de taille (cartes 10 Mo, autres images 5 Mo, audio 10 Mo, PDF 20 Mo) : les joueurs ne les verront pas. Ils restent utilisables ici.",
+  "multiplayerMediaIncomplete": "Le monde est en multijoueur, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé automatiquement.",
+  "worldMediaNotSent": "Au-dessus de la limite de taille, n'atteindra pas les joueurs : {names}"
 }

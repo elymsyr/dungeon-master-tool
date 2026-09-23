@@ -48,17 +48,14 @@ void main() {
       // yerel dosya ne indirme denenir, kart sessizce görselsiz kalır.
       expect(ref.isLocal, isFalse);
       expect(ref.localPath, isNull);
-      expect(ref.isTransient, isFalse);
-      expect(ref.transientSha, isNull);
     });
 
-    test('content ve transient ref\'leri aynı sha\'yı verir', () {
+    test('uzantısız içerik ref\'i: sha var, uzantı boş', () {
       const sha =
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-      expect(
-        AssetRef(AssetRef.formatContentUri(sha, '.webp')).contentSha,
-        AssetRef(AssetRef.formatTransientUri(sha, '.webp')).contentSha,
-      );
+      final ref = AssetRef(AssetRef.formatContentUri(sha, ''));
+      expect(ref.contentSha, sha);
+      expect(ref.contentExt, '');
     });
 
     test('first-party art ref parses and is NOT treated as a local path', () {

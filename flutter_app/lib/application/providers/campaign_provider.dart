@@ -254,7 +254,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// [completeLoad], which the caller awaits separately.
   ///
   /// Downstream providers (`worldSchemaProvider`, `entityProvider`) treat
-  /// `_data == null` as a transient state — schema falls back to default,
+  /// `_data == null` as a passing state — schema falls back to default,
   /// entities to an empty map — until `completeLoad` lands and bumps
   /// `campaignRevisionProvider` to trigger a reparse.
   void beginLoad(String worldId) {
