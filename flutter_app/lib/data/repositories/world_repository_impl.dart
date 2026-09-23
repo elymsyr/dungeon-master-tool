@@ -185,8 +185,14 @@ class WorldRepositoryImpl implements CampaignRepository {
     Map<String, dynamic> row,
   ) async {
     await _requireWorld(worldId);
+    final entity = _entityCompanion(worldId, entityId, row);
     await _db.transaction(() async {
-      await _db.worldEntitiesDao.upsert(_entityCompanion(worldId, entityId, row));
+      // İçerik aynıysa yazılmaz (a3dbfad2'nin settings kuralı): DAO satırı
+      // şimdiyle damgalıyor, değişmeyen bir flush satırı buluta boşuna
+      // gönderir ve öbür cihazda pull + reload tetiklerdi.
+      final old = await _db.worldEntitiesDao.getById(entityId);
+      if (old != null && old.copyWithCompanion(entity) == old) return;
+      await _db.worldEntitiesDao.upsert(entity);
       await _touchWorld(worldId);
     });
   }
