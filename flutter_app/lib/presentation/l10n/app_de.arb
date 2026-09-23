@@ -292,6 +292,13 @@
     }
   },
   "worldsDeletedCloudSnack": "Welt in den Papierkorb verschoben. Cloud-Kopie entfernt.",
+  "cloudOnlyTitle": "In der Cloud, nicht auf diesem Gerät",
+  "cloudOnlyWorldsHint": "Deine Online-Welten von deinen anderen Geräten. Lade eine herunter, um auch hier daran zu arbeiten.",
+  "cloudOnlyPackagesHint": "Deine Online-Pakete von deinen anderen Geräten. Lade eines herunter, um es auch hier zu nutzen.",
+  "cloudPackageNameTaken": "Auf diesem Gerät gibt es bereits ein Paket namens \"{name}\". Benenne es zuerst um.",
+  "cloudOnlyDownload": "Herunterladen",
+  "cloudOnlyDownloaded": "{name} heruntergeladen.",
+  "cloudOnlyDownloadFailed": "Download fehlgeschlagen: {error}",
   "worldsDeletedSnack": "Welt in den Papierkorb verschoben.",
   "worldsOpenFailed": "Welt \"{name}\" konnte nicht geöffnet werden",
   "@worldsOpenFailed": {

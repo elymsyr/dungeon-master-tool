@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: sync
-updated: 2026-09-22
+updated: 2026-09-23
 tags: [moc]
 ---
 
@@ -16,7 +16,7 @@ tags: [moc]
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
 >
-> **Bulut aynası** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir; Faz 5a'dan beri dünyayı geri de okur. Kuyruk yok, CDC yok: giderken `updated_at > son push damgası` taraması, gelirken `get_world_delta(world, since)` tek çağrısı.
+> **Bulut aynası** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir; Faz 5a'dan beri dünyayı geri de okur, Faz 5b'den beri **canlı**. Kuyruk yok, CDC yok: giderken `updated_at > son push damgası` taraması, gelirken `get_world_delta(world, since)` tek çağrısı; ikisinin arasında yalnız bir sayı akıyor (`world_revisions` sinyali). Çatışmada son düzenleyen kazanır — istemcide pull, bulutta 097'nin trigger'ları. Faz 5c'den beri ikinci cihaz dünyayı ve paketi hub'dan indirebiliyor ("Bulutta, bu cihazda yok"); paket de pull alıyor (canlı değil, açılışta).
 >
 > Supabase şemasının kendisi ([[Backend-Infra]]) ve tablo tanımları ([[Data-Layer]]) bu domainin değil.
 
@@ -57,7 +57,7 @@ tags: [moc]
 
 **Yerel yazma:** Edit → [[pending_write_buffer]] debounce → Drift. Bitti. Kuyruk yok, bulut yok.
 
-**Bulut aynası:** dünya açılışı → `syncOnOpen` → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet) → satır indiyse `ActiveCampaignNotifier.reload()` (blob'u Drift'ten tazeler, yoksa inen veri ekrana çıkmaz). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihazın değişikliğini canlı haber veren bir sinyal **henüz yok** (Realtime `world_revisions` Faz 5b).
+**Bulut aynası:** DM'in dünya kanalı `SUBSCRIBED` (açılış · reconnect · uygulama öne gelir) → `catchUp`: tampon flush → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet) → satır indiyse `ActiveCampaignNotifier.reload()` (blob'u Drift'ten tazeler, yoksa inen veri ekrana çıkmaz). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihaz yazınca: `world_revisions` sinyali → 1 sn debounce → sayaç yerel damgadan büyükse aynı `catchUp`. Kendi push'umuzun sinyali eşik altında kalır: push, bulutta boşluksuz bir revizyon dizisi bıraktıysa damgayı dizinin sonuna çekiyor ([[cloud_push_service]] `ownRunEnd`).
 
 **Paylaşım:** DM "Paylaş" → görseller `AssetRef`'e → `entity_shares` satırı **gövdesiyle** → CDC → oyuncunun [[world_mirror_applier]]'ı blob'a yazar. Adımlar: [[Share-Broadcast-Flow]].
 

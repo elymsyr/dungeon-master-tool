@@ -292,6 +292,13 @@
     }
   },
   "worldsDeletedCloudSnack": "Dünya çöp kutusuna taşındı. Bulut kopyası silindi.",
+  "cloudOnlyTitle": "Bulutta, bu cihazda yok",
+  "cloudOnlyWorldsHint": "Öteki cihazlarındaki online dünyaların. İndirirsen burada da çalışabilirsin.",
+  "cloudOnlyPackagesHint": "Öteki cihazlarındaki online paketlerin. İndirirsen burada da kullanabilirsin.",
+  "cloudPackageNameTaken": "Bu cihazda \"{name}\" adlı bir paket zaten var. Önce onu yeniden adlandır.",
+  "cloudOnlyDownload": "İndir",
+  "cloudOnlyDownloaded": "{name} indirildi.",
+  "cloudOnlyDownloadFailed": "İndirme başarısız: {error}",
   "worldsDeletedSnack": "Dünya çöp kutusuna taşındı.",
   "worldsOpenFailed": "\"{name}\" dünyası açılamadı",
   "@worldsOpenFailed": {

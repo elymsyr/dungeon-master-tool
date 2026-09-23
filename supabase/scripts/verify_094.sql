@@ -106,11 +106,12 @@ BEGIN
   ASSERT (SELECT revision FROM public.world_entities WHERE id = 'e1') > v_rev,
     '1.4 UPDATE revision''u artirmadi';
 
-  -- updated_at sunucu tarafindan EZILMEMELI (§2.8)
+  -- updated_at sunucu tarafindan EZILMEMELI (§2.8). Tarih ileri: 097'den
+  -- beri buluttakinden ESKI bir zaman zaten reddediliyor (verify_097).
   UPDATE public.world_entities
-     SET updated_at = TIMESTAMPTZ '2020-01-01 00:00:00+00' WHERE id = 'e2';
+     SET updated_at = TIMESTAMPTZ '2099-01-01 00:00:00+00' WHERE id = 'e2';
   ASSERT (SELECT updated_at FROM public.world_entities WHERE id = 'e2')
-         = TIMESTAMPTZ '2020-01-01 00:00:00+00',
+         = TIMESTAMPTZ '2099-01-01 00:00:00+00',
     '1.5 updated_at sunucu tarafindan ezildi — cevrimdisi kuyruk yeni veriyi eze'
     'r (§2.8)';
 

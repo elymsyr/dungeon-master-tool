@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/cloud_push_service.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-22
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -48,9 +48,12 @@ tags: [file]
 - **Reddedilen satır:** parça reddedilirse (kota, 256 KB, RLS) suçlu tek tek denenerek bulunur, `rejected`'e yazılır ve **atlanır**; damga yine ilerler. Tek bir dev kart bütün dünyanın senkronunu kilitlemesin.
 - **Diriltme koruması:** tombstone yazıldıktan sonra aynı id yerelde geri geldiyse (import / full-replace) bulut satırı silinmez — kayıt düşülür ve satır **şimdiyle damgalanır** ki bu turun taramasına girsin. Sadece atlamak yetmezdi: geri gelen satır eski `updated_at` taşıyor olabilir.
 - **Medya:** gövdeler şemasız geziliyor; mutlak yol taşıyan her string `SharedMediaCourier.refFor` ile içerik ref'ine çevriliyor. Yerel satır yolunu korur, çeviri yalnız giden kopyada (Faz 3.5 sözleşmesi).
+- **Kendi yankısını elemek — `ownRunEnd` (Faz 5b).** Sayaç her yazmada artıyor ve Realtime sinyali yazan cihaza da geliyor; önlem olmasa DM'in her düzenlemesi kendi pull'unda geri inerdi. Upsert `select('revision')` ile yazılan satırların revizyonlarını döndürüyor (097'nin LWW guard'ının atladığı satır dönmüyor). Tur temiz bittiyse ve **silme yoksa**, `ownRunEnd(base, revs)` bu revizyonlar `worlds.cloud_revision`'ın hemen ardından boşluksuz bir dizi mi diye bakıyor: öyleyse aradaki her yazma bizim, yerel zaten o halde → damga dizinin sonuna **koşullu** UPDATE ile ilerliyor (`WHERE cloud_revision = base`, tur sürerken bir pull ilerlettiyse dokunmuyor). Bir boşluk başka bir yazar demek, damga yerinde kalır ve pull onu getirir. `base`'den küçük revizyonlar echo guard'ın yazmadığı satırlar, sayılmıyor. Silmeli turda ilerleme yok: tombstone'un revizyonu DELETE'ten dönmüyor. Yalnız dünyada; paket pull'u yok (Faz 5c). **097 C'ye bağlı:** o düzeltme olmadan upsert'in INSERT dalı her güncellemede ölü bir revizyon yakıyordu ve dizi hiç boşluksuz çıkmazdı.
+- **Paketin satırı ilk yayından sonra yalnız UPDATE (Faz 5c).** `user_packages` her tur gidiyor (çocukların FK hedefi, `sinceAll`); upsert'le gitseydi öbür cihazın buluttan sildiği ya da "Yerele al" dediği paketi bu cihazın ilk turu yeniden yaratırdı. `full` ya da `last_cloud_push_at` boşsa upsert (ilk yayın), değilse `_updatePackageRow`: PATCH → boşsa bir GET daha (boş dönüş 097'nin LWW atlaması da olabilir, silme sanılmasın) → satır gerçekten yoksa `setOnline(false)` ve tur `skipped`. Dünyada bu yok: `worlds` satırını yalnız `publish_world` RPC'si yaratıyor.
+- **Sunucu tarafı LWW (097).** Push hâlâ düz upsert ama bulut artık `NEW.updated_at < OLD.updated_at` olan satırı ve tombstone'dan eski bir düzenlemenin INSERT'ini sessizce atlıyor. İstemci tarafında değişen bir şey yok: atlanan satır `rejected`'e **düşmez** (hata değil), yalnız revizyon listesinde görünmez — ve o boşluk `ownRunEnd`'i durdurur, pull bulutun daha yeni halini getirir.
 
 ## Notes
-- Test: `test/application/services/cloud_push_collect_test.dart` (15 test) — `collect` / `collectPackage` üzerinden, ağsız.
+- Test: `test/application/services/cloud_push_collect_test.dart` (16 test) — `collect` / `collectPackage` üzerinden, ağsız; `ownRunEnd` saf fonksiyon olarak.
 - Bilinçli sınırlar (§4.6, §4.7): `revision` istemcide yazılmıyor, reddedilen satır kullanıcıya gösterilmiyor, uygulama kapanırken "son tur" yok, `updated_at` için ayrı indeks yok, paketin **silinmesi** buluta gitmiyor (bulut kopyasını düşüren tek yol "Yerele al"), `world_characters.is_online` kolonu okunmuyor (Faz 5.5).
-- Migration `095` (karakterin sunucu damgasını düşüren trigger) ve `096` (echo guard) **2026-09-22'de deploy edildi**; **gerçek projede uçtan uca doğrulama hâlâ bekliyor** — koşulacak adımlar `docs/online-sync-redesign.md` §4.7 "Bekleyen doğrulama".
+- Migration `095` (karakterin sunucu damgasını düşüren trigger) ve `096` (echo guard) **2026-09-22'de deploy edildi**, `097` (sunucu LWW) deploy bekliyor; **gerçek projede uçtan uca doğrulama hâlâ bekliyor** — koşulacak adımlar `docs/online-sync-redesign.md` §4.7 "Bekleyen doğrulama".
 - `sync_tombstones.world_id` artık "kapsam id'si" demek: dünya turunda dünya, paket turunda paket. Kolonu yeniden adlandırmak yan tablonun idempotent DDL'ini kırardı.

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +9,7 @@ import '../../domain/entities/online/world_role.dart';
 import '../services/world_mirror_applier.dart';
 import '../services/world_mirror_service.dart';
 import 'auth_provider.dart';
+import 'cloud_push_provider.dart';
 import 'role_provider.dart';
 import 'world_membership_provider.dart';
 import 'world_sync_provider.dart';
@@ -48,12 +50,16 @@ final worldMirrorApplierProvider =
       await ref.watch(activeCampaignIdProvider.selectAsync((id) => id));
   final role =
       await ref.watch(currentWorldRoleProvider.selectAsync((r) => r));
+  if (worldId != null) debugPrint('CloudSync: $worldId rol=${role.name}');
   if (worldId == null || role == WorldRole.none) return applier;
+  final isDm = role == WorldRole.dm;
 
   // Channel her `SUBSCRIBED` durumuna geçtiğinde (ilk bağlanma VE her
   // reconnect) hem member roster'ını hem tüm mirror state'i taze çek.
   // postgres_changes kesinti sırasındaki event'leri replay etmez — bu
   // catch-up olmadan kullanıcı manuel "çık-gir" yapmak zorunda kalır.
+  // DM'de aynı an bulut aynasının da uzlaştırma anı (Faz 5b): kesintide
+  // kaçan revizyon sinyallerini tek push + pull telafi eder.
   void onResubscribed() {
     try {
       // ignore: discarded_futures
@@ -62,13 +68,21 @@ final worldMirrorApplierProvider =
           .bootstrap(force: true);
       // ignore: discarded_futures
       applier.applyInitialState(worldId);
+      // ignore: discarded_futures
+      if (isDm) ref.read(cloudPushPumpProvider).catchUp(worldId);
     } catch (_) {
       // Provider scope tear-down sırasında patlamasın.
     }
   }
 
   if (!sync.isSubscribed(worldId)) {
-    await sync.subscribe(worldId, onSubscribed: onResubscribed);
+    await sync.subscribe(
+      worldId,
+      onSubscribed: onResubscribed,
+      onRevision: isDm
+          ? (rev) => ref.read(cloudPushPumpProvider).onSignal(worldId, rev)
+          : null,
+    );
   } else {
     // Zaten subscribe iken (örn. world reopen aynı oturumda) catch-up et.
     onResubscribed();

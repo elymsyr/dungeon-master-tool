@@ -299,6 +299,34 @@
     }
   },
   "worldsDeletedCloudSnack": "World moved to trash. Cloud copy removed.",
+  "cloudOnlyTitle": "In the cloud, not on this device",
+  "cloudOnlyWorldsHint": "Your online worlds from your other devices. Download one to work on it here too.",
+  "cloudOnlyPackagesHint": "Your online packages from your other devices. Download one to use it here too.",
+  "cloudPackageNameTaken": "A package named \"{name}\" already exists on this device. Rename it first.",
+  "@cloudPackageNameTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudOnlyDownload": "Download",
+  "cloudOnlyDownloaded": "{name} downloaded.",
+  "@cloudOnlyDownloaded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudOnlyDownloadFailed": "Download failed: {error}",
+  "@cloudOnlyDownloadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeletedSnack": "World moved to trash.",
   "worldsOpenFailed": "Failed to open world \"{name}\"",
   "@worldsOpenFailed": {
