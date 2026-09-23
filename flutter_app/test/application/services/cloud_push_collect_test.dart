@@ -315,5 +315,22 @@ void main() {
     expect(row.isOnline, false);
     expect(row.lastCloudPushAt, isNull);
   });
+
+  // Faz 5b — kendi push'umuzun sinyali bize de geliyor. Damga yalnız dönen
+  // revizyonlar damganın hemen ardından BOŞLUKSUZ ise ilerler; tek bir boşluk
+  // başka bir yazar demek ve onu pull getirmeli — yanlış ilerleme o satırı
+  // bir daha hiç indirmez.
+  test('ownRunEnd: yalnız boşluksuz kendi dizimiz damgayı ilerletir', () {
+    expect(CloudPushService.ownRunEnd(10, [11, 12, 13]), 13);
+    expect(CloudPushService.ownRunEnd(10, [13, 11, 12]), 13, reason: 'sıra');
+    // Echo guard'ın yazmadığı satır eski revizyonunu döner — sayılmaz.
+    expect(CloudPushService.ownRunEnd(10, [4, 11, 12]), 12);
+    // Araya başka biri girdi (12 bizim değil).
+    expect(CloudPushService.ownRunEnd(10, [11, 13]), isNull);
+    // Damgadan sonraki ilk revizyon başkasının (11).
+    expect(CloudPushService.ownRunEnd(10, [12, 13]), isNull);
+    expect(CloudPushService.ownRunEnd(10, const []), isNull);
+    expect(CloudPushService.ownRunEnd(10, [3, 7]), isNull);
+  });
 }
 

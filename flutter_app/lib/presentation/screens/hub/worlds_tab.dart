@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/cloud_push_provider.dart';
+import '../../../application/services/cloud_pull_service.dart'
+    show CloudPullResult, CloudWorld;
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
@@ -36,6 +39,7 @@ import '../../widgets/world_packages_section.dart';
 import '../../../application/services/content_transfer/content_item.dart';
 import '../../widgets/content_archive_menu.dart';
 import '../../widgets/compactable_button.dart';
+import '../../widgets/cloud_only_section.dart';
 
 class WorldsTab extends ConsumerStatefulWidget {
   const WorldsTab({super.key});
@@ -114,6 +118,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final campaignInfoList = ref.watch(campaignInfoListProvider);
+    final cloudWorlds =
+        ref.watch(cloudOnlyWorldsProvider).valueOrNull ?? const <CloudWorld>[];
     final filter = ref.watch(worldsFilterProvider);
     final worldPkgs =
         ref.watch(worldPackageNamesProvider).valueOrNull ??
@@ -424,6 +430,20 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     ),
                   ),
                 ],
+              ),
+
+              CloudOnlySection(
+                items: {for (final w in cloudWorlds) w.id: w.name},
+                hint: l10n.cloudOnlyWorldsHint,
+                download: (id, onProgress) async {
+                  final svc = ref.read(cloudPullServiceProvider);
+                  if (svc == null) return const CloudPullResult(skipped: true);
+                  return svc.downloadWorld(
+                    cloudWorlds.firstWhere((w) => w.id == id),
+                    onProgress: onProgress,
+                  );
+                },
+                onDownloaded: () => ref.invalidate(campaignInfoListProvider),
               ),
             ],
           ),

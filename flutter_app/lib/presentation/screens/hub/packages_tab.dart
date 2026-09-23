@@ -27,6 +27,11 @@ import '../../widgets/save_info_section.dart';
 import '../../../application/services/content_transfer/content_item.dart';
 import '../../widgets/content_archive_menu.dart';
 import '../../widgets/compactable_button.dart';
+import '../../widgets/cloud_only_section.dart';
+import '../../../application/providers/cloud_push_provider.dart';
+import '../../../application/services/cloud_pull_service.dart'
+    show CloudPackage, CloudPullResult;
+import '../../../core/utils/error_format.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -87,6 +92,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final packageList = ref.watch(packageListProvider);
+    final cloudPackages = ref.watch(cloudOnlyPackagesProvider).valueOrNull ??
+        const <CloudPackage>[];
     final filter = ref.watch(packagesFilterProvider);
     final allPackages = packageList.valueOrNull ?? const <PackageInfo>[];
     final templateOptions = <String>{
@@ -332,6 +339,19 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 ],
               ),
 
+              CloudOnlySection(
+                items: {for (final p in cloudPackages) p.id: p.name},
+                hint: l10n.cloudOnlyPackagesHint,
+                download: (id, onProgress) async {
+                  final svc = ref.read(cloudPullServiceProvider);
+                  if (svc == null) return const CloudPullResult(skipped: true);
+                  return svc.downloadPackage(
+                    cloudPackages.firstWhere((p) => p.id == id),
+                    onProgress: onProgress,
+                  );
+                },
+                onDownloaded: () => ref.invalidate(packageListProvider),
+              ),
             ],
           ),
         ),
@@ -579,7 +599,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref.read(activePackageProvider.notifier).delete(name);
+              try {
+                await ref.read(activePackageProvider.notifier).delete(name);
+              } catch (e) {
+                // Online paketin bulut kopyası silinemedi — yerel de
+                // silinmedi (bkz. ActivePackageNotifier.delete).
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(l10n.worldsDeleteFailed(formatError(e)))));
+                }
+                return;
+              }
               ref.invalidate(packageListProvider);
               ref.invalidate(trashListProvider);
               setState(() => _selectedIndex = -1);
@@ -740,7 +770,12 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       ref.read(globalLoadingProvider.notifier),
       'open-package-$name',
       'Opening package "$name"...',
-      () => ref.read(activePackageProvider.notifier).load(name),
+      () async {
+        // Faz 5c — online paket açılmadan önce bulutla uzlaşır; offline
+        // pakette hiçbir şey yapmaz.
+        await ref.read(cloudPushPumpProvider).syncPackage(name);
+        return ref.read(activePackageProvider.notifier).load(name);
+      },
     );
     if (!success || !mounted) return;
     if (mounted) context.go('/package');

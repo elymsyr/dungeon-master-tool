@@ -292,6 +292,13 @@
     }
   },
   "worldsDeletedCloudSnack": "Monde placé dans la corbeille. Copie cloud supprimée.",
+  "cloudOnlyTitle": "Dans le cloud, pas sur cet appareil",
+  "cloudOnlyWorldsHint": "Vos mondes en ligne de vos autres appareils. Téléchargez-en un pour y travailler ici aussi.",
+  "cloudOnlyPackagesHint": "Vos paquets en ligne de vos autres appareils. Téléchargez-en un pour l'utiliser ici aussi.",
+  "cloudPackageNameTaken": "Un paquet nommé « {name} » existe déjà sur cet appareil. Renommez-le d'abord.",
+  "cloudOnlyDownload": "Télécharger",
+  "cloudOnlyDownloaded": "{name} téléchargé.",
+  "cloudOnlyDownloadFailed": "Échec du téléchargement : {error}",
   "worldsDeletedSnack": "Monde placé dans la corbeille.",
   "worldsOpenFailed": "Impossible d'ouvrir le monde \"{name}\"",
   "@worldsOpenFailed": {

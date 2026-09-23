@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart'
+    show BooleanExpressionOperators, Value, Variable;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -77,10 +78,11 @@ class CloudPushService {
     var pushed = 0;
     var deleted = 0;
     final rejected = <String>[];
+    final revs = <int>[];
     try {
       deleted = await _sendTombstones(worldId);
       for (final batch in await collect(worldId, since, dmOnlyKeys)) {
-        await _upsert(batch.table, batch.rows, rejected);
+        await _upsert(batch.table, batch.rows, rejected, revs);
         pushed += batch.rows.length;
       }
     } catch (e) {
@@ -92,8 +94,35 @@ class CloudPushService {
           pushed: pushed, deleted: deleted, rejected: rejected, error: e);
     }
     await _db.worldsDao.setCloudPushAt(worldId, cutoff);
+    // Faz 5b — kendi yazdıklarımızın sinyali bize de geliyor. Tur bulutta
+    // boşluksuz bir revizyon dizisi bıraktıysa aradaki her yazma bizim ve
+    // yerel zaten o halde: pull damgası dizinin sonuna ilerler, sinyal gelince
+    // kendi satırlarımızı geri indirmeyiz. Silmenin tombstone revizyonu
+    // DELETE'ten dönmüyor — silme varsa dizi bilinemez, pull getirir.
+    final end = deleted == 0 ? ownRunEnd(world.cloudRevision, revs) : null;
+    if (end != null) {
+      // Koşullu: tur sürerken bir pull damgayı ilerlettiyse ona dokunma.
+      await (_db.update(_db.worlds)
+            ..where((w) =>
+                w.id.equals(worldId) &
+                w.cloudRevision.equals(world.cloudRevision)))
+          .write(WorldsCompanion(cloudRevision: Value(end)));
+    }
     return CloudPushResult(
         pushed: pushed, deleted: deleted, rejected: rejected);
+  }
+
+  /// Push'un geri aldığı revizyonlar [base]'in hemen ardından boşluksuz bir
+  /// dizi mi? Öyleyse dizinin sonu döner, değilse null — araya başka bir yazar
+  /// (öteki cihaz, oyuncunun karakteri, paylaşım) girmiş demektir ve onu pull
+  /// getirmeli.
+  ///
+  /// [base]'den küçük revizyonlar echo guard'ın yazmadığı satırlardır (içerik
+  /// aynı, sayaç kıpırdamadı); hesaba katılmaz.
+  static int? ownRunEnd(int base, Iterable<int> revs) {
+    final own = revs.where((r) => r > base).toSet().toList()..sort();
+    if (own.isEmpty) return null;
+    return own.last - base == own.length ? own.last : null;
   }
 
   /// [packageId]'nin bulut aynasını günceller — aynı watermark, kapsam dünya
@@ -113,13 +142,29 @@ class CloudPushService {
         ? DateTime.fromMillisecondsSinceEpoch(0)
         : (pkg.lastCloudPushAt ?? DateTime.fromMillisecondsSinceEpoch(0));
 
+    // İlk yayında paketin satırı yaratılır; sonrasında yalnız güncellenir.
+    // Upsert'le yazılsaydı, öbür cihazın buluttan sildiği (ya da "Yerele al"
+    // dediği) paketi bu cihazın ilk turu yeniden yaratırdı.
+    final first = full || pkg.lastCloudPushAt == null;
+
     var pushed = 0;
     var deleted = 0;
     final rejected = <String>[];
     try {
       deleted = await _sendTombstones(packageId);
       for (final batch in await collectPackage(packageId, since, ownerId)) {
-        await _upsert(batch.table, batch.rows, rejected);
+        if (batch.table == 'user_packages' && !first) {
+          if (!await _updatePackageRow(packageId, batch.rows.single)) {
+            // Bulutta yok: diriltme, yerelde offline'a düş. Damga da
+            // sıfırlanıyor — yeniden online yapılırsa her şey bir kez daha
+            // gider.
+            await _db.packagesDao.setOnline(packageId, false);
+            return const CloudPushResult(skipped: true);
+          }
+          pushed++;
+          continue;
+        }
+        await _upsert(batch.table, batch.rows, rejected, []);
         pushed += batch.rows.length;
       }
     } catch (e) {
@@ -131,6 +176,26 @@ class CloudPushService {
     await _db.packagesDao.setCloudPushAt(packageId, cutoff);
     return CloudPushResult(
         pushed: pushed, deleted: deleted, rejected: rejected);
+  }
+
+  /// Paketin bulut satırını yalnız günceller; satır bulutta yoksa false.
+  ///
+  /// Boş dönüş iki şey olabilir: satır yok, ya da 097'nin LWW guard'ı bu
+  /// eski hâli atladı (bulutta daha yeni bir düzenleme var). İkincisi silme
+  /// değil — ayırmak için bir okuma daha.
+  Future<bool> _updatePackageRow(String id, Map<String, dynamic> row) async {
+    final hit = await _client
+        .from('user_packages')
+        .update(row)
+        .eq('id', id)
+        .select('id');
+    if (hit.isNotEmpty) return true;
+    final still = await _client
+        .from('user_packages')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+    return still != null;
   }
 
   /// Paketi buluttan kaldırır. Çocuk satırlar `ON DELETE CASCADE` ile gider;
@@ -367,15 +432,23 @@ class CloudPushService {
   /// veri/kota/RLS reddi ise suçlu satır tek tek denenerek bulunur, atlanır ve
   /// [rejected]'e yazılır — **tek bir kart bütün dünyanın senkronunu
   /// kilitlemesin** (§"kota reddi yerel yazmayı durdurmaz").
+  ///
+  /// Yazılan satırların bulut revizyonları [revs]'e eklenir. 097'nin LWW
+  /// guard'ının atladığı satır (bulutta daha yeni düzenleme var) dönmez.
   Future<void> _upsert(
     String table,
     List<Map<String, dynamic>> rows,
     List<String> rejected,
+    List<int> revs,
   ) async {
     for (var i = 0; i < rows.length; i += _chunk) {
       final slice = rows.sublist(i, (i + _chunk).clamp(0, rows.length));
       try {
-        await _client.from(table).upsert(slice);
+        final back = await _client.from(table).upsert(slice).select('revision');
+        for (final r in back) {
+          final v = r['revision'];
+          if (v is num) revs.add(v.toInt());
+        }
       } catch (e) {
         if (isOfflineError(e) || slice.length == 1 && e is! PostgrestException) {
           rethrow;
@@ -387,7 +460,7 @@ class CloudPushService {
           continue;
         }
         for (final row in slice) {
-          await _upsert(table, [row], rejected);
+          await _upsert(table, [row], rejected, revs);
         }
       }
     }

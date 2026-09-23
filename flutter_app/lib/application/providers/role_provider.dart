@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,8 +49,9 @@ final currentWorldRoleProvider = FutureProvider<WorldRole>(
       'player' => WorldRole.player,
       _ => WorldRole.none,
     };
-  } catch (_) {
+  } catch (e) {
     // Network/permission hatası: lokal davran (offline edit modu).
+    debugPrint('CloudSync: rol okunamadı ($campaignId): $e');
     return WorldRole.none;
   }
   },

@@ -16,6 +16,7 @@ import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart' show campaignRevisionProvider;
+import 'cloud_push_provider.dart' show cloudPushServiceProvider;
 import 'ui_state_provider.dart';
 
 final packageRepositoryProvider = Provider<PackageRepository>(
@@ -239,6 +240,16 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String packageName) async {
+    // Faz 5c — online paketin bulut kopyası da gider, dünyadaki kuralla aynı:
+    // önce bulut, sonra yerel. Bulut silinemezse hata yukarı çıkar ve yerel
+    // silme iptal olur; yoksa paket "bulutta, bu cihazda yok" listesinde geri
+    // belirirdi. Öbür cihazlardaki kopya diriltmez, offline'a düşer
+    // (`CloudPushService.pushPackage`).
+    final row = await _ref.read(appDatabaseProvider).packagesDao.getByName(packageName);
+    final cloud = _ref.read(cloudPushServiceProvider);
+    if (row != null && row.isOnline && cloud != null) {
+      await cloud.unpublishPackage(row.id);
+    }
     await _repo.delete(packageName);
     if (state == packageName) {
       _data = null;

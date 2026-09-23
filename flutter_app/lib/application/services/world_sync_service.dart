@@ -24,6 +24,10 @@ class WorldSyncService {
   /// resubscribe retry'ında da yeniden kullanılır.
   final Map<String, void Function()> _onSubscribedCbs = {};
 
+  /// worldId → `world_revisions` sinyali (Faz 5b). Yalnız DM kaydeder;
+  /// resubscribe retry'ı binding'i buradan yeniden kurar.
+  final Map<String, void Function(int revision)> _onRevisionCbs = {};
+
   /// channelError/timedOut sonrası bekleyen resubscribe timer'ları.
   final Map<String, Timer> _resubTimers = {};
 
@@ -71,10 +75,18 @@ class WorldSyncService {
   /// sırasındaki event'leri replay etmez; bu yüzden callback bir catch-up
   /// (initial state + roster) tetikler. Aynı worldId için ikinci subscribe
   /// çağrısında callback hemen tetiklenir (channel zaten subscribed).
+  ///
+  /// [onRevision] verilirse kanala `world_revisions` de bağlanır: bulut
+  /// aynasındaki her yazma sayacı artırır, callback yeni değeri alır (§2.3 —
+  /// CDC değil, uyandırma sinyali). Yalnız DM verir; oyuncunun ayna kapısı
+  /// yok, sinyal ona boşa mesaj olurdu. Binding kanal kurulurken eklenir —
+  /// zaten açık bir kanala sonradan eklenmez.
   Future<void> subscribe(String worldId,
-      {void Function()? onSubscribed}) async {
+      {void Function()? onSubscribed,
+      void Function(int revision)? onRevision}) async {
     if (_disposed) return;
     if (onSubscribed != null) _onSubscribedCbs[worldId] = onSubscribed;
+    if (onRevision != null) _onRevisionCbs[worldId] = onRevision;
     if (_channels.containsKey(worldId)) {
       if (onSubscribed != null) {
         scheduleMicrotask(onSubscribed);
@@ -126,6 +138,18 @@ class WorldSyncService {
       ),
       callback: (payload) => _dispatch(worldId, 'worlds', payload),
     );
+    if (_onRevisionCbs.containsKey(worldId)) {
+      channel.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'world_revisions',
+        filter: filter,
+        callback: (payload) {
+          final rev = payload.newRecord['revision'];
+          if (rev is num) _onRevisionCbs[worldId]?.call(rev.toInt());
+        },
+      );
+    }
 
     channel.subscribe((status, error) {
       switch (status) {
@@ -193,6 +217,7 @@ class WorldSyncService {
   Future<void> unsubscribe(String worldId) async {
     _resubTimers.remove(worldId)?.cancel();
     _onSubscribedCbs.remove(worldId);
+    _onRevisionCbs.remove(worldId);
     _retryCounts.remove(worldId);
     if (_sessionOpen.remove(worldId) == true && !_sessions.isClosed) {
       _sessions.add((worldId: worldId, open: false));
@@ -246,6 +271,7 @@ class WorldSyncService {
     }
     _resubTimers.clear();
     _onSubscribedCbs.clear();
+    _onRevisionCbs.clear();
     _retryCounts.clear();
     await unsubscribeAll();
     _sessionOpen.clear();

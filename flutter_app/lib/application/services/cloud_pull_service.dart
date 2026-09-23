@@ -60,57 +60,256 @@ class CloudPullService {
     if (world == null || !world.isOnline) {
       return const CloudPullResult(skipped: true);
     }
-    var since = full ? 0 : world.cloudRevision;
+    return _pullFrom(worldId, full ? 0 : world.cloudRevision);
+  }
+
+  /// Sayfa döngüsü; dünyada ve pakette aynı. [onProgress] 0–1 arası: inen
+  /// revizyon / bulut başı.
+  Future<CloudPullResult> _pullFrom(
+    String scopeId,
+    int since, {
+    bool package = false,
+    void Function(double progress)? onProgress,
+  }) async {
     var applied = 0;
     var removed = 0;
     try {
       for (var round = 0; round < _maxRounds; round++) {
-        final raw = await _client.rpc('get_world_delta', params: {
-          'p_world': worldId,
-          'p_since': since,
-          'p_limit': _page,
-        });
+        final raw = await _client.rpc(
+          package ? 'get_package_delta' : 'get_world_delta',
+          params: {
+            package ? 'p_package' : 'p_world': scopeId,
+            'p_since': since,
+            'p_limit': _page,
+          },
+        );
         final delta = CloudDelta.fromJson(raw as Map<String, dynamic>);
         // Sunucu ilerlemediyse (damga zaten başta) tur biter.
         if (delta.revision <= since && delta.complete) break;
-        final res = await apply(worldId, delta);
+        final res = await apply(scopeId, delta, package: package);
         applied += res.applied;
         removed += res.removed;
         since = delta.revision;
+        if (delta.head > 0) onProgress?.call(since / delta.head);
         if (delta.complete) break;
       }
     } catch (e) {
       // Ağ / oturum hatası: damga uygulanan sayfaya kadar ilerledi, kalanı
       // bir sonraki tur getirir.
-      debugPrint('CloudPullService.pullWorld($worldId) aborted: '
+      debugPrint('CloudPullService pull($scopeId) aborted: '
           '${isOfflineError(e) ? 'offline' : e}');
-      return CloudPullResult(applied: applied, removed: removed, error: e);
+      return CloudPullResult(
+          applied: applied, removed: removed, revision: since, error: e);
     }
-    return CloudPullResult(applied: applied, removed: removed);
+    return CloudPullResult(applied: applied, removed: removed, revision: since);
+  }
+
+  // ── Faz 5c — bu cihazda olmayan dünya ────────────────────────────────────
+
+  /// Bu kullanıcının bulutta olup bu cihazda olmayan dünyaları.
+  ///
+  /// Sayacı 0 olan dünya listelenmez: aynası hiç yazılmamış (Faz 4'ten önce
+  /// yalnız multiplayer için yayınlanmış) bir dünyayı indirmek boş bir kabuk
+  /// verirdi.
+  Future<List<CloudWorld>> listCloudOnlyWorlds() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return const [];
+    final rows = await _client
+        .from('worlds')
+        .select('id, world_name, template_id, template_hash, '
+            'world_revisions(revision)')
+        .eq('owner_id', uid);
+    final local = {for (final w in await _db.worldsDao.getAll()) w.id};
+    return [
+      for (final r in rows)
+        if (!local.contains(r['id']) && _revisionOf(r['world_revisions']) > 0)
+          (
+            id: r['id'] as String,
+            name: r['world_name'] as String? ?? '',
+            templateId: r['template_id'] as String?,
+            templateHash: r['template_hash'] as String?,
+          ),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  /// Bulutta olup bu cihazda olmayan dünyayı indirir.
+  ///
+  /// **`worlds` satırı en son yazılır.** Satırlar sayfa sayfa iniyor; kabuk
+  /// yokken dünya hiçbir listede görünmüyor, dolayısıyla yarım inmiş bir
+  /// dünya açılamıyor. Açılabilseydi varsayılan ayarlarını "şimdi" damgasıyla
+  /// kaydeder, LWW'yi kazanır ve buluttaki gerçek ayarları (şema, mind map)
+  /// ezerdi. Yarıda kalan indirme yerelde iz bırakmaz — bir sonraki deneme
+  /// baştan.
+  ///
+  /// Push damgası indirmenin başlangıcına çekilir: inen satırlar ondan eski,
+  /// ilk açılışta buluta geri gönderilmezler.
+  Future<CloudPullResult> downloadWorld(
+    CloudWorld world, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null || await _db.worldsDao.getById(world.id) != null) {
+      return const CloudPullResult(skipped: true);
+    }
+    final cutoff = DateTime.now();
+    var res = await _pullFrom(world.id, 0, onProgress: onProgress);
+    // Dünya görünmüyorsa (başka hesap, arada silinmiş) RPC hata atmıyor, boş
+    // ve "tamam" bir delta dönüyor — kabuk yazılsa boş bir dünya doğardı.
+    if (res.ok && res.revision == 0) {
+      res = CloudPullResult(error: StateError('World not found: ${world.id}'));
+    }
+    if (!res.ok) {
+      await _discard(world.id);
+      return res;
+    }
+    await _db.worldsDao.upsert(WorldsCompanion.insert(
+      id: world.id,
+      worldName: world.name,
+      ownerId: Value(uid),
+      templateId: Value(world.templateId),
+      templateHash: Value(world.templateHash),
+      isOnline: const Value(true),
+      cloudRevision: Value(res.revision),
+      lastCloudPushAt: Value(cutoff),
+    ));
+    return res;
+  }
+
+  /// Yarım inmiş dünyanın satırlarını siler. DAO'lardan **geçmez**: DAO
+  /// silmesi `sync_tombstones` bırakır ve bir sonraki push buluttaki gerçek
+  /// satırları silerdi.
+  Future<void> _discard(String worldId) async {
+    await _db.transaction(() async {
+      await _db.customStatement(
+        'DELETE FROM combat_conditions WHERE combatant_id IN '
+        '(SELECT c.id FROM combatants c JOIN encounters e '
+        'ON e.id = c.encounter_id WHERE e.world_id = ?)',
+        [worldId],
+      );
+      await _db.customStatement(
+        'DELETE FROM combatants WHERE encounter_id IN '
+        '(SELECT id FROM encounters WHERE world_id = ?)',
+        [worldId],
+      );
+      for (final t in mirrorTables) {
+        await _db.customStatement(
+            'DELETE FROM ${t.local} WHERE world_id = ?', [worldId]);
+      }
+    });
+  }
+
+  // ── Faz 5c — paket ───────────────────────────────────────────────────────
+
+  /// [packageId]'nin bulut aynasını yerele çeker — [pullWorld]'ün eşi, damga
+  /// `packages.cloud_revision`.
+  Future<CloudPullResult> pullPackage(String packageId,
+      {bool full = false}) async {
+    final pkg = await _db.packagesDao.getById(packageId);
+    if (pkg == null || !pkg.isOnline) {
+      return const CloudPullResult(skipped: true);
+    }
+    return _pullFrom(packageId, full ? 0 : pkg.cloudRevision, package: true);
+  }
+
+  /// Bu kullanıcının bulutta olup bu cihazda olmayan paketleri.
+  Future<List<CloudPackage>> listCloudOnlyPackages() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return const [];
+    final rows = await _client
+        .from('user_packages')
+        .select('id, name, revision')
+        .eq('owner_id', uid);
+    final local = {for (final p in await _db.packagesDao.getAll()) p.id};
+    return [
+      for (final r in rows)
+        if (!local.contains(r['id']) && ((r['revision'] as num?) ?? 0) > 0)
+          (id: r['id'] as String, name: r['name'] as String? ?? ''),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  /// Bulutta olup bu cihazda olmayan paketi indirir — [downloadWorld]'ün eşi.
+  ///
+  /// Paketin kendi satırı `get_package_delta`'nın son sayfasında geliyor ve
+  /// [apply] onu sayfanın en sonunda yazıyor: yarım inen paket hub'da hiç
+  /// görünmez. Yerelde paket adı UNIQUE; aynı adlı başka bir paket varsa
+  /// indirme hiç başlamaz ([CloudPackageNameTaken]).
+  Future<CloudPullResult> downloadPackage(
+    CloudPackage package, {
+    void Function(double progress)? onProgress,
+  }) async {
+    if (_client.auth.currentUser == null ||
+        await _db.packagesDao.getById(package.id) != null) {
+      return const CloudPullResult(skipped: true);
+    }
+    if (await _db.packagesDao.getByName(package.name) != null) {
+      return CloudPullResult(error: CloudPackageNameTaken(package.name));
+    }
+    final cutoff = DateTime.now();
+    var res = await _pullFrom(package.id, 0,
+        package: true, onProgress: onProgress);
+    if (res.ok && await _db.packagesDao.getById(package.id) == null) {
+      res = CloudPullResult(
+          error: StateError('Package not found: ${package.id}'));
+    }
+    if (!res.ok) {
+      await _db.transaction(() async {
+        for (final t in packageTables) {
+          await _db.customStatement(
+              'DELETE FROM ${t.local} WHERE ${t.scope} = ?', [package.id]);
+        }
+      });
+      return res;
+    }
+    await (_db.update(_db.packages)..where((p) => p.id.equals(package.id)))
+        .write(PackagesCompanion(
+      isOnline: const Value(true),
+      cloudRevision: Value(res.revision),
+      lastCloudPushAt: Value(cutoff),
+    ));
+    return res;
+  }
+
+  /// PostgREST bire-bir gömmeyi nesne, bazı sürümler tek elemanlı liste
+  /// olarak döndürüyor.
+  static int _revisionOf(Object? embed) {
+    final row = embed is List ? (embed.isEmpty ? null : embed.first) : embed;
+    final v = row is Map ? row['revision'] : null;
+    return v is num ? v.toInt() : 0;
   }
 
   /// Bir delta sayfasını yerele uygular — **ağ yok**, testin girdiği kapı
-  /// ([CloudPushService.collect]'in eşi).
+  /// ([CloudPushService.collect]'in eşi). [package] ise kapsam paket: tablolar
+  /// [packageTables], damga `packages.cloud_revision`.
   ///
   /// Sayfa ve damga **tek transaction**: yarıda kalan uygulama damgayı
   /// ilerletmez, aynı sayfa yeniden gelir.
-  Future<CloudPullApplied> apply(String worldId, CloudDelta delta) async {
+  Future<CloudPullApplied> apply(
+    String scopeId,
+    CloudDelta delta, {
+    bool package = false,
+  }) async {
     var applied = 0;
     var removed = 0;
+    // Paketin kendi satırı EN SON: çocuklardan önce yazılsaydı yarım inen
+    // paket hub listesinde görünürdü (push'ta tersine, FK yüzünden önce).
+    final tables = package
+        ? [...packageTables.skip(1), packageTables.first]
+        : mirrorTables;
     // Medya çözümü ağ değil ama dosya sistemi — transaction dışında yapılıyor
     // ki yazma kilidi disk I/O'su kadar açık kalmasın.
     final prepared = <MirrorTable, List<Map<String, Object?>>>{};
-    for (final t in mirrorTables) {
+    for (final t in tables) {
       final rows = delta.rowsOf(t.cloud);
       if (rows.isEmpty) continue;
       prepared[t] = [for (final r in rows) await _toLocal(t, r)];
     }
-    final combatants = delta.rowsOf('world_combatants');
+    final combatants =
+        package ? const <Map<String, dynamic>>[] : delta.rowsOf('world_combatants');
 
     await _db.transaction(() async {
       // Silmeler önce: aynı id silinip yeniden yaratıldıysa tazesi kalsın.
       for (final stone in delta.tombstones) {
-        if (await _applyTombstone(worldId, stone)) removed++;
+        if (await _applyTombstone(scopeId, stone)) removed++;
       }
       for (final e in prepared.entries) {
         for (final row in e.value) {
@@ -120,8 +319,13 @@ class CloudPullService {
       for (final row in combatants) {
         if (await _writeCombatant(row)) applied++;
       }
-      await (_db.update(_db.worlds)..where((w) => w.id.equals(worldId)))
-          .write(WorldsCompanion(cloudRevision: Value(delta.revision)));
+      if (package) {
+        await (_db.update(_db.packages)..where((p) => p.id.equals(scopeId)))
+            .write(PackagesCompanion(cloudRevision: Value(delta.revision)));
+      } else {
+        await (_db.update(_db.worlds)..where((w) => w.id.equals(scopeId)))
+            .write(WorldsCompanion(cloudRevision: Value(delta.revision)));
+      }
     });
     return CloudPullApplied(applied: applied, removed: removed);
   }
@@ -332,6 +536,7 @@ final Map<String, MirrorTable> _tableOf = {
 class CloudDelta {
   const CloudDelta({
     required this.revision,
+    this.head = 0,
     required this.complete,
     required this.tables,
     required this.tombstones,
@@ -339,6 +544,7 @@ class CloudDelta {
 
   factory CloudDelta.fromJson(Map<String, dynamic> json) => CloudDelta(
         revision: (json['revision'] as num?)?.toInt() ?? 0,
+        head: (json['head'] as num?)?.toInt() ?? 0,
         complete: json['complete'] as bool? ?? true,
         tables: {
           for (final e in (json['tables'] as Map? ?? const {}).entries)
@@ -355,6 +561,9 @@ class CloudDelta {
 
   /// Bu sayfanın kapsadığı en son revizyon — yeni damga.
   final int revision;
+
+  /// Bulutun o anki sayacı — ilerleme göstergesinin paydası.
+  final int head;
 
   /// Sunucu dünyanın başına kadar geldi mi. False ise istemci [revision] ile
   /// tekrar çağırır.
@@ -395,17 +604,41 @@ class CloudPullApplied {
   final int removed;
 }
 
+/// Bulutta olup bu cihazda olmayan bir dünya (Faz 5c).
+typedef CloudWorld = ({
+  String id,
+  String name,
+  String? templateId,
+  String? templateHash,
+});
+
+/// Bulutta olup bu cihazda olmayan bir paket (Faz 5c).
+typedef CloudPackage = ({String id, String name});
+
+/// Yerelde aynı adlı başka bir paket var — paket adı yerelde UNIQUE.
+class CloudPackageNameTaken implements Exception {
+  const CloudPackageNameTaken(this.name);
+  final String name;
+
+  @override
+  String toString() => 'Package name taken: $name';
+}
+
 /// Bir `pullWorld` turunun sonucu.
 class CloudPullResult {
   const CloudPullResult({
     this.applied = 0,
     this.removed = 0,
+    this.revision = 0,
     this.skipped = false,
     this.error,
   });
 
   final int applied;
   final int removed;
+
+  /// Turun ulaştığı bulut revizyonu.
+  final int revision;
   final bool skipped;
   final Object? error;
 
