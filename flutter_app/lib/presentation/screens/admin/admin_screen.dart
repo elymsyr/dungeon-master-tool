@@ -1093,9 +1093,10 @@ class _BannedTab extends ConsumerWidget {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
-/// R2 havuzu (10 GB, iki sınıf) — Supabase bucket'larından ayrı sayılır.
-/// `pinned` dolarsa yeni marketplace yayını reddedilir, `transient` dolarsa
-/// LRU en eskiyi atar; bu yüzden ikisi ayrı bar.
+/// R2 (tek toplam tavan, iki kullanıcı) — Supabase bucket'larından ayrı
+/// sayılır. Tavan dolunca hem yeni marketplace yayını hem multiplayer'a açılan
+/// dünyanın medyası reddedilir; barlar ikisinin payını aynı tavana göre
+/// gösteriyor.
 class _R2PoolSection extends ConsumerWidget {
   const _R2PoolSection();
 
@@ -1109,7 +1110,6 @@ class _R2PoolSection extends ConsumerWidget {
           style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
       data: (pool) {
         if (pool == null) return const SizedBox.shrink();
-        final oldest = pool.oldestLastUsed;
         return _AdminCard(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -1125,17 +1125,19 @@ class _R2PoolSection extends ConsumerWidget {
               _PoolBar(
                 label: L10n.of(context)!.adminPoolPinned,
                 used: pool.pinnedUsed,
-                cap: pool.pinnedCap,
+                cap: pool.capBytes,
                 subtitle: L10n.of(context)!.adminPoolPinnedSub('${pool.pinnedObjects}', formatBytes(pool.dedupSavedBytes)),
               ),
               const SizedBox(height: 12),
               _PoolBar(
-                label: L10n.of(context)!.adminPoolTransient,
-                used: pool.transientUsed,
-                cap: pool.transientCap,
-                subtitle: '${L10n.of(context)!.adminObjectCount('${pool.transientObjects}')}'
-                    '${oldest == null ? '' : ' · ${L10n.of(context)!.adminOldest(oldest.toLocal().toString().split('.').first)}'}'
-                    '${pool.evictQueueDepth == 0 ? '' : ' · ${pool.evictQueueDepth} queued for eviction'}',
+                label: L10n.of(context)!.adminPoolWorldMedia,
+                used: pool.worldMediaUsed,
+                cap: pool.capBytes,
+                subtitle: L10n.of(context)!.adminPoolWorldMediaSub(
+                        '${pool.worldMediaObjects}', '${pool.worldCount}') +
+                    (pool.evictQueueDepth == 0
+                        ? ''
+                        : ' · ${pool.evictQueueDepth} queued for eviction'),
               ),
             ],
           ),

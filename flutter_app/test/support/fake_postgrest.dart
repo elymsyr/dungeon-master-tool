@@ -22,13 +22,22 @@ class FakePostgrest {
   /// Gelen istekler, `"METHOD /yol"` biçiminde.
   final List<String> requests = [];
 
+  /// Aynı istekler ayrıntısıyla — sorgu, gövde ve içerik başlıkları.
+  final List<FakeCall> calls = [];
+
+  /// Sunucunun kökü — imzalı URL gibi başka uçları da buraya yönlendirmek için.
+  String get baseUrl => 'http://127.0.0.1:${_server.port}';
+
   static Future<FakePostgrest> start({required String uid}) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final client = SupabaseClient('http://127.0.0.1:${server.port}', 'test-key');
     final fake = FakePostgrest._(server, client);
     server.listen((req) async {
-      await utf8.decoder.bind(req).join();
+      final sent = await const Utf8Decoder(allowMalformed: true).bind(req).join();
       fake.requests.add('${req.method} ${req.uri.path}');
+      fake.calls.add(FakeCall(req.method, req.uri, sent,
+          contentType: req.headers.value(HttpHeaders.contentTypeHeader),
+          contentLength: req.headers.contentLength));
       final (status, body) = fake.replies.isEmpty
           ? (500, {'message': 'beklenmeyen istek: ${req.method} ${req.uri}'})
           : await fake.replies.removeAt(0)();
@@ -50,4 +59,16 @@ class FakePostgrest {
     await client.dispose();
     await _server.close(force: true);
   }
+}
+
+class FakeCall {
+  const FakeCall(this.method, this.uri, this.body,
+      {this.contentType, this.contentLength = -1});
+  final String method;
+  final Uri uri;
+  final String body;
+  final String? contentType;
+  final int contentLength;
+
+  Object? get json => jsonDecode(body);
 }

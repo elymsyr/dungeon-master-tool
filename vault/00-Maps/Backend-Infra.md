@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: backend
-updated: 2026-08-27
+updated: 2026-09-23
 tags: [moc]
 ---
 
@@ -11,16 +11,16 @@ tags: [moc]
 > Server side: Supabase Postgres (79 numbered migrations, RLS policies, RPC functions) + the Cloudflare R2 worker (asset/catalog/admin routes, JWT verify, RLS calls, platform rate limiting). The "Camera Host Services" analogue — everything the client talks to over the network.
 
 ## Key Files
-- [[worker]] (`cloudflare/src/worker.ts`) — routes: `/assets/*`, `/catalog/*`, `/transient/*`, `/admin/*`.
+- [[worker]] (`cloudflare/src/worker.ts`) — routes: `/assets/*`, `/catalog/*`, `/world-media/sign` (Faz 5d, presigned R2), `/admin/*`.
 - [[worker_jwt]] (`jwt.ts`) — Supabase token verification.
 - [[worker_rls]] (`rls.ts`) — RPC calls for access/quota checks.
 - [[wrangler_config]] (`wrangler.toml`) — R2 bucket, `[[ratelimits]]` binding'leri, env vars. Tüm rate limiting burada; KV sayacı 2026-09-21'de kaldırıldı.
 - [[migrations-auth-social]] — 001–005 backups/assets/social/marketplace.
 - [[migrations-online-worlds]] — 026 shared worlds + invites + realtime mirror.
-- [[migrations-media-storage]] — 053/065 free-media bucket + transient LRU pool.
+- [[migrations-media-storage]] — 053 free-media bucket, 089 pinned havuzu, **099 dünya medyası** (`world_media`, transient'in sökülmesi).
 - [[migrations-cloud-mirror]] — 094 satır bazlı bulut aynası, revizyon sinyali, tombstone, oyuncunun tek okuma kapısı.
 - [[migrations-security]] — 072/073 RLS hardening + revoke anon execute.
-- [[rpc-reference]] — key RPCs: `transient_reserve/touch/evict_pop`, `get_user_total_storage_used`, `is_admin`, `delete_my_account` (083).
+- [[rpc-reference]] — key RPCs: `world_media_reserve/confirm`, `r2_evict_pop`, `get_user_total_storage_used`, `is_admin`, `delete_my_account` (083).
 - Hesap silme: `/admin/purge-user` artık admin token'ın yanında **kendi JWT'siyle** de çağrılabilir; akışın tamamı [[account_deletion_service]].
 
 ## Data Flow

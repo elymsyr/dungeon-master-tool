@@ -1,17 +1,19 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 055_online_count_limits.sql, 060_asset_access_shared_world.sql, 065_transient_shared_pool.sql
+path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 055_online_count_limits.sql, 060_asset_access_shared_world.sql, 065_transient_shared_pool.sql, 089_media_pool_budgets.sql, 092_media_on_demand.sql, 099_world_media.sql
 layer: backend
 language: sql
 status: stable
-updated: 2026-09-07
+updated: 2026-09-23
 tags: [file]
 ---
 
 # `Migrations — Media Storage (3-Tier Model)`
 
 > [!abstract] Primary Purpose
+> **099 (Faz 5d) ile transient katman kalktı**, yerini dünya başına kalıcı `world_media` aldı — güncel model aşağıdaki "099" bölümünde ve [[Media-Storage-Tiers]]'ta; bu özet 053–065'in tarihçesi.
+>
 > Defines the three-tier media storage model and its server-side enforcement. **Free tier** (portraits, world/package covers) lives in a public Supabase Storage bucket and never counts toward quota. **Counted tier** lives in R2 with quota enforcement. **Transient tier** (storage-full / projection shares) lives under R2 `transient/` with no quota but a per-user 100 MB cap + global 10 GB LRU pool. Also adds per-user/per-world count limits and widens counted-asset read access to shared-world members.
 
 ## Inputs / Outputs
@@ -48,3 +50,11 @@ tags: [file]
 
 ## 088 — paylaşım gövdesi sınırları
 `entity_shares.payload_json` ≤ **512 KB** (`chk_entity_shares_payload_size`, NOT VALID — yeni yazmalarda tam zorlanır, mevcut tabloyu taramaz) ve dünya başına ≤ **4000** satır (`max_shares_per_world()` + `trg_enforce_world_share_limits` BEFORE INSERT; UPDATE saymaz ki rutin payload güncellemesi tam 4000'de patlamasın). `max_share_payload_bytes()` client pre-check'i için var — CHECK ifadesi fonksiyon çağıramaz, iki sabit birlikte değiştirilir. Doğrulama: `supabase/scripts/verify_088_089.sql`.
+
+## 099 — dünya medyası bulutta, transient kalktı (Faz 5d)
+- **`world_media`** `(world_id → worlds ON DELETE CASCADE, sha256, ext, bytes, kind, mime, uploaded, created_at)`, PK `(world_id, sha256)`, `idx_world_media_sha`. `ext` CHECK `^(\.[a-z0-9]{1,10})?$` (R2 key'inin parçası). RLS: üyeler okur, sahip siler; yazma yalnız RPC'den. Satır rezervasyonla `uploaded = false` doğar, onaysız satır imzalanmaz ama kotaya sayılır.
+- Sabitler: `media_total_cap_bytes()` **9 GB** (`pub/` + `worlds/` birlikte; 089'un iki havuz tavanının yerine), `world_media_user_cap_bytes()` **1 GB** (kullanıcının bütün dünyaları), `world_media_max_bytes(kind)`: `battle_map` 10 · `world_entity_image` 5 · `world_audio` 10 · `world_pdf` 20 MB, bilinmeyen tür NULL.
+- RPC'ler: `world_media_reserve(_world, _items)` (tek global `pg_advisory_xact_lock('media_reserve')` — `pub_asset_reserve` de aynısını alıyor; limiti aşan `too_large`'da, tavan aşımı partinin tamamını reddeder), `world_media_confirm`, `get_media_quota`, worker için `world_media_sign_put` / `world_media_sign_get` (service_role). Ortak sayaç `_media_usage(uid)` (istemciye kapalı).
+- **Kuyruk yeniden adlandırıldı:** `transient_evict_queue` → `r2_evict_queue` (index + sequence dahil), `uploader_id` düştü, `r2_key NOT NULL`. `trg_world_media_evict` (AFTER DELETE) her satırın key'ini yazar — tek tek silme, multiplayer kapatma, dünya ve hesap silme aynı yoldan. `r2_evict_pop` (id, r2_key) sınıfa göre canlılık bakar: `pub/` → `pub_assets`, `worlds/` → `world_media`.
+- **Söküm:** `transient_shares` (önce kalan objeleri kuyruğa atıp realtime yayınından çıkararak), `get_transient_access`, `transient_reserve/touch`, `transient_*_cap_bytes`, `pinned_pool_cap_bytes`, `report_missing_shas`, `max_missing_shas`, `world_members.missing_shas`. `drop_orphan_pub_asset`, `get_r2_pool_stats` (yeni biçim: `cap_bytes`, `pinned`, `world_media`) ve `get_asset_access` (yalnız yorum) yeniden tanımlandı.
+- Doğrulama: `supabase/scripts/verify_099.sql` (`099 OK`); `verify_088_089.sql` ve `verify_publish_media.sql` yeni kuyruk adına güncellendi.

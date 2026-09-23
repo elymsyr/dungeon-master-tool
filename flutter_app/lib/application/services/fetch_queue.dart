@@ -141,7 +141,7 @@ class FetchQueue {
   String? _shaOf(String uri) {
     // dmt-asset://{u}/{c}/{sha}.{ext}  → last segment'in noktadan önceki kısım
     // dmt-public://{u}/{sha}.{ext}     → aynı
-    // dmt-transient://{sha}.{ext}      → aynı
+    // dmt-content://{sha}.{ext}        → aynı
     final lastSlash = uri.lastIndexOf('/');
     final filename = lastSlash >= 0 ? uri.substring(lastSlash + 1) : uri;
     final dot = filename.indexOf('.');

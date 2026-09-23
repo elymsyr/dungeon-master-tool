@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/entity_media_cleanup_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -40,7 +40,7 @@ tags: [file]
 - **Per-method scopes:** character = refs collected from `Character.toJson()`; entity = refs from entity map; world = `_scopedRefs(counted+free = {worldId, campaignName})` plus optional `worldData` tree (backup path for mislabeled `campaign_id`/`scope_id`); package = scope `{packageName}`.
 - **`_deleteRefs`** core guard: for each ref, **skip if `_isReferencedElsewhere`** (delegates to `ReferenceGraph.isReferenced` — F2 O(1) `asset_refs` INDEX(uri); on scan error it returns `true` = safe, keep the object). Then route by `AssetRef`: `isCloud` → `asset.deleteAsset(key, keepCache:true)`; `isPublic` → `free.deleteFreeMedia(path, keepCache:true)`.
 - **Ordering invariant (critical, repeated in many docstrings):** all cleanup methods must run **after** the entity's Drift row / new ref is committed locally — otherwise the reference scan sees the entity's own stale ref and wrongly skips the delete.
-- **`cleanupReplacedRef`** / **`cleanupRemovedRef`** no-op when old ref empty, equals new ref, or is local/transient (not cloud/public).
+- **`cleanupReplacedRef`** / **`cleanupRemovedRef`** no-op when old ref empty, equals new ref, or is local/content (not cloud/public).
 
 ## Notes
 - Comments Turkish. Entire service is best-effort: every branch is try/caught with `debugPrint`, never throws, never blocks the local delete.

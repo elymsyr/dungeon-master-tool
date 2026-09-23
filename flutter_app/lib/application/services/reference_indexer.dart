@@ -14,7 +14,6 @@ import 'reference_graph.dart';
 /// Detect edilen şemalar:
 /// - `dmt-asset://...`  (R2 counted)
 /// - `dmt-public://...` (Supabase free-media)
-/// - `dmt-transient://...` (kısa-ömürlü)
 /// - `dmt-content://...` (içerik-adresli, tier'sız — Faz 3.5)
 ///
 /// Local raw path'ler şu an grafa GİRMEZ (legacy + F11 migrator onları
@@ -114,7 +113,6 @@ class ReferenceIndexer {
   static bool _isAssetRef(String s) {
     return s.startsWith(AssetRef.scheme) ||
         s.startsWith(AssetRef.publicScheme) ||
-        s.startsWith(AssetRef.transientScheme) ||
         s.startsWith(AssetRef.contentScheme);
   }
 

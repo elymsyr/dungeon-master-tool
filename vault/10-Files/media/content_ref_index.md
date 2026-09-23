@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_ref_index.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-22
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -18,7 +18,7 @@ tags: [file]
 **Inputs**
 - Constructor dep: `AppDatabase Function()` — **tembel** thunk.
 - Reads: `content_paths` yan tablosu; dosya sistemi (`stat`, akış hash'i).
-- Triggers: [[shared_media_courier]] `refFor`/`serve`, [[asset_ref_resolver]] content dalı.
+- Triggers: [[cloud_push_service]] ve `entity_share_prepare` (`refFor` — giden kopyada yol → ref), [[world_media_sync]] (yüklenecek sha'nın kaynak dosyası), [[asset_ref_resolver]] content dalı.
 
 **Outputs**
 - Public API: `refFor(path)`, `shaFor(path)`, `fileForSha(sha)`, `remember(sha, path)`, top-level `shaOfFile(path)`, `contentRefIndexProvider`.
@@ -27,7 +27,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[drift_database]]
-- Used by: [[shared_media_courier]], [[asset_ref_resolver]], [[missing_media_reporter]] (dolaylı)
+- Used by: [[cloud_push_service]], [[world_media_sync]], [[asset_ref_resolver]], [[cloud_pull_service]]
 - Domain map: [[Media-and-Assets]]
 - System flow: [[Media-Storage-Tiers]], [[Share-Broadcast-Flow]]
 - Spec: `docs/online-sync-redesign.md` §2.7 + §4.5
@@ -41,5 +41,6 @@ tags: [file]
 
 ## Notes
 - `asset_refs` ([[reference_graph]]) bu işi **yapamaz**: `ReferenceIndexer._isAssetRef` ham yolları kasten indekslemiyor (silinen yollar false-orphan üretirdi), orada yerel dosya diye satır yok. Belgedeki "DM `asset_refs`'ten çözer" cümlesi bu yüzden düzeltildi.
-- Yeni bir ref şeması eklerken gezilecek liste: [[asset_ref_resolver]], `reference_indexer.dart`, [[publish_media_pinner]], `eviction_sweeper.dart`, [[missing_media_reporter]].
+- Yeni bir ref şeması eklerken gezilecek liste: [[asset_ref_resolver]], `reference_indexer.dart`, [[publish_media_pinner]], `eviction_sweeper.dart`, [[cloud_push_service]] `mediaRefsOf`.
+- Faz 5d: `SharedMediaCourier.refFor` bu sınıfın `refFor`'unu sarmalamaktan ibaretti; courier silindi, çağıranlar doğrudan buraya geliyor.
 - Regresyon testi: `test/application/services/content_ref_index_test.dart` (bayat satır + silinen dosya + aynı baytlar iki yolda).

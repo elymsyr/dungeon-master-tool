@@ -19,9 +19,9 @@ binding = "R2_BUCKET"
 bucket_name = "dmt-assets"
 
 # ── Cron ─────────────────────────────────────────────────────────────────────
-# transient_evict_queue'yu boşaltır. Kuyruğa hem transient LRU kurbanları hem
-# refcount'u sıfırlanan pinned objeler düşer; kimse boşaltmazsa R2'da yetim
-# obje birikir. Saatte bir yeterli — silme gecikmesi kotayı etkilemez.
+# r2_evict_queue'yu boşaltır. Kuyruğa refcount'u sıfırlanan `pub/` objeleri ve
+# satırı silinen dünya medyası (`worlds/`) düşer; kimse boşaltmazsa R2'da yetim
+# obje birikir. Saatte bir yeterli — kota satırdan sayılıyor, objeden değil.
 [triggers]
 crons = ["0 * * * *"]
 
@@ -56,9 +56,12 @@ simple = { limit = 20, period = 60 }
 [vars]
 SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"
 MAX_UPLOAD_BYTES = "20971520"           # 20 MB per item
+# /world-media/sign'ın imzaladığı bucket. Hesap id'si ve S3 anahtar çifti
+# secret: `wrangler secret put R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` /
+# `R2_SECRET_ACCESS_KEY` (R2 → Manage API tokens → Object Read & Write, yalnız
+# bu bucket). Biri eksikse imza ucu 503 döner.
+R2_BUCKET_NAME = "dmt-assets"
 # İndirme/yükleme limitleri artık burada değil, yukarıdaki [[ratelimits]]
-# bloklarında. Talep-üzerine medya (Phase C) ile bir oyuncunun dünyaya ilk
-# katılışı paylaşılmış her kart görselini tek tek çekiyor; içerik-adresli
-# oldukları için her dosya bir kez inip kalıcı cache'leniyor, yani burst meşru
-# ve DL limiti ona göre geniş. Asıl tavan `transient_max_file_bytes` (dosya
-# başı 100 MB) ve havuz LRU'su.
+# bloklarında. Dünya medyası (Faz 5d) istek başına 100 sha imzalıyor; 200
+# görselli bir dünyanın yüklenmesi ~2 UL, bir oyuncunun katılışı birkaç DL
+# isteği tutar. Asıl tavanlar `world_media_reserve`'de (099).

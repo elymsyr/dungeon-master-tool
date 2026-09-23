@@ -2,19 +2,24 @@
 // DMT Assets — Cloudflare Worker entry
 // ============================================================================
 // Endpoint'ler:
-//   GET  /assets/{key}  → JWT + RLS + rate limit → R2 stream
-//   PUT  /assets/{key}  → JWT + prefix check + MIME allowlist → R2 put
-//   OPTIONS             → CORS preflight
+//   GET  /assets/{key}       → JWT + RLS + rate limit → R2 stream
+//   PUT  /assets/{key}       → JWT + prefix check + MIME allowlist → R2 put
+//   POST /world-media/sign   → JWT + tek RPC → N presigned R2 URL (Faz 5d)
+//   OPTIONS                  → CORS preflight
 //
 // R2 prefix sınıfları:
 //   {userId}/...            → RETIRED counted katmanı. GET çalışır (eski
 //                             kopyalar bir sürüm boyunca indirilebilsin),
 //                             PUT 410 döner. Bkz. docs/media-storage-redesign.md
 //                             "Göç" — sonraki sürümde prefix süpürülecek.
-//   transient/{userId}/...  → transient havuz (5 GB, LRU-atılır)
-//   pub/{sha}.{ext}         → pinned marketplace havuzu (5 GB, içerik-adresli,
+//   worlds/{worldId}/{sha}{ext} → multiplayer dünyanın medyası, dünya yaşadıkça
+//                             durur. Baytlar worker'dan GEÇMEZ: istemci
+//                             /world-media/sign ile imza alıp R2'ye gider.
+//   pub/{sha}.{ext}         → pinned marketplace havuzu (içerik-adresli,
 //                             dedup'lu, refcount 0 olunca silinir)
 //   catalog/...             → first-party içerik, public GET
+//
+// `worlds/` ve `pub/` tek toplam tavanı paylaşır (099, 9 GB).
 //
 // Metadata (community_assets tablosu) insert'i Flutter istemcisi yapar;
 // Worker DB'ye yazmaz. `pub/` istisnadır: rezervasyonu (pub_asset_reserve)
@@ -22,11 +27,13 @@
 // ============================================================================
 
 import { JwtError, verifyJwt } from './jwt';
+import { presignR2, type R2Credentials } from './presign';
 import {
   checkAssetAccess,
   checkPubUploadAllowed,
-  checkTransientAccess,
-  popTransientEvictQueue,
+  popEvictQueue,
+  worldMediaSignGet,
+  worldMediaSignPut,
 } from './rls';
 
 /// Platform rate limiter binding'i. Sayaç edge'de tutulur — KV write
@@ -43,14 +50,20 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   MAX_UPLOAD_BYTES: string;
-  // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep +
-  // /catalog/* write gate.
+  // wrangler secret put ADMIN_TOKEN — /admin/* + /catalog/* write gate.
   ADMIN_TOKEN?: string;
+  // Faz 5d — R2'nin S3 API'si için imza bilgileri. Hesap id'si ve bucket adı
+  // [vars]'ta; anahtar çifti `wrangler secret put` ile. Biri eksikse
+  // /world-media/sign 503 döner.
+  R2_ACCOUNT_ID?: string;
+  R2_BUCKET_NAME?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers':
     'Authorization, Content-Type, X-Content-SHA256, X-Asset-Kind',
   'Access-Control-Max-Age': '86400',
@@ -67,17 +80,26 @@ const CATALOG_LIMIT_PER_MIN = 300;
 const DL_LIMIT_PER_MIN = 600;
 const UL_LIMIT_PER_MIN = 20;
 
+// Dünya medyasının limiti burada değil: `world_media_reserve` (099) zorlar,
+// PUT imzası boyutu bağlar. Bu tablo yalnız `pub/` PUT'u için; sayılar aynı.
 const KIND_MAX_BYTES: Record<string, number> = {
   character_portrait: 4 * 1024 * 1024,
   world_cover: 4 * 1024 * 1024,
   package_cover: 4 * 1024 * 1024,
-  world_entity_image: 4 * 1024 * 1024,
-  package_entity_image: 4 * 1024 * 1024,
-  character_extra_image: 4 * 1024 * 1024,
+  world_entity_image: 5 * 1024 * 1024,
+  package_entity_image: 5 * 1024 * 1024,
+  character_extra_image: 5 * 1024 * 1024,
   battle_map: 10 * 1024 * 1024,
-  mind_map_image: 4 * 1024 * 1024,
-  world_pdf: 50 * 1024 * 1024,
+  mind_map_image: 5 * 1024 * 1024,
+  world_audio: 10 * 1024 * 1024,
+  world_pdf: 20 * 1024 * 1024,
 };
+
+// Tek imza isteğinde en çok bu kadar sha; istemci partiler hâlinde gelir.
+const SIGN_BATCH_MAX = 100;
+// İmzalı URL'in ömrü. Üyelikten çıkan biri elindeki URL'i en çok bu kadar
+// kullanabilir (belgede bilinçli sınır).
+const SIGN_TTL_SEC = 3600;
 
 const ALLOWED_MIME_PREFIXES = ['image/', 'audio/'];
 const ALLOWED_MIME_EXACT = new Set<string>([
@@ -89,6 +111,8 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
 const CATALOG_PATH_REGEX = /^\/catalog\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
+// Dünya id'si R2 key'inin parçası — yalnız güvenli karakterler.
+const WORLD_ID_REGEX = /^[A-Za-z0-9_-]{1,100}$/;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -120,14 +144,18 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
 
   // Admin / maintenance routes — Bearer ADMIN_TOKEN ile gated.
-  if (url.pathname === '/transient/evict-sweep') {
-    return handleTransientEvictSweep(request, env);
+  if (url.pathname === '/admin/evict-sweep') {
+    return handleEvictSweep(request, env);
   }
   if (url.pathname === '/admin/purge-all') {
     return handleAdminPurgeAll(request, env);
   }
   if (url.pathname === '/admin/purge-user') {
     return handleAdminPurgeUser(request, env);
+  }
+
+  if (url.pathname === '/world-media/sign') {
+    return handleWorldMediaSign(request, env);
   }
 
   // First-party content catalog — public read, admin-gated write.
@@ -146,19 +174,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return jsonResponse(400, { error: 'invalid_key' });
   }
 
-  const authHeader = request.headers.get('Authorization') ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return jsonResponse(401, { error: 'missing_token' });
-  }
-
-  let userId: string;
-  try {
-    const payload = await verifyJwt(authHeader.slice(7), env.SUPABASE_URL);
-    userId = payload.sub;
-  } catch (err) {
-    const reason = err instanceof JwtError ? err.reason : 'invalid_token';
-    return jsonResponse(401, { error: reason });
-  }
+  const userId = await authenticate(request, env);
+  if (userId instanceof Response) return userId;
 
   switch (request.method) {
     case 'GET':
@@ -187,16 +204,9 @@ async function handleDownload(
       // Marketplace medyası herkese açık içeriktir — listing'ler zaten anon
       // taranabiliyor (079). Kapı JWT'nin kendisi; per-obje RLS'i yok.
       allowed = true;
-    } else if (r2Key.startsWith('transient/')) {
-      // transient/{uploaderId}/{sha}.{ext} — community_assets satırı yok;
-      // erişim ortak dünya üyeliğiyle belirlenir.
-      const uploaderId = r2Key.split('/')[1] ?? '';
-      allowed = await checkTransientAccess(
-        env.SUPABASE_URL,
-        env.SUPABASE_SERVICE_ROLE_KEY,
-        userId,
-        uploaderId,
-      );
+    } else if (r2Key.startsWith('worlds/')) {
+      // Dünya medyası bu yoldan hiç servis edilmez — imzalı URL'le R2'den.
+      allowed = false;
     } else {
       allowed = await checkAssetAccess(
         env.SUPABASE_URL,
@@ -234,20 +244,13 @@ async function handleUpload(
   userId: string,
   r2Key: string,
 ): Promise<Response> {
-  // Transient objeler `transient/{userId}/...` altında; kalıcı objeler
-  // `{userId}/...` altında. Her iki halde de prefix JWT sub ile eşleşmeli.
-  // `pub/{sha}.{ext}` içerik-adresli olduğu için prefix'te userId taşımaz —
-  // yetkisi rezervasyon kontrolüyle verilir (aşağıda, sha doğrulandıktan
-  // sonra).
-  const isPinned = r2Key.startsWith('pub/');
-  const isTransient = r2Key.startsWith('transient/');
-  // Sayılan katman kaldırıldı: yeni obje yalnızca `transient/` ve `pub/`
-  // altına yazılır. Eski `{userId}/...` kopyaları GET ile inmeye devam eder.
-  if (!isPinned && !isTransient) {
+  // Bu yoldan yazılabilen tek prefix `pub/{sha}.{ext}`. İçerik-adresli olduğu
+  // için key'de userId yok — yetkisi rezervasyon kontrolüyle verilir (aşağıda,
+  // sha doğrulandıktan sonra). Dünya medyası imzalı URL'le doğrudan R2'ye
+  // gider; sayılan katman (`{userId}/...`) emekli, eski kopyaları GET ile
+  // inmeye devam eder.
+  if (!r2Key.startsWith('pub/')) {
     return jsonResponse(410, { error: 'counted_tier_retired' });
-  }
-  if (!isPinned && !r2Key.startsWith(`transient/${userId}/`)) {
-    return jsonResponse(403, { error: 'prefix_mismatch' });
   }
 
   if (!(await env.UL_RL.limit({ key: userId })).success) {
@@ -255,9 +258,7 @@ async function handleUpload(
   }
 
   // Effective limit = per-kind limit; bilinmeyen/eksik kind MAX_UPLOAD_BYTES
-  // ceiling'ine düşer (eski client + cloud backup item'ları). KIND_MAX_BYTES
-  // yetkilidir: world_pdf ceiling'in üstünde (50MB) — ceiling'i yükseltmek
-  // her kind'ı birden gevşetirdi.
+  // ceiling'ine düşer (eski client). KIND_MAX_BYTES yetkilidir.
   const ceilingBytes = parseInt(env.MAX_UPLOAD_BYTES, 10);
   const assetKind = request.headers.get('X-Asset-Kind') ?? '';
   const maxBytes = KIND_MAX_BYTES[assetKind] ?? ceilingBytes;
@@ -286,32 +287,30 @@ async function handleUpload(
     return jsonResponse(400, { error: 'missing_or_invalid_sha256' });
   }
 
-  if (isPinned) {
-    // Key içerik-adresli olmalı: `pub/{sha}.{ext}`. Aksi halde bir kullanıcı
-    // rezerve ettiği sha ile başka bir key'e yazabilirdi.
-    const pubName = r2Key.slice('pub/'.length);
-    const dot = pubName.indexOf('.');
-    const pubSha = (dot < 0 ? pubName : pubName.slice(0, dot)).toLowerCase();
-    if (pubSha !== sha256.toLowerCase() || pubName.includes('/')) {
-      return jsonResponse(400, { error: 'pub_key_sha_mismatch' });
-    }
-    let reserved: boolean;
-    try {
-      reserved = await checkPubUploadAllowed(
-        env.SUPABASE_URL,
-        env.SUPABASE_SERVICE_ROLE_KEY,
-        userId,
-        pubSha,
-      );
-    } catch (err) {
-      console.error('pub_reserve_check_failed', err);
-      return jsonResponse(502, { error: 'pub_reserve_check_failed' });
-    }
-    if (!reserved) {
-      // Cap'ler ve dedup rezervasyon RPC'sinde; buraya rezervasyonsuz gelmek
-      // ya eski client ya da kötü niyet demek.
-      return jsonResponse(403, { error: 'pub_not_reserved' });
-    }
+  // Key içerik-adresli olmalı: `pub/{sha}.{ext}`. Aksi halde bir kullanıcı
+  // rezerve ettiği sha ile başka bir key'e yazabilirdi.
+  const pubName = r2Key.slice('pub/'.length);
+  const dot = pubName.indexOf('.');
+  const pubSha = (dot < 0 ? pubName : pubName.slice(0, dot)).toLowerCase();
+  if (pubSha !== sha256.toLowerCase() || pubName.includes('/')) {
+    return jsonResponse(400, { error: 'pub_key_sha_mismatch' });
+  }
+  let reserved: boolean;
+  try {
+    reserved = await checkPubUploadAllowed(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY,
+      userId,
+      pubSha,
+    );
+  } catch (err) {
+    console.error('pub_reserve_check_failed', err);
+    return jsonResponse(502, { error: 'pub_reserve_check_failed' });
+  }
+  if (!reserved) {
+    // Cap'ler ve dedup rezervasyon RPC'sinde; buraya rezervasyonsuz gelmek
+    // ya eski client ya da kötü niyet demek.
+    return jsonResponse(403, { error: 'pub_not_reserved' });
   }
 
   if (!request.body) {
@@ -323,8 +322,7 @@ async function handleUpload(
     customMetadata: {
       uploader: userId,
       sha256: sha256.toLowerCase(),
-      ...(isTransient ? { transient: 'true' } : {}),
-      ...(isPinned ? { pinned: 'true' } : {}),
+      pinned: 'true',
     },
   });
 
@@ -347,10 +345,8 @@ async function handleDelete(
   if (r2Key.startsWith('pub/')) {
     return jsonResponse(403, { error: 'pinned_delete_forbidden' });
   }
-  const requiredPrefix = r2Key.startsWith('transient/')
-    ? `transient/${userId}/`
-    : `${userId}/`;
-  if (!r2Key.startsWith(requiredPrefix)) {
+  // Dünya medyasının silinmesi de satırın işi (world_media → kuyruk → sweep).
+  if (!r2Key.startsWith(`${userId}/`)) {
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
   await env.R2_BUCKET.delete(r2Key);
@@ -454,12 +450,10 @@ function checkAdminAuth(request: Request, env: Env): boolean {
   return header.slice(7) === expected;
 }
 
-// /transient/evict-sweep — transient_evict_queue'dan N satır al, R2'da sil.
-// Adı tarihsel: kuyruk artık hem transient LRU kurbanlarını hem refcount'u
-// sıfırlanan pinned objeleri (pub_asset_release) taşır.
-// Supabase transient_reserve LRU eviction sırasında satırları kuyruğa atar;
-// bu endpoint kuyruğu boşaltır (cron veya manuel tetik).
-async function handleTransientEvictSweep(
+// /admin/evict-sweep — r2_evict_queue'dan N satır al, R2'da sil. Kuyruğa
+// refcount'u sıfırlanan `pub/` objeleri ve satırı silinen dünya medyası
+// (`worlds/`) düşer. Asıl boşaltan saatlik cron; bu elle tetik.
+async function handleEvictSweep(
   request: Request,
   env: Env,
 ): Promise<Response> {
@@ -488,16 +482,14 @@ async function sweepEvictQueue(
   env: Env,
   limit: number,
 ): Promise<{ popped: number; deleted: number }> {
-  const popped = await popTransientEvictQueue(
+  const popped = await popEvictQueue(
     env.SUPABASE_URL,
     env.SUPABASE_SERVICE_ROLE_KEY,
     limit,
   );
   let deleted = 0;
   for (const row of popped) {
-    // Kuyruk artık transient'e özel değil: pinned düşüşleri tam key yazar.
-    const key =
-      row.r2_key ?? `transient/${row.uploader_id}/${row.sha256}${row.ext}`;
+    const key = row.r2_key;
     try {
       await env.R2_BUCKET.delete(key);
       deleted++;
@@ -568,9 +560,10 @@ async function handleAdminPurgeAll(
   });
 }
 
-// /admin/purge-user — belirli bir kullanıcının TÜM R2 objelerini siler.
-// Hesap silme / admin moderasyon akışında çağrılır. `{userId}/...` (permanent) +
-// `transient/{userId}/...` (transient) iki prefix ayrı ayrı sweep edilir.
+// /admin/purge-user — kullanıcının kullanıcı-prefix'li R2 objelerini siler.
+// Hesap silme / admin moderasyon akışında çağrılır. Yalnız emekli sayılan
+// katmanın `{userId}/...` prefix'i: dünya medyası (`worlds/`) hesap silinince
+// worlds CASCADE → world_media → kuyruk yoluyla zaten gidiyor.
 // Pattern: handleAdminPurgeAll cursor + batch delete, prefix-scoped.
 // Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN — VEYA sub'ı
 // `user_id`'ye eşit bir kullanıcı JWT'si (self-service hesap silme; kullanıcı
@@ -610,7 +603,7 @@ async function handleAdminPurgeUser(
   }
   const dry = new URL(request.url).searchParams.get('dry') === '1';
 
-  const prefixes = [`${userId}/`, `transient/${userId}/`];
+  const prefixes = [`${userId}/`];
   let totalListed = 0;
   let totalDeleted = 0;
   const batchSize = 200;
@@ -654,6 +647,133 @@ async function handleAdminPurgeUser(
     deleted: dry ? 0 : totalDeleted,
     dry,
   });
+}
+
+// POST /world-media/sign {op: 'put', world_id, shas} | {op: 'get', shas}
+// → {urls: {sha: url}, expires_in}. İzin TEK RPC ile, N sha birden; bayt
+// worker'dan geçmez. İzni olmayan sha haritada yoktur (hata değil).
+async function handleWorldMediaSign(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse(405, { error: 'method_not_allowed' });
+  }
+  const userId = await authenticate(request, env);
+  if (userId instanceof Response) return userId;
+
+  const creds = r2Credentials(env);
+  if (!creds) {
+    return jsonResponse(503, { error: 'presign_not_configured' });
+  }
+
+  let body: { op?: unknown; world_id?: unknown; shas?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch (_) {
+    return jsonResponse(400, { error: 'invalid_json' });
+  }
+  const shas = Array.isArray(body.shas)
+    ? [
+        ...new Set(
+          body.shas
+            .filter((s): s is string => typeof s === 'string')
+            .map((s) => s.toLowerCase()),
+        ),
+      ]
+    : [];
+  if (
+    shas.length === 0 ||
+    shas.length > SIGN_BATCH_MAX ||
+    !shas.every((s) => SHA256_HEX_REGEX.test(s))
+  ) {
+    return jsonResponse(400, { error: 'invalid_shas', max: SIGN_BATCH_MAX });
+  }
+
+  const urls: Record<string, string> = {};
+  try {
+    if (body.op === 'put') {
+      if (!(await env.UL_RL.limit({ key: userId })).success) {
+        return rateLimitedResponse(UL_LIMIT_PER_MIN, 60);
+      }
+      const worldId = typeof body.world_id === 'string' ? body.world_id : '';
+      if (!WORLD_ID_REGEX.test(worldId)) {
+        return jsonResponse(400, { error: 'invalid_world_id' });
+      }
+      const rows = await worldMediaSignPut(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        worldId,
+        shas,
+      );
+      for (const r of rows) {
+        urls[r.sha256] = await presignR2(
+          creds,
+          'PUT',
+          `worlds/${worldId}/${r.sha256}${r.ext}`,
+          SIGN_TTL_SEC,
+          { 'content-length': String(r.bytes), 'content-type': r.mime },
+        );
+      }
+    } else if (body.op === 'get') {
+      if (!(await env.DL_RL.limit({ key: userId })).success) {
+        return rateLimitedResponse(DL_LIMIT_PER_MIN, 60);
+      }
+      const rows = await worldMediaSignGet(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        shas,
+      );
+      for (const r of rows) {
+        urls[r.sha256] = await presignR2(
+          creds,
+          'GET',
+          `worlds/${r.world_id}/${r.sha256}${r.ext}`,
+          SIGN_TTL_SEC,
+        );
+      }
+    } else {
+      return jsonResponse(400, { error: 'invalid_op' });
+    }
+  } catch (err) {
+    console.error('world_media_sign_failed', err);
+    return jsonResponse(502, { error: 'sign_check_failed' });
+  }
+  return jsonResponse(200, { urls, expires_in: SIGN_TTL_SEC });
+}
+
+function r2Credentials(env: Env): R2Credentials | null {
+  const { R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } =
+    env;
+  if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    return null;
+  }
+  return {
+    accountId: R2_ACCOUNT_ID,
+    bucket: R2_BUCKET_NAME,
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+  };
+}
+
+/// `Authorization: Bearer <supabase jwt>` → kullanıcı id'si, ya da 401.
+async function authenticate(
+  request: Request,
+  env: Env,
+): Promise<string | Response> {
+  const authHeader = request.headers.get('Authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return jsonResponse(401, { error: 'missing_token' });
+  }
+  try {
+    const payload = await verifyJwt(authHeader.slice(7), env.SUPABASE_URL);
+    return payload.sub;
+  } catch (err) {
+    const reason = err instanceof JwtError ? err.reason : 'invalid_token';
+    return jsonResponse(401, { error: reason });
+  }
 }
 
 function isMimeAllowed(mime: string): boolean {

@@ -1522,7 +1522,6 @@
   "adminR2Pool": "CLOUDFLARE-R2-POOL",
   "adminPoolPinned": "angeheftet (Marketplace)",
   "adminPoolPinnedSub": "{count} Objekte · {size} durch Deduplizierung gespart",
-  "adminPoolTransient": "flüchtig (Freigaben, LRU)",
   "adminStorageSummary": "{count} Objekte in {buckets} Buckets",
   "adminQuotaUnavailable": "Kontingentgrenze nicht verfügbar",
   "adminByBucket": "NACH BUCKET",
@@ -2161,7 +2160,6 @@
   "spellsLeveledTitle": "Zauber (Grad {range})",
   "eraRenameStart": "Anfang umbenennen",
   "eraRenameEnd": "Ende umbenennen",
-  "adminOldest": "älteste {date}",
   "removeMemberBody": "{name} aus der Welt entfernen?",
   "thisPlayer": "diesen Spieler",
   "charsYours": "{count, plural, =1{Dein Charakter} other{Deine Charaktere}}",
@@ -2173,5 +2171,13 @@
   "contentArchiveImported": "{name} importiert",
   "contentArchiveImportedWithSkips": "{name} importiert — {count} Mediendateien übersprungen",
   "contentArchiveFailed": "Übertragung fehlgeschlagen: {error}",
-  "contentArchiveUnsupported": "Diese Datei wurde mit einer neueren Version erstellt. Bitte aktualisiere die App."
+  "contentArchiveUnsupported": "Diese Datei wurde mit einer neueren Version erstellt. Bitte aktualisiere die App.",
+  "adminPoolWorldMedia": "Weltmedien (Multiplayer)",
+  "adminPoolWorldMediaSub": "{count} Objekte · {worlds} Welten",
+  "multiplayerUploadingMedia": "Weltmedien werden hochgeladen {done}/{total}…",
+  "multiplayerQuotaExceeded": "Die Medien dieser Welt brauchen {need}, im Cloud-Speicher sind aber nur noch {left} frei. Entferne einige Bilder oder schalte Multiplayer in einer anderen Welt aus.",
+  "multiplayerTooLargeTitle": "Einige Dateien bleiben auf diesem Gerät",
+  "multiplayerTooLargeBody": "Diese Dateien überschreiten das Größenlimit (Karten 10 MB, andere Bilder 5 MB, Audio 10 MB, PDF 20 MB) und erreichen die Spieler nicht. Hier funktionieren sie weiter.",
+  "multiplayerMediaIncomplete": "Die Welt ist im Multiplayer, aber noch nicht alle Medien sind in der Cloud. Der Rest wird automatisch hochgeladen.",
+  "worldMediaNotSent": "Über dem Größenlimit, erreicht die Spieler nicht: {names}"
 }

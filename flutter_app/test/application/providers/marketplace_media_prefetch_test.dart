@@ -26,14 +26,14 @@ void main() {
     });
   });
 
-  test('skips local paths, art and transient refs', () {
+  test('skips local paths, art and content refs', () {
     // Local: indirende zaten kırık. Art: paket zip'iyle geliyor.
-    // Transient: LRU'ya tabi, yayına giremez.
+    // Content: dünyanın medyası, dünya silinince gider — yayına giremez.
     final refs = remoteMediaRefs({
       'a': '/home/eren/Pictures/map.png',
       'b': r'C:\maps\keep.jpg',
       'c': 'dmt-art://2f3c.webp',
-      'd': 'dmt-transient://abc.png',
+      'd': 'dmt-content://${'a' * 64}.png',
       'e': 'Goblin',
       'f': '',
       'g': 42,

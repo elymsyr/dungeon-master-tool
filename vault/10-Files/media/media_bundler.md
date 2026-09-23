@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/media_bundler.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-08
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -31,7 +31,7 @@ tags: [file]
 - System flow: [[Share-Broadcast-Flow]], `docs/media-storage-redesign.md`
 
 ## Key Logic / Variables
-- **Neden karakter istisna:** `world_characters` beş abone tablodan biri, karakter her zaman sync'tir; medyası oturum ortasında LRU'ya yem olmamalı. Bu yüzden ek resimler transient değil `pinned`.
+- **Neden karakter istisna:** `world_characters` beş abone tablodan biri, karakter her zaman sync'tir; medyası oturum ortasında LRU'ya yem olmamalıydı. Bu yüzden ek resimler transient değil `pinned` (transient Faz 5d'de tamamen kalktı).
 - **Refcount sahibi** `char:{characterId}` (`characterPinKey`). Karakter silinince `character_provider.delete` → `AssetService.releasePub(refKey)`; son ref gidince obje havuzdan düşer.
 - `ponytail:` aynı ref_key altında eski sha bırakılmıyor — kullanıcı resmini değiştirirse eskisi karakter silinene kadar refcount'ta kalır.
 - Zaten bulutta olan (local olmayan) ref'lere dokunulmaz; tek dosya hatası akışı kesmez (null → yerel yol korunur).

@@ -135,7 +135,7 @@ final adminStorageStatsProvider = FutureProvider.autoDispose<List<StorageBucketS
 });
 
 
-/// R2 havuz istatistikleri (pinned/transient) — Supabase bucket'larından ayrı.
+/// R2 istatistikleri (pinned / dünya medyası) — Supabase bucket'larından ayrı.
 final adminR2PoolStatsProvider = FutureProvider.autoDispose<R2PoolStats?>((ref) async {
   final isAdmin = await ref.watch(isAdminProvider.future);
   if (!isAdmin) return null;

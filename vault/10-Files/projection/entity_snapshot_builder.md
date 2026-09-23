@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/entity_snapshot_builder.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -16,7 +16,7 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- Args to `build()`: `Entity entity` (required), `WorldSchema schema` (required), `Map<String,Entity> entities` (for relation-id → name resolution), `Map<String,String> imageRemap` (projection injects transient AssetRefs without mutating the entity).
+- Args to `build()`: `Entity entity` (required), `WorldSchema schema` (required), `Map<String,Entity> entities` (for relation-id → name resolution), `Map<String,String> imageRemap` (projection injects `dmt-content://` refs without mutating the entity).
 - Reads: schema category (`fields`, `fieldGroups`, `color`, `name`), entity `fields`/`imagePath`/`images`/`description`/`source`/`tags`.
 - Supabase / CDC / events / triggers: none (pure).
 
@@ -36,9 +36,9 @@ tags: [file]
 - `FieldType.relation`: `extractRelationIds(raw)` → map each id to `entities[id]?.name`, drop unresolvable, join with `, ` (never shows a raw id).
 - `text`/`textarea`/`markdown`: passed through `stripMentions(_stringify(raw))`.
 - `groupLabel`: resolved from `cat.fieldGroups` by `field.groupId`.
-- Image paths: `[imagePath, ...images]` with `imageRemap[path] ?? path` applied to each (transient-ref swap without entity mutation).
+- Image paths: `[imagePath, ...images]` with `imageRemap[path] ?? path` applied to each (content-ref swap without entity mutation).
 - `_stringify`: recursive — String passthrough, num/bool `.toString()`, List join `, `, Map → `k: v` pairs joined `, `.
 - Output `EntitySnapshot`: id, name, categorySlug, categoryName (`cat?.name ?? slug`), categoryColorHex (`cat?.color ?? '#888888'`), description (mentions stripped), source, tags, imagePaths, fields.
 
 ## Notes
-- `imageRemap` exists specifically for quota-full transient refs that are deliberately not persisted onto the entity.
+- `imageRemap` exists specifically for projection-only content refs of still-local images, which are deliberately not persisted onto the entity (the DM's row keeps its local paths).

@@ -1300,15 +1300,15 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   }
 
   /// Projects this image node to the player screen. A still-local image is
-  /// pushed to the transient pool first so remote players resolve it; the
-  /// returned ref is used for this projection only.
+  /// put into the world's cloud media first so remote players resolve it;
+  /// the returned ref is used for this projection only.
   Future<void> _projectImageNode(BuildContext context) async {
     final initial = widget.node.imageUrl;
     if (initial == null || initial.isEmpty) return;
     var url = initial;
     final imageLabel = L10n.of(context)!.lblImage;
     try {
-      // Transient ref projeksiyona özel — node'a yazılmaz.
+      // İçerik ref'i projeksiyona özel — node'a yazılmaz.
       url = await projectableMapImage(ref.read, url);
       if (!mounted) return;
     } catch (_) {}

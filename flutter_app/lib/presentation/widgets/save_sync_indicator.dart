@@ -13,7 +13,6 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
-import '../../application/services/world_meta_sync.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
 import '../../application/providers/lan_sync_provider.dart';
@@ -466,31 +465,18 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     }
     setState(() => _busy = true);
     try {
-      // Dünyayı online yapmak artık içerik YÜKLEMEZ — sadece `worlds` satırı
-      // ve DM üyeliği. Görseller de burada değil, paylaşım anında (kart
-      // paylaşımı / projeksiyon) R2'ya çıkar; DM'in paylaşmadığı medyayı
-      // önden yüklemek gereksiz kota harcamasıydı.
-      final repo = ref.read(campaignRepositoryProvider);
-      final data = await repo.load(worldId);
-      final templateId =
-          (data['world_schema'] as Map?)?['schemaId'] as String?;
-      final templateHash = data['template_hash'] as String?;
-      await ref.read(worldMembershipServiceProvider).publishWorld(
-            worldId: worldId,
-            worldName: (data['world_name'] as String?) ?? worldId,
-            templateId: templateId,
-            templateHash: templateHash,
-          );
-      // Kart kimliği (açıklama/etiket/kapak) da çıksın — oyuncu dünyaya
-      // katıldığında hub kartı boş görünmesin.
-      final meta = data['metadata'];
-      if (meta is Map) {
-        await ref.read(worldMetaSyncProvider)?.push(
-              worldId: worldId,
-              metadata: Map<String, dynamic>.from(meta),
-            );
-      }
-      ref.read(onlineWorldIdsProvider.notifier).add(worldId);
+      // Faz 5d — multiplayer açmak dünyanın tamamını, medya dahil, buluta
+      // çıkarır. Gövde hub'daki ayar diyaloğuyla ortak.
+      final data = await ref.read(campaignRepositoryProvider).load(worldId);
+      if (!mounted) return;
+      final published = await turnMultiplayerOn(
+        context,
+        ref,
+        worldId,
+        data: data,
+        worldName: (data['world_name'] as String?) ?? worldId,
+      );
+      if (!published) return;
       ref.invalidate(worldOnlineStatusProvider(worldId));
       // First-publish path: the invite-code FutureProvider had already
       // resolved to null while the world was offline (NoOp branch /
@@ -507,21 +493,6 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
         debugPrint('makeOnline ensureInvite error: $e');
       }
       ref.invalidate(worldActiveInviteCodeProvider(worldId));
-      // publish_world inserts the DM `world_members` row, but the role
-      // providers had resolved to `none` while offline and stayed cached.
-      // Without this the in-world panel keeps role=none → no InviteCodeRow
-      // until the world is closed/reopened. Invalidate so role re-resolves
-      // to `dm` on the same tick the publish succeeds.
-      ref.invalidate(currentWorldRoleProvider);
-      ref.invalidate(worldRoleProvider(worldId));
-      // Faz 4 — bayrak yerelde de duruyor: push kararı çevrimdışıyken de
-      // verilebilmeli. Ardından ilk tam tur: dünyanın tamamı buluta çıkar.
-      await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, true);
-      final res = await ref
-          .read(cloudPushPumpProvider)
-          .push(full: true, worldId: worldId);
-      debugPrint('makeOnline ilk push: ${res.pushed} satır, '
-          '${res.rejected.length} red, hata: ${res.error}');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context)!.worldNowOnline)),

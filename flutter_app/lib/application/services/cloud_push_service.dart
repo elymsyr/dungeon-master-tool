@@ -9,8 +9,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import '../../domain/value_objects/media_kind.dart';
 import 'cloud_mirror_tables.dart';
-import 'shared_media_courier.dart';
+import 'content_ref_index.dart';
+import 'world_media_sync.dart';
 
 /// Faz 4 — yereldeki dünya satırlarını bulut aynasına gönderir.
 ///
@@ -35,7 +37,7 @@ class CloudPushService {
   CloudPushService({
     required AppDatabase db,
     required SupabaseClient client,
-    this.courier,
+    this.index,
   })  : _db = db,
         _client = client;
 
@@ -44,7 +46,7 @@ class CloudPushService {
 
   /// Yerel medya yollarını `dmt-content://{sha}` ref'ine çeviren dönüştürücü
   /// (Faz 3.5). Verilmezse satırlar yollarıyla gider — yalnız test yolu.
-  final SharedMediaCourier? courier;
+  final ContentRefIndex? index;
 
   /// Tek upsert'te giden satır sayısı. Bir parça reddedilirse suçluyu bulmak
   /// için tek tek denenir, o yüzden çok büyük olmamalı.
@@ -59,10 +61,15 @@ class CloudPushService {
   /// (§2.6). Kararı Dart verir, uygulamayı `get_shared_entities` yapar.
   /// Bir kategori bu haritada **yoksa** buluta `NULL` yazılır ve o kart
   /// oyuncuya hiç dönmez; "sır yok" demek için boş liste gerekir.
+  ///
+  /// [beforeRows] satırlar gönderilmeden önce, bu turun satırlarının andığı
+  /// medyayla çağrılır (Faz 5d): öbür cihaz satırı gördüğünde baytlar
+  /// bulutta olsun. Hata atmamalı — medya yüklenemese de satırlar gider.
   Future<CloudPushResult> pushWorld(
     String worldId, {
     Map<String, List<String>> dmOnlyKeys = const {},
     bool full = false,
+    Future<void> Function(Map<String, WorldMediaRef> refs)? beforeRows,
   }) async {
     final world = await _db.worldsDao.getById(worldId);
     if (world == null || !world.isOnline) {
@@ -81,7 +88,9 @@ class CloudPushService {
     final revs = <int>[];
     try {
       deleted = await _sendTombstones(worldId);
-      for (final batch in await collect(worldId, since, dmOnlyKeys)) {
+      final batches = await collect(worldId, since, dmOnlyKeys);
+      await beforeRows?.call(mediaRefsOf(batches));
+      for (final batch in batches) {
         await _upsert(batch.table, batch.rows, rejected, revs);
         pushed += batch.rows.length;
       }
@@ -111,6 +120,13 @@ class CloudPushService {
     return CloudPushResult(
         pushed: pushed, deleted: deleted, rejected: rejected);
   }
+
+  /// Dünyanın **bütün** satırlarındaki medya — ağ yok. Tam uzlaştırma
+  /// (eksik yükleme + yetim temizliği) ve "multiplayer aç"ın ön hesabı için;
+  /// dönüşüm push'unkiyle aynı olsun diye aynı toplayıcıdan geçer.
+  Future<Map<String, WorldMediaRef>> worldMediaRefs(String worldId) async =>
+      mediaRefsOf(await collect(
+          worldId, DateTime.fromMillisecondsSinceEpoch(0), const {}));
 
   /// Push'un geri aldığı revizyonlar [base]'in hemen ardından boşluksuz bir
   /// dizi mi? Öyleyse dizinin sonu döner, değilse null — araya başka bir yazar
@@ -472,7 +488,7 @@ class CloudPushService {
   /// değiştirir (Faz 3.5). Yerel satır yollarını korur; çeviri yalnız giden
   /// kopyada. Okunamayan dosya olduğu gibi bırakılır.
   Future<String> _contentRefs(String raw) async {
-    final c = courier;
+    final c = index;
     if (c == null) return raw;
     if (!raw.startsWith('{') && !raw.startsWith('[')) {
       return await c.refFor(raw) ?? raw;
@@ -486,7 +502,7 @@ class CloudPushService {
     }
   }
 
-  Future<Object?> _walk(Object? node, SharedMediaCourier c) async {
+  Future<Object?> _walk(Object? node, ContentRefIndex c) async {
     if (node is String) {
       if (node.isEmpty || !p.isAbsolute(node) || !AssetRef(node).isLocal) {
         return node;
@@ -509,6 +525,58 @@ class CloudPushService {
       ? DateTime.fromMillisecondsSinceEpoch(v * 1000, isUtc: true)
           .toIso8601String()
       : null;
+}
+
+/// Giden satırlardaki `dmt-content://` ref'leri → sha ve dünya medyası sınıfı
+/// (Faz 5d). Harita = dünya haritası ve dönemleri (`world_map_data`) ile savaş
+/// haritası (`world_encounters.map_path`); geri kalan her şey "diğer". Aynı
+/// sha iki yerde geçiyorsa büyük limit (harita) kazanır.
+Map<String, WorldMediaRef> mediaRefsOf(Iterable<CloudPushBatch> batches) {
+  final out = <String, WorldMediaRef>{};
+  for (final b in batches) {
+    final t = _mirrorByCloud[b.table];
+    if (t == null) continue;
+    final map = b.table == 'world_map_data' || b.table == 'world_encounters';
+    for (final row in b.rows) {
+      for (final c in t.mediaCols) {
+        _contentRefsIn(row[c], (sha, ext) {
+          final kind = worldMediaKindOf(ext, map: map);
+          if (out[sha] == null || kind == MediaKind.battleMap) {
+            out[sha] = WorldMediaRef(ext, kind);
+          }
+        });
+      }
+    }
+  }
+  return out;
+}
+
+final Map<String, MirrorTable> _mirrorByCloud = {
+  for (final t in mirrorTables) t.cloud: t,
+};
+
+/// Medya kolonunun değeri düz bir ref ya da JSON metni (galeri, alanlar,
+/// harita verisi); ikisi de gezilir.
+void _contentRefsIn(Object? v, void Function(String sha, String ext) add) {
+  if (v is String) {
+    if (v.startsWith('{') || v.startsWith('[')) {
+      try {
+        _contentRefsIn(jsonDecode(v), add);
+      } catch (_) {}
+      return;
+    }
+    final r = AssetRef(v);
+    final sha = r.isContent ? r.contentSha : null;
+    if (sha != null) add(sha, r.contentExt);
+  } else if (v is Map) {
+    for (final x in v.values) {
+      _contentRefsIn(x, add);
+    }
+  } else if (v is List) {
+    for (final x in v) {
+      _contentRefsIn(x, add);
+    }
+  }
 }
 
 /// Tek bir bulut tablosuna gidecek satırlar.

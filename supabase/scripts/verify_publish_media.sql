@@ -34,14 +34,14 @@ SELECT r.ref_key, count(*) AS asset_count,
 -- Editor'de oturum yok ('admin required'). Aynı toplamlar doğrudan:
 SELECT 'pinned' AS pool,
        COALESCE(SUM(bytes), 0) AS used_bytes,
-       public.pinned_pool_cap_bytes() AS cap_bytes,
+       public.media_total_cap_bytes() AS cap_bytes,
        count(*) AS object_count
   FROM public.pub_assets
 UNION ALL
-SELECT 'transient',
+SELECT 'world_media',
        COALESCE(SUM(bytes), 0),
-       public.transient_pool_cap_bytes(),
+       public.media_total_cap_bytes(),
        count(*)
-  FROM public.transient_shares;
+  FROM public.world_media;
 
-SELECT count(*) AS evict_queue_depth FROM public.transient_evict_queue;
+SELECT count(*) AS evict_queue_depth FROM public.r2_evict_queue;

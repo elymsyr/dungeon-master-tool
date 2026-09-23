@@ -10,7 +10,7 @@ import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_state.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import 'projection_output.dart';
-import 'shared_media_courier.dart';
+import 'world_media_sync.dart';
 
 /// Online projection output — mirrors the projection manifest into the
 /// `world_projection` Supabase table. Remote players receive the row via the
@@ -28,16 +28,18 @@ class ProjectionOutputOnline extends ProjectionOutput {
   ProjectionOutputOnline({
     required this.client,
     required this.worldId,
-    required this.courier,
+    required this.media,
   });
 
   final SupabaseClient client;
   final String worldId;
 
-  /// Yerel medyayı transient havuza çıkarır — bkz. [_withPublishedMedia].
-  final SharedMediaCourier courier;
+  /// Yerel medyayı dünyanın bulut medyasına çıkarır — bkz.
+  /// [withPublishedMedia]. Null ise (worker yapılandırılmamış) yollar olduğu
+  /// gibi gider.
+  final WorldMediaSync? media;
 
-  /// Yerel yol → transient ref (başarısızsa null). Instance ömrü boyunca
+  /// Yerel yol → `dmt-content://` ref (başarısızsa null). Instance ömrü boyunca
   /// bellekte: `_upsert` token sürüklemesinde saniyede ~8 kez çağrılıyor,
   /// aynı arka planı her turda yeniden hash'leyip yüklemek anlamsız.
   final Map<String, Future<String?>> _publishCache = {};
@@ -167,7 +169,7 @@ class ProjectionOutputOnline extends ProjectionOutput {
     try {
       final json = await withPublishedMedia(
         _stripNavState(state).toJson(),
-        _publishTransient,
+        _publishMedia,
       );
       await client.from('world_projection').upsert({
         'world_id': worldId,
@@ -185,8 +187,17 @@ class ProjectionOutputOnline extends ProjectionOutput {
   /// önbelleklenir: `_upsert` token sürüklemesinde saniyede ~8 kez
   /// çağrılıyor, aynı arka planı her turda yeniden hash'leyip yüklemek
   /// anlamsız.
-  Future<String?> _publishTransient(String localPath) =>
-      _publishCache[localPath] ??= courier.publish(worldId, localPath).then((r) {
+  ///
+  /// Satırlarda duran görsel (savaş haritası, kart görseli) push turunda zaten
+  /// yüklenmiştir — burada ağa çıkmadan ref'e döner. Yalnız hiçbir satırın
+  /// anmadığı görsel (paket kartının token'ı, düz görsel) yüklenir.
+  Future<String?> _publishMedia(String localPath) =>
+      _publishCache[localPath] ??= (media?.publish(worldId, localPath) ??
+              Future<String?>.value())
+          .catchError((Object e) {
+        debugPrint('ProjectionOutputOnline.publish $localPath: $e');
+        return null;
+      }).then((r) {
         if (r == null) {
           debugPrint('ProjectionOutputOnline: yerel medya yayınlanamadı, '
               'oyuncu çözemeyecek: $localPath');

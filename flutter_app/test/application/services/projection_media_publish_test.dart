@@ -45,7 +45,6 @@ void main() {
     final out = await withPublishedMedia(
       {
         'a': 'dmt-content://abc.png',
-        'e': 'dmt-transient://abc.png',
         'b': 'dmt-asset://u/c/def.png',
         'c': 'dmt-public://u/ghi.png',
         'd': 'dmt-art://jkl.webp',
@@ -58,7 +57,6 @@ void main() {
 
     expect(calls, isEmpty);
     expect(out['a'], 'dmt-content://abc.png');
-    expect(out['e'], 'dmt-transient://abc.png');
     expect(out['b'], 'dmt-asset://u/c/def.png');
   });
 
@@ -74,7 +72,6 @@ void main() {
   test('isProjectableLocalMedia yalnızca yerel resim yollarını seçer', () {
     expect(isProjectableLocalMedia('/w/media/a.png'), isTrue);
     expect(isProjectableLocalMedia(r'C:\w\media\a.JPEG'), isTrue);
-    expect(isProjectableLocalMedia('dmt-transient://a.png'), isFalse);
     expect(isProjectableLocalMedia('dmt-content://a.png'), isFalse);
     expect(isProjectableLocalMedia('Kara Şövalye'), isFalse);
     expect(isProjectableLocalMedia(''), isFalse);

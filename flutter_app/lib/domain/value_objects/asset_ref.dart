@@ -12,13 +12,9 @@
 /// - **Content (taşınabilir)**: `dmt-content://{sha256}.{ext}` — hiçbir
 ///   depolama katmanı adlandırmaz, yalnızca "şu bayt yığını". Her cihaz kendi
 ///   yolundan çözer: baytları yerelde olan (DM) `content_paths` yan tablosundan
-///   dosyayı bulur, olmayan (oyuncu / DM'in ikinci cihazı) transient havuzdan
-///   indirir. Tier adı taşımadığı için transient LRU'su ref'i öldürmez —
-///   kalıcı satırda durabilen tek içerik-adresli biçim budur.
-/// - **Transient (geçici)**: `dmt-transient://{sha256}.{ext}` — storage dolu
-///   iken oyunculara content-addressed paylaşım. Uploader id KASITLI olarak
-///   ref'te yok; oyuncu SHA ile local cache'i kontrol eder, uploader id
-///   `transient_shares` realtime event'inden gelir.
+///   dosyayı bulur, olmayan (oyuncu / DM'in ikinci cihazı) dünyanın bulut
+///   medyasından (`worlds/{worldId}/…`, Faz 5d) indirir. Kalıcı satırda
+///   durabilen tek içerik-adresli biçim budur.
 /// - **First-party art**: `dmt-art://{uuid}.webp` — `tool/art_gen` üretimi,
 ///   built-in/resmî paketlerin kart görselleri. Önce app bundle'ında
 ///   (`assets/art/srd/`), yoksa R2 catalog'unda (`{worker}/catalog/art/…`,
@@ -35,7 +31,6 @@ class AssetRef {
 
   static const String scheme = 'dmt-asset://';
   static const String publicScheme = 'dmt-public://';
-  static const String transientScheme = 'dmt-transient://';
   static const String contentScheme = 'dmt-content://';
   static const String artScheme = 'dmt-art://';
 
@@ -43,7 +38,6 @@ class AssetRef {
 
   bool get isCloud => raw.startsWith(scheme);
   bool get isPublic => raw.startsWith(publicScheme);
-  bool get isTransient => raw.startsWith(transientScheme);
   bool get isContent => raw.startsWith(contentScheme);
   bool get isArt => raw.startsWith(artScheme);
 
@@ -52,7 +46,6 @@ class AssetRef {
       raw.isNotEmpty &&
       !isCloud &&
       !isPublic &&
-      !isTransient &&
       !isContent &&
       !isArt;
 
@@ -64,39 +57,24 @@ class AssetRef {
   /// Yalnızca `dmt-public://` ref'ler için; aksi halde null.
   String? get publicPath => isPublic ? raw.substring(publicScheme.length) : null;
 
-  /// Transient ref'in SHA-256 hex'i; aksi halde null.
-  String? get transientSha =>
-      isTransient ? _bodyPart(transientScheme, ext: false) : null;
-
-  /// Transient ref'in uzantısı (nokta dahil, ör. `.png`); yoksa boş string.
-  String get transientExt =>
-      isTransient ? _bodyPart(transientScheme, ext: true) : '';
-
-  /// `dmt-content://` / `dmt-transient://` ref'in uzantısı (nokta dahil);
-  /// diğer biçimlerde boş string. İkisi de `{sha}{ext}` gövdesi taşır.
+  /// `dmt-content://` ref'in uzantısı (nokta dahil, ör. `.png`); diğer
+  /// biçimlerde ya da uzantısız gövdede boş string.
   String get contentExt {
-    if (isContent) return _bodyPart(contentScheme, ext: true);
-    if (isTransient) return _bodyPart(transientScheme, ext: true);
-    return '';
-  }
-
-  String _bodyPart(String scheme, {required bool ext}) {
-    final body = raw.substring(scheme.length);
+    if (!isContent) return '';
+    final body = raw.substring(contentScheme.length);
     final dot = body.indexOf('.');
-    if (dot < 0) return ext ? '' : body;
-    return ext ? body.substring(dot) : body.substring(0, dot);
+    return dot < 0 ? '' : body.substring(dot);
   }
 
   /// Şema'lı ref'lerin içerik hash'i (`dmt-asset://`, `dmt-public://`,
-  /// `dmt-transient://`, `dmt-content://` — hepsinde son segmentin adı
-  /// sha256'dır). Local path'lerde ve hash gibi görünmeyen ref'lerde null.
+  /// `dmt-content://` — hepsinde son segmentin adı sha256'dır). Local path'lerde ve hash gibi görünmeyen ref'lerde null.
   ///
   /// `ContentStore` bu sha ile adreslendiği için, ref'i çözmeden "bu asset'in
   /// baytları bende var mı" sorusunu cevaplamaya yarar (LAN sync bunu
   /// kullanıyor).
   String? get contentSha {
     final schemeEnd = raw.indexOf('://');
-    if (!isCloud && !isPublic && !isTransient && !isContent) return null;
+    if (!isCloud && !isPublic && !isContent) return null;
     final body = raw.substring(schemeEnd + 3);
     final lastSlash = body.lastIndexOf('/');
     final fileName = lastSlash >= 0 ? body.substring(lastSlash + 1) : body;
@@ -123,10 +101,6 @@ class AssetRef {
 
   /// `dmt-art://{uuid}.webp` string'i üretir.
   static String formatArtUri(String uuid) => '$artScheme$uuid.webp';
-
-  /// `dmt-transient://{sha}{ext}` string'i üretir. [ext] nokta dahil (`.png`).
-  static String formatTransientUri(String sha256, String ext) =>
-      '$transientScheme$sha256$ext';
 
   /// `dmt-content://{sha}{ext}` string'i üretir. [ext] nokta dahil (`.png`).
   static String formatContentUri(String sha256, String ext) =>

@@ -5,7 +5,7 @@ path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_w
 layer: backend
 language: sql
 status: stable
-updated: 2026-09-22
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -42,5 +42,5 @@ tags: [file]
 
 ## Notes
 - 094 ([[migrations-cloud-mirror]]) 026'nın aynasını satır bazlı olarak geri getirir: `world_entities` ve mind map tabloları yeniden kurulur, ama oyuncuya açılan policy'leri **yoktur** — okuma `get_shared_entities()` RPC'sinden geçer ve mind map sahipliği `map_id` konvansiyonu yerine `owner_id` kolonudur.
-- `transient_shares` (054) follows the same REPLICA IDENTITY FULL pattern so un-share/projection-drop DELETEs propagate.
+- `transient_shares` (054) followed the same REPLICA IDENTITY FULL pattern — dropped in 099 (Faz 5d), see [[migrations-media-storage]].
 - Member CDC and granular per-row mirroring are detailed in [[Sync-and-Realtime]] / [[Share-Broadcast-Flow]].

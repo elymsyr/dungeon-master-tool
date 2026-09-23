@@ -115,45 +115,43 @@ class StorageBucketStat {
       );
 }
 
-/// R2 havuzunun iki sınıfının anlık durumu — `get_r2_pool_stats()` (089).
-/// Supabase `storage.objects`'i sayan [StorageBucketStat]'ın R2 karşılığı;
-/// admin Storage sekmesi ikisini yan yana gösterir.
+/// R2'nin anlık durumu — `get_r2_pool_stats()` (099). İki kullanıcı tek
+/// toplam tavanı paylaşıyor: marketplace (`pub/`) ve dünya medyası
+/// (`worlds/`). Supabase `storage.objects`'i sayan [StorageBucketStat]'ın R2
+/// karşılığı; admin Storage sekmesi ikisini yan yana gösterir.
 class R2PoolStats {
   const R2PoolStats({
+    required this.capBytes,
     required this.pinnedUsed,
-    required this.pinnedCap,
     required this.pinnedObjects,
     required this.dedupSavedBytes,
-    required this.transientUsed,
-    required this.transientCap,
-    required this.transientObjects,
-    required this.oldestLastUsed,
+    required this.worldMediaUsed,
+    required this.worldMediaObjects,
+    required this.worldCount,
     required this.evictQueueDepth,
   });
 
+  final int capBytes;
   final int pinnedUsed;
-  final int pinnedCap;
   final int pinnedObjects;
   final int dedupSavedBytes;
-  final int transientUsed;
-  final int transientCap;
-  final int transientObjects;
-  final DateTime? oldestLastUsed;
+  final int worldMediaUsed;
+  final int worldMediaObjects;
+  final int worldCount;
   final int evictQueueDepth;
 
   factory R2PoolStats.fromJson(Map<String, dynamic> j) {
     final pinned = (j['pinned'] as Map?)?.cast<String, dynamic>() ?? const {};
-    final tr = (j['transient'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final wm = (j['world_media'] as Map?)?.cast<String, dynamic>() ?? const {};
     int n(Object? v) => (v as num?)?.toInt() ?? 0;
     return R2PoolStats(
+      capBytes: n(j['cap_bytes']),
       pinnedUsed: n(pinned['used_bytes']),
-      pinnedCap: n(pinned['cap_bytes']),
       pinnedObjects: n(pinned['object_count']),
       dedupSavedBytes: n(pinned['dedup_saved_bytes']),
-      transientUsed: n(tr['used_bytes']),
-      transientCap: n(tr['cap_bytes']),
-      transientObjects: n(tr['object_count']),
-      oldestLastUsed: DateTime.tryParse(tr['oldest_last_used'] as String? ?? ''),
+      worldMediaUsed: n(wm['used_bytes']),
+      worldMediaObjects: n(wm['object_count']),
+      worldCount: n(wm['world_count']),
       evictQueueDepth: n(j['evict_queue_depth']),
     );
   }
@@ -360,7 +358,7 @@ class AdminUsersRemoteDataSource {
     return (res as List).cast<Map<String, dynamic>>().map(StorageBucketStat.fromRow).toList();
   }
 
-  /// R2 havuz istatistikleri (`pinned` / `transient`) — admin Storage sekmesi.
+  /// R2 istatistikleri (`pinned` / `world_media`) — admin Storage sekmesi.
   Future<R2PoolStats> fetchR2PoolStats() async {
     final res = await _client.rpc('get_r2_pool_stats');
     return R2PoolStats.fromJson((res as Map).cast<String, dynamic>());

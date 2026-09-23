@@ -548,7 +548,8 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
 /// (aynı gerekçe: [PublishMediaPinner.isMediaRef]).
 ///
 /// Sadece cloud + public: local path indirende zaten kırık, `dmt-art://` paket
-/// kurulumunda zip ile geliyor, transient yayına giremez.
+/// kurulumunda zip ile geliyor, `dmt-content://` dünyanın medyası — yayına
+/// giremez.
 @visibleForTesting
 List<String> remoteMediaRefs(Object? payload) {
   final out = <String>{};

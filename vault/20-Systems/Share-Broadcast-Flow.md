@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-09-14
+updated: 2026-09-23
 tags: [system, sync, multiplayer]
 ---
 
@@ -44,8 +44,8 @@ Cihazdan cihaza taşıma artık [[LAN-Sync-Flow]]'un işi. Yerel Drift kaynak-do
 DM "Paylaş" der
   └─ shareEntityWithPlayers()            entity_share_prepare.dart
        ├─ ilişki kapanışı (transitive)   — bağlantılı kartlar da paylaşılır
-       ├─ _payloadWithTransientRefs      — yerel yollar → dmt-transient://{sha}{ext}
-       │     ├─ YÜKLEME YOK, KALICI YAZMA YOK ([[shared_media_courier]])
+       ├─ _payloadWithContentRefs        — yerel yollar → dmt-content://{sha}{ext}
+       │     ├─ YÜKLEME YOK, KALICI YAZMA YOK (baytlar dünyanın bulut medyasında — [[world_media_sync]])
        │     └─ redactDmOnly()            — dmOnly/private alanlar + dm_notes silinir
        └─ her kapanış üyesi için:
             EntityShareService.shareWithAll(
@@ -64,8 +64,8 @@ DM "Paylaş" der
 - **UYARI — linked kartlar kapsam dışı.** `payload_json = NULL` olduğundan gövde oyuncunun kurulu paketinden gelir; o paketteki `secrets` alanları zaten oyuncunun diskindedir. Paket dağıtımı ayrı bir problem.
 - **`payload_json = NULL` → linked (paket / built-in) kart.** Gövdesi oyuncunun kurulu paketinden gelir; kopyalamak fork-on-edit riski ve gereksiz trafik olurdu.
 - Görseller `AssetRef`'e çevrilmeden paylaşılırsa oyuncu çözemez (RLS yok, dosya sistemi yok). `ProjectionOutputOnline._warnRawPaths` debug'da bunu yakalar.
-- **Medya artık paylaşım anında yüklenmez (2026-09-08).** Payload içerik-adresli `dmt-transient://{sha}{ext}` taşır; baytlar DM'in diskinde kalır. Oyuncu çözemediği sha'ları `world_members.missing_shas`'e yazar ([[missing_media_reporter]] → `report_missing_shas`, migration 092), DM CDC ile görüp **yalnızca onları** yükler ([[shared_media_courier]]) — ve yalnızca `WorldSyncService.isSessionOpen` doğruysa. DM tek başına hazırlık yaparken havuza hiçbir şey girmez. Detay: `docs/media-storage-redesign.md` → "Phase C nasıl uygulandı".
-- DM kendi payload'ını geri yazmaz: [[world_mirror_applier]] rol DM ise gövde enjeksiyonunu atlar, aksi halde transient ref'ler DM'in yerel dosya yollarını ezerdi.
+- **Medya paylaşım anında yüklenmez.** Payload içerik-adresli `dmt-content://{sha}{ext}` taşır. 2026-09-08'den (Phase C) 5d'ye kadar baytlar talep üzerine akıyordu (`missing_shas` → DM'in açık cihazı → transient havuz); **Faz 5d (2026-09-23) ile** multiplayer dünyanın bütün medyası zaten R2'de (`worlds/{worldId}/…`), push turu yüklüyor ([[world_media_sync]]) ve oyuncu imzalı URL'le doğrudan çekiyor ([[asset_ref_resolver]]). DM çevrimdışıyken de görsel gelir; `missing_shas`, oturum kapısı ve presence kalktı. Bkz. [[Media-Storage-Tiers]].
+- DM kendi payload'ını geri yazmaz: [[world_mirror_applier]] rol DM ise gövde enjeksiyonunu atlar, aksi halde payload'ın içerik ref'leri DM'in yerel dosya yollarını ezerdi.
 - **Un-share = DELETE.** Applier gövdeyi de düşürür (`_removeSharedEntity`) — aksi halde oyuncuda erişilemez ama duran bir kopya kalırdı. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
 
 ## Paylaşım ne zaman tetiklenir

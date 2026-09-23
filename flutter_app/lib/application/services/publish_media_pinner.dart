@@ -104,15 +104,14 @@ class PublishMediaPinner {
   /// - `pub/` zaten pinned — tekrar yüklemek boşa RPC.
   /// - `dmt-art://` first-party katalog; R2 `catalog/` prefix'inde public durur,
   ///   havuza girmez, refcount'u yoktur.
-  /// - `dmt-transient://` / `dmt-content://` oturum medyasıdır; yayına giren
-  ///   bir şey transient havuza bağlı olamaz (LRU onu silebilir) — ama
-  ///   resolver çözebiliyorsa pinleriz.
+  /// - `dmt-content://` dünyanın medyasıdır; dünya silinince gider, yayına
+  ///   giren bir şey ona bağlı kalamaz — resolver çözebiliyorsa pinleriz.
   static bool isMediaRef(String raw) {
     if (raw.isEmpty || raw.length > 1024) return false;
     final ref = AssetRef(raw);
     if (ref.isArt) return false;
     if (ref.isCloud) return !raw.startsWith('${AssetRef.scheme}pub/');
-    if (ref.isPublic || ref.isTransient || ref.isContent) return true;
+    if (ref.isPublic || ref.isContent) return true;
     // Local path: yalnızca görsel uzantılı, ayırıcı içeren mutlak yollar.
     if (!raw.contains('/') && !raw.contains(r'\')) return false;
     final dot = raw.lastIndexOf('.');

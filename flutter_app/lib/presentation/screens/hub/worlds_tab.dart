@@ -778,7 +778,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // navigate so the route change happens in the same frame as the tap,
     // then run the heavy flush + file IO in [completeLoad]. Skeletons in
     // the affected tabs watch `activeCampaignLoadingProvider` for the
-    // transient state.
+    // in-between state.
     final notifier = ref.read(activeCampaignProvider.notifier);
     // Açılış-anı rol ipucunu seed et: worlds listesi kartı online world
     // için `worldRoleProvider(id)`'ı zaten watch etmiş → cache hazır.

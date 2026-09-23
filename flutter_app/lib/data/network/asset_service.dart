@@ -18,7 +18,9 @@ import '../../domain/value_objects/media_kind.dart';
 /// Yazılan iki prefix var; sayılan (`{uploader}/{campaign}/{sha}`) katman
 /// kaldırıldı (Phase D) — Worker o prefix'e PUT'u 410 ile reddediyor, GET
 /// bir sürüm boyunca çalışmaya devam ediyor:
-/// - `transient/{uploaderId}/{sha}{ext}` — DM'in paylaştığı medya, LRU.
+/// - `worlds/{worldId}/{sha}{ext}` — multiplayer dünyanın medyası (Faz 5d).
+///   Baytlar worker'dan geçmez: [signWorldMedia] toplu imza verir, istemci
+///   R2 ile doğrudan konuşur ([putSigned], [downloadSigned]).
 /// - `pub/{sha}{ext}` — marketplace + karakter medyası, refcount'lu, pinned.
 ///
 /// Download sonrası client SHA-256 doğrulaması yapar; mismatch → cache silinir.
@@ -28,10 +30,12 @@ class AssetService {
     required String workerBaseUrl,
     required ContentStore contentStore,
     HttpClient? httpClient,
+    Duration stall = const Duration(seconds: 30),
   })  : _supabase = supabase,
         _workerBaseUrl = workerBaseUrl.replaceAll(RegExp(r'/$'), ''),
         _store = contentStore,
-        _httpClient = httpClient ?? HttpClient();
+        _stall = stall,
+        _httpClient = httpClient ?? (HttpClient()..connectionTimeout = stall);
 
   final SupabaseClient _supabase;
   final String _workerBaseUrl;
@@ -40,91 +44,11 @@ class AssetService {
 
   static const int _maxDownloadRetries = 2;
 
+  /// Bağlantı kurulana, yanıt başlıkları gelene ya da bir sonraki bayt parçası
+  /// akana kadar en çok bu kadar beklenir. Sınırsız bekleyen tek bir istek
+  /// (yarı açık bağlantı) medya şeridini uygulama kapanana dek kilitliyordu.
+  final Duration _stall;
 
-  /// Storage-dolu geçici paylaşım: dosyayı `transient/{uid}/{sha}.{ext}`
-  /// key'ine yükler. `community_assets` satırı OLUŞTURULMAZ → sayılan
-  /// quota'ya gitmez. Bunun yerine `transient_reserve` RPC kontrol eder:
-  ///   • per-user cap 100 MB → aşarsa [TransientQuotaExceededException]
-  ///   • global pool 10 GB → en eski transient LRU ile silinir
-  /// Worker `transient/` prefix'inde counted-quota check'i atlar; gerçek
-  /// sınır per-user transient cap'tir. Dönen ref `dmt-transient://{sha}.{ext}`.
-  ///
-  /// [worldId] verilirse RPC'ye geçirilir (audit/scope için); şu an sunucu
-  /// tarafı kullanmıyor ama gelecekte dünya başına alt-cap için ayrılmış.
-  Future<Uri> uploadTransient(
-    File file, {
-    required MediaKind kind,
-    String? worldId,
-  }) async {
-    final user = _requireUser();
-    final token = _requireToken();
-
-    if (!await file.exists()) {
-      throw AssetServiceException('file_not_found', file.path);
-    }
-    final bytes = await file.readAsBytes();
-    if (bytes.length > kind.maxBytes) {
-      throw AssetServiceException(
-        'too_large',
-        '${bytes.length} > ${kind.maxBytes}',
-      );
-    }
-    final sha = sha256.convert(bytes).toString();
-    final ext = _extensionOf(file.path);
-    final mime = _guessMime(ext);
-    final r2Key = 'transient/${user.id}/$sha$ext';
-
-    // Reserve per-user transient capacity + trigger global LRU eviction.
-    // Server bytes'a göre kapasite hesaplar; başarısızsa upload yapma.
-    try {
-      await _supabase.rpc('transient_reserve', params: {
-        '_bytes': bytes.length,
-        '_world': worldId,
-      });
-    } on PostgrestException catch (e) {
-      final msg = e.message;
-      if (msg.contains('transient_per_user_full') ||
-          msg.contains('transient_file_too_large')) {
-        throw TransientQuotaExceededException(msg);
-      }
-      rethrow;
-    }
-
-    final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
-    final req = await _httpClient.putUrl(uri);
-    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-    req.headers.set(HttpHeaders.contentTypeHeader, mime);
-    req.headers.contentLength = bytes.length;
-    req.headers.set('X-Content-SHA256', sha);
-    req.headers.set('X-Asset-Kind', kind.wireName);
-    req.add(bytes);
-
-    final res = await req.close();
-    if (res.statusCode != 200) {
-      final body = await _readBody(res);
-      throw AssetServiceException(
-        'transient_upload_failed_${res.statusCode}',
-        body,
-      );
-    }
-    await res.drain<void>();
-
-    // SHA-cache'e de yaz — DM kendi gösterdiği resmi yeniden indirmesin.
-    await _store.write(
-      sha,
-      bytes,
-      ContentMetadata(
-        sha: sha,
-        sizeBytes: bytes.length,
-        createdAt: DateTime.now(),
-        lastAccessAt: DateTime.now(),
-        sourceUri: AssetRef.formatTransientUri(sha, ext),
-        kind: kind.wireName,
-      ),
-    );
-
-    return Uri.parse(AssetRef.formatTransientUri(sha, ext));
-  }
 
   /// Marketplace yayını için **pinned** upload: `pub/{sha}{ext}`.
   ///
@@ -159,7 +83,7 @@ class AssetService {
     }
     final sha = sha256.convert(bytes).toString();
     final ext = _extensionOf(file.path);
-    final mime = _guessMime(ext);
+    final mime = mimeOf(ext);
 
     final Map<String, dynamic> reserved;
     try {
@@ -214,64 +138,78 @@ class AssetService {
     await _supabase.rpc('pub_asset_release', params: {'_ref_key': refKey});
   }
 
-  /// Transient upload + `transient_shares` kaydı. Oyuncu, ref'teki SHA ile bu
-  /// tabloyu sorgulayıp `uploader_id`'yi bulur ([downloadTransient]). Dünya
-  /// başına aynı SHA için idempotent (re-share). [uploadTransient] gibi
-  /// quota'ya SAYILMAZ — storage dolu iken projeksiyon paylaşımı için.
-  Future<Uri> uploadTransientShare(
-    File file, {
-    required MediaKind kind,
-    required String worldId,
+  // ── Dünya medyası (Faz 5d) ─────────────────────────────────────────────
+
+  /// Worker'dan toplu imza: [shas] için ~1 saatlik R2 URL'leri. İzni olmayan
+  /// sha haritada **yer almaz** (hata değil). `put` yalnız dünyanın sahibine
+  /// ve rezerve edilmiş sha'lara ([worldId] zorunlu), `get` dünyanın
+  /// üyelerine ve yüklenmiş sha'lara verilir.
+  Future<Map<String, String>> signWorldMedia(
+    String op,
+    List<String> shas, {
+    String? worldId,
   }) async {
-    final bytes = await file.length();
-    final uri = await uploadTransient(file, kind: kind, worldId: worldId);
-    final ref = AssetRef(uri.toString());
-    final sha = ref.transientSha;
-    if (sha == null) return uri; // beklenmez — uploadTransient hep transient döner
-    final uid = _requireUser().id;
-    final ext = ref.transientExt;
-    final mime = _guessMime(ext);
-    await _supabase
-        .from('transient_shares')
-        .delete()
-        .eq('world_id', worldId)
-        .eq('uploader_id', uid)
-        .eq('sha256', sha);
-    await _supabase.from('transient_shares').insert({
-      'id': _uuidV4(),
-      'world_id': worldId,
-      'uploader_id': uid,
-      'sha256': sha,
-      'ext': ext,
-      'bytes': bytes,
-      'mime_type': mime,
-    });
-    return uri;
-  }
-
-  /// Geçici paylaşılan bir asset'i SHA ile cache-first indirir. Cache hit'te
-  /// (resim daha önce alındı veya aynı SHA'lı sayılan asset cache'li) sıfır
-  /// transfer. [downloadAsset] ile aynı SHA-cache'i (`cacheDir/assets/`)
-  /// kullanır.
-  Future<File> downloadTransient(
-    String sha256Hex,
-    String ext,
-    String uploaderId,
-  ) async {
-    final file = await downloadAsset('transient/$uploaderId/$sha256Hex$ext');
-    // LRU touch — server side last_used_at = now(). Fire-and-forget; başarısız
-    // olursa eviction politikası en kötü ihtimal bu satırı erken siler.
-    unawaited(_touchTransient(sha256Hex));
-    return file;
-  }
-
-  Future<void> _touchTransient(String sha) async {
-    try {
-      await _supabase.rpc('transient_touch', params: {'_sha': sha});
-    } catch (_) {
-      // best-effort
+    final token = _requireToken();
+    final req = await _httpClient
+        .postUrl(Uri.parse('$_workerBaseUrl/world-media/sign'));
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+    req.headers.contentType = ContentType.json;
+    req.write(jsonEncode({
+      'op': op,
+      'shas': shas,
+      'world_id': ?worldId,
+    }));
+    final res = await _guard(req, req.close, _stall);
+    final body = await _readBody(res);
+    if (res.statusCode == 429) throw AssetRateLimitException();
+    if (res.statusCode != 200) {
+      throw AssetServiceException('sign_${res.statusCode}', body);
     }
+    final urls = (jsonDecode(body) as Map)['urls'] as Map? ?? const {};
+    return {for (final e in urls.entries) '${e.key}': '${e.value}'};
   }
+
+  /// İmzalı URL'e PUT. `Content-Length` ve `Content-Type` imzaya bağlı:
+  /// rezervasyondaki değerlerle birebir aynı gitmeli, yoksa R2 403 döner.
+  Future<void> putSigned(
+    String url,
+    File file, {
+    required int bytes,
+    required String mime,
+  }) async {
+    final req = await _httpClient.putUrl(Uri.parse(url));
+    req.headers.set(HttpHeaders.contentTypeHeader, mime);
+    req.headers.contentLength = bytes;
+    // Gönderim tıkanırsa `addStream` de dönmez; süre boya göre — en yavaş
+    // 64 KB/sn'lik bir hat kabul.
+    final res = await _guard(req, () async {
+      await req.addStream(file.openRead());
+      return req.close();
+    }, _stall + Duration(seconds: bytes ~/ (64 * 1024)));
+    if (res.statusCode != 200) {
+      throw AssetServiceException('put_${res.statusCode}', await _readBody(res));
+    }
+    await res.drain<void>().timeout(_stall, onTimeout: () {});
+  }
+
+  /// [body] [limit] içinde bitmezse istek iptal edilir: `TimeoutException`.
+  Future<T> _guard<T>(
+    HttpClientRequest req,
+    Future<T> Function() body,
+    Duration limit,
+  ) =>
+      body().timeout(limit, onTimeout: () {
+        final e = TimeoutException('${req.method} ${req.uri.host}', limit);
+        req.abort(e);
+        throw e;
+      });
+
+  /// İmzalı URL'den indirip [ContentStore]'a yazar; sha doğrulanır. Ref
+  /// `dmt-content://` olarak kaydedilir — kartın satırı da onu taşıyor, yani
+  /// önbellek süpürmesi indirileni yetim sanmaz.
+  Future<File> downloadSigned(String url, String sha, String ext) =>
+      _downloadOnce(Uri.parse(url), null, sha,
+          AssetRef.formatContentUri(sha, ext));
 
   /// Cache-first download. SHA-256 doğrulaması yapar; mismatch → cache at + hata.
   /// Cache hit'te (yeni store veya legacy migrate) zero transfer.
@@ -286,7 +224,12 @@ class AssetService {
 
     for (int attempt = 0; attempt <= _maxDownloadRetries; attempt++) {
       try {
-        return await _downloadOnce(r2Key, token, expectedSha);
+        return await _downloadOnce(
+          Uri.parse('$_workerBaseUrl/assets/$r2Key'),
+          token,
+          expectedSha,
+          'dmt-asset://$r2Key',
+        );
       } on AssetRateLimitException {
         if (attempt == _maxDownloadRetries) rethrow;
         await Future<void>.delayed(Duration(seconds: 1 << attempt));
@@ -295,15 +238,18 @@ class AssetService {
     throw AssetServiceException('download_failed', r2Key);
   }
 
+  /// [token] null ise istek imzalı bir URL'e gidiyor, başlık gerekmez.
   Future<File> _downloadOnce(
-    String r2Key,
-    String token,
+    Uri uri,
+    String? token,
     String expectedSha,
+    String sourceUri,
   ) async {
-    final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
     final req = await _httpClient.getUrl(uri);
-    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-    final res = await req.close();
+    if (token != null) {
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+    }
+    final res = await _guard(req, req.close, _stall);
 
     if (res.statusCode == 429) {
       await res.drain<void>();
@@ -316,7 +262,7 @@ class AssetService {
 
     // Stream'i baytlara topla — store.write atomic rename + SHA verify yapar.
     final builder = BytesBuilder(copy: false);
-    await for (final chunk in res) {
+    await for (final chunk in res.timeout(_stall)) {
       builder.add(chunk);
     }
     final bytes = builder.takeBytes();
@@ -329,12 +275,12 @@ class AssetService {
           sizeBytes: bytes.length,
           createdAt: DateTime.now(),
           lastAccessAt: DateTime.now(),
-          sourceUri: 'dmt-asset://$r2Key',
+          sourceUri: sourceUri,
         ),
       );
     } on ContentStoreException catch (e) {
       if (e.code == 'sha_mismatch') {
-        throw AssetServiceException('sha256_mismatch', r2Key);
+        throw AssetServiceException('sha256_mismatch', sourceUri);
       }
       rethrow;
     }
@@ -412,7 +358,7 @@ class AssetService {
 
   Future<String> _readBody(HttpClientResponse res) async {
     try {
-      return await res.transform(utf8.decoder).join();
+      return await res.transform(utf8.decoder).join().timeout(_stall);
     } catch (_) {
       return '';
     }
@@ -436,7 +382,9 @@ class AssetService {
     return ext.isEmpty ? '.bin' : ext;
   }
 
-  static String _guessMime(String ext) {
+  /// Uzantı → MIME. Dünya medyasında rezervasyona yazılan ve PUT'ta gönderilen
+  /// değer bu — ikisi aynı fonksiyondan geldiği için imza tutuyor.
+  static String mimeOf(String ext) {
     switch (ext) {
       case '.png':
         return 'image/png';
@@ -453,6 +401,10 @@ class AssetService {
         return 'audio/ogg';
       case '.wav':
         return 'audio/wav';
+      case '.m4a':
+        return 'audio/mp4';
+      case '.flac':
+        return 'audio/flac';
       case '.gz':
         return 'application/gzip';
       case '.pdf':
@@ -460,23 +412,6 @@ class AssetService {
       default:
         return 'application/octet-stream';
     }
-  }
-
-  /// Basit UUID v4. `uuid` paketini import etmemek için el-yapımı.
-  /// Burada büyük bir randomness gereksinimi yok — Supabase PK olarak kullanılır.
-  static String _uuidV4() {
-    final rng = DateTime.now().microsecondsSinceEpoch;
-    final bytes = List<int>.generate(16, (i) => (rng >> (i * 2)) & 0xff);
-    // Additional entropy from microsecond drift
-    for (var i = 0; i < bytes.length; i++) {
-      bytes[i] ^= (DateTime.now().microsecondsSinceEpoch >> i) & 0xff;
-    }
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    String hex(int b) => b.toRadixString(16).padLeft(2, '0');
-    final s = bytes.map(hex).join();
-    return '${s.substring(0, 8)}-${s.substring(8, 12)}-'
-        '${s.substring(12, 16)}-${s.substring(16, 20)}-${s.substring(20)}';
   }
 }
 
@@ -526,22 +461,12 @@ class AssetRateLimitException implements Exception {
   String toString() => 'AssetRateLimitException';
 }
 
-/// `transient_reserve` RPC `transient_per_user_full` veya
-/// `transient_file_too_large` fırlattığında. Per-user 100 MB transient
-/// cap dolu ya da tek dosya cap üstü — caller "ekstra paylaşım alanın doldu"
-/// banner'ı gösterir.
-/// `pinned` havuzu (5 GB) ya da yayıncı payı (500 MB) dolu — yeni marketplace
-/// yayını reddedildi. Mevcut listing'ler etkilenmez.
+/// R2'nin toplam tavanı (9 GB, dünya medyasıyla ortak) ya da yayıncı payı
+/// (500 MB) dolu — yeni marketplace yayını reddedildi. Mevcut listing'ler
+/// etkilenmez.
 class PinnedQuotaExceededException implements Exception {
   PinnedQuotaExceededException(this.detail);
   final String detail;
   @override
   String toString() => 'PinnedQuotaExceededException: $detail';
-}
-
-class TransientQuotaExceededException implements Exception {
-  TransientQuotaExceededException(this.detail);
-  final String detail;
-  @override
-  String toString() => 'TransientQuotaExceededException: $detail';
 }

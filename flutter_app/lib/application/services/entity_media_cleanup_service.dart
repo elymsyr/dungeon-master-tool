@@ -59,7 +59,7 @@ class EntityMediaCleanupService {
   /// portreleri) `scope_id` worldId veya kampanya adı olabilir.
   ///
   /// [worldData] verilirse (silinen dünyanın yüklü JSON'u) ref'ler ayrıca o
-  /// ağaçtan da toplanır — Supabase scope sorgusu transient hata verirse veya
+  /// ağaçtan da toplanır — Supabase scope sorgusu geçici hata verirse veya
   /// asset yanlış `campaign_id`/`scope_id` ile etiketlenmişse yedek yol.
   Future<void> cleanupWorld({
     required String worldId,
@@ -94,7 +94,7 @@ class EntityMediaCleanupService {
     final old = oldRef?.trim() ?? '';
     if (old.isEmpty || old == (newRef?.trim() ?? '')) return;
     final r = AssetRef(old);
-    if (!r.isCloud && !r.isPublic) return; // local/transient → no-op
+    if (!r.isCloud && !r.isPublic) return; // local/content → no-op
     await _deleteRefs({old});
   }
 
@@ -108,7 +108,7 @@ class EntityMediaCleanupService {
     final raw = ref?.trim() ?? '';
     if (raw.isEmpty) return;
     final r = AssetRef(raw);
-    if (!r.isCloud && !r.isPublic) return; // local/transient → no-op
+    if (!r.isCloud && !r.isPublic) return; // local/content → no-op
     await _deleteRefs({raw});
   }
 

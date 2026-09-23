@@ -5,7 +5,7 @@ path: supabase/migrations/*.sql (CREATE FUNCTION catalog)
 layer: backend
 language: sql
 status: stable
-updated: 2026-08-27
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -35,11 +35,13 @@ tags: [file]
 - `check_asset_quota(p_user_id uuid, p_new_bytes bigint, p_limit bigint) → bool` — would this upload stay under quota? (002).
 - `get_user_total_storage_used(p_user_id uuid) → bigint` — cloud_backups + community_assets (+ posts/shared_items) total; **excludes** free_media + transient (002/003). `authenticated` + `service_role`.
 - `get_user_storage_used(p_user_id uuid) → bigint` — cloud_backups only (001).
-- `get_transient_access(p_user_id uuid, p_uploader_id uuid) → bool` — transient R2 readable? uploader OR shared-world member (054).
-- `transient_reserve(_bytes bigint, _world text) → jsonb` — pre-upload per-user 100 MB cap check + global 10 GB LRU eviction; returns `{ok, per_user_used, global_used, evicted}` (065). `authenticated`.
-- `transient_touch(_sha text) → void` — bump `last_used_at` (LRU) on download (065). `authenticated`.
-- `transient_evict_pop(_limit int default 20) → setof (id bigint, sha256 text, ext text, uploader_id uuid)` — drain evict queue, `FOR UPDATE SKIP LOCKED` (065). Worker `/transient/evict-sweep` calls it.
-- `transient_per_user_cap_bytes() → 100 MB`, `transient_pool_cap_bytes() → 10 GB` (IMMUTABLE constants, 065).
+- ~~`get_transient_access`, `transient_reserve`, `transient_touch`, `transient_evict_pop`, `transient_*_cap_bytes`, `report_missing_shas`~~ — **099'da silindi** (Faz 5d, transient havuz kalktı).
+- `world_media_reserve(_world text, _items jsonb) → jsonb` — yüklemeden önce: yalnız dünyanın sahibi; her öğe `{sha, ext, bytes, kind, mime}`; limiti aşan `too_large`'da döner (hata değil), zaten yüklü atlanır, rezerve edilip yüklenmemiş yeniden döner; kişi başı 1 GB (`media_user_full`) ya da toplam 9 GB (`media_pool_full`) aşılırsa hiçbir satır yazılmaz. Dönüş `{upload: [sha], too_large: [sha]}` (099). `authenticated`.
+- `world_media_confirm(_world text, _shas text[]) → int` — PUT'u biten sha'lar okunabilir olur (099). `authenticated`, yalnız sahip.
+- `get_media_quota() → jsonb` — `{user_used, user_cap, total_used, total_cap}`; "multiplayer aç"ın ön hesabı (099). `authenticated`.
+- `world_media_sign_put(p_user uuid, p_world text, p_shas text[])` / `world_media_sign_get(p_user uuid, p_shas text[])` — Worker'ın toplu imza izni, N sha tek sorgu (099). `service_role`.
+- `r2_evict_pop(_limit int default 20) → setof (id bigint, r2_key text)` — tahliye kuyruğunu boşaltır, `FOR UPDATE SKIP LOCKED`; obje o arada yeniden canlandıysa (`pub_assets` / `world_media` satırı var) satırı düşürür ama döndürmez (090 → 099). Worker cron'u ve `/admin/evict-sweep` çağırır.
+- `media_total_cap_bytes() → 9 GB`, `world_media_user_cap_bytes() → 1 GB`, `world_media_max_bytes(kind) → bigint | null` (IMMUTABLE, 099).
 
 ### Worlds / membership / invites
 - `is_world_member(world text) → bool`, `is_world_dm(world text) → bool`, `can_access_map(world,map text) → bool` (026). `authenticated`.
@@ -68,4 +70,4 @@ tags: [file]
 
 ## Notes
 - Convention: helper/admin/service RPCs are `REVOKE`d from `anon`/`authenticated` and granted only to the role that needs them; 072–074 enforce this globally (no `anon` EXECUTE on any DEFINER fn). See [[migrations-security]].
-- Worker-facing subset is exactly the 4 in [[worker_rls]] plus the transient caps.
+- Worker-facing subset is exactly the RPCs in [[worker_rls]] (`get_asset_access`, `get_pub_upload_allowed`, `r2_evict_pop`, `world_media_sign_put/get`).

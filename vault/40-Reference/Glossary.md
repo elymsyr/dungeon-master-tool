@@ -1,7 +1,7 @@
 ---
 type: reference
 domain: cross-cutting
-updated: 2026-06-09
+updated: 2026-09-23
 tags: [reference, glossary]
 ---
 
@@ -23,6 +23,6 @@ tags: [reference, glossary]
 - **Effect DSL** *(retired 2026-07-28)* — the former `effect/predicate/scalesWith/activation` row language on content, plus the parallel `granted_modifiers` DSL. Replaced by the grant block; existing data is converted by [[rule_effects_migration]].
 - **Hard ref / Soft ref** — uuid `_ref` (intra-pack, build-resolved) vs slug+name (cross-pack, runtime). See [[Ref-Resolution-Hard-vs-Soft]].
 - **Drift** — the local SQLite ORM (schema v12). See [[Data-Layer]].
-- **Free / Counted / Transient** — the three media tiers. See [[Media-Storage-Tiers]].
+- **Free / World media / Pinned** — the live media tiers (Counted retired in Phase D, Transient in Faz 5d). See [[Media-Storage-Tiers]].
 - **Projection / Second-screen** — DM→player output (4th output type). See [[Projection-Second-Screen]].
 - **Pack / Package** — installable content bundle (`.pkg.json`). Built by [[Content-Pipeline]].

@@ -7,8 +7,9 @@
 library;
 
 const int _kLimit4mb = 4 * 1024 * 1024;
+const int _kLimit5mb = 5 * 1024 * 1024;
 const int _kLimit10mb = 10 * 1024 * 1024;
-const int _kLimit50mb = 50 * 1024 * 1024;
+const int _kLimit20mb = 20 * 1024 * 1024;
 
 enum MediaKind {
   /// Karakterin ana portresi (`entity.imagePath`). Ücretsiz — quota'ya sayılmaz.
@@ -32,28 +33,30 @@ enum MediaKind {
     wireName: 'package_cover',
   ),
 
-  /// Dünya entity kartına atanan resim. Kullanıcının 100MB quota'sına sayılır.
+  /// Dünya entity kartına atanan resim. Dünya medyasında (Faz 5d) harita
+  /// olmayan her dosyanın sınıfı — `world_media_max_bytes` ile aynı sayı.
   worldEntityImage(
     counted: true,
-    maxBytes: _kLimit4mb,
+    maxBytes: _kLimit5mb,
     wireName: 'world_entity_image',
   ),
 
   /// Package entity kartına atanan resim. Quota'ya sayılır.
   packageEntityImage(
     counted: true,
-    maxBytes: _kLimit4mb,
+    maxBytes: _kLimit5mb,
     wireName: 'package_entity_image',
   ),
 
   /// Karakterin portre dışındaki ek resimleri (`entity.images[]`). Sayılır.
   characterExtraImage(
     counted: true,
-    maxBytes: _kLimit4mb,
+    maxBytes: _kLimit5mb,
     wireName: 'character_extra_image',
   ),
 
-  /// Battle map arkaplan resmi. Quota'ya sayılır.
+  /// Battle map arkaplan resmi. Dünya medyasında (Faz 5d) dünya haritası ve
+  /// savaş haritası bu sınıfta. Quota'ya sayılır.
   battleMap(
     counted: true,
     maxBytes: _kLimit10mb,
@@ -63,17 +66,22 @@ enum MediaKind {
   /// Mind map node resmi (kendi veya katılınan dünyada). Quota'ya sayılır.
   mindMapImage(
     counted: true,
-    maxBytes: _kLimit4mb,
+    maxBytes: _kLimit5mb,
     wireName: 'mind_map_image',
   ),
 
+  /// Dünyadaki ses dosyası (Faz 5d dünya medyası).
+  worldAudio(
+    counted: true,
+    maxBytes: _kLimit10mb,
+    wireName: 'world_audio',
+  ),
+
   /// Dünyanın PDF kütüphanesindeki bir doküman; world online yapıldığında
-  /// oyuncularla paylaşılır. Quota'ya sayılır. 50MB — tüm kind'lar içindeki
-  /// en yüksek tavan ve Worker `MAX_UPLOAD_BYTES` ceiling'inin (20MB)
-  /// üstünde; Worker per-kind limiti yetkili sayar.
+  /// oyuncularla paylaşılır. 20 MB — tüm kind'lar içindeki en yüksek tavan.
   worldPdf(
     counted: true,
-    maxBytes: _kLimit50mb,
+    maxBytes: _kLimit20mb,
     wireName: 'world_pdf',
   );
 

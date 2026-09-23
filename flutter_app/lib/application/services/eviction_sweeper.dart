@@ -94,9 +94,7 @@ class EvictionSweeper {
           // referanslı olup olmadığını bilemediğimiz için tut.
           continue;
         }
-        if (await _graph.isReferenced(uri) || await _siblingReferenced(uri)) {
-          continue;
-        }
+        if (await _graph.isReferenced(uri)) continue;
 
         try {
           await _store.delete(entry.sha);
@@ -130,21 +128,6 @@ class EvictionSweeper {
       _running = false;
     }
     return result;
-  }
-
-  /// Aynı baytlar iki ref biçimiyle de anılabilir: transient indirmesi meta'ya
-  /// `dmt-transient://{sha}{ext}` yazar, kartın satırı ise Faz 3.5'ten beri
-  /// `dmt-content://{sha}{ext}` taşır. Yalnız birebir string eşleşmeye bakmak
-  /// indirilen dosyayı orphan sanar — sil, yeniden indir, yine sil döngüsü.
-  Future<bool> _siblingReferenced(String uri) async {
-    final r = AssetRef(uri);
-    if (!r.isContent && !r.isTransient) return false;
-    final sha = r.contentSha;
-    if (sha == null) return false;
-    final other = r.isContent
-        ? AssetRef.formatTransientUri(sha, r.contentExt)
-        : AssetRef.formatContentUri(sha, r.contentExt);
-    return _graph.isReferenced(other);
   }
 
   /// Toplam cache size > [budgetBytes] ise en eski LRU dosyalardan sil.

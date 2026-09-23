@@ -923,7 +923,7 @@ class GuestPromotionService {
   /// the old prefix any more.
   ///
   /// `asset_refs` needs none of this and is not special-cased: its `uri` values
-  /// are scheme URIs (`dmt-asset://`, `dmt-public://`, `dmt-transient://`) and
+  /// are scheme URIs (`dmt-asset://`, `dmt-public://`, `dmt-content://`) and
   /// raw filesystem paths are kept out of that graph on purpose
   /// (`reference_indexer.dart`). What does carry absolute paths is JSON blobs
   /// and columns like `world_entities.image_path` — legacy values the F11

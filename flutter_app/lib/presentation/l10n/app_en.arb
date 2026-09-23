@@ -1852,7 +1852,6 @@
       }
     }
   },
-  "adminPoolTransient": "transient (shares, LRU)",
   "adminStorageSummary": "{count} objects across {buckets} buckets",
   "@adminStorageSummary": {
     "placeholders": {
@@ -3213,14 +3212,6 @@
   },
   "eraRenameStart": "Rename Start",
   "eraRenameEnd": "Rename End",
-  "adminOldest": "oldest {date}",
-  "@adminOldest": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
   "removeMemberBody": "Remove {name} from the world?",
   "@removeMemberBody": {
     "placeholders": {
@@ -3287,5 +3278,50 @@
       }
     }
   },
-  "contentArchiveUnsupported": "This file was created by a newer version. Update the app."
+  "contentArchiveUnsupported": "This file was created by a newer version. Update the app.",
+  "adminPoolWorldMedia": "world media (multiplayer)",
+  "adminPoolWorldMediaSub": "{count} objects · {worlds} worlds",
+  "@adminPoolWorldMediaSub": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "worlds": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerUploadingMedia": "Uploading world media {done}/{total}…",
+  "@multiplayerUploadingMedia": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerQuotaExceeded": "This world's media needs {need}, but only {left} of cloud space is left. Remove some images or turn multiplayer off in another world.",
+  "@multiplayerQuotaExceeded": {
+    "placeholders": {
+      "need": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerTooLargeTitle": "Some files stay on this device",
+  "multiplayerTooLargeBody": "These files are over the size limit (maps 10 MB, other images 5 MB, audio 10 MB, PDF 20 MB), so players won't see them. They keep working here.",
+  "multiplayerMediaIncomplete": "The world is multiplayer, but not all media reached the cloud yet. The rest uploads automatically.",
+  "worldMediaNotSent": "Over the size limit, won't reach players: {names}",
+  "@worldMediaNotSent": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  }
 }

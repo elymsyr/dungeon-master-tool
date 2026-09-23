@@ -3,10 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/entity_share_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
+import '../../application/providers/online_worlds_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/entity_share_prepare.dart';
+import '../../application/services/world_media_sync.dart';
+import '../../application/services/world_meta_sync.dart';
 import '../../core/utils/error_format.dart';
+import '../../core/utils/format_bytes.dart';
+import '../../data/database/database_provider.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../l10n/app_localizations.dart';
@@ -55,6 +63,131 @@ Future<void> seedAndAnnounceWorldContent(
       ],
     ),
   );
+}
+
+/// "Multiplayer aç"ın ortak gövdesi — iki giriş (dünya içi gösterge ve hub
+/// ayar diyaloğu) buradan geçer. Hub yolu bugüne kadar yerel bayrağı hiç
+/// açmıyordu: o yoldan multiplayer olan dünyanın satırları buluta çıkmıyordu.
+///
+/// Sıra (Faz 5d):
+///   1. Ön hesap — medyanın toplamı kalan kotaya sığmıyorsa hiçbir şey
+///      yayınlanmadan red; ne kadar yer gerektiği söylenir.
+///   2. `publish_world` + kart kimliği.
+///   3. Yerel bayrak + satırların tam push'u.
+///   4. Bütün medya, ilerleme overlay'inde. Ağ burada koparsa dünya yine
+///      multiplayer; pompa eksikleri arka planda yeniden dener.
+///   5. Limiti aşan dosyalar listelenir.
+///
+/// [data] dünyanın depodaki blob'u (`campaignRepository.load`). Dönen değer
+/// dünyanın yayınlanıp yayınlanmadığı; ön hesap reddi burada anlatılır, diğer
+/// hatalar çağırana çıkar.
+Future<bool> turnMultiplayerOn(
+  BuildContext context,
+  WidgetRef ref,
+  String worldId, {
+  required Map<String, dynamic> data,
+  required String worldName,
+}) async {
+  final l10n = L10n.of(context)!;
+  final messenger = ScaffoldMessenger.of(context);
+  final pushSvc = ref.read(cloudPushServiceProvider);
+  final media = ref.read(worldMediaSyncProvider);
+
+  if (pushSvc != null && media != null) {
+    final plan = await media.plan(await pushSvc.worldMediaRefs(worldId));
+    if (plan.bytes > 0) {
+      final quota = await media.quota();
+      if (plan.bytes > quota.remaining) {
+        messenger.showSnackBar(SnackBar(
+          content: Text(l10n.multiplayerQuotaExceeded(
+              formatBytes(plan.bytes), formatBytes(quota.remaining))),
+        ));
+        return false;
+      }
+    }
+  }
+
+  await ref.read(worldMembershipServiceProvider).publishWorld(
+        worldId: worldId,
+        worldName: worldName,
+        templateId: (data['world_schema'] as Map?)?['schemaId'] as String?,
+        templateHash: data['template_hash'] as String?,
+      );
+  // Kart kimliği (açıklama/etiket/kapak) da çıksın — oyuncu dünyaya
+  // katıldığında hub kartı boş görünmesin.
+  final meta = data['metadata'];
+  if (meta is Map) {
+    await ref.read(worldMetaSyncProvider)?.push(
+          worldId: worldId,
+          metadata: Map<String, dynamic>.from(meta),
+        );
+  }
+  ref.read(onlineWorldIdsProvider.notifier).add(worldId);
+  // `publish_world` DM üyeliğini yazdı; rol offline'ken `none`'a çözülüp
+  // önbellekte kalmıştı. Tazelenmezse push "DM değil" diye atlar.
+  ref.invalidate(currentWorldRoleProvider);
+  ref.invalidate(worldRoleProvider(worldId));
+
+  // Faz 4 — bayrak yerelde de duruyor: push kararı çevrimdışıyken de
+  // verilebilmeli. Ardından ilk tam tur: dünyanın satırları buluta çıkar.
+  await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, true);
+  final pump = ref.read(cloudPushPumpProvider);
+  final rows = await pump.push(full: true, worldId: worldId);
+  debugPrint('multiplayer açıldı $worldId: ${rows.pushed} satır, '
+      '${rows.rejected.length} red, hata: ${rows.error}');
+
+  // Faz 9 kuralı: kullanıcının başlattığı ve beklediği iş → overlay.
+  final loading = ref.read(globalLoadingProvider.notifier);
+  const task = 'multiplayer-media';
+  loading.start(LoadingTask(
+      id: task, message: l10n.multiplayerUploadingMedia('0', '…')));
+  WorldMediaReport? report;
+  var complete = true;
+  try {
+    report = await pump.syncWorldMedia(worldId, onProgress: (done, total) {
+      loading.update(task,
+          message: l10n.multiplayerUploadingMedia('$done', '$total'),
+          progress: total == 0 ? null : done / total);
+    });
+  } catch (e) {
+    complete = false;
+    debugPrint('multiplayer medya $worldId yarım kaldı: $e');
+  } finally {
+    loading.end(task);
+  }
+
+  if (!complete || (report?.failed.isNotEmpty ?? false)) {
+    messenger.showSnackBar(
+        SnackBar(content: Text(l10n.multiplayerMediaIncomplete)));
+  }
+  final tooLarge = report?.tooLarge ?? const <String>[];
+  if (tooLarge.isNotEmpty && context.mounted) {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.multiplayerTooLargeTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.multiplayerTooLargeBody),
+              const SizedBox(height: 12),
+              for (final name in tooLarge)
+                Text('• $name', style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.landingOk),
+          ),
+        ],
+      ),
+    );
+  }
+  return true;
 }
 
 /// Compact uppercase-style section heading shared by save&sync indicator

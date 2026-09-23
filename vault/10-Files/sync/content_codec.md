@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_codec.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-21
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -47,7 +47,7 @@ tags: [file]
 - **`_flushPending()`** — `buildManifest` / `loadItem` / `applyItem` girişinde `PendingWriteBuffer.flush()`. `combat_state` 500 ms, `mind_maps` 1000 ms, viewport 2000 ms gecikmeyle yazılıyor; eşleme o pencerede başlarsa payload da `worlds.updatedAt` de bayat okunuyor ve karşı cihaz taze veriyi eziyordu. Apply tarafında da gerekli — bekleyen yerel yazım apply'dan sonra fire edip geleni geri yazardı.
 - **Bölüm bazlı birleştirme** — dünya alıcıda da varsa `mergeWorldPayloads` (`world_merge.dart`) çağrılır; entity/session/`map_data` damgaları granüler tabloların `updated_at` sütunlarından, settings anahtarları blob içindeki `_section_updated_at`'ten (`_sectionStamps`). Damgalar `extras.section_stamps` ile taşınır. Birleşim sonrası `_restoreSectionStamps` satır damgalarını geri yazar — bulk `save()` hepsini `now()` yapıyor.
 - **`LocalMediaLocalizer.localizeWorldPayload`** — `loadItem` içinde, `_mediaFor`'dan önce. Veri kökü dışındaki ham yollar (`.../Downloads/map.png`) dünyanın `media/` klasörüne kopyalanır ve payload yeniden yazılır; değişiklik olduysa dünya kaydedilir. Bu olmadan battle map / mindmap resimleri taşınmıyordu, çünkü `_mediaFor` yalnız veri kökü altını tarıyor. Bu yalnız **onarım** geçişi: yeni seçimler zaten seçim anında koşulsuz kopyalanıyor (bkz. [[local_media_localizer]]).
-- `_collectContentBlobs` payload'daki `dmt-asset://` / `dmt-public://` / `dmt-transient://` ref'lerinin sha'sını çıkarıp (`AssetRef.contentSha`) `cache/content/{sha}.bin` blob'unu da medya listesine ekler. Online dünyada resim baytları dünya klasöründe değil bu önbellekte durduğu için, bunlar olmadan karşı cihazda görsel boş kalıyordu.
+- `_collectContentBlobs` payload'daki `dmt-asset://` / `dmt-public://` / `dmt-content://` ref'lerinin sha'sını çıkarıp (`AssetRef.contentSha`) `cache/content/{sha}.bin` blob'unu da medya listesine ekler. Online dünyada resim baytları dünya klasöründe değil bu önbellekte durduğu için, bunlar olmadan karşı cihazda görsel boş kalıyordu.
 - `fileSha256` akış üzerinden (`sha256.bind(file.openRead())`), dosya belleğe alınmaz.
 
 ## Notes

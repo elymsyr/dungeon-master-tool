@@ -12,7 +12,7 @@ String normalizeTemplateName(String raw) {
   return t.isEmpty ? builtinTemplateName : t;
 }
 
-/// Transient selection state for a hub-list filter dialog. Empty set on a
+/// Short-lived selection state for a hub-list filter dialog. Empty set on a
 /// dimension = no constraint. Within a dimension selections are OR'd; across
 /// dimensions AND'd. In-memory only — reset on app restart (not persisted).
 class HubFilter {
