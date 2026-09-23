@@ -28,25 +28,38 @@
 Her oturumun sonunda güncellenir: kartlardaki başlangıç durumundan bu masada ne
 değişti.
 
-*(Oturum 1 sonu)*
+*(Oturum 2 sonu)*
 
-- **Gümüşsu:** ayakta. Dönüşüm köye saldırdı, karakterler köyü kurtardı.
+- **Gümüşsu:** ayakta. Dönüşüm köye saldırdı, karakterler köyü kurtardı. Oturum 2'de
+  bir gece daha orada kaldılar.
 - **Kulübedeki üçlü:** dönüştü ve öldü; cesetler incelendi.
-- **Karakterlerin durumu:** **paladin hastalığı kaptı.**
+- **Argenfon:** Kavkı sorunu çözüldü — Kavkıları bir karışımla bayıltıp yakalamanın
+  yolu bulundu ve köylülere öğretildi. Kavkıların sığınağı **aranmadı**; yeri bilinmiyor.
+- **Karakterlerin durumu:** **paladin hastalığı kaptı** (Oturum 1). Paladin
+  Başkumandan Varhan'dan ceza aldı: Votumar'a dönecek, **1 yıl hapis**, ardından
+  yargılanma; yargılanmanın tarihi öne ya da geriye çekilebilir. Karakterler Lucid
+  Triton'da, Orvan Sancar'ın teklifini dinlemiş halde.
 - **Ölen / yer değiştiren NPC'ler:** Corvin karakterleri Gizli Liman'ın kapısına
-  getirdi ve soktu; kendisi içeri girmedi. Halim (Vorga) köyde görüldü; savaştan sonraki yeri
-  yazılmadı.
+  getirdi ve soktu; kendisi içeri girmedi. Halim (Vorga) Lucid Triton'da; karakterleri
+  Orvan'ın teklifine o çağırdı.
 - **Karakterlerin bildiği:** köyün klasik söylentileri · Umay'dan hastalar hakkında
   biraz bilgi · Duran'dan Corvin'in adı · hastalık eski bir kara vebaya benziyor, ve
   içinde büyü var: hastalar büyüyle **bir yere bağlı** gibi · Fare'den: limana üç
   yabancı geldi, geldiklerinde normal görünüyorlardı · Mine'dan: yüzüğü kendisinin eğelediği,
-  yüzüğün hikayesi ve mühür yüzünün çizimi · üçlü ***Kader*** gemisiyle geldi, gemi şu an limanda değil.
+  yüzüğün hikayesi ve mühür yüzünün çizimi · üçlü ***Kader*** gemisiyle geldi, gemi şu an limanda değil ·
+  Caelynn'den (30 altına): Sicim'deki kitabın bilgisi · Sicim'den: Kadife
+  hakkında bir miktar bilgi · Kavkıları bayıltan karışım · Meclis dinledi ve geri
+  çevirdi · Orvan'ın teklifi ve izlenecek yol (aşağıda).
 - **Karakterlerin elindeki eşya ve ipuçları:** **Mühürsüz Yüzük** (eğelenmiş, değerli,
   işi yapanın damgası yok) · Mine'ın çizdiği mühür.
-- **Açık iplikler:** Rıhtımın sol iskelesinde konuşan iki kişi — Kaptan Caelynn ve
-  Kadife; karakterler adlarını bilmiyor, ranger Kadife'nin bir kurumun adamı olduğunu
-  tahmin etti · paladinin hastalığı · Sicim ve limanın mal defteri henüz
-  görülmedi · Halim'in (Vorga) kimin adamı olduğu.
+- **Orvan'ın teklifi — izlenecek yol:** önce **Karşı-İmza Masası** → gizli kimliklerin
+  ve kıyafetlerin alınacağı yer → son imza için **Orvan'ın imzası** → ardından limandan
+  gemiyle açılma izni hazır. Karakterler teklife olumlu bakıyor; şimdilik kabul etmiş
+  sayılır, ama yola henüz çıkmadılar.
+- **Orvan'ın tavsiyesi:** hastalık hakkında daha çok bilgi için Ravenhall'a gitmeleri.
+- **Açık iplikler:** teklifin kesin kabulü ve yolu · Ravenhall · paladinin cezası (hapis /
+  yargılanma tarihi) ve teklifle çakışması · paladinin hastalığı · Kavkıların sığınağı ·
+  Kadife'nin kimin adamı olduğu · Sicim'in kitabı · *Kader* ve kaptanı · Mine'ın çizdiği mührün ne olduğu.
 
 ---
 
@@ -68,7 +81,68 @@ En yeni en üstte.
 **Tasarıma geri bildirim:** (masada işlemeyen / işleyen — aşağıdaki tabloya da yaz)
 -->
 
-### Oturum 1 — 2026-09-15
+### Oturum 2 — 2026-09-20
+
+**Nerede başladı:** Gizli Liman, rıhtımın orta bölümü; Caelynn ile Kadife görüş
+alanında.
+
+**Ne oldu:**
+
+*Gizli Liman*
+- Karakterler rıhtımda Kadife ile konuştu; ondan pek bilgi alamadılar. Kadife onları
+  durumu anlatmaları için **Meclis'e davet etti**.
+- Kaptan Caelynn ile konuştular; Kadife hakkında yine pek bir şey öğrenemediler.
+  **30 altın** karşılığında yalnız Sicim'deki kitabın bilgisini alabildiler — iyi
+  kazıklandılar.
+- Sicim'den Kadife hakkında bazı bilgiler aldılar; burada daha fazlasını
+  öğrenemeyeceklerini anlayınca limandan çıktılar.
+
+*Gümüşsu → Argenfon*
+- Gümüşsu'ya uğrayıp bir gece daha kaldılar, oradan Argenfon'a geçtiler.
+- Argenfon'da Kavkı sorununu çözdüler: Kavkıları bir karışımla bayıltıp yakalamanın
+  yolunu buldular ve köylülere öğrettiler. Kavkıların sığınağını aramadılar bile.
+
+*Votumar → Lucid Triton*
+- Votumar'a gittiler; önce **tutuklandılar**. Ardından durumla birlikte Başkumandan
+  Varhan'a, Lucid Triton'a gönderildiler.
+- Lucid Triton'da durumu Meclis'e anlattılar; **Meclis onları geri çevirdi**.
+- Başkumandan paladinle özel olarak konuştu: Votumar'a dönmesini emretti, **1 yıl hapis**
+  ve ardından yargılanma cezası verdi. Yargılanma bu süreçte öne ya da geriye
+  çekilebilir.
+- O sırada Halim (Vorga) karakterleri çağırdı: **Kapı Önündeki Teklif** — Orvan Sancar
+  onlara bir teklifte bulundu. Bunun için birkaç yere uğramaları gerekiyor: önce
+  Karşı-İmza Masası, ardından gizli kimliklerini ve kıyafetlerini alacakları yer, son
+  imza için Orvan'ın imzası; sonrasında limandan gemiyle açılma izni hazır olacak.
+  Orvan ayrıca hastalık hakkında daha çok bilgi için **Ravenhall'a** gitmelerini
+  tavsiye etti. Oyuncular teklife olumlu baktı; şimdilik kabul etmiş sayılırlar.
+  Oturum teklif sahnesinden sonra bitti.
+
+**Karşılaşılan NPC'ler ve tutumları:**
+- **Kadife** — ketum; bilgi vermedi, karakterleri Meclis'e davet etti.
+- **Kaptan Caelynn** — 30 altına tek bir bilgi sattı: Sicim'deki kitap.
+- **Sicim** — Kadife hakkında bir miktar bilgi verdi.
+- **Votumar** — karakterleri tutukladı, Lucid Triton'a gönderdi.
+- **Meclis** — dinledi, geri çevirdi.
+- **Başkumandan Varhan** — paladinle özel konuştu; 1 yıl hapis + yargılanma cezası.
+- **Halim (Vorga)** — karakterleri Orvan'ın teklifine çağırdı.
+- **Orvan Sancar** — Kapı Önündeki Teklif'i yaptı; hastalık için Ravenhall'ı tavsiye etti.
+
+**Karakterlerin öğrendiği:** yukarıdaki *Dünyanın bu masadaki hâli* → *Karakterlerin bildiği*.
+
+**Açık kalan:**
+- Orvan'ın teklifi: olumlu baktılar, kesin kabul ve yol (Karşı-İmza Masası → kimlik/kıyafet →
+  Orvan'ın imzası → gemi izni).
+- Paladinin cezası ve teklifle nasıl çakışacağı.
+- Paladinin hastalığı; Orvan'ın tavsiye ettiği Ravenhall.
+- Kavkıların sığınağı.
+- Kadife'nin kimin adamı olduğu; Sicim'in kitabı; *Kader* ve kaptanı; Mine'ın çizdiği mühür.
+
+**Sonraki oturum için DM notu:** oturum Lucid Triton'da, Kapı Önündeki Teklif'in hemen
+ardından açılır.
+
+**Tasarıma geri bildirim:** —
+
+### Oturum 1 — 2026-09-13
 
 **Nerede başladı:** Gümüşsu, akşam. Üç karakter köye varır.
 
