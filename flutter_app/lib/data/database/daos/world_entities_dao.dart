@@ -32,12 +32,16 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
           .watch()
           .distinct();
 
-  Future<void> upsert(WorldEntitiesCompanion row) =>
-      into(worldEntities).insertOnConflictUpdate(row);
+  /// Damga şart: companion `updated_at` taşımazsa ON CONFLICT onu eski
+  /// haliyle bırakır ve düzenleme push taramasına hiç düşmez.
+  Future<void> upsert(WorldEntitiesCompanion row) => into(worldEntities)
+      .insertOnConflictUpdate(row.copyWith(updatedAt: stampedNow(row.updatedAt)));
 
   Future<void> upsertAll(List<WorldEntitiesCompanion> rows) async {
     await batch((b) {
-      b.insertAllOnConflictUpdate(worldEntities, rows);
+      b.insertAllOnConflictUpdate(worldEntities, [
+        for (final r in rows) r.copyWith(updatedAt: stampedNow(r.updatedAt)),
+      ]);
     });
   }
 
