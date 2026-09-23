@@ -1,14 +1,13 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a, 4b, 5a, 5b ve 5c bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz
-5.5+ taslak. Migration 095–097 **deploy edildi** ve 5b'nin elle doğrulaması
-**yapıldı** (2026-09-23). 5c'de dünya indirme ve indirilen dünyada canlı
-düzenleme elle doğrulandı — ikincisi Faz 4a'dan kalan bir damga hatası
-düzeltildikten sonra (§4.9); görseller gelmiyor, karar bekliyor. 098 **deploy edildi** (2026-09-23);
-**paket adımları bekliyor**; liste
-[§4.8.2](#482-faz-5c--ikinci-cihazın-ilk-senkronu--bitti) sonunda. Son faz
-(9) işlem geri bildirimi.
+Faz 3.5, 4a, 4b, 5a, 5b ve 5c bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
+Migration 095–098 **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
+5c'de yalnız yarıda kalan indirme elle denenmedi. **Sıradaki: Faz 5d —
+dünya medyası bulutta** ([§4.8.3](#483-faz-5d--dünya-medyası-bulutta--sıradaki)):
+multiplayer açılınca görseller dahil dünyanın tamamı kalıcı olarak R2'ye
+çıkıyor, transient havuz kalkıyor. Sonra 5.5+ (taslak); son faz (9) işlem
+geri bildirimi.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -64,11 +63,12 @@ map'ini tutar, DM'in paylaştığı kartlara izinle erişir.
 | Paylaşım geri çekilirse | özellik eksiğe düşer, oyuncu DM'e sorar |
 | DM dünyayı silerse | export/import ile kullanıcıya bırakılıyor |
 | DM hesabını silerse | yapacak bir şey yok |
-| Multiplayer | hesap zorunlu, dünya online olmak zorunda |
+| Multiplayer | hesap zorunlu. **Dünya için online = multiplayer** — ayrı bir "online" kavramı yok (5d) |
+| Dünya medyası | multiplayer açılınca **hepsi** kalıcı olarak R2'de, dünya başına; transient havuz yok (5d) |
 | Çatışma | **son düzenleyen kazanır** (kilit yok) |
 | Senkron yöntemi | revizyon sinyali + artımlı çekme (**CDC değil**) |
 | Import / export | zip — dünya, paket, karakter |
-| Kota | kişi başı tek sayı (500 MB) |
+| Kota | satırlar: kişi başı tek sayı (500 MB, Faz 7); medya: kişi başı **1 GB** R2, dosya başı harita 10 MB / diğer görsel 5 MB (5d) |
 
 ---
 
@@ -520,6 +520,9 @@ yüklenmiyor. Yeni cihazda oyuncunun önbelleği boş:
 tavana daha sık çarpıyor. Medyanın önden yüklenmesi bir seçenek ama
 transient havuzunu (5 GB) büyütür — **ölçümden sonra karar** (Faz 8).
 
+> **Karar verildi (2026-09-23):** önden, kalıcı, dünya başına yükleme;
+> transient ve talep-üzerine akış kalkıyor. Bkz. Faz 5d (§4.8.3).
+
 ## 2.8 Çatışma — son düzenleyen kazanır
 
 Kilit **tercih edilmedi.** Gerekçe: kilit fikri LAN sync'in problemine
@@ -697,6 +700,11 @@ Medya altyapısı hazır, **neredeyse hiçbir şey değişmiyor:**
 | First-party | R2 `catalog/art/` | salt-okunur |
 
 Ayna **medya taşımıyor** — satırda ref, bayt ayrı yolda.
+
+> **5d ile değişiyor:** transient satırı yerine dünya başına kalıcı
+> `worlds/{worldId}/{sha}{ext}`; 5+5 GB bölmesi yerine tek toplam tavan +
+> kişi başı 1 GB (§4.8.3). Aşağıdaki "Üç iş"in 3. maddesi (LRU riski)
+> transient'le birlikte kalkıyor.
 
 ### Üç iş
 
@@ -882,12 +890,13 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy edildi; elle doğrulama bekliyor) |
 | ~~**5a**~~ | Dünya pull'u + echo guard + uzlaştırıcı | bulutta değişen satır yerele iniyor, döngü yok | evet | ✅ bitti (096 deploy edildi; elle doğrulama bekliyor) |
 | ~~**5b**~~ | Realtime sinyali + uzlaştırma anı + sunucu tarafı LWW | iki cihaz aynı dünyada **canlı** buluşuyor | evet | ✅ bitti (097 deploy edildi, elle doğrulandı) |
-| ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya adımları elle doğrulandı; paket adımları bekliyor) |
+| ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
+| **5d** | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | **sıradaki** (§4.8.3) |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
-| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.3) |
+| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.4) |
 
 ### Faz 2 nereye gitti
 
@@ -2138,7 +2147,8 @@ açılmadan önce push → pull (en çok 8 sn beklenir, sonra yerel haliyle aç�
   kurulu: `MissingMediaReporter` yalnız paylaşım olaylarında süpürüyor ve DM
   tarafı `missing_shas` olayını aynı uid'den gelince "kendim" sayıp
   (`isSelf`) yüklemiyor. §2.7'nin tablosu DM'in ikinci cihazını hiç
-  düşünmemiş ("DM → `content_paths`'ten yerel dosya"). Karar bekliyor.
+  düşünmemiş ("DM → `content_paths`'ten yerel dosya"). **Karar verildi:**
+  Faz 5d (§4.8.3) — medya kalıcı olarak bulutta, ikinci cihaz da oradan çeker.
 - **Paket canlı değil.** Açılışta uzlaşıyor; açıkken öbür cihazın düzenlemesi
   bir sonraki açılışta gelir. 8 sn'yi aşan pull arka planda biter, satırları
   yine Drift'e yazar ama açık paket onları görmez.
@@ -2171,17 +2181,155 @@ orada. Açılışta push loglarında **satır gitmemeli** (damga indirmenin baş
 **3. Paket indirme + pull.** Aynısı Paketler sekmesinde. Sonra A'da bir kartı
 düzenle ve bir kartı sil; B'de paketi aç: ikisi de yansımalı.
 
+> **Yapıldı (2026-09-23).**
+
 **4. Silme.** A'da online paketi sil: bulutta satır gitmeli
 (`select * from user_packages where id = '<id>'` boş). B'de o paketi aç,
 bir kartı düzenle → B'nin paketi **offline**'a düşmeli, bulutta yeniden
 belirmemeli.
 
+> **Yapıldı (2026-09-23).**
+
 **5. Yarıda kalan indirme.** İndirme sürerken ağı kes: dünya/paket listede
 **görünmemeli**; ağ gelince yeniden indirilebilmeli.
 
+> **Denenmedi — bilinen açık, test edilecek.** Testte (`cloud_download_test`)
+> karşılanıyor, elle denenmedi.
+
 ---
 
-## 4.8.3 Faz 5.5 ve sonrası — taslak
+## 4.8.3 Faz 5d — Dünya medyası bulutta — sıradaki
+
+*Kullanıcının kararı (2026-09-23): multiplayer açılınca dünyanın **tamamı**,
+görseller ve medya dahil, bulutta. Transient havuz ve talep-üzerine medya akışı
+kalkıyor. Bu bölüm plan; kod henüz yazılmadı.*
+
+### Sorun
+
+Medya bugün talep üzerine akıyor (§2.7, Phase C). Oyuncu eksik sha'yı
+`missing_shas`'e yazıyor, DM'in **açık** cihazı onu transient havuza
+yüklüyor. Bunun üç sonucu var:
+
+1. **DM'in ikinci cihazına görsel hiç gelmiyor** (5c el testi, §4.8.2). DM,
+   kendi uid'sinden gelen `missing_shas` olayını `isSelf` sayıyor ve
+   yüklemiyor.
+2. **DM çevrimdışıyken oyuncunun yeni cihazı görselsiz kalıyor** (§2.7
+   "bağlantılı tavan"). Faz 5.5 doğrudan buna çarpıyor.
+3. **Modelin bedeli ağır.** Transient LRU herkesin görselini atabiliyor. Buna
+   5+5 GB havuz bölmesi, rezervasyon, tahliye kuyruğu, 15 sn'lik yeniden
+   deneme döngüsü ve "oturum açık mı" kapısı ekleniyor. Hepsi DM'in
+   çevrimiçi olmasına dayanıyor.
+
+### Verilen kararlar
+
+| Konu | Karar |
+|---|---|
+| Online / multiplayer | **Aynı şey.** Dünya için ayrı bir "online" kavramı yok. "Multiplayer On" zaten `publishWorld` + `setOnline(true)` yapıyor; belgede ve UI'da tek ad kalır |
+| Multiplayer açılınca | Dünyanın tamamı buluta çıkar: satırlar (bugün de çıkıyor) **ve bütün medya**, kalıcı olarak |
+| Medyanın yeri | R2, **dünya başına**: `worlds/{worldId}/{sha}{ext}` |
+| Transient havuz | **Kalkıyor**: `transient/` prefix'i, LRU, `missing_shas` akışı |
+| Havuz bölmesi | 5+5 GB ayrımı yok, tek toplam tavan var |
+| Kişi başı medya | **1 GB**, kullanıcının bütün dünyalarının medyası toplamı |
+| Dosya başı limit | Harita **10 MB**, diğer görseller **5 MB** |
+| Limiti aşan dosya | **Yüklenmez** ve kullanıcıya söylenir; yerelde çalışmaya devam eder. Sıkıştırma sonraya kaldı (Faz 8) |
+| Oyuncunun izni | **Dünya üyeliği.** Sahip ve üyeler o dünyanın medyasını çekebilir |
+| Teslimat | Worker **toplu imza** verir, bayt worker'dan geçmez; istemci R2 ile doğrudan konuşur |
+
+**Hangi görsel "harita" sayılıyor.** Bu satırın tablosuna ve kolonuna
+bakılır: `world_map_data.data_json` (dünya haritası ve dönemleri) ile
+`world_encounters.map_path` (savaş haritası). Geri kalan her şey "diğer"
+sayılır. Aynı sha iki yerde de geçiyorsa büyük limit uygulanır.
+
+**İzin neden üyelik.** Kart bazlı izinde oyuncu yalnızca kendisine
+paylaşılan kartlardaki görseli çekebilirdi. Bunun için bir sha → kart indeksi
+gerekir ve her push'ta güncellenmesi lazım. Pratik fark yok: oyuncu bir sha'yı
+yalnızca kendisine paylaşılmış bir karttan öğrenebilir, tahmin edemez. Tek açık
+şu: paylaşım geri çekildikten sonra da o görseli çekebilir. Ama o görseli
+zaten görmüştü ve önbelleğinde duruyor. İki yol eşit olduğundan kullanıcının
+kuralı gereği üyelik seçildi. Bugünkü `get_transient_access` da zaten
+üyeliğe bakıyor.
+
+**Worker neden az.** Kullanıcının önceliği worker isteğini az tutmak. Bugün
+her görsel bir worker isteği ve bir Supabase RPC harcıyor (JWT →
+`get_transient_access` → R2 stream). 200 görselli bir dünyaya katılan oyuncu
+200 istek harcıyor, yükleme de aynı. Yeni yol şöyle:
+
+1. İstemci tek bir `POST /world-media/sign` isteğiyle N sha ister.
+2. Worker izni **bir** RPC ile toplu doğrular ve her sha için kısa ömürlü
+   (~1 sa) bir R2 presigned URL döner.
+3. Baytlar istemci ile R2'nin S3 uç noktası arasında doğrudan akar, worker'a
+   uğramaz.
+
+200 görsel yaklaşık 2 worker isteği tutar (100'lük partiler). R2 GET'i Class B
+(10M/ay), PUT'u Class A (1M/ay); ikisi de rahat. `ContentStore` baytı sha ile
+sakladığı için bir cihaz bir görseli yalnızca bir kez indirir.
+
+Limit worker'sız da zorlanır. PUT imzası `Content-Length`'i (rezervasyondaki
+boyut) ve `Content-Type`'ı bağlar, R2 farklı boyuttaki gövdeyi reddeder. Baytın
+sha'sını okuyan taraf doğrular (`ContentStore`, `sha_mismatch`). Yanlış bayt
+yükleyen yalnızca kendi dünyasını bozar.
+
+### Yapılacaklar
+
+| Parça | Ne |
+|---|---|
+| **Migration 099** | **`world_media`** tablosu: `(world_id → worlds ON DELETE CASCADE, sha256, ext, bytes, kind, created_at)`, PK `(world_id, sha256)`. RLS: sahip ve üyeler okur. **`world_media_reserve(world_id, items)`**: çağıran sahip mi, dosya limiti (harita 10 / diğer 5 MB), kişi başı 1 GB, toplam tavan kontrolü; zaten olanı atlar, yüklenecekleri döner. Satır silinince (tek tek ya da dünya CASCADE ile) R2 key'i mevcut tahliye kuyruğuna düşer. **Transient'in sökülmesi:** `transient_shares`, `transient_reserve`, `report_missing_shas`/`missing_shas`, `get_transient_access`; 089'un iki havuz tavanı tek bir `media_total_cap_bytes` olur |
+| **Worker** | **`POST /world-media/sign {op: put\|get, items}`**: JWT → bir RPC (put için rezervasyonun doğrulanması, get için okunabilir sha → world_id listesi) → presigned URL'ler. `transient/` yolları ve `checkTransientAccess` silinir. Tahliye cron'u kalır ve hem `pub/` refcount'unu hem `worlds/`'ü temizler. Yeni sırlar: R2 S3 erişim anahtarı ve hesap id'si. Web için bucket'ta CORS gerekir |
+| **Yükleyici** | Push edilen satırlardaki sha'lardan `world_media`'da olanlar çıkarılır, kalanlar için reserve → sign(put) → PUT yapılır. `SharedMediaCourier`'dan yalnızca `refFor` (yol → `dmt-content://`) kalır; `serve`, `publish` ve `uploadTransientShare` gider |
+| **Multiplayer açma** | `publishWorld` → satır push'u → **bütün medyanın yüklenmesi**, ilerleme göstergesiyle (kullanıcının başlattığı iş, Faz 9 kuralı). Önce bir ön hesap yapılır: toplam boyut kalan kotayı aşıyorsa açma reddedilir ve ne kadar yer gerektiği söylenir. Limiti aşan dosyalar atlanır, listesi kullanıcıya gösterilir. Ağ yarıda koparsa dünya yine multiplayer'dır, eksikleri sonraki push turları tamamlar |
+| **Sürekli yükleme** | Multiplayer dünyada yeni bir görsel eklendiğinde ya da değiştiğinde push turu yeni sha'yı da yükler, satırın hemen ardından. Ayrı bir kuyruk yok: `world_media`'da olmayan her referans bir sonraki turun işi |
+| **Ekleme anında uyarı** | Multiplayer dünyaya limitin üstünde bir görsel eklenirse "oyunculara gitmeyecek" uyarısı çıkar; görsel yerelde çalışmaya devam eder |
+| **Çözücü** | `AssetRefResolver`, `dmt-content://` için sırayla bakar: yerel (`content_paths` / `ContentStore`) → sign(get) → R2 → `ContentStore`. Aynı anda gelen istekler kısa bir pencerede toplanıp tek bir imza çağrısına gider. DM'in ikinci cihazı da oyuncu da aynı yolu kullanır. `_downloadTransient` ve `dmt-transient://` okuması gider (kullanıcı yok, §3.1) |
+| **İstemciden silinecekler** | `MissingMediaReporter`; applier'daki `missing_shas` → `serve` kapısı (`isSelf`, `isSessionOpen`); `AssetService.uploadTransientShare`; `EvictionSweeper`'ın transient kısmı |
+| **Projeksiyon** | `projectableMapImage` artık transient'e yüklemez. Multiplayer dünyada harita zaten bulutta ve ref'i `dmt-content://` |
+| **Kapatma / silme** | `unpublishWorld` ya da dünyanın silinmesi `world_media` satırlarını CASCADE ile siler → kuyruk → cron R2'den siler |
+| **Yetim medya** | Karttan çıkarılan görsel kotayı doldurmasın diye DM dünyayı açınca (`catchUp` sonrası) referans kümesi ile `world_media` karşılaştırılır, fazlası silinir. Yanlış silme kendiliğinden düzelir: hâlâ referanslı bir sha bir sonraki push turunda yeniden yüklenir |
+| **Limitler** | `MediaKind` ve worker'daki `KIND_MAX_BYTES`: harita 10 MB, diğer görseller 5 MB |
+| **l10n** | Limit aşımı, kota aşımı ve yükleme ilerlemesi metinleri, 4 dilde |
+
+### Faz 5d çıkış kriteri
+
+> **multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor**
+
+- DM A cihazında multiplayer'ı açar, ilerlemeyi görür, sonra A'yı kapatır.
+  B cihazında dünyayı indirir: görseller orada. Bir oyuncu yeni bir cihazdan
+  katılır: paylaşılan kartların görselleri orada. Bu sırada DM'in hiçbir
+  cihazı açık değil.
+- Limiti aşan görsel yüklenmedi ve açılışta listelendi. Kotayı aşan dünyanın
+  açılması reddedildi.
+- Multiplayer kapatılınca `worlds/{worldId}/` R2'de boşalıyor (cron sonrası).
+- Worker isteği: 200 görselli bir dünyanın açılması ve bir oyuncunun katılması
+  birlikte tek haneli sayıda istek tutuyor (Cloudflare paneli).
+- `lib/`, `cloudflare/src` ve son şemada `transient` geçmiyor; analyze temiz.
+
+### Bilinçli sınırlar
+
+- **Sıkıştırma yok.** Limitin üstündeki görsel yalnızca yerelde. Sonra (Faz 8)
+  eklenecek, ama sıkıştırma sha'yı değiştirir: `ContentStore` sha'yı
+  doğruladığı için karttaki ref yeni sha'ya yeniden yazılmalı ve kullanıcıya
+  bildirilmeli.
+- **Dünyalar arası dedup yok.** Aynı görsel iki dünyada iki kez yüklenir ve
+  kotaya iki kez sayılır. Dünya başına prefix, silmeyi tek işleme indiriyor;
+  bedeli bu.
+- **Üyelikten çıkan oyuncu** önbelleğindeki görselleri tutar, ama yeni imza
+  alamaz. İmzalanmış bir URL süresi (~1 sa) dolana kadar başkasına verilebilir.
+- **Paket medyası buluta çıkmıyor** (açık sorulara bakın).
+
+### Açık sorular (uygulamadan önce)
+
+- **Paketler.** Paket multiplayer olmuyor, ama 4b'den kalma kendi online
+  anahtarı var ve görselleri buluta çıkmıyor: ikinci cihaza inen paket
+  görselsiz. Öneri: 5d yalnızca dünyayı kapsasın, paket medyası ayrı bir karar
+  olsun.
+- **Ses / PDF limiti.** Kullanıcı harita ve görsel limitini verdi. Öneri:
+  görsel dışı medyaya da 5 MB. PDF bugün 50 MB, yani 1 GB kotanın 1/20'si.
+- **Toplam tavanın değeri.** R2 free tier 10 GB. Öneri: `pub/` dahil 9 GB.
+- **`free-media`** (Supabase Storage, ≤2 MB; portre ve kapak): 5d buna
+  dokunmuyor. Dünya kapağı multiplayer dünyada `worlds/`'e mi taşınsın?
+
+---
+
+## 4.8.4 Faz 5.5 ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
 ayrıntıda açılıyor (bkz. §4.4–§4.8.2).*
@@ -2199,12 +2347,14 @@ audit §2 bulgusunu kapalı işaretle.
 ### Faz 7 — Kural, kota, ölçüm
 "Online olmayan dünya multiplayer olamaz"; kota göstergesi gerçek sayılarla;
 admin panelinde Postgres doluluğu; **ölçüm**: gerçek dünya boyutu, delta
-trafiği, egress, transient doluluk, **Realtime mesaj sayısı** (sinyal satır
+trafiği, egress, R2 doluluğu (dünya medyası + `pub/`, 5d), **Realtime mesaj sayısı** (sinyal satır
 başına — §4.8.1; kota zorlarsa sayaç işlem başına bir kez artırılır, ama o
 zaman `get_world_delta`'nın kırpması aynı revizyonlu satırları bölmemeli).
 
 ### Faz 8 — Sonraya bırakılanlar
-Değişmedi — bkz. eski liste.
+Değişmedi — bkz. eski liste. Eklenen: **görsel sıkıştırma** — 5d'de limiti
+aşan görsel yüklenmiyor; sıkıştırma sha'yı değiştirdiği için ref'in yeniden
+yazılması ve kullanıcıya bildirim gerekiyor (§4.8.3).
 
 ### Faz 9 — İşlem geri bildirimi (en son)
 
@@ -2230,8 +2380,8 @@ yolu log satırı eklemekti (`CloudSync:`).
 | Dünya/paket indirme (5c) | `CloudOnlySection` | ✅ satırda ilerleme çubuğu |
 | Paket açılışı `syncPackage` (≤ 8 sn) | `packages_tab` | Genel overlay "Opening package…" — senkronu söylemiyor; zaman aşımında sessizce yerel halle açılıyor |
 | Görsel çözümü | `AssetRefImage` | Çözülürken spinner ✅; bulunamazsa `broken_image` — **nedeni yok** (DM'den bekleniyor mu, hiç gelmeyecek mi) |
-| Oyuncunun eksik görsel beklemesi | `MissingMediaReporter` | Hiçbir şey — 15 sn'lik yeniden deneme döngüsü görünmüyor |
-| Push'ta medya yükleme | `SharedMediaCourier` | Hiçbir şey |
+| Oyuncunun eksik görsel beklemesi | `MissingMediaReporter` | Hiçbir şey — 15 sn'lik yeniden deneme döngüsü görünmüyor. **5d'de kalkıyor** |
+| Push'ta medya yükleme | `SharedMediaCourier` | Hiçbir şey. 5d'de multiplayer açmada ilerlemeli, sonrasında arka plan |
 | `.dmtz` dışa/içe aktarma | `content_archive_menu` | Dosya seçimiyle son snackbar arası **hiçbir şey**; medyalı büyük dünyada saniyeler sürüyor |
 | Resmi katalog kurulumu | `first_party_catalog_provider` | ✅ kalem başına "done / total" |
 | Misafirden hesaba geçiş | `GuestPromotionService` | Hiçbir şey — veri birleştiriliyor ama kullanıcıya söylenmiyor |
@@ -2268,9 +2418,10 @@ yolu log satırı eklemekti (`CloudSync:`).
 iş görünür bir hal taşıyor; senkron hatası log açmadan görülüyor; çevrimdışı
 düzenleme "bekliyor" diye işaretli.
 
-**Karar bekleyen bağlantı:** DM'in ikinci cihazına görsel gelmemesi (§4.8.2
-bilinçli sınırlar) çözülmeden görselin "bekleniyor" hali yalan söyler —
-bekleyen bir şey yok. Faz 9'dan önce karara bağlanmalı.
+**Bağlantı — karara bağlandı:** DM'in ikinci cihazına görsel gelmemesi 5d ile
+çözülüyor (§4.8.3). `AssetRefImage`'ın hata hali o zaman iki gerçek nedene
+iner: "bulutta yok" (sha `world_media`'da değil — henüz yüklenmedi ya da
+limitin üstünde) ve "indirilemedi" (ağ).
 
 ---
 
@@ -2308,6 +2459,8 @@ uyuşmuyordu. Kayda geçiyor:
 | §4.7: paketin silinmesi buluta gitmiyor, bulut kopyasını yalnız "Yerele al" düşürüyor | Yerel silme dünyada bulutu da siliyordu, pakette silmiyordu; üstelik push paketin satırını her turda upsert ettiği için buluttan silinen paketi öbür cihaz **diriltiyordu**. 5c: silme buluta gidiyor, ilk yayından sonra paketin satırı yalnız UPDATE (§4.8.2) |
 | 094: silmeler tombstone ile yayılır | Yalnız dünya tablolarında. Paket kartının silmesi öbür cihaza hiç ulaşmıyordu; 098 (§4.8.2) |
 | Faz 4a: DAO upsert'leri `stampedNow` ile damgalanıyor | `world_entities` hariç — 4a damgayı yeni kolon alan tablolara ekledi, eskiden beri `updated_at`'i olan kart tablosu atlandı. ON CONFLICT eski damgayı bırakıyordu: **var olan kartın düzenlemesi buluta hiç çıkmıyordu**, yalnız yeni kartlar ve silmeler gidiyordu. 5c el testinde çıktı (2026-09-23); DAO damgalıyor, `saveEntity` aynı içeriği yazmıyor (yankı) |
+| §2.7: medyanın önden yüklenmesi "ölçümden sonra karar" (Faz 8); §2.13: transient 5 GB LRU + pinned 5 GB; §2.14: "R2 dolunca LRU atıyor" | **Kullanıcı kararı (2026-09-23):** multiplayer açılınca bütün medya kalıcı olarak R2'de, dünya başına; transient ve talep-üzerine akış kalkıyor; 5+5 bölmesi yerine tek toplam tavan + kişi başı 1 GB. Neden: DM'in ikinci cihazına görsel hiç gelmiyordu (5c el testi) ve DM çevrimdışıyken oyuncu görselsiz kalıyordu (§4.8.3) |
+| Karar tablosu: "Multiplayer — dünya online olmak zorunda" | Online ve multiplayer dünya için **tek kavram**; kod zaten öyle ("Multiplayer On" = `publishWorld` + `setOnline(true)`) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
