@@ -68,7 +68,7 @@ map'ini tutar, DM'in paylaştığı kartlara izinle erişir.
 | Çatışma | **son düzenleyen kazanır** (kilit yok) |
 | Senkron yöntemi | revizyon sinyali + artımlı çekme (**CDC değil**) |
 | Import / export | zip — dünya, paket, karakter |
-| Kota | satırlar: kişi başı tek sayı (500 MB, Faz 7); medya: kişi başı **1 GB** R2, dosya başı harita 10 MB / diğer görsel 5 MB (5d) |
+| Kota | satırlar: kişi başı tek sayı (500 MB, Faz 7); medya: kişi başı **1 GB** R2, toplam 9 GB; dosya başı harita 10 / görsel 5 / ses 10 / PDF 20 MB (5d) |
 
 ---
 
@@ -702,7 +702,7 @@ Medya altyapısı hazır, **neredeyse hiçbir şey değişmiyor:**
 Ayna **medya taşımıyor** — satırda ref, bayt ayrı yolda.
 
 > **5d ile değişiyor:** transient satırı yerine dünya başına kalıcı
-> `worlds/{worldId}/{sha}{ext}`; 5+5 GB bölmesi yerine tek toplam tavan +
+> `worlds/{worldId}/{sha}{ext}`; 5+5 GB bölmesi yerine tek toplam tavan (9 GB) +
 > kişi başı 1 GB (§4.8.3). Aşağıdaki "Üç iş"in 3. maddesi (LRU riski)
 > transient'le birlikte kalkıyor.
 
@@ -892,6 +892,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5b**~~ | Realtime sinyali + uzlaştırma anı + sunucu tarafı LWW | iki cihaz aynı dünyada **canlı** buluşuyor | evet | ✅ bitti (097 deploy edildi, elle doğrulandı) |
 | ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
 | **5d** | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | **sıradaki** (§4.8.3) |
+| 5e | Paket medyası bulutta — paketin tamamı dünya gibi | ikinci cihaza inen paket görselleriyle geliyor | evet | taslak (5d'den sonra) |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -2228,10 +2229,12 @@ yüklüyor. Bunun üç sonucu var:
 | Multiplayer açılınca | Dünyanın tamamı buluta çıkar: satırlar (bugün de çıkıyor) **ve bütün medya**, kalıcı olarak |
 | Medyanın yeri | R2, **dünya başına**: `worlds/{worldId}/{sha}{ext}` |
 | Transient havuz | **Kalkıyor**: `transient/` prefix'i, LRU, `missing_shas` akışı |
-| Havuz bölmesi | 5+5 GB ayrımı yok, tek toplam tavan var |
+| Havuz bölmesi | 5+5 GB ayrımı yok; tek toplam tavan **9 GB** (`pub/` dahil, R2 free tier 10 GB) |
 | Kişi başı medya | **1 GB**, kullanıcının bütün dünyalarının medyası toplamı |
-| Dosya başı limit | Harita **10 MB**, diğer görseller **5 MB** |
+| Dosya başı limit | Harita **10 MB**, diğer görseller **5 MB**, ses **10 MB**, PDF **20 MB** |
 | Limiti aşan dosya | **Yüklenmez** ve kullanıcıya söylenir; yerelde çalışmaya devam eder. Sıkıştırma sonraya kaldı (Faz 8) |
+| Paketler | Paketin de tamamı dünya gibi buluta çıkacak, ama **sonra** — 5d yalnız dünya |
+| `free-media` | Değişmiyor — portre/kapak Supabase Storage'da aynı çalışmaya devam eder |
 | Oyuncunun izni | **Dünya üyeliği.** Sahip ve üyeler o dünyanın medyasını çekebilir |
 | Teslimat | Worker **toplu imza** verir, bayt worker'dan geçmez; istemci R2 ile doğrudan konuşur |
 
@@ -2273,7 +2276,7 @@ yükleyen yalnızca kendi dünyasını bozar.
 
 | Parça | Ne |
 |---|---|
-| **Migration 099** | **`world_media`** tablosu: `(world_id → worlds ON DELETE CASCADE, sha256, ext, bytes, kind, created_at)`, PK `(world_id, sha256)`. RLS: sahip ve üyeler okur. **`world_media_reserve(world_id, items)`**: çağıran sahip mi, dosya limiti (harita 10 / diğer 5 MB), kişi başı 1 GB, toplam tavan kontrolü; zaten olanı atlar, yüklenecekleri döner. Satır silinince (tek tek ya da dünya CASCADE ile) R2 key'i mevcut tahliye kuyruğuna düşer. **Transient'in sökülmesi:** `transient_shares`, `transient_reserve`, `report_missing_shas`/`missing_shas`, `get_transient_access`; 089'un iki havuz tavanı tek bir `media_total_cap_bytes` olur |
+| **Migration 099** | **`world_media`** tablosu: `(world_id → worlds ON DELETE CASCADE, sha256, ext, bytes, kind, created_at)`, PK `(world_id, sha256)`. RLS: sahip ve üyeler okur. **`world_media_reserve(world_id, items)`**: çağıran sahip mi, dosya limiti (harita 10 / görsel 5 / ses 10 / PDF 20 MB), kişi başı 1 GB, toplam tavan (9 GB) kontrolü; zaten olanı atlar, yüklenecekleri döner. Satır silinince (tek tek ya da dünya CASCADE ile) R2 key'i mevcut tahliye kuyruğuna düşer. **Transient'in sökülmesi:** `transient_shares`, `transient_reserve`, `report_missing_shas`/`missing_shas`, `get_transient_access`; 089'un iki havuz tavanı tek bir `media_total_cap_bytes` olur |
 | **Worker** | **`POST /world-media/sign {op: put\|get, items}`**: JWT → bir RPC (put için rezervasyonun doğrulanması, get için okunabilir sha → world_id listesi) → presigned URL'ler. `transient/` yolları ve `checkTransientAccess` silinir. Tahliye cron'u kalır ve hem `pub/` refcount'unu hem `worlds/`'ü temizler. Yeni sırlar: R2 S3 erişim anahtarı ve hesap id'si. Web için bucket'ta CORS gerekir |
 | **Yükleyici** | Push edilen satırlardaki sha'lardan `world_media`'da olanlar çıkarılır, kalanlar için reserve → sign(put) → PUT yapılır. `SharedMediaCourier`'dan yalnızca `refFor` (yol → `dmt-content://`) kalır; `serve`, `publish` ve `uploadTransientShare` gider |
 | **Multiplayer açma** | `publishWorld` → satır push'u → **bütün medyanın yüklenmesi**, ilerleme göstergesiyle (kullanıcının başlattığı iş, Faz 9 kuralı). Önce bir ön hesap yapılır: toplam boyut kalan kotayı aşıyorsa açma reddedilir ve ne kadar yer gerektiği söylenir. Limiti aşan dosyalar atlanır, listesi kullanıcıya gösterilir. Ağ yarıda koparsa dünya yine multiplayer'dır, eksikleri sonraki push turları tamamlar |
@@ -2284,7 +2287,7 @@ yükleyen yalnızca kendi dünyasını bozar.
 | **Projeksiyon** | `projectableMapImage` artık transient'e yüklemez. Multiplayer dünyada harita zaten bulutta ve ref'i `dmt-content://` |
 | **Kapatma / silme** | `unpublishWorld` ya da dünyanın silinmesi `world_media` satırlarını CASCADE ile siler → kuyruk → cron R2'den siler |
 | **Yetim medya** | Karttan çıkarılan görsel kotayı doldurmasın diye DM dünyayı açınca (`catchUp` sonrası) referans kümesi ile `world_media` karşılaştırılır, fazlası silinir. Yanlış silme kendiliğinden düzelir: hâlâ referanslı bir sha bir sonraki push turunda yeniden yüklenir |
-| **Limitler** | `MediaKind` ve worker'daki `KIND_MAX_BYTES`: harita 10 MB, diğer görseller 5 MB |
+| **Limitler** | `MediaKind` ve worker'daki `KIND_MAX_BYTES`: harita 10 MB, diğer görseller 5 MB, ses 10 MB, PDF 20 MB (bugün 50 MB) |
 | **l10n** | Limit aşımı, kota aşımı ve yükleme ilerlemesi metinleri, 4 dilde |
 
 ### Faz 5d çıkış kriteri
@@ -2313,19 +2316,9 @@ yükleyen yalnızca kendi dünyasını bozar.
   bedeli bu.
 - **Üyelikten çıkan oyuncu** önbelleğindeki görselleri tutar, ama yeni imza
   alamaz. İmzalanmış bir URL süresi (~1 sa) dolana kadar başkasına verilebilir.
-- **Paket medyası buluta çıkmıyor** (açık sorulara bakın).
-
-### Açık sorular (uygulamadan önce)
-
-- **Paketler.** Paket multiplayer olmuyor, ama 4b'den kalma kendi online
-  anahtarı var ve görselleri buluta çıkmıyor: ikinci cihaza inen paket
-  görselsiz. Öneri: 5d yalnızca dünyayı kapsasın, paket medyası ayrı bir karar
-  olsun.
-- **Ses / PDF limiti.** Kullanıcı harita ve görsel limitini verdi. Öneri:
-  görsel dışı medyaya da 5 MB. PDF bugün 50 MB, yani 1 GB kotanın 1/20'si.
-- **Toplam tavanın değeri.** R2 free tier 10 GB. Öneri: `pub/` dahil 9 GB.
-- **`free-media`** (Supabase Storage, ≤2 MB; portre ve kapak): 5d buna
-  dokunmuyor. Dünya kapağı multiplayer dünyada `worlds/`'e mi taşınsın?
+- **Paket medyası henüz buluta çıkmıyor**; ikinci cihaza inen paket görselsiz.
+  Karar verildi: paket de dünya gibi tamamen buluta çıkacak, 5d'den sonra
+  ayrı bir faz olarak.
 
 ---
 
@@ -2333,6 +2326,11 @@ yükleyen yalnızca kendi dünyasını bozar.
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
 ayrıntıda açılıyor (bkz. §4.4–§4.8.2).*
+
+### Faz 5e — Paket medyası bulutta
+Paketin de tamamı, medya dahil, buluta çıkar — 5d'nin paket eşi. 5d'nin
+yükleyicisi, imza yolu ve limitleri yeniden kullanılır; açılacak soru R2
+yerleşimi (`packages/{packageId}/…`) ve kotaya sayılması.
 
 ### Faz 5.5 — Oyuncu çoklu cihaz
 `joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
