@@ -5,8 +5,8 @@ Faz 3.5, 4a, 4b, 5a, 5b ve 5c bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)), Faz
 5.5+ taslak. Migration 095–097 **deploy edildi** ve 5b'nin elle doğrulaması
 **yapıldı** (2026-09-23). 5c'de dünya indirme ve indirilen dünyada canlı
 düzenleme elle doğrulandı — ikincisi Faz 4a'dan kalan bir damga hatası
-düzeltildikten sonra (§4.9); görseller gelmiyor, karar bekliyor. **098 deploy
-ve paket adımları bekliyor**; liste
+düzeltildikten sonra (§4.9); görseller gelmiyor, karar bekliyor. 098 **deploy edildi** (2026-09-23);
+**paket adımları bekliyor**; liste
 [§4.8.2](#482-faz-5c--ikinci-cihazın-ilk-senkronu--bitti) sonunda. Son faz
 (9) işlem geri bildirimi.
 
@@ -882,7 +882,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**4b**~~ | Paket + karakter online anahtarı | paket/karakter de buluta çıkıyor | evet | ✅ bitti (095 deploy edildi; elle doğrulama bekliyor) |
 | ~~**5a**~~ | Dünya pull'u + echo guard + uzlaştırıcı | bulutta değişen satır yerele iniyor, döngü yok | evet | ✅ bitti (096 deploy edildi; elle doğrulama bekliyor) |
 | ~~**5b**~~ | Realtime sinyali + uzlaştırma anı + sunucu tarafı LWW | iki cihaz aynı dünyada **canlı** buluşuyor | evet | ✅ bitti (097 deploy edildi, elle doğrulandı) |
-| ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (dünya adımları elle doğrulandı; 098 + paket adımları bekliyor) |
+| ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya adımları elle doğrulandı; paket adımları bekliyor) |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -2152,7 +2152,7 @@ açılmadan önce push → pull (en çok 8 sn beklenir, sonra yerel haliyle aç�
 
 ### Bekleyen doğrulama
 
-**1. Migration 098'i deploy et**, sonra `supabase/scripts/verify_098.sql` →
+**1. ✅ Deploy edildi (2026-09-23).** Migration 098'i deploy et, sonra `supabase/scripts/verify_098.sql` →
 `098 OK`.
 
 **2. Dünya indirme.** B'de A'nın online dünyası yoksa (sil ya da temiz kurulum)
