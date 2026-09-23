@@ -227,7 +227,10 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(campaignRepositoryProvider);
-      final data = await repo.load(widget.campaignName);
+      // v12'den beri depo **id** ile anahtarlı; ad geçmek `getById(ad)` → null
+      // → "World not found: <ad>" demekti. Aşağıdaki `worldName` ise gerçekten
+      // ad istiyor, ikisi karışmasın.
+      final data = await repo.load(widget.campaignId);
       final templateId =
           (data['world_schema'] as Map?)?['schemaId'] as String?;
       final templateHash = data['template_hash'] as String?;
