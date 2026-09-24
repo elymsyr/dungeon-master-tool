@@ -73,10 +73,10 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
-  /// LAN sync: birleştirme sonrası satır damgasını kazanan tarafınkine
+  /// `.dmtz` import: birleştirme sonrası satır damgasını kazanan tarafınkine
   /// sabitler. Bulk `save()` yolu satırları silip yeniden eklediği için
   /// hepsi `now()` olurdu; o zaman "hangi cihaz bu entity'yi düzenledi"
-  /// bilgisi kaybolur ve bir sonraki eşlemede bölüm karşılaştırması
+  /// bilgisi kaybolur ve bir sonraki birleştirmede bölüm karşılaştırması
   /// anlamsızlaşırdı.
   Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
     await (update(worldEntities)..where((t) => t.id.equals(id)))

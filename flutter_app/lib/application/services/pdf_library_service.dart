@@ -10,7 +10,7 @@ import 'local_media_localizer.dart';
 ///
 /// **Tamamen yerel** (Phase D — sayılan katman kaldırıldı). Liste kaynağı
 /// klasörün kendisi; buluta yükleme, manifest ve oyuncu indirmesi yok. PDF'ler
-/// cihazdan cihaza LAN sync ile taşınır — veri kökü altında oldukları için
+/// `.dmtz` ile taşınır — veri kökü altında oldukları için
 /// `ContentCodec._mediaFor` onları zaten kapsıyor.
 class PdfLibraryService {
   const PdfLibraryService();

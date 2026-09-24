@@ -3962,7 +3962,7 @@ class _FileFieldWidget extends StatelessWidget {
                         .map((f) => f.path!)
                         .toList();
                     // Ham seçici yolu saklanmaz — dosya içeriğin `files/`
-                    // klasörüne kopyalanır (LAN eşlemesi + taşınma güvenliği).
+                    // klasörüne kopyalanır (`.dmtz` aktarımı + taşınma güvenliği).
                     final r = ref;
                     final newPaths = r == null
                         ? picked

@@ -140,24 +140,23 @@ Details and the full key table: [vault/20-Systems/Grant-Resolution.md](vault/20-
 
 Hard refs (`*_ref` → uuidv5) resolve inside a package at build time via the two-pass refgraph and **cannot dangle** — the build gates on it. Soft refs (`{slug, name}`) resolve lazily at read time across installed packages; a missing target is silently dropped and surfaced as a warning on `EffectiveCharacter`, never a failure. See [vault/20-Systems/Ref-Resolution-Hard-vs-Soft.md](vault/20-Systems/Ref-Resolution-Hard-vs-Soft.md).
 
-### Local-first: two sync arms, no cloud mirror
+### Local-first, with an opt-in cloud mirror
 
-Local Drift SQLite is the source of truth and **the world is never mirrored to the cloud**. The outbox, `SyncEngine`, `WorldReconciler`, `CloudCatchupService` and `cloud_backups` were removed 2026-08-24 (migration 077). A local edit flows `PendingWriteBuffer.schedule` (750–2000 ms debounce per `WriteKind`) → Drift, and stops there.
+Local Drift SQLite is the source of truth. A local edit flows `PendingWriteBuffer.schedule` (750–2000 ms debounce per `WriteKind`) → Drift. The old CDC mirror (outbox, `SyncEngine`, `WorldReconciler`, `CloudCatchupService`, `cloud_backups`) was removed 2026-08-24 (migration 077); the `online-again` redesign ([docs/online-sync-redesign.md](docs/online-sync-redesign.md)) replaced it with something without a queue.
 
-Two things still cross the network, and they are separate:
+Content leaves the device three ways, and they are separate:
 
-- **LAN sync** (`lib/application/services/lan_sync/`) — the only way content moves between devices. Manual, same-network, persistent pairing, never touches Supabase. `PendingWriteBuffer.flush()` and `WorldRepositoryImpl.save()`'s granular row writes are load-bearing for it; don't "simplify" either. See [vault/20-Systems/LAN-Sync-Flow.md](vault/20-Systems/LAN-Sync-Flow.md).
-- **The DM's share broadcast** — what an online player receives. Exactly five subscribed tables: `world_projection` (live broadcast), `entity_shares` (shared cards **including their bodies** in `payload_json`), `world_characters`, `world_packages`, `world_members`. Pushes are direct writes with a 3 s echo-suppression window; there is no queue and no retry. Adding a table to `WorldSyncService._mirrorTables` means sending a player data the DM did not share — define the sharing action first.
-
-Full step-by-step: [vault/20-Systems/Share-Broadcast-Flow.md](vault/20-Systems/Share-Broadcast-Flow.md).
+- **The cloud mirror** — only for a world or package the user made online. `CloudPushService` sends rows whose `updated_at` is past the last push watermark (deletions via the `sync_tombstones` side table); `CloudPullService` reads back with one `get_world_delta(world, since)` call. `CloudPushPump` (`cloud_push_provider.dart`) decides when: 3 s after an edit, whenever the DM's world channel reaches `SUBSCRIBED`, and on a `world_revisions` signal. Last writer wins — on the client in pull, in the cloud via migration 097's triggers. A multiplayer world's media lives in R2 under `worlds/{worldId}/` (`WorldMediaSync`). `PendingWriteBuffer.flush()` runs before every catch-up and the watermark scan reads the granular rows `WorldRepositoryImpl.save()` writes; don't "simplify" either. See [vault/00-Maps/Sync-and-Realtime.md](vault/00-Maps/Sync-and-Realtime.md).
+- **The DM's share broadcast** — what an online player receives. Exactly five subscribed tables: `world_projection` (live broadcast), `entity_shares` (shared cards **including their bodies** in `payload_json`), `world_characters`, `world_packages`, `world_members`. Pushes are direct writes with a 3 s echo-suppression window; there is no queue and no retry. Adding a table to `WorldSyncService._mirrorTables` means sending a player data the DM did not share — define the sharing action first. Full step-by-step: [vault/20-Systems/Share-Broadcast-Flow.md](vault/20-Systems/Share-Broadcast-Flow.md).
+- **`.dmtz` file transfer** (`lib/application/services/content_transfer/`) — no account, no network: a world, package or character goes into one zip and is merged on import. LAN sync was removed 2026-09-24 (Faz 6); `.dmtz` is the only account-free way to move content between devices.
 
 Accounts are required for exactly three things: playing online, publishing to the marketplace, and downloading another user's content. Browsing the marketplace and installing official catalog content work with no account. There is no beta program (removed 2026-08-24, migration 076) — every user has full access.
 
-### Drift schema v12
+### Drift schema v13
 
-`schemaVersion` is 12 and it is a **fresh cut** — all v1–v11 migration steps were deleted. Any pre-v12 DB found on disk is renamed to `dmt.sqlite.legacy.<ts>` (kept 30 days) and a fresh v12 file is created; `onUpgrade` should never run. The database is per-user (`AppPaths.dataRoot/users/{userId}/db/dmt.sqlite`). Three side tables (`asset_refs`, `migration_progress`, `lan_paired_devices`) are managed with idempotent raw DDL in `beforeOpen` to avoid codegen, so they do not bump the schema version. `foreign_keys = OFF` is intentional — it lets inbound share events apply out of order, with parent-exists checked at the app level.
+`schemaVersion` is 13. v12 was a **fresh cut** — all v1–v11 migration steps were deleted, and any pre-v12 DB found on disk is renamed to `dmt.sqlite.legacy.<ts>` (kept 30 days) and a fresh file is created. The only `onUpgrade` step is v12 → v13 (Faz 4a: `is_online` / `cloud_revision` / `updated_at` columns), which keeps the user's data. The database is per-user (`AppPaths.dataRoot/users/{userId}/db/dmt.sqlite`). Side tables (`asset_refs`, `content_paths`, `migration_progress`, `sync_tombstones`) are managed with idempotent raw DDL in `beforeOpen` to avoid codegen, so they do not bump the schema version. `foreign_keys = OFF` is intentional — it lets inbound share events apply out of order, with parent-exists checked at the app level.
 
-Tables retired with cloud sync (`sync_outbox`, `sync_telemetry`, `bm_mark_ops_local`, `personal_packages`) are dropped by `_retiredTablesDDL` in the same `beforeOpen` pass. **The version deliberately stayed at 12**: bumping it would rename every existing user's DB to `.legacy` and start them empty, and the only thing being removed is a dead table.
+Retired tables (`sync_outbox`, `sync_telemetry`, `bm_mark_ops_local`, `personal_packages`, and LAN's `lan_paired_devices`) are dropped by `_retiredTablesDDL` in the same `beforeOpen` pass, with no version bump: dropping a dead table needs no migration step.
 
 ### Second screen / projection
 

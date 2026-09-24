@@ -1,6 +1,7 @@
 /// Dünyanın **bölüm bazlı** son-değişim damgaları.
 ///
-/// Neden: LAN eşlemesi item (dünya) seviyesinde last-write-wins çalışıyordu;
+/// Neden: birleştirme (önce LAN eşlemesi, şimdi `.dmtz` import) item (dünya)
+/// seviyesinde last-write-wins çalışıyordu;
 /// aynı dünya iki cihazda düzenlendiğinde kazanan tarafın payload'ı diğerini
 /// tamamen eziyordu (A'da savaş notu, B'de mindmap → biri kayboluyor).
 /// Bölüm damgaları sayesinde `mergeWorldPayloads` her bölümü ayrı ayrı
@@ -62,7 +63,7 @@ DateTime? _parseStamp(Object? value) {
   return null;
 }
 
-/// Bir dünyanın bütün bölüm damgaları — LAN `extras` ile tel üzerinden taşınır.
+/// Bir dünyanın bütün bölüm damgaları — `.dmtz` `extras` ile taşınır.
 class WorldSectionStamps {
   const WorldSectionStamps({
     this.entities = const {},

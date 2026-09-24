@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-09-23
+updated: 2026-09-24
 tags: [system]
 ---
 
@@ -27,7 +27,7 @@ tags: [system]
 - [[media_bundler]] — karakter medyası (portre free, ek resim pinned).
 - [[worker]] / [[worker_rls]] — R2 routes + quota/access checks.
 - [[entity_media_cleanup_service]] — GC on delete.
-- [[pdf_library_service]] — world PDF kütüphanesi; Phase D'den beri **tamamen yerel**, LAN sync ile taşınır.
+- [[pdf_library_service]] — world PDF kütüphanesi; Phase D'den beri **tamamen yerel**, `.dmtz` ile taşınır.
 
 ## Tiers
 | Tier | Backend | Quota-counted | Lifecycle |

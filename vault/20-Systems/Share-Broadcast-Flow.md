@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-09-23
+updated: 2026-09-24
 tags: [system, sync, multiplayer]
 ---
 
@@ -17,7 +17,7 @@ tags: [system, sync, multiplayer]
 
 Bu not, kaldırılan `Share-Broadcast-Flow`'un yerine geçer. Eski model dünyanın tamamını (entity'ler, harita, oturumlar, ayarlar, mind-map) Postgres'e aynalıyor ve oyuncunun görmemesi gerekenleri yalnızca istemci tarafında, `visibleEntityProvider` ile gizliyordu — yani veri oyuncunun diskindeydi. Migration **077** o aynayı düşürdü.
 
-Cihazdan cihaza taşıma artık [[LAN-Sync-Flow]]'un işi. Yerel Drift kaynak-doğru.
+Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pull_service]]) ya da `.dmtz`'nin işi; LAN Faz 6'da silindi. Yerel Drift kaynak-doğru.
 
 ## Kanal — abone olunan beş tablo
 
@@ -109,7 +109,7 @@ Outbox + `SyncEngine` kaldırıldı. Kalan dört yazma yolu doğrudan yazar, las
 - Paket paylaşımı → `share_package_to_world` RPC
 - Projeksiyon → `ProjectionOutputOnline._upsert` (120 ms / 500 ms kademeli debounce)
 
-`PendingWriteBuffer` ([[pending_write_buffer]]) **yerinde kalır** — yerel debounce'u o yapıyor ve [[LAN-Sync-Flow]] `flush()`'una bağlı.
+`PendingWriteBuffer` ([[pending_write_buffer]]) **yerinde kalır** — yerel debounce'u o yapıyor ve bulut `catchUp`'ı ile `.dmtz` `flush()`'una bağlı.
 
 > [!note] Çevrimdışı telafisi
 > Kalıcı kuyruk yok. `CharacterListNotifier.pushOwnedCharacters(worldId)` dünya açılışında sahip olunan karakterleri bir kez yeniden yazar; LWW olduğu için kaçan bir yazmayı yakalamaya yeter. Kodda `ponytail:` yorumu ile işaretli — gerçekten dayanıklı kuyruk gerekirse outbox deseni geri gelir.
@@ -124,7 +124,7 @@ Outbox + `SyncEngine` kaldırıldı. Kalan dört yazma yolu doğrudan yazar, las
 Eskiden burada `worlds.state_json` indiriliyordu — DM'in tüm dünyası. O kolon 077'de düştü; `publish_world` artık içerik yüklemez, sadece `worlds` satırı + DM üyeliği yazar.
 
 ## İlgili
-- [[LAN-Sync-Flow]] — cihazdan cihaza taşımanın tek yolu
+- [[cloud_push_service]] / [[cloud_pull_service]] — cihazdan cihaza taşıma (bulut aynası)
 - [[Fog-of-War-and-Visibility]] — projeksiyon payload'ı kurulmadan önceki filtre
 - [[Media-Storage-Tiers]] — paylaşılan görsellerin gittiği yer
 - [[world_sync_service]] · [[world_mirror_applier]] · [[world_mirror_service]] · [[world_join_service]]

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/services/content_transfer/content_archive.dart';
 import '../../application/services/content_transfer/content_codec.dart';
@@ -116,12 +117,18 @@ class ContentArchiveMenu extends ConsumerWidget {
       final path =
           await _savePath(contentArchiveFileName(selectedName ?? 'dmt'));
       if (path == null) return;
-      final ok = await exportContentArchive(
-        codec: ref.read(contentCodecProvider),
-        type: type,
-        path: path,
-        id: selectedId,
-        name: selectedName,
+      // Faz 9 — medyalı dünyada saniyeler sürüyor; kullanıcı bekliyor.
+      final ok = await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'content-archive-export',
+        l10n.contentArchiveExporting(selectedName ?? p.basename(path)),
+        () => exportContentArchive(
+          codec: ref.read(contentCodecProvider),
+          type: type,
+          path: path,
+          id: selectedId,
+          name: selectedName,
+        ),
       );
       messenger.showSnackBar(SnackBar(
         content: Text(ok
@@ -145,6 +152,9 @@ class ContentArchiveMenu extends ConsumerWidget {
     if (path == null) return;
 
     ContentArchive? archive;
+    final loading = ref.read(globalLoadingProvider.notifier);
+    const task = 'content-archive-import';
+    loading.start(LoadingTask(id: task, message: l10n.contentArchiveImporting));
     try {
       archive = await ContentArchive.open(path);
       final result = await archive.applyTo(ref.read(contentCodecProvider));
@@ -174,6 +184,7 @@ class ContentArchiveMenu extends ConsumerWidget {
       messenger
           .showSnackBar(SnackBar(content: Text(l10n.contentArchiveFailed('$e'))));
     } finally {
+      loading.end(task);
       await archive?.close();
     }
   }

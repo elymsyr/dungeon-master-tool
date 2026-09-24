@@ -1,11 +1,8 @@
 /// İçerik aktarımının veri sözleşmesi — saf Dart, hiçbir taşıma katmanına
 /// bağlı değil.
 ///
-/// Aynı üç tip hem LAN telinde hem `.dmtz` zip'inde geçiyor: kimlik satırı
-/// ([ContentItemRef]), taşınan blob ([ContentItemPayload]) ve yanındaki medya
-/// dosyaları ([ContentMediaEntry]). Bir zamanlar `lan_sync_protocol.dart`
-/// içindeydiler; LAN kalkarken codec'in kalması gerektiği için buraya
-/// taşındılar.
+/// `.dmtz` zip'inin üç tipi: kimlik satırı ([ContentItemRef]), taşınan blob
+/// ([ContentItemPayload]) ve yanındaki medya dosyaları ([ContentMediaEntry]).
 library;
 
 // ── Item kimliği ────────────────────────────────────────────────────────

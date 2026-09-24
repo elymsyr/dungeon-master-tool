@@ -20,7 +20,7 @@ const int kMaxEntityImages = 5;
 /// Buluta hiçbir şey yüklenmez (Phase D — sayılan katman kaldırıldı): bir
 /// kartın görseli buluta ancak DM onu paylaştığında ve bir oyuncu eksik
 /// bildirdiğinde çıkar (`SharedMediaCourier`). Ham seçici yolu (`Downloads/`)
-/// hiçbir zaman saklanmaz — veri kökünün dışında kaldığı için LAN eşlemesi
+/// hiçbir zaman saklanmaz — veri kökünün dışında kaldığı için `.dmtz`
 /// taşıyamıyor (`ContentCodec._mediaFor`) ve kullanıcı dosyayı taşırsa
 /// resim kayboluyor.
 Future<List<String>> localizeEntityImages(
@@ -32,8 +32,8 @@ Future<List<String>> localizeEntityImages(
 }
 
 /// Entity'nin resim olmayan eklerini (schema `file` / `pdf` alanları) içeriğin
-/// `files/` klasörüne alır. Resimlerle aynı gerekçe: ham seçici yolu ne LAN
-/// eşlemesinde taşınır ne de kullanıcı dosyayı taşıdığında açılır.
+/// `files/` klasörüne alır. Resimlerle aynı gerekçe: ham seçici yolu ne `.dmtz`
+/// aktarımında taşınır ne de kullanıcı dosyayı taşıdığında açılır.
 Future<List<String>> localizeEntityFiles(
   WidgetRef ref,
   List<String> paths,

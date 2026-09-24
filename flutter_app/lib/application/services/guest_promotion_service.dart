@@ -726,7 +726,7 @@ class GuestPromotionService {
   /// account package, and `idx_packages_name` is UNIQUE: `INSERT OR IGNORE`
   /// would drop the package row and orphan its entities - the homebrew made
   /// while signed out would silently vanish. It comes over as "Name (2)"
-  /// instead, the suffix LAN sync uses for the same collision.
+  /// instead, the suffix `.dmtz` import uses for the same collision.
   Future<Map<String, String>> _guestPackageRenames(
       AppDatabase db, Set<String> remapped) async {
     final out = <String, String>{};

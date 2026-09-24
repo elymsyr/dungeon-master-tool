@@ -126,7 +126,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'exit-world',
-      'Saving...',
+      L10n.of(context)!.savingEllipsis,
       () async {
         await ref.read(pendingWriteBufferProvider).flush();
       },

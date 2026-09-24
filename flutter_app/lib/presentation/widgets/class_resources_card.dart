@@ -14,7 +14,7 @@ import '../l10n/app_localizations.dart';
 /// formül), harcanan kısım ise PC'nin `granted_pool_uses_remaining` alanında
 /// durur. Kapasitenin türetilmiş kalması, kartın nereden geldiğinden bağımsız
 /// olarak aynı görünmesinin tek sebebi: wizard'la elde kurulan karakter,
-/// paketlenmiş dünyadan gelen karakter ve LAN'dan düşen karakter aynı satırı
+/// paketlenmiş dünyadan gelen karakter ve `.dmtz`'den gelen karakter aynı satırı
 /// üretir. (Eskiden level-up `class_resource_pools`'a bir kopya yazıyordu; onu
 /// kimse okumadığı için sayfada hiç görünmüyordu.)
 class ClassResourcesTracker extends StatelessWidget {

@@ -17,7 +17,7 @@ import '../../domain/value_objects/asset_ref.dart';
 /// olmasa da, ham yol hiçbir zaman saklanmaz. Kopya eskiden yalnız yükleme
 /// atlandığında/başarısız olduğunda alınıyordu; bu, ham yolun sızabildiği bir
 /// sürü yol bırakıyordu. Ham yol (`C:\Users\...\Downloads\map.png`):
-///   * LAN eşlemesinde taşınmıyor — `_mediaFor` yalnız veri kökü altını tarar,
+///   * `.dmtz`'de taşınmıyor — `_mediaFor` yalnız veri kökü altını tarar,
 ///   * kaynak dosya taşınır/silinirse resim tamamen kayboluyor,
 ///   * ikinci cihazda zaten hiçbir zaman çözülemiyor.
 ///
@@ -198,7 +198,7 @@ class LocalMediaLocalizer {
   ///
   /// Hayır ise: boş, şema'lı ref (`dmt-*://`), resim uzantısı taşımayan bir
   /// string, diskte bulunmayan bir yol, ya da zaten taşınabilir bir yerde
-  /// duran bir dosya — yani [ownerDir] altında (LAN eşlemesi item'ın kendi
+  /// duran bir dosya — yani [ownerDir] altında (`.dmtz` item'ın kendi
   /// klasörünü tarıyor) veya içerik-adresli önbellekte (bulut ref'lerinin
   /// baytları oradan ayrıca taşınıyor, bkz.
   /// `ContentCodec._collectContentBlobs`).

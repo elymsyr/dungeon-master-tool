@@ -22,7 +22,7 @@ import '../../domain/value_objects/media_kind.dart';
 /// yol. Oyuncuya olduğu gibi gitse çözülemez — önce ücretsiz free-media
 /// havuzuna yüklenip `dmt-public://` ref'ine çevrilir (kapak kind'ı quota'ya
 /// sayılmaz). DM'in kendi satırı yerel yolda kalır: çevrimdışı açılışta ve
-/// LAN eşlemesinde asıl dosya lazım.
+/// `.dmtz`'de asıl dosya lazım.
 class WorldMetaSync {
   WorldMetaSync(this._client, this._free);
 

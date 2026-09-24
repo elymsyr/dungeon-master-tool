@@ -766,17 +766,24 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   }
 
   Future<void> _loadPackage(String name) async {
+    final l10n = L10n.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    var synced = true;
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'open-package-$name',
-      'Opening package "$name"...',
+      l10n.loadingOpeningPackage(name),
       () async {
         // Faz 5c — online paket açılmadan önce bulutla uzlaşır; offline
         // pakette hiçbir şey yapmaz.
-        await ref.read(cloudPushPumpProvider).syncPackage(name);
+        synced = await ref.read(cloudPushPumpProvider).syncPackage(name);
         return ref.read(activePackageProvider.notifier).load(name);
       },
     );
+    // Faz 9 — zaman aşımında sessizce yerel halle açılmasın.
+    if (!synced) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.packageSyncTimedOut)));
+    }
     if (!success || !mounted) return;
     if (mounted) context.go('/package');
   }
@@ -798,7 +805,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-package-$name',
-      'Creating package "$name"...',
+      L10n.of(context)!.loadingCreatingPackage(name),
       () => ref
           .read(activePackageProvider.notifier)
           .create(name, template: templateFinal),

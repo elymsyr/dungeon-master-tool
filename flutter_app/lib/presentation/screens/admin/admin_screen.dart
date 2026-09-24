@@ -293,7 +293,9 @@ class _DashboardTab extends ConsumerWidget {
       final count = await withLoading(
         ref.read(globalLoadingProvider.notifier),
         'assets-packs-toggle',
-        on ? 'Installing asset packs…' : 'Removing asset packs…',
+        on
+            ? L10n.of(context)!.adminInstallingAssetPacks
+            : L10n.of(context)!.adminRemovingAssetPacks,
         () => on ? installer.installAll() : installer.uninstallAll(),
       );
       ref.invalidate(packageListProvider);
@@ -340,7 +342,7 @@ class _DashboardTab extends ConsumerWidget {
       final summary = await withLoading(
         ref.read(globalLoadingProvider.notifier),
         'world-folder-import',
-        'Importing world…',
+        L10n.of(context)!.adminImportingWorld,
         () async {
           final report = await install(installer);
           for (final issue in [...report.failures, ...report.issues]) {
@@ -385,7 +387,9 @@ class _DashboardTab extends ConsumerWidget {
       final summary = await withLoading(
         ref.read(globalLoadingProvider.notifier),
         'bundled-worlds-toggle',
-        on ? 'Installing bundled worlds…' : 'Removing bundled worlds…',
+        on
+            ? L10n.of(context)!.adminInstallingBundledWorlds
+            : L10n.of(context)!.adminRemovingBundledWorlds,
         () async {
           if (!on) {
             return 'Removed ${await installer.uninstallAll()} bundled world(s).';

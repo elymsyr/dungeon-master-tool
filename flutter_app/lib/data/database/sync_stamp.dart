@@ -55,7 +55,7 @@ extension SyncStamp on DatabaseConnectionUser {
 }
 
 /// `updated_at`'i şimdiyle damgalar — çağıran açıkça bir değer vermişse ona
-/// dokunmaz (import / LAN / bulut uygulaması kendi zamanını taşır).
+/// dokunmaz (import / bulut uygulaması kendi zamanını taşır).
 ///
 /// Jenerik: v13'te eklenen kolonlar nullable, eskiden beri var olanlar
 /// (`packages`, `package_entities`, `world_characters`, …) değil.

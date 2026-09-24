@@ -5,7 +5,7 @@
 // (A'da savaş notu, B'de mindmap → biri kayboluyor). Buradaki tablo o
 // davranışın geri gelmemesini bekliyor.
 //
-//   cd flutter_app && flutter test test/application/services/lan_sync/world_merge_test.dart
+//   cd flutter_app && flutter test test/application/services/content_transfer/world_merge_test.dart
 
 import 'package:dungeon_master_tool/application/services/content_transfer/world_merge.dart';
 import 'package:dungeon_master_tool/domain/value_objects/world_section_stamps.dart';

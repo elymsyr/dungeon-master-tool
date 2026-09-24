@@ -5,14 +5,14 @@ path: flutter_app/lib/application/services/local_media_localizer.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-21
+updated: 2026-09-24
 tags: [file]
 ---
 
 # `local_media_localizer.dart`
 
 > [!abstract] Primary Purpose
-> Statik yardımcı sınıf: seçicinin verdiği **ham dosya yollarını veri kökünün içine** kopyalar. `RawPathMigrator`'ın çevrimdışı karşılığı — bulut servisi gerektirmez, ref'e çevirmez, sadece dosyayı içeriğin kendi klasörüne (`{worldsDir}/{worldId}/media/`, `{packagesDir}/{ad}/media/`, `{charactersDir}/{id}_*`) alır ve kopyanın yolunu döndürür. Ham yol ne LAN eşlemesinde taşınır (`ContentCodec._mediaFor` yalnız içeriğin kendi klasörünü tarar) ne de kullanıcı orijinali taşıdığında açılır.
+> Statik yardımcı sınıf: seçicinin verdiği **ham dosya yollarını veri kökünün içine** kopyalar. `RawPathMigrator`'ın çevrimdışı karşılığı — bulut servisi gerektirmez, ref'e çevirmez, sadece dosyayı içeriğin kendi klasörüne (`{worldsDir}/{worldId}/media/`, `{packagesDir}/{ad}/media/`, `{charactersDir}/{id}_*`) alır ve kopyanın yolunu döndürür. Ham yol ne `.dmtz`'de taşınır (`ContentCodec._mediaFor` yalnız içeriğin kendi klasörünü tarar) ne de kullanıcı orijinali taşıdığında açılır.
 
 > [!important] Dünya klasörü **id** ile anahtarlı (Faz 2.5, 2026-09-21)
 > `worldDir(worldId)` — isimle değil. İsimle anahtarlıyken iki dünya aynı adı taşıyamıyordu: taşısalardı aynı klasörü paylaşır, birini açıp kapatmak [[unused_media_sweeper]] üzerinden ötekinin dosyalarını referanssız sayıp silerdi. Yeniden adlandırma da artık klasöre dokunmuyor — eskiden klasörü taşıyıp gövdedeki **mutlak** yolları olduğu gibi bıraktığı için her yeniden adlandırma resimleri kırıyordu. Mevcut kurulumları taşıyan tek seferlik geçiş [[drift_database]] `beforeOpen`'ında: `world_media_dir_by_id_v1`. **Paket klasörü hâlâ adla** — paketler bu fazın kapsamında değil.
@@ -31,7 +31,7 @@ tags: [file]
 - Depends on: [[asset_importer]], `core/config/app_paths.dart`, `domain/value_objects/asset_ref.dart`
 - Used by: [[entity_image_upload]], `map_image_upload.dart`, [[content_codec]], [[content_archive]], `data/repositories/character_repository.dart`, `presentation/widgets/metadata_editor_section.dart`, `field_widget_factory.dart` (`file`/`pdf` alanları)
 - Domain map: [[Media-and-Assets]]
-- System flow: [[LAN-Sync-Flow]], [[Media-Storage-Tiers]]
+- System flow: [[content_codec]], [[Media-Storage-Tiers]]
 
 ## Key Logic / Variables
 - **`dirSafe` Windows'ta tek kapı.** Yasak karakter sınıfı (`\ / : * ? " < > |`), kontrol karakterleri, sondaki nokta/boşluk, boş ad ve MS-DOS aygıt adları (`CON`, `NUL`, `COM1`…, uzantılıları dahil) `_` ile karşılanır. Linux/Android bunları kabul ettiği için hata yalnız Windows'ta çıkıyordu: `Aegis — Meridia: Birinci Perde` gibi bir başlıkta `Directory.exists` bile `ERROR_INVALID_NAME (123)` fırlatıyor. Temiz adlarda birim fonksiyon — var olan klasörler yerinde kalır. `packageDir` hâlâ ada bakıyor, dolayısıyla paketlerde bu kapı duruyor; `worldDir`'e gelen uuid zaten temiz olduğu için orada birim fonksiyon.
@@ -44,5 +44,5 @@ tags: [file]
 - **Kopyanın ömrü:** kaldırma yolları yerel kopyayı silmez; sahipsiz kalanları dünya açılış/kapanışında [[unused_media_sweeper]] temizler.
 
 ## Notes
-- Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem `cache/content/{sha}.bin` içinde duruyor; disk ve LAN transferi bir miktar yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.
+- Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem `cache/content/{sha}.bin` içinde duruyor; disk ve `.dmtz` boyutu bir miktar yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.
 - `_walk` payload taraması **yalnız resim uzantıları** için çalışır; rastgele string'leri dosya sanıp kopyalamamak için.

@@ -214,9 +214,8 @@ Future<void> updateCampaignMetadata(
     }
   }
 
-  // Dünya ayarları artık buluta aynalanmıyor: oyuncuya giden tek şey DM'in
-  // bilinçli paylaşımları (projeksiyon manifesti + entity_shares). Cihazdan
-  // cihaza taşıma LAN sync'in işi.
+  // Dünya ayarları buradan buluta itilmiyor: oyuncuya giden şey DM'in
+  // bilinçli paylaşımları (projeksiyon manifesti + entity_shares).
   //
   // Tek istisna kartın görünen yüzü: dünya online ise açıklama/etiket/kapak
   // `worlds.meta_json`'a gider, yoksa katılan oyuncunun hub'ında isimden
@@ -343,8 +342,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// Dünya açılışında ve kapanışında (`main_screen._exitToHub`) çalışır.
   ///
   /// Kaldırma yolları yalnız bulut nesnesini temizliyor; yerel kopya
-  /// [UnusedMediaSweeper] olmadan sonsuza kadar kalır ve LAN eşlemesiyle her
-  /// cihaza yayılır.
+  /// [UnusedMediaSweeper] olmadan sonsuza kadar kalır ve `.dmtz` ile
+  /// dışa aktarılan her kopyaya gider.
   Future<int> sweepUnusedMedia() async {
     final worldId = state;
     final data = _data;
@@ -418,7 +417,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// (combat / mind_map / map) keeps the in-memory mirror in sync.
   ///
   /// Bulut aynası yok: `world_settings` artık replike edilmiyor. `touchWorld`
-  /// varsayılanı korunur — `_section_updated_at` damgası LAN merge'ün LWW
+  /// varsayılanı korunur — `_section_updated_at` damgası `.dmtz` merge'ün LWW
   /// karşılaştırmasının girdisi.
   Future<void> saveSettingsPatch(Map<String, dynamic> patch) async {
     final name = state;
@@ -435,8 +434,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   ///
   /// `touchWorld: false` kritik: bu yol `_repo.saveSettingsPatch`'i çağırdığı
   /// için mindmap'te sadece pan/zoom yapmak bile dünyayı "değişti" gösteriyor
-  /// ve LAN eşlemesinde o cihazı LWW kazananı yapıyordu — hiç içerik
-  /// düzenlemeyen taraf, karşıdaki gerçek düzenlemeleri eziyordu.
+  /// ve birleştirmede (LAN eşlemesi, şimdi `.dmtz`) o cihazı LWW kazananı
+  /// yapıyordu — hiç içerik düzenlemeyen taraf, karşıdaki gerçek düzenlemeleri eziyordu.
   Future<void> saveSettingsPatchLocalOnly(Map<String, dynamic> patch) async {
     final name = state;
     if (name == null) return;

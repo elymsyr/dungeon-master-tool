@@ -56,7 +56,7 @@ class WorldSessionsDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
-  /// LAN sync birleştirmesi sonrası satır damgası — bkz.
+  /// `.dmtz` birleştirmesi sonrası satır damgası — bkz.
   /// `WorldEntitiesDao.setUpdatedAt`.
   Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
     await (update(worldSessions)..where((t) => t.id.equals(id)))

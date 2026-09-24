@@ -7,6 +7,10 @@ import '../services/guest_promotion_service.dart';
 import 'campaign_provider.dart';
 import 'template_provider.dart';
 
+/// Faz 9 — bu oturumdaki misafir terfisinin sonucu (true taşındı, false
+/// yarıda kaldı); terfi yoksa null. Uygulama kökü dinleyip kullanıcıya söyler.
+final guestPromotionOutcomeProvider = StateProvider<bool?>((_) => null);
+
 /// Auth değişikliklerini dinleyerek AppPaths ve DB'yi kullanıcıya göre
 /// yeniden yapılandırır. Landing screen'de auth sonrası bu provider
 /// tetiklenir, SONRA /hub'a navigate edilir.
@@ -28,6 +32,7 @@ class UserSessionNotifier extends StateNotifier<bool> {
     // **O4** folded the three questions into one: not promoted yet, nobody else
     // has spent the guest tree, and there is something in it.
     final promoting = promotion.canPromote(userId);
+    var promoted = promoting;
 
     if (promoting) {
       try {
@@ -40,6 +45,7 @@ class UserSessionNotifier extends StateNotifier<bool> {
         // Kopya yarıda kaldı: misafir ağacı olduğu gibi duruyor, sentinel
         // atılmadı, bir sonraki girişte baştan denenir.
         debugPrint('Guest promotion copy failed: $e\n$st');
+        promoted = false;
       }
     }
 
@@ -55,7 +61,9 @@ class UserSessionNotifier extends StateNotifier<bool> {
         debugPrint('Guest promotion (finalize): $finalized');
       } catch (e, st) {
         debugPrint('Guest promotion finalize failed: $e\n$st');
+        promoted = false;
       }
+      _ref.read(guestPromotionOutcomeProvider.notifier).state = promoted;
     }
 
     // Downstream provider'ları invalidate et.

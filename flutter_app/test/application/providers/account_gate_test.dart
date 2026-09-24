@@ -27,8 +27,6 @@ import 'package:go_router/go_router.dart';
 /// `marketplace` is deliberately NOT in this set: browsing the catalogue is
 /// open to guests (`marketplace_listings` RLS SELECT is `USING (true)`), and
 /// the account requirement sits on the download/publish actions instead.
-/// Neither is `localSync`: LAN sync never leaves the local network and pairing
-/// is secured by the QR token / PIN.
 const _roadmapOnlineSurfaces = <AppSurface>{
   AppSurface.mediaStorage,
   AppSurface.worldSharing,
@@ -222,7 +220,6 @@ void main() {
     }
 
     for (final surface in [
-      AppSurface.localSync,
       AppSurface.firstPartyCatalog,
       AppSurface.bundledPackInstall,
       AppSurface.worlds,

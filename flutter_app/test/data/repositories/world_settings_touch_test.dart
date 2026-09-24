@@ -1,8 +1,8 @@
 // `saveSettingsPatch`'in `worlds.updated_at`'e dokunup dokunmadığı.
 //
 // Regresyon: viewport pan/zoom yazımları (`saveSettingsPatchLocalOnly`) aynı
-// repository metodunu çağırdığı için dünyayı "değişti" gösteriyordu. LAN
-// eşlemesinde bu, mindmap'te sadece kaydırma yapan cihazı LWW kazananı yapıp
+// repository metodunu çağırdığı için dünyayı "değişti" gösteriyordu.
+// Birleştirmede (o zaman LAN eşlemesi, şimdi `.dmtz`) bu, mindmap'te sadece kaydırma yapan cihazı LWW kazananı yapıp
 // karşı taraftaki gerçek düzenlemeleri eziyordu.
 //
 //   cd flutter_app && flutter test test/data/repositories/world_settings_touch_test.dart

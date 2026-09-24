@@ -1,10 +1,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../application/providers/account_gate.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_push_provider.dart';
+import '../../application/providers/cloud_sync_status_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart' show activePackageProvider;
@@ -13,10 +15,9 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
-import '../../application/providers/lan_sync_provider.dart';
-import '../dialogs/lan_sync_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
@@ -55,60 +56,64 @@ class SaveSyncIndicator extends ConsumerWidget {
       );
     }
 
-    // Full (inside item) mode: reflects the active item's local save state.
+    // Full (inside item) mode: the active item's local save state, and for
+    // an online item its cloud state (Faz 9).
+    final l10n = L10n.of(context)!;
     final saveStatus = ref.watch(saveStateProvider);
-    final localSaving = saveStatus == SaveStatus.saving;
+    final key = ref.watch(activeCampaignProvider);
+    final cloud = key == null
+        ? null
+        : ref.watch(cloudSyncStatusProvider.select((m) => m[key]));
+    final problems = cloud?.problemCount ?? 0;
+    final (icon, color, tip, spin) = _look(
+        l10n, palette, Theme.of(context).colorScheme.primary,
+        saveStatus, cloud);
 
-    final (IconData icon, Color color) = _resolveIcon(
-      saveStatus, palette,
-      localSaving: localSaving,
-      context: context,
-    );
-
-    return Stack(
-      children: [
-        IconButton(
-          icon: localSaving
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: color,
-                  ),
-                )
-              : Icon(icon, size: 20, color: color),
-          tooltip: _tooltip(saveStatus),
-          onPressed: () => _showSaveSyncDialog(context, ref, compact: false),
-        ),
-      ],
+    return IconButton(
+      icon: spin
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Badge(
+              isLabelVisible: problems > 0,
+              label: Text('$problems'),
+              backgroundColor: palette.dangerBtnBg,
+              child: Icon(icon, size: 20, color: color),
+            ),
+      tooltip: tip,
+      onPressed: () => _showSaveSyncDialog(context, ref, compact: false),
     );
   }
 
-  /// Gösterge yalnızca YEREL kayıt durumunu anlatıyor: kuyruk yok, bulut
-  /// kopyası yok. Hesap durumundan bağımsız aynı ikonlar.
-  (IconData, Color) _resolveIcon(
-    SaveStatus save,
-    DmToolColors palette, {
-    required bool localSaving,
-    required BuildContext context,
-  }) {
-    final themePrimary = Theme.of(context).colorScheme.primary;
-    if (localSaving) {
-      return (Icons.save, themePrimary);
+  /// Sıra önem sırası: hata kalıcı ve her şeyin üstünde; çevrimdışı birikme
+  /// yerel kaydın üstünde, çünkü yerel kayıt onu bilmiyor.
+  static (IconData, Color, String, bool) _look(L10n l10n, DmToolColors palette,
+      Color primary, SaveStatus save, CloudSyncStatus? cloud) {
+    final muted = palette.sidebarLabelSecondary;
+    final problems = cloud?.problemCount ?? 0;
+    if (problems > 0) {
+      return (Icons.sync_problem, palette.dangerBtnBg,
+          l10n.cloudSyncTooltipProblems(problems), false);
     }
-    return switch (save) {
-      SaveStatus.saving => (Icons.save, themePrimary),
-      SaveStatus.dirty => (Icons.save_outlined, themePrimary),
-      SaveStatus.saved => (Icons.save, palette.sidebarLabelSecondary),
-    };
+    if (cloud?.offline ?? false) {
+      return (Icons.cloud_off, muted, l10n.cloudSyncTooltipPending, false);
+    }
+    if (save == SaveStatus.saving) {
+      return (Icons.save, primary, l10n.saveTooltipSaving, true);
+    }
+    if (save == SaveStatus.dirty) {
+      return (Icons.save_outlined, primary, l10n.saveTooltipSaving, false);
+    }
+    if (cloud?.syncing ?? false) {
+      return (Icons.cloud_sync, primary, l10n.cloudSyncTooltipSyncing, false);
+    }
+    if (cloud != null) {
+      return (Icons.cloud_done, muted, l10n.cloudSyncTooltipSynced, false);
+    }
+    return (Icons.save, muted, l10n.saveTooltipSaved, false);
   }
-
-  String _tooltip(SaveStatus save) => switch (save) {
-        SaveStatus.saving => 'Auto-saving…',
-        SaveStatus.dirty => 'Auto-saving…',
-        SaveStatus.saved => 'Saved',
-      };
 
   void _showSaveSyncDialog(BuildContext context, WidgetRef ref, {bool compact = false}) {
     showDialog(
@@ -173,6 +178,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                 // ── Active item info (full mode only) ──
                 if (!compact) ...[
                   _ActiveItemSaveInfo(palette: palette, isPackage: isPackage),
+                  _CloudSyncInfo(palette: palette, isPackage: isPackage),
                 ],
 
                 // ── Actions (full mode only) — packages never go multiplayer ──
@@ -198,12 +204,6 @@ class _SaveSyncDialog extends ConsumerWidget {
                   const SizedBox(height: 16),
                 ],
 
-                // ── Local Sync ──
-                // İçerik buluta çıkmıyor, LAN'da kalıyor: hesapsız da açık.
-                _LocalSyncSection(palette: palette),
-
-
-
                 // ── Compact mode hint ──
                 if (compact)
                   Text(
@@ -226,71 +226,6 @@ class _SaveSyncDialog extends ConsumerWidget {
 // ── Helper widgets ──────────────────────────────────────────────────
 
 typedef _SectionLabel = SectionLabel;
-
-/// LAN sync girişi — panel açma + eşleşmiş cihazlarla tek tuş sync.
-/// Hesap gerektirmez: içerik cihazdan çıkmıyor, yerel ağda kalıyor.
-class _LocalSyncSection extends ConsumerWidget {
-  final DmToolColors palette;
-  const _LocalSyncSection({required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = L10n.of(context)!;
-    final syncing =
-        ref.watch(lanSyncControllerProvider).phase == LanSyncPhase.syncing;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        _SectionLabel(l10n.lanSyncTitle, palette),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ActionButton(
-              icon: Icons.sync,
-              label: l10n.lanSyncSyncNow,
-              palette: palette,
-              onPressed: syncing ? null : () => _syncNow(context, ref, l10n),
-            ),
-            ActionButton(
-              icon: Icons.wifi_tethering,
-              label: l10n.lanSyncOpen,
-              palette: palette,
-              onPressed: () {
-                Navigator.pop(context);
-                LanSyncDialog.show(context);
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _syncNow(
-      BuildContext context, WidgetRef ref, L10n l10n) async {
-    final controller = ref.read(lanSyncControllerProvider.notifier);
-    await controller.refreshDevices();
-    if (!context.mounted) return;
-    if (ref.read(lanSyncControllerProvider).devices.isEmpty) {
-      // Eşleşme yoksa sync anlamsız — kullanıcıyı eşleşme paneline gönder.
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.lanSyncNoDevices)));
-      return;
-    }
-    await controller.syncAll();
-    if (!context.mounted) return;
-    final state = ref.read(lanSyncControllerProvider);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(state.phase == LanSyncPhase.error
-          ? l10n.lanSyncError(state.error ?? '')
-          : l10n.lanSyncSummary(state.itemsSynced, state.devicesSynced)),
-    ));
-  }
-}
 
 /// Online world panel — invite code (copy + regenerate) ve member listesini
 /// gösterir. World offline iken hiçbir şey render etmez.
@@ -329,6 +264,93 @@ class _OnlineWorldPanel extends ConsumerWidget {
 
 // _InviteCodeRow / _MemberRow extracted to online_world_widgets.dart so the
 // world-settings online panel can render the same shape.
+
+/// Faz 9 — online öğenin bulut hali: son eşitleme, çevrimdışı birikme ve
+/// sorunlar; sorun ya da birikme varsa elle yeniden deneme. Öğe online
+/// değilse hiçbir şey çizmez.
+class _CloudSyncInfo extends ConsumerWidget {
+  final DmToolColors palette;
+  final bool isPackage;
+  const _CloudSyncInfo({required this.palette, required this.isPackage});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final key = ref.watch(activeCampaignProvider);
+    final s = key == null
+        ? null
+        : ref.watch(cloudSyncStatusProvider.select((m) => m[key]));
+    if (key == null || s == null) return const SizedBox.shrink();
+    final l10n = L10n.of(context)!;
+    final muted = palette.sidebarLabelSecondary;
+    final synced = s.syncedAt;
+    final line = s.syncing
+        ? l10n.cloudSyncTooltipSyncing
+        : s.offline
+            ? l10n.cloudSyncTooltipPending
+            : synced == null
+                ? l10n.cloudSyncNotYet
+                : l10n.cloudSyncLastSynced(
+                    DateFormat.Hm().format(synced.toLocal()));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.cloud_outlined, size: 14, color: muted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.cloudSyncSection,
+                    style: TextStyle(
+                        fontSize: 10, color: muted, letterSpacing: 0.3)),
+                const SizedBox(height: 1),
+                Text(line,
+                    style:
+                        TextStyle(fontSize: 12, color: palette.tabActiveText)),
+                for (final e in s.problems.entries)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(_problemText(l10n, e.key, e.value),
+                        style: TextStyle(
+                            fontSize: 12, color: palette.dangerBtnBg)),
+                  ),
+                if (!s.syncing && (s.offline || s.problems.isNotEmpty))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: _ActionButton(
+                      icon: Icons.refresh,
+                      label: l10n.cloudSyncRetry,
+                      palette: palette,
+                      onPressed: () {
+                        final pump = ref.read(cloudPushPumpProvider);
+                        isPackage ? pump.syncPackage(key) : pump.catchUp(key);
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _problemText(
+          L10n l10n, CloudSyncIssue kind, CloudSyncProblem p) =>
+      switch (kind) {
+        CloudSyncIssue.push => p.error == null
+            ? l10n.cloudSyncProblemPushRejected(p.count)
+            : l10n.cloudSyncProblemPush(p.error!),
+        CloudSyncIssue.pull => l10n.cloudSyncProblemPull(p.error ?? ''),
+        CloudSyncIssue.media => p.error == null
+            ? l10n.cloudSyncProblemMediaFailed(p.count)
+            : l10n.cloudSyncProblemMedia(p.error!),
+        CloudSyncIssue.quota => l10n.worldMediaQuotaFull,
+        CloudSyncIssue.share => l10n.cloudSyncProblemShare(p.error ?? ''),
+      };
+}
 
 /// Actions panel — active world/package için Sync (push + pull) +
 /// Make Online toggle (sadece world). Auto-debounced lokal save row-level
@@ -554,6 +576,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       // kapalıyken yapılan düzenlemeler de dahil her şey bir kez daha gider.
       await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, false);
       ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+      ref.read(cloudSyncStatusProvider.notifier).remove(worldId);
       ref.invalidate(worldOnlineStatusProvider(worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -783,8 +806,12 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
       debugPrint('paket online ilk push: ${res.pushed} satır, '
           '${res.rejected.length} red, hata: ${res.error}');
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.packageNowOnline)));
+      // Bayrak kalıyor: pompa sonraki turda yeniden dener, gösterge hatayı
+      // o zamana kadar taşır.
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(res.error == null
+              ? l10n.packageNowOnline
+              : l10n.publishDialogFailed(formatError(res.error!)))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -828,6 +855,8 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
           .read(appDatabaseProvider)
           .packagesDao
           .setOnline(packageId, false);
+      final name = ref.read(activePackageProvider);
+      if (name != null) ref.read(cloudSyncStatusProvider.notifier).remove(name);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l10n.packageNowOffline)));

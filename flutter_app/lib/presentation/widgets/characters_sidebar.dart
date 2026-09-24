@@ -144,7 +144,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         final ok = await withLoading(
           ref.read(globalLoadingProvider.notifier),
           'open-world-$worldId',
-          'Opening world "$worldName"...',
+          L10n.of(context)!.loadingOpeningWorld(worldName),
           () => ref.read(activeCampaignProvider.notifier).load(worldId),
         );
         if (!mounted) return;
@@ -377,8 +377,8 @@ class _OfflineCharacterRowState
   }
 
   /// Local-only ownership patch. Offline worlds are not mirrored, so there
-  /// is nothing to reconcile with the server — `update()` persists + pushes
-  /// to the owner's other devices via LAN sync like any other edit.
+  /// is nothing to reconcile with the server — `update()` persists it like
+  /// any other edit.
   Future<void> _setOwner(String? ownerId) => _runBusy(() => ref
       .read(characterListProvider.notifier)
       .update(widget.character.copyWith(ownerId: ownerId)));

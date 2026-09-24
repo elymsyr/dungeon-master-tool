@@ -16,6 +16,7 @@ import '../services/content_ref_index.dart';
 import '../services/world_media_sync.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
+import 'cloud_sync_status_provider.dart';
 import 'connectivity_provider.dart';
 import '../../data/database/database_provider.dart';
 import 'entity_provider.dart';
@@ -181,21 +182,63 @@ class CloudPushPump {
     if (svc == null || id == null || id.isEmpty) {
       return const CloudPushResult(skipped: true);
     }
-    // DM olmayan kimse ayna tablolarına yazamaz (RLS).
+    if (!await _worldOnline(id)) return const CloudPushResult(skipped: true);
+    // DM olmayan kimse ayna tablolarına yazamaz (RLS). Online dünya yalnız
+    // DM'in cihazında işaretli; burada rol yoksa çözülemedi demek.
     final role = await _roleOf(id);
     if (role != WorldRole.dm) {
       debugPrint(
           'CloudSync: push $id atlandı, rol=${role?.name ?? 'çözülmedi'}');
+      _status.markOffline(id);
       return const CloudPushResult(skipped: true);
     }
     // Tam tur ("multiplayer aç") medyasını ilerleme overlay'inde ayrıca
     // yüklüyor; burada beklenseydi satırlar bütün medyayı beklerdi.
-    return _rows.run(() => _logged(
-        'push $id',
-        svc.pushWorld(id,
-            dmOnlyKeys: _dmOnlyKeys(),
-            full: full,
-            beforeRows: full ? null : (refs) => _uploadNew(id, refs))));
+    return _shown(
+        id,
+        CloudSyncIssue.push,
+        () => _rows.run(() => _logged(
+            'push $id',
+            svc.pushWorld(id,
+                dmOnlyKeys: _dmOnlyKeys(),
+                full: full,
+                beforeRows: full ? null : (refs) => _uploadNew(id, refs)))));
+  }
+
+  CloudSyncStatusNotifier get _status =>
+      _ref.read(cloudSyncStatusProvider.notifier);
+
+  /// Faz 9 — online değilse göstergenin kaydı da kalkar (multiplayer
+  /// kapandı): yerel dünyada gösterge yalnız yerel kaydı anlatır.
+  Future<bool> _worldOnline(String id) async {
+    final world = await _ref.read(appDatabaseProvider).worldsDao.getById(id);
+    if (world?.isOnline ?? false) return true;
+    _status.remove(id);
+    return false;
+  }
+
+  /// Turu göstergeye yansıtır: sürerken "eşitleniyor", bitince sonucu.
+  Future<T> _shown<T>(
+      String key, CloudSyncIssue kind, Future<T> Function() body) async {
+    _status.started(key);
+    try {
+      final res = await body();
+      switch (res) {
+        // Servisler yalnız öğe online değilse atlıyor.
+        case CloudPushResult(skipped: true) || CloudPullResult(skipped: true):
+          _status.remove(key);
+        case CloudPushResult(:final error, :final rejected):
+          _status.report(key, kind, error: error, failed: rejected.length);
+        case CloudPullResult(:final error):
+          _status.report(key, kind, error: error);
+      }
+      return res;
+    } catch (e) {
+      _status.report(key, kind, error: e);
+      rethrow;
+    } finally {
+      _status.ended(key);
+    }
   }
 
   /// Satırlardan önce: bu turun satırlarının andığı, bulutta olmayan medya.
@@ -234,18 +277,23 @@ class CloudPushPump {
   }) async {
     final svc = _ref.read(cloudPushServiceProvider);
     if (svc == null) return const CloudPushResult(skipped: true);
-    var id = packageId;
-    if (id == null) {
-      final name = packageName ?? _ref.read(activePackageProvider);
-      if (name == null || name.isEmpty) {
-        return const CloudPushResult(skipped: true);
-      }
-      id = (await _ref.read(appDatabaseProvider).packagesDao.getByName(name))?.id;
-      if (id == null) return const CloudPushResult(skipped: true);
+    final dao = _ref.read(appDatabaseProvider).packagesDao;
+    final name = packageName ?? _ref.read(activePackageProvider);
+    final row = packageId != null
+        ? await dao.getById(packageId)
+        : (name == null || name.isEmpty ? null : await dao.getByName(name));
+    if (row == null) return const CloudPushResult(skipped: true);
+    // Göstergenin anahtarı paket adı (bkz. [CloudSyncStatusNotifier]).
+    if (!row.isOnline) {
+      _status.remove(row.name);
+      return const CloudPushResult(skipped: true);
     }
-    final pid = id;
-    return _rows.run(
-        () => _logged('push paket $pid', svc.pushPackage(pid, full: full)));
+    final pid = row.id;
+    return _shown(
+        row.name,
+        CloudSyncIssue.push,
+        () => _rows.run(() =>
+            _logged('push paket $pid', svc.pushPackage(pid, full: full))));
   }
 
   /// Faz 5a — aktif dünyanın bulut aynasını yerele çeker.
@@ -265,7 +313,8 @@ class CloudPushPump {
       return const CloudPullResult(skipped: true);
     }
     final sw = Stopwatch()..start();
-    final res = await _rows.run(() => svc.pullWorld(id, full: full));
+    final res = await _shown(id, CloudSyncIssue.pull,
+        () => _rows.run(() => svc.pullWorld(id, full: full)));
     debugPrint('CloudSync: pull $id +${res.applied} -${res.removed} '
         'rev=${res.revision}${res.skipped ? ' atlandı' : ''}'
         '${res.error != null ? ' hata=${res.error}' : ''} '
@@ -397,9 +446,12 @@ class CloudPushPump {
   Future<void> _quiet(
       String id, Future<WorldMediaReport?> Function() body) async {
     final sw = Stopwatch()..start();
+    _status.started(id);
     try {
       final rep = await body();
       if (rep == null) return;
+      _status.report(id, CloudSyncIssue.media, failed: rep.failed.length);
+      if (rep.failed.isEmpty) _status.report(id, CloudSyncIssue.quota);
       if (rep.uploaded > 0 || rep.tooLarge.isNotEmpty || rep.failed.isNotEmpty) {
         debugPrint('CloudSync: medya $id ↑${rep.uploaded}'
             '${rep.tooLarge.isEmpty ? '' : ' limit üstü ${rep.tooLarge.length}'}'
@@ -417,9 +469,13 @@ class CloudPushPump {
       debugPrint('CloudSync: medya $id hata=${isOfflineError(e) ? 'offline' : e}');
       if (e is WorldMediaQuotaException) {
         _ref.read(worldMediaQuotaProvider.notifier).state ??= e.pool;
+        _status.report(id, CloudSyncIssue.quota, failed: 1);
       } else {
+        _status.report(id, CloudSyncIssue.media, error: e);
         _scheduleMediaRetry(id);
       }
+    } finally {
+      _status.ended(id);
     }
   }
 
@@ -487,21 +543,28 @@ class CloudPushPump {
   /// [wait] kadar beklenir, sonra paket yerel haliyle açılır: yavaş ağ
   /// açılışı kilitlemesin. Geç biten pull satırları yine Drift'e yazar,
   /// bir sonraki açılışta görünür.
-  Future<void> syncPackage(String packageName,
+  ///
+  /// false: [wait] doldu, paket bulutla uzlaşmadan açılıyor (Faz 9 — çağıran
+  /// kullanıcıya söyler).
+  Future<bool> syncPackage(String packageName,
       {Duration wait = const Duration(seconds: 8)}) async {
     final svc = _ref.read(cloudPullServiceProvider);
     final id =
         (await _ref.read(appDatabaseProvider).packagesDao.getByName(packageName))
             ?.id;
-    if (svc == null || id == null) return;
-    Future<void> run() async {
-      await pushPackage(packageId: id);
-      final res = await _rows.run(() => svc.pullPackage(id));
+    if (svc == null || id == null) return true;
+    Future<bool> run() async {
+      final pushed = await pushPackage(packageId: id, packageName: packageName);
+      // Push'la aynı koşul: paket online değil, pull da atlardı.
+      if (pushed.skipped) return true;
+      final res = await _shown(packageName, CloudSyncIssue.pull,
+          () => _rows.run(() => svc.pullPackage(id)));
       debugPrint('CloudSync: pull paket $id +${res.applied} -${res.removed} '
           'rev=${res.revision}${res.error != null ? ' hata=${res.error}' : ''}');
+      return true;
     }
 
-    await run().timeout(wait, onTimeout: () {});
+    return run().timeout(wait, onTimeout: () => false);
   }
 
   Future<CloudPushResult> pushActivePackage() =>

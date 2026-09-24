@@ -693,8 +693,8 @@ class WorldRepositoryImpl implements CampaignRepository {
 
       // Granular tabloları da yaz — `_loadFromDb` bunları settings_json'a
       // **tercih ediyor**. Yalnız blob'a yazmak, hedefte zaten satır varsa
-      // gelen map/session'ı görünmez kılıyordu: cloud restore ve LAN
-      // eşlemesi "harita ve oturumlar gelmedi" diye görünüyordu. Anahtar
+      // gelen map/session'ı görünmez kılıyordu: cloud restore ve `.dmtz`
+      // import "harita ve oturumlar gelmedi" diye görünüyordu. Anahtar
       // yoksa dokunulmaz — `entities`'teki metadata-only save korumasının
       // aynısı (bkz. aşağıdaki PR-B5 notu).
       if (data.containsKey('map_data')) {

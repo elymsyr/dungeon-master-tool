@@ -178,8 +178,9 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA mmap_size = 67108864'); // 64 MB
           await customStatement('PRAGMA foreign_keys = OFF');
           // F2+: drift-codegen kaçınmak için side-tables raw SQL ile
-          // idempotent kurulur (asset_refs, migration_progress,
-          // lan_paired_devices). Schema bump yok — IF NOT EXISTS.
+          // idempotent kurulur (asset_refs, content_paths,
+          // migration_progress, sync_tombstones). Schema bump yok — IF NOT
+          // EXISTS.
           for (final stmt in _sideTablesDDL) {
             await customStatement(stmt);
           }
@@ -256,7 +257,7 @@ class AppDatabase extends _$AppDatabase {
           } catch (e) {
             debugPrint('world_media_dir_by_id_v1: $e');
           }
-          // LAN sync: yeniden adlandırma zamanı — tablolara kolon ekle.
+          // Yeniden adlandırma zamanı — tablolara kolon ekle.
           // ALTER TABLE IF NOT EXISTS SQLite'da desteklenmiyor; hata yutulur.
           for (final stmt in _renamedAtColumnsDDL) {
             try {
@@ -447,8 +448,6 @@ const List<String> _v12Indexes = <String>[
 /// - `content_paths` (Faz 3.5): sha256 → yerel özgün dosya; `dmt-content://`
 ///   ref'inin cihaz-yerel çözümü.
 /// - `migration_progress` (F11): raw-path migrator resume state.
-/// - `lan_paired_devices` (LAN sync v2): kalıcı cihaz eşleşmeleri. DB zaten
-///   `users/{uid}/` altında olduğu için kayıtlar doğal olarak hesaba bağlı.
 /// - `sync_tombstones` (Faz 4): buluta bildirilecek silmeler.
 const List<String> _sideTablesDDL = <String>[
   // asset_refs
@@ -509,21 +508,9 @@ const List<String> _sideTablesDDL = <String>[
       ')',
   'CREATE INDEX IF NOT EXISTS idx_sync_tombstones_world '
       'ON sync_tombstones (world_id)',
-
-  // lan_paired_devices — LAN sync v2 (bkz. [[LAN-Sync-Flow]])
-  // `shared_secret` iki cihazda aynıdır; `/pair` el sıkışmasında iki tarafın
-  // ürettiği yarımların sha256'sı. `last_address` presence beacon'ı ile tazelenir.
-  'CREATE TABLE IF NOT EXISTS lan_paired_devices ('
-      'device_id TEXT NOT NULL PRIMARY KEY, '
-      'name TEXT NOT NULL DEFAULT \'\', '
-      'last_address TEXT NOT NULL DEFAULT \'\', '
-      'shared_secret TEXT NOT NULL, '
-      'paired_at INTEGER NOT NULL, '
-      'last_seen_at INTEGER NOT NULL DEFAULT 0'
-      ')',
 ];
 
-/// LAN sync: yeniden adlandırma zamanı damgası. Schema bump yok — her
+/// Yeniden adlandırma zamanı damgası (`.dmtz` birleştirmesinde isim LWW'si). Schema bump yok — her
 /// `beforeOpen`'da `ALTER TABLE … ADD COLUMN` denenir, kolon zaten varsa
 /// hata yutulur.
 const List<String> _renamedAtColumnsDDL = <String>[
@@ -532,8 +519,8 @@ const List<String> _renamedAtColumnsDDL = <String>[
   'ALTER TABLE world_characters ADD COLUMN renamed_at INTEGER',
 ];
 
-/// Bulut sync ile birlikte emekliye ayrılan tablolar. `beforeOpen`'da
-/// düşürülür ki eski v12 dosyaları ölü veri taşımasın. Silme listesine bir
+/// Bulut sync (ve Faz 6'da LAN sync) ile birlikte emekliye ayrılan tablolar.
+/// `beforeOpen`'da düşürülür ki eski v12 dosyaları ölü veri taşımasın. Silme listesine bir
 /// şey eklemek serbest; buradan bir satır ÇIKARMAK ise eski kurulumlarda
 /// tabloyu geri getirmez — sadece artık temizliği durdurur.
 const List<String> _retiredTablesDDL = <String>[
@@ -541,6 +528,7 @@ const List<String> _retiredTablesDDL = <String>[
   'DROP TABLE IF EXISTS sync_telemetry',
   'DROP TABLE IF EXISTS bm_mark_ops_local',
   'DROP TABLE IF EXISTS personal_packages',
+  'DROP TABLE IF EXISTS lan_paired_devices',
 ];
 
 LazyDatabase _openConnection() => _openConnectionForUser(null);

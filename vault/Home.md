@@ -17,7 +17,7 @@ tags: [home, moc]
 ## Domains (Maps of Content)
 | Domain | Owns |
 |---|---|
-| [[Sync-and-Realtime]] | LAN eşlemesi + DM'in paylaşım yayını (bulut dünya aynası yok) |
+| [[Sync-and-Realtime]] | Bulut aynası + `.dmtz` aktarımı + DM'in paylaşım yayını |
 | [[Character-System]] | Chargen wizard, level-up, effect resolution |
 | [[Combat-and-VTT]] | Initiative, battle map grid, tokens, fog |
 | [[Projection-Second-Screen]] | DM→player output: window / screencast / online |

@@ -8,7 +8,6 @@ import '../../application/providers/auth_provider.dart';
 import '../../application/providers/hub_tab_provider.dart';
 import '../../application/providers/profile_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
-import '../dialogs/lan_sync_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
 import '../dialogs/support_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -18,7 +17,7 @@ import 'profile_avatar.dart';
 /// Top-right'taki sign in/out icon'unun yerini alan menü.
 ///
 /// Menü **her** [AccountAccess] durumunda açılır; değişen yalnızca içeriği:
-/// hesap gerektirmeyen öğeler (Settings, LAN Sync, Support, Report Bug) herkese
+/// hesap gerektirmeyen öğeler (Settings, Support, Report Bug) herkese
 /// açıktır — bir misafirin bunlara ulaşmak için giriş sayfasına atılması, O1/O2
 /// ile ayrılan "yerel olan gate'lenmez" kuralının ihlaliydi. Profil / Admin /
 /// Sign Out yalnızca [AccountAccess.signedIn] durumunda; misafir bunların
@@ -77,8 +76,6 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/profile/me');
           case 'edit':
             context.push('/profile/me?edit=1');
-          case 'local_sync':
-            LanSyncDialog.show(context);
           case 'settings':
             ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex;
           case 'support':
@@ -98,7 +95,6 @@ class ProfileMenuButton extends ConsumerWidget {
           item('view', Icons.person_outline, l10n.profileMenuViewProfile),
           item('edit', Icons.edit_outlined, l10n.profileMenuEditProfile),
         ],
-        item('local_sync', Icons.wifi_tethering, l10n.lanSyncOpen),
         item('settings', Icons.settings_outlined, l10n.profileMenuSettings),
         item('support', Icons.favorite_outline, l10n.profileMenuSupport),
         if (isAdmin)

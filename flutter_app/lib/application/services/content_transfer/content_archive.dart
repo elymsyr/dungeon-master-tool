@@ -1,11 +1,9 @@
 /// `.dmtz` — hesapsız, internetsiz içerik aktarımı. Bir dünya / paket /
 /// karakter tek bir zip'e girer, başka bir kurulumda geri açılır.
 ///
-/// Taşınan şey LAN telindekiyle **birebir aynı**: [ContentItemPayload].
-/// Yol taşınabilirliği için yeni kod yok — manifest export eden makinenin
-/// veri kökünü yazıyor, import [ContentCodec.rewriteRoots] ile onu kendi
-/// köküne çeviriyor. LAN'ın iki cihaz arasında yaptığı şeyin aynısı, arada
-/// zip var.
+/// Taşınan şey [ContentItemPayload]. Manifest export eden makinenin veri
+/// kökünü yazıyor, import [ContentCodec.rewriteRoots] ile onu kendi köküne
+/// çeviriyor.
 ///
 /// Zip düzeni:
 /// ```
@@ -142,7 +140,7 @@ class ContentArchive {
 
   final Archive _archive;
 
-  /// Zip'ten okunan item — LAN'dan gelmiş gibi, aynı DTO.
+  /// Zip'ten okunan item.
   final ContentItemPayload item;
 
   static Future<ContentArchive> open(String path) async {
@@ -204,7 +202,7 @@ class ContentArchive {
     );
   }
 
-  /// Medyayı diske açar, sonra item'ı LAN'la aynı yoldan uygular.
+  /// Medyayı diske açar, sonra item'ı [ContentCodec.applyItem] ile uygular.
   ///
   /// Yerelde aynı id varsa [ContentCodec.applyItem] bölüm bazlı birleştirme
   /// yapıyor (silme yaymıyor), yani import yıkıcı değil. Aynı isimde **başka**

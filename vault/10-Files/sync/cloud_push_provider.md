@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/cloud_push_provider.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-23
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -34,7 +34,8 @@ tags: [file]
 - `CloudPushPump.reconcileAll()` (Faz 5f) — online dünyaları (`worlds.is_online`, açık olan hariç) sırayla uzlaştırır.
 - `worldMediaQuotaProvider` (Faz 5f) — arka plan yüklemesi kotaya takıldı (`false` kişi payı, `true` R2 toplamı); oturumda bir kez dolar.
 - `cloudOnlyWorldsProvider` / `cloudOnlyPackagesProvider` (Faz 5c) → bulutta olup bu cihazda olmayanlar; yerel liste (`campaignInfoListProvider` / `packageListProvider`) değişince yeniden sorulur, çevrimdışıyken boş. Tüketicisi hub'daki ortak `CloudOnlySection` widget'ı (`presentation/widgets/cloud_only_section.dart`: satır başına İndir + ilerleme, tek seferde tek indirme).
-- `CloudPushPump.syncPackage(name)` (Faz 5c) — paket açılmadan önce push → pull; paketin Realtime sinyali yok, uzlaştırma anı açılış. En çok 8 sn beklenir, sonra paket yerel haliyle açılır.
+- `CloudPushPump.syncPackage(name)` (Faz 5c) — paket açılmadan önce push → pull; paketin Realtime sinyali yok, uzlaştırma anı açılış. En çok 8 sn beklenir, sonra paket yerel haliyle açılır; Faz 9'dan beri `false` dönüp çağırana zaman aşımını söylüyor (`packages_tab` snackbar'la bildiriyor).
+- [[cloud_sync_status_provider]] (Faz 9) — her push / pull / medya turunun başı ve sonucu buraya yazılıyor; Save & Sync göstergesi oradan okuyor.
 
 ## Dependencies & Links
 - Depends on: [[cloud_push_service]], [[cloud_pull_service]], [[pending_write_buffer]], [[world_media_sync]], [[content_ref_index]], [[campaign_provider]] (`reload()`).
@@ -55,4 +56,5 @@ tags: [file]
 - **Pull'dan sonra açık dünya tazeleniyor.** `pull()` tur satır uyguladıysa (`applied > 0 || removed > 0`) ve çekilen dünya hâlâ açık dünyaysa `ActiveCampaignNotifier.reload()` çağrılıyor. Bu şart olmadan 5a kullanıcıya **tamamen görünmezdi**: `EntityNotifier._loadFromCampaign` Drift'ten değil bellekteki blob'dan okuyor, dolayısıyla inen satırlar ancak bir sonraki açılışta belirirdi. `reload()` blob'u `_repo.load()` ile yerinde değiştirip `campaignRevisionProvider`'ı bump ediyor — yalnız bump etmek yetmez, aynı bayat blob yeniden okunur. `installed_packages` Drift `StreamProvider`'ı üstünden zaten canlı; `worldCharactersProvider` bulut kaynaklı, bu yoldan etkilenmiyor.
 - **`catchUp` — flush, push, pull.** Uzlaştırma turu; kanal her `SUBSCRIBED` olduğunda (dünya açılışı, reconnect, uygulamanın öne gelmesi) ve karşı cihazın sinyalinde koşuyor. Önce `PendingWriteBuffer.flush()`: pull artık düzenleme sürerken de koşabiliyor, tampondaki satır Drift'e inmeden LWW onu bayat haliyle karşılaştırırdı (flush'ın `_bumpTick`'i 3 sn sonra boş bir push turu doğuruyor — yalnız yerel sorgu). Push-önce sırasının gerekçesi [[cloud_pull_service]]'te: ters sırada her pull kendi getirdiği satırları buluta geri göndertirdi.
 - **`onSignal` — 1 sn debounce.** Karşı cihazın bir push turu satır başına bir sinyal üretiyor (sayaç her yazmada artıyor); pencere patlamayı tek pull'a indiriyor. Sonra sayaç yerel `worlds.cloud_revision` ile karşılaştırılıyor: eşik altındaysa (kendi yankımız ya da zaten çekilmiş) hiçbir şey yapılmıyor.
+- **Gösterge beslemesi (Faz 9):** `push` önce `worlds.is_online`'a bakıyor (`_worldOnline`) — online değilse durum kaydı silinip tur atlanıyor, rol sorgusu da yapılmıyor; yoksa `started` her 3 sn'de yerel dünyada "eşitleniyor" kaydı açıp göstergeyi titretirdi. Online dünyada rol DM değilse = çözülemedi → `markOffline`. `_shown(key, kind, body)` turu `started`/`ended` arasına alıp sonucu `report` ediyor; servisin `skipped` sonucu = öğe online değil → kayıt silinir. Anahtar dünyada id, pakette **paket adı** (göstergenin `activeCampaignProvider` okuması paket ekranında adı veriyor). Medya `_quiet`'te `media` / `quota` türüyle raporlanıyor; `worldMediaQuotaProvider` snackbar'ı da duruyor.
 - **Eski `syncOnOpen` kaldırıldı (5b).** Rol DM'e çözülünce bir kez koşması gerekiyordu, ama pompa autoDispose olmayan bir `Provider` — kök kapsamda yaşıyor, dünya kapanınca dispose olmuyor. `_opened` bayrağı ilk DM dünyasında `true` olup öyle kalıyor ve **uygulama ömrü boyunca ikinci bir açılış pull'u koşmuyordu.** Tetik kanalın `SUBSCRIBED`'ına taşındı; bayrağa gerek kalmadı.

@@ -25,6 +25,7 @@ import '../services/undo_redo_mixin.dart';
 import '../../domain/entities/online/world_role.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
+import 'cloud_sync_status_provider.dart';
 import 'online_worlds_provider.dart';
 import 'event_bus_provider.dart';
 import 'package_link_provider.dart' show packageReferenceOverlayProvider;
@@ -786,8 +787,15 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       await _ref
           .read(entitySharerProvider)
           .share(entityId: entityId, worldId: worldId);
+      _ref
+          .read(cloudSyncStatusProvider.notifier)
+          .report(worldId, CloudSyncIssue.share);
     } catch (e) {
       debugPrint('entity auto re-share failed for $entityId: $e');
+      // Kuyruk yok: kart yeniden düzenlenene kadar oyuncuda eski hali kalır.
+      _ref
+          .read(cloudSyncStatusProvider.notifier)
+          .report(worldId, CloudSyncIssue.share, error: e);
     }
   }
 

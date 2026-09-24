@@ -6,13 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/asset_ref_resolver.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import '../l10n/app_localizations.dart';
 import 'perf/image_cache_size.dart';
 
 /// Displays an image from an [AssetRef] — local path or `dmt-asset://` cloud
 /// URI. Cloud refs download + cache on first render; subsequent renders hit
 /// the SHA-keyed disk cache (see [AssetService.downloadAsset]).
 ///
-/// While resolving, shows [placeholder]; on failure, shows [errorWidget].
+/// While resolving, shows [placeholder]; on failure, shows [errorWidget] with
+/// the reason as its tooltip (Faz 9).
 class AssetRefImage extends ConsumerStatefulWidget {
   const AssetRefImage({
     super.key,
@@ -103,8 +105,19 @@ class _AssetRefImageState extends ConsumerState<AssetRefImage> {
         }
         final file = snap.data;
         if (file == null) {
-          return widget.errorWidget ??
-              const Icon(Icons.broken_image_outlined);
+          final error =
+              widget.errorWidget ?? const Icon(Icons.broken_image_outlined);
+          final miss = ref.read(assetRefResolverProvider).missOf(widget.ref);
+          final l10n = L10n.of(context);
+          if (miss == null || l10n == null) return error;
+          return Tooltip(
+            message: switch (miss) {
+              AssetMiss.notOnDevice => l10n.assetMissNotOnDevice,
+              AssetMiss.notInCloud => l10n.assetMissNotInCloud,
+              AssetMiss.downloadFailed => l10n.assetMissDownloadFailed,
+            },
+            child: error,
+          );
         }
         var autoW = widget.width != null
             ? cachePxFromLogical(context, widget.width!)

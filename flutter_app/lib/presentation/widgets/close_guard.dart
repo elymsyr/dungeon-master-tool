@@ -18,7 +18,7 @@ Future<bool> confirmCloseWithBackupCheck({
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'close-guard-save',
-      'Saving "$itemName"...',
+      L10n.of(context)!.loadingSavingItem(itemName),
       () => ref.read(saveStateProvider.notifier).saveNow(),
     );
   } catch (e) {
