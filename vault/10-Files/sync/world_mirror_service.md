@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-09-23
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Constructor: `SupabaseClient client`.
-- `fetchInitialState(worldId)` / `fetchEntity(worldId, entityId)` / `fetchWorldMeta(worldId)` reads.
+- `fetchInitialState(worldId, {withShares})` / `fetchEntity(worldId, entityId)` / `fetchWorldMeta(worldId)` reads.
 - Echo/guard queries called by the applier: `isEchoOf(event)`, `isEchoOfId/MapData/Session/Settings/Package/WorldPackage/PersonalPackageEntity`, `isExpectedUnpublish`, `isExpectedCharDelete`.
 
 **Outputs**
@@ -41,7 +41,7 @@ tags: [file]
 - **Char-delete guard (leave_beta orphans):** `_expectedCharDelete` mirror of the above for `world_characters` DELETE — keeps the local copy when the server deletes an orphan online character.
 - **`_entityRow`:** maps a blob entity to the wide `world_entities` columns (`category_slug` via `_categoryFor` = lowercased hyphenated `type`, defaults `npc`; jsonEncodes images/tags/pdfs/attributes; preserves `package_id`/`package_entity_id`/`linked`).
 - **`pushWorldState`** goes through the `publish_world` RPC (SECURITY DEFINER, owner_id from `auth.uid()`) — avoids RLS/upsert noise; player blocked by RLS.
-- **`fetchInitialState`** returns a record of `entities`, `characters`, `mapData`, `sessions`, `settings`, `worldRow` (worlds.state_json), `mindMapNodes`, `mindMapEdges` — pulls all tables in one go to seed Drift on world open (cross-device empty-snapshot fix).
+- **`fetchInitialState`** returns `(characters, shares, projection)` — the share channel's accumulated state, seeded on world open. Faz 5f: the three queries run concurrently (`Future.wait`, which forwards the first error unwrapped so the offline log classification survives); world open awaits this, and it used to be three sequential round trips. `withShares: false` skips `entity_shares` entirely — the DM keeps its own card bodies locally and the applier discarded the payloads, so every DM open downloaded every share body for nothing.
 - **`fetchWorldMeta`** reads `worlds.meta_json` and hands it to `decodeWorldMeta` ([[world_meta_sync]]) — dünya kartının açıklaması/etiketleri/kapağı. Çözülemezse null; çağıran (`WorldMirrorApplier._applyWorldMeta`) yamasız devam eder.
 - **`fetchEntity`** single row — used after an `entity_shares` INSERT CDC (the share doesn't mutate `world_entities`, so no CDC fires for the now-visible row).
 

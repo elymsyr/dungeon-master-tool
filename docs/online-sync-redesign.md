@@ -8,8 +8,11 @@ Migration 095–098 **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
 elle doğrulandı:** aynı hesapla ikinci cihaz ve DM + oyuncu (oyuncu tarafında
 yalnız savaş haritası) çalışıyor; el testinde bulunan yükleme kilidi düzeltildi.
 Oyuncu tarafında karakter yaratma ve kart paylaşımı henüz denenmedi.
-**Sıradaki: 5f — hız ve optimizasyon ([§4.8.4](#484-faz-55-ve-sonrası--taslak));
-kullanıcıya göre çok önemli.** Ardından 5e+; son faz (9) işlem geri bildirimi.
+**5f'nin 1. kısmı bitti ([§4.8.4](#484-faz-5f--hız-ve-optimizasyon--1-kısım--ölçüm-bekliyor)):**
+paralel yükleme, açılışın eşzamanlı sorguları, uygulama açılınca ve bağlantı
+gelince arka plan uzlaştırması, kota bildirimi, süre log'ları. Kalanı
+(önizleme, sıkıştırma, önden çekme, genel profil) el testindeki ölçüme bağlı.
+Ardından 5e+; son faz (9) işlem geri bildirimi.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -894,13 +897,13 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5b**~~ | Realtime sinyali + uzlaştırma anı + sunucu tarafı LWW | iki cihaz aynı dünyada **canlı** buluşuyor | evet | ✅ bitti (097 deploy edildi, elle doğrulandı) |
 | ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
 | ~~**5d**~~ | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | ✅ bitti (099 + worker deploy edildi; ikinci cihaz ve DM + oyuncu savaş haritası elle doğrulandı, kart paylaşımı / karakter bekliyor — §4.8.3) |
-| 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **sıradaki** (kullanıcı: çok önemli; analiz bekliyor, §4.8.4) |
+| 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
 | 5e | Paket medyası bulutta — paketin tamamı dünya gibi | ikinci cihaza inen paket görselleriyle geliyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
 | 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
-| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.4) |
+| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.5) |
 
 ### Faz 2 nereye gitti
 
@@ -2441,62 +2444,173 @@ karttaki görsel sayısına ulaşmalı.
 
 ---
 
-## 4.8.4 Faz 5.5 ve sonrası — taslak
+## 4.8.4 Faz 5f — Hız ve optimizasyon — 1. kısım ✅, ölçüm bekliyor
+
+*Kullanıcının gözlemi (2026-09-23, 5d el testinden sonra): dünya yükleme çok
+yavaş; görsellerin inmesi ve yüklenmesi beklenenden yavaş; başarısız olan
+görsel sonra yine denenmeli ve sistem bunu garanti etmeli; uygulamanın geneli
+optimizasyona ihtiyaç duyuyor, bu çok önemli. Faz el testi yapılmadan başladı
+(kullanıcı, 2026-09-23). Bu kısım ölçümü mümkün kılıyor ve sayımla görünen
+gecikmeleri kapatıyor; ölçümün kendisi el testinde.*
+
+### Sorun
+
+Koddan (2026-09-23):
+
+1. **Yükleme sırayla.** `WorldMediaSync.upload` 179 dosyayı 179 ardışık PUT'la
+   gönderiyordu. Aegis'in medyası 216 dosya, toplam 23,7 MB, medyan **72 KB**,
+   p90 104 KB. Dosya başına süreyi bant genişliği değil gidiş-dönüş
+   belirliyor: 179 × ~0,3 sn ≈ 1 dk. Aynı bayt 6'lı paralelde ~10 sn.
+2. **Dünya açılışı buluta bekliyor.** Online dünyada `completeLoad`,
+   `applyInitialState`'i 8 sn tavanla bekliyor; hub'da spinner dönüyor. İçinde
+   önce rol sorgusu, sonra karakterler, paylaşımlar ve projeksiyon için
+   **sırayla** üç sorgu var. DM'de paylaşımların gövdeleri her açılışta
+   tamamen iniyor ve applier onları atıyordu, çünkü DM kendi kartlarını
+   yerelde tutuyor.
+3. **Yeniden deneme dünyayı açmaya bağlı.** Eksik medya ve çevrimdışı birikmiş
+   satırlar yalnız dünya açılınca gidiyordu. Koddan bir açık daha çıktı: rol
+   sağlayıcıları (`currentWorldRoleProvider`, `worldRoleProvider`) ağ hatasını
+   `none` sayıp önbellekte tutuyor. Çevrimdışı açılan dünyada push atlanıyor
+   ve kanal kurulmuyordu. Bağlantı gelince de bir şey olmuyordu, dünya
+   yeniden açılana kadar.
+4. **Kota dolunca sessiz.** Arka plan yüklemesi `media_user_full` /
+   `media_pool_full` alınca yalnız log yazıyordu.
+5. **Ölçü yok.** `CloudSync:` log'ları işin ne kadar sürdüğünü söylemiyordu.
+   El testinin 8. adımı kronometreye kalıyordu.
+
+### Verilen kararlar
+
+| Konu | Karar |
+|---|---|
+| Ölçüm | `CloudSync:` satırları süreyi (ms) ve baytı taşır. Release derlemede de görünür, el testi log'la yapılıyor. Kare süreleri için var olan `PerfProbe` kullanılır (profil derlemede 20 sn'de bir döküm) |
+| Paralel PUT | **6** eşzamanlı, işçi havuzuyla. Bir işçi hata alırsa yeni dosya başlamaz; yoldakiler biter ve onaylanır. Onay yine onar dosyada bir |
+| Açılış seed'i | Üç sorgu eşzamanlı. DM paylaşımları hiç istemiyor |
+| Arka plan uzlaştırması | Uygulama açılınca, oturum açılınca ve bağlantı geri gelince bu cihazdaki **bütün online dünyalar** sırayla `catchUp`'tan geçer (push → pull → medya). Açık dünya kanalın işi |
+| Rol önbelleği | Bağlantı geri gelince ve her yeniden denemede tazelenir. Rolü çözülemeyen online dünya yeniden deneme kuyruğuna girer (30 sn → 10 dk) |
+| Kota | Arka plan yüklemesi kotaya takılınca oturumda **bir kez** snackbar çıkar, hangi ekranda olunursa. Yeniden denenmez |
+| Ölçüme bırakılanlar | Önizleme (thumbnail), yüklemeden önce sıkıştırma, indirmeleri önden çekme, hash'i izolata taşıma. Aegis zaten webp ve medyanı 72 KB; bu dünyada önizleme ve sıkıştırmanın kazancı küçük |
+
+**Neden ölçmeden önce.** Taslak "tahminle optimizasyon yapılmayacak" diyordu.
+Bu kısımdaki iki hızlandırma tahmin değil sayım: N ardışık gidiş-dönüşü
+eşzamanlıya çevirmenin kazancı bayttan bağımsız ve kodda görünüyor. Geri
+kalan her şey ölçüm gelene kadar bekliyor.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **`WorldMediaSync.upload`** | 100'lük partinin PUT'ları 6 işçide. `WorldMediaReport.bytes` giden baytı taşıyor |
+| **Açılış seed'i** | `WorldMirrorService.fetchInitialState(withShares:)`: üç sorgu `Future.wait` ile, DM'de paylaşımsız. `Future.wait` ilk hatayı sarmadan iletiyor, log'daki çevrimdışı ayrımı korunuyor |
+| **`CloudPushPump.reconcileAll`** | Online dünyaları sırayla uzlaştırıyor. `StartupSyncGate` açılışta ve geç gelen oturumda bir kez çağırıyor; pompa bağlantı geri gelince (`connectivityStreamProvider`) çağırıyor |
+| **`catchUp`** | Push rol yüzünden atlandıysa ve dünya online ise yeniden deneme kuruluyor. Yetim temizliği yalnız pull tuttuysa koşuyor |
+| **Yeniden deneme** | Denemeden önce rol önbelleği tazeleniyor |
+| **Kota** | `worldMediaQuotaProvider`. `StartupSyncGate` dinleyip snackbar gösteriyor (`worldMediaQuotaFull`, 4 dil) |
+| **Ölçüm log'ları** | `açılış <id> yerel=… ms toplam=… ms` · `push … ↑N ✕M … ms` · `pull … ms` · `medya <id> ↑N <bayt> … ms` · `indirme <id> +N … ms` · `multiplayer açıldı <id>: N satır … ms` + `multiplayer medya <id> ↑N <bayt> … ms (toplam)` · `bağlantı geri geldi` — hepsi `CloudSync:` önekli |
+
+### Faz 5f çıkış kriteri — testlerle kısmen, ölçüm bekliyor
+
+> 1. **Ölçülen süreler kaydedildi ve kullanıcıyla konuşulan hedefin altında.**
+> 2. **Yarıda kesilen yükleme, kullanıcı bir şey yapmadan tamamlanıyor**
+>    (§4.8.3 8. adım yeşil).
+
+Karşılanan:
+- `world_media_sync_test.dart` **9 test**. Yeni olanı "PUT'lar eşzamanlı, en
+  çok altı": 14 dosyada tepe 6, bayt ve ilerleme doğru. PUT yanıtları artık
+  sıraya değil yola bağlı (`FakePostgrest.routes`), çünkü eşzamanlı
+  isteklerin varış sırası belirsiz.
+- `world_mirror_initial_state_test.dart` **2 test**: üç sorgu aynı anda
+  uçuşta; `withShares: false` paylaşım tablosuna hiç istek atmıyor.
+- Tam `flutter test` **1593 yeşil / 1 kırmızı** (bilinen
+  `bundled_pack_resolve_test`); `flutter analyze`'ın 30 bulgusunun hiçbiri
+  değişen dosyalarda değil (hepsi önceden vardı).
+
+Bekleyen:
+- **Hedef sayılar kullanıcıyla konuşulmadı.** Öneri, ev bağlantısında:
+  online dünyanın açılışı toplam < 1,5 sn; "multiplayer aç" (179 görsel,
+  ~20 MB) < 30 sn; bir karta eklenen 15 görselin buluta çıkması < 10 sn;
+  ikinci cihazın ilk senkronunda satırlar < 10 sn.
+- Ölçüm: `online-el-testi.md` §8, log satırlarıyla.
+- 2. kriter: §4.8.3 8. adım elle, (b) şıkkında dünyayı açmadan.
+
+### Uygulamada çıkan farklar
+
+| Taslakta yazan | Uygulanan |
+|---|---|
+| Uygulama açılınca online dünyalar için arka planda uzlaştırma | Bağlantı geri gelince de. Açılışta ağ yoksa açılış uzlaştırması bir şey yapamıyor |
+| (yok) | **Rol önbelleği açığı.** Rol sağlayıcıları ağ hatasını `none` sayıp önbellekte tutuyor. Çevrimdışı açılan dünya bağlantı gelince de push etmiyordu, kanal da kurulmuyordu. Artık bağlantı geri gelince ve her yeniden denemede tazeleniyor |
+| (yok) | Yetim temizliği pull başarısızken de koşuyordu. Bayat yerel satırlar, öbür cihazın yeni görselini "anılmıyor" sayıp buluttan sildirebilirdi. Artık yalnız pull tuttuysa |
+| "Sınırlı paralel PUT/GET" | Yalnız PUT. GET zaten widget başına ve sınırsız eşzamanlı (`HttpClient` host başına sınır koymuyor); sınır koymak ölçümden sonra |
+| Kota: "kullanıcıya söylensin (Faz 9 ile bağlantılı)" | Faz 9'u beklemeden tek snackbar |
+| (yok) | DM açılışta paylaşım gövdelerini indirmiyor |
+
+### Bilinçli sınırlar
+
+- **Arka plan uzlaştırması satır şeridini paylaşıyor.** Açık olmayan bir
+  dünyanın push'u medyayı satırlardan önce yüklüyor (5d). Bu sürerken açık
+  dünyanın push ve pull'u bekliyor; 6'lı paralelde onlarca dosya birkaç
+  saniye tutar.
+- **Açılışta her online dünya için tam tarama.** `worldMediaRefs` bütün
+  satırları topluyor (ağsız), oturumda bir kez.
+- **Rolü gerçekten `none` olan online dünya** (multiplayer başka cihazdan
+  kapatıldı, bu cihaz bayrağı taşıyor) oturum boyunca 10 dakikada bir rol
+  sorgusu yapıyor.
+- **İnternetsiz Wi-Fi'de açılış.** Bağlantı "var" göründüğü için geçiş olayı
+  gelmiyor; bunu yeniden deneme kuyruğu (30 sn → 10 dk) kapatıyor.
+- **Kota bildirimi oturumda bir kez.** Kalıcı durum Faz 9'un işi.
+- **İndirme tarafı değişmedi.** Görseller hâlâ ekranda görününce iniyor.
+  Önden çekme ve önizleme ölçüme bağlı.
+
+### Doğrulama — bekliyor
+
+**1. Süreler.** `online-el-testi.md` §8'i koş, log satırlarını topla:
+`açılış`, `multiplayer açıldı` + `multiplayer medya`, `medya … ↑N`,
+`indirme`. Sayıları buraya yaz ve hedefle karşılaştır.
+
+**2. Hub'da tamamlanma.** §4.8.3 8(b)'yi tekrarla, ama uygulamayı açınca
+dünyayı **açma**. Hub'da log'da `CloudSync: catchUp <W>` ve ardından
+`CloudSync: medya <W> ↑N` görünmeli; `world_media`'daki `uploaded` sayısı
+tamamlanmalı.
+
+**3. Bağlantının geri gelmesi.** Hub'dayken interneti kes, bir süre sonra
+aç: `CloudSync: bağlantı geri geldi`, ardından online dünyalar için
+`catchUp`.
+
+**4. Çevrimdışı açılan dünya.** İnternet kapalıyken dünyayı aç, bir kartı
+düzenle, interneti aç. Dünyayı kapatmadan: `bağlantı geri geldi`, kanal
+kurulunca `catchUp` ve `push … ↑1`. Öbür cihaza gelmeli.
+
+**5. Kota (isteğe bağlı, canlı veritabanında).** Tavanı geçici düşür:
+
+```sql
+create or replace function public.world_media_user_cap_bytes()
+returns bigint language sql immutable set search_path = public, pg_temp
+as $$ select 1::bigint $$;
+```
+
+Açık multiplayer dünyada bir karta görsel ekle: "Bulut medya alanı dolu"
+snackbar'ı bir kez çıkmalı. Sonra tavanı geri al (aynı fonksiyon,
+`1::bigint * 1024 * 1024 * 1024`).
+
+---
+
+## 4.8.5 Faz 5.5 ve sonrası — taslak
 
 *Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4–§4.8.2).*
+ayrıntıda açılıyor (bkz. §4.4–§4.8.4).*
 
-### Faz 5f — Hız ve optimizasyon (sıradaki, öncelikli)
+### Faz 5f — kalan kısım (ölçümden sonra)
 
-*Kullanıcının gözlemi (2026-09-23, 5d el testinden sonra):*
-- **Dünya yükleme çok yavaş.**
-- Genel online deneyimde görsellerin inmesi ve yüklenmesi beklenenden yavaş.
-- **Başarısız olan görsel sonra yine denenmeli.** Örnek: bir karta çok sayıda
-  görsel yüklendi, hepsi buluta çıkmadan internet kesildi. Uygulama tekrar
-  açıldığında eksikler yüklenmeli. Sistem bunu garanti etmeli.
-- **Uygulamanın geneli optimizasyona ihtiyaç duyuyor. Bu çok önemli.**
-
-**Bugünkü durum (koddan, 2026-09-23):**
-- **Yeniden deneme.** Kodda var ama elle denenmedi (§4.8.3 8. adım).
-  - Uygulama açıkken: ağ hatası ya da reddedilen dosya pompanın yeniden
-    denemesini kuruyor (30 sn → 10 dk, dünya online kaldıkça).
-  - Yeniden açılışta: dünya açılınca `catchUp` tam uzlaştırma yapıyor ve
-    bulutta onaylı olmayan her dosyayı yüklüyor.
-
-  Açıklar:
-  - Eksikler ancak DM **o dünyayı açınca** yükleniyor. Uygulamanın
-    açılması, hub'da durmak yetmiyor.
-  - Dosya bu cihazın diskinde durmalı.
-  - Kota doluysa yeniden denenmiyor ve kullanıcıya söylenmiyor.
-- **Yükleme.** PUT'lar **sırayla, tek tek** gidiyor: 179 görsel, 179 ardışık
-  istek. Dünyanın satırları da 200'lük parçalar halinde sırayla gidiyor.
-  Görseller özgün boyutuyla çıkıyor; sıkıştırma yok (Faz 8).
-- **İndirme.** Küçük bir kart kutusu bile özgün boyutlu görseli indiriyor;
-  küçük önizleme yok. İmzalar 50 ms'lik pencerede topluca alınıyor, indirmeler
-  widget başına.
-
-**Yapılacaklar (taslak — fazın başında ayrıntılanacak):**
-1. **Önce ölç.** Tahminle optimizasyon yapılmayacak.
-   - 179 görselli dünyada "multiplayer aç" süresi (satırlar ile medya ayrı).
-   - İkinci cihazın ilk senkronu ve görsellerin gelme süresi.
-   - Dosya başına PUT/GET süresi.
-   - Uygulamanın geneli için profil (Flutter DevTools): açılış, dünya açma,
-     kart listesi kaydırma, bellek.
-2. **Medya:**
-   - Sınırlı paralel PUT/GET (ör. 4–6 eşzamanlı).
-   - Yüklemeden önce sıkıştırma ya da yeniden boyutlandırma (sha değişir —
-     §4.8.3 sınırlar).
+1. **Önce ölç** (§4.8.4 doğrulama 1) ve hedefi kullanıcıyla konuş.
+2. Ölçüm gösterirse:
+   - İndirme: bir dünyanın görsellerini açılışta önden çekmek (DM'in ikinci
+     cihazı, oyuncu için yalnız paylaşılanlar), sınırlı eşzamanlı GET.
    - Liste ve kart için küçük önizleme.
-3. **Yeniden deneme garantisi:**
-   - Eksik medyanın yüklenmesi dünyayı açmaya bağlı kalmasın; uygulama
-     açılınca online dünyalar için arka planda uzlaştırma.
-   - Kota doluysa kullanıcıya söylensin (Faz 9 ile bağlantılı).
-4. **Uygulamanın geneli.** Ölçümün gösterdiği en pahalı üç yer düzeltilir.
-
-**Çıkış kriteri:**
-- Ölçülen süreler kaydedildi ve kullanıcıyla konuşulan hedefin altında.
-- Yarıda kesilen yükleme, kullanıcı bir şey yapmadan tamamlanıyor
-  (§4.8.3 8. adım yeşil).
+   - Yüklemeden önce sıkıştırma ya da yeniden boyutlandırma. Sha değişir;
+     §4.8.3 sınırlarına bak.
+   - `ContentStore.write`'ın sha doğrulamasını büyük dosyada izolata taşımak.
+3. **Uygulamanın geneli.** Profil derlemede (`flutter run --profile`)
+   `PerfProbe` dökümü ve DevTools: açılış, dünya açma, kart listesi
+   kaydırma, bellek. Ölçümün gösterdiği en pahalı üç yer düzeltilir.
 
 ### Faz 5e — Paket medyası bulutta
 Paketin de tamamı, medya dahil, buluta çıkar — 5d'nin paket eşi. 5d'nin
@@ -2550,7 +2664,7 @@ yolu log satırı eklemekti (`CloudSync:`).
 | Paket açılışı `syncPackage` (≤ 8 sn) | `packages_tab` | Genel overlay "Opening package…" — senkronu söylemiyor; zaman aşımında sessizce yerel halle açılıyor |
 | Görsel çözümü | `AssetRefImage` | Çözülürken spinner ✅; bulunamazsa `broken_image` — **nedeni yok** (henüz yüklenmedi mi, limitin üstünde mi, ağ mı) |
 | ~~Oyuncunun eksik görsel beklemesi~~ | ~~`MissingMediaReporter`~~ | **5d'de kalktı** |
-| Push'ta medya yükleme | `WorldMediaSync` (5d) | Multiplayer açmada ✅ overlay'de ilerleme; sonrası arka plan, yalnız limit aşımı snackbar |
+| Push'ta medya yükleme | `WorldMediaSync` (5d) | Multiplayer açmada ✅ overlay'de ilerleme; sonrası arka plan, yalnız limit aşımı snackbar ve kota dolunca bir kez snackbar (5f) |
 | `.dmtz` dışa/içe aktarma | `content_archive_menu` | Dosya seçimiyle son snackbar arası **hiçbir şey**; medyalı büyük dünyada saniyeler sürüyor |
 | Resmi katalog kurulumu | `first_party_catalog_provider` | ✅ kalem başına "done / total" |
 | Misafirden hesaba geçiş | `GuestPromotionService` | Hiçbir şey — veri birleştiriliyor ama kullanıcıya söylenmiyor |
@@ -2636,6 +2750,9 @@ uyuşmuyordu. Kayda geçiyor:
 | 5d: `world_media (…, bytes, kind, created_at)` | `mime` (PUT imzası `Content-Type`'ı bağlıyor) ve `uploaded` + `world_media_confirm` (rezervasyon PUT'tan önce yazıldığı için onaysız satır yarım yüklemeyi tamamlanmış sayardı) (§4.8.3) |
 | 5d: yetim medya "catchUp sonrası" | pull'dan **sonra** ve 10 dk pencereyle — yoksa öbür cihazın yeni görseli, anan satır buraya inmeden silinirdi (§4.8.3) |
 | 5d: yarıda kalan yükleme "sonraki turun işi", onay partinin sonunda | El testinde 98. PUT asılı kaldı (zaman aşımı yoktu), 100 satır onaysız kaldı ve öbür cihaza tek görsel gelmedi. Zaman aşımları, onar onay, dosya başına deneme, pompanın kendi yeniden denemesi ve medya-önce push; alıcı da yeniden deniyor (§4.8.3) |
+| 5f taslağı: eksik medya "uygulama açılınca" yüklensin | Yetmiyordu: rol sağlayıcıları ağ hatasını `none` sayıp önbellekte tutuyor, çevrimdışı açılan dünya bağlantı gelince de push etmiyor ve kanal kurmuyordu. Uzlaştırma bağlantı geri gelince de koşuyor, rol her yeniden denemede tazeleniyor (§4.8.4) |
+| 5d: yetim temizliği `catchUp`'ta pull'dan sonra | Pull başarısızken de koşuyordu — bayat yerel satırlarla öbür cihazın yeni görseli silinebilirdi. Yalnız pull tuttuysa (§4.8.4) |
+| (kodda) açılış seed'i `applyInitialState` | Üç sorgu sırayla gidiyordu ve DM her açılışta bütün paylaşım gövdelerini indirip atıyordu. Eşzamanlı, DM'de paylaşımsız (§4.8.4) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 

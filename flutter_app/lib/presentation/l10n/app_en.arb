@@ -3323,5 +3323,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "worldMediaQuotaFull": "Cloud media storage is full. New images stay on this device and won't reach players."
 }

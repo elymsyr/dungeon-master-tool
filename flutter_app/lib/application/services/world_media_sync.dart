@@ -51,6 +51,11 @@ class WorldMediaSync {
   /// Tek rezervasyon / imza isteğinde en çok bu kadar sha (worker'ın tavanı).
   static const int _batch = 100;
 
+  /// Aynı anda en çok bu kadar PUT (Faz 5f). Dünya medyası çoğunlukla küçük
+  /// dosya (Aegis: medyan 72 KB), yani süreyi bant genişliği değil istek
+  /// başına gecikme belirliyor — sırayla 179 dosya 179 gidiş-dönüş demekti.
+  static const int _parallel = 6;
+
   /// Onaylar bu kadar dosyada bir gider. R2'de duran ama `uploaded = false`
   /// kalan obje kimseye imzalanmaz; tur yarıda kesilirse (uygulama kapandı,
   /// ağ koptu) boşa giden PUT bununla sınırlı — onaysız olanı bir sonraki tur
@@ -95,13 +100,14 @@ class WorldMediaSync {
     return WorldMediaPlan(items, tooLarge);
   }
 
-  /// [refs]'ten bulutta olmayanları yükler.
+  /// [refs]'ten bulutta olmayanları yükler; aynı anda en çok [_parallel] PUT.
   ///
   /// Dosyaya özgü ret (4xx, okunamayan dosya) o dosyayı atlar, tur sürer —
   /// adı [WorldMediaReport.failed]'da. Geçici hata [_attempts] kez denenir,
   /// geçmezse yukarı çıkar: ağ yoksa kalan dosyaları tek tek denemek yalnızca
   /// zaman kaybı. Kota aşımı [WorldMediaQuotaException]. Her durumda o ana dek
-  /// yüklenenler onaylanmış olur; kalanı bir sonraki tur tamamlar.
+  /// yüklenenler (yoldaki PUT'lar dahil) onaylanmış olur; kalanı bir sonraki
+  /// tur tamamlar.
   Future<WorldMediaReport> upload(
     String worldId,
     Map<String, WorldMediaRef> refs, {
@@ -128,6 +134,7 @@ class WorldMediaSync {
       uploaded += shas.length;
     }
 
+    var bytes = 0;
     try {
       for (var i = 0; i < total; i += _batch) {
         final chunk = plan.items.sublist(i, (i + _batch).clamp(0, total));
@@ -145,21 +152,45 @@ class WorldMediaSync {
         final urls = put.isEmpty
             ? <String, String>{}
             : await _sign(worldId, [for (final it in put) it.sha]);
-        for (final it in put) {
-          if (await _put(worldId, it, urls)) {
-            pending.add(it.sha);
-            if (pending.length >= _confirmEvery) await confirm();
-          } else {
-            failed.add(_nameOf(it.file, it.ref.ext));
+
+        // [_parallel] işçi aynı listeden sırayla dosya alır. Birinin hatası
+        // yenilerin başlamasını durdurur; yoldakiler biter ve onaylanır.
+        var next = 0;
+        Object? error;
+        StackTrace? trace;
+        Future<void> worker() async {
+          while (error == null && next < put.length) {
+            final it = put[next++];
+            try {
+              if (await _put(worldId, it, urls)) {
+                bytes += it.bytes;
+                pending.add(it.sha);
+                if (pending.length >= _confirmEvery) await confirm();
+              } else {
+                failed.add(_nameOf(it.file, it.ref.ext));
+              }
+            } catch (e, s) {
+              error ??= e;
+              trace ??= s;
+              return;
+            }
+            onProgress?.call(++done, total);
           }
-          onProgress?.call(++done, total);
         }
+
+        await Future.wait([
+          for (var w = 0; w < _parallel && w < put.length; w++) worker(),
+        ]);
+        if (error != null) Error.throwWithStackTrace(error!, trace!);
       }
     } finally {
       await confirm();
     }
     return WorldMediaReport(
-        uploaded: uploaded, tooLarge: plan.tooLarge, failed: failed);
+        uploaded: uploaded,
+        bytes: bytes,
+        tooLarge: plan.tooLarge,
+        failed: failed);
   }
 
   /// Tek dosyanın PUT'u; true → R2'de. Dosyaya özgü ret false döner, geçici
@@ -389,10 +420,14 @@ class WorldMediaPlan {
 class WorldMediaReport {
   const WorldMediaReport({
     this.uploaded = 0,
+    this.bytes = 0,
     this.tooLarge = const [],
     this.failed = const [],
   });
   final int uploaded;
+
+  /// R2'ye giden bayt — ölçüm log'u için (Faz 5f).
+  final int bytes;
   final List<String> tooLarge;
 
   /// R2'nin reddettiği ya da okunamayan dosyalar — tur onları atlayıp sürdü.

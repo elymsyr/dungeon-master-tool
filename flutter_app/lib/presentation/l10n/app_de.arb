@@ -2179,5 +2179,6 @@
   "multiplayerTooLargeTitle": "Einige Dateien bleiben auf diesem Gerät",
   "multiplayerTooLargeBody": "Diese Dateien überschreiten das Größenlimit (Karten 10 MB, andere Bilder 5 MB, Audio 10 MB, PDF 20 MB) und erreichen die Spieler nicht. Hier funktionieren sie weiter.",
   "multiplayerMediaIncomplete": "Die Welt ist im Multiplayer, aber noch nicht alle Medien sind in der Cloud. Der Rest wird automatisch hochgeladen.",
-  "worldMediaNotSent": "Über dem Größenlimit, erreicht die Spieler nicht: {names}"
+  "worldMediaNotSent": "Über dem Größenlimit, erreicht die Spieler nicht: {names}",
+  "worldMediaQuotaFull": "Der Cloud-Medienspeicher ist voll. Neue Bilder bleiben auf diesem Gerät und erreichen die Spieler nicht."
 }

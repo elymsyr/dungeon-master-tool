@@ -7,10 +7,12 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/lan_sync_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/cloud_push_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/app_icon_image.dart';
 
 /// Cold-start gate. Splash card with progress message stays on top until:
@@ -44,6 +46,10 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
   /// fire eder; aynı session'da tekrar fire etmez.
   bool _retryFired = false;
 
+  /// Online dünyaların arka plan uzlaştırması oturumda bir kez başlatıldı mı
+  /// (açılış ve geç gelen oturum aynı anda tetikleyebilir).
+  bool _reconcileFired = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +73,16 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     } catch (e) {
       debugPrint('deferred char list refresh error: $e');
     }
+    _reconcile();
+  }
+
+  /// Faz 5f — yarıda kalan yükleme ve çevrimdışı birikmiş düzenleme dünyayı
+  /// açmayı beklemesin. Arka planda; açılışı bekletmez.
+  void _reconcile() {
+    if (_reconcileFired || !mounted) return;
+    if (!SupabaseConfig.isConfigured || ref.read(authProvider) == null) return;
+    _reconcileFired = true;
+    unawaited(ref.read(cloudPushPumpProvider).reconcileAll());
   }
 
   void _setMessage(String m) {
@@ -85,6 +101,7 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     // yoksa hiç soket açmaz. Fire-and-forget — startup ceiling'ini bekletmez.
     unawaited(ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle());
     if (mounted) setState(() => _ready = true);
+    _reconcile();
   }
 
   Future<void> _runSequence() async {
@@ -154,6 +171,14 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       if (prev == null && next != null) {
         unawaited(_runDeferredCatchup());
       }
+    });
+    // Faz 5f — arka plan yüklemesi kotaya takıldı; hangi ekranda olunursa.
+    ref.listen<bool?>(worldMediaQuotaProvider, (_, full) {
+      if (full == null) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(L10n.of(context)!.worldMediaQuotaFull),
+        duration: const Duration(seconds: 8),
+      ));
     });
     if (_ready) return widget.child;
 

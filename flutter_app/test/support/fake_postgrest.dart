@@ -19,6 +19,11 @@ class FakePostgrest {
   /// Sıradaki isteğin yanıtı: (durum, gövde). İstek geldiği anda çağrılır.
   final List<FutureOr<(int, Object)> Function()> replies = [];
 
+  /// Yola göre yanıt — sırası belirsiz (eşzamanlı) istekler için. Yolu bir
+  /// anahtarla başlayan istek [replies]'a hiç uğramaz.
+  final Map<String, FutureOr<(int, Object)> Function(FakeCall call)> routes =
+      {};
+
   /// Gelen istekler, `"METHOD /yol"` biçiminde.
   final List<String> requests = [];
 
@@ -35,12 +40,19 @@ class FakePostgrest {
     server.listen((req) async {
       final sent = await const Utf8Decoder(allowMalformed: true).bind(req).join();
       fake.requests.add('${req.method} ${req.uri.path}');
-      fake.calls.add(FakeCall(req.method, req.uri, sent,
+      final call = FakeCall(req.method, req.uri, sent,
           contentType: req.headers.value(HttpHeaders.contentTypeHeader),
-          contentLength: req.headers.contentLength));
-      final (status, body) = fake.replies.isEmpty
-          ? (500, {'message': 'beklenmeyen istek: ${req.method} ${req.uri}'})
-          : await fake.replies.removeAt(0)();
+          contentLength: req.headers.contentLength);
+      fake.calls.add(call);
+      final route = [
+        for (final e in fake.routes.entries)
+          if (req.uri.path.startsWith(e.key)) e.value,
+      ];
+      final (status, body) = route.isNotEmpty
+          ? await route.first(call)
+          : fake.replies.isEmpty
+              ? (500, {'message': 'beklenmeyen istek: ${req.method} ${req.uri}'})
+              : await fake.replies.removeAt(0)();
       req.response
         ..statusCode = status
         ..headers.contentType = ContentType.json

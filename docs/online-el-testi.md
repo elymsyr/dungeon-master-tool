@@ -19,7 +19,9 @@ Aegis dünyasının id'si: `47272f9a-baf7-4eb6-acdf-267f8dfc6b4e`. Aşağıda
 
 ## 0. Hazırlık
 
-- [ ] Üç cihazı da son commit'le (`e1b0b2a5`) ve üç `--dart-define`'la derle.
+- [ ] Üç cihazı da çalışma ağacının son haliyle ve üç `--dart-define`'la
+      derle. Faz 5f'nin 1. kısmı (paralel yükleme, arka plan uzlaştırması,
+      süre log'ları) henüz commit'lenmedi; derleme onu içermeli.
 - [ ] Log'u açık tut. Masaüstünde `flutter run` konsolu; Android'de
       `adb logcat | grep -E "CloudSync|AssetRefResolver|WorldMediaSync"`.
       Her adımda log'u da not et.
@@ -156,18 +158,24 @@ select uploaded, count(*) from world_media where world_id = '<W>' group by 1;
   `CloudSync: medya <W> ↑N`. `true` sayısı kartın görselleri kadar artar. B'de
   kart bütün görselleriyle gelir.
 
-**4.2 Uygulamanın kapanıp açılması.**
+**4.2 Uygulamanın kapanıp açılması — dünyayı açmadan.**
 1. 4.1'i tekrarla, ama internet kesikken **uygulamayı tamamen kapat**.
-2. İnterneti aç, uygulamayı aç ve **dünyayı aç**. Eksikler ancak dünya
-   açılınca yükleniyor; hub'da durmak yetmez (bilinen açık, Faz 5f).
+2. İnterneti aç, uygulamayı aç. **Dünyayı açma**, hub'da bekle.
 
-- Beklenen: dünya açılınca log'da `CloudSync: catchUp <W>`, ardından
-  `CloudSync: medya <W> ↑N`. Sorgu 4.1'deki gibi tamamlanır.
+- Beklenen (Faz 5f): açılış ekranı kapandıktan birkaç saniye sonra log'da
+  `CloudSync: catchUp <W>`, ardından `CloudSync: medya <W> ↑N <bayt> … ms`.
+  Sorgu 4.1'deki gibi tamamlanır. Önceden bu ancak dünya açılınca oluyordu.
 
-**4.3 (İsteğe bağlı) Hub'da beklemek.** 4.2'yi tekrarla, ama uygulamayı açınca
-dünyayı açma, hub'da 5 dk bekle.
-- Beklenen, bugünkü kodla: yükleme **olmaz**. Bunu doğrulamak Faz 5f'nin
-  gerekçesi için.
+**4.3 Hub'dayken bağlantının geri gelmesi.** 4.2'yi tekrarla, ama uygulamayı
+internet **kapalıyken** aç. Hub'da bekle, sonra interneti aç.
+- Beklenen: `CloudSync: bağlantı geri geldi`, ardından `catchUp <W>` ve
+  `medya <W> ↑N`. Sorgu tamamlanır.
+
+**4.4 Çevrimdışı açılan dünya.** İnternet kapalıyken A'da dünyayı aç, bir
+kartın adını değiştir. Dünyayı kapatmadan interneti aç.
+- Beklenen: `CloudSync: bağlantı geri geldi`, kanal kurulunca `catchUp <W>`
+  ve `push <W> ↑1`. B'ye yeni ad gelir. Önceden bu, dünya yeniden açılana
+  kadar gitmiyordu.
 
 ---
 
@@ -283,14 +291,29 @@ B'nin internetini kes.
 
 ## 8. Ölçüm (Faz 5f'ye veri)
 
-Kronometreyle tut, sonuçları yaz:
+Süreler artık log'da (hepsi `CloudSync:` önekli). Her satırı olduğu gibi
+kopyala; cihazı (A masaüstü / B telefon) ve bağlantıyı (Wi-Fi / mobil) yanına
+yaz.
 
-- [ ] A'da 10–15 görselin eklenmesinden `true` sayısının tamamlanmasına kadar
-      geçen süre.
-- [ ] B'de dünyanın sıfırdan indirilmesi (7.3'ün kesintisiz hali): içerik
-      süresi ve bütün görsellerin gelme süresi.
+- [ ] **Dünya açılışı.** A'da ve B'de dünyayı üç kez aç-kapat:
+      `açılış <W> yerel=… ms toplam=… ms`. `toplam − yerel` bulut beklemesi.
+- [ ] **Multiplayer aç.** Aegis'in bir kopyasında (9.3'teki kopya işe
+      yarar) "Multiplayer On": `multiplayer açıldı <id>: N satır … ms` ve
+      `multiplayer medya <id> ↑N <bayt> … ms (toplam)`.
+- [ ] **Arka plan yüklemesi.** A'da bir karta 10–15 görsel ekle:
+      `medya <W> ↑N <bayt> … ms`.
+- [ ] **Satır turu.** Aynı sırada `push <W> ↑N ✕M … ms` ve B'de
+      `pull <W> +N -M rev=… ms`.
+- [ ] **İkinci cihazın ilk senkronu.** B'de dünyanın sıfırdan indirilmesi
+      (7.3'ün kesintisiz hali): `indirme <W> +N … ms`. Görsellerin gelmesi
+      log'da tek satır değil; dünyayı açıp kartları kaydırırken ekrandaki
+      bütün görsellerin gelmesini kronometreyle tut.
 - [ ] Cloudflare paneli → Workers → `dmt-assets` → istek sayısı. 3.1 ve 3.5
       sırasında istek sayısı tek haneli olmalı (200 görsel ≈ 2 imza isteği).
+- [ ] (İsteğe bağlı) Genel profil: A'da `flutter run --profile`. Konsola 20
+      sn'de bir `── PerfProbe ──` dökümü düşer (kare build/raster
+      süreleri). Dünyayı aç, kart listesini kaydır, haritaya geç; o
+      dakikaların dökümünü getir.
 
 ---
 

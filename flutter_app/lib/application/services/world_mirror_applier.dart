@@ -146,7 +146,8 @@ class WorldMirrorApplier {
     ref.invalidate(worldEntitySharesProvider(worldId));
     await _applyWorldMeta(worldId);
     if (_disposed) return;
-    final snapshot = await mirror.fetchInitialState(worldId);
+    final snapshot = await mirror.fetchInitialState(worldId,
+        withShares: !_isDm(worldId));
     if (_disposed) return;
     if (snapshot.characters.isEmpty &&
         snapshot.shares.isEmpty &&

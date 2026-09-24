@@ -152,7 +152,10 @@ class CloudPullService {
       return const CloudPullResult(skipped: true);
     }
     final cutoff = DateTime.now();
+    final sw = Stopwatch()..start();
     var res = await _pullFrom(world.id, 0, onProgress: onProgress);
+    debugPrint('CloudSync: indirme ${world.id} +${res.applied} '
+        '${sw.elapsedMilliseconds} ms${res.error != null ? ' hata=${res.error}' : ''}');
     // Dünya görünmüyorsa (başka hesap, arada silinmiş) RPC hata atmıyor, boş
     // ve "tamam" bir delta dönüyor — kabuk yazılsa boş bir dünya doğardı.
     if (res.ok && res.revision == 0) {

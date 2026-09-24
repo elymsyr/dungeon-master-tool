@@ -178,6 +178,11 @@ class WorldMirrorService {
   /// kaldırıldı. Geriye kalan üçü, oyuncunun bağlandığında görmesi gereken
   /// birikmiş durum: paylaşılan kartlar, karakterler ve canlı yayın manifesti.
   /// CDC yalnızca bundan SONRAKİ değişimleri taşır, o yüzden bu seed şart.
+  ///
+  /// Üç sorgu eşzamanlı (Faz 5f): dünya açılışı bunu bekliyor, sırayla üç
+  /// gidiş-dönüştü. [withShares] false ise paylaşımlar hiç istenmez — DM
+  /// kendi paylaştığı kartların gövdesini zaten yerelde tutuyor ve applier
+  /// onları atıyordu; her açılışta bütün paylaşım gövdeleri boşa iniyordu.
   Future<
     ({
       List<Map<String, dynamic>> characters,
@@ -185,25 +190,25 @@ class WorldMirrorService {
       Map<String, dynamic>? projection,
     })
   >
-  fetchInitialState(String worldId) async {
+  fetchInitialState(String worldId, {bool withShares = true}) async {
     try {
-      final charactersRaw = await client
-          .from('world_characters')
-          .select()
-          .eq('world_id', worldId);
-      final sharesRaw = await client
-          .from('entity_shares')
-          .select()
-          .eq('world_id', worldId);
-      final projectionRaw = await client
-          .from('world_projection')
-          .select()
-          .eq('world_id', worldId)
-          .maybeSingle();
+      // `Future.wait` ilk hatayı olduğu gibi iletir (kaydın `.wait`'i
+      // sarmalıyor) — çevrimdışı ayrımı log'da korunuyor.
+      final res = await Future.wait<Object?>([
+        client.from('world_characters').select().eq('world_id', worldId),
+        withShares
+            ? client.from('entity_shares').select().eq('world_id', worldId)
+            : Future.value(const <Map<String, dynamic>>[]),
+        client
+            .from('world_projection')
+            .select()
+            .eq('world_id', worldId)
+            .maybeSingle(),
+      ]);
       return (
-        characters: (charactersRaw as List).cast<Map<String, dynamic>>(),
-        shares: (sharesRaw as List).cast<Map<String, dynamic>>(),
-        projection: projectionRaw,
+        characters: (res[0] as List).cast<Map<String, dynamic>>(),
+        shares: (res[1] as List).cast<Map<String, dynamic>>(),
+        projection: res[2] as Map<String, dynamic>?,
       );
     } catch (e) {
       _logMirrorError('fetchInitialState', e);

@@ -15,6 +15,7 @@
 //   5. Dosyaya özgü ret (4xx) o dosyayı atlar, tur sürer; 403 önce imzayı
 //      tazeler.
 //   6. Onay onar dosyada bir gider — kopan turda kayıp bununla sınırlı.
+//   6b. PUT'lar eşzamanlı ama en çok altı (Faz 5f).
 //   7. Yetim temizliği pencereden genç satıra ve hâlâ anılana dokunmaz.
 //   8. Projeksiyonun tek dosyası: yüklenince ref döner, ikinci kez ağa çıkmaz.
 
@@ -173,7 +174,6 @@ void main() {
       b: const WorldMediaRef('.png', image),
       c: const WorldMediaRef('.png', image),
     };
-    // Haritanın sırası sabit değil; hangisi önce PUT edilirse o biter.
     reply(<Object>[]);
     reply({
       'upload': [b, c],
@@ -182,10 +182,9 @@ void main() {
     reply({
       'urls': {b: '${cloud.baseUrl}/r2/1', c: '${cloud.baseUrl}/r2/2'}
     });
-    reply({}); // ilk PUT
-    for (var i = 0; i < 3; i++) {
-      reply({'error': 'boom'}, 500); // ikinci PUT, her denemede
-    }
+    // PUT'lar eşzamanlı: yanıt sıraya değil yola bağlı.
+    cloud.routes['/r2/1'] = (_) => (200, {});
+    cloud.routes['/r2/2'] = (_) => (500, {'error': 'boom'});
     reply(1); // onay
 
     await expectLater(
@@ -193,8 +192,8 @@ void main() {
     expect(callsTo('/r2/2'), hasLength(3), reason: 'geçici hata yeniden denenir');
     final done =
         (callsTo('/rest/v1/rpc/world_media_confirm').single.json as Map)['_shas'];
-    expect(done, hasLength(1));
-    final left = done.single == b ? c : b;
+    expect(done, [b]);
+    final left = c;
 
     // Sonraki tur: onaylanan önbellekte, yalnız kalan rezerve edilir.
     reply({
@@ -204,7 +203,7 @@ void main() {
     reply({
       'urls': {left: '${cloud.baseUrl}/r2/3'}
     });
-    reply({});
+    cloud.routes['/r2/3'] = (_) => (200, {});
     reply(1);
     final rep = await sync.upload('w1', refs);
     expect(rep.uploaded, 1);
@@ -223,11 +222,9 @@ void main() {
     reply({
       'urls': {b: '${cloud.baseUrl}/r2/1', c: '${cloud.baseUrl}/r2/2'}
     });
-    reply({});
     final hang = Completer<(int, Object)>();
-    for (var i = 0; i < 3; i++) {
-      cloud.replies.add(() => hang.future);
-    }
+    cloud.routes['/r2/1'] = (_) => (200, {});
+    cloud.routes['/r2/2'] = (_) => hang.future;
     reply(1);
 
     await expectLater(
@@ -260,13 +257,13 @@ void main() {
         c: '${cloud.baseUrl}/r2/c',
       }
     });
-    reply({'error': 'bad'}, 400); // a: dosyaya özgü ret
-    reply({'error': 'expired'}, 403); // b: imzanın süresi dolmuş
+    cloud.routes['/r2/a'] = (_) => (400, {'error': 'bad'}); // dosyaya özgü ret
+    cloud.routes['/r2/b2'] = (_) => (200, {}); // b yeniden
+    cloud.routes['/r2/b'] = (_) => (403, {'error': 'expired'}); // imza dolmuş
+    cloud.routes['/r2/c'] = (_) => (200, {});
     reply({
       'urls': {b: '${cloud.baseUrl}/r2/b2'}
     });
-    reply({}); // b yeniden
-    reply({}); // c
     reply(2);
 
     final rep = await sync.upload('w1', {
@@ -283,7 +280,7 @@ void main() {
     expect(
         (callsTo('/rest/v1/rpc/world_media_confirm').single.json
             as Map)['_shas'],
-        [b, c]);
+        unorderedEquals([b, c]));
     expect(cloud.replies, isEmpty);
   });
 
@@ -296,12 +293,8 @@ void main() {
     reply({
       'urls': {for (final s in shas) s: '${cloud.baseUrl}/r2/$s'}
     });
-    for (var i = 0; i < 10; i++) {
-      reply({});
-    }
+    cloud.routes['/r2/'] = (_) => (200, {});
     reply(10);
-    reply({});
-    reply({});
     reply(2);
 
     final rep = await sync.upload('w1', {
@@ -313,6 +306,36 @@ void main() {
         ((c.json as Map)['_shas'] as List).length,
     ];
     expect(confirms, [10, 2]);
+  });
+
+  test('PUT\'lar eşzamanlı, en çok altı', () async {
+    final shas = [
+      for (var i = 0; i < 14; i++) await file('p$i.png', [i, i]),
+    ];
+    reply(<Object>[]);
+    reply({'upload': shas, 'too_large': []});
+    reply({
+      'urls': {for (final s in shas) s: '${cloud.baseUrl}/r2/$s'}
+    });
+    var inFlight = 0;
+    var peak = 0;
+    cloud.routes['/r2/'] = (_) async {
+      peak = ++inFlight > peak ? inFlight : peak;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      inFlight--;
+      return (200, {});
+    };
+    reply(10);
+    reply(4);
+
+    final progress = <int>[];
+    final rep = await sync.upload('w1', {
+      for (final s in shas) s: const WorldMediaRef('.png', image),
+    }, onProgress: (done, _) => progress.add(done));
+    expect(rep.uploaded, 14);
+    expect(rep.bytes, 28);
+    expect(peak, 6);
+    expect(progress.last, 14);
   });
 
   test('yetim temizliği: yalnız eski ve artık anılmayan silinir', () async {

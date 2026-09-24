@@ -22,7 +22,7 @@ tags: [file]
 - Constructor: `Ref ref`, `WorldMirrorService mirror`, `WorldSyncService sync`.
 - Subscribed: `sync.events` (`WorldSyncEvent` stream) → `_EventBatcher.add`.
 - Reads: `mirror.isEchoOf*` / `isExpectedUnpublish` / `isExpectedCharDelete`, `pendingWriteBufferProvider.isPending`, `authProvider`.
-- `applyInitialState(worldId)` pulls `mirror.fetchInitialState` → `(characters, shares, projection)`; CDC only carries changes made after the subscription, so this seed is load-bearing.
+- `applyInitialState(worldId)` pulls `mirror.fetchInitialState` → `(characters, shares, projection)`; CDC only carries changes made after the subscription, so this seed is load-bearing. The DM passes `withShares: false` (Faz 5f): it never applies share payloads, so they aren't fetched.
 
 **Outputs**
 - Mutates active campaign blob via `activeCampaignProvider.notifier` (captured at construction as `_campaign`, a stable `ActiveCampaignNotifier`).
