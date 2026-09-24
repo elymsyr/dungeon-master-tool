@@ -347,6 +347,100 @@ select count(*) from r2_evict_queue where r2_key like 'worlds/<kopya id>/%'; -- 
 
 ---
 
+## 10. Faz 6 — LAN kalktı (tek cihaz, her platform)
+
+Yıkıcı değil, istediğin zaman koşulabilir. Faz 6 bulut koduna dokunmadı;
+buradaki şey silinen LAN'ın yanında giden bir şey olmadığını görmek.
+
+**10.1 Eski veritabanı.** LAN kullanılmış (ya da kullanılmamış) eski bir
+kurulumda uygulamayı aç.
+- Beklenen: açılış normal, dünyalar yerinde. Veritabanında tablo yok:
+
+```bash
+sqlite3 "<dataRoot>/users/<uid>/db/dmt.sqlite" \
+  "select name from sqlite_master where name = 'lan_paired_devices';"   # boş
+```
+
+**10.2 Menüler.** Profil menüsü ve bir dünyanın içindeki Save & Sync paneli.
+- Beklenen: "Local Sync" hiçbir yerde yok; panel boşluk bırakmadan
+  bitiyor.
+
+**10.3 `.dmtz` gidiş-dönüş.** Görselli bir dünyayı dışa aktar, başka bir
+kurulumda (ya da dünyayı sildikten sonra) içe aktar.
+- Beklenen: kartlar, harita, görseller aynen geliyor. (Codec'ten yalnız
+  LAN'ın kullandığı iki metot çıktı; bu adım bunu doğruluyor.)
+
+**10.4 Masaüstü OAuth (macOS Release öncelikli).** Google ya da GitHub ile
+giriş.
+- Beklenen: tarayıcıdan dönüşte oturum açılıyor. macOS'ta `network.server`
+  yetkisi bunun için kaldı; kırılırsa ilk bakılacak yer
+  `macos/Runner/Release.entitlements`.
+
+**10.5 Android.** Temiz kurulum.
+- Beklenen: kamera izni hiç istenmiyor. Giriş, online dünya açma ve görsel
+  yükleme çalışıyor — cleartext izni kalktı, Supabase ve R2 `https`
+  olduğu için etkilenmemeli.
+
+**10.6 iOS.** Temiz kurulum.
+- Beklenen: "yerel ağdaki cihazları bulmak istiyor" sorusu çıkmıyor.
+
+---
+
+## 11. Faz 9 — işlem geri bildirimi (A, gerekirse B)
+
+Çoğu adım §1–§7 koşulurken yan gözle bakılabilir. Simge, dünya ya da paket
+içindeki araç çubuğundaki kayıt simgesi.
+
+**11.1 Yerel dünya.** Multiplayer kapalı bir dünyada bir kart düzenle.
+- Beklenen: simge eskisi gibi yalnız kayıt (dolu disket ↔ boş disket).
+  Bulut simgesi **hiç** görünmüyor, 3 sn'de bir titreme yok.
+
+**11.2 Online dünya — eşit ve eşitleniyor.** Multiplayer açık dünyada kart
+düzenle, eli çek.
+- Beklenen: kısa süre bulut-ok simgesi (eşitleniyor), sonra bulut-tik.
+  Save & Sync diyaloğunda "BULUT · Son eşitleme HH:mm".
+  Sonra multiplayer'ı kapat → simge hemen yalnız kayda döner (bulut simgesi
+  ya da rozet kalmaz). Aynısı online paketi "Online kapat"la.
+
+**11.3 Çevrimdışı bekliyor.** Online dünyadayken ağı kes, bir kart düzenle.
+- Beklenen: simge üstü çizili bulut; tooltip "Çevrimdışı — değişiklikler bu
+  cihazda kayıtlı…"; diyalogda Yeniden dene düğmesi. Ağı aç → birkaç saniye
+  içinde bulut-tik'e döner. Ayrıca: **uygulamayı çevrimdışı aç**, online
+  dünyayı aç, bir şey düzenle → yine "bekliyor".
+
+**11.4 Sorun.** Ağ kesintisi sorun değil "bekliyor" sayılır; gerçek sorunu
+zorlamak için online dünyada bir kartın açıklamasına 300 KB'tan uzun metin
+yapıştır (bulut satır sınırı 256 KB). İsteğe bağlı: kotayı geçici düşür
+(`online-sync-redesign.md` §4.8.4 doğrulama 5).
+- Beklenen: kırmızı uyarı simgesi + rozette sayı; diyalogda kırmızı satır
+  ("1 değişiklik buluta yazılamadı" / "Bulut medya alanı dolu"). Metni
+  kısaltınca bir sonraki başarılı turda sorun kendiliğinden kalkar.
+
+**11.5 Görsel nedeni.** B'de, A'nın henüz yüklemediği bir görseli olan kartı
+aç (A'da görsel ekle, A'yı hemen kapat). Ayrıca ağ kapalıyken bulutta olan
+ama B'ye inmemiş bir görsel.
+- Beklenen: kırık görselin üstüne gelince (mobilde basılı tut) sırasıyla
+  "Henüz bulutta değil…" ve "İndirilemedi — bağlantını kontrol et".
+
+**11.6 Paket zaman aşımı.** Online bir paketi çok yavaş ağda aç (ya da
+açarken ağı kes).
+- Beklenen: 8 sn sonra paket açılıyor ve "Bulut eşitlemesi zamanında
+  bitmedi…" snackbar'ı çıkıyor.
+
+**11.7 `.dmtz`.** Büyük, görselli bir dünyayı dışa, sonra içe aktar.
+- Beklenen: dosya seçiminden sonra ekranı kaplayan "… dışa aktarılıyor" /
+  "İçe aktarılıyor…" overlay'i; bitince snackbar.
+
+**11.8 Misafir → hesap.** Çıkış yap, misafir olarak bir dünya oluştur, giriş
+yap.
+- Beklenen: hub'a düşünce "Misafir olarak oluşturduğun … hesabına taşındı".
+
+**11.9 Dil.** Uygulama dilini Türkçe yap; dünya aç/kapat, paket aç/oluştur.
+- Beklenen: overlay'ler ("… dünyası açılıyor", "Kaydediliyor...") ve
+  açılış ekranı Türkçe; İngilizce kalıntı yok.
+
+---
+
 ## Sonuçları bana nasıl getireceksin
 
 Her adım için ✅ ya da ❌. ❌ olanlarda:

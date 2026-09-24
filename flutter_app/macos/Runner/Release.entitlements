@@ -6,11 +6,9 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<!-- LAN sync host modu bir HttpServer açar. -->
+	<!-- Masaüstü OAuth geri dönüşü localhost'ta bir HttpServer açar
+	     (auth_provider.dart `_signInWithOAuthDesktop`). -->
 	<key>com.apple.security.network.server</key>
-	<true/>
-	<!-- LAN sync: eşleşme QR'ını okutmak için. -->
-	<key>com.apple.security.device.camera</key>
 	<true/>
 </dict>
 </plist>

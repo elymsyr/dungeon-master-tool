@@ -884,6 +884,13 @@ Her fazın bir **çıkış kriteri** var — o sağlanmadan sonraki faza geçilm
 Kriterler çalıştırılabilir olacak şekilde yazıldı; "bitti" demek için
 tıklanacak bir şey ya da yeşil olacak bir test var.
 
+> **Esneme (2026-09-24, kullanıcının kararı):** el testi şimdilik yapılamıyor.
+> Otomatik testlerle karşılanabilen fazlar el testi beklemeden ilerliyor;
+> bekleyen her el adımı `docs/online-el-testi.md`'ye yazılıyor ve hepsi en
+> sonda, temelden üste sırayla (4a/5a → 5d → sonrası) koşulacak. Önce el testi
+> gerektirmeyen fazlar: **6** ve **9**. 5f'nin kalanı ölçüme bağlı olduğu için
+> bekliyor; 5e ve 5.5 5d'nin denenmemiş yollarına dayandığı için risklidir.
+
 | Faz | Ne | Çıkış kriteri | Bulut | Durum |
 |---|---|---|---|---|
 | ~~**0**~~ | KV rate limiter'ı platform binding'ine taşı | istek yolunda `kv.put` yok | worker | ✅ bitti (2026-09-21 deploy edildi) |
@@ -900,10 +907,10 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
 | 5e | Paket medyası bulutta — paketin tamamı dünya gibi | ikinci cihaza inen paket görselleriyle geliyor | evet | taslak |
 | 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
-| 6 | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | taslak |
+| ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
-| 9 | İşlem geri bildirimi (en son) | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | analiz edildi (§4.8.5) |
+| ~~**9**~~ | İşlem geri bildirimi | ağa çıkan her iş görünür; hata log'a değil kullanıcıya düşüyor | hayır | ✅ bitti (2026-09-24; testler yeşil, el testi sona — §4.8.5). Kota göstergesi Faz 7'yle gelecek |
 
 ### Faz 2 nereye gitti
 
@@ -2622,10 +2629,35 @@ yerleşimi (`packages/{packageId}/…`) ve kotaya sayılması.
 ekranı; "benim karakterim" bulma; oyuncu mind map'i; `world_member_state`;
 izinli kartların RPC'den çekilmesi; paylaşım geri çekilince gri kart + etiket.
 
-### Faz 6 — LAN'ı sil
+### Faz 6 — LAN'ı sil ✅ bitti (2026-09-24)
 `lan_sync/` 6 dosya (2.733 satır), provider + dialog, **41 l10n anahtarı ×
 4 dil ≈ 164 satır**, 3 test dosyası; 9 dosyada referans temizliği;
 audit §2 bulgusunu kapalı işaretle.
+
+**Yapılanlar:**
+- Silindi: `lan_sync/` (4 dosya, 1.665 satır), `lan_sync_provider.dart`,
+  `lan_sync_dialog.dart`, `lan_sync_loopback_test.dart`,
+  `lan_sync_protocol_test.dart`, 41 `lanSync*` anahtarı × 4 dil,
+  `AppSurface.localSync`, profil menüsündeki ve Save & Sync panelindeki
+  "Local Sync" girişleri, açılışta host başlatma (`startup_sync_gate`).
+- `lan_paired_devices`: `_sideTablesDDL`'den `_retiredTablesDDL`'e
+  (`DROP TABLE IF EXISTS`). Şema sürümü değişmedi — ölü tabloyu düşürmek
+  migration adımı gerektirmiyor.
+- `ContentCodec`'ten yalnız LAN'ın kullandığı `openMedia` / `writeMedia`;
+  DAO'lardan çağıranı olmayan `WorldsDao.setRenamedAt` /
+  `PackagesDao.setRenamedAt`. Kalan damga setter'ları `.dmtz` import'unun.
+- Bağımlılıklar `qr_flutter`, `mobile_scanner`. Android: multicast ve kamera
+  izni, cleartext'e izin veren `network_security_config.xml`. iOS: kamera ve
+  yerel ağ açıklamaları, `NSAllowsLocalNetworking`. macOS: kamera yetkisi.
+- LAN'ı gerekçe gösteren ~30 yorum `.dmtz`'ye ya da geçmiş zamana çevrildi;
+  vault'ta beş LAN notu silindi, bağlanan 14 not ve üç harita güncellendi;
+  `AGENTS.md`'nin senkron ve şema bölümleri bugüne getirildi (LAN'ın yanında
+  "bulut aynası yok" ve "v12" de eskimişti).
+- Audit §2 kapandı.
+
+**Çıkış kriteri — testlerle karşılandı:** `lan_sync/` yok; `flutter analyze`
+hata/uyarı vermiyor; `flutter test` yeşil (bilinen `bundled_pack_resolve_test`
+dışında). El testi sona kaldı: `online-el-testi.md` §10.
 
 ### Faz 7 — Kural, kota, ölçüm
 "Online olmayan dünya multiplayer olamaz"; kota göstergesi gerçek sayılarla;
@@ -2639,7 +2671,7 @@ Değişmedi — bkz. eski liste. Eklenen: **görsel sıkıştırma** — 5d'de l
 aşan görsel yüklenmiyor; sıkıştırma sha'yı değiştirdiği için ref'in yeniden
 yazılması ve kullanıcıya bildirim gerekiyor (§4.8.3).
 
-### Faz 9 — İşlem geri bildirimi (en son)
+### Faz 9 — İşlem geri bildirimi ✅ bitti (2026-09-24)
 
 *Kullanıcının isteği (2026-09-23): "bir işlem yapılırken kullanıcıya
 belirtilmiyor." Bu bölüm analiz; uygulama en son, çünkü Faz 6 (LAN) ve Faz 7
@@ -2706,6 +2738,44 @@ düzenleme "bekliyor" diye işaretli.
 iner: "bulutta yok" (sha `world_media`'da değil — henüz yüklenmedi ya da
 limitin üstünde) ve "indirilemedi" (ağ).
 
+**Yapılanlar** (Faz 6'dan sonra, Faz 7'den önce — kullanıcının 2026-09-24
+kararı, §4.0; Faz 7'nin kota göstergesi bu modele bir satır olarak eklenecek):
+- **Tek model:** `cloud_sync_status_provider.dart` — online dünya/paket
+  başına koşan tur sayısı, çevrimdışı birikme, tür başına sorun (`push`,
+  `pull`, `media`, `quota`, `share`) ve son başarılı push. Anahtar dünyada id,
+  pakette paket **adı** (paket ekranı `activeCampaignProvider`'ı adla
+  override ediyor; gösterge ikisini tek okumayla buluyor). Türler birbirini
+  temizlemiyor; ağ hatası sorun değil, "bekliyor".
+- **Üreticiler:** `CloudPushPump` her push / pull / medya turunu `_shown`
+  ile yazıyor; online olmayan öğede tur başlamadan kayıt siliniyor (yoksa
+  yerel dünyada gösterge her 3 sn'de titrerdi); online dünyada rol
+  çözülemediyse "bekliyor". `_pushIfShared` paylaşım hatasını yazıyor.
+- **Tüketici:** `SaveSyncIndicator` simgesi — sorun (rozetle sayı) >
+  çevrimdışı bekliyor > yerel kayıt > eşitleniyor > eşit; diyalogda "Bulut"
+  satırı (son eşitleme / bekliyor / sorunlar) ve Yeniden dene (`catchUp` /
+  `syncPackage`).
+- **Görsel:** `AssetRefResolver.missOf` üç neden — bu cihazda yok, bulutta
+  yok, indirilemedi. İmza isteğinin ağ hatası artık "bulutta yok" sayılmıyor.
+  `AssetRefImage` nedeni, çağıranın kendi hata widget'ı dahil, tooltip olarak
+  ekliyor.
+- **Overlay kuralı:** `.dmtz` dışa/içe aktarma overlay'de; paket açılışında
+  bulut zaman aşımı snackbar'la söyleniyor; misafir terfisinin sonucu
+  söyleniyor; paketin ilk online push'u hatayı yutup "online" diyordu.
+- **l10n:** 13 overlay çağrısının, açılış ekranının ve göstergenin gömülü
+  İngilizce metinleri — 35 anahtar × 4 dil.
+
+**Taslaktan bilinçli sapmalar:** ayrı bir "arka plan işleri" provider'ı
+yerine bulut durumu — arka planda ağa çıkan tek üretici pompa; arşiv ve
+misafir terfisi kullanıcının beklediği iş, overlay/snackbar kuralına giriyor.
+Diyalogda etkinlik listesi yerine tek durum satırı + sorunlar. "Online yap"
+tam push'unda satır ilerlemesi yok (düğme meşgul halini taşıyor; medya zaten
+ilerlemeli). Kullanılmayan `CloudBackupButton` durum makinesi kullanılmadı.
+
+**Çıkış kriteri — testlerle karşılandı:** `cloud_sync_status_test` (geçişler),
+`asset_ref_resolver_miss_test` (üç neden); `flutter analyze` hata/uyarı
+vermiyor, `flutter test` yeşil (bilinen `bundled_pack_resolve_test` dışında).
+El testi sona: `online-el-testi.md` §11.
+
 ---
 
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
@@ -2718,6 +2788,9 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 2: "`isOnline` bayrağı UI'ı" yeni iş | Dünya için **var** — `save_sync_indicator.dart:437` `_makeOnline` → `publishWorld` RPC, satır 566 `unpublishWorld` |
 | Faz 1/6: "mevcut JSON paket export'unu zip'e taşı" | `export_package_dialog.dart` dosyaya yazmıyor; dünyadan uygulama içi paket kuruyor (`repo.save`, satır 235). Uygulamada hiç `saveFile` çağrısı yok |
 | Faz 6: "68 l10n anahtarı × 4 dil = 272 satır" | Gerçek LAN anahtarı **41** (`lanSync*`). 68 sayısı `landing*` anahtarlarını da sayıyor. ≈164 satır |
+| Faz 6: "`lan_sync/` 6 dosya (2.733 satır), 3 test dosyası" | Faz 1.1 codec'i (`content_codec`, `content_item`, `world_merge`) ve `world_merge_test`'i `content_transfer/`'e taşımıştı: silinen **4 dosya, 1.665 satır**, **2 test**. |
+| Faz 6: "9 dosyada referans temizliği" | Kod referansı 4 dosyada (`startup_sync_gate`, `save_sync_indicator`, `profile_menu_button`, `account_gate`); listenin kalanı ve ~25 dosya daha yalnız yorumda LAN'ı gerekçe gösteriyordu |
+| Faz 6: LAN'ın platform izinleri gider | macOS Release'teki `network.server` **kalıyor**: LAN'la eklenmişti ama masaüstü OAuth geri dönüşü de `localhost`'ta `HttpServer` açıyor (`auth_provider._signInWithOAuthDesktop`); sandbox onu da engellerdi |
 | Faz 0: v13 bump şimdi yapılmalı | Bump'ın taşıyacağı her kalem Faz 4+ doğuyor; Faz 0'da yapmak tahmin demek (§4.0) |
 | Faz 0: limitleri "bugünkü saatlik sayılarla eşleştir" | Platform limiter'da `period` yalnızca 10 veya 60 — saatlik pencere ifade edilemiyor, sayılar dakikalığa çevrildi (§4.1) |
 | Faz 0: 429'da `X-RateLimit-Remaining` sadeleşir | Böyle bir başlık hiç yoktu; `rateLimitedResponse` yalnızca `Retry-After` + `X-RateLimit-Limit` yazıyor ve Flutter istemcisi ikisini de okumuyor — 429 gövdesi tamamen bilgilendirme amaçlı |

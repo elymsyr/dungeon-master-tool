@@ -3,8 +3,8 @@
 //
 // Seçilen her dosya artık dünyanın kendi klasörüne kopyalanıyor
 // (`LocalMediaLocalizer`), ama resmi kaldırma yolları yalnız bulut nesnesini
-// siliyor. Süpürge olmadan yerel kopya sonsuza kadar kalır ve LAN eşlemesi
-// dünya klasörünün tamamını taşıdığı için her cihaza yayılır.
+// siliyor. Süpürge olmadan yerel kopya sonsuza kadar kalır ve `.dmtz` dünya
+// klasörünün tamamını taşıdığı için her kopyaya gider.
 //
 //   cd flutter_app && flutter test test/application/services/unused_media_sweeper_test.dart
 
@@ -113,7 +113,7 @@ void main() {
   });
 
   test('yeni yazılmış dosyaya dokunulmaz', () async {
-    // LAN eşlemesi dosyayı payload'dan önce yazabiliyor; grace window bunu
+    // `.dmtz` import dosyayı payload'dan önce yazabiliyor; grace window bunu
     // yanlışlıkla silmemek için.
     final fresh = await media('yeni.png', fresh: true);
 

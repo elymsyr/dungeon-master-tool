@@ -22,7 +22,7 @@ class WorldMapDataDao extends DatabaseAccessor<AppDatabase>
   Future<void> upsert(WorldMapDataCompanion row) =>
       into(worldMapData).insertOnConflictUpdate(row);
 
-  /// LAN sync birleştirmesi sonrası satır damgası — bkz.
+  /// `.dmtz` birleştirmesi sonrası satır damgası — bkz.
   /// `WorldEntitiesDao.setUpdatedAt`.
   Future<void> setUpdatedAt(String worldId, DateTime updatedAt) async {
     await (update(worldMapData)..where((t) => t.worldId.equals(worldId)))

@@ -349,7 +349,7 @@ class _MetadataEditorSectionState
     if (raw == null) return;
     // Ham seçici yolu asla saklanmaz: dosya önce içeriğin kendi klasörüne
     // kopyalanır, yükleme de o kopyadan yapılır. Bulut yüklemesi başarılı olsa
-    // bile kopya duruyor — LAN eşlemesi ve çevrimdışı açılış için.
+    // bile kopya duruyor — `.dmtz` aktarımı ve çevrimdışı açılış için.
     final path = await _localizeCover(raw);
     if (!mounted) return;
 

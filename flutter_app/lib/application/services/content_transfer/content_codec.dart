@@ -27,9 +27,8 @@ import 'world_merge.dart';
 /// İçerik aktarımının yerel yarısı: manifest üretimi, item okuma, item
 /// uygulama.
 ///
-/// **Taşıma katmanını bilmez.** Aynı codec'i LAN eşlemesi (soket) ve `.dmtz`
-/// zip export/import'u kullanır; ikisi de buradan okuyup buraya yazar.
-/// Aradaki tek fark, blob'un tel üzerinden mi yoksa dosyadan mı geldiğidir.
+/// **Taşıma katmanını bilmez.** `.dmtz` zip export/import'u buradan okuyup
+/// buraya yazar.
 ///
 /// Yazımlar `campaign/package/character` repository'leri üzerinden gider.
 /// `lib/data/repositories/` içinde tek bir `enqueue`/`syncEngine` çağrısı
@@ -209,16 +208,8 @@ class ContentCodec {
     );
   }
 
-  /// Bir medya dosyasını relatif yolundan okur. Yol `userBase` dışına
-  /// çıkıyorsa null — path traversal koruması (sunucu bunu doğrudan servis
-  /// ettiği için güvenlik sınırı).
-  Future<File?> openMedia(String relativePath) async {
-    final file = resolveMedia(relativePath);
-    if (file == null || !await file.exists()) return null;
-    return file;
-  }
-
-  /// [relativePath]'i `userBase` altına çözer; kaçış denemesinde null döner.
+  /// [relativePath]'i `userBase` altına çözer; kaçış denemesinde null döner
+  /// (path traversal koruması — zip'teki yol dışarıdan gelir).
   static File? resolveMedia(String relativePath) {
     if (relativePath.isEmpty) return null;
     final base = p.normalize(userBase);
@@ -229,11 +220,11 @@ class ContentCodec {
 
   // ── Uygulama ──────────────────────────────────────────────────────────
 
-  /// Kaynaktan (peer ya da zip) gelen item'ı yerel'e yazar.
+  /// Zip'ten gelen item'ı yerel'e yazar.
   ///
-  /// Medya dosyaları çağıran tarafından önceden indirilip [writeMedia] ile
-  /// yerleştirilmiş olmalıdır; burada yalnız payload içindeki yollar
-  /// gönderenin kökünden bizimkine çevrilir.
+  /// Medya dosyaları çağıran tarafından önceden diske açılmış olmalıdır;
+  /// burada yalnız payload içindeki yollar gönderenin kökünden bizimkine
+  /// çevrilir.
   Future<void> applyItem(ContentItemPayload item) async {
     await _flushPending();
     final payload = rewriteRoots(item.payload, item.dataRoot, userBase)
@@ -509,9 +500,8 @@ class ContentCodec {
   /// gidiyor ve yerelde yalnız içerik-adresli önbellekte
   /// (`cache/content/{sha}.bin`) kalıyor. Ref'in kendisi cihazdan bağımsız
   /// olduğu için [rewriteRoots] ona dokunmuyordu — ama baytlar taşınmayınca
-  /// karşı cihaz resmi ancak internete çıkıp indirebiliyordu, LAN eşlemesinin
-  /// vaadi ise tam tersi. Blob'ları da taşıyınca resim karşı tarafta
-  /// çevrimdışı açılıyor.
+  /// karşı cihaz resmi ancak internete çıkıp indirebiliyordu. Blob'ları da
+  /// taşıyınca resim karşı tarafta çevrimdışı açılıyor.
   ///
   /// Blob içerik-adresli olduğu için dosyayı yeniden hash'lemeye gerek yok:
   /// dosya adındaki sha zaten içeriğin hash'i.
@@ -589,16 +579,6 @@ class ContentCodec {
     if (file == null || !await file.exists()) return false;
     if ((await file.stat()).size != entry.size) return false;
     return await fileSha256(file) == entry.sha256;
-  }
-
-  /// İndirilen medya baytlarını kendi veri kökümüze yazar.
-  Future<void> writeMedia(ContentMediaEntry entry, List<int> bytes) async {
-    final file = resolveMedia(entry.path);
-    if (file == null) {
-      throw ArgumentError('ContentCodec: geçersiz medya yolu ${entry.path}');
-    }
-    await file.parent.create(recursive: true);
-    await file.writeAsBytes(bytes, flush: true);
   }
 
   // ── Yol yeniden yazımı ────────────────────────────────────────────────

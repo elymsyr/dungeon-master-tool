@@ -24,6 +24,9 @@ class _LateResolver implements AssetRefResolver {
   }
 
   @override
+  AssetMiss? missOf(AssetRef ref) => null;
+
+  @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 

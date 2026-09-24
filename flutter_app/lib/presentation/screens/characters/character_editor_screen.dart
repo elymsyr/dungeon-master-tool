@@ -1017,7 +1017,7 @@ class _CharacterEditorScreenState
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'open-world-$worldId',
-      'Opening world "$worldName"...',
+      L10n.of(context)!.loadingOpeningWorld(worldName),
       () => ref.read(activeCampaignProvider.notifier).load(worldId),
     );
     if (!success || !mounted) return;
@@ -3291,7 +3291,7 @@ class _CharacterEditorScreenState
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'save-close-char-${widget.characterId}',
-      'Saving...',
+      L10n.of(context)!.savingEllipsis,
       _flushAndPush,
     );
     if (!context.mounted) return;

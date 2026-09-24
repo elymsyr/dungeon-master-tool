@@ -10,7 +10,7 @@ tags: [moc, architecture]
 > [!summary] The whole system in one note
 > Flutter client (clean architecture, **local-first**) + Supabase (auth, membership, marketplace, DM'in paylaşım kanalı) + Cloudflare R2 worker (media/catalog). Content is built offline from Open5e by a Dart pipeline and shipped as packages. Multi-platform: desktop / mobile / web + a second-screen projection target.
 >
-> Yerel Drift kaynak-doğru. Buluta dünya kopyalanmaz; cihazdan cihaza taşıma LAN sync'in ya da `.dmtz` dosya aktarımının işi (ikisi de `application/services/content_transfer/` altındaki aynı codec'i kullanır), oyuncuya giden ise yalnızca DM'in bilinçli paylaşımları.
+> Yerel Drift kaynak-doğru. Cihazdan cihaza taşıma "Online yap" denen dünya/paket için bulut aynasının ([[cloud_push_service]] / [[cloud_pull_service]]), hesapsız ve internetsiz ise `.dmtz` dosya aktarımının işi; oyuncuya giden yalnızca DM'in bilinçli paylaşımları. LAN sync Faz 6'da (2026-09-24) silindi.
 >
 > **Dünyanın kimliği `worldId`** (2026-09-21): isim salt etiket. Repository, aktif dünya provider'ı, medya klasörü (`worlds/<id>/`) ve UI durumu id ile anahtarlı — aynı dünya iki cihazda aynı kimliği taşısın diye. Bkz. [[World-and-Content]]. Paketler hâlâ adla anahtarlı.
 
@@ -55,13 +55,13 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
                           Content-Pipeline ──builds──> packages ──install──> World-and-Content
 ```
 
-- **Sync-and-Realtime** has three independent arms: LAN (cihazdan cihaza, bulutsuz), `.dmtz` dosya aktarımı ([[content_archive]] — hesapsız, internetsiz) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a). İlk ikisi aynı codec'i paylaşır ([[content_codec]]).
+- **Sync-and-Realtime** has three independent arms: bulut aynası ([[cloud_push_service]] / [[cloud_pull_service]]), `.dmtz` dosya aktarımı ([[content_archive]] — hesapsız, internetsiz, [[content_codec]]) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a).
 - **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]]. Packages may [[Package-Links|link]] each other instead of duplicating content.
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
 
 ## Key cross-cutting flows
 - [[Share-Broadcast-Flow]] — DM'in paylaştığı → oyuncuda canlı. Beş tablo, doğrudan yazma.
-- [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme. **Kalkıyor** (`online-again` Faz 6); yerine tam online dönüyor — bulut şeması 094 ile kuruldu ([[migrations-cloud-mirror]]), istemcinin giden yolu Faz 4a–4b'de bağlandı ([[cloud_push_service]]: Drift **v13** + watermark taraması; dünya, karakter ve paket kapsamları), dünyanın geri okuması Faz 5a'da ([[cloud_pull_service]], migration 096), canlı sinyal ve sunucu tarafı "son düzenleyen kazanır" Faz 5b'de (migration 097), ikinci cihazın ilk senkronu ve paket pull'u Faz 5c'de (migration 098).
+- Bulut aynası — LAN eşlemesinin yerine (LAN `online-again` Faz 6'da silindi) tam online: bulut şeması 094 ile kuruldu ([[migrations-cloud-mirror]]), istemcinin giden yolu Faz 4a–4b'de bağlandı ([[cloud_push_service]]: Drift **v13** + watermark taraması; dünya, karakter ve paket kapsamları), dünyanın geri okuması Faz 5a'da ([[cloud_pull_service]], migration 096), canlı sinyal ve sunucu tarafı "son düzenleyen kazanır" Faz 5b'de (migration 097), ikinci cihazın ilk senkronu ve paket pull'u Faz 5c'de (migration 098).
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs dünya medyası (R2 `worlds/{worldId}/`, multiplayer dünyanın tamamı, kişi başı 1 GB — Faz 5d) vs pinned (R2 `pub/`, refcount); `worlds/` + `pub/` tek 9 GB tavan. Sayılan katman emekli (Phase D), transient kalktı (5d).
 - [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.

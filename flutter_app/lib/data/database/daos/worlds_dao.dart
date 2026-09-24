@@ -77,17 +77,11 @@ class WorldsDao extends DatabaseAccessor<AppDatabase> with _$WorldsDaoMixin {
     );
   }
 
-  /// LAN sync: uygulanan item'ın zaman damgasını peer'ınkine sabitler.
+  /// `.dmtz` import: uygulanan item'ın zaman damgasını kaynağınkine sabitler.
   /// Repository `save()` her yazımda `DateTime.now()` basar; restamp olmazsa
   /// çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi.
   Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
     await (update(worlds)..where((t) => t.id.equals(id)))
         .write(WorldsCompanion(updatedAt: Value(updatedAt)));
-  }
-
-  /// LAN sync: yeniden adlandırma zamanını kaydet.
-  Future<void> setRenamedAt(String id, DateTime renamedAt) async {
-    await (update(worlds)..where((t) => t.id.equals(id)))
-        .write(WorldsCompanion(renamedAt: Value(renamedAt)));
   }
 }

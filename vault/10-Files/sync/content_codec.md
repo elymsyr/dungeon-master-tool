@@ -5,14 +5,14 @@ path: flutter_app/lib/application/services/content_transfer/content_codec.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-23
+updated: 2026-09-24
 tags: [file]
 ---
 
 # `content_codec.dart`
 
 > [!abstract] Primary Purpose
-> İçerik aktarımının yerel yarısı: manifest üretimi, item okuma, item uygulama, medya listeleme/yazma ve yol yeniden yazımı. **Taşıma katmanını bilmez** — aynı codec'i LAN eşlemesi (soket) ve `.dmtz` zip'i ([[content_archive]]) kullanır. Yazımlar repository'ler üzerinden gittiği ve `lib/data/repositories/` içinde hiç `enqueue`/`syncEngine` çağrısı olmadığı için buradan gelen içerik **Supabase outbox'ına düşmez**.
+> İçerik aktarımının yerel yarısı: manifest üretimi, item okuma, item uygulama, medya listeleme ve yol yeniden yazımı. **Taşıma katmanını bilmez** — tek kullanıcısı `.dmtz` zip'i ([[content_archive]]); LAN eşlemesi Faz 6'da (2026-09-24) silindi, yalnız LAN'ın kullandığı `openMedia`/`writeMedia` da onunla gitti. Yazımlar repository'ler üzerinden gittiği ve `lib/data/repositories/` içinde hiç `enqueue`/`syncEngine` çağrısı olmadığı için buradan gelen içerik **Supabase outbox'ına düşmez**.
 >
 > 2026-09-21'de `lan_sync/lan_sync_session.dart`'tan buraya taşındı (sınıf `LanSyncSession` → `ContentCodec`, provider `lanSyncSessionProvider` → `contentCodecProvider`). Gerekçe: LAN Faz 6'da komple siliniyor, codec kalmalı — `docs/online-sync-redesign.md` §4.2. Davranış değişmedi; taşıma `lan_sync_loopback_test.dart` **değiştirilmeden** yeşil kalarak doğrulandı.
 
@@ -29,9 +29,9 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[content_item]], [[world_merge]], [[worlds_dao]], [[packages_dao]], `ui_state_provider.dart` (`exportWorldUiView` / `importWorldUiView`)
-- Used by: [[lan_sync_server]], [[content_archive]], `lan_sync_provider.dart`
+- Used by: [[content_archive]], [[content_archive_menu]]
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[LAN-Sync-Flow]]
+- System flow: [[Sync-and-Realtime]] (`.dmtz`)
 
 ## Key Logic / Variables
 - **Rename klasörü `LocalMediaLocalizer.worldDir` ile bulur** — ham ad Windows'ta yasak karakter taşıyan dünyalarda medya klasörüne denk gelmiyordu.
@@ -52,4 +52,4 @@ tags: [file]
 
 ## Notes
 - ponytail: yeniden adlandırma taşınmaz. Silme birleştirmede de yayılmaz — tombstone yok, A'da silinen bir entity B'de duruyorsa geri gelir; veri kaybetmemeyi hayalet satıra tercih ediyoruz.
-- Test: `test/application/services/lan_sync/lan_sync_loopback_test.dart` — iki in-memory Drift DB, gerçek soket. Zip tarafı: `test/application/services/content_transfer/content_archive_test.dart`.
+- Test: `test/application/services/content_transfer/content_archive_test.dart` (LAN loopback testi Faz 6'da LAN'la birlikte silindi).

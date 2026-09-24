@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/app_database.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-22
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Providers watched / constructor deps: none directly. Opened via `_openConnectionForUser(userId)` using `AppPaths.dataRoot`; `userId` from `activeUserIdProvider` (in `database_provider.dart`).
-- Reads (DAOs / Drift tables): all registered tables (see list below) + raw side tables `asset_refs`, `content_paths`, `migration_progress`, `lan_paired_devices`.
+- Reads (DAOs / Drift tables): all registered tables (see list below) + raw side tables `asset_refs`, `content_paths`, `migration_progress`, `sync_tombstones`.
 - Supabase / CDC subscribed: none (this is the local store; the share channel's inbound apply targets a handful of these tables — see [[world_mirror_applier]]).
 - Events consumed: none.
 - Triggers (timers, connectivity, lifecycle): `beforeOpen` runs on every open; `onCreate`/`onUpgrade` on schema (re)create.
@@ -46,7 +46,7 @@ tags: [file]
   - Combat/map (local-only): `Encounters, Combatants, CombatConditions, MapPins, TimelinePins` ([[tables-combat]]).
 - **DAOs** registered: Worlds, WorldMembers, WorldInvites, WorldEntities, WorldCharacters, WorldMindMap, WorldSessions, WorldMapData, WorldSettings, WorldPackages, EntityShares, CharacterClaimPool, Packages, InstalledPackages, Trash, Combat, MapPins, TimelinePins.
 - **v13 (Faz 4a)** — push'un yerel gereksinimleri, tek bump'ta: `worlds.is_online` + `cloud_revision`, `packages.is_online` + `cloud_revision`, `world_characters.is_online`, ve `updated_at` kolonu `encounters` / `combatants` / `map_pins` / `timeline_pins` / `installed_packages` tablolarına. `onUpgrade(12→13)` `addColumn` × 10 + mevcut satırların `updated_at` backfill'i yapar (NULL damga taramaya hiç girmezdi). Bkz. [[cloud_push_service]].
-- **Side tables** (`_sideTablesDDL`, raw SQL, `CREATE TABLE IF NOT EXISTS`, run in `beforeOpen`, no schema bump): `asset_refs` (AssetRef→owner-row graph for eviction sweeper), `content_paths` (sha256 → bu cihazdaki özgün dosya; `dmt-content://` ref'inin yerel çözümü, PK `(sha, path)` + `size`/`mtime` doğrulaması — bkz. [[content_ref_index]]), `migration_progress` (F11 raw-path migrator resume state, also gates one-time repairs), `lan_paired_devices` (kalıcı LAN cihaz eşleşmeleri), `sync_tombstones` (Faz 4a: buluta bildirilecek silmeler — `(table_name, row_id, world_id, deleted_at)`; DAO silme yollarında `sync_stamp.dart` yazar, push gönderince düşer).
+- **Side tables** (`_sideTablesDDL`, raw SQL, `CREATE TABLE IF NOT EXISTS`, run in `beforeOpen`, no schema bump): `asset_refs` (AssetRef→owner-row graph for eviction sweeper), `content_paths` (sha256 → bu cihazdaki özgün dosya; `dmt-content://` ref'inin yerel çözümü, PK `(sha, path)` + `size`/`mtime` doğrulaması — bkz. [[content_ref_index]]), `migration_progress` (F11 raw-path migrator resume state, also gates one-time repairs), `sync_tombstones` (Faz 4a: buluta bildirilecek silmeler — `(table_name, row_id, world_id, deleted_at)`; DAO silme yollarında `sync_stamp.dart` yazar, push gönderince düşer).
 - **Katman notu:** bu dosya `beforeOpen` geçişi için `application/services/local_media_localizer.dart`'ı import ediyor (klasör adı kuralı orada). Data→application yönü ideal değil ama tek seferlik geçiş mekanizması (`migration_progress` kapısı + `replaceInEveryTextColumn`) burada yaşıyor ve ikinci bir mekanizma kurmak daha pahalı olurdu; aynı yönde [[world_repository_impl]] de üç application servisi import ediyor.
 - **Retired tables** (`_retiredTablesDDL`, `DROP TABLE IF EXISTS`, same `beforeOpen` pass): `sync_outbox`, `sync_telemetry`, `bm_mark_ops_local`, `personal_packages` — bulut sync ile birlikte gittiler ve **geri gelmediler**: Faz 4a push'u kuyruk değil watermark taraması kullanıyor ([[cloud_push_service]]). Listeye eklemek serbest; bir satır ÇIKARMAK eski kurulumlarda tabloyu geri getirmez, sadece temizliği durdurur.
 - **PRAGMA tuning** (every open): `journal_mode=WAL`, `synchronous=NORMAL`, `temp_store=MEMORY`, `mmap_size=64MB`, **`foreign_keys=OFF`** — lets CDC apply land out-of-order events without parent-first ordering; parent-exists checks are done at app level on apply.

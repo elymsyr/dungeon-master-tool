@@ -14,8 +14,8 @@ import 'local_media_localizer.dart';
 /// Neden gerekli: [LocalMediaLocalizer] seçilen her dosyayı dünyanın kendi
 /// klasörüne kopyalıyor, ama resmi kaldırma yolları (`cleanupMapImageRef`,
 /// `cleanupRemovedEntityImageRef`) yalnız **bulut** nesnesini siliyor —
-/// yereldeki kopya sahipsiz kalıyordu. Üstelik LAN eşlemesi dünya klasörünün
-/// tamamını taşıdığı için o çöp her cihaza gidip orada da kalıyordu.
+/// yereldeki kopya sahipsiz kalıyordu. Üstelik `.dmtz` dünya klasörünün
+/// tamamını taşıdığı için o çöp her kopyaya gidip orada da kalıyordu.
 ///
 /// Neden silme anında değil de süpürge: `AssetImporter` ad + boyut ile dedupe
 /// ediyor, yani aynı dosyayı iki yere koyduğunda **tek kopya** paylaşılıyor.
@@ -28,7 +28,7 @@ import 'local_media_localizer.dart';
 ///   2. Çöp kutusundaki (`trash_items`) payload'lar da referans sayılır;
 ///      silinen bir entity geri alındığında resmi yerinde duruyor.
 ///   3. [graceWindow] içinde değiştirilmiş dosyalar atlanır — yeni gelmiş ama
-///      henüz payload'a yazılmamış bir dosya (LAN eşlemesi, bekleyen debounce
+///      henüz payload'a yazılmamış bir dosya (`.dmtz` import, bekleyen debounce
 ///      yazımı) yanlışlıkla silinmesin.
 class UnusedMediaSweeper {
   UnusedMediaSweeper(this._db);

@@ -109,7 +109,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     HardwareKeyboard.instance.addHandler(_handleGlobalKey);
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
-    // "Ne açıktı" bilgisi dünya başına saklanıyor (LAN eşlemesi de bunu
+    // "Ne açıktı" bilgisi dünya başına saklanıyor (`.dmtz` de bunu
     // taşıyor). Bu dünyanın kaydı varsa global alanlar da ona çevrilir —
     // session/karakter panelleri global alanları okuyor.
     final worldKey = ref.read(activeCampaignProvider) ?? '';
@@ -221,7 +221,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'exit-world',
-      'Saving...',
+      L10n.of(context)!.savingEllipsis,
       () async {
         await ref.read(pendingWriteBufferProvider).flush();
         // Flush'tan SONRA: henüz diske inmemiş bir seçim referanssız

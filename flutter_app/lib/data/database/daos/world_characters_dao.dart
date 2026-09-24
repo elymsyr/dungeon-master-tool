@@ -89,7 +89,7 @@ class WorldCharactersDao extends DatabaseAccessor<AppDatabase>
           WorldCharactersCompanion(
               ownerId: const Value(null), updatedAt: Value(DateTime.now())));
 
-  /// LAN sync: yeniden adlandırma zamanını kaydet.
+  /// `.dmtz` import: yeniden adlandırma zamanını kaydet.
   Future<void> setRenamedAt(String id, DateTime renamedAt) async {
     await (update(worldCharacters)..where((t) => t.id.equals(id)))
         .write(WorldCharactersCompanion(renamedAt: Value(renamedAt)));

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_archive.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-21
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -35,10 +35,10 @@ media/<yol>     baytlar; manifest.data_root'a göreli
 - Depends on: [[content_codec]], [[content_item]], `archive: ^4.0.9` (zaten bağımlılık), [[local_media_localizer]] (`dirSafe` → dosya adı)
 - Used by: [[content_archive_menu]] — hub Dünyalar/Paketler sekmeleri ve karakter düzenleyici
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[LAN-Sync-Flow]] (aynı codec)
+- System flow: [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
-- **Yol taşınabilirliği için yeni kod yok.** Manifest export eden makinenin `dataRoot`'unu yazıyor, import `ContentCodec.rewriteRoots` ile kendi köküne çeviriyor — LAN'ın iki cihaz arasında yaptığının aynısı, arada zip var.
+- **Yol taşınabilirliği için yeni kod yok.** Manifest export eden makinenin `dataRoot`'unu yazıyor, import `ContentCodec.rewriteRoots` ile kendi köküne çeviriyor.
 - Export medyayı **diskten akıtır** (`ZipFileEncoder.addFile`), belleğe almaz. Manifest yalnız gerçekten pakete giren dosyaları listeler; kaybolmuş bir dosya import tarafında "eksik" sayılmasın.
 - `manifest.format` bilinmiyorsa **sessiz kabul yok** — `unsupportedFormat` atar. `kContentArchiveFormat = 1`.
 - Import her medya için: veri kökü dışıysa atla (yol geçişi savunması) → aynı içerik zaten varsa atla → yazıp **sha doğrula**, tutmazsa dosyayı sil ve atlananlara say.

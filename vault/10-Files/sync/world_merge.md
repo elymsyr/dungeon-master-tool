@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/world_merge.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-21
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 - Depends on: `core/utils/deep_copy.dart`, `domain/value_objects/world_section_stamps.dart`
 - Used by: [[content_codec]] (`_applyWorld`)
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[LAN-Sync-Flow]]
+- System flow: [[Sync-and-Realtime]] (`.dmtz`)
 
 ## Key Logic / Variables
 - Taban kopya item seviyesinde LWW (`remoteFallback > localFallback` ise remote), üstüne bölüm bazlı kararlar yazılır. Şema/template gibi damgası olmayan alanlar tabandan gelir.
@@ -31,5 +31,5 @@ tags: [file]
 
 ## Notes
 - **Bilinçli sınır:** tombstone yok, silmeler yayılmaz. A'da silinmiş bir entity B'de duruyorsa birleşimde geri gelir — veri kaybetmemeyi hayalet satıra tercih ediyoruz.
-- 2026-09-21'de `lan_sync/`'ten `content_transfer/`'e taşındı; LAN silinince de zip import'un çakışma çözümü olarak kalıyor.
+- 2026-09-21'de `lan_sync/`'ten `content_transfer/`'e taşındı; LAN Faz 6'da (2026-09-24) silindi; zip import'un çakışma çözümü olarak kaldı.
 - Test: `test/application/services/content_transfer/world_merge_test.dart` (taşıma sırasında **değiştirilmedi**).

@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Son yerel kayıt zamanı. Bulut kopyası yok — her şey yerelde yaşıyor,
-/// cihazlar arası aktarım LAN sync ile. Hesap durumundan bağımsız.
+/// Son yerel kayıt zamanı. Hesap durumundan bağımsız.
 class SaveInfoSection extends StatelessWidget {
   final DateTime? localUpdatedAt;
 

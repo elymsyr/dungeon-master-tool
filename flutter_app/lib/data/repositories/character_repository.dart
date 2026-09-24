@@ -72,7 +72,7 @@ class CharacterRepository {
         );
       }
     }
-    // renamedAt'i koru — LAN sync ve explicit rename tarafından yönetilir.
+    // renamedAt'i koru — `.dmtz` import ve explicit rename tarafından yönetilir.
     // Drift upsert tüm kolonları yazar; mevcut değeri okuyup geri koymazsak
     // null'a döner.
     final existing = await _db.worldCharactersDao.getById(character.id);

@@ -29,7 +29,8 @@ import 'content_store.dart';
 ///   son çare dünyanın bulut medyası (Faz 5d): imzalı URL'le R2'den, oradan
 ///   store'a. DM'in ikinci cihazı da oyuncu da aynı yolu kullanır.
 ///
-/// Çözülemeyen her durumda (dosya yok, servis offline, download hatası) null.
+/// Çözülemeyen her durumda (dosya yok, servis offline, download hatası) null;
+/// nedeni [missOf] söyler.
 class AssetRefResolver {
   AssetRefResolver(
     this._assetService,
@@ -46,7 +47,19 @@ class AssetRefResolver {
   final ContentRefIndex _contentIndex;
   final _WorldMediaSigner _signer = _WorldMediaSigner();
 
+  /// Faz 9 — son çözümü başarısız olan ref'in nedeni.
+  final Map<String, AssetMiss> _misses = {};
+
+  AssetMiss? missOf(AssetRef ref) => _misses[ref.raw];
+
   Future<File?> resolve(AssetRef ref) async {
+    _misses.remove(ref.raw);
+    final file = await _resolve(ref);
+    if (file == null) _misses.putIfAbsent(ref.raw, () => AssetMiss.notOnDevice);
+    return file;
+  }
+
+  Future<File?> _resolve(AssetRef ref) async {
     if (ref.raw.isEmpty) return null;
 
     if (ref.isLocal) {
@@ -70,7 +83,11 @@ class AssetRefResolver {
     }
 
     if (ref.isPublic) {
-      return _freeMediaService?.resolveFreeMedia(ref.publicPath!);
+      final free = _freeMediaService;
+      if (free == null) return null;
+      final file = await free.resolveFreeMedia(ref.publicPath!);
+      if (file == null) _misses[ref.raw] = AssetMiss.downloadFailed;
+      return file;
     }
 
     if (ref.isContent) {
@@ -78,7 +95,7 @@ class AssetRefResolver {
       // Baytları bu cihaz üretmişse (DM'in kendi kartı) ağa hiç çıkma.
       final local = await _contentIndex.fileForSha(sha);
       if (local != null) return local;
-      return _fetchWorldMedia(sha, ref.contentExt);
+      return _fetchWorldMedia(ref, sha);
     }
 
     final svc = _assetService;
@@ -87,23 +104,44 @@ class AssetRefResolver {
     try {
       return await svc.downloadAsset(ref.r2Key!);
     } catch (_) {
+      _misses[ref.raw] = AssetMiss.downloadFailed;
       return null;
     }
   }
 
   /// Dünyanın bulut medyasından: imza (toplu) → R2 → store.
-  Future<File?> _fetchWorldMedia(String sha, String ext) async {
+  Future<File?> _fetchWorldMedia(AssetRef ref, String sha) async {
     final svc = _assetService;
     if (svc == null) return null;
     final url = await _signer.urlFor(sha, svc);
-    if (url == null) return null;
+    if (url == null) {
+      _misses[ref.raw] = _signer.errored(sha)
+          ? AssetMiss.downloadFailed
+          : AssetMiss.notInCloud;
+      return null;
+    }
     try {
-      return await svc.downloadSigned(url, sha, ext);
+      return await svc.downloadSigned(url, sha, ref.contentExt);
     } catch (e) {
       debugPrint('AssetRefResolver: $sha indirilemedi: $e');
+      _misses[ref.raw] = AssetMiss.downloadFailed;
       return null;
     }
   }
+}
+
+/// Görsel neden gelmedi — kullanıcıya söylenecek üç gerçek neden.
+enum AssetMiss {
+  /// Yerel yol diskte yok ya da bu cihazda onu çözecek servis yok (oturum
+  /// kapalı, çevrimdışı derleme).
+  notOnDevice,
+
+  /// Dünyanın bulut medyasında yok: onu ekleyen cihaz henüz yüklemedi ya da
+  /// dosya limitin üstünde (§4.8.3).
+  notInCloud,
+
+  /// Ağ: imza ya da indirme başarısız.
+  downloadFailed,
 }
 
 /// Bulutta henüz olmayan `dmt-content://` görselinin (DM'in cihazı yüklemeyi
@@ -127,6 +165,11 @@ class _WorldMediaSigner {
 
   final Map<String, Completer<String?>> _pending = {};
   final Map<String, DateTime> _missUntil = {};
+
+  /// İmzası ağ hatasıyla alınamayan sha'lar — "bulutta yok" değil.
+  final Set<String> _errored = {};
+
+  bool errored(String sha) => _errored.contains(sha);
   Timer? _timer;
   AssetService? _svc;
 
@@ -148,11 +191,14 @@ class _WorldMediaSigner {
     for (var i = 0; i < shas.length; i += _max) {
       final part = shas.sublist(i, (i + _max).clamp(0, shas.length));
       var urls = const <String, String>{};
+      var failed = false;
       try {
         urls = await _svc!.signWorldMedia('get', part);
       } catch (e) {
+        failed = true;
         debugPrint('AssetRefResolver: imza alınamadı (${part.length}): $e');
       }
+      failed ? _errored.addAll(part) : _errored.removeAll(part);
       final until = DateTime.now().add(_missTtl);
       for (final sha in part) {
         final url = urls[sha];

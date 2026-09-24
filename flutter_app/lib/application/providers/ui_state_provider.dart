@@ -75,11 +75,11 @@ class UiState {
   /// Dünyaya özgü görünüm anlık görüntüsü — worldKey (dünya adı) →
   /// [WorldViewState] JSON'u. Yukarıdaki global alanlar (açık PDF'ler, sağ
   /// sidebar, session sekmesi) tek bir dünyaya aittir; dünya değiştirince
-  /// buradan restore edilir ve LAN eşlemesinde dünyayla birlikte taşınır.
+  /// buradan restore edilir ve `.dmtz`'de dünyayla birlikte taşınır.
   final Map<String, String> worldViewByWorld;
 
-  /// worldKey → görünümün son değişme anı (ms since epoch, UTC). LAN
-  /// eşlemesinin LWW karşılaştırması bunu dünyanın içerik zaman damgasıyla
+  /// worldKey → görünümün son değişme anı (ms since epoch, UTC). `.dmtz`
+  /// birleştirmesinin LWW karşılaştırması bunu dünyanın içerik zaman damgasıyla
   /// birlikte kullanır; yoksa "sadece açık kart değişti" durumu eşlenmezdi.
   final Map<String, int> viewTouchedByWorld;
 
@@ -395,7 +395,7 @@ class WorldViewState {
   }
 }
 
-/// LAN eşlemesinde dünyayla birlikte taşınan bütün görünüm dilimi: açık
+/// `.dmtz`'de dünyayla birlikte taşınan bütün görünüm dilimi: açık
 /// kartlar, panel filtreleri/sıralaması ve [WorldViewState].
 ///
 /// Cihaza özgü olanlar (pencere genişlikleri, splitter oranları, tema, dil,
@@ -494,7 +494,7 @@ class UiStateNotifier extends StateNotifier<UiState> {
 
   Future<void> _save() async {
     // Debounce timer, notifier'dan uzun yasayabilir (scope teardown, hot
-    // restart, LAN eslemesi sirasinda kapanan container). `state`'e dispose
+    // restart, kapanan container). `state`'e dispose
     // sonrasi dokunmak StateNotifier'da hata firlatiyor.
     if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();

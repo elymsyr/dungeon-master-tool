@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/widgets/content_archive_menu.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-09-22
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -41,6 +41,7 @@ tags: [file]
 - **İçe aktarma seçili öğeden bağımsız.** Dosyanın manifest'i türü zaten söylüyor; hangi sekmeden açılırsa açılsın çalışır ve `result.ref.type`'a göre doğru listeyi tazeler. Dışa aktarma ise seçim ister — seçim yoksa menü açılır ama o madde kapalıdır.
 - `ponytail:` mobilde kaydetme diyaloğu yok — `FilePicker.saveFile` orada baytları istiyor, biz diske akıtıyoruz. Dosya Documents'a yazılıp yolu snackbar'da gösteriliyor.
 - Arşiv `finally` içinde kapatılır (`ContentArchive.close`), hata yolunda da.
+- **Overlay (Faz 9):** dışa aktarma `withLoading`, içe aktarma `LoadingTask` ile genel overlay'de — dosya seçimiyle son snackbar arasında medyalı dünyada saniyeler geçiyor ve kullanıcı bekliyor. İçe aktarmanın `end`'i `finally`'de, hata yolunda overlay açık kalmasın.
 
 ## Notes
 - Test: `test/presentation/content_archive_menu_test.dart` — tetikleyicinin `OutlinedButton` olduğunu (yani görünümü temadan aldığını) iki temada bağlar, tek eylemli hâlin `IconButton` olduğunu ve seçim yokken dışa aktarmanın kapalı geldiğini doğrular. Yükseklik eşitliği tek başına ayırt etmiyor: ölçüldü, eski `IconButton` da 48 px idi (Material'ın asgari dokunma hedefi).

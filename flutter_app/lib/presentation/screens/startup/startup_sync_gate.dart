@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/auth_provider.dart';
-import '../../../application/providers/lan_sync_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_push_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../application/providers/user_session_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../core/config/supabase_config.dart';
@@ -37,12 +37,13 @@ class StartupSyncGate extends ConsumerStatefulWidget {
 
 class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
   bool _ready = false;
-  String _message = 'Syncing local writes...';
+  /// Splash satırı: önce yerel yazımlar, sonra dünya bağlantısı.
+  bool _connecting = false;
   static const Duration _ceiling = Duration(seconds: 8);
 
   /// Initial `_runSequence` auth-null guard'ında çıktıysa veya kullanıcı
-  /// uygulama içinde sign-in yaptıysa, bu listener bir kez LAN host'unu
-  /// değerlendirir ve hub listelerini tazeler. `null → non-null` geçişinde
+  /// uygulama içinde sign-in yaptıysa, bu listener bir kez hub listelerini
+  /// tazeler. `null → non-null` geçişinde
   /// fire eder; aynı session'da tekrar fire etmez.
   bool _retryFired = false;
 
@@ -61,10 +62,6 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     _retryFired = true;
     if (!SupabaseConfig.isConfigured) return;
     if (ref.read(authProvider) == null) return;
-    // Geç gelen sign-in sonrası da LAN host'u değerlendir.
-    unawaited(
-      ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle(),
-    );
     if (!mounted) return;
     ref.invalidate(campaignInfoListProvider);
     ref.invalidate(packageListProvider);
@@ -85,8 +82,8 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     unawaited(ref.read(cloudPushPumpProvider).reconcileAll());
   }
 
-  void _setMessage(String m) {
-    if (mounted) setState(() => _message = m);
+  void _setConnecting() {
+    if (mounted) setState(() => _connecting = true);
   }
 
   Future<void> _run() async {
@@ -97,15 +94,11 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     } catch (e, st) {
       debugPrint('StartupSyncGate error: $e\n$st');
     }
-    // LAN sync host'u: giriş varsa ve eşleşmiş cihaz varsa dinlemeye başlar,
-    // yoksa hiç soket açmaz. Fire-and-forget — startup ceiling'ini bekletmez.
-    unawaited(ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle());
     if (mounted) setState(() => _ready = true);
     _reconcile();
   }
 
   Future<void> _runSequence() async {
-    _setMessage('Syncing local writes...');
     await ref.read(pendingWriteBufferProvider).flush();
 
     // Built-in SRD pack must be present locally before world joins/CDC try
@@ -139,7 +132,7 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       }
     }
 
-    _setMessage('Connecting to active world...');
+    _setConnecting();
     try {
       await ref.read(worldMirrorApplierProvider.future);
     } catch (e) {
@@ -171,6 +164,16 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       if (prev == null && next != null) {
         unawaited(_runDeferredCatchup());
       }
+    });
+    // Faz 9 — misafir verisi hesaba taşındı mı; giriş ekranı bunu beklerken
+    // hiçbir şey söylemiyordu.
+    ref.listen<bool?>(guestPromotionOutcomeProvider, (_, ok) {
+      if (ok == null) return;
+      final l10n = L10n.of(context)!;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(ok ? l10n.guestPromotionDone : l10n.guestPromotionFailed),
+        duration: const Duration(seconds: 8),
+      ));
     });
     // Faz 5f — arka plan yüklemesi kotaya takıldı; hangi ekranda olunursa.
     ref.listen<bool?>(worldMediaQuotaProvider, (_, full) {
@@ -204,7 +207,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                _message,
+                _connecting
+                    ? L10n.of(context)!.startupConnecting
+                    : L10n.of(context)!.startupSavingLocal,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white70,

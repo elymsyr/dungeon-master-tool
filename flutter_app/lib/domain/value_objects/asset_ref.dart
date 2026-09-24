@@ -70,8 +70,7 @@ class AssetRef {
   /// `dmt-content://` — hepsinde son segmentin adı sha256'dır). Local path'lerde ve hash gibi görünmeyen ref'lerde null.
   ///
   /// `ContentStore` bu sha ile adreslendiği için, ref'i çözmeden "bu asset'in
-  /// baytları bende var mı" sorusunu cevaplamaya yarar (LAN sync bunu
-  /// kullanıyor).
+  /// baytları bende var mı" sorusunu cevaplamaya yarar.
   String? get contentSha {
     final schemeEnd = raw.indexOf('://');
     if (!isCloud && !isPublic && !isContent) return null;

@@ -1387,102 +1387,6 @@
   "accountRequiredCloudBackup": "Cloud backup copies this item to your account. Local saves keep working without it.",
   "accountRequiredOnlineSync": "Online sync keeps this in step with your other devices.",
   "accountRequiredWorldSharing": "Shared worlds, invites and player seats live on the server.",
-  "lanSyncTitle": "Local Sync",
-  "lanSyncSubtitle": "Sync worlds, packages and characters straight to your other devices on this Wi-Fi. Nothing goes online.",
-  "lanSyncOpen": "Local Sync",
-  "lanSyncPinLabel": "PIN",
-  "lanSyncAddressLabel": "Address",
-  "lanSyncManualHint": "Address (e.g. 192.168.1.5:54321)",
-  "lanSyncManualConnect": "Connect",
-  "lanSyncEnterPin": "Enter the PIN shown on the other device",
-  "lanSyncBadAddress": "That address doesn't look right.",
-  "lanSyncNoHostThere": "No device answered at that address.",
-  "lanSyncBadPin": "Wrong PIN, or the other device stopped sharing.",
-  "lanSyncFailures": "{count} items could not be transferred: {names}",
-  "@lanSyncFailures": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncNoDeleteNotice": "Local Sync only adds and updates. Nothing gets deleted on either device.",
-  "lanSyncError": "Local sync failed: {message}",
-  "@lanSyncError": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncQrCaption": "Scan this on your other device",
-  "lanSyncPairedDevices": "Paired devices",
-  "lanSyncNoDevices": "No paired devices yet. Tap “Add device” on your other device and scan the code above.",
-  "lanSyncOnline": "Online",
-  "lanSyncLastSeen": "Last seen {when}",
-  "@lanSyncLastSeen": {
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncNeverSeen": "Not seen yet",
-  "lanSyncSyncNow": "Sync",
-  "lanSyncAddDevice": "Add device",
-  "lanSyncRemoveDevice": "Remove device",
-  "lanSyncRemoveConfirm": "Remove {name}? Nothing gets deleted — the devices just stop syncing.",
-  "@lanSyncRemoveConfirm": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncRemove": "Remove",
-  "lanSyncHowToAdd": "How do you want to add it?",
-  "lanSyncScanQr": "Scan QR code",
-  "lanSyncEnterManually": "Enter address + PIN",
-  "lanSyncScanHint": "Point the camera at the code on your other device.",
-  "lanSyncCameraDenied": "Camera access is needed to scan. You can still add the device with its address and PIN.",
-  "lanSyncPairedWith": "Paired with {name}",
-  "@lanSyncPairedWith": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncProgress": "Syncing {label}",
-  "@lanSyncProgress": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "lanSyncSummary": "{items} items synced across {devices} devices.",
-  "@lanSyncSummary": {
-    "placeholders": {
-      "items": {
-        "type": "int"
-      },
-      "devices": {
-        "type": "int"
-      }
-    }
-  },
-  "lanSyncErrBadQr": "That code isn’t a Local Sync code.",
-  "lanSyncErrBadAddress": "That address doesn’t look right.",
-  "lanSyncErrNoHost": "No device answered there. Make sure Local Sync is open on the other one.",
-  "lanSyncErrBadPin": "Wrong PIN, or the code expired. Check the other device again.",
-  "lanSyncErrAccountMismatch": "That device is signed into a different account. Local Sync only pairs your own devices.",
-  "lanSyncErrPairingClosed": "The other device isn’t accepting new pairings. Open Local Sync there first.",
-  "lanSyncErrNotSignedIn": "Sign in to pair devices.",
-  "lanSyncErrFailed": "Pairing failed.",
   "shareWithPlayers": "Share with players",
   "worldContentSharedTitle": "World content shared with players",
   "worldContentSharedBody": "The cards you marked to share were shared with your players. Nothing else left your device — no category is shared automatically.\n\nMark or unmark any card from its menu; the Sharing filter in the sidebar shows what is marked. Marks you set while the world is offline go out the next time you publish.",
@@ -3324,5 +3228,131 @@
       }
     }
   },
-  "worldMediaQuotaFull": "Cloud media storage is full. New images stay on this device and won't reach players."
+  "worldMediaQuotaFull": "Cloud media storage is full. New images stay on this device and won't reach players.",
+  "saveTooltipSaving": "Auto-saving…",
+  "saveTooltipSaved": "Saved",
+  "cloudSyncTooltipSynced": "Saved · in sync with the cloud",
+  "cloudSyncTooltipSyncing": "Syncing with the cloud…",
+  "cloudSyncTooltipPending": "Offline — changes are saved on this device and will sync when you're back online",
+  "cloudSyncTooltipProblems": "{count, plural, =1{1 sync problem} other{{count} sync problems}} — tap for details",
+  "@cloudSyncTooltipProblems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cloudSyncSection": "CLOUD",
+  "cloudSyncLastSynced": "Last synced {time}",
+  "@cloudSyncLastSynced": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudSyncNotYet": "Not synced yet in this session",
+  "cloudSyncProblemPushRejected": "{count, plural, =1{1 change couldn't be saved to the cloud} other{{count} changes couldn't be saved to the cloud}}",
+  "@cloudSyncProblemPushRejected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cloudSyncProblemPush": "Couldn't send changes: {error}",
+  "@cloudSyncProblemPush": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudSyncProblemPull": "Couldn't fetch changes: {error}",
+  "@cloudSyncProblemPull": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudSyncProblemMediaFailed": "{count, plural, =1{1 file couldn't be uploaded} other{{count} files couldn't be uploaded}} — retrying automatically",
+  "@cloudSyncProblemMediaFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cloudSyncProblemMedia": "Couldn't upload files: {error} — retrying automatically",
+  "@cloudSyncProblemMedia": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudSyncProblemShare": "A shared card couldn't be sent to players: {error}",
+  "@cloudSyncProblemShare": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cloudSyncRetry": "Retry",
+  "assetMissNotOnDevice": "This file isn't on this device",
+  "assetMissNotInCloud": "Not in the cloud yet — the device that added it hasn't uploaded it, or it's over the size limit",
+  "assetMissDownloadFailed": "Couldn't download — check your connection",
+  "loadingOpeningWorld": "Opening world \"{name}\"...",
+  "@loadingOpeningWorld": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingOpeningPackage": "Opening package \"{name}\"...",
+  "@loadingOpeningPackage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingCreatingPackage": "Creating package \"{name}\"...",
+  "@loadingCreatingPackage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingSavingItem": "Saving \"{name}\"...",
+  "@loadingSavingItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "packageSyncTimedOut": "Cloud sync didn't finish in time — the package opened with this device's copy. Late changes will show next time you open it.",
+  "adminInstallingAssetPacks": "Installing asset packs…",
+  "adminRemovingAssetPacks": "Removing asset packs…",
+  "adminImportingWorld": "Importing world…",
+  "adminInstallingBundledWorlds": "Installing bundled worlds…",
+  "adminRemovingBundledWorlds": "Removing bundled worlds…",
+  "contentArchiveExporting": "Exporting \"{name}\"...",
+  "@contentArchiveExporting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contentArchiveImporting": "Importing…",
+  "startupSavingLocal": "Syncing local writes...",
+  "startupConnecting": "Connecting to active world...",
+  "guestPromotionDone": "Your guest worlds, characters and packages were moved into your account.",
+  "guestPromotionFailed": "Couldn't move your guest data into your account. It's still on this device and will be tried again at next sign-in."
 }

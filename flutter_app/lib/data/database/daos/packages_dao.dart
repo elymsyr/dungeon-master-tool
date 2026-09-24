@@ -75,18 +75,12 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  /// LAN sync: uygulanan item'ın zaman damgasını peer'ınkine sabitler.
+  /// `.dmtz` import: uygulanan item'ın zaman damgasını kaynağınkine sabitler.
   /// Repository `save()` her yazımda `DateTime.now()` basar; restamp olmazsa
   /// çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi.
   Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
     await (update(packages)..where((t) => t.id.equals(id)))
         .write(PackagesCompanion(updatedAt: Value(updatedAt)));
-  }
-
-  /// LAN sync: yeniden adlandırma zamanını kaydet.
-  Future<void> setRenamedAt(String id, DateTime renamedAt) async {
-    await (update(packages)..where((t) => t.id.equals(id)))
-        .write(PackagesCompanion(renamedAt: Value(renamedAt)));
   }
 
   // ── Package schemas ──────────────────────────────────────────────────────

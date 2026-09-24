@@ -242,7 +242,7 @@ class CloudPushService {
       // veriyi öldürürdü; onun yerine kayıt düşülür ve satır **şimdiyle
       // damgalanır** ki bu turun taramasına düşsün. Damgalamadan sadece
       // atlamak yetmez: geri gelen satır eski `updated_at` taşıyor olabilir
-      // (LAN restamp, zaman koruyan import) ve taramaya hiç girmezdi.
+      // (zaman koruyan `.dmtz` import) ve taramaya hiç girmezdi.
       if (await _resurrected(table, id, scopeId)) {
         await _db.customStatement(
           'DELETE FROM sync_tombstones WHERE table_name = ? AND row_id = ?',

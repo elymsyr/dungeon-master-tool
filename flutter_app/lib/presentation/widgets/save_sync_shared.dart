@@ -50,5 +50,4 @@ class ActionButton extends StatelessWidget {
   }
 }
 
-// ponytail: StorageUsageBar removed — cloud storage gone, only local+LAN remains
 

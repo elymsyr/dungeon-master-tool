@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/account_gate.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
+import '../../application/providers/cloud_sync_status_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/role_provider.dart';
@@ -301,6 +302,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           .worldsDao
           .setOnline(widget.campaignId, false);
       ref.read(onlineWorldIdsProvider.notifier).remove(widget.campaignId);
+      ref.read(cloudSyncStatusProvider.notifier).remove(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(widget.campaignId));

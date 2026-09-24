@@ -11,7 +11,7 @@ import 'role_provider.dart';
 /// `world_settings.settings_json` key holding the DM-shared entity id list.
 ///
 /// [kPinnedEntitiesKey] ile aynı gerekçe: tipli kolon değil blob anahtarı,
-/// böylece marketplace publish → download ve LAN dünya senkronunda bedavaya
+/// böylece marketplace publish → download ve `.dmtz` aktarımında bedavaya
 /// taşınır.
 ///
 /// Bu set dünya **offline'ken de** tutulur. Orada hiçbir işe yaramaz; amacı

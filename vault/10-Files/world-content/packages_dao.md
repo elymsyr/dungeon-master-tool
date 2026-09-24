@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/daos/packages_dao.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-08-20
+updated: 2026-09-24
 tags: [file]
 ---
 
@@ -26,13 +26,13 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[tables-packages]], [[drift_database]]
-- Used by: [[package_sync_service]], [[bundled_packs_bootstrap]], [[world_repository_impl]] (purge of orphaned packages), [[srd_core_pack]] bootstrap, [[lan_sync_session]]
+- Used by: [[package_sync_service]], [[bundled_packs_bootstrap]], [[world_repository_impl]] (purge of orphaned packages), [[srd_core_pack]] bootstrap, [[content_codec]] (`.dmtz` import)
 - Domain map: [[World-and-Content]]
 - System flow:
 - Spec / reference: [[Data-Layer]]
 
 ## Key Logic / Variables
-- `setUpdatedAt(id, ts)` — [[LAN-Sync-Flow]] için: uygulanan item'ın `packages.updated_at`'ini peer'ınkine sabitler. Repository `save()` her yazımda `now()` bastığı için restamp olmadan çekilen içerik anında geri push edilirdi.
+- `setUpdatedAt(id, ts)` — `.dmtz` import ([[content_codec]]) için: uygulanan item'ın `packages.updated_at`'ini kaynağınkine sabitler. (`setRenamedAt` Faz 6'da silindi — çağıranı yoktu.) Repository `save()` her yazımda `now()` bastığı için restamp olmadan çekilen içerik anında geri push edilirdi.
 - **DB-2 perf projections**: `firstSchemaNameByPackage()` uses `selectOnly` projecting only `packageId + name` (skips the big categories/encounter JSON just to label a pack); `countEntitiesByPackage()` is one grouped `COUNT(id)` query instead of materializing rows to call `.length` (packages with zero entities are absent from the map).
 - **`countEntities(id)`** (CS-1) — single-package count via `selectOnly` + `id.count()`; used by the SRD/bundled bootstrap freshness gate instead of `getEntities(id).isNotEmpty`.
 - `updateCloudPush` records `lastCloudPushAt`/`lastPushedHash` for package cloud-sync watermarking (mirrors `worlds`).

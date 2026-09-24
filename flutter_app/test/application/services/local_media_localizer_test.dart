@@ -1,7 +1,7 @@
 // Ham seçici yollarının veri kökü içine alınması.
 //
 // Kural: seçilen her medya kopyalanır — bulut yüklemesi başarılı olsun ya da
-// olmasın. Ham bir yol (`.../Downloads/map.png`) LAN eşlemesinde taşınmıyor
+// olmasın. Ham bir yol (`.../Downloads/map.png`) `.dmtz`'de taşınmıyor
 // (`ContentCodec._mediaFor` yalnız içeriğin kendi klasörünü tarıyor) ve
 // kullanıcı dosyayı taşırsa büsbütün kayboluyor.
 //
