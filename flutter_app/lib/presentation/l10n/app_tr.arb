@@ -2179,5 +2179,6 @@
   "multiplayerTooLargeTitle": "Bazı dosyalar bu cihazda kalıyor",
   "multiplayerTooLargeBody": "Bu dosyalar boyut limitinin üstünde (harita 10 MB, diğer görseller 5 MB, ses 10 MB, PDF 20 MB), oyuncular onları görmeyecek. Burada çalışmaya devam ederler.",
   "multiplayerMediaIncomplete": "Dünya multiplayer, ama medyanın tamamı henüz buluta çıkmadı. Kalanı kendiliğinden yüklenecek.",
-  "worldMediaNotSent": "Boyut limitinin üstünde, oyunculara gitmeyecek: {names}"
+  "worldMediaNotSent": "Boyut limitinin üstünde, oyunculara gitmeyecek: {names}",
+  "worldMediaQuotaFull": "Bulut medya alanı dolu. Yeni görseller bu cihazda kalacak, oyunculara gitmeyecek."
 }

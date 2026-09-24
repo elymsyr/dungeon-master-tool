@@ -132,9 +132,11 @@ Future<bool> turnMultiplayerOn(
   // verilebilmeli. Ardından ilk tam tur: dünyanın satırları buluta çıkar.
   await ref.read(appDatabaseProvider).worldsDao.setOnline(worldId, true);
   final pump = ref.read(cloudPushPumpProvider);
+  final sw = Stopwatch()..start();
   final rows = await pump.push(full: true, worldId: worldId);
-  debugPrint('multiplayer açıldı $worldId: ${rows.pushed} satır, '
-      '${rows.rejected.length} red, hata: ${rows.error}');
+  debugPrint('CloudSync: multiplayer açıldı $worldId: ${rows.pushed} satır '
+      '${sw.elapsedMilliseconds} ms, ${rows.rejected.length} red, '
+      'hata: ${rows.error}');
 
   // Faz 9 kuralı: kullanıcının başlattığı ve beklediği iş → overlay.
   final loading = ref.read(globalLoadingProvider.notifier);
@@ -155,6 +157,8 @@ Future<bool> turnMultiplayerOn(
   } finally {
     loading.end(task);
   }
+  debugPrint('CloudSync: multiplayer medya $worldId ↑${report?.uploaded ?? 0} '
+      '${formatBytes(report?.bytes ?? 0)} ${sw.elapsedMilliseconds} ms (toplam)');
 
   if (!complete || (report?.failed.isNotEmpty ?? false)) {
     messenger.showSnackBar(

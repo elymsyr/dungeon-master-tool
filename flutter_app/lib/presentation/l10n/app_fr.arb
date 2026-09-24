@@ -2179,5 +2179,6 @@
   "multiplayerTooLargeTitle": "Certains fichiers restent sur cet appareil",
   "multiplayerTooLargeBody": "Ces fichiers dépassent la limite de taille (cartes 10 Mo, autres images 5 Mo, audio 10 Mo, PDF 20 Mo) : les joueurs ne les verront pas. Ils restent utilisables ici.",
   "multiplayerMediaIncomplete": "Le monde est en multijoueur, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé automatiquement.",
-  "worldMediaNotSent": "Au-dessus de la limite de taille, n'atteindra pas les joueurs : {names}"
+  "worldMediaNotSent": "Au-dessus de la limite de taille, n'atteindra pas les joueurs : {names}",
+  "worldMediaQuotaFull": "L'espace cloud des médias est plein. Les nouvelles images restent sur cet appareil et n'atteindront pas les joueurs."
 }

@@ -277,11 +277,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       return false;
     }
+    // Faz 5f ölçümü: yerel yükleme ve toplam (fark bulut beklemesi).
+    final sw = Stopwatch()..start();
     try {
       // Önceki world'ün pending row yazımlarını drain et — yeni world
       // yüklenmeden eski edit'ler kayba uğramasın.
       await _ref.read(pendingWriteBufferProvider).flush();
       _data = await _repo.load(worldId);
+      final localMs = sw.elapsedMilliseconds;
       // `state` already equals `worldId` from beginLoad — bump revision so
       // schema + entity providers re-read `_data` (state didn't change so
       // they wouldn't otherwise see the new content).
@@ -323,6 +326,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         }
       }
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
+      debugPrint('CloudSync: açılış $worldId yerel=$localMs ms '
+          'toplam=${sw.elapsedMilliseconds} ms');
       // Sahipsiz kalmış yerel medyayı temizle (dünya kapanışında da çalışır).
       // Fire-and-forget — açılışı bloklamaz, hatası yutulur.
       unawaited(sweepUnusedMedia());
