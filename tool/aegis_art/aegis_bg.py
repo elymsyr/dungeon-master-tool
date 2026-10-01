@@ -172,10 +172,11 @@ LOCATION_BG = [
   "A cold windswept ridge of coarse grass and bare rock, a line of squat grey stone watchtowers "
   "receding into thick fog along the crest, unlit beacon baskets on their tops, wet ground and low "
   "cloud, the near ground empty"),
- ("Ravenhall Avlusu", "DAY",
-  "A walled rocky courtyard of moss and scattered stone slabs backed by dark pines, weathered "
-  "standing markers leaning along the outer edges, a heavy closed timber door set into the rock "
-  "face at the back, flat grey overcast light, open empty ground in the middle"),
+ ("Radenhall Avlusu", "DAY",
+  "A wide open sunlit clearing of short grass ringed by tall broadleaf forest, small standing "
+  "stones of uneven sizes scattered in loose rings along the edges, wooden houses half hidden "
+  "under the trees, forested coastal mountains rising behind, clear warm daylight, open empty "
+  "ground in the middle"),
  ("Cinervik", "DAY",
   "A wide dirt crossroads of a small village, packed earth rutted by cart wheels, half-timbered and "
   "thatched houses lining both sides and falling away behind, a fence and a water trough at the "

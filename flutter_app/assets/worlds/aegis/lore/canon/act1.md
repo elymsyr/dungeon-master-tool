@@ -21,13 +21,13 @@
 > + boş parşömen, yüzük **gizli cepte** ve içeriği askıda (§3.3) · üçlünün geçmişi,
 > yolu ve nasıl hastalandıkları **askıya alındı** (§3.1, §3.2) · gerçek adların
 > nerede karşılık bulduğu yazıldı (§3.1 → Lonca Meclisi) · doğrudan lonca yolu
-> yazıldı (§6.1) · Paladin Şatosu · Ravenhall · Elymsyr liman kenti **sonraya
+> yazıldı (§6.1) · Paladin Şatosu · Radenhall · Elymsyr liman kenti **sonraya
 > bırakıldı** (§6).
 >
 > **2026-09-09 revizyonu (bölge turu):** §4 artık 5e'nin üstündeki *tek* kural değil —
 > kalan sapmalar [`mekanikler.md`](mekanikler.md)'de · §4.4'e şifa büyülerinin
 > **yapana** bedeli eklendi · §6'nın üç açık lokasyonu (Elymsyr · Votumar ·
-> Ravenhall) [`bolgeler.md`](bolgeler.md)'de yazıldı ve §9 açık 8 kapandı · bilgi
+> Radenhall) [`bolgeler.md`](bolgeler.md)'de yazıldı ve §9 açık 8 kapandı · bilgi
 > eğimi beş noktaya çıktı (§6).
 >
 > **2026-09-10 revizyonu (hastalık turu):** Blight'ın üç evresi yerine **Hastalık
@@ -53,7 +53,7 @@
 > kapanışı** var. Üç kilit anı sahneye çevrildi: **Kapıya En Yakın Masa** (Halim →
 > Orvan'ın adı), **Dilekçe Avlusu** (Meclis'e giriş), **Ayar Masası** (yüzük →
 > liman). Gerçek adların anahtarı yazıldı (alyansların içindeki *C. & P. Greenbottle*
-> ve tarif), ve Ravenhall patikasının ikinci anahtarı çürümeden söz etmek oldu.
+> ve tarif), ve Radenhall patikasının ikinci anahtarı çürümeden söz etmek oldu.
 > *"Karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (§4.4, §5).
 >
 > Hepsi **kartın son hali gibi**, DM'e yönelik yazıldı. Karar sahibine notlar
@@ -769,15 +769,15 @@ standartla:
 | **Lonca + Lucid Triton** | → [`lonca-sehir.md`](lonca-sehir.md) §6–7: Meclis'in altı koltuğu + sokağın beşi |
 | **Elymsyr** | → [`bolgeler.md`](bolgeler.md) §2.7: gümrük valisi · nehir muhafızı çavuşu · vinç ustası · çevirmen |
 | **Paladin Şatosu (Votumar)** | → [`bolgeler.md`](bolgeler.md) §3.7: Başkumandan · kapı komutanı · şüpheci rütbeli · kule nöbetçisi |
-| **Ravenhall Avlusu** | → [`bolgeler.md`](bolgeler.md) §4.6: en yaşlı druid · patika gözcüsü |
+| **Radenhall Avlusu** | → [`bolgeler.md`](bolgeler.md) §4.6: en yaşlı druid · patika gözcüsü |
 | **Cinervik · Argenfon** | → [`bolgeler.md`](bolgeler.md) §5: iki köyün profili yazıldı, NPC'leri ayrı turda |
 
 **Bilgi eğimi (09 §4) beş noktaya çıktı** ([`bolgeler.md` §9](bolgeler.md) madde 12):
 Elymsyr'de söylenti **okunur** (defterde izi var) · Cinervik'te **bol ve yanlış** ·
 Argenfon'da bastırılmıyor **teselli ediliyor** · Lucid Triton'da **bastırılmış** ·
-Votumar'da **fısıltı** · Ravenhall'da **yok, çünkü zaten biliniyor.**
+Votumar'da **fısıltı** · Radenhall'da **yok, çünkü zaten biliniyor.**
 
-**Paladin Şatosu · Ravenhall · Elymsyr — KAPANDI (2026-09-09, bölge turu):**
+**Paladin Şatosu · Radenhall · Elymsyr — KAPANDI (2026-09-09, bölge turu):**
 üçü de [`bolgeler.md`](bolgeler.md)'de yazıldı, artı kıta geneli katmanı (doktrin,
 adalet, mimari, ırk, mesafe) ve iki büyük köy. Yukarıdaki satırlar artık taslak değil,
 o belgenin tabloları. **Act 1'in kapsamı değişmedi:** perde hâlâ Gümüşsu'da başlıyor
@@ -1228,7 +1228,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
    bırakıldı.
 7. **Hastalığın kaynağı** (§4.6) — Act 1'de adlandırılmıyor; kaynağın *ne* olduğu
    sonraki perdelerin kararı.
-8. ~~**Paladin Şatosu · Ravenhall · Elymsyr liman kenti**~~ — **KAPANDI**
+8. ~~**Paladin Şatosu · Radenhall · Elymsyr liman kenti**~~ — **KAPANDI**
    (2026-09-09, bölge turu): [`bolgeler.md`](bolgeler.md) §2–4. Kalan açık, o üç
    yerin **NPC adları** ve M0.6'ya bağlı iki bölüm (Elymsyr'in zinciri, Votumar'ın
    bugünkü hali).
@@ -1284,7 +1284,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
   içindeki **metin**: kitapların içi, rozetin nakşı, künyenin ibaresi. O da bilerek
   bekliyor, çünkü kitabın içini yazmak Sancak Kaydı'nı (10 M1) yazmadan mümkün değil.
   Yani bu bir borç değil, **sıraya konmuş bir iş.**
-- **Üç lokasyon bilerek boş** *(4. tur).* Paladin Şatosu · Ravenhall · Elymsyr liman
+- **Üç lokasyon bilerek boş** *(4. tur).* Paladin Şatosu · Radenhall · Elymsyr liman
   kenti (§6) yazılmadı. Riski yok: Act 1'in kapsamı Gümüşsu → liman → (Lonca/Şehir) →
   ufukta ikinci kıta ile kapanıyor. Tek dikkat edilecek şey, §6 tablosundaki o üç
   satırın **taslak** olduğunu unutmamak — masaya söz verme.

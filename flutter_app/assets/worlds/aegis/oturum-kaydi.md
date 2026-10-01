@@ -56,10 +56,59 @@ değişti.
   ve kıyafetlerin alınacağı yer → son imza için **Orvan'ın imzası** → ardından limandan
   gemiyle açılma izni hazır. Karakterler teklife olumlu bakıyor; şimdilik kabul etmiş
   sayılır, ama yola henüz çıkmadılar.
-- **Orvan'ın tavsiyesi:** hastalık hakkında daha çok bilgi için Ravenhall'a gitmeleri.
-- **Açık iplikler:** teklifin kesin kabulü ve yolu · Ravenhall · paladinin cezası (hapis /
+- **Orvan'ın tavsiyesi:** hastalık hakkında daha çok bilgi için Radenhall'a gitmeleri.
+- **Açık iplikler:** teklifin kesin kabulü ve yolu · Radenhall · paladinin cezası (hapis /
   yargılanma tarihi) ve teklifle çakışması · paladinin hastalığı · Kavkıların sığınağı ·
   Kadife'nin kimin adamı olduğu · Sicim'in kitabı · *Kader* ve kaptanı · Mine'ın çizdiği mührün ne olduğu.
+
+## Oturum 3 için akış — hazırlık
+
+Paket **0.14.0** ile oynanır. Açılış: Lucid Triton, teklifin hemen ardı. Aşağıdaki bir
+sıra değil, masanın önünde duran üç iş; hangisinin önce açılacağı masanın.
+
+**Teklif netleşir.** Oturum 2'de Orvan yolu anlattı; istediği şey artık kartta yazılı
+(`Kapı Önündeki Teklif`, `Nereden Geldiler`): **gemiler kayboluyor — nedenini bulun,
+gerekirse durdurun, ve bana Meclis'te inkâr edilemeyecek bir kanıt getirin.** Masada
+bunu Orvan'ın teklifin *nedenini* açması gibi oynayabilirsin. Ödül değişmedi: imza +
+mirasa ortaklık.
+
+**1 · Geçiş kağıdı** (`İyi Yazı`) — durakların sırası kağıdın yolu:
+
+| Durak | Kart | Anahtar | Bu masada |
+|---|---|---|---|
+| Ön onay | `Geçiş Divanı'nda Sıra` — Corin | rüşvet · Orvan'ın adı · Corin'in terfisi (imzacı olmak) | Ranger'ın annesinin hanesi aynı loncada; Corin soyadı tanıyabilir — istersen |
+| Kimlik ve kıyafet | `Mavnacılar Hanı` — kiler | yolu Orvan ya da Kandil gösterir; bedeli senin | **Ranger** rıhtımda tanınır; **paladin** cezalı. Bu durak ikisine de en çok lazım |
+| Karşı-imza | Orvan'ın bir imzacısı | Orvan'ın teklifi | İmzayı işten **önce** mi **sonra** mı verdirdiği senin: gemileri denizde arayacak masaya kağıt işten önce lazım olabilir |
+| Gemi | `Gümrük Rıhtımı` (Elymsyr) · `Geçiş Pazarlığı` (Gizli Liman) | iyi yazı ikisinde de geçer | — |
+
+**2 · Orvan'ın işi** (`Nereden Geldiler`) — üç ucu var:
+
+- **Kaybolan gemiler:** Sınır ve Ticaret Divanhanesi'nin cetvel odası (hangi gemi
+  gelmedi) — **wizard arşivci**, kopyaları okuyabilir · Elymsyr gümrük kopyaları ·
+  Sicim'in defteri (*Kader*'in yükü orada).
+- **Kanıt:** Halim (Vorga) tanık ve yanlarında · Sindri'deki ilk beyanın kopyası ·
+  Radenhall'da druidin okuyuşu (ama Yazısız bir yerin sözü Meclis'te kayıt sayılmaz).
+- **Üçlünün izi:** *Kader* · Mine'ın çizdiği mühür · Mühürsüz Yüzük.
+
+**3 · Radenhall** (`Taşların Bildiği`) — Orvan zaten tavsiye etti. Lucid Triton'dan
+**4–5 gün** kuzey; tek patika, gözcü ve dev kurdu. Burada iki şey bu masaya özel:
+
+- Yaşlı druid **paladindeki hastalığı sezebilir** — sezip sezmediği ve söyleyip
+  söylemediği senin.
+- **Direnç Şerbeti**'nin tarifi ve takası burada; paladin için tek korunma. Takasın
+  karşılığı senin.
+
+**Çakışmalar:**
+
+- **Paladinin cezası.** Varhan Votumar'a dönmesini emretti; kimlik durağı da, kuzey yolu
+  da bu emirle çakışır. Ne olacağı masanın.
+- **Zaman.** Radenhall gidiş-dönüş on gün kadar. Hastalığın genel seyri (Blight kartı):
+  yaklaşık bir hafta kuluçka, genelde bir ay ilerleme — paladinin sayacı bu yolculuğun
+  içinde işler.
+
+**Senin kararın (kartlarda bilerek boş):** gemilerin neden kaybolduğu · şerbetin takas
+karşılığı · kilerin bedeli · imzanın işten önce mi sonra mı geldiği · druidin sezip
+sezmediği.
 
 ---
 
@@ -113,7 +162,7 @@ alanında.
   onlara bir teklifte bulundu. Bunun için birkaç yere uğramaları gerekiyor: önce
   Karşı-İmza Masası, ardından gizli kimliklerini ve kıyafetlerini alacakları yer, son
   imza için Orvan'ın imzası; sonrasında limandan gemiyle açılma izni hazır olacak.
-  Orvan ayrıca hastalık hakkında daha çok bilgi için **Ravenhall'a** gitmelerini
+  Orvan ayrıca hastalık hakkında daha çok bilgi için **Radenhall'a** gitmelerini
   tavsiye etti. Oyuncular teklife olumlu baktı; şimdilik kabul etmiş sayılırlar.
   Oturum teklif sahnesinden sonra bitti.
 
@@ -125,7 +174,7 @@ alanında.
 - **Meclis** — dinledi, geri çevirdi.
 - **Başkumandan Varhan** — paladinle özel konuştu; 1 yıl hapis + yargılanma cezası.
 - **Halim (Vorga)** — karakterleri Orvan'ın teklifine çağırdı.
-- **Orvan Sancar** — Kapı Önündeki Teklif'i yaptı; hastalık için Ravenhall'ı tavsiye etti.
+- **Orvan Sancar** — Kapı Önündeki Teklif'i yaptı; hastalık için Radenhall'ı tavsiye etti.
 
 **Karakterlerin öğrendiği:** yukarıdaki *Dünyanın bu masadaki hâli* → *Karakterlerin bildiği*.
 
@@ -133,7 +182,7 @@ alanında.
 - Orvan'ın teklifi: olumlu baktılar, kesin kabul ve yol (Karşı-İmza Masası → kimlik/kıyafet →
   Orvan'ın imzası → gemi izni).
 - Paladinin cezası ve teklifle nasıl çakışacağı.
-- Paladinin hastalığı; Orvan'ın tavsiye ettiği Ravenhall.
+- Paladinin hastalığı; Orvan'ın tavsiye ettiği Radenhall.
 - Kavkıların sığınağı.
 - Kadife'nin kimin adamı olduğu; Sicim'in kitabı; *Kader* ve kaptanı; Mine'ın çizdiği mühür.
 
@@ -225,3 +274,4 @@ Kartların yazımını etkileyen gözlemler. Buradan bir karar çıkarsa README 
 | Tarih | Gözlem | Kartlara etkisi |
 |---|---|---|
 | 2026-09-14 | Gelen yorumlar: insanlar önceden planlanmış olayların doğrudan oynatılmasından hoşlanmıyor. | Karar **A3** (README §3.1, §6.8): kartlar olay takvimi değil durum yazar. *"Şafakta dönerler"* → *"son aşamaya geçmek üzereler"*; *"Corvin şafaktan önce köye döner"* → *"Corvin ara ara köye uğrar"*; Orvan'ın teklifi kesin bir sahne değil, elindeki bir olasılık. **0.8.0'da uygulandı** (26 kart; Kadife'nin yollaması silindi, hastalığa genel seyir geldi). |
+| 2026-10-01 | Oturum 2'de Orvan'ın yolu masada *Karşı-İmza → kimlik/kıyafet → Orvan'ın imzası → gemi* diye anlatıldı; kartlarda sıra farklıydı. | Masadaki sıra kanon oldu: karar **A6** (README §3.1) — ön onay → kimlik ve kıyafet → imzacının karşı-imzası → gemi; imzayı loncanın 5–10 imzacısı atar. **0.14.0'da uygulandı.** |

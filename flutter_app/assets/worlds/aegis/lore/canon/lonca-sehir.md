@@ -207,7 +207,8 @@ masadaki herkesin **iki adı var** — odanın asıl ayrımı ırk değil kayıt
 ### 6.1 Meclisin en fakir koltuğu — Sınır ve Ticaret
 
 Mührü en eski hanede (**Sancarlar**), parası hiçbirinde yok. Sebep yapıdan
-çıkıyor: bu loncanın geliri **akıştan** gelir, mülkten değil. Gemiler gecikince,
+çıkıyor: bu loncanın geliri **akıştan** gelir, mülkten değil. Gemiler gecikince — ve
+artık bazıları hiç gelmeyince (§6.2) —
 sınır kapıları yarı kapanınca, tahıl gelmeyince koltuk fakirleşti — diğer beşi
 şehrin kendi bütçesinden ve kendi çarşısından besleniyor.
 
@@ -223,7 +224,7 @@ Aynı yapı, onu **inanan tek üye** yapıyor:
 > adam haklıdır ve odada hiçbir ağırlığı yoktur. Odanın ders verdiği şey budur —
 > Meclis'te haklı olmak bir para birimi değil.
 
-### 6.2 Orvan'ın teklifi — gizli görev (KARAR; 2026-09-14'te olasılığa çevrildi)
+### 6.2 Orvan'ın teklifi — gizli görev (KARAR; 2026-09-14'te olasılığa çevrildi, 2026-10-01'de istek değişti)
 
 Meclis'in beş koltuğu hastalığı kendi çıkarının gözünden görmez (§6), ve
 Gümüşsu'nun kanıtı bu tutumu kolay değiştirmez: oturum bir kapı değil bir
@@ -239,20 +240,29 @@ geçiş memuru değil; onun kendi çırağı). Salonda konuşmadığı şeyi bur
 
 1. *"Söyledikleriniz doğru. Odada kimse buna bakmayacak, ben dahil — çünkü benim
    sözümün orada ağırlığı yok."*
-2. *"Üç hasta insanı bu kıtaya biri soktu ve kimsenin soru sormadığı bir köye
-   benim memurlarımdan biri. Bana **kimin ödediğini** getirin."*
+2. *"Gemiler kayboluyor. Gecikmiyor, kayboluyor. Ve bu hastalık kıtaya bir gemiyle
+   girdi. Neden kaybolduklarını bulun, gerekirse durdurun. Ve bana bu hastalık için o
+   salonda kimsenin inkâr edemeyeceği bir kanıt getirin."*
+
+> **İstek değişti (KARAR, 2026-10-01).** Eski ikinci cümle (*"bana kimin ödediğini
+> getirin"*) düştü. Orvan'ın istediği artık üç şey, tek iş: **gemilerin neden
+> kaybolduğunu bulmak · gerekirse durdurmak · hastalıkla ilgili kesin kanıt.** Üçlüyü
+> kimin geçirdiği bu işin içinde bir iz olarak kalıyor. **Gemilerin neden kaybolduğu
+> yazılmadı** — Orvan bilmiyor, kanon da bilmiyor; M0.6'ya bağlanıp bağlanmayacağı da
+> açık.
 3. *"Param yok. Verebileceğim şey imza."*
 
 **Ödül iki parça (KARAR, 2026-09-09 4. tur):**
 
 1. **Ücretsiz seyahat** = "iyi yazı" (act1.md §7.2): koltuğun karşı-imzalı geçiş
-   kağıdı. Perdenin sonundaki gemi biletini Meclis'in **en fakir** üyesi ödüyor —
+   kağıdı. Karşı-imzayı Orvan kendi atmaz; loncasının **imzacılarından** birine
+   attırır (§6.4). Perdenin sonundaki gemi biletini Meclis'in **en fakir** üyesi ödüyor —
    parayla değil yetkiyle. Grup gemiye para bulamazsa bile hat kapanmıyor.
 2. **Tüm mirasına ortaklık.** Verecek nakdi yok, ama bir **hane**si var: Sancarlar,
    Meclis'in en eski mührü. Teklif ettiği şey para değil, adının arkasındaki her şey.
 
 > **Masanın görebileceği ince yer:** o miras **her gün küçülüyor.** Bu koltuğun geliri
-> akıştan gelir (§6.1), ve söylenti ticaret gemilerini azaltıyor — yani teklif ettiği
+> akıştan gelir (§6.1), ve gemiler hem azalıyor hem kayboluyor — yani teklif ettiği
 > pay, tam da oyuncuların çözmesi istenen sorun yüzünden eriyor.
 >
 > Bunu fark eden oyuncu iki şeyi birden anlar: teklif **düşündüğünden küçük**, ve adam
@@ -260,16 +270,36 @@ geçiş memuru değil; onun kendi çırağı). Salonda konuşmadığı şeyi bur
 > taşıyor. Insight istemez; §6.1'i dinleyen ya da limanda gemi sayan masa kendiliğinden
 > görür. Sorulursa adam inkâr etmez: *"Doğru. Bekleyemem, o yüzden buradayım."*
 
-**Görevin iki yüzü var (4. tur, 5. turda güncellendi).** Koltuğun kendi istediği
-*üçlüyü kim geçirdi.* Ama oyunculara verdiği iş bundan geniş de yazılabilir —
-**"bu şeyin ne olduğunu bulun."** İkisi aynı işin iki ucudur; DM masayı hangisi
-çekiyorsa onu öne alır: izin peşindeki masa limana gider (act1.md §7.5), hastalık
-peşindeki masa kulübeye ve kaynağa döner (act1.md §4.6). Aynı `quest` kartı
-(*Nereden Geldiler*) ikisini de taşır.
+**Görev tek kart (KARAR, 2026-10-01).** Kaybolan gemiler, hastalığın kanıtı ve
+üçlünün nereden geldiği **aynı `quest` kartında** durur: *Nereden Geldiler*. DM masayı
+hangi uç çekiyorsa onu öne alır: izin peşindeki masa limana gider (act1.md §7.5),
+hastalık peşindeki masa kulübeye, kaynağa ve **Radenhall**'a döner (act1.md §4.6,
+[`bolgeler.md` §4](bolgeler.md) — `quest/Taşların Bildiği`). Gemilerin kayıtları
+Sınır ve Ticaret'in kendi cetvel odasında: hangi geminin gelmesi gerekip gelmediği.
+
+**Kanıt neden zor.** Meclis'in her koltuğu hastalığı kendi uzmanlığından reddediyor
+(§6). Bir tanık, bir beyan kopyası ya da bir druidin sözü bir koltuğu ikna edebilir,
+ötekini etmez — ve druidin sözü bir kayıt değildir: Radenhall Yazısız'dır.
 
 **Kurum bastırır, üye görevlendirir.** Bu çelişki tasarımın kendisi: Meclis'in
 hastalığı susturması altı ayrı çıkarın toplamı (§6), tek üyenin konuşması ise tek bir
 çıkarın — kaybedecek malı olmayan adamın. act1.md §6.1 bu yolu köyden bakınca yazıyor.
+
+**Geçiş kağıdının yolu (KARAR, 2026-10-01).** Sıra kağıdın yoludur, takvim değil:
+
+| Basamak | Nerede | Ne olur |
+|---|---|---|
+| **Ön onay** | Karşı-İmza Masası (Geçiş Divanı) — Corin Sancar | Kağıt karşı-imza defterine geçer; ön onaysız kağıt hiçbir imzacının önüne çıkmaz |
+| **Kimlik ve kıyafet** | **Mavnacılar Hanı**'nın kileri | Kağıda yazılacak ad ve o ada uyan kıyafet. Kendi adıyla binmek isteyen atlar |
+| **Karşı-imza** | Sınır ve Ticaret'in bir imzacısı (§6.4) | Orvan teklifinin karşılığı olarak imzalatır. Karşı-imzalanmış kağıdın adı değişmez |
+| **Gemi** | Elymsyr ya da Gizli Liman | act1.md §7.2 |
+
+**Mavnacılar Hanı** (yeni yer, 2026-10-01): Nehir Yükleme Alanı'nın dibinde
+mavnacıların hanı; altındaki kilerde ad ve kıyafet hazırlanır. Ad uydurma değil:
+Orvan'ın loncasının defterine kendi eliyle yazdığı bir satır — Mertebeli Lonca Çocuğu
+için *İyi Yazı*'nın "sahte kimlik" sırrının yeri burası. Yolu bilen iki kişi: **Orvan**,
+ve adını borca kaptırmış **Kandil** (§7). Kilerdeki iki el (adı yazan, kıyafeti diken)
+**adlandırılmadı**, kart değil; kilerin bedeli DM'in.
 
 **Neden kilitlenmez:** bu görev yolun tek kapısı değil. Aynı yazıyı para da alır
 (act1.md §7.2), aynı bilgiyi liman hattı da taşır (Sicim + ayar ustası, §7). Meclis
@@ -300,6 +330,18 @@ soruyu kuruma taşıyan **bilet**.
 
 **Zorunlu değil.** Oyuncular gerçek adları hiç öğrenmeyebilir; §6.2'nin teklifi
 adlardan bağımsızdır. İki hat birbirinin ön koşulu değil, aynı odaya iki kapı.
+
+### 6.4 İmzacılar (KARAR, 2026-10-01)
+
+**Her loncanın Meclis'te 5–10 imzacısı var**, ve loncanın adına atılan imzaları onlar
+atar: koltuk sahibi karar verir, imzacı imzalar. *(Ad değişebilir.)*
+
+- Geçiş kağıdının **karşı-imzası** bir imzacının elinden çıkar. **Karşı-İmza
+  Masası'nın işi ön onaydır** — kağıdı deftere geçirmek ve imzacıya yollamak. Masanın
+  adı "karşı-imza"yı taşıyor, çünkü kağıt oradan karşı-imzaya çıkar (*"Divan'a çıktım"*
+  = karşı-imza beklemek, `location/Kalem Binası`).
+- **Corin Sancar'ın terfisi** artık somut: loncanın imzacılarından biri olmak.
+- İmzacıların adları ve sayısı loncadan loncaya değişir; **hiçbiri adlandırılmadı.**
 
 ---
 
