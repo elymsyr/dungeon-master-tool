@@ -179,5 +179,31 @@ void main() {
       ]);
       expect(refs, isEmpty);
     });
+
+    test('paket satırlarının medyası da toplanır, harita sınıfı yok (Faz 5e)',
+        () {
+      final refs = mediaRefsOf([
+        CloudPushBatch('user_packages', [
+          {
+            'state_json': jsonEncode({
+              'metadata': {'cover_image_path': content(shaA, '.png')},
+            }),
+          },
+        ]),
+        CloudPushBatch('user_package_entities', [
+          {
+            'image_path': content(shaB, '.jpg'),
+            'fields_json': jsonEncode({'sheet': content(shaE, '.pdf')}),
+            // Paket kartının da medya kolonu değil.
+            'description': content('d' * 64, '.png'),
+          },
+        ]),
+      ]);
+      expect(refs, {
+        shaA: const WorldMediaRef('.png', MediaKind.worldEntityImage),
+        shaB: const WorldMediaRef('.jpg', MediaKind.worldEntityImage),
+        shaE: const WorldMediaRef('.pdf', MediaKind.worldPdf),
+      });
+    });
   });
 }

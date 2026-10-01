@@ -15,10 +15,11 @@ import '../../domain/value_objects/media_kind.dart';
 ///
 /// Mimari bkz. docs/media-storage-redesign.md.
 ///
-/// Yazılan iki prefix var; sayılan (`{uploader}/{campaign}/{sha}`) katman
+/// Yazılan üç prefix var; sayılan (`{uploader}/{campaign}/{sha}`) katman
 /// kaldırıldı (Phase D) — Worker o prefix'e PUT'u 410 ile reddediyor, GET
 /// bir sürüm boyunca çalışmaya devam ediyor:
-/// - `worlds/{worldId}/{sha}{ext}` — multiplayer dünyanın medyası (Faz 5d).
+/// - `worlds/{worldId}/{sha}{ext}` — multiplayer dünyanın medyası (Faz 5d),
+///   `packages/{packageId}/{sha}{ext}` — online paketinki (Faz 5e).
 ///   Baytlar worker'dan geçmez: [signWorldMedia] toplu imza verir, istemci
 ///   R2 ile doğrudan konuşur ([putSigned], [downloadSigned]).
 /// - `pub/{sha}{ext}` — marketplace + karakter medyası, refcount'lu, pinned.
@@ -141,13 +142,14 @@ class AssetService {
   // ── Dünya medyası (Faz 5d) ─────────────────────────────────────────────
 
   /// Worker'dan toplu imza: [shas] için ~1 saatlik R2 URL'leri. İzni olmayan
-  /// sha haritada **yer almaz** (hata değil). `put` yalnız dünyanın sahibine
-  /// ve rezerve edilmiş sha'lara ([worldId] zorunlu), `get` dünyanın
-  /// üyelerine ve yüklenmiş sha'lara verilir.
+  /// sha haritada **yer almaz** (hata değil). `put` yalnız kapsamın sahibine
+  /// ve rezerve edilmiş sha'lara ([worldId] ya da [packageId], Faz 5e), `get`
+  /// dünyanın üyelerine ya da paketin sahibine ve yüklenmiş sha'lara verilir.
   Future<Map<String, String>> signWorldMedia(
     String op,
     List<String> shas, {
     String? worldId,
+    String? packageId,
   }) async {
     final token = _requireToken();
     final req = await _httpClient
@@ -158,6 +160,7 @@ class AssetService {
       'op': op,
       'shas': shas,
       'world_id': ?worldId,
+      'package_id': ?packageId,
     }));
     final res = await _guard(req, req.close, _stall);
     final body = await _readBody(res);

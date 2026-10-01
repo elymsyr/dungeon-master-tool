@@ -2139,7 +2139,7 @@
   "multiplayerTooLargeBody": "Ces fichiers dépassent la limite de taille (cartes 10 Mo, autres images 5 Mo, audio 10 Mo, PDF 20 Mo) : les joueurs ne les verront pas. Ils restent utilisables ici.",
   "multiplayerMediaIncomplete": "Le monde est en multijoueur, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé automatiquement.",
   "worldMediaNotSent": "Au-dessus de la limite de taille, n'atteindra pas les joueurs : {names}",
-  "worldMediaQuotaFull": "L'espace cloud des médias est plein. Les nouvelles images restent sur cet appareil et n'atteindront pas les joueurs.",
+  "worldMediaQuotaFull": "L'espace cloud des médias est plein. Les nouvelles images restent sur cet appareil et n'atteindront ni les joueurs ni vos autres appareils.",
   "saveTooltipSaving": "Enregistrement automatique…",
   "saveTooltipSaved": "Enregistré",
   "cloudSyncTooltipSynced": "Enregistré · synchronisé avec le cloud",
@@ -2174,5 +2174,9 @@
   "startupSavingLocal": "Écriture des modifications locales...",
   "startupConnecting": "Connexion au monde actif...",
   "guestPromotionDone": "Vos mondes, personnages et paquets invités ont été transférés dans votre compte.",
-  "guestPromotionFailed": "Impossible de transférer vos données invité dans votre compte. Elles restent sur cet appareil ; un nouvel essai aura lieu à la prochaine connexion."
+  "guestPromotionFailed": "Impossible de transférer vos données invité dans votre compte. Elles restent sur cet appareil ; un nouvel essai aura lieu à la prochaine connexion.",
+  "packageUploadingMedia": "Envoi des médias du paquet {done}/{total}…",
+  "packageQuotaExceeded": "Les médias de ce paquet nécessitent {need}, mais il ne reste que {left} d'espace cloud. Retirez des images ou repassez un autre monde ou paquet en local.",
+  "packageTooLargeBody": "Ces fichiers dépassent la limite de taille (images 5 Mo, audio 10 Mo, PDF 20 Mo) : vos autres appareils ne les recevront pas. Ils restent utilisables ici.",
+  "packageMediaIncomplete": "Le paquet est en ligne, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé à la prochaine synchronisation."
 }

@@ -200,7 +200,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                 if (!compact && isPackage) ...[
                   _SectionLabel('Actions', palette),
                   const SizedBox(height: 8),
-                  _PackageOnlineRow(palette: palette),
+                  PackageOnlineRow(palette: palette),
                   const SizedBox(height: 16),
                 ],
 
@@ -692,20 +692,28 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
 
 
 
-/// Paketin "bulutta dursun" anahtarı — dünyanın `_makeOnline`'ının paket
-/// karşılığı (Faz 4b). Davet/üyelik yok: paket kullanıcı kapsamlı, RLS
-/// `owner_id`'ye bakıyor.
-class _PackageOnlineRow extends ConsumerStatefulWidget {
+/// Paketin "bulutta dursun" anahtarı — dünyanın "multiplayer aç"ının paket
+/// karşılığı (Faz 4b; 5e'den beri medyasıyla). Davet/üyelik yok: paket
+/// kullanıcı kapsamlı, RLS `owner_id`'ye bakıyor.
+///
+/// İki giriş: Save & Sync diyaloğu (açık paket) ve hub'ın paket ayarları
+/// ([packageId] ile, Faz 5e).
+class PackageOnlineRow extends ConsumerStatefulWidget {
   final DmToolColors palette;
-  const _PackageOnlineRow({required this.palette});
+
+  /// Verilmezse açık paket.
+  final String? packageId;
+  const PackageOnlineRow({super.key, required this.palette, this.packageId});
 
   @override
-  ConsumerState<_PackageOnlineRow> createState() => _PackageOnlineRowState();
+  ConsumerState<PackageOnlineRow> createState() => _PackageOnlineRowState();
 }
 
-class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
+typedef _PackageRow = ({String id, String name, bool online});
+
+class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
   bool _busy = false;
-  Future<({String id, bool online})?>? _row;
+  Future<_PackageRow?>? _row;
 
   @override
   void initState() {
@@ -713,12 +721,16 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
     _row = _load();
   }
 
-  Future<({String id, bool online})?> _load() async {
+  Future<_PackageRow?> _load() async {
+    final dao = ref.read(appDatabaseProvider).packagesDao;
+    final id = widget.packageId;
     final name = ref.read(activePackageProvider);
-    if (name == null || name.isEmpty) return null;
-    final row =
-        await ref.read(appDatabaseProvider).packagesDao.getByName(name);
-    return row == null ? null : (id: row.id, online: row.isOnline);
+    final row = id != null
+        ? await dao.getById(id)
+        : (name == null || name.isEmpty ? null : await dao.getByName(name));
+    return row == null
+        ? null
+        : (id: row.id, name: row.name, online: row.isOnline);
   }
 
   void _reload() => setState(() => _row = _load());
@@ -726,7 +738,7 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
-    return FutureBuilder<({String id, bool online})?>(
+    return FutureBuilder<_PackageRow?>(
       future: _row,
       builder: (context, snap) {
         final row = snap.data;
@@ -764,7 +776,7 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
               IconButton(
                 tooltip: l10n.packageOnlineOff,
                 icon: const Icon(Icons.cloud_off, size: 16),
-                onPressed: _busy ? null : () => _makeOffline(row.id),
+                onPressed: _busy ? null : () => _makeOffline(row),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints:
@@ -785,36 +797,56 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
 
   /// Bulut yazımı: hesap + internet şart. Bayrak yerelde tutuluyor ki push
   /// kararı çevrimdışıyken de verilebilsin.
+  ///
+  /// Sıra `turnMultiplayerOn`'ınki (Faz 5e): ön hesap (medya kotaya
+  /// sığmıyorsa hiçbir şey yayınlanmaz) → bayrak + tam push (paketin bulut
+  /// satırı doğar; medyanın rezervasyonu ona bağlı) → bütün medya overlay'de
+  /// → limiti aşanların listesi.
   Future<void> _makeOnline(String packageId) async {
     final l10n = L10n.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
     if (!ref.read(hasAccountProvider)) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.accountRequiredBody)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.accountRequiredBody)));
       return;
     }
     if (!(ref.read(connectivityStreamProvider).valueOrNull ?? true)) {
-      ScaffoldMessenger.of(context)
+      messenger
           .showSnackBar(SnackBar(content: Text(l10n.internetRequiredRetry)));
       return;
     }
     setState(() => _busy = true);
     try {
+      if (!await mediaFitsQuota(ref, messenger,
+          (svc) => svc.packageMediaRefs(packageId), l10n.packageQuotaExceeded)) {
+        return;
+      }
       await ref.read(appDatabaseProvider).packagesDao.setOnline(packageId, true);
-      final res = await ref
-          .read(cloudPushPumpProvider)
-          .pushPackage(full: true, packageId: packageId);
+      final pump = ref.read(cloudPushPumpProvider);
+      final res = await pump.pushPackage(full: true, packageId: packageId);
       debugPrint('paket online ilk push: ${res.pushed} satır, '
           '${res.rejected.length} red, hata: ${res.error}');
-      if (!mounted) return;
-      // Bayrak kalıyor: pompa sonraki turda yeniden dener, gösterge hatayı
-      // o zamana kadar taşır.
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(res.error == null
+      if (res.error != null) {
+        // Bayrak kalıyor: pompa bir sonraki uzlaştırmada yeniden dener
+        // (medyası dahil), gösterge hatayı o zamana kadar taşır.
+        messenger.showSnackBar(SnackBar(
+            content: Text(l10n.publishDialogFailed(formatError(res.error!)))));
+        return;
+      }
+      final (:report, :complete) = await uploadMediaWithProgress(
+          ref,
+          l10n.packageUploadingMedia,
+          (onProgress) =>
+              pump.syncPackageMedia(packageId, onProgress: onProgress));
+      messenger.showSnackBar(SnackBar(
+          content: Text(complete
               ? l10n.packageNowOnline
-              : l10n.publishDialogFailed(formatError(res.error!)))));
+              : l10n.packageMediaIncomplete)));
+      if (mounted) {
+        await showTooLargeDialog(
+            context, report?.tooLarge ?? const [], l10n.packageTooLargeBody);
+      }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
+      messenger
           .showSnackBar(SnackBar(content: Text(l10n.publishDialogFailed('$e'))));
     } finally {
       if (mounted) {
@@ -824,7 +856,7 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
     }
   }
 
-  Future<void> _makeOffline(String packageId) async {
+  Future<void> _makeOffline(_PackageRow row) async {
     final l10n = L10n.of(context)!;
     if (!(ref.read(connectivityStreamProvider).valueOrNull ?? true)) {
       ScaffoldMessenger.of(context)
@@ -849,14 +881,15 @@ class _PackageOnlineRowState extends ConsumerState<_PackageOnlineRow> {
     if (ok != true) return;
     setState(() => _busy = true);
     try {
-      await ref.read(cloudPushServiceProvider)?.unpublishPackage(packageId);
+      // Bulut satırı gidince medyası da gider: `world_media` CASCADE →
+      // tahliye kuyruğu → cron R2'deki `packages/{id}/` önekini boşaltır.
+      await ref.read(cloudPushServiceProvider)?.unpublishPackage(row.id);
       // Damga da sıfırlanır: yeniden açılırsa her şey bir kez daha gider.
       await ref
           .read(appDatabaseProvider)
           .packagesDao
-          .setOnline(packageId, false);
-      final name = ref.read(activePackageProvider);
-      if (name != null) ref.read(cloudSyncStatusProvider.notifier).remove(name);
+          .setOnline(row.id, false);
+      ref.read(cloudSyncStatusProvider.notifier).remove(row.name);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l10n.packageNowOffline)));

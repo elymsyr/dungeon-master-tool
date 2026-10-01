@@ -128,6 +128,12 @@ class CloudPushService {
       mediaRefsOf(await collect(
           worldId, DateTime.fromMillisecondsSinceEpoch(0), const {}));
 
+  /// Paketin bütün satırlarındaki medya (Faz 5e) — [worldMediaRefs]'in eşi.
+  /// Sahip kolonu yalnız giden satırın parçası, ref'lere etkisi yok.
+  Future<Map<String, WorldMediaRef>> packageMediaRefs(String packageId) async =>
+      mediaRefsOf(await collectPackage(
+          packageId, DateTime.fromMillisecondsSinceEpoch(0), ''));
+
   /// Push'un geri aldığı revizyonlar [base]'in hemen ardından boşluksuz bir
   /// dizi mi? Öyleyse dizinin sonu döner, değilse null — araya başka bir yazar
   /// (öteki cihaz, oyuncunun karakteri, paylaşım) girmiş demektir ve onu pull
@@ -147,7 +153,15 @@ class CloudPushService {
   ///
   /// Pakette `dm_only_keys` yok: paket oyuncuyla paylaşılmıyor, sahibinden
   /// başkası RLS'e takılıyor.
-  Future<CloudPushResult> pushPackage(String packageId, {bool full = false}) async {
+  ///
+  /// [beforeRows] dünyadaki gibi satırlardan önce, turun medyasıyla (Faz 5e).
+  /// İlk yayında çağrılmaz: medyanın rezervasyonu paketin bulut satırına
+  /// bağlı, o satır bu turda doğuyor — ilk yayının medyası ayrıca yükleniyor.
+  Future<CloudPushResult> pushPackage(
+    String packageId, {
+    bool full = false,
+    Future<void> Function(Map<String, WorldMediaRef> refs)? beforeRows,
+  }) async {
     final pkg = await _db.packagesDao.getById(packageId);
     final ownerId = _client.auth.currentUser?.id;
     if (pkg == null || !pkg.isOnline || ownerId == null) {
@@ -168,7 +182,9 @@ class CloudPushService {
     final rejected = <String>[];
     try {
       deleted = await _sendTombstones(packageId);
-      for (final batch in await collectPackage(packageId, since, ownerId)) {
+      final batches = await collectPackage(packageId, since, ownerId);
+      if (!first) await beforeRows?.call(mediaRefsOf(batches));
+      for (final batch in batches) {
         if (batch.table == 'user_packages' && !first) {
           if (!await _updatePackageRow(packageId, batch.rows.single)) {
             // Bulutta yok: diriltme, yerelde offline'a düş. Damga da
@@ -527,10 +543,11 @@ class CloudPushService {
       : null;
 }
 
-/// Giden satırlardaki `dmt-content://` ref'leri → sha ve dünya medyası sınıfı
-/// (Faz 5d). Harita = dünya haritası ve dönemleri (`world_map_data`) ile savaş
-/// haritası (`world_encounters.map_path`); geri kalan her şey "diğer". Aynı
-/// sha iki yerde geçiyorsa büyük limit (harita) kazanır.
+/// Giden satırlardaki `dmt-content://` ref'leri → sha ve medya sınıfı (Faz
+/// 5d; 5e'den beri paket tabloları da). Harita = dünya haritası ve dönemleri
+/// (`world_map_data`) ile savaş haritası (`world_encounters.map_path`); geri
+/// kalan her şey, paketinki dahil, "diğer". Aynı sha iki yerde geçiyorsa
+/// büyük limit (harita) kazanır.
 Map<String, WorldMediaRef> mediaRefsOf(Iterable<CloudPushBatch> batches) {
   final out = <String, WorldMediaRef>{};
   for (final b in batches) {
@@ -553,6 +570,7 @@ Map<String, WorldMediaRef> mediaRefsOf(Iterable<CloudPushBatch> batches) {
 
 final Map<String, MirrorTable> _mirrorByCloud = {
   for (final t in mirrorTables) t.cloud: t,
+  for (final t in packageTables) t.cloud: t,
 };
 
 /// Medya kolonunun değeri düz bir ref ya da JSON metni (galeri, alanlar,

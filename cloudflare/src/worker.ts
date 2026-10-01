@@ -4,7 +4,8 @@
 // Endpoint'ler:
 //   GET  /assets/{key}       → JWT + RLS + rate limit → R2 stream
 //   PUT  /assets/{key}       → JWT + prefix check + MIME allowlist → R2 put
-//   POST /world-media/sign   → JWT + tek RPC → N presigned R2 URL (Faz 5d)
+//   POST /world-media/sign   → JWT + tek RPC → N presigned R2 URL (Faz 5d;
+//                             5e'den beri paket medyası da)
 //   OPTIONS                  → CORS preflight
 //
 // R2 prefix sınıfları:
@@ -15,11 +16,13 @@
 //   worlds/{worldId}/{sha}{ext} → multiplayer dünyanın medyası, dünya yaşadıkça
 //                             durur. Baytlar worker'dan GEÇMEZ: istemci
 //                             /world-media/sign ile imza alıp R2'ye gider.
+//   packages/{packageId}/{sha}{ext} → online paketin medyası (Faz 5e), aynı
+//                             yol; yalnız paketin sahibi imza alır.
 //   pub/{sha}.{ext}         → pinned marketplace havuzu (içerik-adresli,
 //                             dedup'lu, refcount 0 olunca silinir)
 //   catalog/...             → first-party içerik, public GET
 //
-// `worlds/` ve `pub/` tek toplam tavanı paylaşır (099, 9 GB).
+// `worlds/`, `packages/` ve `pub/` tek toplam tavanı paylaşır (099, 9 GB).
 //
 // Metadata (community_assets tablosu) insert'i Flutter istemcisi yapar;
 // Worker DB'ye yazmaz. `pub/` istisnadır: rezervasyonu (pub_asset_reserve)
@@ -31,9 +34,10 @@ import { presignR2, type R2Credentials } from './presign';
 import {
   checkAssetAccess,
   checkPubUploadAllowed,
+  mediaSignGet,
+  mediaSignPut,
   popEvictQueue,
-  worldMediaSignGet,
-  worldMediaSignPut,
+  type MediaScope,
 } from './rls';
 
 /// Platform rate limiter binding'i. Sayaç edge'de tutulur — KV write
@@ -111,8 +115,13 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
 const CATALOG_PATH_REGEX = /^\/catalog\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
-// Dünya id'si R2 key'inin parçası — yalnız güvenli karakterler.
-const WORLD_ID_REGEX = /^[A-Za-z0-9_-]{1,100}$/;
+// Dünya / paket id'si R2 key'inin parçası — yalnız güvenli karakterler
+// (100'ün `_media_scope_owner`'ı aynı kalıba bakıyor).
+const SCOPE_ID_REGEX = /^[A-Za-z0-9_-]{1,100}$/;
+// Key'i SQL kuruyor; yine de yalnız medya önekleri imzalanır — bozuk bir
+// satır `pub/` ya da başka bir öneke imza aldırmasın.
+const MEDIA_KEY_REGEX =
+  /^(worlds|packages)\/[A-Za-z0-9_-]{1,100}\/[0-9a-f]{64}(\.[a-z0-9]{1,10})?$/;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -204,8 +213,8 @@ async function handleDownload(
       // Marketplace medyası herkese açık içeriktir — listing'ler zaten anon
       // taranabiliyor (079). Kapı JWT'nin kendisi; per-obje RLS'i yok.
       allowed = true;
-    } else if (r2Key.startsWith('worlds/')) {
-      // Dünya medyası bu yoldan hiç servis edilmez — imzalı URL'le R2'den.
+    } else if (r2Key.startsWith('worlds/') || r2Key.startsWith('packages/')) {
+      // Dünya ve paket medyası bu yoldan hiç servis edilmez — imzalı URL'le R2'den.
       allowed = false;
     } else {
       allowed = await checkAssetAccess(
@@ -345,7 +354,8 @@ async function handleDelete(
   if (r2Key.startsWith('pub/')) {
     return jsonResponse(403, { error: 'pinned_delete_forbidden' });
   }
-  // Dünya medyasının silinmesi de satırın işi (world_media → kuyruk → sweep).
+  // Dünya / paket medyasının silinmesi de satırın işi (world_media → kuyruk
+  // → sweep).
   if (!r2Key.startsWith(`${userId}/`)) {
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
@@ -562,8 +572,9 @@ async function handleAdminPurgeAll(
 
 // /admin/purge-user — kullanıcının kullanıcı-prefix'li R2 objelerini siler.
 // Hesap silme / admin moderasyon akışında çağrılır. Yalnız emekli sayılan
-// katmanın `{userId}/...` prefix'i: dünya medyası (`worlds/`) hesap silinince
-// worlds CASCADE → world_media → kuyruk yoluyla zaten gidiyor.
+// katmanın `{userId}/...` prefix'i: dünya ve paket medyası (`worlds/`,
+// `packages/`) hesap silinince worlds / user_packages CASCADE → world_media →
+// kuyruk yoluyla zaten gidiyor.
 // Pattern: handleAdminPurgeAll cursor + batch delete, prefix-scoped.
 // Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN — VEYA sub'ı
 // `user_id`'ye eşit bir kullanıcı JWT'si (self-service hesap silme; kullanıcı
@@ -649,9 +660,11 @@ async function handleAdminPurgeUser(
   });
 }
 
-// POST /world-media/sign {op: 'put', world_id, shas} | {op: 'get', shas}
+// POST /world-media/sign {op: 'put', world_id | package_id, shas}
+//                       | {op: 'get', shas}
 // → {urls: {sha: url}, expires_in}. İzin TEK RPC ile, N sha birden; bayt
-// worker'dan geçmez. İzni olmayan sha haritada yoktur (hata değil).
+// worker'dan geçmez. İzni olmayan sha haritada yoktur (hata değil). PUT'un
+// kapsamı tam olarak biri; GET kapsam istemez (ref yalnız sha taşıyor).
 async function handleWorldMediaSign(
   request: Request,
   env: Env,
@@ -667,7 +680,12 @@ async function handleWorldMediaSign(
     return jsonResponse(503, { error: 'presign_not_configured' });
   }
 
-  let body: { op?: unknown; world_id?: unknown; shas?: unknown };
+  let body: {
+    op?: unknown;
+    world_id?: unknown;
+    package_id?: unknown;
+    shas?: unknown;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch (_) {
@@ -697,21 +715,27 @@ async function handleWorldMediaSign(
         return rateLimitedResponse(UL_LIMIT_PER_MIN, 60);
       }
       const worldId = typeof body.world_id === 'string' ? body.world_id : '';
-      if (!WORLD_ID_REGEX.test(worldId)) {
-        return jsonResponse(400, { error: 'invalid_world_id' });
+      const packageId =
+        typeof body.package_id === 'string' ? body.package_id : '';
+      const scope: MediaScope = packageId ? 'package' : 'world';
+      const scopeId = packageId || worldId;
+      if ((worldId && packageId) || !SCOPE_ID_REGEX.test(scopeId)) {
+        return jsonResponse(400, { error: 'invalid_scope' });
       }
-      const rows = await worldMediaSignPut(
+      const rows = await mediaSignPut(
         env.SUPABASE_URL,
         env.SUPABASE_SERVICE_ROLE_KEY,
         userId,
-        worldId,
+        scope,
+        scopeId,
         shas,
       );
       for (const r of rows) {
+        if (!MEDIA_KEY_REGEX.test(r.r2_key)) continue;
         urls[r.sha256] = await presignR2(
           creds,
           'PUT',
-          `worlds/${worldId}/${r.sha256}${r.ext}`,
+          r.r2_key,
           SIGN_TTL_SEC,
           { 'content-length': String(r.bytes), 'content-type': r.mime },
         );
@@ -720,19 +744,15 @@ async function handleWorldMediaSign(
       if (!(await env.DL_RL.limit({ key: userId })).success) {
         return rateLimitedResponse(DL_LIMIT_PER_MIN, 60);
       }
-      const rows = await worldMediaSignGet(
+      const rows = await mediaSignGet(
         env.SUPABASE_URL,
         env.SUPABASE_SERVICE_ROLE_KEY,
         userId,
         shas,
       );
       for (const r of rows) {
-        urls[r.sha256] = await presignR2(
-          creds,
-          'GET',
-          `worlds/${r.world_id}/${r.sha256}${r.ext}`,
-          SIGN_TTL_SEC,
-        );
+        if (!MEDIA_KEY_REGEX.test(r.r2_key)) continue;
+        urls[r.sha256] = await presignR2(creds, 'GET', r.r2_key, SIGN_TTL_SEC);
       }
     } else {
       return jsonResponse(400, { error: 'invalid_op' });

@@ -2139,7 +2139,7 @@
   "multiplayerTooLargeBody": "Bu dosyalar boyut limitinin üstünde (harita 10 MB, diğer görseller 5 MB, ses 10 MB, PDF 20 MB), oyuncular onları görmeyecek. Burada çalışmaya devam ederler.",
   "multiplayerMediaIncomplete": "Dünya multiplayer, ama medyanın tamamı henüz buluta çıkmadı. Kalanı kendiliğinden yüklenecek.",
   "worldMediaNotSent": "Boyut limitinin üstünde, oyunculara gitmeyecek: {names}",
-  "worldMediaQuotaFull": "Bulut medya alanı dolu. Yeni görseller bu cihazda kalacak, oyunculara gitmeyecek.",
+  "worldMediaQuotaFull": "Bulut medya alanı dolu. Yeni görseller bu cihazda kalacak, oyunculara ve öteki cihazlarına gitmeyecek.",
   "saveTooltipSaving": "Otomatik kaydediliyor…",
   "saveTooltipSaved": "Kaydedildi",
   "cloudSyncTooltipSynced": "Kaydedildi · bulutla eşit",
@@ -2174,5 +2174,9 @@
   "startupSavingLocal": "Yerel kayıtlar yazılıyor...",
   "startupConnecting": "Açık dünyaya bağlanılıyor...",
   "guestPromotionDone": "Misafir olarak oluşturduğun dünyalar, karakterler ve paketler hesabına taşındı.",
-  "guestPromotionFailed": "Misafir verilerin hesabına taşınamadı. Bu cihazda duruyor; bir sonraki girişte yeniden denenecek."
+  "guestPromotionFailed": "Misafir verilerin hesabına taşınamadı. Bu cihazda duruyor; bir sonraki girişte yeniden denenecek.",
+  "packageUploadingMedia": "Paket medyası yükleniyor {done}/{total}…",
+  "packageQuotaExceeded": "Bu paketin medyası {need} yer istiyor, bulutta ise {left} kaldı. Bazı görselleri kaldır ya da başka bir dünyayı veya paketi yerele al.",
+  "packageTooLargeBody": "Bu dosyalar boyut limitinin üstünde (görseller 5 MB, ses 10 MB, PDF 20 MB), öteki cihazlarına gitmeyecekler. Burada çalışmaya devam ederler.",
+  "packageMediaIncomplete": "Paket online, ama medyanın tamamı henüz buluta çıkmadı. Kalanı bir sonraki eşitlemede yüklenecek."
 }

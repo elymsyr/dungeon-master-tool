@@ -5,7 +5,7 @@ path: cloudflare/src/rls.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -22,8 +22,8 @@ tags: [file]
 **Outputs**
 - `checkAssetAccess(userId, r2Key) → bool` via `get_asset_access(p_user_id, p_r2_key)`.
 - `popEvictQueue(limit) → EvictRow[]` via `r2_evict_pop(_limit)` (099).
-- `worldMediaSignPut(userId, worldId, shas) → {sha256, ext, bytes, mime}[]` via `world_media_sign_put` — yalnız dünyanın sahibi, yalnız rezerve edilmiş sha; `bytes` + `mime` imzaya bağlanır.
-- `worldMediaSignGet(userId, shas) → {sha256, world_id, ext}[]` via `world_media_sign_get` — kullanıcının üyesi olduğu herhangi bir dünyada **onaylı** sha.
+- `mediaSignPut(userId, scope, scopeId, shas) → {sha256, r2_key, bytes, mime}[]` via `media_sign_put` (100) — `scope` `'world'` | `'package'`; yalnız kapsamın sahibi, yalnız o kapsamda rezerve edilmiş sha; `bytes` + `mime` imzaya bağlanır.
+- `mediaSignGet(userId, shas) → {sha256, r2_key}[]` via `media_sign_get` (100) — kullanıcının üyesi olduğu bir dünyada ya da sahibi olduğu bir pakette **onaylı** sha. Key'i SQL kuruyor (`media_r2_key`); worker yalnız imzalıyor.
 - Yeni üçü ortak `serviceRpc<T>` üzerinden; eski ikisi (`checkAssetAccess`, `checkPubUploadAllowed`) kendi fetch'lerini tutuyor.
 - Throws on non-2xx (`*_rpc_failed_<status>`); Worker maps these to `502`.
 

@@ -18,6 +18,8 @@
 //   6b. PUT'lar eşzamanlı ama en çok altı (Faz 5f).
 //   7. Yetim temizliği pencereden genç satıra ve hâlâ anılana dokunmaz.
 //   8. Projeksiyonun tek dosyası: yüklenince ref döner, ikinci kez ağa çıkmaz.
+//   9. Faz 5e — paket kapsamı: liste, rezervasyon, imza, onay ve temizlik
+//      paketin kolonuna / id'sine bakar; önbellek kapsam başına.
 
 import 'dart:async';
 import 'dart:io';
@@ -117,7 +119,7 @@ void main() {
     expect(rep.uploaded, 1);
     expect(rep.tooLarge, ['big.png']);
 
-    final items = (callsTo('/rest/v1/rpc/world_media_reserve').single.json
+    final items = (callsTo('/rest/v1/rpc/media_reserve').single.json
         as Map)['_items'] as List;
     expect(items, [
       {
@@ -142,8 +144,8 @@ void main() {
     expect(put.contentType, 'image/jpeg', reason: 'imzaya bağlı tür');
     expect(put.body, 'bbbbbb');
 
-    expect((callsTo('/rest/v1/rpc/world_media_confirm').single.json as Map),
-        {'_world': 'w1', '_shas': [fresh]});
+    expect((callsTo('/rest/v1/rpc/media_confirm').single.json as Map),
+        {'_scope': 'world', '_id': 'w1', '_shas': [fresh]});
     expect(cloud.replies, isEmpty);
   });
 
@@ -191,7 +193,7 @@ void main() {
         sync.upload('w1', refs), throwsA(isA<AssetServiceException>()));
     expect(callsTo('/r2/2'), hasLength(3), reason: 'geçici hata yeniden denenir');
     final done =
-        (callsTo('/rest/v1/rpc/world_media_confirm').single.json as Map)['_shas'];
+        (callsTo('/rest/v1/rpc/media_confirm').single.json as Map)['_shas'];
     expect(done, [b]);
     final left = c;
 
@@ -207,7 +209,7 @@ void main() {
     reply(1);
     final rep = await sync.upload('w1', refs);
     expect(rep.uploaded, 1);
-    final second = callsTo('/rest/v1/rpc/world_media_reserve').last.json as Map;
+    final second = callsTo('/rest/v1/rpc/media_reserve').last.json as Map;
     expect([for (final i in second['_items'] as List) i['sha']], [left]);
   });
 
@@ -235,7 +237,7 @@ void main() {
       throwsA(isA<TimeoutException>()),
     );
     expect(
-        (callsTo('/rest/v1/rpc/world_media_confirm').single.json
+        (callsTo('/rest/v1/rpc/media_confirm').single.json
             as Map)['_shas'],
         [b]);
   });
@@ -278,7 +280,7 @@ void main() {
     expect(
         (callsTo('/world-media/sign').last.json as Map)['shas'], [b]);
     expect(
-        (callsTo('/rest/v1/rpc/world_media_confirm').single.json
+        (callsTo('/rest/v1/rpc/media_confirm').single.json
             as Map)['_shas'],
         unorderedEquals([b, c]));
     expect(cloud.replies, isEmpty);
@@ -302,7 +304,7 @@ void main() {
     });
     expect(rep.uploaded, 12);
     final confirms = [
-      for (final c in callsTo('/rest/v1/rpc/world_media_confirm'))
+      for (final c in callsTo('/rest/v1/rpc/media_confirm'))
         ((c.json as Map)['_shas'] as List).length,
     ];
     expect(confirms, [10, 2]);
@@ -360,6 +362,57 @@ void main() {
     expect(q, isNot(contains(young)),
         reason: 'öbür cihazın yeni görseli, anan satır henüz inmemiş olabilir');
     expect(q, isNot(contains(kept)));
+  });
+
+  test('paket kapsamı: satır, rezervasyon, imza, onay ve temizlik paketin',
+      () async {
+    final sha = await file('p.png', 'pppp'.codeUnits);
+    reply(<Object>[]); // world_media (package_id = p1)
+    reply({
+      'upload': [sha],
+      'too_large': [],
+    });
+    reply({
+      'urls': {sha: '${cloud.baseUrl}/r2/p'}
+    });
+    reply({}); // R2 PUT
+    reply(1); // onay
+
+    final rep = await sync.upload(
+        'p1', {sha: const WorldMediaRef('.png', image)},
+        scope: MediaScope.package);
+    expect(rep.uploaded, 1);
+
+    final list = callsTo('/rest/v1/world_media').single.uri.queryParameters;
+    expect(list['package_id'], 'eq.p1');
+    expect(list.containsKey('world_id'), isFalse);
+    final reserve = callsTo('/rest/v1/rpc/media_reserve').single.json as Map;
+    expect([reserve['_scope'], reserve['_id']], ['package', 'p1']);
+    expect(callsTo('/world-media/sign').single.json, {
+      'op': 'put',
+      'shas': [sha],
+      'package_id': 'p1',
+    });
+    expect(callsTo('/rest/v1/rpc/media_confirm').single.json,
+        {'_scope': 'package', '_id': 'p1', '_shas': [sha]});
+
+    // Aynı id'li dünyanın önbelleği ayrı: paketin yüklediği orada
+    // "bulutta" sayılmaz, dünya kendi listesini okur.
+    reply(<Object>[]);
+    reply({'upload': [], 'too_large': []});
+    await sync.upload('p1', {sha: const WorldMediaRef('.png', image)});
+    expect(callsTo('/rest/v1/world_media').last.uri.queryParameters['world_id'],
+        'eq.p1');
+
+    reply([
+      {'sha256': 'a' * 64, 'created_at': '2026-01-01T00:00:00Z'},
+    ]);
+    reply(<Object>[]); // DELETE
+    expect(await sync.prune('p1', {sha}, scope: MediaScope.package), 1);
+    final del = cloud.calls.last;
+    expect(del.method, 'DELETE');
+    expect(del.uri.queryParameters['package_id'], 'eq.p1');
+    expect(cloud.replies, isEmpty);
   });
 
   test('projeksiyonun tek dosyası: ref döner, ikinci kez ağa çıkmaz', () async {

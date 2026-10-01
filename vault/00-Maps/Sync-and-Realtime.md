@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: sync
-updated: 2026-09-24
+updated: 2026-10-01
 tags: [moc]
 ---
 
@@ -14,7 +14,7 @@ tags: [moc]
 >
 > **Paylaşım yayını** — online oyunda DM'in paylaştıklarının oyuncuya canlı akışı. Push doğrudan yazma + echo suppression, inbound Supabase Realtime CDC.
 >
-> **Bulut aynası** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir; Faz 5a'dan beri dünyayı geri de okur, Faz 5b'den beri **canlı**. Kuyruk yok, CDC yok: giderken `updated_at > son push damgası` taraması, gelirken `get_world_delta(world, since)` tek çağrısı; ikisinin arasında yalnız bir sayı akıyor (`world_revisions` sinyali). Çatışmada son düzenleyen kazanır — istemcide pull, bulutta 097'nin trigger'ları. Faz 5c'den beri ikinci cihaz dünyayı ve paketi hub'dan indirebiliyor ("Bulutta, bu cihazda yok"); paket de pull alıyor (canlı değil, açılışta).
+> **Bulut aynası** — "Online yap" denen **dünyanın** (kartlar, savaş, pinler, karakterler) ve **paketin** (`user_package*`) satırlarını Supabase'e gönderir; Faz 5a'dan beri dünyayı geri de okur, Faz 5b'den beri **canlı**. Kuyruk yok, CDC yok: giderken `updated_at > son push damgası` taraması, gelirken `get_world_delta(world, since)` tek çağrısı; ikisinin arasında yalnız bir sayı akıyor (`world_revisions` sinyali). Çatışmada son düzenleyen kazanır — istemcide pull, bulutta 097'nin trigger'ları. Faz 5c'den beri ikinci cihaz dünyayı ve paketi hub'dan indirebiliyor ("Bulutta, bu cihazda yok"); paket de pull alıyor (canlı değil, açılışta). Faz 5e'den beri paket medyasıyla birlikte (R2 `packages/{id}/`, migration 100) ve açılmadan da uzlaşıyor: uygulama/oturum açılışı ve bağlantı geri gelince `reconcileAll` online paketleri de geziyor; hub'ın paket ayarlarında online yap / yerele al.
 >
 > Supabase şemasının kendisi ([[Backend-Infra]]) ve tablo tanımları ([[Data-Layer]]) bu domainin değil.
 
@@ -34,7 +34,7 @@ tags: [moc]
 - [[cloud_mirror_tables]] — yerel ↔ bulut kolon eşlemesinin **tek** bildirimi; iki servis de bunu okuyor.
 - [[cloud_push_service]] — giden yön: watermark taraması, tombstone'lar, reddedilen satır kuralı. İki kapsam: dünya (`pushWorld`) ve paket (`pushPackage`, `owner_id` kapsamlı).
 - [[cloud_pull_service]] — gelen yön: `get_world_delta` sayfaları, LWW uzlaştırması, tombstone uygulaması, `dmt-content://` → yerel yol.
-- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici; `tick` → dünya turu → paket turu, dünya açılışında bir kez `syncOnOpen` (**önce push, sonra pull**).
+- [[cloud_push_provider]] — turu ne zaman koşacağına karar veren tetikleyici; `tick` → dünya turu → paket turu; uzlaştırma **önce push, sonra pull** (dünyada kanalın `SUBSCRIBED`'ı ve sinyal, pakette açılış; ikisinde de `reconcileAll`).
 - [[cloud_sync_status_provider]] (Faz 9) — turların kullanıcıya görünen hali: eşitleniyor · çevrimdışı bekliyor · sorun N; Save & Sync göstergesi ve diyaloğu okur.
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):

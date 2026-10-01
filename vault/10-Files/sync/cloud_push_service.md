@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/cloud_push_service.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -28,7 +28,7 @@ tags: [file]
 **Outputs**
 - Supabase `upsert`: 12 dünya tablosu (`world_*` + `world_combatants` + `world_characters`) ve 3 paket tablosu (`user_packages`, `user_package_schemas`, `user_package_entities`); `delete`: tombstone'ların işaret ettiği satırlar, `unpublishPackage`'ta paketin kendisi.
 - Writes (Drift): `worlds.last_cloud_push_at` / `packages.last_cloud_push_at` (tur temiz bittiyse), `sync_tombstones` temizliği, dirilen satırın `updated_at` tazelemesi.
-- Public API: `pushWorld(worldId, {dmOnlyKeys, full, beforeRows})` / `pushPackage(packageId, {full})` → `CloudPushResult` (Faz 5d: `beforeRows` turun satırlarının andığı medyayla **upsert'ten önce** çağrılır — pompa baytları satırdan önce buluta çıkarıyor); `worldMediaRefs(worldId)` (dünyanın **bütün** satırlarının medyası, ağsız); `unpublishPackage(packageId)`; `collect(worldId, since, dmOnlyKeys)` ve `collectPackage(packageId, since, ownerId)` → `List<CloudPushBatch>` (**ağsız** ara adım, testin girdiği kapı); top-level `mediaRefsOf(batches)`.
+- Public API: `pushWorld(worldId, {dmOnlyKeys, full, beforeRows})` / `pushPackage(packageId, {full, beforeRows})` → `CloudPushResult` (Faz 5d: `beforeRows` turun satırlarının andığı medyayla **upsert'ten önce** çağrılır — pompa baytları satırdan önce buluta çıkarıyor); `worldMediaRefs(worldId)` (dünyanın **bütün** satırlarının medyası, ağsız); `packageMediaRefs(packageId)` (Faz 5e, paketinki); `unpublishPackage(packageId)`; `collect(worldId, since, dmOnlyKeys)` ve `collectPackage(packageId, since, ownerId)` → `List<CloudPushBatch>` (**ağsız** ara adım, testin girdiği kapı); top-level `mediaRefsOf(batches)`.
 
 ## Dependencies & Links
 - Depends on: [[cloud_mirror_tables]] (tablo eşlemesi), [[drift_database]], [[content_ref_index]] (`refFor` → `dmt-content://`), [[world_media_sync]] (`WorldMediaRef`, `worldMediaKindOf`), `isOfflineError`.
@@ -51,6 +51,7 @@ tags: [file]
 - **`mediaRefsOf` (Faz 5d)** giden satırların `mediaCols`'unu (düz ref ya da JSON metni) gezip her `dmt-content://` için sha → `WorldMediaRef(ext, kind)` çıkarır. Sınıf: `.pdf` / ses uzantısı önce; sonra tablo — `world_map_data` ve `world_encounters` harita (10 MB), geri kalan "diğer" (5 MB). Aynı sha iki yerdeyse harita kazanır, sıra fark etmez. Medya kolonu olmayan kolondaki ref sayılmaz. Pompa bunu `beforeRows` üzerinden [[world_media_sync]]'e verir; bayt yükleme bu serviste değil.
 - **Kendi yankısını elemek — `ownRunEnd` (Faz 5b).** Sayaç her yazmada artıyor ve Realtime sinyali yazan cihaza da geliyor; önlem olmasa DM'in her düzenlemesi kendi pull'unda geri inerdi. Upsert `select('revision')` ile yazılan satırların revizyonlarını döndürüyor (097'nin LWW guard'ının atladığı satır dönmüyor). Tur temiz bittiyse ve **silme yoksa**, `ownRunEnd(base, revs)` bu revizyonlar `worlds.cloud_revision`'ın hemen ardından boşluksuz bir dizi mi diye bakıyor: öyleyse aradaki her yazma bizim, yerel zaten o halde → damga dizinin sonuna **koşullu** UPDATE ile ilerliyor (`WHERE cloud_revision = base`, tur sürerken bir pull ilerlettiyse dokunmuyor). Bir boşluk başka bir yazar demek, damga yerinde kalır ve pull onu getirir. `base`'den küçük revizyonlar echo guard'ın yazmadığı satırlar, sayılmıyor. Silmeli turda ilerleme yok: tombstone'un revizyonu DELETE'ten dönmüyor. Yalnız dünyada; paket pull'u yok (Faz 5c). **097 C'ye bağlı:** o düzeltme olmadan upsert'in INSERT dalı her güncellemede ölü bir revizyon yakıyordu ve dizi hiç boşluksuz çıkmazdı.
 - **Paketin satırı ilk yayından sonra yalnız UPDATE (Faz 5c).** `user_packages` her tur gidiyor (çocukların FK hedefi, `sinceAll`); upsert'le gitseydi öbür cihazın buluttan sildiği ya da "Yerele al" dediği paketi bu cihazın ilk turu yeniden yaratırdı. `full` ya da `last_cloud_push_at` boşsa upsert (ilk yayın), değilse `_updatePackageRow`: PATCH → boşsa bir GET daha (boş dönüş 097'nin LWW atlaması da olabilir, silme sanılmasın) → satır gerçekten yoksa `setOnline(false)` ve tur `skipped`. Dünyada bu yok: `worlds` satırını yalnız `publish_world` RPC'si yaratıyor.
+- **Paketin medyası (Faz 5e).** `pushPackage` da `beforeRows` alıyor: turun satırlarının medyası upsert'ten önce. **İlk yayında çağrılmaz** — medyanın rezervasyonu (`media_reserve('package', …)`) paketin bulut satırına bağlı ve o satır bu turda doğuyor; ilk yayının medyası `syncPackageMedia` ile ayrıca yükleniyor. `mediaRefsOf` paket tablolarını da tanıyor (`user_packages.state_json`, `user_package_entities` medya kolonları); paketin harita sınıfı yok.
 - **Sunucu tarafı LWW (097).** Push hâlâ düz upsert ama bulut artık `NEW.updated_at < OLD.updated_at` olan satırı ve tombstone'dan eski bir düzenlemenin INSERT'ini sessizce atlıyor. İstemci tarafında değişen bir şey yok: atlanan satır `rejected`'e **düşmez** (hata değil), yalnız revizyon listesinde görünmez — ve o boşluk `ownRunEnd`'i durdurur, pull bulutun daha yeni halini getirir.
 
 ## Notes

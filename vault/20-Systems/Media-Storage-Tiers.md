@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-09-24
+updated: 2026-10-01
 tags: [system]
 ---
 
@@ -22,7 +22,7 @@ tags: [system]
 ## Participants
 - [[free_media_service]] — free tier reads.
 - [[entity_image_upload]] — seçilen resmin yerelleştirilmesi (yükleme yok).
-- [[world_media_sync]] — multiplayer dünyanın medyası R2'de, dünya başına (Faz 5d): rezervasyon → toplu imza → doğrudan PUT → onay; yetim temizliği.
+- [[world_media_sync]] — multiplayer dünyanın medyası R2'de, dünya başına (Faz 5d); 5e'den beri online paketinki de, paket başına: rezervasyon → toplu imza → doğrudan PUT → onay; yetim temizliği.
 - [[content_ref_index]] — `dmt-content://` ref'inin cihaz-yerel çözümü (`content_paths`).
 - [[media_bundler]] — karakter medyası (portre free, ek resim pinned).
 - [[worker]] / [[worker_rls]] — R2 routes + quota/access checks.
@@ -35,7 +35,7 @@ tags: [system]
 | **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; ≤2 MB/file. **Yalnızca paylaşım yolu yazar** (`world_characters` mirror push → [[media_bundler]]); görsel seçmek artık yükleme tetiklemez |
 | ~~**Counted**~~ | Cloudflare R2 `{userId}/{sha}.{ext}` | — | **Emekli (Phase D)**: PUT 410, GET bir sürüm daha çalışır, sonra prefix süpürülecek |
 | ~~**Transient**~~ | ~~R2 `transient/{userId}/…`~~ | — | **Kalktı (Faz 5d, 099)**: LRU, talep-üzerine akış, `missing_shas` ve oturum kapısı gitti |
-| **World media** | Cloudflare R2 `worlds/{worldId}/{sha}{ext}` | **Yes** — kişi başı **1 GB** (bütün dünyaları), toplam tavan **9 GB** (`pub/` ile ortak) | Dünya multiplayer oldukça kalıcı; satır silinince (tek tek, multiplayer kapatma, dünya/hesap silme — CASCADE) key `r2_evict_queue`'ya düşer, cron siler. Bayt worker'dan geçmez: `POST /world-media/sign` imzalı URL verir |
+| **World media** (+ paket, 5e) | Cloudflare R2 `worlds/{worldId}/{sha}{ext}`, `packages/{packageId}/{sha}{ext}` | **Yes** — kişi başı **1 GB** (bütün dünyaları + paketleri), toplam tavan **9 GB** (`pub/` ile ortak) | Dünya multiplayer oldukça kalıcı; satır silinince (tek tek, multiplayer kapatma, dünya/hesap silme — CASCADE) key `r2_evict_queue`'ya düşer, cron siler. Bayt worker'dan geçmez: `POST /world-media/sign` imzalı URL verir |
 | **Pinned** | Cloudflare R2 `pub/{sha}.{ext}` | **No** (toplam 9 GB tavanı dünya medyasıyla paylaşır, 500 MB/yayıncı) | Eviction yok; `pub_asset_refs` refcount 0 olunca kuyruğa atılır (089). Yazan iki yol: marketplace yayını ([[publish_media_pinner]]) ve karakter ek resimleri ([[media_bundler]], ref_key `char:{id}`) |
 | **First-party art** | App bundle `assets/art/srd/` + R2 `catalog/art/{uuid}.webp` | **No** (kullanıcı yüklemesi değil) | Salt-okunur, sürümsüz; `cacheDir/art/` altında cache'lenir |
 
@@ -55,8 +55,8 @@ tags: [system]
   hiç yüklenmez.
 - Per-kind limit **yetkilidir**: `pub/` için Worker `KIND_MAX_BYTES[kind] ?? MAX_UPLOAD_BYTES`; dünya medyası için `world_media_max_bytes(kind)` (099) — harita 10 / diğer 5 / ses 10 / PDF 20 MB, limiti aşan dosya **yüklenmez**, yerelde çalışır, kullanıcıya söylenir.
 - `application/pdf` Worker MIME allowlist'inde (`ALLOWED_MIME_EXACT`).
-- Kota **yalnız dünya medyasında** (kişi başı 1 GB, `get_media_quota`); "multiplayer aç" toplamı önden hesaplar, sığmıyorsa dünyayı hiç yayınlamadan reddeder. UI'da genel kota göstergesi yok (Faz 7).
-- Tek toplam tavan (`media_total_cap_bytes()` 9 GB) `pub/` ve `worlds/`'ü birlikte bağlar; iki rezervasyon aynı advisory lock'u alır. 089'un 5+5 bölmesi LRU'yu korumak içindi, LRU kalkınca gerekçesi de kalktı.
+- Kota **yalnız dünya ve paket medyasında** (kişi başı 1 GB, tek sayı, `get_media_quota`); "multiplayer aç" ve paketi online yapmak toplamı önden hesaplar, sığmıyorsa hiçbir şey yayınlamadan reddeder. UI'da genel kota göstergesi yok (Faz 7).
+- Tek toplam tavan (`media_total_cap_bytes()` 9 GB) `pub/`, `worlds/` ve `packages/`'ı birlikte bağlar; iki rezervasyon aynı advisory lock'u alır. 089'un 5+5 bölmesi LRU'yu korumak içindi, LRU kalkınca gerekçesi de kalktı.
 - **İndirme eager'dır** (2026-09-12): `marketplace_listing_provider.downloadAsNewCopy` payload'ı kurduktan sonra `remoteMediaRefs` ile bütün cloud+public ref'leri gezip `AssetRefResolver` üzerinden 4'erli diske çeker (`marketplaceDownloadProgressProvider` ile `done/total`). Öncesi tembeldi — bayt ancak kart ilk çizilirken iniyordu, yani "indirdim" diyen kullanıcı çevrimdışına geçince dünyayı görselsiz açıyordu. Kısmi başarı kasıtlı olarak zararsız: düşen ref çizim anında yeniden denenir, indirme başarısız sayılmaz.
 - Kart görselleri (`cacheDir/art/`) **paket/dünya silindiğinde temizlenir**; boyut cap'i yoktur, yaşam süresini referans belirler. `EvictionSweeper` bu dizini kapsamaz (o `cacheDir/content/` üzerinde çalışır ve şu an hiçbir yerde instantiate edilmiyor).
 - `pub/` DELETE Worker'da **yasak** — silimi refcount belirler, doğrudan DELETE başkasının listing'ini yok ederdi.
@@ -106,7 +106,7 @@ adlandırmıyor, dolayısıyla her okuyan kendi yolundan çözüyor:
 | Kim | Yol |
 |---|---|
 | Baytları üreten cihaz | [[content_ref_index]] → `content_paths` → yerel dosya, **ağ yok** |
-| Başka cihaz | içerik store'u → *(5d'den beri)* toplu imza → R2 `worlds/` → store |
+| Başka cihaz | içerik store'u → *(5d'den beri)* toplu imza → R2 `worlds/` (5e'den beri `packages/` de) → store |
 | Hiçbir yerde yoksa | *(5d'den beri)* bulutta yok demek: yüklenmedi ya da limitin üstünde |
 
 Havuz mekaniği, kota ve LRU **değişmedi** — transient hâlâ baytların tek
@@ -135,4 +135,23 @@ kalıyordu.
 İzin neden üyelik, kart değil: oyuncu bir sha'yı yalnız kendisine paylaşılmış
 bir karttan öğrenebilir, tahmin edemez; kart bazlı izin sha → kart indeksi
 isterdi. Bilinçli sınırlar (dedup yok, sıkıştırma yok, imzalı URL 1 saat
-geçerli, paket medyası henüz yok): `docs/online-sync-redesign.md` §4.8.3.
+geçerli): `docs/online-sync-redesign.md` §4.8.3.
+
+## Paket medyası bulutta (2026-10-01, Faz 5e)
+
+Online paketin medyası da aynı yoldan, paket başına:
+`packages/{packageId}/{sha}{ext}` (100). Ayrı tablo yok — `world_media` ikinci
+bir kapsam kolonu aldı (`package_id`, satır ya dünyanın ya paketin), RPC'ler
+kapsamlı (`media_reserve('package', id, …)`), key'i SQL kuruyor
+(`media_r2_key`). İmzayı (put ve get) yalnız paketin sahibi alır: paket
+kimseyle paylaşılmıyor. Paket medyası kişi başı 1 GB'a dünyanınkiyle birlikte
+sayılır.
+
+| Adım | Nerede |
+|---|---|
+| Hangi medya | `user_packages.state_json` + `user_package_entities` medya kolonları — `mediaRefsOf` (harita sınıfı yok, hepsi "diğer" / PDF / ses) |
+| Ne zaman | artımlı turda satırlardan önce (ilk yayın hariç — paketin bulut satırı o turda doğuyor); paket açılışında ve [[cloud_push_provider]] `reconcileAll`'da (uygulama/oturum açılışı, bağlantı) push → pull → tam uzlaştırma + yetim temizliği; "online yap"ta tamamı, ilerlemeyle. Zamanlayıcıyla yeniden deneme yok |
+| Silme | "yerele al" / yerel silme / hesap silme `user_packages` satırını siler → CASCADE → kuyruk → cron |
+
+Dünyaya kurulu paket kartlarının görselleri bu yolun işi değil: onlar
+`world_entities` satırında, dünyanın medyasıyla gidiyor (iki kopya, dedup yok).

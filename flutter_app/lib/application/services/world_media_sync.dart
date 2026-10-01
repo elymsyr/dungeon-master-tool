@@ -15,7 +15,9 @@ import 'content_ref_index.dart';
 import 'content_store.dart';
 
 /// Faz 5d — multiplayer dünyanın medyası R2'de, dünya başına ve kalıcı
-/// (`worlds/{worldId}/{sha}{ext}`).
+/// (`worlds/{worldId}/{sha}{ext}`). Faz 5e'den beri online paketinki de, aynı
+/// yoldan ([MediaScope.package], `packages/{packageId}/…`); kapsamı söylemeyen
+/// çağrı dünyadır.
 ///
 /// **Kuyruk yok.** Bulutta ne olduğunu `world_media` söylüyor, gönderilmesi
 /// gerekeni satırlardaki `dmt-content://` ref'leri; aradaki fark bir sonraki
@@ -73,13 +75,16 @@ class WorldMediaSync {
   /// pencere o yarışı kapatıyor.
   static const Duration pruneGrace = Duration(minutes: 10);
 
-  /// Dünya → bulutta yüklü sha'lar. İlk ihtiyaçta `world_media`'dan okunur;
+  /// Kapsam → bulutta yüklü sha'lar. İlk ihtiyaçta `world_media`'dan okunur;
   /// [forget] bir sonraki okumayı tazeletir.
   final Map<String, Set<String>> _inCloud = {};
 
-  /// [worldId]'nin önbelleğini düşürür — uzlaştırma turunda, öbür cihazın
+  static String _key(MediaScope scope, String id) => '${scope.name}:$id';
+
+  /// [id]'nin önbelleğini düşürür — uzlaştırma turunda, öbür cihazın
   /// yüklediklerini de görmek için.
-  void forget(String worldId) => _inCloud.remove(worldId);
+  void forget(String id, {MediaScope scope = MediaScope.world}) =>
+      _inCloud.remove(_key(scope, id));
 
   /// Bu cihazdaki kaynak dosyalar ve limitler — **ağ yok**. "Multiplayer aç"
   /// bunu kotayla karşılaştırıp dünyayı hiç yayınlamadan reddedebilir.
@@ -109,11 +114,12 @@ class WorldMediaSync {
   /// yüklenenler (yoldaki PUT'lar dahil) onaylanmış olur; kalanı bir sonraki
   /// tur tamamlar.
   Future<WorldMediaReport> upload(
-    String worldId,
+    String id,
     Map<String, WorldMediaRef> refs, {
+    MediaScope scope = MediaScope.world,
     void Function(int done, int total)? onProgress,
   }) async {
-    final have = await _cloudSet(worldId);
+    final have = await _cloudSet(scope, id);
     final plan = await this.plan({
       for (final e in refs.entries)
         if (!have.contains(e.key)) e.key: e.value,
@@ -129,7 +135,7 @@ class WorldMediaSync {
       if (pending.isEmpty) return;
       final shas = List.of(pending);
       pending.clear();
-      await _confirm(worldId, shas);
+      await _confirm(scope, id, shas);
       have.addAll(shas);
       uploaded += shas.length;
     }
@@ -138,7 +144,7 @@ class WorldMediaSync {
     try {
       for (var i = 0; i < total; i += _batch) {
         final chunk = plan.items.sublist(i, (i + _batch).clamp(0, total));
-        final todo = await _reserve(worldId, chunk);
+        final todo = await _reserve(scope, id, chunk);
         final put = <WorldMediaItem>[];
         for (final it in chunk) {
           // Rezervasyonun atladığı (zaten yüklü) sha'lar bulutta.
@@ -151,7 +157,7 @@ class WorldMediaSync {
         done += chunk.length - put.length;
         final urls = put.isEmpty
             ? <String, String>{}
-            : await _sign(worldId, [for (final it in put) it.sha]);
+            : await _sign(scope, id, [for (final it in put) it.sha]);
 
         // [_parallel] işçi aynı listeden sırayla dosya alır. Birinin hatası
         // yenilerin başlamasını durdurur; yoldakiler biter ve onaylanır.
@@ -162,7 +168,7 @@ class WorldMediaSync {
           while (error == null && next < put.length) {
             final it = put[next++];
             try {
-              if (await _put(worldId, it, urls)) {
+              if (await _put(scope, id, it, urls)) {
                 bytes += it.bytes;
                 pending.add(it.sha);
                 if (pending.length >= _confirmEvery) await confirm();
@@ -196,7 +202,8 @@ class WorldMediaSync {
   /// Tek dosyanın PUT'u; true → R2'de. Dosyaya özgü ret false döner, geçici
   /// hata denemeler bitince yukarı çıkar ([upload]).
   Future<bool> _put(
-    String worldId,
+    MediaScope scope,
+    String id,
     WorldMediaItem it,
     Map<String, String> urls,
   ) async {
@@ -214,7 +221,7 @@ class WorldMediaSync {
         if (status == 403 && !resigned) {
           resigned = true;
           urls.remove(it.sha);
-          urls.addAll(await _sign(worldId, [it.sha]));
+          urls.addAll(await _sign(scope, id, [it.sha]));
           continue;
         }
         if (status >= 400 && status < 500) {
@@ -232,8 +239,11 @@ class WorldMediaSync {
     }
   }
 
-  Future<Map<String, String>> _sign(String worldId, List<String> shas) async =>
-      Map.of(await _assets.signWorldMedia('put', shas, worldId: worldId));
+  Future<Map<String, String>> _sign(
+          MediaScope scope, String id, List<String> shas) async =>
+      Map.of(await _assets.signWorldMedia('put', shas,
+          worldId: scope == MediaScope.world ? id : null,
+          packageId: scope == MediaScope.package ? id : null));
 
   /// Tek dosyayı dünyanın medyasına çıkarır ve `dmt-content://` ref'ini döner
   /// — projeksiyon yolu için: yansıtılan görsel her zaman bir satırda
@@ -250,16 +260,22 @@ class WorldMediaSync {
     await upload(worldId, {
       sha: WorldMediaRef(ext, worldMediaKindOf(ext, map: kind == MediaKind.battleMap)),
     });
-    return (_inCloud[worldId]?.contains(sha) ?? false) ? ref : null;
+    return (_inCloud[_key(MediaScope.world, worldId)]?.contains(sha) ?? false)
+        ? ref
+        : null;
   }
 
   /// Artık hiçbir satırın anmadığı medyayı buluttan siler — kotayı
-  /// doldurmasın. [keep] dünyanın bütün satırlarındaki sha'lar. Yanlış silme
+  /// doldurmasın. [keep] kapsamın bütün satırlarındaki sha'lar. Yanlış silme
   /// kendiliğinden düzelir: hâlâ anılan sha bir sonraki turda yeniden yüklenir.
-  Future<int> prune(String worldId, Set<String> keep) async {
+  Future<int> prune(
+    String id,
+    Set<String> keep, {
+    MediaScope scope = MediaScope.world,
+  }) async {
     final cutoff = DateTime.now().toUtc().subtract(pruneGrace);
     final victims = <String>[
-      for (final r in await _rows(worldId, 'sha256, created_at'))
+      for (final r in await _rows(scope, id, 'sha256, created_at'))
         if (!keep.contains(r['sha256']) &&
             (DateTime.tryParse('${r['created_at']}')?.isBefore(cutoff) ??
                 false))
@@ -269,16 +285,16 @@ class WorldMediaSync {
       await _client
           .from('world_media')
           .delete()
-          .eq('world_id', worldId)
+          .eq(scope.column, id)
           .inFilter('sha256',
               victims.sublist(i, (i + _batch).clamp(0, victims.length)))
           .retry(requestTimeout: _rpcTimeout);
     }
-    _inCloud[worldId]?.removeAll(victims);
+    _inCloud[_key(scope, id)]?.removeAll(victims);
     return victims.length;
   }
 
-  /// Kullanıcının dünya medyası payı ve R2'nin toplam doluluğu.
+  /// Kullanıcının medya payı (dünyalar + paketler) ve R2'nin toplam doluluğu.
   Future<MediaQuota> quota() async {
     final m = Map<String, dynamic>.from(await _client
         .rpc('get_media_quota')
@@ -294,22 +310,23 @@ class WorldMediaSync {
 
   // ── içerisi ──────────────────────────────────────────────────────────────
 
-  Future<Set<String>> _cloudSet(String worldId) async =>
-      _inCloud[worldId] ??= {
-        for (final r in await _rows(worldId, 'sha256', uploadedOnly: true))
+  Future<Set<String>> _cloudSet(MediaScope scope, String id) async =>
+      _inCloud[_key(scope, id)] ??= {
+        for (final r in await _rows(scope, id, 'sha256', uploadedOnly: true))
           r['sha256'] as String,
       };
 
   /// PostgREST bir yanıtta en çok 1000 satır döner; dünya daha büyük olabilir.
   Future<List<Map<String, dynamic>>> _rows(
-    String worldId,
+    MediaScope scope,
+    String id,
     String columns, {
     bool uploadedOnly = false,
   }) async {
     const page = 1000;
     final out = <Map<String, dynamic>>[];
     for (var from = 0;; from += page) {
-      var q = _client.from('world_media').select(columns).eq('world_id', worldId);
+      var q = _client.from('world_media').select(columns).eq(scope.column, id);
       if (uploadedOnly) q = q.eq('uploaded', true);
       final rows = await q
           .order('sha256')
@@ -320,11 +337,13 @@ class WorldMediaSync {
     }
   }
 
-  Future<Set<String>> _reserve(String worldId, List<WorldMediaItem> items) async {
+  Future<Set<String>> _reserve(
+      MediaScope scope, String id, List<WorldMediaItem> items) async {
     try {
       final res = Map<String, dynamic>.from(
-        await _client.rpc('world_media_reserve', params: {
-          '_world': worldId,
+        await _client.rpc('media_reserve', params: {
+          '_scope': scope.name,
+          '_id': id,
           '_items': [
             for (final it in items)
               {
@@ -351,9 +370,9 @@ class WorldMediaSync {
   /// Onay gitmezse hata yukarı çıkar ve sha'lar "bulutta" sayılmaz: bir
   /// sonraki rezervasyon onları yeniden döner, PUT tekrar edilir (aynı bayt,
   /// aynı key). Yutulsaydı bu cihaz onları yüklü sanıp bir daha denemezdi.
-  Future<void> _confirm(String worldId, List<String> shas) async {
-    await _client.rpc('world_media_confirm',
-        params: {'_world': worldId, '_shas': shas}).retry(
+  Future<void> _confirm(MediaScope scope, String id, List<String> shas) async {
+    await _client.rpc('media_confirm',
+        params: {'_scope': scope.name, '_id': id, '_shas': shas}).retry(
         requestTimeout: _rpcTimeout);
   }
 
@@ -362,6 +381,17 @@ class WorldMediaSync {
     // Önbellekteki kopyanın adı `{sha}.bin` — kullanıcıya bir şey anlatmaz.
     return name.endsWith('.bin') ? '${name.substring(0, 12)}…$ext' : name;
   }
+}
+
+/// Medyanın buluttaki kapsamı (Faz 5e): `world_media` satırı hangi kolona
+/// bağlı, R2'de hangi önek altında (`worlds/` | `packages/`). Adı RPC'lerin
+/// `_scope` parametresi.
+enum MediaScope {
+  world,
+  package;
+
+  /// `world_media`'daki kapsam kolonu.
+  String get column => '${name}_id';
 }
 
 /// Bir sha'nın buluttaki adı ve sınıfı.

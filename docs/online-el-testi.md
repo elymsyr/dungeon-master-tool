@@ -278,8 +278,8 @@ select count(*) from user_package_entities where package_id = '<paket id>';
 
 **7.2 Paket düzenleme.** A'da bir kartın adını değiştir, bir kart sil; B'de
 paketi aç.
-- Beklenen: ikisi de yansır. Paket görselleri B'de **gelmez** (Faz 5e,
-  bilinen).
+- Beklenen: ikisi de yansır. Paket görselleri 5e'den beri B'de **gelir**
+  (§12).
 
 **7.3 Yarıda kalan indirme (5c'nin tek eksiği).** B'de paketi ya da dünyayı
 sil. Hub → "Bulutta, bu cihazda yok" → İndir. İlerleme çubuğu yarıdayken
@@ -438,6 +438,56 @@ yap.
 **11.9 Dil.** Uygulama dilini Türkçe yap; dünya aç/kapat, paket aç/oluştur.
 - Beklenen: overlay'ler ("… dünyası açılıyor", "Kaydediliyor...") ve
   açılış ekranı Türkçe; İngilizce kalıntı yok.
+
+---
+
+## 12. Faz 5e — paket medyası ve arka plan uzlaştırması (A + B)
+
+**12.0 Deploy.** Önce `supabase/migrations/100_package_media.sql`, sonra
+`supabase/scripts/verify_100.sql` → `100 OK` (ve `verify_099.sql` → `099 OK`).
+**Hemen ardından** `wrangler deploy` (arada imza ucu 502 döner). Sonra iki
+cihazda da uygulamanın yeni derlemesi — eskisi dünya medyası yükleyemez.
+
+**12.1 Hub'dan online yap.** A'da görselli (kart görseli, bir PDF alanı) bir
+paket. Hub → paketin ayarları (dişli) → "Paketi Online Yap".
+- Beklenen: "Paket medyası yükleniyor n/N" overlay'i, bitince "Paket artık
+  çevrimiçi". 5 MB'ı aşan görsel varsa liste diyaloğu ("öteki cihazlarına
+  gitmeyecekler").
+
+```sql
+select count(*), sum(bytes) from world_media
+ where package_id = '<paket id>' and uploaded;
+```
+
+**12.2 İkinci cihaz.** B'de hub → "Bulutta, bu cihazda yok" → paketi indir,
+aç.
+- Beklenen: kart görselleri geliyor (çıkış kriteri 1). Log'da
+  `AssetRefResolver: … indirilemedi` yok.
+
+**12.3 Açılmadan çıkış.** A'da paketi aç, interneti kes, bir kartın adını
+değiştir ve yeni bir görsel ekle, paketi kapat (hub'a dön). İnterneti aç.
+- Beklenen: paketi açmadan birkaç saniye içinde `CloudSync: push paket … ↑`
+  ve `pull paket …` (çıkış kriteri 2); `world_media`'da yeni görselin satırı
+  `uploaded`. B'de paketi aç: yeni ad ve görsel orada.
+
+**12.4 Açık paket çekilmez.** B'de paketi açık tut, A'da aynı paketin bir
+kartını değiştir (A'da paket kapalıyken `reconcileAll` onu push eder).
+B'de interneti kesip aç.
+- Beklenen: B'de yalnız `push paket` satırı, `pull paket` yok; B'nin açık
+  ekranındaki kart **ezilmedi**. B paketi kapatıp yeniden açınca A'nın
+  değişikliği görünür.
+
+**12.5 Yerele al.** A'da hub → paketin ayarları → "Paketi Yerele Al".
+- Beklenen: `world_media`'da paketin satırı kalmıyor, `r2_evict_queue`'da
+  `packages/<id>/…` key'leri; cron'dan (≤1 sa) sonra R2'de `packages/<id>/`
+  boş (çıkış kriteri 3). B'de paketi aç (ya da uygulamayı yeniden başlat):
+  paket offline'a düşüyor, silinmiyor.
+
+**12.6 Kota.** Kotayı geçici düşür (`online-sync-redesign.md` §4.8.4
+doğrulama 5) ve görselli bir paketi online yapmayı dene.
+- Beklenen: "Bu paketin medyası X yer istiyor, bulutta ise Y kaldı" ve paket
+  yayınlanmıyor. Online bir pakete görsel ekleyince kota dolarsa "Bulut medya
+  alanı dolu…" snackbar'ı (çıkış kriteri 4).
 
 ---
 

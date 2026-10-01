@@ -3228,7 +3228,7 @@
       }
     }
   },
-  "worldMediaQuotaFull": "Cloud media storage is full. New images stay on this device and won't reach players.",
+  "worldMediaQuotaFull": "Cloud media storage is full. New images stay on this device and won't reach players or your other devices.",
   "saveTooltipSaving": "Auto-saving…",
   "saveTooltipSaved": "Saved",
   "cloudSyncTooltipSynced": "Saved · in sync with the cloud",
@@ -3354,5 +3354,29 @@
   "startupSavingLocal": "Syncing local writes...",
   "startupConnecting": "Connecting to active world...",
   "guestPromotionDone": "Your guest worlds, characters and packages were moved into your account.",
-  "guestPromotionFailed": "Couldn't move your guest data into your account. It's still on this device and will be tried again at next sign-in."
+  "guestPromotionFailed": "Couldn't move your guest data into your account. It's still on this device and will be tried again at next sign-in.",
+  "packageUploadingMedia": "Uploading package media {done}/{total}…",
+  "@packageUploadingMedia": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "packageQuotaExceeded": "This package's media needs {need}, but only {left} of cloud space is left. Remove some images or take another world or package offline.",
+  "@packageQuotaExceeded": {
+    "placeholders": {
+      "need": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "packageTooLargeBody": "These files are over the size limit (images 5 MB, audio 10 MB, PDF 20 MB), so your other devices won't get them. They keep working here.",
+  "packageMediaIncomplete": "The package is online, but not all media reached the cloud yet. The rest uploads at the next sync."
 }
