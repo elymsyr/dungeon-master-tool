@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a, 4b, 5a, 5b, 5c ve 5d bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
+Faz 3.5, 4a, 4b, 5a, 5b, 5c, 5d, 6 ve 9 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
 Migration 095–098 **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
 5c'de yalnız yarıda kalan indirme elle denenmedi. **5d (dünya medyası bulutta,
 [§4.8.3](#483-faz-5d--dünya-medyası-bulutta--bitti)) deploy edildi ve kısmen
@@ -12,7 +12,10 @@ Oyuncu tarafında karakter yaratma ve kart paylaşımı henüz denenmedi.
 paralel yükleme, açılışın eşzamanlı sorguları, uygulama açılınca ve bağlantı
 gelince arka plan uzlaştırması, kota bildirimi, süre log'ları. Kalanı
 (önizleme, sıkıştırma, önden çekme, genel profil) el testindeki ölçüme bağlı.
-Ardından 5e+; son faz (9) işlem geri bildirimi.
+**Sıradaki (2026-09-24'te revize edildi, [§4.8.5](#485-sıradaki-fazlar--taslak)):**
+5e paket (dünyayla aynı yol, canlı değil, medyası bulutta) → 5g karakter
+(kendi online anahtarı, dünya gibi canlı, medyası bulutta) → 5.5 oyuncu
+çoklu cihaz → 7 kota ve ölçüm.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -39,7 +42,7 @@ eklenmesini tanımlar. Kararların hepsi verilmiş durumda; açık kalan noktala
 - [`media-storage-redesign.md`](media-storage-redesign.md) — medya tier'ları, Phase C/D/E
 - [`audit-2026-09.md`](audit-2026-09.md) — §2 LAN güvenlik bulgusu, §5 KV write amplification
 - [`../vault/20-Systems/Share-Broadcast-Flow.md`](../vault/20-Systems/Share-Broadcast-Flow.md) — mevcut paylaşım kanalı
-- [`../vault/20-Systems/LAN-Sync-Flow.md`](../vault/20-Systems/LAN-Sync-Flow.md) — kaldırılacak sistem
+- ~~`vault/20-Systems/LAN-Sync-Flow.md`~~ — LAN'la birlikte silindi (Faz 6, 2026-09-24)
 
 ---
 
@@ -61,7 +64,8 @@ map'ini tutar, DM'in paylaştığı kartlara izinle erişir.
 | Online kapsamı | seçici — kullanıcı ne isterse |
 | Dünya içeriği | kartlar, harita, mind map, oturumlar, **savaş**, **pinler**, ayarlar, kurulu paketler |
 | Çöp kutusu | yerel kalıyor |
-| Paketler | dünyayla aynı mantıkta online olabiliyor |
+| Paketler | dünyayla aynı mantıkta online olabiliyor; **canlı değil**, açılışta ve arka planda uzlaşıyor (2026-09-24) |
+| Karakter | kendi online anahtarı, varsayılan **kapalı**; online karakter dünya gibi **canlı**. Online (multiplayer) dünyadaki her karakter **zorunlu** online, anahtar yalnız online olmayan dünyadaki ve dünyasız karakterde. Böyle bir karakter bulutta **dünyasız** durur, ikinci cihaza yalnız karakter iner (2026-09-24) |
 | Oyuncu bulutta ne tutuyor | **yalnızca** karakteri + o dünyadaki mind map'i |
 | Paylaşılan kartlar | **link** — oyuncuda bulut kopyası yok |
 | Oyuncu paylaşılan kartı düzenleyebilir mi | hayır |
@@ -70,6 +74,7 @@ map'ini tutar, DM'in paylaştığı kartlara izinle erişir.
 | DM hesabını silerse | yapacak bir şey yok |
 | Multiplayer | hesap zorunlu. **Dünya için online = multiplayer** — ayrı bir "online" kavramı yok (5d) |
 | Dünya medyası | multiplayer açılınca **hepsi** kalıcı olarak R2'de, dünya başına; transient havuz yok (5d) |
+| Paket ve karakter medyası | dünyanınkiyle aynı: online olunca **hepsi** kalıcı olarak R2'de, kendi kapsamında (5e, 5g) |
 | Çatışma | **son düzenleyen kazanır** (kilit yok) |
 | Senkron yöntemi | revizyon sinyali + artımlı çekme (**CDC değil**) |
 | Import / export | zip — dünya, paket, karakter |
@@ -94,12 +99,14 @@ duruyor. Basmazsan hiçbir baytı çıkmıyor.
 
 | Şey | Online olabilir | Notu |
 |---|---|---|
-| Dünya | evet | tamamı bulutta |
-| Paket | evet | dünyayla aynı mantık |
-| Karakter | evet | multiplayer'da **zorunlu** |
+| Dünya | evet | tamamı bulutta, canlı |
+| Paket | evet | dünyayla aynı mantık, medyası dahil; **canlı değil**, açılışta eşitleniyor |
+| Karakter | evet, kullanıcı seçer | dünyayla aynı mantık, medyası dahil, **canlı**. Online dünyadaki karakter **zorunlu** online |
 | Çöp kutusu | hayır | hep yerel |
 
 Her biri bağımsız. Dünyanı online yapıp paketlerini yerel bırakabilirsin.
+Karakter varsayılan olarak yerel. Online dünyada değilse kullanıcı onu tek
+başına online yapabilir; o zaman karakter öbür cihaza dünyası olmadan iner.
 
 ## 1.3 DM: dünyayı online yapınca
 
@@ -890,6 +897,14 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 > sonda, temelden üste sırayla (4a/5a → 5d → sonrası) koşulacak. Önce el testi
 > gerektirmeyen fazlar: **6** ve **9**. 5f'nin kalanı ölçüme bağlı olduğu için
 > bekliyor; 5e ve 5.5 5d'nin denenmemiş yollarına dayandığı için risklidir.
+>
+> **Sıra (2026-09-24, kullanıcının kararıyla revize):** 6 ve 9 bitti. Sırada
+> **5e → 5g → 5.5 → 7** var. 5e 5d'nin medya yolunu dünyaya bağlı olmaktan
+> çıkarıp genelleştiriyor ve canlı sinyale dokunmuyor, bu yüzden en düşük
+> riskli olanı. 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
+> iskeletini kullanıyor. 5.5, 5g'nin karakteri ikinci cihaza indirmesinin
+> üstüne kuruluyor. 5g de 5d'nin denenmemiş yollarına dayanıyor (karakter
+> yaratma ve kart paylaşımı elle denenmedi).
 
 | Faz | Ne | Çıkış kriteri | Bulut | Durum |
 |---|---|---|---|---|
@@ -905,8 +920,9 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
 | ~~**5d**~~ | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | ✅ bitti (099 + worker deploy edildi; ikinci cihaz ve DM + oyuncu savaş haritası elle doğrulandı, kart paylaşımı / karakter bekliyor — §4.8.3) |
 | 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
-| 5e | Paket medyası bulutta — paketin tamamı dünya gibi | ikinci cihaza inen paket görselleriyle geliyor | evet | taslak |
-| 5.5 | Oyuncu çoklu cihaz | oyuncu ikinci cihazdan karakterine ulaşıyor | evet | taslak |
+| 5e | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | taslak (revize 2026-09-24) |
+| 5g | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | taslak (yeni, 2026-09-24) |
+| 5.5 | Oyuncu çoklu cihaz — üyelik, "Online dünyalarım", paylaşılan kartlar | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | evet | taslak (5g'den sonra daraldı) |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
@@ -1640,9 +1656,9 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
 
 | Belgede yazan | Uygulanan |
 |---|---|
-| Eski §4.7 taslağı: "`world_characters` üstündeki `isOnline` bayrağı" | Kolon duruyor ama **kimse okumuyor**. Dünya başına bir anahtar var, karakter başına ikincisinin bugün anlamı yok: dünyanın karakterleri dünya online'sa gider. Kolon `cloud_revision` gibi Faz 5.5'i bekliyor — oyuncunun dünyaya bağlı olmayan karakteri ortaya çıkınca kullanılacak |
+| Eski §4.7 taslağı: "`world_characters` üstündeki `isOnline` bayrağı" | Kolon duruyor ama **kimse okumuyor**. Dünya başına bir anahtar var, karakter başına ikincisinin bugün anlamı yok: dünyanın karakterleri dünya online'sa gider. Kolon `cloud_revision` gibi Faz 5.5'i bekliyor — oyuncunun dünyaya bağlı olmayan karakteri ortaya çıkınca kullanılacak. **→ 5g** karakterin kendi anahtarı olarak okuyacak (2026-09-24) |
 | Eski §4.7 taslağı: "paketin kendi revizyon sayacı" | Sayaç bulutta (`next_package_revision`), istemci yine yazmıyor — dünyadaki kuralın aynısı |
-| Faz 4a: "`pushCharacter` doğrudan yolu duruyor" | Duruyor ve **duracak**. Tur onun yerine geçmiyor, güvenlik ağı: doğrudan yol anında yazıyor (oyuncu canlı oyunda beklemesin), tur 3 sn sonra aynı satıra idempotent upsert yapıyor. Doğrudan yolun emekliliği Faz 5.5'te, oyuncu RPC'ye geçince |
+| Faz 4a: "`pushCharacter` doğrudan yolu duruyor" | Duruyor ve **duracak**. Tur onun yerine geçmiyor, güvenlik ağı: doğrudan yol anında yazıyor (oyuncu canlı oyunda beklemesin), tur 3 sn sonra aynı satıra idempotent upsert yapıyor. Doğrudan yolun emekliliği Faz 5.5'te, oyuncu RPC'ye geçince. **→ 5g'ye çekildi:** iki yol aynı değeri yazmıyor, tur doğrudan yolun görsel ref'lerini eziyor (§4.9) |
 
 ### Bilinçli sınırlar
 
@@ -1655,7 +1671,9 @@ Faz 4a'nın turu yalnız dünyayı tanıyordu. Geriye iki delik kaldı:
   çevirisine sokulmadı: blob'un byte-for-byte korunması kuralı
   (`world_characters_dao`) jsonDecode/encode turundan ağır basıyor. Bugünkü
   `pushCharacter` de aynısını yapıyor, yani gerileme yok — `dmt-content://`
-  çevirisi karakterler için ayrı bir iş.
+  çevirisi karakterler için ayrı bir iş. *(2026-09-24: "aynısını yapıyor"
+  yanlış çıktı: doğrudan yol görselleri `MediaBundler` ile yüklüyor, tur ise
+  onları eziyor. Bkz. §4.9. Kapatan faz 5g.)*
 - **Paket kapsamı `sync_tombstones.world_id` kolonunda taşınıyor.** Kolon adı
   artık "kapsam" demek. Yeniden adlandırmak yan tablonun `CREATE TABLE IF NOT
   EXISTS` DDL'ini kırardı; adın yalanı yorumla kapatıldı.
@@ -2165,14 +2183,17 @@ açılmadan önce push → pull (en çok 8 sn beklenir, sonra yerel haliyle aç�
   Faz 5d (§4.8.3) — medya kalıcı olarak bulutta, ikinci cihaz da oradan çeker.
 - **Paket canlı değil.** Açılışta uzlaşıyor; açıkken öbür cihazın düzenlemesi
   bir sonraki açılışta gelir. 8 sn'yi aşan pull arka planda biter, satırları
-  yine Drift'e yazar ama açık paket onları görmez.
+  yine Drift'e yazar ama açık paket onları görmez. *(2026-09-24: kalıcı
+  karar, paket canlı olmayacak. 5e uzlaştırma anlarını dünyanınkilerle
+  eşitliyor, sinyali eklemiyor.)*
 - **Aynı adlı paket indirilemez.** Yerelde paket adı UNIQUE; kullanıcıdan
   yerel olanı yeniden adlandırması isteniyor. Otomatik "(2)" eklemek adı
   buluta da yayardı.
 - **Buluttan silinen dünya öbür cihazda online görünmeye devam eder.** Rol
   `none`'a düştüğü için push/pull koşmaz, zarar yok; bayrak yalnız temizlenmiyor.
 - **Paketin kendisinin silinmesinin tombstone'u yok.** Öbür cihaz bunu yalnız
-  o paketi düzenleyip push ettiğinde öğreniyor.
+  o paketi düzenleyip push ettiğinde öğreniyor. *(→ 5e: arka plan
+  uzlaştırması düzenleme beklemeden öğrenecek.)*
 
 ### Bekleyen doğrulama
 
@@ -2363,7 +2384,7 @@ Hedef senaryo (hâlâ elle koşulacak):
 - **`pdfs_json` yüklenmiyor.** Kartın eski PDF listesi push'un medya kolonu değil;
   `file`/`pdf` tipli alanlar (`fields_json`) yükleniyor.
 - **Karakterin yerel görselleri çıkmıyor** — `payload_json` §4.6'dan beri medya
-  çevirisine girmiyor.
+  çevirisine girmiyor. *(→ 5g.)*
 - **Yetim temizliği oturumda bir kez**, dünyanın ilk açılışında. Oturum içinde
   karttan çıkarılan görsel bir sonraki açılışa kadar kotada durur; projeksiyon
   için yüklenip hiçbir satırda olmayan görsel de o temizlikte düşer.
@@ -2393,7 +2414,7 @@ Hedef senaryo (hâlâ elle koşulacak):
   alamaz. İmzalanmış bir URL süresi (~1 sa) dolana kadar başkasına verilebilir.
 - **Paket medyası henüz buluta çıkmıyor**; ikinci cihaza inen paket görselsiz.
   Karar verildi: paket de dünya gibi tamamen buluta çıkacak, 5d'den sonra
-  ayrı bir faz olarak.
+  ayrı bir faz olarak. *(→ 5e.)*
 
 ### Doğrulama — kısmen yapıldı (2026-09-23)
 
@@ -2600,10 +2621,12 @@ snackbar'ı bir kez çıkmalı. Sonra tavanı geri al (aynı fonksiyon,
 
 ---
 
-## 4.8.5 Faz 5.5 ve sonrası — taslak
+## 4.8.5 Sıradaki fazlar — taslak
 
-*Aşağısı henüz detaylandırılmadı. Bir faz başlarken, koda bakılarak aynı
-ayrıntıda açılıyor (bkz. §4.4–§4.8.4).*
+*Aşağısı henüz tam detaylandırılmadı. Bir faz başlarken koda bakılarak
+§4.4–§4.8.4'teki ayrıntıya açılıyor. 5e ve 5g 2026-09-24'te kullanıcının
+kararıyla revize edildi ve "Bugün" tabloları o günkü koddan çıkarıldı. Sıra
+§4.0'da.*
 
 ### Faz 5f — kalan kısım (ölçümden sonra)
 
@@ -2619,15 +2642,156 @@ ayrıntıda açılıyor (bkz. §4.4–§4.8.4).*
    `PerfProbe` dökümü ve DevTools: açılış, dünya açma, kart listesi
    kaydırma, bellek. Ölçümün gösterdiği en pahalı üç yer düzeltilir.
 
-### Faz 5e — Paket medyası bulutta
-Paketin de tamamı, medya dahil, buluta çıkar — 5d'nin paket eşi. 5d'nin
-yükleyicisi, imza yolu ve limitleri yeniden kullanılır; açılacak soru R2
-yerleşimi (`packages/{packageId}/…`) ve kotaya sayılması.
+### Faz 5e — Paket: dünyayla aynı yol, canlı hariç
+
+*Kullanıcının kararı (2026-09-24): paket dünyayla aynı yöntemle online
+olacak ama canlı olması gerekmiyor. Görseller ve medya da düzelmeli. Eski 5e
+("paket medyası bulutta") bu fazın bir parçası oldu.*
+
+**Bugün (koddan, 2026-09-24).** Dünyayla eşit olanlar: push (4b), paket
+açılırken push → pull (5c), ikinci cihaza indirme (5c), kart silmesinin
+yayılması (098), yerel silmenin bulutu da silmesi (5c). Kart satırlarındaki
+görsel ref'leri de zaten `dmt-content://` olarak gidiyor (`packageTables`'ın
+`mediaCols`'u). Eksik olan baytın kendisi. Dünyadan geri kalanlar:
+
+| Eksik | Kodda |
+|---|---|
+| Medya buluta çıkmıyor, ikinci cihaza inen paket görselsiz | 5d'nin bütün yığını dünyaya bağlı: `world_media` PK `(world_id, sha256)` + `worlds` FK'sı, RLS `is_world_member`, kota `_media_usage` sahibi `worlds` üstünden buluyor, tahliye `worlds/` önekini ayrıştırıyor, worker `/world-media/sign` |
+| Uzlaştırma yalnız paket açılırken | `reconcileAll` yalnız dünyaları geziyor. Pompanın turu yalnız açık paketi görüyor (`pushActivePackage`). Çevrimdışı düzenlenip kapatılan paket yeniden açılana kadar bekliyor |
+| Anahtar yalnız paketin içinde | Save & Sync diyaloğu (`SaveSyncIndicator(isPackage: true)`). Hub'dan online yapmak da yerele almak da yok |
+| Paketin kendi silinmesinin izi yok | 5c sınırı: öbür cihaz bunu ancak o paketi düzenleyip push edince öğreniyor |
+
+**Verilen kararlar (kullanıcı, 2026-09-24).**
+
+| Konu | Karar |
+|---|---|
+| Yöntem | Dünyanınki: anahtar, watermark push'u, artımlı pull, indirme, medya önce |
+| Canlılık | **Yok.** Sinyal ve kanal açılmıyor. Uzlaştırma anları: paket açılışı (bugünkü `syncPackage`), uygulamanın açılışı, oturum açılışı ve bağlantının geri gelmesi, yani 5f'nin anları. Açık paket, öbür cihazın düzenlemesini bir sonraki uzlaştırmada görür |
+| Medya | 5d'nin paket eşi: online paketin **bütün** medyası kalıcı olarak R2'de, paket başına. 5d'nin yükleyicisi (6'lı paralel PUT, onar onay, yeniden deneme), limitleri ve kotası kullanılır. İkinci bir yükleyici yazılmaz |
+
+**Yapılacaklar (taslak).**
+1. **Medya kapsamını genelleştir.** Faz başında karar verilecek: `world_media`
+   bir kapsam kolonuyla (`dünya | paket | karakter`) tek tablo mu olur, yoksa
+   paket için kardeş tablo mu açılır? **Öneri: tek tablo.** Kişi başı 1 GB
+   üç kapsamın toplamı, 5g aynı yolu kullanacak ve kardeş tablo kota
+   fonksiyonunu, tahliyeyi ve worker yolunu çoğaltır. R2 yerleşimi
+   `packages/{packageId}/{sha}{ext}`. Paket kimseyle paylaşılmadığı için
+   imzayı yalnız sahibi alır. `WorldMediaSync` kapsamdan bağımsız hale gelir.
+2. **Arka plan uzlaştırması.** `reconcileAll` online paketleri de gezer
+   (push → pull → medya). Yetim medya temizliği dünyadaki kuralla çalışır:
+   yalnız pull tuttuysa ve 10 dk pencereyle.
+3. **Hub anahtarı.** Paket satırında "online yap / yerele al". Açınca tam
+   push ve ilerlemeli medya yüklemesi yapılır (dünyadaki `turnMultiplayerOn`
+   akışının eşi). Yerele alınca bulut satırları ve R2 önekiyle birlikte
+   paketin medyası gider.
+4. **Buluttan silinmiş paket.** Uzlaştırma bulutta paketin satırını
+   bulamazsa yerel paket offline'a düşer. Bu, push'taki kuralın aynısı.
+   Öneri: ayrı bir tombstone tablosu açma, arka plan uzlaştırması düzenleme
+   beklemeden öğreniyor zaten.
+
+**Kapsam dışı.** Canlı sinyal. Dünyaya kurulu paket kartlarının görselleri de
+bu fazın işi değil: onlar `world_entities` satırında duruyor ve 5d onları
+dünyanın medyasıyla zaten taşıyor. Paketin kendi kopyası ayrıca sayılır,
+§4.8.3'teki "dünyalar arası dedup yok" sınırının aynısı. Marketplace'in
+`pub/`'ı da kapsam dışı.
+
+**Çıkış kriteri.**
+1. İkinci cihaza indirilen online paket görselleriyle açılıyor.
+2. Çevrimdışı düzenlenip kapatılan paket, bağlantı gelince **paket açılmadan**
+   buluta çıkıyor.
+3. Paket hub'dan online yapılıp yerele alınabiliyor. Yerele alınınca R2'de
+   paketin önekinde obje kalmıyor.
+4. Paket medyası kotaya sayılıyor. Kota dolunca 5f'nin bildirimi çıkıyor.
+
+### Faz 5g — Karakter: kendi anahtarı, canlı
+
+*Kullanıcının kararı (2026-09-24): karakter dünyayla birebir aynı mantıkta
+çalışacak ve canlı olacak. Online yapmak kullanıcının seçimi, her karakter
+her zaman online değil. Online (multiplayer) dünyadaki karakterler bugünkü
+gibi zorunlu online. Tek başına online yapılan karakter bulutta dünyasız
+durur ve ikinci cihaza yalnız karakter iner.*
+
+**Bugün (koddan, 2026-09-24).**
+
+| Konu | Kodda |
+|---|---|
+| Anahtar | Yok. `world_characters.is_online` (v13) duruyor ama okuyan yok. Online dünyanın bütün karakterleri turla gidiyor. Online olmayan dünyadaki ve dünyasız karakter hiç gitmiyor |
+| İki yazma yolu birbirini bozuyor | Doğrudan yol (`_pushCharacterToMirror` → `pushCharacter`) görselleri `MediaBundler` ile yükleyip ref'e çeviriyor: portre ücretsiz Supabase Storage'a, ek görseller R2'nin pinned havuzuna. Tur (`cloud_mirror_tables.dart`) ise `payload_json`'u yerel yollarla ham gönderiyor. DAO turun satırını `stampedNow` ile damgalıyor ve 097 yalnız **daha eski** yazmayı atlıyor (`NEW.updated_at < OLD.updated_at`). Bu yüzden sonra gelen kazanıyor, o da çoğunlukla tur. Sonuç: DM'in yazdığı karakterin portresi öbür cihazda ve oyuncuda kırık. *Koddan okundu, testle doğrulanacak* |
+| Oyuncunun çevrimdışı düzenlemesi | Yeniden denenmiyor. Tur yalnız DM rolünde koşuyor (`CloudPushPump.push`). `_mirrorPush`'un yorumu kaçan yazmayı "dünya açılışındaki `pushOwnedCharacters`"ın kapattığını söylüyor, ama o fonksiyon yalnız "multiplayer aç" akışında çağrılıyor (`online_world_section.dart`). DM, aynı karakterin bir sonraki çevrimiçi düzenlemesine kadar eski hali görüyor. 4b'nin kapattığı açık yalnız DM için kapandı |
+| Canlılık | DM oyuncunun karakterini paylaşım yayınından canlı görüyor (`world_characters` abone tablolardan biri). Sahibinin kendi öbür cihazına hiçbir şey gelmiyor |
+| Bulut şeması | Dünyasız karakter 039'dan beri tanımlı: `world_id` nullable, `owner_id OR world_id` CHECK var, INSERT RLS'inde dünyasız dal var (057). Satırın `revision`'ı dünya sayacından geliyor (094, `tg_stamp_world_revision`). `world_id` NULL'ken ne olduğu denenmedi |
+| İndirme | DM'in ikinci cihazı karakterleri dünya pull'uyla alıyor. Oyuncu ve dünyasız karakter için yol yok |
+
+**Verilen kararlar (kullanıcı, 2026-09-24).**
+
+| Konu | Karar |
+|---|---|
+| Anahtar | Karakter başına, varsayılan **kapalı** (`is_online`). Karakter ekranında ve hub'ın karakter listesinde |
+| Online dünyadaki karakter | **Zorunlu** online, bugünkü gibi: oyuncunun karakteri, sahipsiz (claim edilecek) karakter ve DM'in kendi karakterleri. Anahtar orada kilitli görünür ve nedenini söyler |
+| Online olmayan dünyadaki ya da dünyasız karakter | Kullanıcı açarsa bulutta **dünyasız** satır olur (`world_id` NULL). Dünya bağı `payload_json`'daki `worldId`'de kalıyor. Öbür cihazda o dünya varsa (`.dmtz` ile geldiyse ya da sonradan multiplayer olduysa) bağ kurulur. Yoksa karakter, kartlardan gelen özellikleri eksik ve uyarılı olarak açılır (soft ref kuralı, §1.7) |
+| Canlılık | Dünya gibi: revizyon sinyali, artımlı çekme, sinyalde ve bağlantı gelince uzlaştırma |
+| Medya | Karakterin bütün görselleri kalıcı olarak R2'de, 5e'nin genelleşmiş medya yoluyla |
+
+**Yapılacaklar (taslak).**
+1. **Tek yazma yolu.** Doğrudan `pushCharacter` ve `MediaBundler`'ın karakter
+   dalı kalkar. Karakter de watermark turuyla gider, medyası önce. Bu iki
+   açığı birlikte kapatıyor: ref'i ezen ikinci yol kalmıyor, ve tur rol
+   kapısıyla değil **sahiplik** kapısıyla koştuğu için oyuncunun çevrimdışı
+   düzenlemesi de gidiyor. Ref çevirisi yalnız giden kopyada yapılır,
+   dünyanın kartlarında olduğu gibi (§4.5). Bunun için `payload_json`'u
+   çözüp yeniden kodlamak gerekiyor. 4b bunu blob'un byte-for-byte korunması
+   gerekçesiyle reddetmişti, ama doğrudan yol bugün tam olarak bunu yapıyor
+   (`toJson` → bundle → `fromJson`). Kuralın yalnız yerel satırı mı yoksa
+   giden kopyayı da mı bağladığı faz başında netleşmeli.
+2. **Sahip kapsamı.** Sahibinin online karakterleri tek kapsamdır:
+   `get_character_delta(since)` bu karakterlerin satırlarını ve
+   tombstone'larını döndürür, sinyal kullanıcı başına bir satırdır.
+3. **İndirme.** Hub'ın karakter sekmesinde "Bulutta, bu cihazda yok"
+   bölümü (5c'nin `CloudOnlySection`'ı).
+4. **Medya.** R2 yerleşimi `characters/{characterId}/`, sahibinin kotasına
+   sayılır. Karakter bir dünyada olsa bile karakter kapsamında durur: dünyadan
+   çıkınca medyasının taşınması gerekmez. İmzayı sahibi ve karakterin
+   dünyasının üyeleri alır.
+5. **Yerele alma.** Bulut satırı ve medyası silinir. Öbür cihazda karakter
+   offline'a düşer (paketteki kural).
+
+**Faz başında karar verilecek (kullanıcıyla).**
+- **Gecikme.** Bugün doğrudan yol anında yazıyor. Tek yolda pompanın 3
+  sn'si canlı oyunda oyuncunun HP değişikliğini DM'e 3 sn geç götürür.
+  Karakter için daha kısa bekleme mi olsun (öneri ≤ 1 sn), 3 sn yeter mi?
+- **İki kapsam, iki sayaç.** Online dünyadaki karakter hem dünya kapsamında
+  (DM'in cihazları, `get_world_delta`) hem sahibinin kapsamında (sahibinin
+  cihazları). Satırda tek `revision` kolonu var. Öneri: sahip sayacından
+  damgalanan ikinci bir kolon (`owner_revision`) ve `owner_id` süzgeçli tek
+  kanal. Bununla oyuncunun karakteri 5.5'i beklemeden ikinci cihazına iner.
+- **Damga nerede.** Karakter başına `last_cloud_push_at`, Drift v14 bump'ı ve
+  gerçek bir `onUpgrade` adımı ister. `beforeOpen` DDL'li bir yan tablo ise
+  istemez.
+- **Multiplayer kapatılınca.** 039'un FK'sı `ON DELETE SET NULL`. Dünya
+  buluttan silinince karakter satırları bugün dünyasız olarak kalıyor
+  olabilir, oyuncuların karakterleri dahil. Kendi anahtarı kapalı olan
+  karakterin bulut kopyasını kimin sileceği kod okunarak netleşmeli.
+
+**Çıkış kriteri.**
+1. Online karakter A'da düzenlenince B'de, karakter açıkken, dünyadaki kadar
+   hızlı değişiyor. Buna dünyasız karakter de dahil.
+2. B'ye indirilen karakter portresi ve görselleriyle geliyor. DM'in yazdığı
+   karakterin portresi oyuncuda görünüyor.
+3. Oyuncunun çevrimdışı düzenlemesi, bağlantı gelince, karakter yeniden
+   düzenlenmeden DM'e ulaşıyor.
+4. Anahtarı kapalı ve online dünyada olmayan karakterin hiçbir satırı ya da
+   görseli buluta çıkmıyor.
 
 ### Faz 5.5 — Oyuncu çoklu cihaz
+
+*5g'den sonra daraldı. 5g oyuncunun karakterini ikinci cihazına indiriyor,
+5.5 onu dünyaya bağlıyor.*
+
 `joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
-ekranı; "benim karakterim" bulma; oyuncu mind map'i; `world_member_state`;
-izinli kartların RPC'den çekilmesi; paylaşım geri çekilince gri kart + etiket.
+ekranı; inen karakterin dünyayla eşleşmesi ("benim karakterim" sorgusunu
+5g'nin sahip kapsamı veriyor); oyuncu mind map'i; `world_member_state`;
+izinli kartların RPC'den çekilmesi ve oyuncunun sinyali (§4.8.1: "Oyuncu
+sinyal almıyor"); paylaşım geri çekilince gri kart + etiket.
 
 ### Faz 6 — LAN'ı sil ✅ bitti (2026-09-24)
 `lan_sync/` 6 dosya (2.733 satır), provider + dialog, **41 l10n anahtarı ×
@@ -2660,9 +2824,12 @@ hata/uyarı vermiyor; `flutter test` yeşil (bilinen `bundled_pack_resolve_test`
 dışında). El testi sona kaldı: `online-el-testi.md` §10.
 
 ### Faz 7 — Kural, kota, ölçüm
-"Online olmayan dünya multiplayer olamaz"; kota göstergesi gerçek sayılarla;
+~~"Online olmayan dünya multiplayer olamaz"~~ (5d'den beri dünya için online
+= multiplayer, kural kendiliğinden sağlanıyor); kota göstergesi gerçek
+sayılarla, dünya + paket + karakter satırları ve medyası tek sayıda (5e, 5g);
 admin panelinde Postgres doluluğu; **ölçüm**: gerçek dünya boyutu, delta
-trafiği, egress, R2 doluluğu (dünya medyası + `pub/`, 5d), **Realtime mesaj sayısı** (sinyal satır
+trafiği, egress, R2 doluluğu (`worlds/` + `packages/` + `characters/` +
+`pub/`), **Realtime mesaj sayısı** (5g'nin karakter sinyali dahil; sinyal satır
 başına — §4.8.1; kota zorlarsa sayaç işlem başına bir kez artırılır, ama o
 zaman `get_world_delta`'nın kırpması aynı revizyonlu satırları bölmemeli).
 
@@ -2826,19 +2993,25 @@ uyuşmuyordu. Kayda geçiyor:
 | 5f taslağı: eksik medya "uygulama açılınca" yüklensin | Yetmiyordu: rol sağlayıcıları ağ hatasını `none` sayıp önbellekte tutuyor, çevrimdışı açılan dünya bağlantı gelince de push etmiyor ve kanal kurmuyordu. Uzlaştırma bağlantı geri gelince de koşuyor, rol her yeniden denemede tazeleniyor (§4.8.4) |
 | 5d: yetim temizliği `catchUp`'ta pull'dan sonra | Pull başarısızken de koşuyordu — bayat yerel satırlarla öbür cihazın yeni görseli silinebilirdi. Yalnız pull tuttuysa (§4.8.4) |
 | (kodda) açılış seed'i `applyInitialState` | Üç sorgu sırayla gidiyordu ve DM her açılışta bütün paylaşım gövdelerini indirip atıyordu. Eşzamanlı, DM'de paylaşımsız (§4.8.4) |
+| §4.7: karakter görselleri mutlak yolla gidiyor, "bugünkü `pushCharacter` de aynısını yapıyor, gerileme yok" | Aynısını yapmıyor: doğrudan yol görselleri `MediaBundler` ile yükleyip ref'e çeviriyor. Tur ise aynı satıra ham `payload_json`'u, eşit ya da daha yeni damgayla yazıyor. 097 yalnız daha eskiyi attığı için tur kazanıyor ve ref'ler eziliyor. Koddan okundu (2026-09-24), testle doğrulanmadı. 5g'ye alındı (§4.8.5) |
+| 4b: karakterin çevrimdışı düzenlemesi kapandı; `_mirrorPush` yorumu: kaçan yazmayı "dünya açılışındaki `pushOwnedCharacters`" kapatıyor | Yalnız DM için kapandı, çünkü tur DM rolünde koşuyor. `pushOwnedCharacters` yalnız "multiplayer aç" akışında çağrılıyor. Oyuncunun kaçan yazması, aynı karakterin bir sonraki çevrimiçi düzenlemesine kadar DM'e ulaşmıyor. 5g'ye alındı (§4.8.5) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
 ---
 
-## Üç kırmızı nokta
+## Üç kırmızı nokta — üçü de kapandı
 
-1. **RLS gizlilik hatası** — sır artık sunucuya çıkıyor. Tek RPC kapısı +
-   `dm_only_keys` + rol bazlı testler.
-2. **Medya ref'lerinin taşınabilirliği** — çözülmemiş tasarım işi,
-   push'tan önce bitmeli.
-3. **KV rate limiter** — şu an bile sınırda, online açılmadan
-   düzeltilmeli.
+1. ~~**RLS gizlilik hatası**~~ — sır artık sunucuya çıkıyor. Tek RPC kapısı +
+   `dm_only_keys` + rol bazlı testler. **→ Faz 3 (§4.4).**
+2. ~~**Medya ref'lerinin taşınabilirliği**~~ — push'tan önce bitmeliydi.
+   **→ Faz 3.5 (§4.5), `dmt-content://`.**
+3. ~~**KV rate limiter**~~ — online açılmadan düzeltilmeliydi. **→ Faz 0
+   (§4.1).**
+
+Bugünkü en büyük açık el testi borcu: 4a/5a → 5d → 5f → 6 → 9'un el
+adımları `online-el-testi.md`'de bekliyor (§4.0 esnemesi). 5e ve 5g
+5d'nin elle denenmemiş yollarına dayanıyor.
 
 ## Doğrulanmamış tek veri
 
