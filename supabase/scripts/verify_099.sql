@@ -3,7 +3,9 @@
 -- ============================================================================
 -- Kullanım: Supabase Dashboard > SQL Editor > yapıştır > Run.
 -- Sonunda ROLLBACK var; başarılıysa "099 OK" notice'i döner, aksi halde ilk
--- başarısız assertion exception olarak patlar.
+-- başarısız assertion exception olarak patlar. RPC'ler 100'den beri kapsamlı
+-- (`media_reserve('world', …)`, `media_sign_get` tam key döner); paket
+-- kapsamı verify_100.sql'de.
 --
 -- Kapsam:
 --   1. Sabitler; transient'ten iz kalmadı, kuyruk yeniden adlandırıldı.
@@ -66,7 +68,7 @@ BEGIN
     json_build_object('sub', v_dm, 'role', 'authenticated')::text, true);
   PERFORM set_config('role', 'authenticated', true);
 
-  v_r := public.world_media_reserve('w099', jsonb_build_array(
+  v_r := public.media_reserve('world', 'w099', jsonb_build_array(
     jsonb_build_object('sha', v_a, 'ext', '.png', 'bytes', 1000,
                        'kind', 'world_entity_image', 'mime', 'image/png'),
     jsonb_build_object('sha', v_b, 'ext', '.jpg', 'bytes', 9000000,
@@ -85,8 +87,8 @@ BEGIN
   PERFORM set_config('role', 'authenticated', true);
 
   -- Onaysız tekrar döner (yarıda kalan tur), onaylı atlanır.
-  PERFORM public.world_media_confirm('w099', ARRAY[v_a]);
-  v_r := public.world_media_reserve('w099', jsonb_build_array(
+  PERFORM public.media_confirm('world', 'w099', ARRAY[v_a]);
+  v_r := public.media_reserve('world', 'w099', jsonb_build_array(
     jsonb_build_object('sha', v_a, 'ext', '.png', 'bytes', 1000,
                        'kind', 'world_entity_image', 'mime', 'image/png'),
     jsonb_build_object('sha', v_b, 'ext', '.jpg', 'bytes', 9000000,
@@ -95,7 +97,7 @@ BEGIN
 
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_reserve('w099', jsonb_build_array(
+    PERFORM public.media_reserve('world', 'w099', jsonb_build_array(
       jsonb_build_object('sha', v_c, 'ext', '/../x', 'bytes', 10,
                          'kind', 'world_entity_image', 'mime', 'image/png')));
   EXCEPTION WHEN invalid_parameter_value THEN v_ok := TRUE;
@@ -104,7 +106,7 @@ BEGIN
 
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_reserve('w099', jsonb_build_array(
+    PERFORM public.media_reserve('world', 'w099', jsonb_build_array(
       jsonb_build_object('sha', v_c, 'ext', '.exe', 'bytes', 10,
                          'kind', 'world_entity_image', 'mime', 'application/x-msdownload')));
   EXCEPTION WHEN invalid_parameter_value THEN v_ok := TRUE;
@@ -116,13 +118,13 @@ BEGIN
     json_build_object('sub', v_player, 'role', 'authenticated')::text, true);
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_reserve('w099', '[]'::jsonb);
+    PERFORM public.media_reserve('world', 'w099', '[]'::jsonb);
   EXCEPTION WHEN insufficient_privilege THEN v_ok := TRUE;
   END;
   ASSERT v_ok, '2.8 OYUNCU DÜNYAYA MEDYA REZERVE ETTİ';
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_confirm('w099', ARRAY[v_b]);
+    PERFORM public.media_confirm('world', 'w099', ARRAY[v_b]);
   EXCEPTION WHEN insufficient_privilege THEN v_ok := TRUE;
   END;
   ASSERT v_ok, '2.9 oyuncu onay verebildi';
@@ -140,27 +142,27 @@ BEGIN
     '4.3 YABANCI DÜNYANIN MEDYASINI GÖRDÜ';
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_reserve('w099', '[]'::jsonb);
+    PERFORM public.media_reserve('world', 'w099', '[]'::jsonb);
   EXCEPTION WHEN insufficient_privilege THEN v_ok := TRUE;
   END;
   ASSERT v_ok, '4.4 yabancı başkasının dünyasına rezerve etti';
 
   -- ══ 3 — İmza RPC'leri (worker, service_role) ═══════════════════════════
   PERFORM set_config('role', 'postgres', true);
-  ASSERT (SELECT count(*) FROM public.world_media_sign_put(v_dm, 'w099', ARRAY[v_a, v_b])) = 2,
+  ASSERT (SELECT count(*) FROM public.media_sign_put(v_dm, 'world', 'w099', ARRAY[v_a, v_b])) = 2,
     '3.1 sahip PUT imzası alamıyor';
-  ASSERT (SELECT bytes FROM public.world_media_sign_put(v_dm, 'w099', ARRAY[v_b])) = 9000000,
+  ASSERT (SELECT bytes FROM public.media_sign_put(v_dm, 'world', 'w099', ARRAY[v_b])) = 9000000,
     '3.2 imzaya bağlanacak boyut yanlış';
-  ASSERT (SELECT count(*) FROM public.world_media_sign_put(v_player, 'w099', ARRAY[v_a])) = 0,
+  ASSERT (SELECT count(*) FROM public.media_sign_put(v_player, 'world', 'w099', ARRAY[v_a])) = 0,
     '3.3 OYUNCUYA PUT İMZASI VERİLDİ';
-  ASSERT (SELECT world_id FROM public.world_media_sign_get(v_player, ARRAY[v_a])) = 'w099',
+  ASSERT (SELECT r2_key FROM public.media_sign_get(v_player, ARRAY[v_a])) = 'worlds/w099/' || v_a || '.png',
     '3.4 üye onaylı görseli çekemiyor';
-  ASSERT (SELECT count(*) FROM public.world_media_sign_get(v_dm, ARRAY[v_b])) = 0,
+  ASSERT (SELECT count(*) FROM public.media_sign_get(v_dm, ARRAY[v_b])) = 0,
     '3.5 onaysız (yüklenmemiş) sha imzalandı';
-  ASSERT (SELECT count(*) FROM public.world_media_sign_get(v_other, ARRAY[v_a])) = 0,
+  ASSERT (SELECT count(*) FROM public.media_sign_get(v_other, ARRAY[v_a])) = 0,
     '3.6 ÜYE OLMAYANA GET İMZASI VERİLDİ';
   ASSERT has_function_privilege('authenticated',
-           'public.world_media_sign_get(uuid, text[])', 'EXECUTE') = FALSE,
+           'public.media_sign_get(uuid, text[])', 'EXECUTE') = FALSE,
     '3.7 imza RPC''si istemciye açık';
 
   -- ══ 5 — Tavanlar ═══════════════════════════════════════════════════════
@@ -175,7 +177,7 @@ BEGIN
   PERFORM set_config('role', 'authenticated', true);
   v_ok := FALSE;
   BEGIN
-    PERFORM public.world_media_reserve('w099', jsonb_build_array(
+    PERFORM public.media_reserve('world', 'w099', jsonb_build_array(
       jsonb_build_object('sha', repeat('d', 64), 'ext', '.png', 'bytes', 400,
                          'kind', 'world_entity_image', 'mime', 'image/png'),
       jsonb_build_object('sha', repeat('e', 64), 'ext', '.png', 'bytes', 400,
@@ -187,7 +189,7 @@ BEGIN
   ASSERT NOT EXISTS (SELECT 1 FROM public.world_media WHERE sha256 = repeat('d', 64)),
     '5.2 reddedilen partiden satır yazıldı';
   -- Sığan tek dosya geçer; zaten olan (b) tekrar sayılmaz.
-  v_r := public.world_media_reserve('w099', jsonb_build_array(
+  v_r := public.media_reserve('world', 'w099', jsonb_build_array(
     jsonb_build_object('sha', repeat('d', 64), 'ext', '.png', 'bytes', 400,
                        'kind', 'world_entity_image', 'mime', 'image/png'),
     jsonb_build_object('sha', v_b, 'ext', '.jpg', 'bytes', 9000000,

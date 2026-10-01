@@ -56,51 +56,56 @@ export async function popEvictQueue(
 }
 
 // ============================================================================
-// Dünya medyası (Faz 5d) — toplu imzanın izin sorgusu. N sha, tek RPC.
+// Dünya ve paket medyası (Faz 5d, 5e) — toplu imzanın izin sorgusu. N sha,
+// tek RPC. Key'i SQL kuruyor (`media_r2_key`, 100): `worlds/{id}/…` ya da
+// `packages/{id}/…`.
 // ============================================================================
 
-/// PUT: kullanıcının SAHİBİ olduğu dünyada rezerve edilmiş sha'lar. `bytes`
-/// ve `mime` imzaya bağlanır.
-export interface WorldMediaPutRow {
+export type MediaScope = 'world' | 'package';
+
+/// PUT: kullanıcının SAHİBİ olduğu dünyada ya da pakette rezerve edilmiş
+/// sha'lar. `bytes` ve `mime` imzaya bağlanır.
+export interface MediaPutRow {
   sha256: string;
-  ext: string;
+  r2_key: string;
   bytes: number;
   mime: string;
 }
 
-export async function worldMediaSignPut(
+export async function mediaSignPut(
   supabaseUrl: string,
   serviceRoleKey: string,
   userId: string,
-  worldId: string,
+  scope: MediaScope,
+  scopeId: string,
   shas: string[],
-): Promise<WorldMediaPutRow[]> {
-  const body = await serviceRpc<WorldMediaPutRow[] | null>(
+): Promise<MediaPutRow[]> {
+  const body = await serviceRpc<MediaPutRow[] | null>(
     supabaseUrl,
     serviceRoleKey,
-    'world_media_sign_put',
-    { p_user: userId, p_world: worldId, p_shas: shas },
+    'media_sign_put',
+    { p_user: userId, p_scope: scope, p_id: scopeId, p_shas: shas },
   );
   return Array.isArray(body) ? body : [];
 }
 
-/// GET: kullanıcının üyesi olduğu herhangi bir dünyada yüklenmiş sha'lar.
-export interface WorldMediaGetRow {
+/// GET: kullanıcının üyesi olduğu bir dünyada ya da sahibi olduğu bir
+/// pakette yüklenmiş sha'lar.
+export interface MediaGetRow {
   sha256: string;
-  world_id: string;
-  ext: string;
+  r2_key: string;
 }
 
-export async function worldMediaSignGet(
+export async function mediaSignGet(
   supabaseUrl: string,
   serviceRoleKey: string,
   userId: string,
   shas: string[],
-): Promise<WorldMediaGetRow[]> {
-  const body = await serviceRpc<WorldMediaGetRow[] | null>(
+): Promise<MediaGetRow[]> {
+  const body = await serviceRpc<MediaGetRow[] | null>(
     supabaseUrl,
     serviceRoleKey,
-    'world_media_sign_get',
+    'media_sign_get',
     { p_user: userId, p_shas: shas },
   );
   return Array.isArray(body) ? body : [];

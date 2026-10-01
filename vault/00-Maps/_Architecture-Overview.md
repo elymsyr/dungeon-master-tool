@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [moc, architecture]
 ---
 
@@ -61,9 +61,9 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 
 ## Key cross-cutting flows
 - [[Share-Broadcast-Flow]] — DM'in paylaştığı → oyuncuda canlı. Beş tablo, doğrudan yazma.
-- Bulut aynası — LAN eşlemesinin yerine (LAN `online-again` Faz 6'da silindi) tam online: bulut şeması 094 ile kuruldu ([[migrations-cloud-mirror]]), istemcinin giden yolu Faz 4a–4b'de bağlandı ([[cloud_push_service]]: Drift **v13** + watermark taraması; dünya, karakter ve paket kapsamları), dünyanın geri okuması Faz 5a'da ([[cloud_pull_service]], migration 096), canlı sinyal ve sunucu tarafı "son düzenleyen kazanır" Faz 5b'de (migration 097), ikinci cihazın ilk senkronu ve paket pull'u Faz 5c'de (migration 098).
+- Bulut aynası — LAN eşlemesinin yerine (LAN `online-again` Faz 6'da silindi) tam online: bulut şeması 094 ile kuruldu ([[migrations-cloud-mirror]]), istemcinin giden yolu Faz 4a–4b'de bağlandı ([[cloud_push_service]]: Drift **v13** + watermark taraması; dünya, karakter ve paket kapsamları), dünyanın geri okuması Faz 5a'da ([[cloud_pull_service]], migration 096), canlı sinyal ve sunucu tarafı "son düzenleyen kazanır" Faz 5b'de (migration 097), ikinci cihazın ilk senkronu ve paket pull'u Faz 5c'de (migration 098), dünya medyası Faz 5d'de (099), paket medyası ve paketin arka plan uzlaştırması Faz 5e'de (100).
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
-- [[Media-Storage-Tiers]] — free (Supabase) vs dünya medyası (R2 `worlds/{worldId}/`, multiplayer dünyanın tamamı, kişi başı 1 GB — Faz 5d) vs pinned (R2 `pub/`, refcount); `worlds/` + `pub/` tek 9 GB tavan. Sayılan katman emekli (Phase D), transient kalktı (5d).
+- [[Media-Storage-Tiers]] — free (Supabase) vs dünya medyası (R2 `worlds/{worldId}/`, multiplayer dünyanın tamamı — Faz 5d; online paketin tamamı `packages/{packageId}/` — Faz 5e; kişi başı 1 GB, tek sayı) vs pinned (R2 `pub/`, refcount); `worlds/` + `packages/` + `pub/` tek 9 GB tavan. Sayılan katman emekli (Phase D), transient kalktı (5d).
 - [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.
 
 ## Source docs (design history)

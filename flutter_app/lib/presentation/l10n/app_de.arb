@@ -2139,7 +2139,7 @@
   "multiplayerTooLargeBody": "Diese Dateien überschreiten das Größenlimit (Karten 10 MB, andere Bilder 5 MB, Audio 10 MB, PDF 20 MB) und erreichen die Spieler nicht. Hier funktionieren sie weiter.",
   "multiplayerMediaIncomplete": "Die Welt ist im Multiplayer, aber noch nicht alle Medien sind in der Cloud. Der Rest wird automatisch hochgeladen.",
   "worldMediaNotSent": "Über dem Größenlimit, erreicht die Spieler nicht: {names}",
-  "worldMediaQuotaFull": "Der Cloud-Medienspeicher ist voll. Neue Bilder bleiben auf diesem Gerät und erreichen die Spieler nicht.",
+  "worldMediaQuotaFull": "Der Cloud-Medienspeicher ist voll. Neue Bilder bleiben auf diesem Gerät und erreichen weder die Spieler noch deine anderen Geräte.",
   "saveTooltipSaving": "Wird automatisch gespeichert…",
   "saveTooltipSaved": "Gespeichert",
   "cloudSyncTooltipSynced": "Gespeichert · mit der Cloud synchron",
@@ -2174,5 +2174,9 @@
   "startupSavingLocal": "Lokale Änderungen werden geschrieben...",
   "startupConnecting": "Verbindung zur aktiven Welt...",
   "guestPromotionDone": "Deine Gast-Welten, -Charaktere und -Pakete wurden in dein Konto übernommen.",
-  "guestPromotionFailed": "Deine Gastdaten konnten nicht in dein Konto übernommen werden. Sie sind weiterhin auf diesem Gerät; beim nächsten Anmelden wird es erneut versucht."
+  "guestPromotionFailed": "Deine Gastdaten konnten nicht in dein Konto übernommen werden. Sie sind weiterhin auf diesem Gerät; beim nächsten Anmelden wird es erneut versucht.",
+  "packageUploadingMedia": "Paketmedien werden hochgeladen {done}/{total}…",
+  "packageQuotaExceeded": "Die Medien dieses Pakets brauchen {need}, im Cloud-Speicher sind aber nur noch {left} frei. Entferne einige Bilder oder nimm eine andere Welt oder ein anderes Paket offline.",
+  "packageTooLargeBody": "Diese Dateien überschreiten das Größenlimit (Bilder 5 MB, Audio 10 MB, PDF 20 MB) und erreichen deine anderen Geräte nicht. Hier funktionieren sie weiter.",
+  "packageMediaIncomplete": "Das Paket ist online, aber noch nicht alle Medien sind in der Cloud. Der Rest wird bei der nächsten Synchronisierung hochgeladen."
 }

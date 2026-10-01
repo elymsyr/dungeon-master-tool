@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/cloud_push_provider.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -15,6 +15,8 @@ tags: [file]
 > Bulut aynasının **ne zaman** koşacağına karar veren ince katman. `PendingWriteBuffer.tick`'i dinler, 3 sn sessizlikten sonra açık olanın push turunu başlatır — önce dünya, sonra paket. Ayrıca turun girdilerini toplar: açık içeriğin kimliği ve şemadan türeyen `dm_only_keys` haritası.
 >
 > Faz 5a'dan beri pull da buradan, Faz 5b'den beri **canlı**: dünya kanalı her `SUBSCRIBED`'da `catchUp`'ı, her `world_revisions` sinyalinde `onSignal`'ı çağırıyor ([[world_mirror_applier]] provider'ı bağlıyor). Push ve pull tek şeritten geçiyor.
+>
+> Faz 5e'den beri paketler de medyasıyla ve açılmadan: `reconcileAll` online paketleri de geziyor (açık paket yalnız push, kalanlar push → pull → tam medya), paket turunda medya satırlardan önce, "online yap" için `syncPackageMedia`.
 >
 > Faz 5f'den beri açık olmayan dünyalar da: uygulama açılınca, oturum açılınca ve bağlantı geri gelince `reconcileAll` bu cihazdaki bütün online dünyaları sırayla `catchUp`'tan geçiriyor — yarım kalan yükleme dünyayı açmayı beklemiyor.
 
@@ -34,7 +36,8 @@ tags: [file]
 - `CloudPushPump.reconcileAll()` (Faz 5f) — online dünyaları (`worlds.is_online`, açık olan hariç) sırayla uzlaştırır.
 - `worldMediaQuotaProvider` (Faz 5f) — arka plan yüklemesi kotaya takıldı (`false` kişi payı, `true` R2 toplamı); oturumda bir kez dolar.
 - `cloudOnlyWorldsProvider` / `cloudOnlyPackagesProvider` (Faz 5c) → bulutta olup bu cihazda olmayanlar; yerel liste (`campaignInfoListProvider` / `packageListProvider`) değişince yeniden sorulur, çevrimdışıyken boş. Tüketicisi hub'daki ortak `CloudOnlySection` widget'ı (`presentation/widgets/cloud_only_section.dart`: satır başına İndir + ilerleme, tek seferde tek indirme).
-- `CloudPushPump.syncPackage(name)` (Faz 5c) — paket açılmadan önce push → pull; paketin Realtime sinyali yok, uzlaştırma anı açılış. En çok 8 sn beklenir, sonra paket yerel haliyle açılır; Faz 9'dan beri `false` dönüp çağırana zaman aşımını söylüyor (`packages_tab` snackbar'la bildiriyor).
+- `CloudPushPump.syncPackageMedia(packageId, {onProgress})` (Faz 5e) — paketin bütün medyası, ilerlemeyle; hata ve kota çağırana (hub/Save & Sync'teki `PackageOnlineRow`). Zamanlayıcıyla yeniden deneme yok.
+- `CloudPushPump.syncPackage(name)` (Faz 5c; 5e'den beri `_catchUpPackage`) — paket açılmadan önce push → pull → (oturumda bir kez, kendi şeridinde) tam medya + yetim temizliği; paketin Realtime sinyali yok, uzlaştırma anı açılış. En çok 8 sn beklenir, sonra paket yerel haliyle açılır; Faz 9'dan beri `false` dönüp çağırana zaman aşımını söylüyor (`packages_tab` snackbar'la bildiriyor).
 - [[cloud_sync_status_provider]] (Faz 9) — her push / pull / medya turunun başı ve sonucu buraya yazılıyor; Save & Sync göstergesi oradan okuyor.
 
 ## Dependencies & Links
@@ -52,6 +55,7 @@ tags: [file]
 - **Arka plan uzlaştırması (`reconcileAll`, Faz 5f):** online dünyalar sırayla `catchUp`; her birinden önce `worldRoleProvider(id)` tazelenir. Pompa `connectivityStreamProvider`'ı dinliyor: çevrimdışı → çevrimiçi geçişinde `currentWorldRoleProvider`'ı tazeler (açık dünyanın kanalı kurulur, `SUBSCRIBED` uzlaştırır) ve `reconcileAll`'u çağırır. Gerekçe: rol sağlayıcıları ağ hatasını `none` sayıp önbellekte tutuyor; çevrimdışı açılan dünya bağlantı gelince de push etmiyor, kanal kurmuyordu. Paylaşılan satır şeridi yüzünden açık olmayan dünyanın medya-önce push'u açık dünyanın turunu birkaç saniye bekletebilir.
 - **`catchUp`'ta atlanan push:** dünya online iken push atlandıysa (rol çözülemedi) yeniden deneme kurulur. Yetim temizliği yalnız pull tuttuysa koşar — bayat yerel satırlar öbür cihazın yeni görselini "anılmıyor" sayardı.
 - **Yeniden deneme (`_scheduleMediaRetry`):** medya işi hata verirse ya da dosya reddedilirse `_mediaSynced` düşer ve dünya için tek bir zamanlayıcı kurulur — 30 sn, her başarısızlıkta iki katı, en çok 10 dk; ateşlenince dünya hâlâ online ise `catchUp`. Başarıda sayaç sıfırlanır. Kota dolduysa kurulmaz (beklemek yer açmaz), onun yerine `worldMediaQuotaProvider` bir kez dolar. Ateşlenmeden önce rol önbelleği tazelenir. Eskiden yarım kalan yükleme ancak bir sonraki düzenlemede ya da yeniden açılışta sürüyordu. `syncWorldMedia` de başarısızlıkta kurar, hatayı yine çağırana verir. Limit aşan yeni dosya `worldMediaNoticeProvider`'a (oturumda her ad bir kez); tam uzlaştırmanın bulduğu eski dosyalar sessiz.
+- **Paket (Faz 5e):** `pushPackage` servise `beforeRows: _uploadNew(scope: package)` veriyor (ilk yayında servis atlar). `_quiet` paketi göstergeye **adıyla** yazar (`statusKey`) ve `retry: false` — paketin uzlaştırma anları belli (açılış, `reconcileAll`), `_scheduleMediaRetry` yalnız dünyanın. "Oyunculara gitmeyecek" uyarısı da yalnız dünyanın. `reconcileAll`'da **açık paket yalnız push edilir**: pull Drift'e yazar ama paket ekranı bellekteki halinden okuyup onu kaydediyor — inen satırları bir sonraki kayıtta eski halleriyle ezerdi; öbür cihazın düzenlemesini bir sonraki açılışta görür. Test: `test/application/providers/cloud_push_pump_package_test.dart`.
 - **Satır şeridi:** push ve pull `_rows`'dan geçiyor — bir Future zinciri, işler sırayla koşuyor, bir işin hatası şeridi tıkamıyor. Eski `_guarded`/`_pendingRound` kapısı üst üste gelen isteği *atlıyordu* ("skipped"); şerit hiçbirini düşürmüyor. `_round()` dünyayı ve paketi sıra sıra deniyor, açık olmayan kendiliğinden atlanıyor. Şeridin asıl işi yankıyı elemek: sinyal kendi push'umuzdan geldiyse `_onSignal` şeridin boşalmasını bekliyor, o arada push damgayı ilerletmiş oluyor (bkz. [[cloud_push_service]] `ownRunEnd`).
 - **Pull'dan sonra açık dünya tazeleniyor.** `pull()` tur satır uyguladıysa (`applied > 0 || removed > 0`) ve çekilen dünya hâlâ açık dünyaysa `ActiveCampaignNotifier.reload()` çağrılıyor. Bu şart olmadan 5a kullanıcıya **tamamen görünmezdi**: `EntityNotifier._loadFromCampaign` Drift'ten değil bellekteki blob'dan okuyor, dolayısıyla inen satırlar ancak bir sonraki açılışta belirirdi. `reload()` blob'u `_repo.load()` ile yerinde değiştirip `campaignRevisionProvider`'ı bump ediyor — yalnız bump etmek yetmez, aynı bayat blob yeniden okunur. `installed_packages` Drift `StreamProvider`'ı üstünden zaten canlı; `worldCharactersProvider` bulut kaynaklı, bu yoldan etkilenmiyor.
 - **`catchUp` — flush, push, pull.** Uzlaştırma turu; kanal her `SUBSCRIBED` olduğunda (dünya açılışı, reconnect, uygulamanın öne gelmesi) ve karşı cihazın sinyalinde koşuyor. Önce `PendingWriteBuffer.flush()`: pull artık düzenleme sürerken de koşabiliyor, tampondaki satır Drift'e inmeden LWW onu bayat haliyle karşılaştırırdı (flush'ın `_bumpTick`'i 3 sn sonra boş bir push turu doğuruyor — yalnız yerel sorgu). Push-önce sırasının gerekçesi [[cloud_pull_service]]'te: ters sırada her pull kendi getirdiği satırları buluta geri göndertirdi.

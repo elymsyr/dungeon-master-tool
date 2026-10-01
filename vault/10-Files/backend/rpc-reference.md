@@ -5,7 +5,7 @@ path: supabase/migrations/*.sql (CREATE FUNCTION catalog)
 layer: backend
 language: sql
 status: stable
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -36,11 +36,11 @@ tags: [file]
 - `get_user_total_storage_used(p_user_id uuid) → bigint` — cloud_backups + community_assets (+ posts/shared_items) total; **excludes** free_media + transient (002/003). `authenticated` + `service_role`.
 - `get_user_storage_used(p_user_id uuid) → bigint` — cloud_backups only (001).
 - ~~`get_transient_access`, `transient_reserve`, `transient_touch`, `transient_evict_pop`, `transient_*_cap_bytes`, `report_missing_shas`~~ — **099'da silindi** (Faz 5d, transient havuz kalktı).
-- `world_media_reserve(_world text, _items jsonb) → jsonb` — yüklemeden önce: yalnız dünyanın sahibi; her öğe `{sha, ext, bytes, kind, mime}`; limiti aşan `too_large`'da döner (hata değil), zaten yüklü atlanır, rezerve edilip yüklenmemiş yeniden döner; kişi başı 1 GB (`media_user_full`) ya da toplam 9 GB (`media_pool_full`) aşılırsa hiçbir satır yazılmaz. Dönüş `{upload: [sha], too_large: [sha]}` (099). `authenticated`.
-- `world_media_confirm(_world text, _shas text[]) → int` — PUT'u biten sha'lar okunabilir olur (099). `authenticated`, yalnız sahip.
-- `get_media_quota() → jsonb` — `{user_used, user_cap, total_used, total_cap}`; "multiplayer aç"ın ön hesabı (099). `authenticated`.
-- `world_media_sign_put(p_user uuid, p_world text, p_shas text[])` / `world_media_sign_get(p_user uuid, p_shas text[])` — Worker'ın toplu imza izni, N sha tek sorgu (099). `service_role`.
-- `r2_evict_pop(_limit int default 20) → setof (id bigint, r2_key text)` — tahliye kuyruğunu boşaltır, `FOR UPDATE SKIP LOCKED`; obje o arada yeniden canlandıysa (`pub_assets` / `world_media` satırı var) satırı düşürür ama döndürmez (090 → 099). Worker cron'u ve `/admin/evict-sweep` çağırır.
+- `media_reserve(_scope text, _id text, _items jsonb) → jsonb` — yüklemeden önce; `_scope` `'world'` | `'package'` (100, 099'un `world_media_reserve`'ünün yerine). Yalnız kapsamın sahibi (`_media_scope_owner`; id `^[A-Za-z0-9_-]{1,100}$`, R2 key'inin parçası); her öğe `{sha, ext, bytes, kind, mime}`; limiti aşan `too_large`'da döner (hata değil), zaten yüklü atlanır, rezerve edilip yüklenmemiş yeniden döner; kişi başı 1 GB (`media_user_full`, dünyalar + paketler) ya da toplam 9 GB (`media_pool_full`) aşılırsa hiçbir satır yazılmaz. Dönüş `{upload: [sha], too_large: [sha]}`. `authenticated`.
+- `media_confirm(_scope text, _id text, _shas text[]) → int` — PUT'u biten sha'lar okunabilir olur; yalnız o kapsamın satırları (100). `authenticated`, yalnız sahip.
+- `get_media_quota() → jsonb` — `{user_used, user_cap, total_used, total_cap}`; "multiplayer aç"ın ve paketi online yapmanın ön hesabı (099; 100'den beri `user_used` paket medyasını da sayar). `authenticated`.
+- `media_sign_put(p_user uuid, p_scope text, p_id text, p_shas text[]) → (sha256, r2_key, bytes, mime)` / `media_sign_get(p_user uuid, p_shas text[]) → (sha256, r2_key)` — Worker'ın toplu imza izni, N sha tek sorgu (100). Put: kapsamın sahibi + rezervasyon; get: dünya üyeliği ya da paket sahipliği + onay. Key'i `media_r2_key` kurar (`worlds/{id}/…` | `packages/{id}/…`). `service_role`.
+- `r2_evict_pop(_limit int default 20) → setof (id bigint, r2_key text)` — tahliye kuyruğunu boşaltır, `FOR UPDATE SKIP LOCKED`; obje o arada yeniden canlandıysa (`pub_assets` / `world_media` satırı var — `worlds/` ve 100'den beri `packages/` öneki) satırı düşürür ama döndürmez (090 → 099 → 100). Worker cron'u ve `/admin/evict-sweep` çağırır.
 - `media_total_cap_bytes() → 9 GB`, `world_media_user_cap_bytes() → 1 GB`, `world_media_max_bytes(kind) → bigint | null` (IMMUTABLE, 099).
 
 ### Worlds / membership / invites
@@ -70,4 +70,4 @@ tags: [file]
 
 ## Notes
 - Convention: helper/admin/service RPCs are `REVOKE`d from `anon`/`authenticated` and granted only to the role that needs them; 072–074 enforce this globally (no `anon` EXECUTE on any DEFINER fn). See [[migrations-security]].
-- Worker-facing subset is exactly the RPCs in [[worker_rls]] (`get_asset_access`, `get_pub_upload_allowed`, `r2_evict_pop`, `world_media_sign_put/get`).
+- Worker-facing subset is exactly the RPCs in [[worker_rls]] (`get_asset_access`, `get_pub_upload_allowed`, `r2_evict_pop`, `media_sign_put/get`).

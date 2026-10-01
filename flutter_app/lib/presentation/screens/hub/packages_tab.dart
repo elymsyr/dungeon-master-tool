@@ -24,6 +24,7 @@ import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/save_sync_indicator.dart' show PackageOnlineRow;
 import '../../../application/services/content_transfer/content_item.dart';
 import '../../widgets/content_archive_menu.dart';
 import '../../widgets/compactable_button.dart';
@@ -706,6 +707,11 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
               SaveInfoSection(
                 localUpdatedAt: localUpdatedAt,
               ),
+              // Faz 5e — paketi hub'dan online yapmak / yerele almak.
+              if (packageRow != null) ...[
+                const SizedBox(height: 12),
+                PackageOnlineRow(palette: palette, packageId: packageRow.id),
+              ],
               const SizedBox(height: 12),
               MarketplacePanel(
                 itemType: 'package',

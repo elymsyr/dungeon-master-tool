@@ -1,7 +1,7 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a, 4b, 5a, 5b, 5c, 5d, 6 ve 9 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
+Faz 3.5, 4a, 4b, 5a, 5b, 5c, 5d, 5e, 6 ve 9 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
 Migration 095–098 **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
 5c'de yalnız yarıda kalan indirme elle denenmedi. **5d (dünya medyası bulutta,
 [§4.8.3](#483-faz-5d--dünya-medyası-bulutta--bitti)) deploy edildi ve kısmen
@@ -12,8 +12,11 @@ Oyuncu tarafında karakter yaratma ve kart paylaşımı henüz denenmedi.
 paralel yükleme, açılışın eşzamanlı sorguları, uygulama açılınca ve bağlantı
 gelince arka plan uzlaştırması, kota bildirimi, süre log'ları. Kalanı
 (önizleme, sıkıştırma, önden çekme, genel profil) el testindeki ölçüme bağlı.
+**5e bitti (2026-10-01, [§4.8.6](#486-faz-5e--paket-dünyayla-aynı-yol--bitti)):**
+paket medyası R2'de (migration 100, deploy bekliyor), paket açılmadan da
+uzlaşıyor, hub'dan online yapılıyor.
 **Sıradaki (2026-09-24'te revize edildi, [§4.8.5](#485-sıradaki-fazlar--taslak)):**
-5e paket (dünyayla aynı yol, canlı değil, medyası bulutta) → 5g karakter
+5g karakter
 (kendi online anahtarı, dünya gibi canlı, medyası bulutta) → 5.5 oyuncu
 çoklu cihaz → 7 kota ve ölçüm.
 
@@ -901,7 +904,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 > **Sıra (2026-09-24, kullanıcının kararıyla revize):** 6 ve 9 bitti. Sırada
 > **5e → 5g → 5.5 → 7** var. 5e 5d'nin medya yolunu dünyaya bağlı olmaktan
 > çıkarıp genelleştiriyor ve canlı sinyale dokunmuyor, bu yüzden en düşük
-> riskli olanı. 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
+> riskli olanı. **5e bitti (2026-10-01, §4.8.6); sırada 5g → 5.5 → 7.**
+> 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
 > iskeletini kullanıyor. 5.5, 5g'nin karakteri ikinci cihaza indirmesinin
 > üstüne kuruluyor. 5g de 5d'nin denenmemiş yollarına dayanıyor (karakter
 > yaratma ve kart paylaşımı elle denenmedi).
@@ -920,7 +924,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
 | ~~**5d**~~ | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | ✅ bitti (099 + worker deploy edildi; ikinci cihaz ve DM + oyuncu savaş haritası elle doğrulandı, kart paylaşımı / karakter bekliyor — §4.8.3) |
 | 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
-| 5e | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | taslak (revize 2026-09-24) |
+| ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy ve el testi bekliyor — §4.8.6) |
 | 5g | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | taslak (yeni, 2026-09-24) |
 | 5.5 | Oyuncu çoklu cihaz — üyelik, "Online dünyalarım", paylaşılan kartlar | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | evet | taslak (5g'den sonra daraldı) |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
@@ -2642,66 +2646,7 @@ kararıyla revize edildi ve "Bugün" tabloları o günkü koddan çıkarıldı. 
    `PerfProbe` dökümü ve DevTools: açılış, dünya açma, kart listesi
    kaydırma, bellek. Ölçümün gösterdiği en pahalı üç yer düzeltilir.
 
-### Faz 5e — Paket: dünyayla aynı yol, canlı hariç
-
-*Kullanıcının kararı (2026-09-24): paket dünyayla aynı yöntemle online
-olacak ama canlı olması gerekmiyor. Görseller ve medya da düzelmeli. Eski 5e
-("paket medyası bulutta") bu fazın bir parçası oldu.*
-
-**Bugün (koddan, 2026-09-24).** Dünyayla eşit olanlar: push (4b), paket
-açılırken push → pull (5c), ikinci cihaza indirme (5c), kart silmesinin
-yayılması (098), yerel silmenin bulutu da silmesi (5c). Kart satırlarındaki
-görsel ref'leri de zaten `dmt-content://` olarak gidiyor (`packageTables`'ın
-`mediaCols`'u). Eksik olan baytın kendisi. Dünyadan geri kalanlar:
-
-| Eksik | Kodda |
-|---|---|
-| Medya buluta çıkmıyor, ikinci cihaza inen paket görselsiz | 5d'nin bütün yığını dünyaya bağlı: `world_media` PK `(world_id, sha256)` + `worlds` FK'sı, RLS `is_world_member`, kota `_media_usage` sahibi `worlds` üstünden buluyor, tahliye `worlds/` önekini ayrıştırıyor, worker `/world-media/sign` |
-| Uzlaştırma yalnız paket açılırken | `reconcileAll` yalnız dünyaları geziyor. Pompanın turu yalnız açık paketi görüyor (`pushActivePackage`). Çevrimdışı düzenlenip kapatılan paket yeniden açılana kadar bekliyor |
-| Anahtar yalnız paketin içinde | Save & Sync diyaloğu (`SaveSyncIndicator(isPackage: true)`). Hub'dan online yapmak da yerele almak da yok |
-| Paketin kendi silinmesinin izi yok | 5c sınırı: öbür cihaz bunu ancak o paketi düzenleyip push edince öğreniyor |
-
-**Verilen kararlar (kullanıcı, 2026-09-24).**
-
-| Konu | Karar |
-|---|---|
-| Yöntem | Dünyanınki: anahtar, watermark push'u, artımlı pull, indirme, medya önce |
-| Canlılık | **Yok.** Sinyal ve kanal açılmıyor. Uzlaştırma anları: paket açılışı (bugünkü `syncPackage`), uygulamanın açılışı, oturum açılışı ve bağlantının geri gelmesi, yani 5f'nin anları. Açık paket, öbür cihazın düzenlemesini bir sonraki uzlaştırmada görür |
-| Medya | 5d'nin paket eşi: online paketin **bütün** medyası kalıcı olarak R2'de, paket başına. 5d'nin yükleyicisi (6'lı paralel PUT, onar onay, yeniden deneme), limitleri ve kotası kullanılır. İkinci bir yükleyici yazılmaz |
-
-**Yapılacaklar (taslak).**
-1. **Medya kapsamını genelleştir.** Faz başında karar verilecek: `world_media`
-   bir kapsam kolonuyla (`dünya | paket | karakter`) tek tablo mu olur, yoksa
-   paket için kardeş tablo mu açılır? **Öneri: tek tablo.** Kişi başı 1 GB
-   üç kapsamın toplamı, 5g aynı yolu kullanacak ve kardeş tablo kota
-   fonksiyonunu, tahliyeyi ve worker yolunu çoğaltır. R2 yerleşimi
-   `packages/{packageId}/{sha}{ext}`. Paket kimseyle paylaşılmadığı için
-   imzayı yalnız sahibi alır. `WorldMediaSync` kapsamdan bağımsız hale gelir.
-2. **Arka plan uzlaştırması.** `reconcileAll` online paketleri de gezer
-   (push → pull → medya). Yetim medya temizliği dünyadaki kuralla çalışır:
-   yalnız pull tuttuysa ve 10 dk pencereyle.
-3. **Hub anahtarı.** Paket satırında "online yap / yerele al". Açınca tam
-   push ve ilerlemeli medya yüklemesi yapılır (dünyadaki `turnMultiplayerOn`
-   akışının eşi). Yerele alınca bulut satırları ve R2 önekiyle birlikte
-   paketin medyası gider.
-4. **Buluttan silinmiş paket.** Uzlaştırma bulutta paketin satırını
-   bulamazsa yerel paket offline'a düşer. Bu, push'taki kuralın aynısı.
-   Öneri: ayrı bir tombstone tablosu açma, arka plan uzlaştırması düzenleme
-   beklemeden öğreniyor zaten.
-
-**Kapsam dışı.** Canlı sinyal. Dünyaya kurulu paket kartlarının görselleri de
-bu fazın işi değil: onlar `world_entities` satırında duruyor ve 5d onları
-dünyanın medyasıyla zaten taşıyor. Paketin kendi kopyası ayrıca sayılır,
-§4.8.3'teki "dünyalar arası dedup yok" sınırının aynısı. Marketplace'in
-`pub/`'ı da kapsam dışı.
-
-**Çıkış kriteri.**
-1. İkinci cihaza indirilen online paket görselleriyle açılıyor.
-2. Çevrimdışı düzenlenip kapatılan paket, bağlantı gelince **paket açılmadan**
-   buluta çıkıyor.
-3. Paket hub'dan online yapılıp yerele alınabiliyor. Yerele alınınca R2'de
-   paketin önekinde obje kalmıyor.
-4. Paket medyası kotaya sayılıyor. Kota dolunca 5f'nin bildirimi çıkıyor.
+### Faz 5e — Paket ✅ bitti (2026-10-01) → [§4.8.6](#486-faz-5e--paket-dünyayla-aynı-yol--bitti)
 
 ### Faz 5g — Karakter: kendi anahtarı, canlı
 
@@ -2945,6 +2890,107 @@ El testi sona: `online-el-testi.md` §11.
 
 ---
 
+## 4.8.6 Faz 5e — Paket: dünyayla aynı yol ✅ bitti
+
+*Kullanıcının kararı (2026-09-24): paket dünyayla aynı yöntemle online
+olacak ama canlı olması gerekmiyor; görseller ve medya da buluta çıkmalı.
+Uygulandı 2026-10-01; migration 100 + worker deploy bekliyor, el testi sona
+(`online-el-testi.md` §12).*
+
+### Sorun
+
+Paket 4b'den beri satır satır buluta çıkıyor, 5c'den beri ikinci cihaza
+iniyor ve açılırken push → pull yapıyordu. Eksik üç şey vardı:
+
+1. **Baytlar.** Kart satırlarındaki `dmt-content://` ref'leri gidiyordu ama
+   işaret ettikleri görsel hiçbir yerde değildi: ikinci cihaza inen paket
+   görselsizdi. 5d'nin bütün yığını dünyaya bağlıydı.
+2. **Açılmadan uzlaşma.** Pompanın turu yalnız açık paketi görüyordu.
+   Çevrimdışı düzenlenip kapatılan paket yeniden açılana kadar bekliyordu.
+3. **Hub anahtarı.** Online yapmak ve yerele almak yalnız paketin içindeki
+   Save & Sync diyaloğundaydı.
+
+### Verilen kararlar
+
+| Konu | Karar |
+|---|---|
+| Tek tablo mu, kardeş mi (faz başında açıktı) | **Tek tablo** (belgenin önerisi). `world_media` ikinci bir kapsam kolonu aldı: `package_id` (FK `user_packages`, CASCADE). Satır ya dünyanın ya paketin (CHECK). Kişi başı 1 GB bütün kapsamların toplamı. 5g karakteri üçüncü kolon olarak ekleyecek. Tablonun adı tarihsel kaldı: yeniden adlandırmak istemciye ve eski doğrulama betiklerine dokunurdu |
+| R2 yerleşimi | `packages/{packageId}/{sha}{ext}`. Key'i SQL kuruyor (`media_r2_key`), worker kurmuyor |
+| İzin | Put ve get yalnız paketin sahibine; paket kimseyle paylaşılmıyor |
+| RPC'ler | Kapsamlı: `media_reserve(_scope, _id, _items)`, `media_confirm`, worker için `media_sign_put` / `media_sign_get` (tam key döner). 099'un dört dünya RPC'si düştü; uyumluluk sarmalayıcısı yok (kullanıcı yok, §3.1) |
+| Medya sınıfları | Dünyanınkiler (`world_entity_image` 5 MB, `world_audio` 10, `world_pdf` 20). Paketin harita sınıfı yok, kart alanındaki harita dünyada da "diğer" |
+| Canlılık | Yok. Uzlaşma anları: paket açılışı, uygulama ve oturum açılışı, bağlantının geri gelmesi (`reconcileAll`) |
+| Açık paket | `reconcileAll`'da **yalnız push**. Pull Drift'e yazar ama paket ekranı bellekteki halinden okuyup kaydediyor: inen satırlar bir sonraki kayıtta eski halleriyle ezilirdi. Öbür cihazın düzenlemesi bir sonraki açılışta görünür |
+| Yeniden deneme | Zamanlayıcı yok (dünyanın 30 sn → 10 dk'sı paket için kurulmuyor). Yarım kalan medya bir sonraki uzlaşma anında tamamlanır |
+| Buluttan silinmiş paket | Ayrı tombstone yok. `reconcileAll` her online paketi push ediyor; 5c'nin kuralı (bulut satırı yoksa UPDATE boş döner → offline'a düş) artık düzenleme beklemeden işliyor |
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Migration 100** | `world_media.package_id`, `world_id` nullable, `world_media_one_scope` CHECK, PK → iki UNIQUE; `media_r2_key`, `_media_scope_owner` (sahiplik + id kalıbı, hep true/false); RLS: paket satırını yalnız sahibi okur/siler; `_media_usage` paketi sayar; tahliye trigger'ı ve `r2_evict_pop` `packages/`'ı tanır; kapsamlı RPC'ler |
+| **Worker** | `/world-media/sign {op: put, world_id \| package_id}` (tam olarak biri, `400 invalid_scope`); key `r2_key`'den, yalnız `worlds/` / `packages/` biçimi imzalanır (`MEDIA_KEY_REGEX`); `packages/` `/assets`'ten servis edilmiyor |
+| **`WorldMediaSync`** | `MediaScope { world, package }` — upload / prune / forget kapsam alıyor, önbellek kapsam başına; `publish` dünyanın |
+| **`CloudPushService`** | `pushPackage(beforeRows:)` medya satırlardan önce, **ilk yayında hiç** (rezervasyon paketin bulut satırına bağlı, o satır o turda doğuyor); `packageMediaRefs`; `mediaRefsOf` paket tablolarını tanıyor |
+| **Pompa** | Paket turunda medya satırlardan önce; `syncPackage` → `_catchUpPackage` (push → pull → oturumda bir kez tam medya + yetim temizliği, yalnız pull tuttuysa); `reconcileAll` online paketleri geziyor; `syncPackageMedia` "online yap" için; `_quiet` paketi göstergeye adıyla yazıyor, yeniden deneme kurmuyor |
+| **Hub anahtarı** | `PackageOnlineRow` herkese açık: Save & Sync'te (açık paket) ve hub'ın paket ayarlarında. Online yapmak `turnMultiplayerOn`'ın eşi: ön hesap (sığmıyorsa yayın yok) → bayrak + tam push → bütün medya overlay'de → limit üstü listesi. Ortak parçalar `online_world_widgets`'ta: `mediaFitsQuota`, `uploadMediaWithProgress`, `showTooLargeDialog` |
+| **l10n** | 4 anahtar × 4 dil (`packageUploadingMedia`, `packageQuotaExceeded`, `packageTooLargeBody`, `packageMediaIncomplete`); `worldMediaQuotaFull` öteki cihazları da anıyor (kota artık paketle ortak) |
+
+### Faz 5e çıkış kriteri — testlerle karşılandı, elle bekliyor
+
+1. İkinci cihaza indirilen online paket görselleriyle açılıyor.
+2. Çevrimdışı düzenlenip kapatılan paket, bağlantı gelince **paket açılmadan**
+   buluta çıkıyor.
+3. Paket hub'dan online yapılıp yerele alınabiliyor. Yerele alınınca R2'de
+   paketin önekinde obje kalmıyor.
+4. Paket medyası kotaya sayılıyor. Kota dolunca 5f'nin bildirimi çıkıyor.
+
+Karşılanan:
+- `verify_100.sql` temiz Postgres 16'da `100 OK`: tek kapsam CHECK'i, paket
+  rezervasyonu ve onayı yalnız sahibin, kapsam karışmıyor (paket id'si dünya
+  kapsamında aranmıyor, paketin onayı dünyanın satırını açmıyor), key'i bozan
+  id reddediliyor, imza key'i `packages/…`, dünyanın oyuncusu sahibin paket
+  medyasını görmüyor/çekemiyor, iki kapsam tek kota sayısı (4), paket
+  silinince her obje kuyrukta ve worker'a dönüyor (3), yeniden canlanan obje
+  silinmiyor. 001→100 zinciri hatasız, 100 iki kez koşunca da;
+  `verify_094/096/097/098/099` ve `088_089` yeşil.
+- `cloud_push_pump_package_test`: `reconcileAll` kapalı online paketi push →
+  pull ediyor ve çevrimdışı düzenlenmiş kartı gönderiyor (2), açık paket
+  yalnız push, online olmayan pakete dokunulmuyor.
+- `cloud_download_test` "medya satırlardan önce": paket turunda medya hiçbir
+  satır yazılmadan önce, ilk yayında hiç.
+- `world_media_sync_test` "paket kapsamı" (liste, rezervasyon, imza, onay,
+  temizlik paketin; önbellek ayrı) ve `world_media_refs_test` paket tabloları
+  (1'in yükleme yarısı).
+- Worker `tsc` temiz, `npm run check` (SigV4) geçiyor; `flutter analyze`
+  yeni bulgu yok.
+
+Elle bekleyen: 1–4'ün uçtan uca hali (`online-el-testi.md` §12).
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| "Kapsam kolonu (`dünya \| paket \| karakter`)" | Ayrı bir `scope` kolonu değil, kapsam başına FK kolonu (`world_id`, `package_id`) + tek kapsam CHECK'i. Böylece `ON DELETE CASCADE` korunuyor: multiplayer kapatma ve yerele alma medyayı tek silmeyle kuyruğa atıyor; tek `scope` + `scope_id` kolonunda FK olamazdı |
+| "Uzlaştırma anı: paket açılışı + 5f'nin anları" | Açık paket o anlarda **yalnız push** ediliyor (yukarıdaki karar). Pull ekranın bellekteki halini bayatlatırdı |
+| `WorldMediaSync` kapsamdan bağımsız olur | Oldu, adı kaldı. `publish` (projeksiyon) yalnız dünyanın |
+| (yok) | `get_media_quota` ve kota bildirimi metni artık dünya + paket; admin Storage barı "dünya medyası" adıyla paket medyasını da sayıyor (Faz 7'nin göstergesiyle düzelecek) |
+
+### Bilinçli sınırlar
+
+- **Paket kartına sonradan eklenen limit üstü dosya için uyarı yok.** Dünyanın
+  "oyunculara gitmeyecek" snackbar'ı `MainScreen`'de; paket ekranı onu
+  dinlemiyor. Online yaparken liste diyalogda gösteriliyor, sonrası log.
+- **Yeniden deneme zamanlayıcısı yok.** R2 geçici bir hata verip ağ açık
+  kalırsa yarım medya bir sonraki açılışa ya da uygulama açılışına kalır.
+- **Dünyalar ve paketler arası dedup yok.** Dünyaya kurulmuş paket kartının
+  görseli `world_entities` satırında dünyanın medyasıyla, paketin kendi kopyası
+  paketin medyasıyla gidiyor: iki obje, kotaya iki kez.
+- **Yerele almanın R2 temizliği cron'a bağlı** (≤1 sa), dünyadaki gibi.
+- **Eski istemci dünya medyası yükleyemez.** 100 deploy edildikten sonra 099
+  RPC'lerini çağıran uygulama rezervasyonda düşer (indirme çalışır). Sıra:
+  100 → worker → uygulama.
+
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
@@ -2994,6 +3040,8 @@ uyuşmuyordu. Kayda geçiyor:
 | 5d: yetim temizliği `catchUp`'ta pull'dan sonra | Pull başarısızken de koşuyordu — bayat yerel satırlarla öbür cihazın yeni görseli silinebilirdi. Yalnız pull tuttuysa (§4.8.4) |
 | (kodda) açılış seed'i `applyInitialState` | Üç sorgu sırayla gidiyordu ve DM her açılışta bütün paylaşım gövdelerini indirip atıyordu. Eşzamanlı, DM'de paylaşımsız (§4.8.4) |
 | §4.7: karakter görselleri mutlak yolla gidiyor, "bugünkü `pushCharacter` de aynısını yapıyor, gerileme yok" | Aynısını yapmıyor: doğrudan yol görselleri `MediaBundler` ile yükleyip ref'e çeviriyor. Tur ise aynı satıra ham `payload_json`'u, eşit ya da daha yeni damgayla yazıyor. 097 yalnız daha eskiyi attığı için tur kazanıyor ve ref'ler eziliyor. Koddan okundu (2026-09-24), testle doğrulanmadı. 5g'ye alındı (§4.8.5) |
+| Faz 5e: "`world_media` bir kapsam kolonuyla tek tablo" | Kapsam başına FK kolonu (`package_id`) + tek kapsam CHECK'i — tek `scope` kolonu FK'yı, dolayısıyla CASCADE'li temizliği kaybettirirdi (§4.8.6) |
+| Faz 5e: uzlaştırma anlarında paket push → pull | Açık paket yalnız push: paket ekranı bellekteki halini kaydediyor, arka planda inen satırları ezerdi (§4.8.6) |
 | 4b: karakterin çevrimdışı düzenlemesi kapandı; `_mirrorPush` yorumu: kaçan yazmayı "dünya açılışındaki `pushOwnedCharacters`" kapatıyor | Yalnız DM için kapandı, çünkü tur DM rolünde koşuyor. `pushOwnedCharacters` yalnız "multiplayer aç" akışında çağrılıyor. Oyuncunun kaçan yazması, aynı karakterin bir sonraki çevrimiçi düzenlemesine kadar DM'e ulaşmıyor. 5g'ye alındı (§4.8.5) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
@@ -3009,7 +3057,7 @@ Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğ
 3. ~~**KV rate limiter**~~ — online açılmadan düzeltilmeliydi. **→ Faz 0
    (§4.1).**
 
-Bugünkü en büyük açık el testi borcu: 4a/5a → 5d → 5f → 6 → 9'un el
+Bugünkü en büyük açık el testi borcu: 4a/5a → 5d → 5f → 6 → 9 → 5e'nin el
 adımları `online-el-testi.md`'de bekliyor (§4.0 esnemesi). 5e ve 5g
 5d'nin elle denenmemiş yollarına dayanıyor.
 

@@ -9,6 +9,7 @@ import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../../application/services/cloud_push_service.dart';
 import '../../application/services/entity_share_prepare.dart';
 import '../../application/services/world_media_sync.dart';
 import '../../application/services/world_meta_sync.dart';
@@ -90,21 +91,10 @@ Future<bool> turnMultiplayerOn(
 }) async {
   final l10n = L10n.of(context)!;
   final messenger = ScaffoldMessenger.of(context);
-  final pushSvc = ref.read(cloudPushServiceProvider);
-  final media = ref.read(worldMediaSyncProvider);
 
-  if (pushSvc != null && media != null) {
-    final plan = await media.plan(await pushSvc.worldMediaRefs(worldId));
-    if (plan.bytes > 0) {
-      final quota = await media.quota();
-      if (plan.bytes > quota.remaining) {
-        messenger.showSnackBar(SnackBar(
-          content: Text(l10n.multiplayerQuotaExceeded(
-              formatBytes(plan.bytes), formatBytes(quota.remaining))),
-        ));
-        return false;
-      }
-    }
+  if (!await mediaFitsQuota(ref, messenger,
+      (svc) => svc.worldMediaRefs(worldId), l10n.multiplayerQuotaExceeded)) {
+    return false;
   }
 
   await ref.read(worldMembershipServiceProvider).publishWorld(
@@ -138,60 +128,107 @@ Future<bool> turnMultiplayerOn(
       '${sw.elapsedMilliseconds} ms, ${rows.rejected.length} red, '
       'hata: ${rows.error}');
 
-  // Faz 9 kuralı: kullanıcının başlattığı ve beklediği iş → overlay.
-  final loading = ref.read(globalLoadingProvider.notifier);
-  const task = 'multiplayer-media';
-  loading.start(LoadingTask(
-      id: task, message: l10n.multiplayerUploadingMedia('0', '…')));
-  WorldMediaReport? report;
-  var complete = true;
-  try {
-    report = await pump.syncWorldMedia(worldId, onProgress: (done, total) {
-      loading.update(task,
-          message: l10n.multiplayerUploadingMedia('$done', '$total'),
-          progress: total == 0 ? null : done / total);
-    });
-  } catch (e) {
-    complete = false;
-    debugPrint('multiplayer medya $worldId yarım kaldı: $e');
-  } finally {
-    loading.end(task);
-  }
+  final (:report, :complete) = await uploadMediaWithProgress(
+      ref,
+      l10n.multiplayerUploadingMedia,
+      (onProgress) => pump.syncWorldMedia(worldId, onProgress: onProgress));
   debugPrint('CloudSync: multiplayer medya $worldId ↑${report?.uploaded ?? 0} '
       '${formatBytes(report?.bytes ?? 0)} ${sw.elapsedMilliseconds} ms (toplam)');
 
-  if (!complete || (report?.failed.isNotEmpty ?? false)) {
+  if (!complete) {
     messenger.showSnackBar(
         SnackBar(content: Text(l10n.multiplayerMediaIncomplete)));
   }
-  final tooLarge = report?.tooLarge ?? const <String>[];
-  if (tooLarge.isNotEmpty && context.mounted) {
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.multiplayerTooLargeTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.multiplayerTooLargeBody),
-              const SizedBox(height: 12),
-              for (final name in tooLarge)
-                Text('• $name', style: const TextStyle(fontSize: 12)),
-            ],
-          ),
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.landingOk),
-          ),
-        ],
-      ),
-    );
+  if (context.mounted) {
+    await showTooLargeDialog(
+        context, report?.tooLarge ?? const [], l10n.multiplayerTooLargeBody);
   }
   return true;
+}
+
+/// Ön hesap (Faz 5d): kapsamın bu cihazdaki medyası kalan kotaya sığmıyorsa
+/// [exceeded] ("X gerekiyor, Y kaldı") söylenir ve false döner — çağıran
+/// hiçbir şeyi yayınlamaz. "Multiplayer aç" ve paketi online yapmak (Faz 5e)
+/// ortak.
+Future<bool> mediaFitsQuota(
+  WidgetRef ref,
+  ScaffoldMessengerState messenger,
+  Future<Map<String, WorldMediaRef>> Function(CloudPushService svc) refsOf,
+  String Function(String need, String left) exceeded,
+) async {
+  final svc = ref.read(cloudPushServiceProvider);
+  final media = ref.read(worldMediaSyncProvider);
+  if (svc == null || media == null) return true;
+  final plan = await media.plan(await refsOf(svc));
+  if (plan.bytes == 0) return true;
+  final quota = await media.quota();
+  if (plan.bytes <= quota.remaining) return true;
+  messenger.showSnackBar(SnackBar(
+    content: Text(
+        exceeded(formatBytes(plan.bytes), formatBytes(quota.remaining))),
+  ));
+  return false;
+}
+
+/// Kapsamın bütün medyası, ilerleme overlay'inde — Faz 9 kuralı:
+/// kullanıcının başlattığı ve beklediği iş. Hata yutulur; [complete] false
+/// ise yükleme yarım kaldı ya da dosya reddedildi.
+Future<({WorldMediaReport? report, bool complete})> uploadMediaWithProgress(
+  WidgetRef ref,
+  String Function(String done, String total) progress,
+  Future<WorldMediaReport?> Function(
+          void Function(int done, int total) onProgress)
+      upload,
+) async {
+  final loading = ref.read(globalLoadingProvider.notifier);
+  const task = 'media-upload';
+  loading.start(LoadingTask(id: task, message: progress('0', '…')));
+  try {
+    final report = await upload((done, total) {
+      loading.update(task,
+          message: progress('$done', '$total'),
+          progress: total == 0 ? null : done / total);
+    });
+    return (report: report, complete: report?.failed.isEmpty ?? true);
+  } catch (e) {
+    debugPrint('medya yüklemesi yarım kaldı: $e');
+    return (report: null, complete: false);
+  } finally {
+    loading.end(task);
+  }
+}
+
+/// Limiti aşıp buluta çıkmayan dosyaların listesi; liste boşsa bir şey
+/// göstermez. [body] kimin göremeyeceğini söylüyor (oyuncular / öteki
+/// cihazlar).
+Future<void> showTooLargeDialog(
+    BuildContext context, List<String> names, String body) async {
+  if (names.isEmpty) return;
+  final l10n = L10n.of(context)!;
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.multiplayerTooLargeTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(body),
+            const SizedBox(height: 12),
+            for (final name in names)
+              Text('• $name', style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.landingOk),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Compact uppercase-style section heading shared by save&sync indicator

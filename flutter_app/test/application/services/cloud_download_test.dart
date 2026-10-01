@@ -15,11 +15,14 @@
 //   4. Paket: kendi satırı son yazılır; aynı adlı yerel paket varsa hiç
 //      başlamaz; kart tombstone'u yerelde siler.
 //   5. Buluttan silinmiş paketi öbür cihazın push'u DİRİLTMEZ, offline'a düşer.
+//   6. Faz 5e — paket turunda medya satırlardan önce; ilk yayında hiç.
 
 import 'package:drift/drift.dart' show Value, Variable;
 import 'package:dungeon_master_tool/application/services/cloud_pull_service.dart';
 import 'package:dungeon_master_tool/application/services/cloud_push_service.dart';
+import 'package:dungeon_master_tool/application/services/world_media_sync.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
+import 'package:dungeon_master_tool/domain/value_objects/media_kind.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fake_postgrest.dart';
@@ -364,6 +367,62 @@ void main() {
 
       expect(res.ok, isTrue, reason: '${res.error}');
       expect((await db.packagesDao.getById('p9'))!.isOnline, isTrue);
+    });
+
+    test('medya satırlardan önce gider; ilk yayında hiç (Faz 5e)', () async {
+      final sha = 'a' * 64;
+      await db.packagesDao.upsertPackage(PackagesCompanion.insert(
+          id: 'p9', name: 'Canavarlar', isOnline: const Value(true)));
+      await db.packagesDao.upsertEntity(PackageEntitiesCompanion.insert(
+        id: 'k1',
+        packageId: 'p9',
+        categorySlug: 'npc',
+        name: 'Ejder',
+        imagePath: Value('dmt-content://$sha.png'),
+        updatedAt: Value(DateTime(2026, 7, 1)),
+      ));
+      final push = CloudPushService(db: db, client: cloud.client);
+      final seen = <Map<String, WorldMediaRef>>[];
+      var sentBeforeMedia = -1;
+      Future<void> media(Map<String, WorldMediaRef> refs) async {
+        seen.add(refs);
+        sentBeforeMedia = cloud.requests.length;
+      }
+
+      // İlk yayın: medyanın rezervasyonu paketin bulut satırına bağlı, o
+      // satır bu turda doğuyor — medyası ayrıca yükleniyor.
+      cloud.replies.addAll([
+        () => (201, [
+              {'revision': 1},
+            ]), // user_packages
+        () => (201, [
+              {'revision': 2},
+            ]), // user_package_entities
+      ]);
+      final first =
+          await push.pushPackage('p9', full: true, beforeRows: media);
+      expect(first.ok, isTrue, reason: '${first.error}');
+      expect(seen, isEmpty);
+
+      // Sonraki tur: değişen kartın görseli, hiçbir satır yazılmadan önce.
+      await db.packagesDao.setCloudPushAt('p9', DateTime(2026, 6, 1));
+      cloud.replies.addAll([
+        () => (200, [
+              {'id': 'p9'},
+            ]), // PATCH user_packages
+        () => (201, [
+              {'revision': 3},
+            ]), // user_package_entities
+      ]);
+      final next = await push.pushPackage('p9', beforeRows: media);
+      expect(next.ok, isTrue, reason: '${next.error}');
+      expect(seen.single,
+          {sha: const WorldMediaRef('.png', MediaKind.worldEntityImage)});
+      expect(sentBeforeMedia, 2, reason: 'yalnız ilk yayının iki isteği');
+      expect(cloud.requests.skip(2), [
+        'PATCH /rest/v1/user_packages',
+        'POST /rest/v1/user_package_entities',
+      ]);
     });
   });
 }

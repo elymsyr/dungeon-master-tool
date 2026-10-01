@@ -105,7 +105,9 @@ final cloudOnlyPackagesProvider =
 /// denenir ([_scheduleMediaRetry]); kullanıcının bir şey düzenlemesi gerekmez.
 ///
 /// Açık olmayan dünyalar (Faz 5f): uygulama açılınca, oturum açılınca ve
-/// bağlantı geri gelince [reconcileAll] — dünyayı açmak gerekmez.
+/// bağlantı geri gelince [reconcileAll] — dünyayı açmak gerekmez. Faz 5e'den
+/// beri online paketler de aynı anlarda ve medyalarıyla; paketin canlı
+/// sinyali yok, zamanlayıcıyla yeniden denenmez.
 class CloudPushPump {
   CloudPushPump(this._ref) {
     _buffer = _ref.read(pendingWriteBufferProvider);
@@ -243,15 +245,22 @@ class CloudPushPump {
 
   /// Satırlardan önce: bu turun satırlarının andığı, bulutta olmayan medya.
   /// Hata atmaz ([_quiet]) — yüklenemese de satırlar gider, uzlaştırma
-  /// sonra tamamlar.
-  Future<void> _uploadNew(String id, Map<String, WorldMediaRef> refs) async {
+  /// sonra tamamlar. Pakette (Faz 5e) [statusKey] paketin adı; "oyunculara
+  /// gitmeyecek" uyarısı yalnız dünyanın.
+  Future<void> _uploadNew(
+    String id,
+    Map<String, WorldMediaRef> refs, {
+    MediaScope scope = MediaScope.world,
+    String? statusKey,
+  }) async {
     final media = _ref.read(worldMediaSyncProvider);
     if (media == null || refs.isEmpty) return;
+    final world = scope == MediaScope.world;
     await _quiet(id, () async {
-      final rep = await media.upload(id, refs);
-      _notice(rep.tooLarge);
+      final rep = await media.upload(id, refs, scope: scope);
+      if (world) _notice(rep.tooLarge);
       return rep;
-    });
+    }, statusKey: statusKey, retry: world);
   }
 
   /// Rol, dünya açık olmasa da: hub'dan multiplayer açılan dünya aktif değil.
@@ -289,11 +298,17 @@ class CloudPushPump {
       return const CloudPushResult(skipped: true);
     }
     final pid = row.id;
+    // Medya satırlardan önce (Faz 5e), dünyadaki gerekçeyle. İlk yayında
+    // servis atlıyor: paketin bulut satırı o turda doğuyor.
     return _shown(
         row.name,
         CloudSyncIssue.push,
-        () => _rows.run(() =>
-            _logged('push paket $pid', svc.pushPackage(pid, full: full))));
+        () => _rows.run(() => _logged(
+            'push paket $pid',
+            svc.pushPackage(pid,
+                full: full,
+                beforeRows: (refs) => _uploadNew(pid, refs,
+                    scope: MediaScope.package, statusKey: row.name)))));
   }
 
   /// Faz 5a — aktif dünyanın bulut aynasını yerele çeker.
@@ -380,8 +395,15 @@ class CloudPushPump {
   /// [catchUp] yine doğruluyor.
   ///
   /// Açık dünya atlanır: onu kanalın `SUBSCRIBED`'ı uzlaştırıyor.
+  ///
+  /// Faz 5e — online paketler de: çevrimdışı düzenlenip kapatılan paket
+  /// açılmayı beklemeden çıkar. Açık paket yalnız push edilir: pull Drift'e
+  /// yazar ama paket ekranı bellekteki halinden okuyup onu kaydediyor —
+  /// inen satırları bir sonraki kayıtta eski halleriyle ezerdi. Öbür
+  /// cihazın düzenlemesini bir sonraki açılışta görür.
   Future<void> reconcileAll() async {
-    final worlds = await _ref.read(appDatabaseProvider).worldsDao.getAll();
+    final db = _ref.read(appDatabaseProvider);
+    final worlds = await db.worldsDao.getAll();
     for (final w in worlds) {
       if (!w.isOnline || w.id == _ref.read(activeCampaignProvider)) continue;
       _ref.invalidate(worldRoleProvider(w.id));
@@ -389,6 +411,18 @@ class CloudPushPump {
         await catchUp(w.id);
       } catch (e) {
         debugPrint('CloudSync: uzlaştırma ${w.id} hata=$e');
+      }
+    }
+    for (final p in await db.packagesDao.getAll()) {
+      if (!p.isOnline) continue;
+      try {
+        if (p.name == _ref.read(activePackageProvider)) {
+          await pushPackage(packageId: p.id, packageName: p.name);
+        } else {
+          await _catchUpPackage(p.id, p.name);
+        }
+      } catch (e) {
+        debugPrint('CloudSync: uzlaştırma paket ${p.id} hata=$e');
       }
     }
   }
@@ -416,25 +450,41 @@ class CloudPushPump {
         }
       });
 
-  /// Dünyanın bütün satırlarındaki medyayı buluta çıkarır; [prune] ise artık
+  /// Faz 5e — paketi online yapmak: bütün medyası, ilerlemeyle. Hata ve
+  /// kota aşımı çağırana çıkar. Yarım kalan, paketin bir sonraki uzlaştırma
+  /// anında tamamlanır (zamanlayıcı yok).
+  Future<WorldMediaReport?> syncPackageMedia(
+    String packageId, {
+    void Function(int done, int total)? onProgress,
+  }) =>
+      _media.run(() => _fullMedia(packageId,
+          scope: MediaScope.package, onProgress: onProgress));
+
+  /// Kapsamın bütün satırlarındaki medyayı buluta çıkarır; [prune] ise artık
   /// anılmayanı siler. Limit aşımı burada bildirilmez: açılışta eski dosyalar
   /// için her seferinde uyarmak gürültü olurdu, uyarı eklenme anının.
   Future<WorldMediaReport?> _fullMedia(
     String id, {
+    MediaScope scope = MediaScope.world,
     bool prune = false,
     void Function(int done, int total)? onProgress,
   }) async {
     final media = _ref.read(worldMediaSyncProvider);
     final svc = _ref.read(cloudPushServiceProvider);
     if (media == null || svc == null) return null;
-    if (await _roleOf(id) != WorldRole.dm) return null;
-    final refs = await svc.worldMediaRefs(id);
-    media.forget(id);
-    final rep = await media.upload(id, refs, onProgress: onProgress);
+    final world = scope == MediaScope.world;
+    // Paket kullanıcı kapsamlı: rol yok, RLS sahibe bakıyor.
+    if (world && await _roleOf(id) != WorldRole.dm) return null;
+    final refs = world
+        ? await svc.worldMediaRefs(id)
+        : await svc.packageMediaRefs(id);
+    media.forget(id, scope: scope);
+    final rep = await media.upload(id, refs,
+        scope: scope, onProgress: onProgress);
     if (rep.failed.isEmpty) _mediaSynced.add(id);
     _noticed.addAll(rep.tooLarge);
     if (prune) {
-      final n = await media.prune(id, refs.keys.toSet());
+      final n = await media.prune(id, refs.keys.toSet(), scope: scope);
       _pruned.add(id);
       if (n > 0) debugPrint('CloudSync: medya $id yetim ✕$n');
     }
@@ -443,15 +493,23 @@ class CloudPushPump {
 
   /// Arka plan medya işi: hata log'a, uzlaştırma bayrağı düşer ve yeniden
   /// deneme kurulur. Kota dolduysa kurulmaz — beklemek yer açmaz.
+  ///
+  /// Paket (Faz 5e) göstergeye adıyla girer ([statusKey]) ve [retry] almaz:
+  /// uzlaştırma anları belli (açılış, [reconcileAll]).
   Future<void> _quiet(
-      String id, Future<WorldMediaReport?> Function() body) async {
+    String id,
+    Future<WorldMediaReport?> Function() body, {
+    String? statusKey,
+    bool retry = true,
+  }) async {
+    final key = statusKey ?? id;
     final sw = Stopwatch()..start();
-    _status.started(id);
+    _status.started(key);
     try {
       final rep = await body();
       if (rep == null) return;
-      _status.report(id, CloudSyncIssue.media, failed: rep.failed.length);
-      if (rep.failed.isEmpty) _status.report(id, CloudSyncIssue.quota);
+      _status.report(key, CloudSyncIssue.media, failed: rep.failed.length);
+      if (rep.failed.isEmpty) _status.report(key, CloudSyncIssue.quota);
       if (rep.uploaded > 0 || rep.tooLarge.isNotEmpty || rep.failed.isNotEmpty) {
         debugPrint('CloudSync: medya $id ↑${rep.uploaded}'
             '${rep.tooLarge.isEmpty ? '' : ' limit üstü ${rep.tooLarge.length}'}'
@@ -462,20 +520,20 @@ class CloudPushPump {
         _mediaFails.remove(id);
       } else {
         _mediaSynced.remove(id);
-        _scheduleMediaRetry(id);
+        if (retry) _scheduleMediaRetry(id);
       }
     } catch (e) {
       _mediaSynced.remove(id);
       debugPrint('CloudSync: medya $id hata=${isOfflineError(e) ? 'offline' : e}');
       if (e is WorldMediaQuotaException) {
         _ref.read(worldMediaQuotaProvider.notifier).state ??= e.pool;
-        _status.report(id, CloudSyncIssue.quota, failed: 1);
+        _status.report(key, CloudSyncIssue.quota, failed: 1);
       } else {
-        _status.report(id, CloudSyncIssue.media, error: e);
-        _scheduleMediaRetry(id);
+        _status.report(key, CloudSyncIssue.media, error: e);
+        if (retry) _scheduleMediaRetry(id);
       }
     } finally {
-      _status.ended(id);
+      _status.ended(key);
     }
   }
 
@@ -537,8 +595,8 @@ class CloudPushPump {
     await catchUp(worldId);
   }
 
-  /// Faz 5c — paket açılmadan önce: push, sonra pull (sıranın gerekçesi
-  /// [catchUp]'ta). Paketin canlı sinyali yok; uzlaştırma anı açılış.
+  /// Faz 5c — paket açılmadan önce uzlaştırma ([_catchUpPackage]). Paketin
+  /// canlı sinyali yok; uzlaştırma anı açılış (ve [reconcileAll]).
   ///
   /// [wait] kadar beklenir, sonra paket yerel haliyle açılır: yavaş ağ
   /// açılışı kilitlemesin. Geç biten pull satırları yine Drift'e yazar,
@@ -548,23 +606,38 @@ class CloudPushPump {
   /// kullanıcıya söyler).
   Future<bool> syncPackage(String packageName,
       {Duration wait = const Duration(seconds: 8)}) async {
-    final svc = _ref.read(cloudPullServiceProvider);
     final id =
         (await _ref.read(appDatabaseProvider).packagesDao.getByName(packageName))
             ?.id;
-    if (svc == null || id == null) return true;
+    if (_ref.read(cloudPullServiceProvider) == null || id == null) return true;
     Future<bool> run() async {
-      final pushed = await pushPackage(packageId: id, packageName: packageName);
-      // Push'la aynı koşul: paket online değil, pull da atlardı.
-      if (pushed.skipped) return true;
-      final res = await _shown(packageName, CloudSyncIssue.pull,
-          () => _rows.run(() => svc.pullPackage(id)));
-      debugPrint('CloudSync: pull paket $id +${res.applied} -${res.removed} '
-          'rev=${res.revision}${res.error != null ? ' hata=${res.error}' : ''}');
+      await _catchUpPackage(id, packageName);
       return true;
     }
 
     return run().timeout(wait, onTimeout: () => false);
+  }
+
+  /// Paketin uzlaştırması: push, sonra pull (sıranın gerekçesi [catchUp]'ta),
+  /// sonra oturumda bir kez bütün medyası (Faz 5e) — kendi şeridinde, açılışı
+  /// bekletmeden. Yetim temizliği dünyadaki kuralla: yalnız pull tuttuysa.
+  Future<void> _catchUpPackage(String id, String name) async {
+    final svc = _ref.read(cloudPullServiceProvider);
+    if (svc == null) return;
+    final pushed = await pushPackage(packageId: id, packageName: name);
+    // Push'la aynı koşul: paket online değil, pull da atlardı.
+    if (pushed.skipped) return;
+    final res = await _shown(
+        name, CloudSyncIssue.pull, () => _rows.run(() => svc.pullPackage(id)));
+    debugPrint('CloudSync: pull paket $id +${res.applied} -${res.removed} '
+        'rev=${res.revision}${res.error != null ? ' hata=${res.error}' : ''}');
+    if (_mediaSynced.contains(id) && _pruned.contains(id)) return;
+    final prune = res.ok && !_pruned.contains(id);
+    unawaited(_media.run(() => _quiet(
+        id,
+        () => _fullMedia(id, scope: MediaScope.package, prune: prune),
+        statusKey: name,
+        retry: false)));
   }
 
   Future<CloudPushResult> pushActivePackage() =>
