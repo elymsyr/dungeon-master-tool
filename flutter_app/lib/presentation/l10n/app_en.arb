@@ -2814,6 +2814,7 @@
   "charNowOffline": "Character is now local only",
   "charOfflineBody": "This removes the character and its images from the cloud. Your other devices keep their copy, but it no longer syncs. Continue?",
   "cloudOnlyCharactersHint": "Your online characters from your other devices. Download one to use it here too.",
+  "charOnlineRejected": "The cloud didn't accept this character. You may have reached the limit of 10 online characters.",
   "nowPlaying": "Now playing",
   "soundPlaying": "Playing",
   "soundStopped": "Stopped",

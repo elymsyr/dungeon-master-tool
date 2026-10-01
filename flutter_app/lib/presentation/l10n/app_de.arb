@@ -2027,6 +2027,7 @@
   "charNowOffline": "Charakter ist jetzt nur noch lokal",
   "charOfflineBody": "Dies entfernt den Charakter und seine Bilder aus der Cloud. Deine anderen Geräte behalten ihre Kopie, sie wird aber nicht mehr synchronisiert. Fortfahren?",
   "cloudOnlyCharactersHint": "Deine Online-Charaktere von deinen anderen Geräten. Lade einen herunter, um ihn auch hier zu nutzen.",
+  "charOnlineRejected": "Die Cloud hat diesen Charakter nicht angenommen. Möglicherweise ist das Limit von 10 Online-Charakteren erreicht.",
   "nowPlaying": "Läuft gerade",
   "soundPlaying": "Läuft",
   "soundStopped": "Gestoppt",

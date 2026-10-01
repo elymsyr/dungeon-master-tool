@@ -308,12 +308,16 @@ class CloudPullService {
 
   /// Bu kullanıcının bulutta olup bu cihazda olmayan karakterleri. Çöpteki
   /// karakter de sayılmaz: silmesi henüz buluta gitmemiş olabilir.
+  ///
+  /// Önce yalnız id'ler, gövde yalnız eksikler için: liste her karakter
+  /// uzlaştırmasında tazeleniyor (hub'ın üstünde açık karakter ekranında her
+  /// sinyalde), gövdeler büyük ve çoğu zaman hepsi zaten bu cihazda.
   Future<List<CloudCharacter>> listCloudOnlyCharacters() async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
-    final rows = await _client
+    final ids = await _client
         .from('world_characters')
-        .select('id, payload_json')
+        .select('id')
         .eq('owner_id', uid);
     final local = {
       for (final r in await _db.customSelect(
@@ -322,10 +326,18 @@ class CloudPullService {
           .get())
         r.read<String>('id'),
     };
+    final missing = [
+      for (final r in ids)
+        if (!local.contains(r['id'])) r['id'] as String,
+    ];
+    if (missing.isEmpty) return const [];
+    final rows = await _client
+        .from('world_characters')
+        .select('id, payload_json')
+        .inFilter('id', missing);
     return [
       for (final r in rows)
-        if (!local.contains(r['id']))
-          (id: r['id'] as String, name: _nameOf(r['payload_json'])),
+        (id: r['id'] as String, name: _nameOf(r['payload_json'])),
     ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 

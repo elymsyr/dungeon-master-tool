@@ -16,6 +16,8 @@
 //      başlamaz; kart tombstone'u yerelde siler.
 //   5. Buluttan silinmiş paketi öbür cihazın push'u DİRİLTMEZ, offline'a düşer.
 //   6. Faz 5e — paket turunda medya satırlardan önce; ilk yayında hiç.
+//   7. Faz 5g — "bulutta, bu cihazda yok" karakter listesi gövdeyi yalnız
+//      eksik karakter için indirir.
 
 import 'package:drift/drift.dart' show Value, Variable;
 import 'package:dungeon_master_tool/application/services/cloud_pull_service.dart';
@@ -424,5 +426,30 @@ void main() {
         'POST /rest/v1/user_package_entities',
       ]);
     });
+  });
+
+  test('karakter listesi: önce id, gövde yalnız eksikler için (Faz 5g)',
+      () async {
+    await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
+        id: 'here', worldId: '', templateId: 't', templateName: 'T'));
+    cloud.replies.add(() => (200, [
+          {'id': 'here'},
+        ]));
+    expect(await svc.listCloudOnlyCharacters(), isEmpty);
+    expect(cloud.calls.single.uri.queryParameters['select'], 'id',
+        reason: 'hepsi buradaysa hiçbir gövde inmez');
+
+    cloud.replies.addAll([
+      () => (200, [
+            {'id': 'here'},
+            {'id': 'away'},
+          ]),
+      () => (200, [
+            {'id': 'away', 'payload_json': '{"entity":{"name":"Kael"}}'},
+          ]),
+    ]);
+    final list = await svc.listCloudOnlyCharacters();
+    expect(list, [(id: 'away', name: 'Kael')]);
+    expect(cloud.calls.last.uri.queryParameters['id'], 'in.("away")');
   });
 }
