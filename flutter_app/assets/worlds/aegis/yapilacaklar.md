@@ -18,3 +18,8 @@
   çizdiği eski yüzün bu kıtadan olmadığı anlaşılırsa, hele Meclis'te nereden olduğu
   anlaşılırsa, bu oyuncuların Meclis'e karşı *"hastalık var"* iddiasını güçlendirir.
   **Yazılacak:** bunun nasıl ve nerede işlediği.
+
+## Lucid Triton
+
+- **Kilerdeki iki el** (adı yazan, kıyafeti diken) kart değil ve adsız. Masada
+  gerekirse NPC kartı olarak yazılabilir — öneri, onay bekliyor.

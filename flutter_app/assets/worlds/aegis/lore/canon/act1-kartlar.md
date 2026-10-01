@@ -228,7 +228,7 @@ biliyor) · `environmental-effect` Gemi ambarı · `encounter` Deniz karşılaş
 **Perde kapanışı** — `scene` Ufuk / ikinci kıta görüntüsü (06 #12). Kart mı sahne mi
 belirsiz.
 
-**Votumar (Paladin Şatosu)** ve **Ravenhall Avlusu** — README §2 güzergahında var ama
+**Votumar (Paladin Şatosu)** ve **Radenhall Avlusu** — README §2 güzergahında var ama
 act1.md'de hiç geçmiyor. Act 1'de yer alıyorlar mı → karar.
 
 **Cinervik · Argenfon** — yazıldı: [`bolgeler.md`](bolgeler.md) §5 (yol köyü ·

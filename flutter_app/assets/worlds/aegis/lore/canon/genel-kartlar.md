@@ -88,7 +88,7 @@ Kart eşiği gereği kıtaların da kartı var; Act 1'in yerleri bunların altı
 | **Meridia** — kıta | Aegis | ✅ | Act 1'in tamamı burada. Sancak Kaydı'nın geçerli olduğu yer |
 | **Vorstrand** | Aegis | ✅ | act1.md §3.1: Blight oradan geldi, üçlü oradan kaçtı. Ad: *vost-* doğu + *-strand* kıyı. Perde bu kıta ufukta görülünce biter (06 #12) |
 
-Bölge/güzergah kartları (Cinervik · Argenfon · Votumar · Ravenhall) bu listede değil:
+Bölge/güzergah kartları (Cinervik · Argenfon · Votumar · Radenhall) bu listede değil:
 içerikleri [`bolgeler.md`](bolgeler.md)'de yazıldı, kartları
 [`kart-listesi.md`](kart-listesi.md) §3'te.
 

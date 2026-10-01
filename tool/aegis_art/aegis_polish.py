@@ -206,12 +206,13 @@ SUBJECT = {
  "answering far away, ranks of catapults with their arms raised on the open ground between "
  "the towers, a lighthouse standing on black rocks at the last point, a bright hammered sea "
  "and salt haze below",
-"location|Ravenhall Avlusu":
- "A flat windswept northern plateau emerging out of thick fog, a great ring of standing stones "
- "with the smallest as tall as a man, rune grooves cut a finger deep into their faces holding "
- "a slow amber glow, a raven with ruffled feathers on the tallest stone, a door carved into "
- "the trunk of an enormous ancient tree beyond the ring, one narrow path climbing to the "
- "plateau edge and dropping away into white cloud, wet black rock and wind-bent grass",
+"location|Radenhall Avlusu":
+ "A wide open sunlit clearing in a warm near-tropical forest basin, a great circle of giant "
+ "standing stones with faint barely visible runes cut into their faces, inner and outer rings "
+ "of smaller stones of many different sizes, beyond the clearing dense green forest climbing "
+ "the surrounding coastal mountains to their peaks, small wooden houses of many shapes under "
+ "the trees, some on the ground, some up in the branches, some lashed between trunks with "
+ "thick vines, one narrow path descending from a mountain notch",
 "location|Cinervik":
  "A long road village at dusk with the northern highway running straight through the middle of "
  "it and coating everything in the same grey dust, half a dozen inns with enormous signboards "
@@ -395,7 +396,7 @@ LIGHT = {
 "location|Elymsyr": "clear bright late afternoon, cool white sunlight on pale grey limestone, crisp blue shadows between the terraces, only the painted roofs and awnings carrying colour, sparkling water, faint sea haze",
 "location|Votumar": "storm light, heavy slate cloud stacked over the sea, one cold break of sun striking wet white limestone, spray in the air",
 "location|Gözcü Kuleleri Hattı": "hard bright midday sun, hammered glare off the sea, sharp black shadows, salt haze on the horizon",
-"location|Ravenhall Avlusu": "moonlight breaking through thick fog, cold silver air, faint amber glow rising out of the rune grooves",
+"location|Radenhall Avlusu": "clear high summer sun, warm dry air, sharp short shadows at the foot of the stones, deep green forest behind",
 "location|Cinervik": "dusty gold last light, everything filmed with the same grey road dust, one forge mouth glowing orange, long shadows down the road",
 "location|Argenfon": "warm low evening sun under a racing grey sky, wet shingle catching the light, cold sea behind",
 
@@ -452,8 +453,8 @@ LIGHT = {
 "npc|Kapı Komutanı — Nevra": "the shade of a gatehouse arch with cold light from outside, the open register bright under her hand",
 "npc|Başkumandan Yardımcısı — Aren": "one shuttered window throwing a single bar of light across a dim stone chamber, most of the face in shadow",
 "npc|Kule Nöbetçisi — Vrask": "hard coastal sun and mirror glare, salt haze, bronze scales flashing",
-"npc|En Yaşlı Druid": "fog-diffused plateau light, cold silver air, a faint amber rune glow from below",
-"npc|Patika Gözcüsü": "overcast cliff-path light, cold green-grey, wet rock",
+"npc|En Yaşlı Druid": "warm dappled forest light, clear summer air, sun through leaves on a pale plant-fibre robe",
+"npc|Patika Gözcüsü": "bright mountain-path sun, warm grey rock, green forest below",
 
 "trait|Acıyı Tanımaz": "cold dawn light on wet trampled grass, long blue shadows, grey lifeless skin",
 "trait|Bulaştıran Yara": "harsh close daylight, clinical and unflinching, sharp detail in the wound",
@@ -500,7 +501,7 @@ LIGHT = {
 "scene|Geçiş Divanı'nda Sıra": "yellow lamplight down a dim windowless corridor, tired stale air",
 "scene|Gümrük Rıhtımı": "hard midday sun on a stone quay, sharp shadows, spice dust hanging in the light",
 "scene|Susan Kule": "night, the fire basin the only strong light, wind tearing the flame sideways, distant fires down a black coast",
-"scene|Avluda Karşılanma": "fog-diffused dusk, amber rune light falling across half an old face",
+"scene|Avluda Karşılanma": "high noon in an open stone circle, warm light, an old face half in the shade of a giant stone",
 "encounter|Şafak Çatışması": "the grey moment before sunrise, cold blue everywhere, sour haze catching the light",
 "quest|Söylentinin Peşinde": "dusk on a muddy forest road, last warm light on the nailed notice, dark pines closing in",
 "quest|Nereden Geldiler": "one desk lamp over the cut page, a warm close pool of light, the port window blue with evening behind",
@@ -1010,6 +1011,103 @@ SUBJECT.update({
  "flap and the body of the packet in one unbroken piece, one short line of handwritten dark ink "
  "script across the closed face, a brass seal matrix and a stub of white wax with a softened end "
  "lying beside it, a goose quill and a shallow ink horn at the edge of the boards",
+})
+
+
+# ---------------------------------------------------------------------------
+# 0.14.0 — Radenhall yeniden yazildi (ekvatora yakin, acik hava, ormanlik canak,
+# tas halkalari, agac alti tahta evler, bitki lifi giysi) + iki yeni kart.
+# Eski konular sisli plato, yun ve kurk ciziyordu.
+# ---------------------------------------------------------------------------
+
+LIGHT.update({
+"lore|Kuzeyin Gözcüleri":
+ "clear warm summer daylight, sun breaking past the edge of the canopy, short shadows on the grass",
+"location|Mavnacılar Hanı":
+ "low smoky lamplight in the common room, warm amber on oak and wet rope, "
+ "one smaller brighter pool of lamp light glowing up from the cellar stair",
+"quest|Taşların Bildiği":
+ "clear high summer sun, warm haze hanging over the forest basin, hard light on grey rock along the path",
+})
+
+SUBJECT.update({
+"npc|En Yaşlı Druid":
+ "A very old woman standing straight-backed, a sun-browned face of deep lines, white hair to the "
+ "waist with black raven feathers braided into it, clear pale green eyes, wearing a light undyed "
+ "robe woven from bamboo fibre that reads like linen, a string of dried seeds around her neck, "
+ "turning a flat rune-carved stone between the fingers of one hand, standing in the shade at the "
+ "foot of a giant standing stone at the edge of a sunlit forest clearing, small wooden houses "
+ "under the trees behind her",
+"scene|Avluda Karşılanma":
+ "A wide open sunlit clearing ringed by tall green forest, a circle of giant standing stones with "
+ "faint barely visible runes, smaller stones of uneven sizes standing in rings inside and outside "
+ "the circle, an ancient white-haired druid woman in a pale plant-fibre robe sitting down in the "
+ "shade at the foot of one giant stone and patting the grass beside her with one hand, a flat "
+ "rune-carved stone in her other hand, a small group of travellers with packs standing at the edge "
+ "of the stones in the noon sun, a grey wolf lying in the grass at a distance, wooden houses under "
+ "the trees behind",
+"lore|Kuzeyin Gözcüleri":
+ "Three druids of different peoples, an old human man, a young dark-skinned elf woman and a stocky "
+ "half-orc, wearing light robes and wraps woven from bamboo and plant fibre in pale green and "
+ "undyed tones, hung with carved rune tokens and braided grass cord, standing among giant standing "
+ "stones in a sunlit forest clearing, a raven on the tallest stone, a huge grey wolf lying at their "
+ "feet, small wooden houses of many shapes under the trees behind, some up in the branches and some "
+ "lashed between trunks with thick vines",
+"location|Mavnacılar Hanı":
+ "The common room of a riverside inn for barge crews, long rough oak tables, bargemen with dried "
+ "river mud on their forearms drinking from clay mugs, one of them counting a fan of small paper "
+ "tickets, a woman behind the counter pulling the bung from a wooden cask, coils of wet hemp rope "
+ "by the door, at the far end of the counter beside a hanging curtain a narrow stone stair going "
+ "down, and at its foot a glimpse of a lamplit cellar with a writing table, an open ledger and a "
+ "quill, and a tailor's table with folded coats and a pair of boots",
+"quest|Taşların Bildiği":
+ "A tall broad-shouldered male elf scout standing square in the middle of a single narrow rocky "
+ "mountain path facing the viewer, long hair tied back, wearing natural earthy clothes of woven "
+ "plant fibre and soft undyed leather with layered shoulder guards made of large overlapping "
+ "dried leaves, a short bow in one hand and his other hand raised palm out, a huge bare grey wolf "
+ "the size of a pony standing beside him with its head low and its eyes on the viewer, three "
+ "travellers with packs halted on the path in the foreground with their backs to the viewer, behind "
+ "the scout the path drops through a notch into a wide green broadleaf forest basin holding a great "
+ "sunlit open clearing with a circle of giant standing stones and rings of smaller stones, the "
+ "forest climbing every slope around it to the peaks",
+})
+
+
+# 0.14.0 — secim turu yorumlari (out_014_pick/picks.json)
+SUBJECT.update({
+"location|Radenhall Avlusu":
+ "A wide open sunlit clearing in a warm near-tropical forest basin, a great circle of giant "
+ "standing stones with faint barely visible runes cut into their faces, inner and outer rings "
+ "of smaller stones of many different sizes, the open ground inside the circle bare short grass "
+ "and packed earth with two small people on foot walking across it, beyond the clearing dense "
+ "green forest climbing the surrounding coastal mountains to their peaks, small wooden houses of "
+ "many shapes under the trees, some on the ground, some up in the branches, some lashed between "
+ "trunks with thick vines, one narrow footpath descending from a mountain notch",
+"scene|Avluda Karşılanma":
+ "A vast open sunlit clearing ringed far away by tall green forest, an enormous wide circle of "
+ "giant standing stones with faint barely visible runes spread across the whole meadow, the far "
+ "side of the circle small in the distance, smaller stones of uneven sizes standing in rings "
+ "inside and outside it, the near foreground open empty grass and wildflowers, a small group of "
+ "travellers with packs standing at the inner edge of the stones in the noon sun, a grey wolf "
+ "lying in the grass at a distance, wooden houses under the trees at the edge of the forest",
+"location|Mavnacılar Hanı":
+ "The large sprawling grimy common room of a poor riverside tavern for barge crews, a wide low "
+ "hall stretching far back with many long rough stained oak tables in rows, sagging smoke-"
+ "blackened beams overhead, sawdust and spilled ale on a dirty plank floor, a mixed crowd of "
+ "fantasy folk drinking from chipped clay mugs: a broad grey-green half-orc bargeman with river "
+ "mud on his forearms, a stout red-bearded dwarf counting a fan of small paper tickets, a wiry "
+ "halfling in a patched coat, a tired tiefling woman with curling horns behind a long counter "
+ "pulling the bung from a wooden cask, coils of wet hemp rope by the door, at the far end of the "
+ "counter beside a ragged hanging curtain a narrow stone stair going down, and at its foot a "
+ "glimpse of a lamplit cellar with a writing table, an open ledger and a quill, and a tailor's "
+ "table with folded coats and a pair of boots",
+"npc|Patika Gözcüsü":
+ "A tall broad-shouldered male elf scout standing on a single narrow rocky mountain path, long "
+ "hair tied back, wearing natural earthy clothes of woven plant fibre and soft undyed leather with "
+ "layered shoulder guards made of large overlapping dried leaves, a short bow held low in one hand "
+ "and his other hand resting on the head of a huge bare grey wolf the size of a pony standing "
+ "beside him with its head low and its eyes on the viewer, behind them the path drops through a "
+ "notch into a wide green broadleaf forest basin",
 })
 
 if __name__ == "__main__":

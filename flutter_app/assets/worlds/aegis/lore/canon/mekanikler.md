@@ -263,7 +263,7 @@ zarıyla aynı tutuldu. Kanon bir sayı verdiğinde bu satır onunla değişir.
 
 | Sınıf | Fark |
 |---|---|
-| **Druid** | Yozlaşma zarına **+2**. Doğanın hastalandığını okuyabilen tek meslek; Ravenhall'un öğrettiği şey bu ([`bolgeler.md` §4](bolgeler.md)) |
+| **Druid** | Yozlaşma zarına **+2**. Doğanın hastalandığını okuyabilen tek meslek; Radenhall'ın öğrettiği şey bu ([`bolgeler.md` §4](bolgeler.md)) |
 | **Paladin** | Bozulmanın **fiziksel** etkilerini daha kolay savuşturur: Aşama 1'in belirtileri onda görünmez, puanı ve mekaniği değişmez |
 
 **Neden Act 1'de hiç atılmıyor:** perdenin tamamı cephenin **iç** tarafında geçiyor
@@ -294,6 +294,10 @@ olan **tek** savunma.
 +8 kasten yüksek: bu bir kolaylık değil, **kıt bir kaynak.** Kural şerbeti güçlü
 yapıp bulunmasını zorlaştırıyor; tersi (zayıf ve bol) hastalığı bir tempo kuralından
 bir muhasebe kalemine çevirirdi.
+
+**Tarifi ve takası Radenhall'da (KARAR, 2026-10-01).** Şerbetin yurdu Kuzeyin
+Gözcüleri: bilir, yapar, ve altınla değil takasla verir; tarif de orada öğrenilir
+([`bolgeler.md` §4.7](bolgeler.md)). Takasın karşılığı bilerek boş — DM'in.
 
 **Şifa büyülerinin bedeli — yapan öder.** `act1.md` §4.4 iki büyünün *etkisini*
 yazdı; `YT` *ücretini* ekliyor ve ikisi çelişmiyor:

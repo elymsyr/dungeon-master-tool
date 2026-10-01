@@ -62,7 +62,7 @@ sözlük de dünyayı anlatmaz — ilk oturumda duyulacak kelimeleri açar.
 | **Hizmet Basamakları** | 18 yaş, çırak→üstat; yükseliş gerçek ama **kayda geçmesi** karşı-imza ister | ✅ |
 | **Onur Mahkemeleri** | Lonca mahkemesi / Onur Mahkemesi / kamu hizmeti. İhanet: **kayıttan düşürme + sürgün** | ✅ |
 | **Gümüş Kalkan Nişanı** | Votumar'ın paladin düzeni: ağır zırh, kule kalkanı, kusursuz nizam | ✅ |
-| **Kuzeyin Gözcüleri** | Ravenhall'ın druid kabilesi; kararı döngü ve rün verir, oylama değil | ✅ |
+| **Kuzeyin Gözcüleri** | Radenhall'ın druid kabilesi; kararı döngü ve rün verir, oylama değil | ✅ |
 | **Liman Ahdi** | Gizli Liman'ın sözlü kanunu. İki ağır ihlal: **yeri ifşa etmek** · **izinsiz gemiye girmek** | ✅ |
 | **Kural Sapmaları** | 4 sayfa: *Çağrı Zarı* · *Ölümün Ağırlığı* (diriltmenin bedeli) · *Işınlanma ve Mesafe* · *Kalıcı Yaralar* | 🟡 |
 | **İlahi Büyü Listesi** | Çağrı zarını hangi büyüler istiyor: Paladin (34) · Cleric (105) · Warlock (68) dökümü, ve bu kıtada neredeyse hiç görülmeyen 38 büyü | ✅ |
@@ -113,7 +113,7 @@ anlatıyla yazılır, `pages[]` içindeki rakamlar kilitlenmez.
 Haneler ayrı kart değil — ait oldukları loncanın kartı içinde yazılır. Bir hane
 masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi kartını alır.
 
-## 3. `location` — 33
+## 3. `location` — 35
 
 | Kart | Üst (`parent_location_ref`) | Ne | Durum |
 |---|---|---|---|
@@ -128,14 +128,14 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Lucid Triton** | Meridia | Beyaz mermer; hiçbir şey üretmez, **meşruiyet** üretir. Resmi kayıtta *Lucidum Triton* | ✅ |
 | **Mühür Salonu** | Lucid Triton | Kararın alındığı değil **kayda geçtiği** oda | ✅ |
 | **Meclis Salonu** | Lucid Triton | Altı koltuğun toplandığı oda; §8'in iki sahnesinin yeri | ✅ |
-| **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdı buradan çıkar | ✅ |
+| **Karşı-İmza Masası** | Lucid Triton | Geçiş Divanı'nın kendisi; geçiş kağıdının **ön onayı** burada (karşı-imzayı loncanın imzacısı atar, `lonca-sehir.md` §6.4) | ✅ |
 | **Elymsyr** | Meridia | Resmi kapı; ikinci adı **Claport**. Altın Nehir'in kanyon ağzında, iki yakaya kurulmuş. Hep açık kapı ve kalkmayan zincir bu kartta. Mal buradan geçer, **kağıt şehre gider** | ✅ |
 | **Gümrük Binası** | Elymsyr | Yükün açıldığı, tartıldığı ve yazıldığı salon; valinin odası üst katta | ✅ |
 | **Aşağı Rıhtım** | Elymsyr | İki yakadaki antrepolar, hangarlar, gnome vinçleri. Gece boşaltmalarının yeri | ✅ |
 | **Kanyon Asansörleri** | Elymsyr | Kanyon duvarındaki ahşap hat; mal iç yerleşimlere buradan çıkar. Halatçıların kendi çetelesi | ✅ |
 | **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
 | **Gözcü Kuleleri Hattı** | Votumar | İşaret ağı: gece ateş, gündüz dev aynalar. En uçta deniz feneri | ✅ |
-| **Ravenhall Avlusu** | Meridia | Rünlü taş dairesi. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
+| **Radenhall Avlusu** | Meridia | Kıyı dağlarının çevirdiği ormanlık çanak; dev taş dairesi, iç ve dış halkalar, ağaç altında tahta evler. Ekvatora yakın, hava açık. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
 | **Cinervik** | Meridia | Yol köyü. Han, at kiralama, nalbant. Söylenti bol **ve yanlış** | ✅ |
 | **Argenfon** | Meridia | Kıyı köyü. Balıkçılık, Deniz Festivali, paladin dostluğu | ✅ |
 | **Meclis Binası** | Lucid Triton | Dilekçe avlusu, altı loncanın kalemi; Meclis ve Mühür salonlarının üstü | ✅ |
@@ -150,6 +150,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Şehir Kapıları** | Lucid Triton | Girişin yazıldığı yer; gündüz ve gece defterleri ayrı | ✅ |
 | **Sessiz Sokak** | Lucid Triton | Eski tanrıların sokağı; hiçbir mahalle defterinde yok | ✅ |
 | **Nehir Yükleme Alanı** | Lucid Triton | Altın Nehir'in mavnaları, kantar, sur dışı ve içi | ✅ |
+| **Mavnacılar Hanı** | Lucid Triton | Yükleme alanının dibinde han; **kilerinde ad ve kıyafet** hazırlanır. Yolu Orvan ve Kandil bilir (`lonca-sehir.md` §6.2, 2026-10-01) | ✅ |
 
 ## 4. `npc` — 35
 
@@ -197,7 +198,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 
 | Kart | Nerede | Hangi kapıyı açar | Durum |
 |---|---|---|---|
-| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | **Kilit** — karşı-imzayı verir ya da yığının altına kaydırır; masada Orvan'ın kayırmasıyla oturuyor | ✅ |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | **Kilit** — ön onayı verir ya da kağıdı yığının altına kaydırır; masada Orvan'ın kayırmasıyla oturuyor. Terfisi: imzacı olmak | ✅ |
 | **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Yüzüğün tezgahı: fihristten hangi kuyumcunun vurduğu | ✅ |
 | **Sindri** — simyacı çırağı *(gnome)* | Şifacılar kışlası | Hastalığın şehirde **bilindiğinin** belgesi | ✅ |
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | ✅ |
@@ -225,12 +226,12 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Gözcü Yüzbaşısı — Drahan** *(ejderdoğan)* | Hattın itibarı | O geceyi yazmamasının ağızdan bir emirle olduğunu; emri getireni tanımadığını | Hattın şato ucu: kaza değil karar — **ama kararı verenin adı hiçbir yerde yok** | ✅ |
 | **Kıyı Kardeşleri — Kessa, Bram ve Tomas** *(iki insan, bir tiefling)* | Teknenin ve birbirlerinin güvende kalması | Aynı gece kıyıdan bir ışık gördüklerini; o saatte orada olmamaları gerektiğini | Susan gecenin **sivil** tanığı; şatoya girmeden ulaşılır. **Üç kardeş, tek kart** | ✅ |
 
-**Ravenhall** — `bolgeler.md` §4.6
+**Radenhall** — `bolgeler.md` §4.6
 
 | Kart | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **En Yaşlı Druid** *(insan / elf)* | Platonun kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladı, hangi yöne yürüyor | 🟡 ad |
-| **Patika Gözcüsü** *(yarı-elf)* | Kimsenin yukarı çıkmaması | Son aylarda çıkmayı deneyen ilk kişilerin kim olduğunu | Kimin Ravenhall'ı aradığı — ve neden | 🟡 ad |
+| **En Yaşlı Druid** *(insan / elf)* — köyün yaşlısı | Radenhall'ın kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladı, hangi yöne yürüyor · bir karakterdeki hastalığı sezebilir · şerbetin tarifi ve takası | 🟡 ad |
+| **Patika Gözcüsü** *(elf, dev kurtla)* | Kimsenin davetsiz patikadan geçmemesi | Son aylarda geçmeyi deneyen ilk kişilerin kim olduğunu | Kimin Radenhall'ı aradığı — ve neden | 🟡 ad |
 
 > **İki taşıyıcı kuralı (5. tur güncellemesi):** *limana nasıl gidilir* iki yerde
 > (Duran/Corvin · yüzük→Kildrak). ~~*Silme oldu mu* iki yerde (Sicim · Mine).~~ *2026-09-15:* limanda insan yazılmadığı
@@ -244,7 +245,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 > satın alınır* iki limanda birden (Sicim · Vinç Ustası). *Başkumandan'da bir
 > terslik var* iki bağımsız yerde (Şüpheci Rütbeli · Kule Nöbetçisi).
 
-**Adı bekleyen 6 NPC** (🟡): Elymsyr'in dördü, Ravenhall'ın ikisi. *(Votumar'ın kadrosu 2026-09-17'de adlandırıldı ve sekize çıktı.)*
+**Adı bekleyen 6 NPC** (🟡): Elymsyr'in dördü, Radenhall'ın ikisi. *(Votumar'ın kadrosu 2026-09-17'de adlandırıldı ve sekize çıktı.)*
 Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
 `npc/Konsey Aracısı`'nın **Kadife** olmadan önceki hali gibi.
 
@@ -305,9 +306,9 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Geçiş Pazarlığı** | Rıhtım | İkinci kapı: iyi yazı ya da iyi para | ✅ |
 | **Meclis Oturumu** | Meclis Salonu | Altı koltuk, beş inkâr, inkâr etmeyen tek üye | ✅ |
 | **Kapı Önündeki Teklif** | Meclis Salonu | Orvan'ın elindeki teklif, ne zaman yapacağı yazılmaz: "onları geçireni bana getirin" | ✅ |
-| **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur): Orvan'ın imzası elde, Corin ikinciyi vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
+| **Geçiş Divanı'nda Sıra** | Geçiş Divanı | **Kilit sahnesi** (5. tur; 2026-10-01'de ön onaya çevrildi): kağıdın ilk durağı, Corin ön onayı vermiyor. Rüşvet · Orvan'ın adı · terfi | ✅ |
 | **Gümrük Rıhtımı** | Elymsyr | Yükün didik didik edilmesi; kaydın çıkması, kağıdın şehre gitmesi. İyi yazı buradan da gemiye bindirir (5. tur) | ✅ |
-| **Avluda Karşılanma** | Ravenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor**. Patikanın iki anahtarı: gözcüyü ikna · çürümeden söz etmek | ✅ |
+| **Avluda Karşılanma** | Radenhall Avlusu | Şaşırmayan bir yaşlı. Bilgi kazanılmıyor, **teslim alınıyor**. Patikanın iki anahtarı: gözcüyü ikna · çürümeden söz etmek | ✅ |
 | **Kapıya En Yakın Masa** | Goodbarrel'ın Ocak Başı | **Kilit sahnesi** (kapı turu): Halim'in kim olduğu → Orvan Sancar'ın adı ve Lucid Triton yolu | ✅ |
 | **Dilekçe Avlusu** | Meclis Binası | **Kilit sahnesi** (kapı turu): Meclis Salonu'na giriş. Lonca hattı · Halim'in anlattıkları · bir koltuğun adı · rüşvet/sabır | ✅ |
 | **Ayar Masası** | Yukarı Çarşı | **Kilit sahnesi** (kapı turu): Kildrak yüzüğü okur, ad değil **yön** verir — limana ikinci kapı | ✅ |
@@ -318,13 +319,14 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
 
-## 10. `quest` — 6
+## 10. `quest` — 7
 
 | Kart | Zincir | Durum |
 |---|---|---|
-| **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · plato. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
-| **Nereden Geldiler** | Yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
-| **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: karşı-imza kapısı ya da para kapısı. Kullanılmayabilir | ✅ |
+| **Söylentinin Peşinde** | Giriş kancası: söylenti Gümüşsu'ya çıkar. Açık kapılar — köy · kulübe · dönüşüm · şehir · şato · Radenhall. **Üç kapanışı var:** bir makama ulaşmak · köyün bir sonuca bağlanması · köyü arkada bırakmak | ✅ |
+| **Nereden Geldiler** | **Orvan'ın işi, tek kart** (2026-10-01): kaybolan gemiler (neden — yazılmadı) · gerekirse durdurmak · hastalığın kesin kanıtı. İçinde üçlünün izi: yüzük → kayıtsız giriş → limanda soğur (*Kader*). Gerçek adlar iki taşıyıcıda: alyansın içi · tarif | ✅ |
+| **İyi Yazı** | Kıtadan çıkış **kapı mekanizması**, görev değil: yasal kapı (ön onay → kimlik ve kıyafet → imzacının karşı-imzası → gemi) ya da para kapısı. Kullanılmayabilir | ✅ |
+| **Taşların Bildiği** | Radenhall'a gitmek (Lucid Triton'dan 4–5 gün), patika, druidin okuyuşu. Druid hastalığı **sezebilir**; şerbetin tarifi ve takası burada. Yolu Orvan · Sindri · Gözcüler'i duymuş biri gösterir (`bolgeler.md` §4, 2026-10-01) | ✅ |
 | **Gelgit Gecesi** | Argenfon'un sehpalarını boşaltan Hıkka kolonisi. **Amaç: yuvayı bulmak.** Yalnız köye uğrayan masaya açılır; dört kapanış (yer bulundu · şatoya bildirildi · baskın durdu · köy arkada bırakıldı) | ✅ |
 | **Son Yazılı Emir** | Votumar'ın kapı kartı: Gümüşsu'da görüleni şatoya anlatmak. Muhatap **Aren**, ikna elde yazı varsa zarsız. İki kapı — mühürlü yazı (masa taşır, başkentte kapı açar) ya da sivil kıyafetli bir asker. Varhan'ın giderken bıraktığı iki maddelik emir `secrets`'ta | ✅ |
 | **Sayım Açığı** | Şato ambarının sayımı tutmuyor. **Torvun** verir, çünkü kendisi arayamaz (arayan bildirir). Cevap ikili: bir çırak alıyor **ve** iki aydır yazılmayan bir çıkış onu gizliyor. Karar: insanı mı, boşluğu mu bildireceksin | ✅ |
@@ -425,7 +427,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 22 | 1 | — | 23 |
-| `location` | 34 | — | — | 34 |
+| `location` | 35 | — | — | 35 |
 | `npc` | 31 | 10 | — | 41 |
 | `monster` | 7 | — | — | 7 |
 | `creature-action` | 16 | — | — | 16 |
@@ -433,7 +435,7 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `curse` | 1 | — | — | 1 |
 | `scene` | 15 | — | — | 15 |
 | `encounter` | 1 | — | — | 1 |
-| `quest` | 6 | — | — | 6 |
+| `quest` | 7 | — | — | 7 |
 | `background` | 9 | — | — | 9 |
 | `adventuring-gear` | 8 | 1 | — | 9 |
 | `trinket` | 7 | — | — | 7 |
@@ -441,9 +443,13 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **203** | **12** | **—** | **215** |
+| **Toplam** | **205** | **12** | **—** | **217** |
 
-**203/215 ✅, 12 🟡, 0 ⬜** *(2026-09-19, Votumar'ın iki işi: `quest/Son Yazılı Emir` ·
+**205/217 ✅, 12 🟡, 0 ⬜** *(2026-10-01, Radenhall ve Orvan'ın işi: `location/Mavnacılar Hanı` ·
+`quest/Taşların Bildiği`; 215'ten 217'ye. Radenhall yeniden yazıldı, `Nereden Geldiler`
+Orvan'ın tek görev kartı oldu, geçiş kağıdına ön onay ve imzacılar girdi.)*
+
+Öncesi: **203/215 ✅** *(2026-09-19, Votumar'ın iki işi: `quest/Son Yazılı Emir` ·
 `quest/Sayım Açığı` · `adventuring-gear/Mühürlü Yazı`; 212'den 215'e. Yeni kanon
 [`bolgeler.md` §3.6, §3.8](bolgeler.md) — Varhan'ın giderken bıraktığı iki maddelik
 yazılı emir, ve şatonun bir yabancıya iş vermesinin üç geçerli sebebi.)*

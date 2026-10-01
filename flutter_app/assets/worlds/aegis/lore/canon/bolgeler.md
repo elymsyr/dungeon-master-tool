@@ -1,9 +1,9 @@
-# Bölgeler — Kıta Geneli, Elymsyr, Votumar, Ravenhall
+# Bölgeler — Kıta Geneli, Elymsyr, Votumar, Radenhall
 
 > **Durum: kanon.** README §0 hiyerarşisine bağlıdır.
 > [`act1.md`](act1.md) Gümüşsu ve Gizli Liman'ı, [`lonca-sehir.md`](lonca-sehir.md)
 > Lucid Triton'u yazdı. Bu belge güzergahın **kalan üç durağını** kart yazılabilir
-> hale getiriyor — **Elymsyr**, **Votumar (Paladin Şatosu)**, **Ravenhall Avlusu** —
+> hale getiriyor — **Elymsyr**, **Votumar (Paladin Şatosu)**, **Radenhall Avlusu** —
 > artı ikisinin arasında duran iki büyük köyü ve hepsinin altında duran **kıta
 > geneli** katmanını: doktrin, adalet, mimari, ırk ve mesafe.
 >
@@ -38,7 +38,7 @@ sağlam, boşluk *bilgide*. Ama `AE`'nin coğrafyası tümden atılmıyor — at
 |---|---|
 | Batıda geçit vermez sıradağlar; ordunun geçmesi imkansız | **Batıda dağlar var**, ve içlerinden **Altın Nehir** geçiyor. Duvar değil, **arazi** |
 | Doğuda gemi yanaştırmayan beyaz kireçtaşı uçurumlar | **Doğu kıyısı beyaz kireçtaşı**, ve tek derin koyu Votumar tutuyor. Kıyı zor, kapalı değil |
-| Kuzeyde sisli, rüzgarlı platolar | **Ravenhall o platoda**, ve oraya giden tek dar patika var (§4) |
+| Kuzeyde sisli, rüzgarlı platolar | **Düştü (2026-10-01).** Kıtanın kuzey ucu **ekvatora yakın**: sis ve soğuk yok. Radenhall kıyı dağlarının çevirdiği ormanlık bir çanakta, ve içeri tek dar patika iniyor (§4) |
 | **Tek giriş kapısı** nehir ağzıdır | **Elymsyr resmi kapıdır, tek kapı değil.** İkinci kapı Gizli Liman (`act1.md` §7), ve kıyı ikisinden ibaret değil |
 
 Fark şu: `AE`'de kıta bir **kale**, kanonda bir **gümrük**. Duvar yok; **masa var**,
@@ -92,7 +92,7 @@ deftere yazılmayan şey resmi olarak yoktur ([`lonca-sehir.md` §2](lonca-sehir
 |---|---|---|
 | **Kadim tanrı kırıntıları** | Arka sokaklar, bodrumlar, en yaşlı evler, mağaralar | Deniz tanrılarına, hasat tanrıçalarına küçük sunaklar. Adları yarı unutulmuş |
 | **Atalar kültü** | Evin baş köşesi | Tanrı yerine soyun büyük iş başarmış atası: büstü ya da silahı sergilenir. **Doktrine en uygun sapkınlık** — sonuçta bir insana saygı duyuluyor |
-| **Doğa ruhları** | Gümüşsu ve Ravenhall | Doğanın kendi bilinci olduğuna, **rünlerin o bilincin dili** olduğuna inanılır (§4, §6.1) |
+| **Doğa ruhları** | Gümüşsu ve Radenhall | Doğanın kendi bilinci olduğuna, **rünlerin o bilincin dili** olduğuna inanılır (§4, §6.1) |
 | **Kör şans** | Gizli Liman | Denizcilerin unutulmuş tanrıları; kuytuda tütsü, kayaya kazınmış eski semboller (`act1.md` §7) |
 | **Akışın Ruhu** | Elymsyr | Denizci yola çıkmadan suya bir parça **gümüş** atar. Gizlice, ama herkes yapıyor (§2.6) |
 
@@ -192,7 +192,11 @@ ilgi çekicidir ve serbesttir.
 > **Lucid Triton → Votumar: atlı bir kurye için 2 gün.**
 
 `AE`'nin verdiği tek kesin mesafe bu, ve 10 M12 ("bu olmadan Act 1'in temposu
-hesaplanamaz") için ilk çivi. **Diğer mesafeler hâlâ yazılmadı** ve uydurulmadı (§9).
+hesaplanamaz") için ilk çivi.
+
+> **Lucid Triton → Radenhall: 4–5 gün** (KARAR, 2026-10-01).
+
+**Diğer mesafeler hâlâ yazılmadı** ve uydurulmadı (§9).
 
 İki günün siyasi değeri sayısal değerinden büyük:
 
@@ -480,7 +484,7 @@ tavrını fark etmeye başladı. Kimse yüksek sesle söylemiyor — söyleyen k
 sevdiği bir adama iftira atmış olur.
 
 **Bilgi eğimi (09 §4) burada yeni bir nokta kazanıyor:** limanda söylenti bol, şehirde
-bastırılmış, Ravenhall'da gereksiz — **Votumar'da ise fısıltı.** Bilgi var ama
+bastırılmış, Radenhall'da gereksiz — **Votumar'da ise fısıltı.** Bilgi var ama
 yükselmiyor; çünkü onu yükseltmenin bedeli kariyer değil **onur**.
 
 🟡 **Kara Gemiler ablukası (M0.6)** bu bölümün açık ucu. Abluka geldiğinde Votumar'ın
@@ -561,50 +565,67 @@ Bu iki iş birbirinin ön koşulu değil. `Sayım Açığı` sessiz bir ön prov
 
 ---
 
-## 4. Ravenhall Avlusu — kuzeyin kalbi
+## 4. Radenhall Avlusu — kuzeyin kalbi
 
-Kıtanın kuzeye doğru daralıp en uçta tekrar hafifçe genişlediği izole plato. Rüzgarlı,
-kayalık, sisli. Meridia'nın düzeninden fersah fersah uzakta — ve o düzenin **negatifi**.
+> **Yeniden yazıldı (KARAR, 2026-10-01).** `AE`'nin sisli, rüzgarlı, kayalık platosu
+> düştü; yerine elymsyr'in tarifi kondu. Kalanlar: Kuzeyin Gözcüleri, köy yaşlısının
+> yönetimi, tek dar patika ve gözcüsü, dev kurtlar, rünlü taşlar, Yazısızlık, takas.
+
+Kıtanın kuzeye doğru daralıp en uçta yeniden hafifçe genişlediği yer. **En kuzey, ama
+soğuk değil:** Meridia'nın bu ucu neredeyse ekvatora denk geliyor; kar ve kış soğuğu
+buraya ulaşmaz, hava çoğu zaman açık ve güzel. Meridia'nın düzeninden fersah fersah
+uzakta — ve o düzenin **negatifi**.
 
 ### 4.1 Kayıt dışı olmak, bir yer olarak
 
-Ravenhall kağıt üzerinde Meridia'ya bağlı, fiilen kendi kurallarıyla yönetiliyor.
+Radenhall kağıt üzerinde Meridia'ya bağlı, fiilen kendi kurallarıyla yönetiliyor.
 Konsey burayı *"tehlikesiz ama kontrol edilemez bir vahşilik"* olarak görüyor ve iç
 işlerine karışmıyor.
 
-Kanonun diliyle: **Ravenhall'un tamamı Yazısız'dır**
+Kanonun diliyle: **Radenhall'ın tamamı Yazısız'dır**
 ([`lonca-sehir.md` §9](lonca-sehir.md)). Ve bu, kıtanın geri kalanı için düşünülemez
 bir şeyi gösteriyor — **kayıtsız bir hayat kurulabiliyor, ve çalışıyor.** Lucid
 Triton'da "kayıtsız" bir eksikti; burada bir **tercih**.
 
-> Bu yüzden kayıt tıkanması, ekonomik daralma, gümrük krizi — hiçbiri Ravenhall'ı
+> Bu yüzden kayıt tıkanması, ekonomik daralma, gümrük krizi — hiçbiri Radenhall'ı
 > etkilemiyor. Bir kayıt sistemini felç etmek, kayda hiç girmemiş bir topluluğa hiçbir
 > şey yapmaz.
 
-**Ekonomi takas.** Altın burada pek geçmez: şifalı ot, kürk, rünlü taş. Dış mala
-ihtiyaç duymuyorlar.
+**Ekonomi takas.** Altın burada pek geçmez: şifalı ot, rünlü taş, ve **Direnç
+Şerbeti** (§4.7). Dış mala ihtiyaç duymuyorlar.
 
 ### 4.2 Kuzeyin Gözcüleri
 
-Bölgeyi bir druid kabilesi yönetiyor. Kararları en yaşlı druid alır ve dayanağı
-oylama değil **doğanın döngüsü ile rünlerin işareti.**
+Bölgeyi bir druid kabilesi yönetiyor, ve kabileyi **köyün yaşlısı** — en yaşlı druid —
+yönetiyor. Dayanağı oylama değil **doğanın döngüsü ile rünlerin işareti.**
 
 - **Düzenli ordu yok.** Bölgeyi ehlileştirilmiş dev kurtlar, kuzgunlar ve doğanın
   kendisini silaha çevirebilen koruyucular tutar.
-- **Tek dar patika.** Platoya çıkan yol bir tanedir ve sürekli izlenir. Düzenli ordu
-  buraya girmeyi lojistik bir kabus sayıyor — yani girmiyor.
-- **Mülkiyet zayıf.** Neredeyse her şey paylaşılır; buranın halkı krallığın
-  karmaşasından kaçmış insanlardan ve diğer ırklardan oluşuyor.
+- **Tek dar patika.** Radenhall'ı kıyı dağları çevirir, ve dağların içinden çanağa
+  inen yol bir tanedir; sürekli izlenir. Düzenli ordu buraya girmeyi lojistik bir
+  kabus sayıyor — yani girmiyor.
+- **Mülkiyet zayıf.** Neredeyse her şey paylaşılır.
+- **Karışık bir halk.** Krallığın karmaşasından kaçıp gelmiş, **her ırktan ve her
+  cinsiyetten** insan bir arada yaşıyor. Doğaya saygıyla büyümüşler. Giysileri
+  çoğunlukla bitkiden: bazıları kumaş gibi görünür, ama o kumaş da **bambudan ve
+  benzeri bitkilerden** dokunmuştur.
 
-### 4.3 Avlu
+### 4.3 Avlu ve orman
 
-Bölgenin kalbi: üzerine devasa rünler kazınmış, dairesel dizilmiş kadim taşlar.
-Güneşin ve ayın hareketine göre parlıyorlar. Hasat, doğum ve ölüm ritüelleri bu
-taşların etrafında yapılır — yani Ravenhall'un "kayıt salonu" budur: **taş, kağıt
-değil.**
+**Merkez** olabildiğince geniş, üstü açık bir alan. Ortasında, üstüne **zar zor
+görünen rünler** kazınmış dev taşlar bir daire oluşturacak biçimde oturtulmuş. Dairenin
+**içinde ve dışında**, farklı boylarda daha küçük taşlardan yine **iç ve dış halkalar**
+var. Hasat, doğum ve ölüm ritüelleri bu taşların arasında yapılır — yani Radenhall'ın
+"kayıt salonu" budur: **taş, kağıt değil.**
 
-Tarih kitaba değil şarkıya yazılır; ozanlar ve şifacılar en saygın üyeler. Yapılar
-doğaya zarar vermeden ağaçların ve kayaların içine kuruluyor.
+**Merkezin hemen dışında orman başlar**, ve merkezi saran kıyı dağlarının tepelerine
+kadar devam eder.
+
+**Evler** merkezin hemen dışında, çoğu ağaçların altında: farklı biçimlerde, irili
+ufaklı **tahta evler.** Kimi yerde durur, kimi ağaç üstündedir, kimi ağaçtan ağaca sıkıca
+gerilmiş sarmaşıklarla sarılıdır.
+
+Tarih kitaba değil şarkıya yazılır; ozanlar ve şifacılar en saygın üyeler.
 
 ### 4.4 İnanç — rün bir dildir
 
@@ -618,24 +639,37 @@ doğanın hastalandığını okuyabilen tek meslek burada yetişiyor.
 
 ### 4.5 Bilgi eğimi — sıfır, çünkü sorulmadı
 
-09 §4: *"Ravenhall'da söylenti yok — çünkü zaten biliniyor, kimse sormadı."* Bu belge
+09 §4: *"Radenhall'da söylenti yok — çünkü zaten biliniyor, kimse sormadı."* Bu belge
 o cümlenin **sebebini** veriyor: druidler çürümeyi bir söylentiden değil **doğrudan
 doğadan** okuyor. Onlar için bu bir haber değil, aylardır oradaki bir **gerçek.**
 
-Ve kimse sormadı, çünkü Ravenhall'a soru sormak için oraya gitmek gerekiyor, ve oraya
-tek bir dar patika çıkıyor.
+Ve kimse sormadı, çünkü Radenhall'a soru sormak için oraya gitmek gerekiyor —
+Lucid Triton'dan 4–5 gün (§1.7) — ve oraya tek bir dar patika iniyor.
 
 > **Masanın buraya geldiğinde yaşayacağı şey:** ilk kez bilgiyi **kazanmıyorlar,**
 > teslim alıyorlar. Perdenin tamamı sorularla geçti; burada karşılarına duran şey
 > şaşırmayan bir yaşlı. Sahnenin işi bu — cevap vermek değil, **ne kadar geç
 > kaldıklarını** göstermek.
 
+**Yaşlı druid hastalığı sezebilir (KARAR, 2026-10-01).** Karakterlerden birine
+hastalık bulaştıysa en yaşlı druid bunu sezebilir. Bu bir **olasılık** (README A3):
+sezip sezmediği, ve sezerse söyleyip söylemediği DM'in. Zar yazılmadı.
+
 ### 4.6 NPC ihtiyacı — 2
 
 | Rol | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **En yaşlı druid** *(insan ya da elf)* | Platonun kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladığı, hangi yöne yürüdüğü | 🟡 ad |
-| **Patika gözcüsü** *(yarı-elf)* | Kimsenin yukarı çıkmaması | Son aylarda yukarı çıkmayı deneyen ilk kişilerin kim olduğunu | Kimin Ravenhall'ı aradığı — ve neden | 🟡 ad |
+| **En yaşlı druid** *(insan ya da elf)* — köyün yaşlısı | Radenhall'ın kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladığı, hangi yöne yürüdüğü · bir karakterdeki hastalığı **sezebilir** · şerbetin tarifi ve takası | 🟡 ad |
+| **Patika gözcüsü** *(elf, yanında dev bir kurt)* | Kimsenin davetsiz patikadan geçmemesi | Son aylarda patikadan geçmeyi deneyen ilk kişilerin kim olduğunu | Kimin Radenhall'ı aradığı — ve neden | 🟡 ad |
+
+### 4.7 Direnç Şerbeti — tarifi ve takası burada (KARAR, 2026-10-01)
+
+[`mekanikler.md` §7](mekanikler.md)'nin tek savunması **Direnç Şerbeti**'nin hem
+**tarifi** hem **takası** Radenhall'da. Gözcüler şerbeti bilir, yapar, ve altınla değil
+takasla verir. **Karşılığında ne istedikleri yazılmadı** — bilerek boş (§9).
+
+Şehirde ruhsatlı otacılarda da şerbet var ve pahalı; ama tarifin yurdu burası, ve
+Şifacılar Loncası bunu bilir ve söylemez (`npc/Sindri`).
 
 ---
 
@@ -734,7 +768,7 @@ ekliyor.
 - **Ahşap işçiliği ve orman folkloru.** Köyün her köşesinde tahtadan oyulmuş tılsımlar
   ve bereket sembolleri var.
 - **İnanç: Koca Orman.** Doğanın ruhlarına ve "Koca Orman"ın sesine inanılıyor; resmi
-  öğretiler burada birer fısıltıdan ibaret (§1.2). Bu, Ravenhall'un rün inancının
+  öğretiler burada birer fısıltıdan ibaret (§1.2). Bu, Radenhall'ın rün inancının
   seyreltilmiş halidir — aynı damar, iki uç.
 
 Bunların hiçbiri `act1.md` §3'ün manzarasını değiştirmiyor: köy hâlâ **huzursuz ama
@@ -766,16 +800,17 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 | `lore` | **Hizmet Basamakları** — liyakatin işleyen yarısı (§1.4) | ✅ |
 | `lore` | **Onur Mahkemeleri** — adalet ve kayıttan düşürme (§1.5) | ✅ |
 | `lore` | **Gümüş Kalkan Nişanı** — şatonun paladin düzeni (§3.2) | ✅ |
-| `lore` | **Kuzeyin Gözcüleri** — Ravenhall'ın druid kabilesi (§4.2) | ✅ |
+| `lore` | **Kuzeyin Gözcüleri** — Radenhall'ın druid kabilesi (§4.2) | ✅ |
 | `lore` | **Liman Ahdi** — Gizli Liman'ın sözlü kanunu (§6.2) | ✅ |
 | `location` | **Elymsyr** *(üst: Meridia)* — resmi kapı (§2) | ✅ |
 | `location` | **Votumar** *(üst: Meridia)* — Paladin Şatosu (§3) | ✅ |
 | `location` | **Gözcü Kuleleri Hattı** *(üst: Votumar)* — işaret ağı, en uçta deniz feneri (§3.3) | ✅ |
-| `location` | **Ravenhall Avlusu** *(üst: Meridia)* — plato ve rünlü taşlar (§4) | ✅ |
+| `location` | **Radenhall Avlusu** *(üst: Meridia)* — ormanlık çanak ve rünlü taş halkaları (§4) | ✅ |
 | `location` | **Cinervik** *(üst: Meridia)* — yol köyü (§5.1) | ✅ |
 | `location` | **Argenfon** *(üst: Meridia)* — kıyı köyü (§5.2) | ✅ |
-| `npc` | Elymsyr'in dördü (§2.7) · Votumar'ın dördü (§3.7) · Ravenhall'ın ikisi (§4.6) — **10 kart** | 🟡 ad |
+| `npc` | Elymsyr'in dördü (§2.7) · Votumar'ın dördü (§3.7) · Radenhall'ın ikisi (§4.6) — **10 kart** | 🟡 ad |
 | `scene` | **Gümrük Rıhtımı** (§2.2) · **Avluda Karşılanma** (§4.5) | ✅ |
+| `quest` | **Taşların Bildiği** — Radenhall'a gitmek, patika, druidin okuyuşu, şerbet (§4.5–4.7) | ✅ |
 | `lore` | **Hıkka — Kitaplardaki Kayıt** — ırk, kabuk, ses, baharat, History kademeleri (§5.3) | ✅ |
 | `location` | **Gelgit Ağzı** *(üst: Argenfon)* — su çekilince görünen yuva ağzı (§5.3) | ✅ |
 | `npc` | **Sevran** · **Iraz** — Argenfon'un ilk iki kartı (§5.3) | ✅ |
@@ -785,19 +820,21 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 
 **Toplam 24 kart** — 7 `lore` · 7 `location` · 10 `npc` (adları bekliyor) · 3 `scene`.
 
+**2026-10-01 eki (§4):** +1 `quest` (`Taşların Bildiği`).
+
 **2026-09-19 eki (§5.3):** +12 kart — 1 `lore` · 1 `location` · 2 `npc` · 3 `monster` · 3 `creature-action` · 6 `trait` · 2 `scene` · 1 `quest`.
 
 **Var olan kartlara giren:**
 
 | Kart | Ne ekleniyor |
 |---|---|
-| `location/Meridia` | Arazi: batıda dağlar ve nehir yarığı, doğuda beyaz kireçtaşı kıyı, kuzeyde plato (§0) |
+| `location/Meridia` | Arazi: batıda dağlar ve nehir yarığı, doğuda beyaz kireçtaşı kıyı, kuzeyde ekvatora yakın, kıyı dağlarıyla çevrili ormanlık çanak (§0, §4) |
 | `location/Gümüşsu` | İhtiyar Heyeti · milis · takas ekonomisi · Koca Orman inancı (§6.1) |
 | `location/Gizli Liman` | Liman Ahdi'nin adı ve iki maddesi (§6.2) |
 | `location/Lucid Triton` | Beyaz taş kuşağı · anıtlar · fener disiplini (§1.3) |
 | `lore/Sancak Kaydı` | Hizmet Basamakları'nın kayıtla ilişkisi (§1.4) |
 | `lore/İrade Çağı` | Doktrinin bugüne kalan hali için `İrade Yolu` kartına çapraz link (§1.1) |
-| `campaign/Aegis` → *DM'e* sayfası | Bilgi eğiminin beş noktası: Elymsyr okunur · Cinervik bol ve yanlış · Argenfon teselli · Votumar fısıltı · Ravenhall gereksiz |
+| `campaign/Aegis` → *DM'e* sayfası | Bilgi eğiminin beş noktası: Elymsyr okunur · Cinervik bol ve yanlış · Argenfon teselli · Votumar fısıltı · Radenhall gereksiz |
 
 ---
 
@@ -817,7 +854,7 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 | **Gizli Liman'ı "Kaptanlar Konseyi" ve bir "liman ağası" yönetir** | `act1.md` §7.4: **reis yok, bayrak yok**; işleri yürüten birkaç kişi var, düzenleyici **Sicim** |
 | **Gümüşsu'da ormandaki hayvanlar hırçınlaşıyor, bitkiler kararıyor** | `act1.md` §3: köy **huzursuz ama işleyen**; kimse ölmemiş. Ve Blight bir **cephe**, iklim değil (README §1) — Gümüşsu hastalığı üretmedi, **teslim aldı** |
 | **Sürgün "ölümden ağır", çünkü dışarısı vahşettir** | Gerekçe düştü. Ceza duruyor, sebebi değişti: ağır olan **kayıttan düşürülmek** (§1.5) |
-| **Ravenhall'ı "nehir ticaretinin durması etkilemez"** | Nehir ablukası çerçevesi düştü. Cümlenin kanona giren hali: **kayıt sisteminin dışında** olduğu için kayıt krizinden etkilenmiyor (§4.1) |
+| **Radenhall'ı "nehir ticaretinin durması etkilemez"** | Nehir ablukası çerçevesi düştü. Cümlenin kanona giren hali: **kayıt sisteminin dışında** olduğu için kayıt krizinden etkilenmiyor (§4.1) |
 
 ---
 
@@ -838,6 +875,7 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
    ihanetin cezası **kayıttan düşürme + sürgün.**
 7. **Irk–iş eğilimi tablosu** (§1.6), kural değil eğilim; kanondaki NPC'lerle örtüşüyor.
 8. **İlk mesafe sayısı: Lucid Triton → Votumar 2 gün atlı** (§1.7). 10 M12'nin ilk çivisi.
+   İkincisi (2026-10-01): **Lucid Triton → Radenhall 4–5 gün.**
 9. **Elymsyr yazıldı** (§2): Sınır ve Ticaret Loncası'nın taşra gümrüğü; mal buradan
    geçer, kağıt şehre gider. **Zincir** savunması M0.6'ya bağlı.
 10. **Votumar yazıldı** (§3): askeri valilik · **Gümüş Kalkan Nişanı** · Sahil Savunma
@@ -847,11 +885,12 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
     `quest/Sayım Açığı`. Yeni kanon, **Varhan'ın giderken bıraktığı iki maddelik yazılı
     emir** (§3.6) — savunulabilir, gizli, ve yalnız Aren'de. Şatonun bir yabancıya iş
     vermesinin üç geçerli sebebi de burada kural olarak yazıldı.
-11. **Ravenhall yazıldı** (§4): **Kuzeyin Gözcüleri**, Avlu'nun rünlü taşları, tek dar
+11. **Radenhall yazıldı** (§4; **2026-10-01'de yeniden yazıldı:** ekvatora yakın, açık
+    hava, ormanlık çanak, taş halkaları, tahta evler, karışık halk, şerbet): **Kuzeyin Gözcüleri**, Avlu'nun rünlü taşları, tek dar
     patika, takas ekonomisi. Bölgenin tamamı **Yazısız** — ve bu bir eksiklik değil bir
     tercih.
 12. **Bilgi eğimi beş noktaya çıktı** (09 §4'ün genişlemesi): Elymsyr okunur · Cinervik
-    bol ve yanlış · Argenfon teselli · Votumar fısıltı · Ravenhall gereksiz.
+    bol ve yanlış · Argenfon teselli · Votumar fısıltı · Radenhall gereksiz.
 13. **Cinervik = yol köyü, Argenfon = kıyı köyü** (§5) — geri alınabilir.
 14. **Liman Ahdi** (§6.2): `act1.md` §7.3'ün kurallarına ad ve iki madde.
 15. **Gümüşsu'ya İhtiyar Heyeti, milis, takas ve Koca Orman eklendi** (§6.1) — manzarası
@@ -883,22 +922,24 @@ Ad, `act1.md` §7.3'ün üç sabit doğrusunu değiştirmiyor; onlara bir başl�
 7. **Argenfon'un adı** (§5). Adlandırma Doktrini'nde *Argentfons* Gümüşsu'nun
    Latinleşmiş haliydi; aynı anlamdaki ad şimdi ayrı bir köyde (`AE`'nin Büyük Köy'ü)
    duruyor. Kıyı köyü yeni ad bekliyor — tek grep.
+8. **Radenhall'ın şerbet karşılığı** (§4.7). Gözcülerin takasta ne istediği bilerek
+   boş bırakıldı (2026-10-01). Masada DM'in.
 
 ---
 
 ## 10. DM'e not
 
 - **Bu belgenin asıl kazancı üç lokasyon değil, altlarındaki katman.** §1 olmadan
-  Elymsyr bir liman, Votumar bir kale, Ravenhall bir orman olurdu. §1 ile üçü de aynı
+  Elymsyr bir liman, Votumar bir kale, Radenhall bir orman olurdu. §1 ile üçü de aynı
   sorunun üç cevabı oluyor: *kayıt sisteminin dışında kalmak mümkün mü?* Elymsyr hayır
-  diyor, Votumar "kayıt yerine yemin" diyor, Ravenhall **evet** diyor. Masaya bu üçünü
+  diyor, Votumar "kayıt yerine yemin" diyor, Radenhall **evet** diyor. Masaya bu üçünü
   bu sırayla göster.
 - **Votumar'ı bir düşman kalesi gibi oynatma.** Oradaki herkes iyi niyetli, disiplinli
   ve sevdiği bir adama güveniyor. Perdenin en rahatsız edici yeri burası olmalı, en
   gergin değil: masa hiçbir kötülük görmeyecek, sadece **hiçbir şeyin yazılı olmadığını**
   fark edecek. Kapı komutanının "son iki aydır emirler sözlü geliyor" cümlesi, bu
   evrende bir kılıçtan ağırdır.
-- **Ravenhall'a gitmek bir ödül değil bir yenilgi hissi vermeli.** Masa oraya vardığında
+- **Radenhall'a gitmek bir ödül değil bir yenilgi hissi vermeli** — yeri güzel olsa bile. Masa oraya vardığında
   aylardır aradıkları bilgiyi bekleyen birinden alacaklar. Bunu bir hazine sandığı gibi
   oynarsan sahne ölür; bir **geç kalınmışlık** olarak oynarsan perdenin en iyi anı olur.
   Yaşlı druid şaşırmaz, azarlamaz, üzülmez — sadece anlatır.

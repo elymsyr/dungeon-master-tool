@@ -83,7 +83,7 @@ müttefiktir), Kara Donanma ablukası Act 1 **başında yok** (öneri: sonunda).
 > |---|---|
 > | [`act1.md`](lore/canon/act1.md) | Açılış, background'lar, Gümüşsu, Gizli Liman, Blight kural kartı, ilk savaş |
 > | [`lonca-sehir.md`](lore/canon/lonca-sehir.md) | Altı lonca, haneler, Konsey/Meclis, Lucid Triton, Meclis oturumu |
-> | [`bolgeler.md`](lore/canon/bolgeler.md) | Kıta geneli (doktrin, adalet, mimari, ırk, mesafe) + **Elymsyr · Votumar · Ravenhall** + Cinervik/Argenfon |
+> | [`bolgeler.md`](lore/canon/bolgeler.md) | Kıta geneli (doktrin, adalet, mimari, ırk, mesafe) + **Elymsyr · Votumar · Radenhall** + Cinervik/Argenfon |
 > | [`mekanikler.md`](lore/canon/mekanikler.md) | 5e'nin üstündeki kural sapmaları: lisans, diriltme, ışınlanma, yozlaşma, simya, kalıcı yaralar |
 
 **Sınır (06 #12, ÇÖZÜLDÜ):** Act 1, **Gümüşsu'da başlar**; deniz yolculuğunun
@@ -130,12 +130,12 @@ hangi kapıyı açıyor*. **Kilitlenme kuralı:** her kritik kapının **en az i
 taşıyıcısı** olmalı. Tek NPC'de duran bilgi hikayeyi kilitler.
 
 **Bilgi eğimi (09 §4)** — soruşturmanın haritasını kendiliğinden çizer:
-limanlarda söylenti bol · Lucid Triton'da bastırılmış · Ravenhall'da yok
+limanlarda söylenti bol · Lucid Triton'da bastırılmış · Radenhall'da yok
 (çünkü zaten biliniyor, kimse sormadı).
 
 **Act 1 lokasyon güzergahı (09 §5, 10 M13):**
 Gümüşsu → büyük köyler (Cinervik / Argenfon) → Lucid Triton → Elymsyr →
-Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
+Gizli Liman → Paladin Şatosu (Votumar) → Radenhall Avlusu.
 
 ---
 
@@ -154,6 +154,8 @@ Gizli Liman → Paladin Şatosu (Votumar) → Ravenhall Avlusu.
 | A2 | **Uydurma yasağı + öneri kanalı** | Teyit edilmemiş hiçbir görev, NPC, mekan veya olay örgüsü metne kanon gibi girmez. Fikirler ayrı bir **"Öneri / Fikir:"** bloğunda sorulur, onay beklenir. Uygulama kuralı §4.2.2 |
 | A3 | **Durum yazılır, olay takvimi yazılmaz** (2026-09-14) | Kartlar bir durum, mekanlar ve NPC'ler kurar; olayları saate ya da oyuncunun hamlesine bağlayıp *olacakmış gibi* yazmaz. *"Şafakta üçü döner"* → *"üçü son aşamaya geçmek üzere"*; *"Corvin şafaktan önce köye döner"* → *"Corvin ara ara köye uğrar"*; *"Orvan kapıda bekler ve teklif eder"* → Orvan'ın elinde bir teklif var, yapıp yapmayacağı masanın. Masadan gelen yorumlardan çıktı ([`oturum-kaydi.md`](oturum-kaydi.md)). Uygulama kuralı §6.8 |
 | A4 | **Votumar: Başkumandan şatoda değil** (2026-09-17) | Ordugahtan çıkmayan adam iki ay önce iki yardımcısından birini alıp başkente gitti, o gün bu gün kaleye uğramadı, ve hastalık söylentileriyle ilgilenmiyor. Şatoya emirler ağızdan geliyor; askerler yokluktan **açıkça** şikayetçi, sebebe dair şüphe ise fısıltı. Yokluğu **Paladin Askeri / Paladin Rütbelisi** geçmişi olan bir karakter önceden bilir, başkasının duyma ihtimali düşüktür. Kadro dörtten sekize çıktı ve **adlar kondu**; *Şüpheci Rütbeli* = şatoda kalan yardımcı **Aren**. Kanon: [`bolgeler.md` §3.6–3.7](lore/canon/bolgeler.md) |
+| A5 | **Ravenhall → Radenhall, yeniden yazıldı** (2026-10-01) | Kıtanın kuzey ucu **ekvatora yakın**: sis, rüzgar ve soğuk düştü, hava açık. Merkez geniş ve üstü açık; zar zor görünen rünlü dev taşlardan bir daire, içinde ve dışında küçük taşlardan iç ve dış halkalar. Dışında orman başlar ve çevreleyen kıyı dağlarının tepelerine çıkar; ağaç altında irili ufaklı tahta evler (yerde, ağaç üstünde, sarmaşıkla ağaçtan ağaca). Halk karışık ırk ve cinsiyet, giysiler bambu benzeri bitkiden; **köy yaşlısı** yönetir. **Kalanlar:** tek dar patika ve gözcüsü, dev kurt, En Yaşlı Druid, Kuzeyin Gözcüleri. Yaşlı druid bir karakterdeki hastalığı **sezebilir** (olasılık, zar yok). **Direnç Şerbeti'nin tarifi ve takası Radenhall'da**; takasın karşılığı bilerek boş. **Lucid Triton → Radenhall 4–5 gün.** Yeni görev: `quest/Taşların Bildiği`. Kanon: [`bolgeler.md` §4](lore/canon/bolgeler.md) |
+| A6 | **Orvan'ın işi tek kart; geçiş kağıdına ön onay ve imzacılar** (2026-10-01) | Orvan'ın istediği artık **gemilerin neden kaybolduğu · gerekirse durdurulması · hastalığın kesin kanıtı**; kaybolma nedeni **yazılmadı**. Hepsi ve üçlünün izi tek kart: `quest/Nereden Geldiler`. **Her loncanın Meclis'te 5–10 imzacısı var** ve imzayı onlar atar. Yasal kapının sırası: **Karşı-İmza Masası'nda ön onay → kimlik ve kıyafet → imzacının karşı-imzası → gemi.** Kimlik durağı yeni yer `location/Mavnacılar Hanı`'nın kileri (yolu Orvan ve Kandil bilir). Mirasa ortaklık kalıyor. Kanon: [`lonca-sehir.md` §6.2, §6.4](lore/canon/lonca-sehir.md) |
 | 06 #8 | **Gümüşsu kurtarılabilir** | Karantina tutulabilir, köyün bir kısmı yaşar → oyunun ilk zaferi. Ton kuralıyla ("ışık bugünde") örtüşür. Gümüşsu bölümü ve açılış [`act1.md` §1–3](lore/canon/act1.md)'te yeniden kurgulandı — 07'deki ilkeler geçerli, sahne akışı değil |
 
 ### 3.2 Hâlâ açık — yazmadan önce kapatılması gerekenler
@@ -165,7 +167,7 @@ kapanmadan yazılan her şey yeniden yazılır:
 |---|---|---|
 | M0.2 | **Lucian'ın doğum adı** — Cor / Rhen / Bast / Dorn / Vell | Seçilmedi. Act 1'i bloke etmez (sır) |
 | M0.3 | **Triton isminin kökeni** — A+C önerildi (isim fetihten kaldı + Oculus kökeni sildi; halk "üç dişli mızrak" sanıyor) | Onay bekliyor |
-| M0.6 | **Kara Gemiler ablukasının zamanı** | Öneri: Act 1 sonu — liman seçimi gerçek baskı altında yapılsın. ⚠️ **Artık iki yazılmış bölümü doğrudan etkiliyor:** Elymsyr'in zinciri ve Votumar'ın bugünkü hali ([`bolgeler.md` §2.3, §3.6](lore/canon/bolgeler.md)). Filonun **kimliği** de yazılmadı (arşivdeki "ork donanması" reddedildi) |
+| M0.6 | **Kara Gemiler ablukasının zamanı** | Öneri: Act 1 sonu — liman seçimi gerçek baskı altında yapılsın. ⚠️ **Artık iki yazılmış bölümü doğrudan etkiliyor:** Elymsyr'in zinciri ve Votumar'ın bugünkü hali ([`bolgeler.md` §2.3, §3.6](lore/canon/bolgeler.md)). Filonun **kimliği** de yazılmadı (arşivdeki "ork donanması" reddedildi). 2026-10-01'den beri **gemiler kayboluyor** (A6), nedeni yazılmadı — M0.6'ya bağlanıp bağlanmayacağı da açık |
 
 `06 · Açık Kararlar`'dan Act 1'i doğrudan etkileyenler:
 
@@ -184,7 +186,7 @@ kapanmadan yazılan her şey yeniden yazılır:
 (09 §8 adım 2). ~~Sancak Kaydı statü sistemi~~ (10 M1) `lonca-sehir.md` §9'da,
 ~~kişi adı dağarcığı~~ (10 M5) `kart-listesi.md`'nin adlandırma kurallarında kapandı.
 **10 M12 (mesafeler) kısmen açıldı:** ilk sayı yazıldı — Lucid Triton → Votumar
-2 gün atlı ([`bolgeler.md` §1.7](lore/canon/bolgeler.md)); diğer mesafeler hâlâ yok.
+2 gün atlı, ve Lucid Triton → Radenhall 4–5 gün ([`bolgeler.md` §1.7](lore/canon/bolgeler.md)); diğer mesafeler hâlâ yok.
 
 ---
 
@@ -289,7 +291,7 @@ zincirine uyar. Act 1'de kullanılacaklar:
 | Sıra | Kategori | Act 1 içeriği |
 |---|---|---|
 | 1 | `campaign` | Kitabın giriş bölümü: ton sözleşmesi, "bu dünyada oynamak", DM'e bağlama (`pages[]`) |
-| 2 | `location` | Gümüşsu → Cinervik/Argenfon → Lucid Triton → Elymsyr → Gizli Liman → Votumar → Ravenhall. Hiyerarşi `parent_location_ref` ile |
+| 2 | `location` | Gümüşsu → Cinervik/Argenfon → Lucid Triton → Elymsyr → Gizli Liman → Votumar → Radenhall. Hiyerarşi `parent_location_ref` ile |
 | 3 | `lore` | Sansürlü resmi tarih, İrade doktrini, Adlandırma Doktrini'nin oyuncuya görünen yüzü, fraksiyonlar, Blight'ın bilinen hali. **DM sırları buraya değil** — `secrets` alanlarına |
 | 4 | `monster` | Blight'lı asker/köylü, ele geçirilmiş paladin. SRD'de birebir adı olan hiçbir şeyi tekrar yazma, referans ver |
 | 5 | `npc` | Halder, Elara, Başkumandan (= Suretsiz, `secrets`'te), Gümüşsu kadrosu, karantina doktoru, meclis üyesi, kaçakçı. Her biri *ne istiyor / ne gizliyor / hangi kapıyı açıyor* |
@@ -297,7 +299,7 @@ zincirine uyar. Act 1'de kullanılacaklar:
 | 8 | `scene` | Paslı Kadeh, karantina kararı, meclis, liman pazarlığı, gemi bölümü |
 | 9 | `encounter` | Gümüşsu çatışması, liman kaçışı, deniz karşılaşması |
 | 10 | `quest` | Yuva başına giriş kancaları + ana hat |
-| — | `species` / `background` | **Bölgeye özgü** background'lar (lonca ajanı, paladin çırağı, Ravenhall druidi, kayıtsız). Irklar M0.11 kapanmadan yazılmaz |
+| — | `species` / `background` | **Bölgeye özgü** background'lar (lonca ajanı, paladin çırağı, Radenhall druidi, kayıtsız). Irklar M0.11 kapanmadan yazılmaz |
 | Tier 3 | `blueprint.json` | Dört pre-gen (rol yuvası başına bir tane) |
 
 **Sır yerleşimi:** DM-only bilgi `location.secrets`, `npc.secrets`,
@@ -354,6 +356,8 @@ cd flutter_app/assets/worlds/aegis && rm -f aegis-act1.zip && zip -r -X -9 aegis
 ```
 
 ### 4.8 Yazılan kartlar (0.11.0)
+
+**0.14.0 (2026-10-01) — Radenhall ve Orvan'ın işi.** **Ad değişti:** Ravenhall → **Radenhall** (kart, görsel dosyası, manifest, kanon belgeleri, `tool/aegis_art` prompt'ları; `lore/archive` ve vault geçmişi dokunulmadı). **Radenhall yeniden yazıldı** (karar A5): `location/Radenhall Avlusu` · `scene/Avluda Karşılanma` · `npc/En Yaşlı Druid` · `npc/Patika Gözcüsü` · `lore/Kuzeyin Gözcüleri` · `location/Meridia` · `adventuring-gear/Direnç Şerbeti`. **Orvan'ın isteği değişti** (karar A6): `scene/Kapı Önündeki Teklif`'in ikinci cümlesi, `quest/Nereden Geldiler` tek görev kartı oldu (kaybolan gemiler · durdurmak · kesin kanıt · üçlünün izi). **Geçiş kağıdının yolu:** ön onay → kimlik ve kıyafet → imzacının karşı-imzası → gemi (`location/Karşı-İmza Masası` · `npc/Corin Sancar` · `scene/Geçiş Divanı'nda Sıra` · `quest/İyi Yazı` · `lore/Sınır ve Ticaret Loncası` · `lore/Konsey ve Lonca Meclisi`). **2 yeni kart:** `location/Mavnacılar Hanı` (kilerde ad ve kıyafet) ve `quest/Taşların Bildiği` (Radenhall). Orvan · Kandil · Sindri · Lucid Triton · Söylentinin Peşinde · campaign · Fihrist (yeni 9. sayfa) bağlandı. **217 entity.** Görsel: `Radenhall-Avlusu`, `Avluda-Karşılanma`, `En-Yaşlı-Druid`, `Kuzeyin-Gözcüleri` yeni tarifle yeniden çizildi; `Mavnacılar-Hanı` ve `Taşların-Bildiği` eklendi. **Patika Gözcüsü** uzun boylu, geniş omuzlu bir elf erkek oldu (yaprak omuzluklar, dev kurt); eski görseli silindi, yeni prompt `tool/aegis_art/art_jobs_015_gozcu.jsonl`'de hazır (`Taşların-Bildiği`'nin yeni gözcüyle düzeltmesi de aynı dosyada).
 
 **0.13.0 (2026-09-19) — Votumar'ın iki işi.** Şatoya iki görev yazıldı ve ikisinin de *neden bir yabancıya verildiği* kartın içinde duruyor: **emir yok · onur pahalı · zırhla konuşulmaz** ([`bolgeler.md` §3.8](lore/canon/bolgeler.md)). **3 yeni kart** — `quest/Son Yazılı Emir` (hikaye zinciri: Gümüşsu'da görüleni şatoya anlatmak; muhatap **Aren**, iki kapı — mühürlü yazıyı masa taşır, ya da sivil kıyafetli bir asker köye gider), `quest/Sayım Açığı` (yan iş: ambar sayımı tutmuyor; **Torvun** verir, cevap ikili — bir çırak alıyor *ve* iki aydır yazılmayan bir çıkış onu gizliyor) ve `adventuring-gear/Mühürlü Yazı`. **Yeni kanon:** Varhan giderken Aren'e **yazılı, mühürlü, iki maddelik bir emir** bıraktı — *uzak yerlere izinsiz asker gönderilmeyecek* · *hastalık söylentisi doğrudan bana bildirilecek.* Gizli, yalnız Aren'de, ve **savunulabilir**: masa bundan şüphe eder, kanıt çıkaramaz. Birinci madde Aren'in elinden askeri alıyor, yani taşıyıcı olarak yalnız **siviller** kalıyor. Gizli askerin ve alan çırağın **adı yazılmadı** — ikisi de DM'in. Kanon: [`bolgeler.md` §3.6, §3.8](lore/canon/bolgeler.md). Üç kartın da görseli üretildi (`tool/aegis_art`, 0.13.0 bloğu).
 
@@ -527,12 +531,12 @@ hikayenin gerçekten kullandığı yerlerde (silinen sayfa, gümrük, Sancak Kay
 | `campaign` | 1 | Aegis — 5 sayfa (giriş kartı) |
 | `lore` | 20 | Çağ ve din (2) · Blight/Vorstrand (2) · Konsey ve Sancak Kaydı (2) · altı lonca (6) · doktrin ve toplum (4) · düzenler (3) · Kural Sapmaları (1) |
 | `location` | 18 | Dünya → kıta → yer zinciri eksiksiz; güzergahın tamamı + Meclis Salonu |
-| `npc` | 34 | Gümüşsu (4) · kulübe (3) · liman (6) · Meclis (6) · şehir sokağı (5) · Elymsyr (4) · Votumar (4) · Ravenhall (2) |
+| `npc` | 34 | Gümüşsu (4) · kulübe (3) · liman (6) · Meclis (6) · şehir sokağı (5) · Elymsyr (4) · Votumar (4) · Radenhall (2) |
 | `monster` | 4 | Jenerik Dönüşmüş + üç adlandırılmış hâli |
 | `creature-action` | 4 | Pençe'nin dört sürümü |
 | `trait` | 5 | Acıyı Tanımaz · Bulaştıran Yara · üç belirti hattı |
 | `curse` | 1 | Blight — Enfeksiyon (Hastalık Puanı, beş aşama, Yozlaşma Kontrolü dahil) |
-| `scene` | 11 | Gümüşsu (3) · liman (2) · şehir (3) · Elymsyr · Votumar · Ravenhall |
+| `scene` | 11 | Gümüşsu (3) · liman (2) · şehir (3) · Elymsyr · Votumar · Radenhall |
 | `encounter` | 1 | Şafak Çatışması |
 | `quest` | 2 | Söylentinin Peşinde · Nereden Geldiler |
 | `background` | 9 | Dokuz kurumsal background, mekanikleri SRD ref'i |
@@ -552,7 +556,7 @@ yazılmadı. Sahne `Gümrükte Kayıt` → `Gümrük Rıhtımı`; pinlenen `lore
 Kartların içinde "kanon değil" işareti yok (§6.0). Türetilmiş sayılar, yorumlar, read-aloud
 dokusu ve bilerek yazılmayanlar: [PROVENANCE.md](PROVENANCE.md) §Yorum ve türetme.
 
-**On NPC unvanla yazıldı** (Elymsyr'in dördü, Votumar'ın dördü, Ravenhall'ın ikisi):
+**On NPC unvanla yazıldı** (Elymsyr'in dördü, Votumar'ın dördü, Radenhall'ın ikisi):
 ad kararı verilince tek `name` değişikliği ve link grep'i yeter.
 
 ---

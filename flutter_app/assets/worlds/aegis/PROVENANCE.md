@@ -4,6 +4,8 @@ README §4.2 kural 3'ün karşılığı: **her entity'nin izi sürülebilir olma
 Aegis'te aktarılacak bitmiş bir kitap olmadığı için `audit_coverage.py` kapsam
 denetiminin yerini bu dosya tutar.
 
+**Sürüm 0.14.0 — 217 entity** (2026-10-01). **Radenhall ve Orvan'ın işi.** Kaynak: elymsyr'in 2026-10-01 kararları (README §3.1 **A5**, **A6**) → `bolge §1.7, §4, §4.7` + `lonca §6.1, §6.2, §6.4` + `mek §7`. Ad Ravenhall → **Radenhall** (görsel dosyası `Radenhall-Avlusu.webp`; görselin kendisi eski tarifle çizili). **2 yeni kart:** `location/Mavnacılar Hanı` ← `lonca §6.2` (kimlik ve kıyafet durağı; elymsyr'in "ticaret bölgesinde bir hanın altı" önerisi, yeri Nehir Yükleme Alanı'nın dibi ve adı türetme) · `quest/Taşların Bildiği` ← `bolge §4.5–4.7`. Taşıyıcılar var olan kartlardan: Orvan (kiler + kuzey), Kandil (kiler — `liste §4` iki taşıyıcı kuralı), Sindri (şerbetin tarifinin kuzeyden geldiği). **Türetme:** kağıttaki adın ön onaydan sonra, karşı-imzadan önce değişebilmesi — elymsyr'in verdiği sıranın (ön onay → kimlik → imza) mantıksal sonucu. Kayıp gemilerin nedeni, takasın karşılığı, kilerin bedeli ve druidin sezişinin zarı **bilerek yazılmadı**.
+
 **Sürüm 0.13.1 — 215 entity** (2026-09-19). **Gelgit Ağzı'nın iki haritası.** Yeni kart yok. `location/Gelgit Ağzı` tamamlandı: kutu metni `description`'dan `description_long`'a taşındı ve altına **Genel özellikler** yazıldı (gelgit · kabuk tabakası · ağzın kenarı · su yalakları · kıyı yolu), kart 34 `location` içinde `environment` ve `tags` taşımayan tek kart olmaktan çıktı (`environment: Gelgit kayalığındaki yuva ağzı`; `tags: argenfon · gelgit-ağzı · hıkka`) ve `description` tek cümlelik özete indi. **İki harita:** `map: media/Maps/Gelgit-Ağzı.webp` — en alçak gelgitte kıyı kayalığı, kuru midye kabuğuyla kaplı basamaklar, tuzlu su yalakları ve kayanın altındaki omuz genişliğinde ağız; `battlemaps: [media/Maps/Gelgit-Ağzı-Yuva.webp]` — su dolu boğaz ve arkasındaki hava boşluğu: orta gölcük, kenar sekileri, arka duvardaki yosun döşeli oyuklar, sırttan yarılmış boş kabuklar, kurutulan balık ve içeri sürüklenmiş ağ. İç harita kanonun üç kısıtını tutuyor: **tek giriş** (ikinci ağız ya da tavan deliği yok — `monster/Bırakmayan`'ın tuttuğu boğaz mekaniğin kendisi), **ışık kaynağı yok** (`lore/Hıkka — Kitaplardaki Kayıt`: ateş ışığında görmüyorlar) ve **yaratık çizilmedi** (token DM'in). Kaynak `bolge §5.3` + kartın kutu metni; görseller `tool/aegis_art/ref/geçit-üstten.jpeg` ve `ref/mağara-iç.jpeg` — üretim değil elden gelen referans, `0.9.3` (Elymsyr haritası) akışının aynısı. Dünya haritasına **pin eklenmedi**: yuvanın yeri `secrets`'ta kalıyor ve `quest/Gelgit Gecesi`'nin amacı onu bulmak.
 
 **Sürüm 0.13.0 — 215 entity** (2026-09-19). **Votumar'ın iki işi.** Şatoya, biri hikaye biri yan olmak üzere iki görev yazıldı, ve ikisinin de *neden bir yabancıya verildiği* kartın içinde duruyor. **3 yeni kart:** `quest/Son Yazılı Emir` · `quest/Sayım Açığı` · `adventuring-gear/Mühürlü Yazı`. Yeni kanon (karar sahibinin kararı, `bolge §3.6`, `§3.8`): **Varhan giderken Aren'e yazılı, mühürlü, iki maddelik bir emir bıraktı** — *uzak yerlere izinsiz asker gönderilmeyecek* · *hastalık söylentisi doğrudan bana bildirilecek* — gizli, yalnız Aren'de, ve **savunulabilir**: bir sınır valisinin sınır emri gibi okunur, yani fısıltı eğimi (`bolge §3.6`) bozulmuyor. Emir iki ayın **başında** verildiği için `npc/Başkumandan — Varhan` ve `npc/Kapı Komutanı — Nevra`'nın *"son iki aydır yazılı emir yok"* satırlarıyla çelişmiyor. Kaynak: `bolge §3.1` (Onur ve Yemin Yasaları — fark eden bildirmek zorunda) + `bolge §3.4–3.5` (garnizon toplumu, zırhla konuşulmaz, ekonomi harcama noktası) + `bolge §3.6` (Başkumandan iki aydır yok, emirler ağızdan) + `bolge §1.7` (Lucid Triton → Votumar 2 gün atlı — birinci maddenin masayı kurye yapması buradan) + `bolge §3.7` (Aren · Nevra · Nerion · Torvun'un mevcut `secrets` içerikleri). **Gizli askerin adı yazılmadı** (karar sahibinin isteği) ve dönüşü takvime bağlanmadı (karar A3); `quest/Sayım Açığı`'nda **alan çırağın adı da yok** — kim olduğu DM'in. **Üçünün de görseli `tool/aegis_art` ile üretildi** (`art_jobs_013_votumar.jsonl`): Gemini'nin cache konuları kanonla çelişiyordu — kartal arması, kırmızı mum, tartılı kasa defteri — ve üçü de elle yeniden yazıldı (`aegis_polish.py` 0.13.0 bloğu). Mühür beyaz mum ve **kule kalkanı**, yazı **kapalı ve mühürlü** duruyor (kart *"mühür bir kez kırılır"* diyor), Aren'in görselindeki betim `npc` kartıyla aynı (tiefling, geriye kıvrık iki boynuz, sırtta kılıç, kusursuz beyaz pelerin), Torvun'unki de kendi kartıyla. Güncellenen kartlar: `npc/Başkumandan Yardımcısı — Aren` (`secrets`) · `npc/Ocak Ustası — Torvun` (`dmNotes`) · `npc/Başkumandan — Varhan` (`secrets`) · `location/Votumar` (`secrets`) · `quest/Söylentinin Peşinde` (şato kapısı) · `lore/Fihrist` (*Dört zincir* → *Altı zincir*).
@@ -16,7 +18,7 @@ denetiminin yerini bu dosya tutar.
 
 **Sürüm 0.11.0 — 195 entity** (2026-09-17). **Votumar turu.** Şatonun kadrosu dörtten sekize çıktı ve dört eski kart adlandırıldı (`bolge §3.7`). Yeni kanon (karar A4, `bolge §3.6`): **Başkumandan iki aydır şatoda değil** — iki yardımcısından birini alıp başkente gitti, kaleye uğramıyor, hastalık söylentileriyle ilgilenmiyor, ve emirler ağızdan geliyor; askerler yokluktan açıkça şikayetçi, sebebe dair şüphe fısıltı. Yokluğu **Paladin Askeri / Paladin Rütbelisi** geçmişi önceden bilir. *Şüpheci Rütbeli* artık **şatoda kalan yardımcı** (`npc/Başkumandan Yardımcısı — Aren`), ve *kurum içinden inanan ilk ses* onun ağzı. **Beş yeni kart:** `npc/Ocak Ustası — Torvun` (`bolge §3.4` cüce ocakları) · `npc/Şato Kâtibi — Nerion` (`bolge §3.4` kütüphane/kayıt) · `npc/Kıyı Kardeşleri — Kessa, Bram ve Tomas` (`bolge §3.5` çiçek ve rün; üç kardeş tek kartta — iki insan, bir tiefling, 14–18) · `npc/Gözcü Yüzbaşısı — Drahan` (`bolge §3.3` hattın şato ucu) · `quest/Yazılmayan Emir`. Görev **yedi taşıyıcıyı üç hatta** topluyor (yazı yok · kayıt eksik · gören var) ve hiçbir olay sırası yazmıyor (karar A3). **Emri kimin verdiği yazılmadı ve uydurulmadı** — Votumar'da kanıt yazıdır, ve bu hattın taşıdığı şey yazının yokluğudur.
 
-**Sürüm 0.10.0 — 190 entity** (2026-09-16). **Kapı turu.** Kartlar artık bir karakterin ya da dünyanın ne *yapacağını* yazmıyor; kapı açan **kilit davranışları** yazıyor (doktrin: `lore/canon/act1-kartlar.md` §0). 11 sahnenin hepsine `## Kapı` bloğu yazıldı: *bu sahne ne zaman durur* · *anahtarlar* · *buradan hangi kapılar açılabilir*. **Üç yeni kart, üçü de kilit sahnesi** ve üçü de daha önce bir NPC kartının `dmNotes`'una gömülüydü: `scene/Kapıya En Yakın Masa` (Halim → Orvan Sancar'ın adı; kaynak `act1 §3.5`, `§6.1`), `scene/Dilekçe Avlusu` (Meclis Salonu'na giriş; kaynak `lonca §1`, `act1 §6.1`, `liste §3` Meclis Binası satırı), `scene/Ayar Masası` (Kildrak yüzüğü okur, ad değil yön verir; kaynak `act1 §3.3` iz 3, `lonca §7`). Üç görev kartının `objective` alanı güzergah olmaktan çıkıp açık kapı tablosuna döndü ve her görev **çok kapanışlı** oldu; `quest/İyi Yazı` bir iş değil **kapı mekanizması** olarak yazıldı. İki anahtarsız kilide anahtar yazıldı: gerçek adlar (alyansların iç yüzünde *C. & P. Greenbottle*, ikinci taşıyıcı Orvan'ın tarife de tepki vermesi — `act1 §3.1`) ve Ravenhall patikası (gözcüyü ikna · çürümeden söz etmek — `bolge §4`). 15 kartta tek cümlelik ihlal düzeltildi, ve *"karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (`act1 §4.4`, `§5`).
+**Sürüm 0.10.0 — 190 entity** (2026-09-16). **Kapı turu.** Kartlar artık bir karakterin ya da dünyanın ne *yapacağını* yazmıyor; kapı açan **kilit davranışları** yazıyor (doktrin: `lore/canon/act1-kartlar.md` §0). 11 sahnenin hepsine `## Kapı` bloğu yazıldı: *bu sahne ne zaman durur* · *anahtarlar* · *buradan hangi kapılar açılabilir*. **Üç yeni kart, üçü de kilit sahnesi** ve üçü de daha önce bir NPC kartının `dmNotes`'una gömülüydü: `scene/Kapıya En Yakın Masa` (Halim → Orvan Sancar'ın adı; kaynak `act1 §3.5`, `§6.1`), `scene/Dilekçe Avlusu` (Meclis Salonu'na giriş; kaynak `lonca §1`, `act1 §6.1`, `liste §3` Meclis Binası satırı), `scene/Ayar Masası` (Kildrak yüzüğü okur, ad değil yön verir; kaynak `act1 §3.3` iz 3, `lonca §7`). Üç görev kartının `objective` alanı güzergah olmaktan çıkıp açık kapı tablosuna döndü ve her görev **çok kapanışlı** oldu; `quest/İyi Yazı` bir iş değil **kapı mekanizması** olarak yazıldı. İki anahtarsız kilide anahtar yazıldı: gerçek adlar (alyansların iç yüzünde *C. & P. Greenbottle*, ikinci taşıyıcı Orvan'ın tarife de tepki vermesi — `act1 §3.1`) ve Radenhall patikası (gözcüyü ikna · çürümeden söz etmek — `bolge §4`). 15 kartta tek cümlelik ihlal düzeltildi, ve *"karakterler hastalığı durduramaz"* → *"durdurmanın bilinen bir yolu yok"* (`act1 §4.4`, `§5`).
 
 **Sürüm 0.9.3 — 187 entity** (2026-09-16). **Elymsyr kuşbakışı haritası.** Yeni kart yok. `location/Elymsyr` artık `map: media/Maps/Elymsyr.webp` taşıyor; harita kentin kanon coğrafyasını gösteriyor — iki yakaya birden kurulu kent, kazık üstüne kurulmuş su mahallesi, boğazdaki iki vinç kulesi ile suyun altında yatan zincir, köprüsüz kanal ve mavnalar, kanyon duvarındaki ahşap platformlar. Kaynak `tool/aegis_art/ref/elymsyr-üstten.jpeg`.
 
@@ -268,11 +270,12 @@ Kaynak kısaltmaları:
 | Lucid Triton | Meridia | `lonca §5` + `bolge §1.3` + `09 §5` + `liste §3` (Lucidum Triton) |
 | Mühür Salonu | Lucid Triton | `liste §3` + `lonca §5` Siyasal |
 | Meclis Salonu | Lucid Triton | `liste §8` iki sahnenin yeri + `lonca §1, §5, §6` — `liste §3` başlığının 18. satırı (README §4.8) |
-| Karşı-İmza Masası | Lucid Triton | `liste §3` + `liste §2` sayfa 4, 6 + `lonca §6.2, §7` |
+| Karşı-İmza Masası | Lucid Triton | `liste §3` + `liste §2` sayfa 4, 6 + `lonca §6.2, §6.4, §7` (ön onay, 0.14.0) |
 | Elymsyr | Meridia | `bolge §2.1–2.7` |
 | Votumar | Meridia | `bolge §3.1–3.7` + `bolge §1.7` |
 | Gözcü Kuleleri Hattı | Votumar | `bolge §3.3` |
-| Ravenhall Avlusu | Meridia | `bolge §4.1–4.6` |
+| Radenhall Avlusu | Meridia | `bolge §4.1–4.7` (0.14.0'da yeniden yazıldı, README A5) |
+| Mavnacılar Hanı | Lucid Triton | `lonca §6.2` geçiş kağıdının yolu (0.14.0, README A6) |
 | Cinervik | Meridia | `bolge §5.1` |
 | Argenfon | Meridia | `bolge §5.2` |
 
@@ -289,7 +292,7 @@ Kaynak kısaltmaları:
 | Elymsyr | Gümrük Valisi · Nehir Muhafızı Çavuşu · Vinç Ustası · Çevirmen | `bolge §2.1, §2.7` |
 | Votumar | Başkumandan — Varhan · Başkumandan Yardımcısı — Aren · Kapı Komutanı — Nevra · Kule Nöbetçisi — Vrask | `bolge §3.1, §3.6, §3.7, §10` + `09 §2` (gerçek Başkumandan tutuluyor) + `08 §1` (Lucian'ın eli) |
 | Votumar | **Ocak Ustası — Torvun** · **Şato Kâtibi — Nerion** · **Kıyı Kardeşleri — Kessa, Bram ve Tomas** · **Gözcü Yüzbaşısı — Drahan** | `bolge §3.3` (işaret hattı) · `bolge §3.4` (cüce ocakları, kütüphane/kayıt) + `bolge §1.6` sapma izni · `bolge §3.5` (kıyıya çiçek, taşa rün) + `bolge §3.6` (yazılı emir yokluğu) |
-| Ravenhall | En Yaşlı Druid · Patika Gözcüsü | `bolge §4.5–4.6, §10` |
+| Radenhall | En Yaşlı Druid · Patika Gözcüsü | `bolge §4.2, §4.5–4.7, §10` (sezme olasılığı, şerbet — 0.14.0) |
 
 ## monster — 4 · creature-action — 3 · trait — 4 · curse — 1
 
@@ -310,16 +313,17 @@ Kaynak kısaltmaları:
 | Limana Kabul | `act1 §7.1, §7.3, §7.4` + `bolge §6.2` |
 | Geçiş Pazarlığı | `act1 §7.2, §7.4` + `lonca §6.2` |
 | Meclis Oturumu | `lonca §6, §6.1, §6.3, §10` |
-| Kapı Önündeki Teklif | `lonca §6.2, §10` + `act1 §6.1` |
-| Geçiş Divanı'nda Sıra | `liste §2` sayfa 4, 6 + `lonca §7` |
+| Kapı Önündeki Teklif | `lonca §6.2, §6.4, §10` + `act1 §6.1` (ikinci cümle 0.14.0'da değişti) |
+| Geçiş Divanı'nda Sıra | `liste §2` sayfa 4, 6 + `lonca §6.4, §7` |
 | Gümrük Rıhtımı | `bolge §2.2–2.7` |
 | Kapıya En Yakın Masa | `act1 §3.5` (Halim'in işi ve tek bildiği ad) + `§6.1` (doğrudan lonca yolu) |
 | Dilekçe Avlusu | `lonca §1` (Meclis'in işleyişi) + `act1 §6.1` + `liste §3` Meclis Binası satırı |
 | Ayar Masası | `act1 §3.3` iz 3 (damgasız yüzük) + `lonca §7` (ayar masası ve fihrist) |
-| Avluda Karşılanma | `bolge §4.5, §4.6, §10` |
+| Avluda Karşılanma | `bolge §4.5, §4.6, §4.7, §10` |
 | Şafak Çatışması | `act1 §5, §5.1` + `mek §8, §12` + `bolge §6.1` |
 | Söylentinin Peşinde | `act1 §1, §5, §6, §6.1` |
-| Nereden Geldiler | `act1 §3.1–3.3, §7.5` + `lonca §6.2–6.3, §7` + `liste §4` iki taşıyıcı kuralı |
+| Nereden Geldiler | `act1 §3.1–3.3, §7.5` + `lonca §6.2–6.3, §7` + `liste §4` iki taşıyıcı kuralı — 0.14.0'dan beri Orvan'ın tek görev kartı (README A6) |
+| Taşların Bildiği | `bolge §1.7, §4.5–4.7` + `mek §7` (0.14.0, README A5) |
 
 `lonca §8`'in *Adı tanıyan üye* sahnesi ayrı kart değil (`liste §8` on bir sahne
 sayıyor): içerik `Meclis Oturumu` beat 3'e ve Orvan Sancar'ın `secrets`'ına girdi.
@@ -330,7 +334,7 @@ sayıyor): içerik `Meclis Oturumu` beat 3'e ve Orvan Sancar'ın `secrets`'ına 
 |---|---|
 | Dokuz background | `act1 §2` tablosu + `liste §11` (altın) + `act1 §7.4` (Kadife'yi zarsız tanıyanlar) + `act1 §7.6` (Rıhtım İşçisi) + `mek §7` (Öğrenci'nin simya takımı) + `bolge §2.5` (Arşivci Elymsyr'de) |
 | Tasnif Çantası · Kayıt Elifbası · Sancak Fihristi · Mertebe Kaftanı · Öğrenci Defteri · Yük Kancası · Seyir Defteri | `act1 §2` eşya tablosu + `liste §12` |
-| Direnç Şerbeti | `mek §7, §12` |
+| Direnç Şerbeti | `mek §7, §12` + `bolge §4.7` (tarif ve takas) |
 | Lonca Mührü · Lonca Rozeti · Aile Mührü · Sahte Mühür · Kışla Künyesi · Emir Mührü | `act1 §2` eşya tablosu + `mek §3` (künye = anten) |
 | Mühürsüz Yüzük | `act1 §3.3` iz 3 + yedek içerik |
 
