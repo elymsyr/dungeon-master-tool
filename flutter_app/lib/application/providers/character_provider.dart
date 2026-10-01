@@ -478,12 +478,17 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   /// Granular delete from realtime mirror — disk + state in one shot, no
   /// full-list reload. Soft delete: snapshots to trash (restore destekli).
+  ///
+  /// Silme buluttan geldi: tombstone yok (Faz 5g). Bıraksaydı bir sonraki
+  /// karakter turu aynı id'ye DELETE gönderir, arada geri yaratılmış
+  /// karakteri (DM'in cihazından oyuncununkini de) yeniden silerdi.
   Future<void> removeMirror(String id) async {
     final list = state.valueOrNull ?? const <Character>[];
     final existing = list.where((c) => c.id == id).firstOrNull;
     if (existing == null) return;
     try {
-      await _repo.delete(id, displayName: existing.entity.name);
+      await _repo.delete(id,
+          displayName: existing.entity.name, tombstone: false);
     } catch (e) {
       debugPrint('removeMirror delete error: $e');
     }
@@ -535,22 +540,30 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   /// Faz 5g — karakterin kendi anahtarı. Açmak satırı damgalayıp tam tur
-  /// gönderir (görselleri dahil); hata çağırana çıkar. Kapatmak ("yerele
-  /// al") bulut satırını ve medyasını siler, öbür cihazlar kopyalarını tutar.
-  /// Online dünyadaki karakter kapatılamaz — RPC reddeder.
-  Future<void> setOnline(String id, bool online) async {
+  /// gönderir (görselleri dahil); hata çağırana çıkar, bayrak kalır ve tur
+  /// sonra yeniden dener. Bulut satırı reddederse (kişi başı online karakter
+  /// sınırı, 055) bayrak geri alınır ve false döner: kalsaydı karakter online
+  /// görünür ama hiç gitmezdi. Kapatmak ("yerele al") bulut satırını ve
+  /// medyasını siler, öbür cihazlar kopyalarını tutar. Online dünyadaki
+  /// karakter kapatılamaz — RPC reddeder.
+  Future<bool> setOnline(String id, bool online) async {
     final dao = _ref.read(appDatabaseProvider).worldCharactersDao;
     final pump = _ref.read(cloudPushPumpProvider);
     if (online) {
       await dao.setOnline(id, true);
       final res = await pump.pushCharacters();
       if (res.error != null) throw res.error!;
-      return;
+      if (res.rejected.contains('world_characters/$id')) {
+        await dao.setOnline(id, false);
+        return false;
+      }
+      return true;
     }
     final svc = _ref.read(cloudPushServiceProvider);
     if (svc == null) throw StateError('not signed in');
     await svc.unpublishCharacter(id);
     await dao.setOnline(id, false);
+    return true;
   }
 
   /// Ownership benden gittiğinde (unclaim / başka oyuncuya assign) hub char

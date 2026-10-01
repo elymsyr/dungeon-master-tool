@@ -711,10 +711,13 @@ class CloudPushPump {
   /// karakterler döner — servis onları satırdan sonra bir kez daha dener.
   /// Yeni bir görsel çıktıysa karakterin artık anılmayan görseli silinir
   /// (öbür cihazın tazesini [WorldMediaSync.pruneGrace] koruyor): portre
-  /// değiştikçe eskisi kotada birikmesin.
+  /// değiştikçe eskisi kotada birikmesin. Bulut satırının andıkları da
+  /// korunur: temizlik pull'dan önce koşuyor, bu satır LWW'yi kaybedecekse
+  /// (öbür cihazda daha yeni portre) o portre silinmesin.
   Future<Set<String>> _characterMedia(
       Map<String, Map<String, WorldMediaRef>> refs) async {
     final media = _ref.read(worldMediaSyncProvider);
+    final svc = _ref.read(cloudPushServiceProvider);
     final failed = <String>{};
     for (final MapEntry(key: id, value: shas) in refs.entries) {
       if (media == null || shas.isEmpty) continue;
@@ -723,8 +726,9 @@ class CloudPushPump {
             await media.upload(id, shas, scope: MediaScope.character);
         if (rep.failed.isNotEmpty) {
           failed.add(id);
-        } else if (rep.uploaded > 0) {
-          await media.prune(id, shas.keys.toSet(), scope: MediaScope.character);
+        } else if (rep.uploaded > 0 && svc != null) {
+          final keep = {...shas.keys, ...await svc.cloudCharacterShas(id)};
+          await media.prune(id, keep, scope: MediaScope.character);
         }
       } on WorldMediaQuotaException catch (e) {
         _ref.read(worldMediaQuotaProvider.notifier).state ??= e.pool;

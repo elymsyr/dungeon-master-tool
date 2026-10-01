@@ -11,7 +11,8 @@
 //   5. Tombstone: DAO silme yolunda yazılır.
 //   6. Faz 4b — paket (kullanıcı kapsamlı) ve karakter satırları.
 //   7. Faz 5g — karakter turu: kapı sahiplik, tombstone karakter kapsamına,
-//      medya satırlardan önce (ilk kez gidende bir kez daha sonra).
+//      medya satırlardan önce (ilk kez gidende bir kez daha sonra); yetim
+//      temizliği bulut satırının andığını da korur.
 
 import 'dart:convert';
 
@@ -382,6 +383,34 @@ void main() {
         await remote.collectCharacters(
             'u1', const {}, mark.pushedAt!.add(const Duration(seconds: 1))),
         isEmpty);
+  });
+
+  test('yetim temizliği bulut satırının andığı medyayı da korur', () async {
+    // Bu cihazın satırı bayat olabilir: bulutta öbür cihazın yeni portresi.
+    final fresh = 'c' * 64;
+    final cloud = await FakePostgrest.start(uid: 'u1');
+    addTearDown(cloud.close);
+    final remote = CloudPushService(db: db, client: cloud.client);
+    cloud.replies.addAll([
+      () => (
+            200,
+            [
+              {
+                'payload_json': jsonEncode({
+                  'entity': {
+                    'imagePath': 'dmt-content://$fresh.png',
+                    'images': ['dmt-content://${'d' * 64}.jpg'],
+                  },
+                }),
+              }
+            ]
+          ),
+      () => (200, <Object>[]), // satır bulutta yok
+    ]);
+
+    expect(await remote.cloudCharacterShas('ch1'), {fresh, 'd' * 64});
+    expect(cloud.calls.first.uri.queryParameters['id'], 'eq.ch1');
+    expect(await remote.cloudCharacterShas('ch2'), isEmpty);
   });
 
   test('paket: ebeveyn her tur gider, çocuklar damgaya bakar', () async {

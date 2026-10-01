@@ -248,6 +248,23 @@ class CloudPushService {
     );
   }
 
+  /// Karakterin bulut satırının andığı medya — karakter medyasının yetim
+  /// temizliği bunları da korur. Bu cihazın satırı bayat olabilir (öbür
+  /// cihazın daha yeni düzenlemesi LWW'yi kazanacak): yalnız ona bakılsa öbür
+  /// cihazın yeni portresi silinir, bulut satırı kırık görseli anardı.
+  Future<Set<String>> cloudCharacterShas(String id) async {
+    final row = await _client
+        .from(characterTable.cloud)
+        .select('payload_json')
+        .eq('id', id)
+        .maybeSingle();
+    return row == null
+        ? const {}
+        : mediaRefsOf([
+            CloudPushBatch(characterTable.cloud, [row])
+          ]).keys.toSet();
+  }
+
   /// Push'un geri aldığı revizyonlar [base]'in hemen ardından boşluksuz bir
   /// dizi mi? Öyleyse dizinin sonu döner, değilse null — araya başka bir yazar
   /// (öteki cihaz, oyuncunun karakteri, paylaşım) girmiş demektir ve onu pull

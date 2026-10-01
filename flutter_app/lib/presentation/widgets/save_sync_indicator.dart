@@ -995,10 +995,11 @@ class _CharacterOnlineRowState extends ConsumerState<CharacterOnlineRow> {
     }
     setState(() => _busy = true);
     try {
-      await ref
+      final ok = await ref
           .read(characterListProvider.notifier)
           .setOnline(widget.characterId, true);
-      messenger.showSnackBar(SnackBar(content: Text(l10n.charNowOnline)));
+      messenger.showSnackBar(SnackBar(
+          content: Text(ok ? l10n.charNowOnline : l10n.charOnlineRejected)));
     } catch (e) {
       // Bayrak kalıyor: tur bir sonraki uzlaştırmada yeniden dener.
       messenger.showSnackBar(

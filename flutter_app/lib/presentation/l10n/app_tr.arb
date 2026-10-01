@@ -2027,6 +2027,7 @@
   "charNowOffline": "Karakter artık yalnızca yerel",
   "charOfflineBody": "Bu işlem karakteri ve görsellerini buluttan kaldırır. Öteki cihazların kopyalarını tutar ama artık eşitlenmez. Devam edilsin mi?",
   "cloudOnlyCharactersHint": "Öteki cihazlarındaki online karakterlerin. İndirirsen burada da kullanabilirsin.",
+  "charOnlineRejected": "Bulut bu karakteri kabul etmedi. En fazla 10 online karakter sınırına ulaşmış olabilirsin.",
   "nowPlaying": "Şimdi çalıyor",
   "soundPlaying": "Çalıyor",
   "soundStopped": "Durdu",
