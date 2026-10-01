@@ -27,7 +27,12 @@ import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/save_sync_indicator.dart' show CharacterOnlineRow;
+import '../../widgets/cloud_only_section.dart';
 import '../../widgets/compactable_button.dart';
+import '../../../application/providers/cloud_push_provider.dart';
+import '../../../application/services/cloud_pull_service.dart';
+import '../../../data/database/database_provider.dart';
 
 /// View + manage all characters across worlds. Creation also available here;
 /// per-world creation lives in the campaign Characters sidebar.
@@ -409,6 +414,28 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 );
               })),
             ),
+            // Faz 5g — başka cihazda online yapılmış karakterler.
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              sliver: SliverToBoxAdapter(
+                child: CloudOnlySection(
+                  items: {
+                    for (final c in ref.watch(cloudOnlyCharactersProvider)
+                            .valueOrNull ??
+                        const <CloudCharacter>[])
+                      c.id: c.name.isEmpty ? c.id : c.name,
+                  },
+                  hint: l10n.cloudOnlyCharactersHint,
+                  download: (id, onProgress) async {
+                    final svc = ref.read(cloudPullServiceProvider);
+                    if (svc == null) return const CloudPullResult(skipped: true);
+                    return svc.downloadCharacter(id);
+                  },
+                  onDownloaded: () =>
+                      ref.read(characterListProvider.notifier).refresh(),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -425,6 +452,18 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
           ref.read(campaignInfoListProvider).valueOrNull ?? const [];
       final worldName = c.resolvedWorldName(infos);
       if (worldName.isEmpty) {
+        // Online karakterin dünyası bu cihazda olmayabilir (başka cihazdan
+        // indi, Faz 5g): bağ korunur, yoksa tur karakteri dünyasından
+        // kopararak buluta yazardı.
+        final row = await ref
+            .read(appDatabaseProvider)
+            .worldCharactersDao
+            .getById(c.id);
+        if (!mounted) return;
+        if (row?.isOnline ?? false) {
+          context.push('/character/${c.id}');
+          return;
+        }
         // Dünya silinmiş (ya da bu cihazda hiç yok): karakteri kilitleme,
         // yalnız bağını kopar ve orphan olarak aç. `orphanForWorld` bunu
         // silme anında yapıyor; burası eski/kaçmış satırların telafisi.
@@ -744,6 +783,8 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                   SaveInfoSection(
                     localUpdatedAt: updatedAt,
                   ),
+                  const SizedBox(height: 12),
+                  CharacterOnlineRow(palette: palette, characterId: c.id),
                   const SizedBox(height: 12),
                   MarketplacePanel(
                     itemType: 'character',

@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/error_format.dart';
-import '../../domain/entities/character.dart';
 import 'world_meta_sync.dart';
 import 'world_sync_service.dart';
 
@@ -113,43 +112,12 @@ class WorldMirrorService {
 
   // ── Entities (DM-only writes) ──────────────────────────────────────
 
-  // ── Characters (DM full + player own) ──────────────────────────────
+  // ── Characters ─────────────────────────────────────────────────────
 
-  Future<void> pushCharacter({
-    required String worldId,
-    required Character character,
-    required Set<String> referencedEntityIds,
-  }) async {
-    _stamp(character.id);
-    try {
-      await client.from('world_characters').upsert({
-        'id': character.id,
-        'world_id': worldId,
-        'owner_id': character.ownerId,
-        'template_id': character.templateId,
-        'template_name': character.templateName,
-        'payload_json': jsonEncode(character.toJson()),
-        'referenced_entity_ids': referencedEntityIds.toList(),
-        // Faz 4b: 095 `trg_chars_bump_updated`'ı düşürdü (§2.8 — zamanı
-        // istemci yazar). Damga buradan gitmezse satır ilk INSERT'teki
-        // saatte donar ve push taramasıyla ayrışırdı.
-        'updated_at': character.updatedAt,
-      });
-    } catch (e) {
-      _logMirrorError('pushCharacter', e);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteCharacter({required String characterId}) async {
-    _stamp(characterId);
-    try {
-      await client.from('world_characters').delete().eq('id', characterId);
-    } catch (e) {
-      _logMirrorError('deleteCharacter', e);
-      rethrow;
-    }
-  }
+  /// Faz 5g — karakter karakter turuyla gidiyor (`CloudPushService
+  /// .pushCharacters`); tur yazdığı satırları burada damgalar ki paylaşım
+  /// yayınındaki yankısı uygulanmasın.
+  void markPushed(String characterId) => _stamp(characterId);
 
   // ── World state (campaign blob) ────────────────────────────────────
 

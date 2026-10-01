@@ -56,15 +56,15 @@ export async function popEvictQueue(
 }
 
 // ============================================================================
-// Dünya ve paket medyası (Faz 5d, 5e) — toplu imzanın izin sorgusu. N sha,
-// tek RPC. Key'i SQL kuruyor (`media_r2_key`, 100): `worlds/{id}/…` ya da
-// `packages/{id}/…`.
+// Dünya, paket ve karakter medyası (Faz 5d, 5e, 5g) — toplu imzanın izin
+// sorgusu. N sha, tek RPC. Key'i SQL kuruyor (`media_r2_key`, 101):
+// `worlds/{id}/…`, `packages/{id}/…` ya da `characters/{id}/…`.
 // ============================================================================
 
-export type MediaScope = 'world' | 'package';
+export type MediaScope = 'world' | 'package' | 'character';
 
-/// PUT: kullanıcının SAHİBİ olduğu dünyada ya da pakette rezerve edilmiş
-/// sha'lar. `bytes` ve `mime` imzaya bağlanır.
+/// PUT: kullanıcının SAHİBİ olduğu dünyada, pakette ya da karakterde (ya da
+/// DM'i olduğu dünyanın karakterinde) rezerve edilmiş sha'lar. `bytes` ve `mime` imzaya bağlanır.
 export interface MediaPutRow {
   sha256: string;
   r2_key: string;
@@ -89,8 +89,8 @@ export async function mediaSignPut(
   return Array.isArray(body) ? body : [];
 }
 
-/// GET: kullanıcının üyesi olduğu bir dünyada ya da sahibi olduğu bir
-/// pakette yüklenmiş sha'lar.
+/// GET: kullanıcının üyesi olduğu bir dünyada, sahibi olduğu bir pakette ya
+/// da sahibi olduğu / dünyasının üyesi olduğu bir karakterde yüklenmiş sha'lar.
 export interface MediaGetRow {
   sha256: string;
   r2_key: string;

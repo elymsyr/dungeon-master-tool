@@ -119,8 +119,13 @@ class CharacterRepository {
   /// drift row was already cleared by a racing CDC echo so the trash row is
   /// still created — without it, applyMirror's trash check has no entry to
   /// match against and a subsequent cloud pull would resurrect the char.
+  ///
+  /// [tombstone] false: silme buluttan geldi (Faz 5g, `deleted`) — geri
+  /// gönderilecek bir şey yok.
   Future<void> delete(String id,
-      {String? displayName, Character? fallback}) async {
+      {String? displayName,
+      Character? fallback,
+      bool tombstone = true}) async {
     final row = await _db.worldCharactersDao.getById(id);
     Map<String, dynamic>? map;
     if (row != null) {
@@ -143,7 +148,7 @@ class CharacterRepository {
       }),
     ));
     if (row != null) {
-      await _db.worldCharactersDao.deleteById(id);
+      await _db.worldCharactersDao.deleteById(id, tombstone: tombstone);
     }
   }
 
@@ -152,9 +157,10 @@ class CharacterRepository {
   /// ownership moves away (unclaim / assign-to-other): the canonical row
   /// stays in the world, only this device's personal copy is no longer ours.
   /// Unlike [delete], no trash entry → a later re-claim isn't blocked by
-  /// `applyMirror`'s trash guard.
+  /// `applyMirror`'s trash guard. No tombstone either — one would make the
+  /// next character round delete the cloud row (Faz 5g).
   Future<void> dropLocal(String id) async {
-    await _db.worldCharactersDao.deleteById(id);
+    await _db.worldCharactersDao.deleteById(id, tombstone: false);
   }
 
   /// Restore a soft-deleted character. [trashId] is the `trash_items.id`

@@ -47,6 +47,8 @@ tags: [file]
 - **`publish`** projeksiyonun tek dosyası: satırda duran görsel zaten yüklü olduğundan ağa çıkmadan ref döner; hiçbir satırın anmadığı görsel (paket kartının token'ı, düz görsel) yüklenir ve bir sonraki oturumun temizliğinde düşer.
 - **Sınıflar** (`worldMediaKindOf`): `.pdf` → `world_pdf` 20 MB, ses uzantıları → `world_audio` 10 MB, harita → `battle_map` 10 MB, geri kalan → `world_entity_image` 5 MB. Hangi satırın harita olduğunu [[cloud_push_service]] `mediaRefsOf` belirler.
 
+- **Karakter kapsamı (Faz 5g):** `MediaScope.character` → `world_media.character_id`, R2 `characters/{id}/`, imza isteğinde `character_id`. Karakter dünyadaysa da medyası karakter kapsamında (dünyadan çıkınca taşınmıyor). Rezervasyon karakterin bulut satırına bağlı: ilk kez giden karakterin medyası satırdan sonra ([[cloud_push_service]] `pushCharacters`).
+
 ## Notes
 - Regresyon testleri: `test/application/services/world_media_sync_test.dart` (sahte PostgREST üstünde rezervasyon → imza → PUT → onay zinciri, kota, denemeleri biten PUT, **yanıt vermeyen PUT'un zaman aşımı**, 4xx atlama + 403 yeniden imza, onar onay, **en çok 6 eşzamanlı PUT**, temizlik penceresi, projeksiyon önbelleği; PUT yanıtları `FakePostgrest.routes` ile yola bağlı) ve `world_media_refs_test.dart` (sınıflandırma + paylaşım/push aynı sha'yı görüyor).
 - Faz 5e: paket kapsamı `world_media_sync_test` "paket kapsamı" testinde (liste/rezervasyon/imza/onay/temizlik paketin kolonuna ve id'sine bakar, önbellek dünyanınkinden ayrı). Paket medyasının sınıfları dünyanınkiyle aynı tür adlarını kullanıyor (`world_entity_image` vb.) — limitler kapsamdan bağımsız.

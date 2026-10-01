@@ -904,7 +904,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 > **Sıra (2026-09-24, kullanıcının kararıyla revize):** 6 ve 9 bitti. Sırada
 > **5e → 5g → 5.5 → 7** var. 5e 5d'nin medya yolunu dünyaya bağlı olmaktan
 > çıkarıp genelleştiriyor ve canlı sinyale dokunmuyor, bu yüzden en düşük
-> riskli olanı. **5e bitti (2026-10-01, §4.8.6); sırada 5g → 5.5 → 7.**
+> riskli olanı. **5e bitti (2026-10-01, §4.8.6); 5g bitti (2026-10-01,
+> §4.8.7); sırada 5.5 → 7.**
 > 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
 > iskeletini kullanıyor. 5.5, 5g'nin karakteri ikinci cihaza indirmesinin
 > üstüne kuruluyor. 5g de 5d'nin denenmemiş yollarına dayanıyor (karakter
@@ -925,7 +926,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5d**~~ | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | ✅ bitti (099 + worker deploy edildi; ikinci cihaz ve DM + oyuncu savaş haritası elle doğrulandı, kart paylaşımı / karakter bekliyor — §4.8.3) |
 | 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
 | ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy ve el testi bekliyor — §4.8.6) |
-| 5g | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | taslak (yeni, 2026-09-24) |
+| ~~**5g**~~ | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 101 + worker deploy ve el testi bekliyor — §4.8.7) |
 | 5.5 | Oyuncu çoklu cihaz — üyelik, "Online dünyalarım", paylaşılan kartlar | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | evet | taslak (5g'den sonra daraldı) |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -2648,7 +2649,9 @@ kararıyla revize edildi ve "Bugün" tabloları o günkü koddan çıkarıldı. 
 
 ### Faz 5e — Paket ✅ bitti (2026-10-01) → [§4.8.6](#486-faz-5e--paket-dünyayla-aynı-yol--bitti)
 
-### Faz 5g — Karakter: kendi anahtarı, canlı
+### Faz 5g — Karakter: kendi anahtarı, canlı ✅ bitti (2026-10-01) → [§4.8.7](#487-faz-5g--karakter-kendi-kapsamı-tek-yol--bitti)
+
+*Aşağısı fazın başındaki taslak; uygulanan §4.8.7'de.*
 
 *Kullanıcının kararı (2026-09-24): karakter dünyayla birebir aynı mantıkta
 çalışacak ve canlı olacak. Online yapmak kullanıcının seçimi, her karakter
@@ -2991,6 +2994,114 @@ Elle bekleyen: 1–4'ün uçtan uca hali (`online-el-testi.md` §12).
   RPC'lerini çağıran uygulama rezervasyonda düşer (indirme çalışır). Sıra:
   100 → worker → uygulama.
 
+## 4.8.7 Faz 5g — Karakter: kendi kapsamı, tek yol ✅ bitti
+
+*Uygulandı 2026-10-01; migration 101 + worker deploy bekliyor, el testi sona
+(`online-el-testi.md` §13).*
+
+### Sorun
+
+§4.8.5'in "Bugün" tablosu. Kısaca: karakter yalnız dünyasının parçası olarak
+buluta çıkıyordu, iki yazma yolu (doğrudan `pushCharacter` ve dünya turu)
+aynı satıra farklı medya çevirisiyle yazıp portreyi kırıyordu, oyuncunun
+çevrimdışı düzenlemesi gitmiyordu ve sahibinin öbür cihazına hiçbir şey
+gelmiyordu. Faz başında iki şey daha çıktı:
+
+- **094'ün revizyon trigger'ı `world_id` NULL satırda patlıyordu**
+  (`world_revisions`'a NULL). Dünyasız karakter hiç yazılamıyordu; sahipli
+  karakteri olan dünyanın multiplayer'ı kapatılamıyordu (FK'nın `SET NULL`'u
+  trigger'a takılıyor), `remove_from_world` sahipli karakterde ve hesap silme
+  başka oyuncunun karakterini taşıyan dünyada hata veriyordu.
+- **DM'in cihazı oyuncunun karakterini buluttan silebiliyordu.** Sahiplik
+  değişince (`applyCharacterCdc` → `dropMirror` → `dropLocal`) yerel silme
+  `sync_tombstones`'a kayıt bırakıyordu, DM'in bir sonraki dünya turu da onu
+  "dm full" RLS'iyle buluta DELETE olarak gönderiyordu. Koddan okundu.
+
+### Verilen kararlar (kullanıcı, 2026-10-01)
+
+| Konu | Karar |
+|---|---|
+| Gecikme | Karakter turu düzenlemeden **1 sn** sonra (dünyanınki 3 sn) |
+| İki kapsam | Satırda ikinci sayaç `owner_revision`, kullanıcı başına `character_revisions` satırı ve tek Realtime sinyali. Online dünyadaki karakter iki kapsamda: dünyanınkinde DM'in cihazları, sahibininkinde sahibinin cihazları görüyor |
+| Multiplayer kapatılınca | Sahipli karakter online kalır (bulutta dünyasız satır). Sahipsizler 039'dan beri siliniyor |
+| Silme | Yayılır. Tombstone türü `deleted` → öbür cihaz çöpe atar; `gone` (yerele alma, sahiplik değişimi) → yerel kopyayı tutar |
+| Damga nerede (faz başında açıktı) | `beforeOpen` DDL'li yan tablo `cloud_scopes` — Drift v14 bump'ı ve `onUpgrade` adımı gerekmedi |
+| `payload_json` çevrilsin mi (faz başında açıktı) | Evet, **yalnız giden kopyada**. Byte-for-byte kuralı DAO'nun yerel satırını bağlıyor; doğrudan yol da zaten `toJson` → bundle → `fromJson` yapıyordu |
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **Migration 101** | A: `tg_stamp_character_revision` iki sayacı NULL'a dayanıklı damgalıyor (094 hatası). B: `character_revisions`, `next_character_revision`, `owner_revision` + mevcut sahipli satırların doldurulması. C: bulutta olmayan dünya `world_id`'yi NULL'a çekiyor (bağ payload'da). D: `character_tombstones` (`deleted`/`gone`), sahibin silmesi ve sahiplik değişimi yazıyor; tombstone'dan eski yazma diriltmiyor. E: dünyadan ayrılan karakter dünyaya tombstone. F: `get_character_delta`. G: `get_world_delta`'da DM dünyanın bütün tombstone'larını görüyor. H: `remove_from_world` payload'daki `worldId`'yi de boşaltıyor, sahibin dünyasız satırı silme izni, `unpublish_character`. I: `world_media.character_id` üçüncü kapsam, `characters/{id}/`; rezervasyon sahibine ya da dünyasının DM'ine, imza sahibine ve dünyasının üyelerine, kota sahibine |
+| **Worker** | `/world-media/sign` `character_id` alıyor (üç kapsamdan tam olarak biri); `MEDIA_KEY_REGEX` `characters/`'ı tanıyor |
+| **`cloud_mirror_tables`** | `world_characters` dünya listesinden çıktı → `characterTable`, `payload_json` medya kolonu. Dünyanın pull'u onu yine okuyor (DM'in ikinci cihazı) |
+| **`CloudPushService.pushCharacters`** | Karakterin tek yazma yolu. Kapı sahiplik: kendi anahtarı açık ya da üyesi olduğu online dünyadaki karakterler + bu cihazda online işaretli dünyaların bütün karakterleri (DM). Tombstone'lar `@characters` kapsamında, medya karakter başına satırlardan önce (ilk kez gidende bir kez daha sonra), yazılan satır yerelde online işaretleniyor, `owner_revision` dizisi kendi yankısını eliyor |
+| **`CloudPullService`** | `pullCharacters` / `applyCharacters`: yalnız bu cihazdaki karakter güncellenir, bağ payload'ın `worldId`'sinden, silmeler türüyle döner. `listCloudOnlyCharacters` + `downloadCharacter`. Yarım dünya indirmesi kendi kapsamından inmiş karakteri silmiyor |
+| **Pompa** | `characterEdited` → 1 sn → `pushCharacters`; sahibin kanalı (`character_revisions`, oturum boyunca), `SUBSCRIBED`'da ve sinyalde `catchUpCharacters` (push → pull → silmeler); `reconcileAll` önce karakterleri; "multiplayer aç" tam karakter turu |
+| **`CharacterListNotifier`** | `_mirrorPush` doğrudan yazmıyor, turu tetikliyor; `updateInWorld` (DM'in oyuncu karakterine yazması) Drift'e de yazıyor; `applyCloudRemovals`; `setOnline` |
+| **DAO** | Tombstone yalnız bulutta duran satıra ve `@characters`'a; `dropLocal` ve dünya silme tombstone bırakmıyor (DM silme hatası); `cloud_scopes` damgaları, `setOnline`, `watchOnlineIds` |
+| **Kaldırılan** | `MediaBundler`, `WorldMirrorService.pushCharacter` / `deleteCharacter` (yerine yankı damgası `markPushed`) |
+| **UI** | `CharacterOnlineRow`: karakter ekranının Save & Sync diyaloğunda ve hub'ın karakter ayarlarında; online dünyada kilitli. Hub'ın karakter sekmesinde "Bulutta, bu cihazda yok". Dünyası bu cihazda olmayan online karakter açılırken dünyasından koparılmıyor |
+| **l10n** | 8 anahtar × 4 dil |
+
+### Faz 5g çıkış kriteri — testlerle kısmen, elle bekliyor
+
+1. Online karakter A'da düzenlenince B'de, karakter açıkken, dünyadaki kadar
+   hızlı değişiyor. Buna dünyasız karakter de dahil.
+2. B'ye indirilen karakter portresi ve görselleriyle geliyor. DM'in yazdığı
+   karakterin portresi oyuncuda görünüyor.
+3. Oyuncunun çevrimdışı düzenlemesi, bağlantı gelince, karakter yeniden
+   düzenlenmeden DM'e ulaşıyor.
+4. Anahtarı kapalı ve online dünyada olmayan karakterin hiçbir satırı ya da
+   görseli buluta çıkmıyor.
+
+Karşılanan:
+- Temiz Postgres 16'da 001→101 hatasız, 101 iki kez koşunca da;
+  `verify_094/096/097/098/099/100` yeşil. İstemcinin yazmaları geri alınan
+  bir işlemde denendi: dünyasız karakter yazılıyor (094 hatası kapandı),
+  bulutta olmayan dünya NULL'a çekiliyor, aynı içerik sayacı kıpırdatmıyor,
+  karakter kapsamında rezervasyon, yerele alma `gone` + medyasız, eski
+  düzenleme diriltmiyor, sahibin silmesi `deleted`, DM'in yazması oyuncunun
+  sayacını ilerletiyor, `remove_from_world` payload'ı boşaltıyor ve DM
+  ayrılmayı görüyor, multiplayer kapatma sahipliyi dünyasız bırakıyor.
+- `cloud_push_collect_test`: turun kapısı (4), tombstone yalnız bulutta
+  duranın ve `@characters`'a, sahiplik değişimi ve dünya silme tombstone
+  bırakmıyor, medya satırlardan önce ve ilk kez gidende sonra, satır online
+  işaretleniyor, damga ilerliyor.
+- `cloud_pull_apply_test`: yalnız bu cihazdaki karakter güncelleniyor, bağ
+  payload'dan, `remove_from_world` dünyasız bırakıyor, tombstone türüyle ve
+  LWW'den geçerek dönüyor.
+- Worker `tsc` temiz, `npm run check` geçiyor; `flutter analyze` yeni bulgu
+  yok.
+
+Elle bekleyen: 1–4'ün uçtan uca hali ve DM silme hatasının kapandığı
+(`online-el-testi.md` §13; iki cihaz, aynı ve farklı hesap, SQL'siz).
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §4.8.5: "Hub'ın karakter sekmesinde 'Bulutta, bu cihazda yok'" ve sahip kapsamı karakteri ikinci cihaza **indirir** | İkisi birlikte: sahip kapsamının pull'u yalnız bu cihazda **olan** karakteri güncelliyor; olmayan, dünya ve paketteki gibi seçilerek iniyor |
+| §4.8.5: "Yerele alma: öbür cihazda karakter offline'a düşer" (her `gone` için) | Sahiplik el değiştirdiyse ve dünyası online'sa yerel kopya düşüyor (bugünkü `dropMirror`): kopya kalsaydı sahibi hâlâ ben görünür, tur onu dünyaya geri yazmaya çalışırdı |
+| §4.8.5: "Medya önce" | İlk kez giden karakterin medyası satırdan **sonra**: rezervasyon bulut satırına bağlı. Öbür cihaz arada satırı görürse görsel alıcının yeniden denemesiyle geliyor |
+| (yok) | `remove_from_world` damgayı `GREATEST(now(), eski + 1 ms)` yazıyor: `now()`, saati ileri bir cihazın son düzenlemesinden küçükse 097'nin LWW'si RPC'yi sessizce atlıyordu (yerel denemede çıktı) |
+| (yok) | Portre değiştiğinde karakterin artık anılmayan görseli siliniyor (yeni görsel yüklendiği turda, 10 dk pencereyle) — portre değiştikçe kotada birikmesin |
+| (yok) | İnceleme (2026-10-01): push taraması `updated_at >= damga`, `>` değil. `updated_at` saniye, damga turun başındaki an: tur sürerken aynı saniyede yapılan düzenleme `>` ile sonraki turda da atlanıp kayboluyordu. 1 sn'lik karakter turunda canlı HP tıklamasıyla kolay tetikleniyordu; dünya, paket ve combatant taraması da aynı kusuru taşıyordu, hepsi düzeldi. Sınır saniyesinin satırları bir kez daha gidiyor (idempotent, 097 yalnız eskiyi atlıyor) |
+| (yok) | İnceleme: "Bulutta, bu cihazda yok" karakter listesi her karakter uzlaştırmasının sonunda tazeleniyor. Önce yalnız yerel karakter sayısı değişince soruluyordu; öbür cihazda online yapılan karakter uygulama yeniden açılana kadar listeye düşmüyordu |
+| (yok) | İnceleme: anahtar yalnız sahibi ben olan karakterde görünüyor. Sahipsiz ya da bırakılmış karakterde "online oldu" deniyor ama tur, sahiplik kapısı yüzünden onu hiç göndermiyordu |
+
+### Bilinçli sınırlar
+
+- **Eski doğrudan yolun medyası.** 5g'den önce yazılmış satırlardaki
+  `dmt-public://` portre ve `pub/` ek görseller olduğu gibi çözülüyor; görsel
+  değişene kadar yeni kapsama taşınmıyor.
+- **Kanal hatasında 30 sn'de bir yeniden bağlanma**, üstel geri çekilme yok.
+- **Karakter göstergesi yok.** Turun durumu `@characters` anahtarıyla
+  göstergeye yazılıyor ama editör onu göstermiyor; hata log'da.
+- **Yankı.** Paylaşım yayınından ya da pull'dan gelen satır yerelde öbür
+  cihazın düzenleme zamanıyla duruyor; bu cihazın bir sonraki turu onu aynı
+  gövdeyle geri yazabilir. Echo guard sayacı kıpırdatmıyor, döngü yok.
+
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
 
 Bu roadmap hazırlanırken kod okundu ve belgenin birkaç yeri gerçekle
@@ -3043,6 +3154,9 @@ uyuşmuyordu. Kayda geçiyor:
 | Faz 5e: "`world_media` bir kapsam kolonuyla tek tablo" | Kapsam başına FK kolonu (`package_id`) + tek kapsam CHECK'i — tek `scope` kolonu FK'yı, dolayısıyla CASCADE'li temizliği kaybettirirdi (§4.8.6) |
 | Faz 5e: uzlaştırma anlarında paket push → pull | Açık paket yalnız push: paket ekranı bellekteki halini kaydediyor, arka planda inen satırları ezerdi (§4.8.6) |
 | 4b: karakterin çevrimdışı düzenlemesi kapandı; `_mirrorPush` yorumu: kaçan yazmayı "dünya açılışındaki `pushOwnedCharacters`" kapatıyor | Yalnız DM için kapandı, çünkü tur DM rolünde koşuyor. `pushOwnedCharacters` yalnız "multiplayer aç" akışında çağrılıyor. Oyuncunun kaçan yazması, aynı karakterin bir sonraki çevrimiçi düzenlemesine kadar DM'e ulaşmıyor. 5g'ye alındı (§4.8.5) |
+| 094: revizyon trigger'ı karakter satırını damgalar | `world_id` NULL satırda `world_revisions`'a NULL yazıp patlıyordu: dünyasız karakter yazılamıyor, sahipli karakterli dünyanın multiplayer'ı kapatılamıyor, `remove_from_world` ve hesap silme hata veriyordu. 101 A (§4.8.7) |
+| 096: `get_world_delta` dünyanın tombstone'larını verir | DM'e yalnız sahipsiz satırlarınkini veriyordu: oyuncunun karakteri silinince ya da dünyadan ayrılınca DM'in yerel kopyası dünyada kalıyordu. 101 G (§4.8.7) |
+| 4b: sahiplik düşünce karakter "yalnız bu cihazdan" kalkar (`dropLocal`) | Yerel silme tombstone bırakıyordu; DM'in dünya turu oyuncunun karakterini buluttan silebiliyordu. 5g'de DAO'nun `tombstone: false`'u (§4.8.7) |
 
 Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğru.
 
@@ -3057,8 +3171,8 @@ Değişmeyen tek şey `lan_sync/` boyutu: **2.733 satır**, belgedeki sayı doğ
 3. ~~**KV rate limiter**~~ — online açılmadan düzeltilmeliydi. **→ Faz 0
    (§4.1).**
 
-Bugünkü en büyük açık el testi borcu: 4a/5a → 5d → 5f → 6 → 9 → 5e'nin el
-adımları `online-el-testi.md`'de bekliyor (§4.0 esnemesi). 5e ve 5g
+Bugünkü en büyük açık el testi borcu: 4a/5a → 5d → 5f → 6 → 9 → 5e → 5g'nin
+el adımları `online-el-testi.md`'de bekliyor (§4.0 esnemesi). 5e ve 5g
 5d'nin elle denenmemiş yollarına dayanıyor.
 
 ## Doğrulanmamış tek veri

@@ -489,6 +489,153 @@ doğrulama 5) ve görselli bir paketi online yapmayı dene.
   yayınlanmıyor. Online bir pakete görsel ekleyince kota dolarsa "Bulut medya
   alanı dolu…" snackbar'ı (çıkış kriteri 4).
 
+## 13. Faz 5g — karakterin kendi kapsamı (iki cihaz, SQL yok)
+
+Bu bölüm baştaki A/B/P düzenini kullanmıyor. İki cihaz var, **X** ve **Y**;
+iki hesap var, **H1** ve **H2**. Veritabanına bakılmıyor: "bulutta mı?"
+sorusunun cevabı öbür cihazın ekranında.
+
+- **Kısım A:** X ve Y ikisi de H1 ile açık, yani aynı kişinin iki cihazı.
+- **Kısım B:** Y, H1'den çıkıp H2 ile giriyor. X'teki H1 DM, Y'deki H2
+  oyuncu oluyor. Hesap değişince Y'deki H1 verisi silinmiyor; her hesabın
+  cihazda ayrı veritabanı var.
+
+"Birkaç saniye" en çok 5 sn demek. Karakter düzenlemeden 1 sn sonra gidiyor,
+öbür cihaz sinyali aldıktan 1 sn sonra çekiyor. 10 sn'yi geçerse ❌.
+
+Log isteğe bağlı. Bir adım ❌ olursa o anki `CloudSync` satırlarını getir:
+masaüstünde `flutter run` konsolundan, Android'de
+`adb logcat | grep CloudSync` ile.
+
+**13.0 Hazırlık**
+- [ ] Deploy sırası: `100` → `101_character_scope.sql` → `wrangler deploy`.
+      Sonra iki cihaza da yeni derleme. Eski derleme karakteri eski yoldan
+      yazar; öyle bir cihaz varsa test geçersiz.
+- [ ] X'te multiplayer'ı kapalı bir dünya: **Yerel**. Karakter yaratmak bir
+      dünya istiyor.
+- [ ] X'te iki farklı portre görseli.
+
+### Kısım A — aynı hesap (X: H1, Y: H1)
+
+**13.1 Anahtar kapalı başlıyor.** X'te Yerel dünyasında **K1** adında
+karakter yarat ve portre koy. Hub → Karakterler → K1'in dişlisi.
+- Beklenen: "Karakteri Online Yap" düğmesi görünüyor.
+- Beklenen: Y'de hub → Karakterler'in altındaki "Bulutta, bu cihazda yok"
+  bölümünde K1 **yok** (çıkış kriteri 4).
+
+**13.2 Online yap.** X'te K1'in dişlisi → "Karakteri Online Yap".
+- Beklenen: X'te "Karakter artık çevrimiçi" mesajı çıkıyor, düğmenin yerine
+  "Karakter çevrimiçi" rozeti geliyor.
+- Beklenen: Y'de, uygulamayı yeniden açmadan, birkaç saniye içinde
+  "Bulutta, bu cihazda yok" altında K1 görünüyor.
+
+**13.3 İndir.** Y'de K1 → "İndir". Sonra K1'i aç.
+- Beklenen: K1 açılıyor. Yerel dünyası Y'de olmadığı halde "dünya
+  bulunamadı" uyarısı çıkmıyor.
+- Beklenen: portre birkaç saniye içinde geliyor (çıkış kriteri 2).
+- Beklenen: K1 "Bulutta, bu cihazda yok" listesinden çıkıyor; dişlisinde
+  "Karakter çevrimiçi" yazıyor.
+
+**13.4 Canlı, X'ten Y'ye.** K1 iki cihazda da açık. X'te HP'yi değiştir.
+- Beklenen: Y'de yeni HP birkaç saniye içinde, ekrandan çıkmadan
+  (çıkış kriteri 1).
+
+**13.5 Canlı, Y'den X'e; dünya bağı.** Y'de K1'in HP'sini değiştir.
+- Beklenen: X'te değer birkaç saniye içinde değişiyor.
+- Beklenen: X'te K1'in dişlisinde dünya hâlâ "Yerel". "Dünya atanmamış"
+  yazıyorsa Y karakteri dünyasından koparmış demek: ❌.
+
+**13.6 Hızlı düzenleme.** X'te HP'yi art arda, aralarında 1 sn'den az
+bekleyerek 6–8 kez değiştir, sonra dur.
+- Beklenen: Y'de birkaç saniye içinde **son** değer görünüyor. X'e bir daha
+  dokunmadan da doğru olmalı. Bu adım incelemede düzeltilen bir hatanın
+  testi: tur sürerken aynı saniyede yapılan düzenleme kayboluyordu.
+
+**13.7 Portre değişimi.** X'te K1'in portresini ikinci görselle değiştir.
+- Beklenen: Y'de birkaç saniye içinde yeni portre geliyor. Gelmezse
+  karakteri kapatıp aç; o zaman da gelmezse ❌.
+
+**13.8 Çevrimdışı düzenleme.** Y'de interneti kes, K1'in HP'sini değiştir
+ve uygulamayı kapat. İnterneti aç, Y'de uygulamayı aç ama K1'e dokunma.
+- Beklenen: X'te Y'nin değeri birkaç saniye içinde görünüyor (çıkış
+  kriteri 3).
+
+**13.9 Yerele al.** X'te K1'in dişlisi → "Karakteri Yerele Al" → onayla.
+- Beklenen: X'te "Karakter artık yalnızca yerel" mesajı çıkıyor, düğme
+  "Karakteri Online Yap" oluyor.
+- Beklenen: Y'de K1 duruyor, çöpe gitmiyor; birkaç saniye içinde
+  dişlisinde "Karakteri Online Yap" görünüyor.
+- Beklenen: X'te K1'in HP'sini değiştir. Y'de değişmiyor (çıkış kriteri 4).
+
+**13.10 Silme yayılır.** X'te **K2** yarat, online yap, Y'de indir. Sonra
+X'te K2'yi sil.
+- Beklenen: Y'de K2 birkaç saniye içinde Karakterler'den kalkıyor ve
+  Ayarlar → Çöp Kutusu'nda görünüyor. Oradan geri yüklenebiliyor.
+
+### Kısım B — farklı hesap (X: H1 DM, Y: H2 oyuncu)
+
+Y'de H1'den çık, H2 ile gir.
+
+**13.11 Masa.** X'te **Masa** adında dünya yarat, multiplayer'ı aç, davet
+kodunu kopyala. Y'de "Dünyaya Katıl" ile kodu gir.
+- Beklenen: Y'de "Masa dünyasına katıldın" mesajı.
+
+**13.12 Oyuncunun karakteri.** Y'de Masa'da **P1** adında karakter yarat ve
+portre koy.
+- Beklenen: X'te P1, Masa'nın karakter listesinde birkaç saniye içinde
+  portresiyle görünüyor.
+- Beklenen: Y'de P1'in dişlisinde ya da Save & Sync diyaloğunda
+  "Çevrimiçi — dünyası multiplayer" yazıyor; kapatma düğmesi yok.
+
+**13.13 Canlı, oyuncudan DM'e.** Y'de P1'in HP'sini değiştir.
+- Beklenen: X'te değer birkaç saniye içinde değişiyor.
+
+**13.14 Canlı, DM'den oyuncuya.** X'te Masa'da bir karşılaşma aç, P1'i ekle,
+HP'sini savaş ekranından değiştir. Y'de P1 açık olsun.
+- Beklenen: Y'de yeni HP birkaç saniye içinde görünüyor.
+
+**13.15 Oyuncunun çevrimdışı düzenlemesi.** Y'de interneti kes, P1'in
+HP'sini değiştir ve uygulamayı kapat. İnterneti aç, Y'de uygulamayı aç ama
+P1'e dokunma.
+- Beklenen: X'te Y'nin değeri birkaç saniye içinde görünüyor (çıkış
+  kriteri 3).
+
+**13.16 DM'in koyduğu portre, DM'in bırakması.** X'te Masa'da **D1** adında
+karakter yarat ve portre koy. Birkaç saniye bekle. X'te hub → Karakterler →
+D1 → "Bırak" → onayla. Y'de Masa'nın karakter listesinde D1 →
+"Sahiplen".
+- Beklenen: X'te D1 bıraktıktan sonra Masa'nın listesinde, sahipsiz olarak
+  duruyor. Kaybolursa bu kapatılan "DM'in cihazı karakteri buluttan siliyor"
+  hatası: ❌.
+- Beklenen: D1 Y'nin Karakterler sekmesinde portresiyle görünüyor (çıkış
+  kriteri 2'nin ikinci yarısı).
+
+**13.17 Oyuncu bırakıyor, karakter dünyada kalıyor.** Y'de P1 → "Bırak" →
+onayla. Birkaç saniye bekle, X'te Masa'da herhangi bir şeyi düzenle, yine
+bekle.
+- Beklenen: P1 Y'nin Karakterler sekmesinden kalkıyor.
+- Beklenen: X'te P1 Masa'nın listesinde sahipsiz olarak duruyor. X'i kapatıp
+  açınca da duruyor.
+- Sonra Y'de P1'i yeniden "Sahiplen". 13.18 bunu kullanıyor.
+
+**13.18 Multiplayer'ı kapat (yıkıcı, en son).** X'in Masa'da kendine ait
+bir karakteri olsun: **D2** yarat. Sonra X'te Masa → "Çok Oyunculu Kapalı" →
+onayla.
+- Beklenen: hata mesajı çıkmıyor.
+- Beklenen: X'te D2 duruyor; dişlisinde kilit kalkmış, "Karakter çevrimiçi"
+  ve "Karakteri Yerele Al" görünüyor.
+- Beklenen: Y'de P1 duruyor, açılıyor, dişlisinde "Karakter çevrimiçi"
+  yazıyor. Silinmişse ❌: sahipli karakter multiplayer kapanınca online
+  kalmalı.
+
+**13.19 Kapanış: sahipli karakter bulutta kaldı mı.** Y'de H2'den çık, H1
+ile gir. Hub → Karakterler.
+- Beklenen: "Bulutta, bu cihazda yok" altında D2 var. Bu, D2'nin Masa
+  kapandıktan sonra da bulutta kaldığını gösteriyor. İndir; portresi ve HP'si
+  X'teki gibi olmalı.
+- Beklenen: K1 bu listede yok (yerele alındı, Y'de zaten var), K2 de yok
+  (silindi).
+
 ---
 
 ## Sonuçları bana nasıl getireceksin
@@ -496,4 +643,4 @@ doğrulama 5) ve görselli bir paketi online yapmayı dene.
 Her adım için ✅ ya da ❌. ❌ olanlarda:
 - ne yaptın, ne bekliyordun, ne oldu;
 - o anki `CloudSync` / `AssetRefResolver` log satırları;
-- ilgili SQL sorgusunun çıktısı.
+- ilgili SQL sorgusunun çıktısı (§13'te SQL yok).

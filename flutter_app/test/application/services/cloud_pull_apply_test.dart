@@ -11,6 +11,8 @@
 //   5. Aynalanmayan yerel kolon (`is_online`) korunur — INSERT OR REPLACE değil.
 //   6. Damga `worlds.cloud_revision`'a yazılır.
 //   7. Round-trip: pull edilen satır push'a geri verildiğinde aynı gövde çıkar.
+//   8. Faz 5g — sahip kapsamı: yalnız bu cihazdaki karakter güncellenir, bağ
+//      payload'daki `worldId`'den; silmeler türüyle döner.
 
 import 'dart:convert';
 
@@ -451,5 +453,86 @@ void main() {
       expect(out[k], incoming[k], reason: '$k round-trip"te değişti');
     }
     expect(jsonDecode(out['fields_json'] as String), {'hp': 12});
+  });
+  // ── Faz 5g — sahip kapsamı ────────────────────────────────────────────
+
+  Map<String, dynamic> cloudChar(String id, DateTime at,
+          {String? world, String payload = '{"worldId":"w-local"}'}) =>
+      {
+        'id': id,
+        'world_id': world,
+        'owner_id': 'u1',
+        'template_id': 't1',
+        'template_name': 'Savaşçı',
+        'payload_json': payload,
+        'referenced_entity_ids': <String>[],
+        'revision': 0,
+        'owner_revision': 4,
+        'created_at': iso(DateTime.utc(2026, 1, 1)),
+        'updated_at': iso(at),
+      };
+
+  Future<void> localChar(String id, DateTime at) =>
+      db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
+        id: id,
+        worldId: '',
+        ownerId: const Value('u1'),
+        templateId: 't1',
+        templateName: 'Savaşçı',
+        updatedAt: Value(at),
+      ));
+
+  test('karakter: yalnız bu cihazdakiler güncellenir, bağ payload\'dan',
+      () async {
+    await localChar('here', DateTime.utc(2026, 1, 1));
+    final res = await svc.applyCharacters(delta(revision: 7, tables: {
+      'world_characters': [
+        // Dünya bulutta değil (101 C) → kolon NULL, bağ payload'da.
+        cloudChar('here', DateTime.utc(2026, 6, 1)),
+        cloudChar('elsewhere', DateTime.utc(2026, 6, 1)),
+      ],
+    }));
+    expect(res.applied, 1);
+    final row = (await db.worldCharactersDao.getById('here'))!;
+    expect(row.worldId, 'w-local');
+    expect(row.isOnline, true, reason: 'sahip kapsamından inen bulutta duruyor');
+    expect(await db.worldCharactersDao.getById('elsewhere'), isNull,
+        reason: 'olmayan hub bölümünden iner');
+    expect((await db.worldCharactersDao.cloudMark()).revision, 7);
+  });
+
+  test('karakter: remove_from_world payload\'ı boşaltınca dünyasız kalır',
+      () async {
+    await localChar('c1', DateTime.utc(2026, 1, 1));
+    await svc.applyCharacters(delta(tables: {
+      'world_characters': [
+        cloudChar('c1', DateTime.utc(2026, 6, 1), payload: '{"worldId":null}'),
+      ],
+    }));
+    expect((await db.worldCharactersDao.getById('c1'))!.worldId, '');
+  });
+
+  test('karakter tombstone: türüyle döner, yerel düzenleme yeniyse yaşar',
+      () async {
+    await localChar('del', DateTime.utc(2026, 1, 1));
+    await localChar('gone', DateTime.utc(2026, 1, 1));
+    await localChar('edited', DateTime.utc(2026, 9, 1));
+    Map<String, dynamic> stone(String id, String kind) => {
+          'table_name': 'world_characters',
+          'row_id': id,
+          'kind': kind,
+          'deleted_at': iso(DateTime.utc(2026, 6, 1)),
+          'revision': 3,
+        };
+    final res = await svc.applyCharacters(delta(tombstones: [
+      stone('del', 'deleted'),
+      stone('gone', 'gone'),
+      stone('edited', 'deleted'),
+      stone('absent', 'deleted'),
+    ]));
+    expect(res.deleted, ['del']);
+    expect(res.gone, ['gone']);
+    // Uygulamak çağıranın (hub listesi); satırlar yerinde.
+    expect(await db.worldCharactersDao.getById('del'), isNotNull);
   });
 }

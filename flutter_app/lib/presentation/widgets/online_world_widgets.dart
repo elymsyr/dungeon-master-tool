@@ -127,6 +127,9 @@ Future<bool> turnMultiplayerOn(
   debugPrint('CloudSync: multiplayer açıldı $worldId: ${rows.pushed} satır '
       '${sw.elapsedMilliseconds} ms, ${rows.rejected.length} red, '
       'hata: ${rows.error}');
+  // Faz 5g — karakterler dünya turunda değil, kendi turlarında. Dünyanın
+  // karakterleri kapsama şimdi girdi ama damgadan eskiler: tam tur.
+  await pump.pushCharacters(full: true);
 
   final (:report, :complete) = await uploadMediaWithProgress(
       ref,

@@ -16,8 +16,9 @@ import 'content_store.dart';
 
 /// Faz 5d — multiplayer dünyanın medyası R2'de, dünya başına ve kalıcı
 /// (`worlds/{worldId}/{sha}{ext}`). Faz 5e'den beri online paketinki de, aynı
-/// yoldan ([MediaScope.package], `packages/{packageId}/…`); kapsamı söylemeyen
-/// çağrı dünyadır.
+/// yoldan ([MediaScope.package], `packages/{packageId}/…`), 5g'den beri online
+/// karakterinki de (`characters/{characterId}/…`); kapsamı söylemeyen çağrı
+/// dünyadır.
 ///
 /// **Kuyruk yok.** Bulutta ne olduğunu `world_media` söylüyor, gönderilmesi
 /// gerekeni satırlardaki `dmt-content://` ref'leri; aradaki fark bir sonraki
@@ -243,7 +244,8 @@ class WorldMediaSync {
           MediaScope scope, String id, List<String> shas) async =>
       Map.of(await _assets.signWorldMedia('put', shas,
           worldId: scope == MediaScope.world ? id : null,
-          packageId: scope == MediaScope.package ? id : null));
+          packageId: scope == MediaScope.package ? id : null,
+          characterId: scope == MediaScope.character ? id : null));
 
   /// Tek dosyayı dünyanın medyasına çıkarır ve `dmt-content://` ref'ini döner
   /// — projeksiyon yolu için: yansıtılan görsel her zaman bir satırda
@@ -383,12 +385,16 @@ class WorldMediaSync {
   }
 }
 
-/// Medyanın buluttaki kapsamı (Faz 5e): `world_media` satırı hangi kolona
-/// bağlı, R2'de hangi önek altında (`worlds/` | `packages/`). Adı RPC'lerin
-/// `_scope` parametresi.
+/// Medyanın buluttaki kapsamı (Faz 5e, 5g): `world_media` satırı hangi
+/// kolona bağlı, R2'de hangi önek altında (`worlds/` | `packages/` |
+/// `characters/`). Adı RPC'lerin `_scope` parametresi.
+///
+/// Karakterin medyası dünyadaysa da karakter kapsamında: dünyadan çıkınca
+/// taşınması gerekmiyor.
 enum MediaScope {
   world,
-  package;
+  package,
+  character;
 
   /// `world_media`'daki kapsam kolonu.
   String get column => '${name}_id';

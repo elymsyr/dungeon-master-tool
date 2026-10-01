@@ -18,7 +18,6 @@ import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import 'rule_config_provider.dart';
 import '../../data/network/network_providers.dart';
-import '../services/media_bundler.dart';
 import '../services/builtin_srd_entities.dart';
 import '../services/package_source_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
@@ -29,10 +28,10 @@ import '../services/reference_indexer.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'character_claim_provider.dart';
+import 'cloud_push_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
 import 'role_provider.dart';
-import 'world_mirror_provider.dart';
 import 'world_characters_provider.dart';
 
 const _uuid = Uuid();
@@ -92,6 +91,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     // own-only char tab filter. Adopt them on first auth.
     _ref.listen(authProvider, (prev, next) {
       if (prev == null && next != null) {
+        // Pompa sahibin karakter kanalını oturumla açıyor (Faz 5g); oturum
+        // açılınca henüz kurulmamış olabilir.
+        _ref.read(cloudPushPumpProvider);
         // ignore: discarded_futures
         _backfillWorldlessOwnership(next.uid);
         // Sign-in → server'a ulaşabiliyoruz; offline'da biriken release'leri
@@ -152,13 +154,15 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         );
   }
 
-  /// `world_characters` push — runs whenever the char's world is in
-  /// `onlineWorldIdsProvider`. RLS enforces ownership.
+  /// Faz 5g — karakterin buluta tek yolu karakter turu
+  /// ([CloudPushPump.pushCharacters]): Drift'e yazılan her değişiklik 1 sn
+  /// sonra, kapı sahiplik. Doğrudan `pushCharacter` kaldırıldı — turla aynı
+  /// satıra başka bir medya çevirisiyle yazıp ref'leri eziyordu, ve tek atış
+  /// olduğu için oyuncunun çevrimdışı düzenlemesi hiç gitmiyordu.
   ///
-  /// Karakter sayfası, oyuncunun DM'e gönderdiği tek canlı veri; doğrudan
-  /// yazılır (last-write-wins). Kalıcı kuyruk yok — kaçan bir yazma dünya
-  /// açılışındaki [pushOwnedCharacters] geçişinde kapanır.
+  /// Online dünyadaysa dünya görünümüne iyimser satır da konur.
   void _mirrorPush(Character c0) {
+    _characterEdited();
     // Guest release marker yerel bir işaret — `owner_id` uuid kolonuna asla
     // yazılmaz.
     final c = c0.ownerId == kGuestReleasedOwnerId
@@ -186,55 +190,17 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
                 DateTime.now().toUtc(),
           ),
         );
-    // ignore: discarded_futures
-    _pushCharacterToMirror(worldId: worldId, character: c);
   }
 
-  /// Medyayı bundle'layıp `world_characters` satırını yazar. Hata yutulur —
-  /// yerel Drift kaynak-doğru, bulut kopyası yalnızca DM'in görebilmesi için.
-  Future<void> _pushCharacterToMirror({
-    required String worldId,
-    required Character character,
-  }) async {
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) return;
-    var characterMap = character.toJson();
-    // Portre ücretsiz Supabase'e (dmt-public://), ek resimler R2'ya. Bundle
-    // hatası push'u bozmaz — ref'siz satır yine de karakteri taşır.
-    final assetSvc = _ref.read(assetServiceProvider);
-    if (assetSvc != null) {
-      try {
-        characterMap = await MediaBundler(
-          assetSvc,
-          freeMediaService: _ref.read(freeMediaServiceProvider),
-        ).bundleCharacterMedia(
-          scopeId: worldId,
-          characterMap: characterMap,
-        );
-      } catch (e, st) {
-        debugPrint('character media bundle error: $e\n$st');
-      }
-    }
-    try {
-      await mirror.pushCharacter(
-        worldId: worldId,
-        character: Character.fromJson(characterMap),
-        referencedEntityIds: const {},
-      );
-    } catch (e) {
-      debugPrint('character mirror push error: $e');
-    }
+  /// Misafirin bulutu yok; pompa yalnız oturum açıkken.
+  void _characterEdited() {
+    if (_ref.read(authProvider) == null) return;
+    _ref.read(cloudPushPumpProvider).characterEdited();
   }
 
-  /// Dünya online olduğunda bir kez: sahibi bu kullanıcı olan (veya hiç
-  /// sahibi olmayan — paketlenmiş dünyaların claim edilebilir PC'leri)
-  /// karakterleri buluta yazar. Bu olmadan multiplayer'a geçince sidebar
-  /// bulut-kaynaklı [WorldCharactersView]'e döner ve hiç push edilmemiş
-  /// yerel karakterler kaybolmuş gibi görünür. Doğrudan-yazma yolunun çevrimdışı telafisi — LWW olduğu
-  /// için kaçan bir yazmayı yakalamaya yeter.
-  ///
-  /// ponytail: kalıcı kuyruk yok. Gerçekten dayanıklı bir kuyruk gerekirse
-  /// outbox deseni geri gelir.
+  /// Dünya multiplayer olunca dünya görünümüne iyimser satırlar: bootstrap
+  /// yarışını beklemeden görünsünler. Buluta tam karakter turu
+  /// `turnMultiplayerOn`'da gidiyor.
   Future<void> pushOwnedCharacters(String worldId) async {
     if (_ref.read(authProvider) == null) return;
     if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
@@ -242,25 +208,17 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     for (final c in state.valueOrNull ?? const <Character>[]) {
       if (c.worldId != worldId) continue;
       if (uid != null && c.ownerId != null && c.ownerId != uid) continue;
-      // `_mirrorPush` hem buluta yazar hem de `worldCharactersProvider`'a
-      // iyimser satırı koyar — bootstrap yarışını beklemeden görünür olur.
       _mirrorPush(c);
     }
   }
 
+  /// Silme Drift'te tombstone bıraktı (`deleteById`), tur onu gönderir.
   void _mirrorDelete(String characterId, {String? worldId}) {
+    _characterEdited();
     final wid = worldId;
     if (wid == null) return;
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    if (!onlineIds.contains(wid)) return;
-    if (_ref.read(authProvider) == null) return;
+    if (!_ref.read(onlineWorldIdsProvider).contains(wid)) return;
     _ref.read(worldCharactersProvider(wid).notifier).removeMirror(characterId);
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) return;
-    // ignore: discarded_futures
-    mirror.deleteCharacter(characterId: characterId).catchError(
-          (Object e) => debugPrint('character mirror delete error: $e'),
-        );
   }
 
   /// Targeted freshness pull for a single character on editor open. Routes
@@ -536,6 +494,65 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         );
   }
 
+  /// Faz 5g — sahip kapsamının silmeleri (`get_character_delta`).
+  ///
+  /// `deleted`: karakter öbür cihazda silindi → çöpe (geri alınabilir),
+  /// tombstone bırakmadan. `gone`: bulut kopyası kalktı ama karakter
+  /// silinmedi. Yerele alındıysa yerel kopya kalır, offline'a düşer.
+  /// Sahipliği el değiştirdiyse ve dünyası online'sa [dropMirror]: kopya
+  /// bende kalsaydı sahibi hâlâ ben görünür, tur onu dünyaya geri yazmaya
+  /// çalışırdı.
+  ///
+  /// Sonunda liste diskten tazelenir — pull satırları Drift'e yazdı, açık
+  /// editör yeni hali `characterByIdProvider`'dan alıyor.
+  Future<void> applyCloudRemovals({
+    List<String> deleted = const [],
+    List<String> gone = const [],
+    Set<String> onlineWorlds = const {},
+  }) async {
+    final list = state.valueOrNull ?? const <Character>[];
+    for (final id in deleted) {
+      final c = list.where((x) => x.id == id).firstOrNull;
+      try {
+        await _repo.delete(id,
+            displayName: c?.entity.name, fallback: c, tombstone: false);
+      } catch (e) {
+        debugPrint('applyCloudRemovals delete error: $e');
+      }
+      _ref.read(referenceIndexerProvider).scheduleRemove('world_characters', id);
+    }
+    final dao = _ref.read(appDatabaseProvider).worldCharactersDao;
+    for (final id in gone) {
+      final row = await dao.getById(id);
+      if (row == null) continue;
+      if (row.worldId.isNotEmpty && onlineWorlds.contains(row.worldId)) {
+        await _repo.dropLocal(id);
+      } else {
+        await dao.setOnline(id, false);
+      }
+    }
+    await _load();
+  }
+
+  /// Faz 5g — karakterin kendi anahtarı. Açmak satırı damgalayıp tam tur
+  /// gönderir (görselleri dahil); hata çağırana çıkar. Kapatmak ("yerele
+  /// al") bulut satırını ve medyasını siler, öbür cihazlar kopyalarını tutar.
+  /// Online dünyadaki karakter kapatılamaz — RPC reddeder.
+  Future<void> setOnline(String id, bool online) async {
+    final dao = _ref.read(appDatabaseProvider).worldCharactersDao;
+    final pump = _ref.read(cloudPushPumpProvider);
+    if (online) {
+      await dao.setOnline(id, true);
+      final res = await pump.pushCharacters();
+      if (res.error != null) throw res.error!;
+      return;
+    }
+    final svc = _ref.read(cloudPushServiceProvider);
+    if (svc == null) throw StateError('not signed in');
+    await svc.unpublishCharacter(id);
+    await dao.setOnline(id, false);
+  }
+
   /// Ownership benden gittiğinde (unclaim / başka oyuncuya assign) hub char
   /// listesinden + local Drift'ten çıkar. [removeMirror]'dan farkı: trash'e
   /// snapshot ALMAZ (karakter silinmedi, yalnızca artık benim değil) ve cloud
@@ -692,12 +709,18 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   /// Encounter → karakter HP/AC yazma yolu bunu kullanır: `update` tek
   /// başına başka oyuncunun karakterini DM'in Drift'ine ve karakter
   /// sekmesine kopyalardı.
+  ///
+  /// Faz 5g: tek yol karakter turu ve tur Drift'i okuyor, o yüzden satır
+  /// yerele de yazılır (hub listesine değil). DM'in turu online dünyasının
+  /// bütün karakterlerini kapsıyor.
   Future<void> updateInWorld(Character character) async {
     final own = state.valueOrNull ?? const <Character>[];
     if (own.any((c) => c.id == character.id)) return update(character);
-    _mirrorPush(character.copyWith(
+    final bumped = character.copyWith(
       updatedAt: DateTime.now().toUtc().toIso8601String(),
-    ));
+    );
+    await _repo.save(bumped);
+    _mirrorPush(bumped);
   }
 
   /// Partial metadata update — name/description/tags/cover/rename combined.
@@ -878,12 +901,11 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         } else {
           await svc.deleteCharacter(id);
         }
-        // Karakterin pinned medyası (ek resimler) bırakılır; son ref gidince
-        // obje havuzdan düşer. Best-effort — silme akışını bozmasın.
+        // 5g'den önceki doğrudan yolun pinned medyası (ek resimler) bırakılır;
+        // son ref gidince obje havuzdan düşer. Best-effort — silme akışını
+        // bozmasın. Yeni medya `characters/{id}/` altında, satırla gidiyor.
         try {
-          await _ref
-              .read(assetServiceProvider)
-              ?.releasePub(MediaBundler.characterPinKey(id));
+          await _ref.read(assetServiceProvider)?.releasePub('char:$id');
         } catch (e) {
           debugPrint('character pinned media release error: $e');
         }
@@ -981,6 +1003,10 @@ final sortedCharactersProvider = Provider<List<Character>>((ref) {
 @Deprecated('Personal sync retired in 039+; world_characters RLS handles cross-device sync')
 final autoOnlineForCharacterProvider =
     Provider.family<bool, String>((ref, id) => true);
+
+/// Faz 5g — bulutta duran karakterlerin id'leri (`is_online`); anahtarın UI'ı.
+final onlineCharacterIdsProvider = StreamProvider<Set<String>>((ref) =>
+    ref.watch(appDatabaseProvider).worldCharactersDao.watchOnlineIds());
 
 /// Tek bir karakteri ID ile döndürür — editor ekran için.
 final characterByIdProvider = Provider.family<Character?, String>((ref, id) {

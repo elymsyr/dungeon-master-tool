@@ -73,8 +73,31 @@ enum MirrorOwner {
 final Map<String, String> localTableOf = {
   for (final t in mirrorTables) t.cloud: t.local,
   for (final t in packageTables) t.cloud: t.local,
+  characterTable.cloud: characterTable.local,
   'world_combatants': 'combatants',
 };
+
+/// Faz 5g — karakter. Dünya turundan çıktı: karakterin kapsamı sahibi, tek
+/// yazma yolu karakter turu (`CloudPushService.pushCharacters`). Dünyanın
+/// pull'u onu yine okuyor — DM'in ikinci cihazı oyuncuların karakterlerini
+/// oradan alıyor.
+///
+/// `payload_json` artık medya çevirisinde: yerel satır yollarını koruyor,
+/// giden kopya ref taşıyor (§4.5'in kuralı; byte-for-byte kuralı DAO'nun
+/// yerel satırı için). Doğrudan yol bunu zaten yapıyordu, ama ref'i başka
+/// kapsama yükleyip turla eziliyordu.
+const MirrorTable characterTable = MirrorTable(
+  'world_characters',
+  'world_characters',
+  cols: [
+    'id', 'world_id', 'owner_id', 'template_id', 'template_name',
+    'payload_json', 'referenced_entity_ids_json',
+  ],
+  dateCols: ['created_at', 'updated_at'],
+  mediaCols: ['payload_json'],
+  jsonCols: ['referenced_entity_ids_json'],
+  rename: {'referenced_entity_ids_json': 'referenced_entity_ids'},
+);
 
 /// Paketin ayna tabloları (§2.2 BÖLÜM D). Ebeveyn **önce** gider: çocukların
 /// FK'sı `user_packages`'a bakıyor.
@@ -179,23 +202,6 @@ const List<MirrorTable> mirrorTables = [
   MirrorTable('timeline_pins', 'world_timeline_pins',
       cols: ['id', 'world_id', 'x', 'y', 'day', 'note', 'entity_ids_json',
           'session_id', 'parent_ids_json', 'color']),
-  // Karakterler: bugün `WorldMirrorService.pushCharacter` anında yazıyor,
-  // ama o yol tek atış — çevrimdışı yapılan düzenleme buluta hiç çıkmıyordu.
-  // Tur bunu kapatıyor; iki yol da aynı satıra idempotent upsert yapıyor.
-  // `payload_json` **medya çevirisine girmiyor**: blob'un byte-for-byte
-  // korunması kuralı (world_characters_dao) jsonDecode/encode turundan ağır
-  // basıyor; karakter görselleri bugünkü gibi mutlak yolla gidiyor.
-  MirrorTable(
-    'world_characters',
-    'world_characters',
-    cols: [
-      'id', 'world_id', 'owner_id', 'template_id', 'template_name',
-      'payload_json', 'referenced_entity_ids_json',
-    ],
-    dateCols: ['created_at', 'updated_at'],
-    jsonCols: ['referenced_entity_ids_json'],
-    rename: {'referenced_entity_ids_json': 'referenced_entity_ids'},
-  ),
   MirrorTable('installed_packages', 'world_installed_packages',
       cols: ['world_id', 'package_id', 'package_name', 'package_version'],
       dateCols: ['installed_at', 'last_synced_at', 'updated_at'],

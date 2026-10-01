@@ -5,7 +5,7 @@ path: flutter_app/lib/data/network/free_media_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 - Reads: `free_media_assets` table (dedupe lookup by `storage_path`, list by `owner_id` / `scope_id`); local content-store cache; public-URL downloads from `free-media` bucket.
 - Supabase / CDC subscribed: queries `free_media_assets`; no realtime.
 - Events consumed: none.
-- Triggers: called by [[media_bundler]] (`_uploadFree`), gallery views, and cleanup ([[entity_media_cleanup_service]]).
+- Triggers: gallery views and cleanup ([[entity_media_cleanup_service]]). The character portrait upload (`MediaBundler._uploadFree`) was removed in Faz 5g — portraits now go to `characters/{id}/` via [[world_media_sync]]; existing `dmt-public://` refs still resolve here.
 
 **Outputs**
 - Public API: `uploadFreeMedia(file, {kind, scopeId})` → `dmt-public://{path}`; `resolveFreeMedia(publicPath)` → cached `File?`; `listForUser()`, `listForScope(scopeId)` → `List<FreeMediaAssetRow>`; `deleteFreeMedia(publicPath, {keepCache})`.
@@ -30,7 +30,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `supabase_flutter` (`SupabaseClient`), `application/services/content_store.dart` (`ContentStore`, `ContentMetadata`, `ContentStoreException`), `domain/value_objects/asset_ref.dart` (`AssetRef.formatPublicUri`), `domain/value_objects/media_kind.dart` (`MediaKind`), `core/utils/id_gen.dart`, `crypto` (sha256)
-- Used by: [[media_bundler]], [[entity_media_cleanup_service]], gallery/portrait pickers
+- Used by: [[entity_media_cleanup_service]], gallery/portrait pickers
 - Domain map: [[Media-and-Assets]]
 - System flow: [[Media-Storage-Tiers]]
 - Spec / reference: [[migrations-media-storage]]

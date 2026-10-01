@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/cloud_mirror_tables.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-22
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -38,6 +38,8 @@ Bir `MirrorTable` sekiz bayrakla iki yönü birden tarif ediyor. Kolon adları �
 | `owner` | `owner_id` kaynağı: satırın kendisi / NULL (DM'in mind map'i) / oturumdaki kullanıcı |
 | `sinceAll` | damga yok sayılsın mı — FK hedefi olan ebeveyn satır (`user_packages`) |
 | `key` | **yerel** birincil anahtar; pull gelen satırı bununla buluyor (`id`, 1:1'de `world_id`, `installed_packages`'ta bileşik) |
+
+- **`characterTable` (Faz 5g)** `mirrorTables`'ta değil: karakterin push kapsamı sahibi, tek yazma yolu karakter turu. `payload_json` `mediaCols`'ta (çeviri yalnız giden kopyada). Dünyanın pull'u, `localTableOf` ve iki servisin tablo haritaları onu ayrıca tanıyor.
 
 ## Notes
 - Yeni bir kolon aynalanacaksa **tek** yer burası; iki servis de otomatik öğrenir. İstisna: bulut tarafındaki DDL (migration) ve varsa dönüşüm bayrağı.

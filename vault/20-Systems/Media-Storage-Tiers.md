@@ -22,9 +22,8 @@ tags: [system]
 ## Participants
 - [[free_media_service]] — free tier reads.
 - [[entity_image_upload]] — seçilen resmin yerelleştirilmesi (yükleme yok).
-- [[world_media_sync]] — multiplayer dünyanın medyası R2'de, dünya başına (Faz 5d); 5e'den beri online paketinki de, paket başına: rezervasyon → toplu imza → doğrudan PUT → onay; yetim temizliği.
+- [[world_media_sync]] — multiplayer dünyanın medyası R2'de, dünya başına (Faz 5d); 5e'den beri online paketinki de, paket başına; 5g'den beri online karakterinki de, karakter başına: rezervasyon → toplu imza → doğrudan PUT → onay; yetim temizliği.
 - [[content_ref_index]] — `dmt-content://` ref'inin cihaz-yerel çözümü (`content_paths`).
-- [[media_bundler]] — karakter medyası (portre free, ek resim pinned).
 - [[worker]] / [[worker_rls]] — R2 routes + quota/access checks.
 - [[entity_media_cleanup_service]] — GC on delete.
 - [[pdf_library_service]] — world PDF kütüphanesi; Phase D'den beri **tamamen yerel**, `.dmtz` ile taşınır.
@@ -32,11 +31,11 @@ tags: [system]
 ## Tiers
 | Tier | Backend | Quota-counted | Lifecycle |
 |---|---|---|---|
-| **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; ≤2 MB/file. **Yalnızca paylaşım yolu yazar** (`world_characters` mirror push → [[media_bundler]]); görsel seçmek artık yükleme tetiklemez |
+| **Free** | Supabase Storage `free-media` bucket | **No** | Permanent; ≤2 MB/file. Faz 5g'den beri **yeni yazan yok** (karakter portresi `characters/{id}/`'ye gidiyor); eski `dmt-public://` ref'leri okunmaya devam ediyor |
 | ~~**Counted**~~ | Cloudflare R2 `{userId}/{sha}.{ext}` | — | **Emekli (Phase D)**: PUT 410, GET bir sürüm daha çalışır, sonra prefix süpürülecek |
 | ~~**Transient**~~ | ~~R2 `transient/{userId}/…`~~ | — | **Kalktı (Faz 5d, 099)**: LRU, talep-üzerine akış, `missing_shas` ve oturum kapısı gitti |
-| **World media** (+ paket, 5e) | Cloudflare R2 `worlds/{worldId}/{sha}{ext}`, `packages/{packageId}/{sha}{ext}` | **Yes** — kişi başı **1 GB** (bütün dünyaları + paketleri), toplam tavan **9 GB** (`pub/` ile ortak) | Dünya multiplayer oldukça kalıcı; satır silinince (tek tek, multiplayer kapatma, dünya/hesap silme — CASCADE) key `r2_evict_queue`'ya düşer, cron siler. Bayt worker'dan geçmez: `POST /world-media/sign` imzalı URL verir |
-| **Pinned** | Cloudflare R2 `pub/{sha}.{ext}` | **No** (toplam 9 GB tavanı dünya medyasıyla paylaşır, 500 MB/yayıncı) | Eviction yok; `pub_asset_refs` refcount 0 olunca kuyruğa atılır (089). Yazan iki yol: marketplace yayını ([[publish_media_pinner]]) ve karakter ek resimleri ([[media_bundler]], ref_key `char:{id}`) |
+| **World media** (+ paket 5e, karakter 5g) | Cloudflare R2 `worlds/{worldId}/{sha}{ext}`, `packages/{packageId}/{sha}{ext}`, `characters/{characterId}/{sha}{ext}` | **Yes** — kişi başı **1 GB** (bütün dünyaları + paketleri + karakterleri; sahipsiz karakterinki dünyanın sahibine), toplam tavan **9 GB** (`pub/` ile ortak) | Dünya multiplayer oldukça kalıcı; satır silinince (tek tek, multiplayer kapatma, dünya/hesap silme — CASCADE) key `r2_evict_queue`'ya düşer, cron siler. Bayt worker'dan geçmez: `POST /world-media/sign` imzalı URL verir |
+| **Pinned** | Cloudflare R2 `pub/{sha}.{ext}` | **No** (toplam 9 GB tavanı dünya medyasıyla paylaşır, 500 MB/yayıncı) | Eviction yok; `pub_asset_refs` refcount 0 olunca kuyruğa atılır (089). Yazan: marketplace yayını ([[publish_media_pinner]]). Karakter ek resimleri (ref_key `char:{id}`) 5g'den beri yazılmıyor; karakter silinince eskileri bırakılıyor |
 | **First-party art** | App bundle `assets/art/srd/` + R2 `catalog/art/{uuid}.webp` | **No** (kullanıcı yüklemesi değil) | Salt-okunur, sürümsüz; `cacheDir/art/` altında cache'lenir |
 
 ## Flow

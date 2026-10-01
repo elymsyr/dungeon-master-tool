@@ -198,7 +198,166 @@ class CloudPullService {
         await _db.customStatement(
             'DELETE FROM ${t.local} WHERE world_id = ?', [worldId]);
       }
+      // Kendi kapsamından inmiş karakter (Faz 5g) dünyası burada olmadan da
+      // yaşıyor; yalnız bu indirmenin yazdıkları gider.
+      await _db.customStatement(
+          'DELETE FROM world_characters WHERE world_id = ? AND is_online = 0',
+          [worldId]);
     });
+  }
+
+  // ── Faz 5g — karakter ────────────────────────────────────────────────────
+
+  /// Sahibin karakterlerini yerele çeker: `get_character_delta`, damga
+  /// `cloud_scopes`. Yalnız bu cihazda olan karakter güncellenir; olmayan
+  /// hub'ın "Bulutta, bu cihazda yok" bölümünden iner ([downloadCharacter]).
+  ///
+  /// Silmeler burada uygulanmaz, sonuçta döner: `deleted` çöpe gider,
+  /// `gone` yerel kopyayı tutar. İkisi de hub listesine dokunuyor — karar
+  /// `CharacterListNotifier.applyCloudRemovals`'ta.
+  Future<CharacterPullResult> pullCharacters({bool full = false}) async {
+    var since = full ? 0 : (await _db.worldCharactersDao.cloudMark()).revision;
+    var applied = 0;
+    final deleted = <String>[];
+    final gone = <String>[];
+    try {
+      for (var round = 0; round < _maxRounds; round++) {
+        final raw = await _client.rpc('get_character_delta',
+            params: {'p_since': since, 'p_limit': _page});
+        final delta = CloudDelta.fromJson(raw as Map<String, dynamic>);
+        if (delta.revision <= since && delta.complete) break;
+        final res = await applyCharacters(delta);
+        applied += res.applied;
+        deleted.addAll(res.deleted);
+        gone.addAll(res.gone);
+        since = delta.revision;
+        if (delta.complete) break;
+      }
+    } catch (e) {
+      debugPrint('CloudPullService.pullCharacters aborted: '
+          '${isOfflineError(e) ? 'offline' : e}');
+      return (
+        pull: CloudPullResult(applied: applied, revision: since, error: e),
+        deleted: deleted,
+        gone: gone,
+      );
+    }
+    return (
+      pull: CloudPullResult(applied: applied, revision: since),
+      deleted: deleted,
+      gone: gone,
+    );
+  }
+
+  /// [pullCharacters]'ın tek sayfası — **ağ yok**, testin kapısı. Satırlar ve
+  /// damga tek transaction; tombstone'lar LWW'den geçip döner (yerel
+  /// düzenleme silmeden yeniyse karakter yaşar, push onu geri koyar).
+  Future<({int applied, List<String> deleted, List<String> gone})>
+      applyCharacters(CloudDelta delta) async {
+    final local = {
+      for (final r
+          in await _db.customSelect('SELECT id FROM world_characters').get())
+        r.read<String>('id'),
+    };
+    final rows = [
+      for (final r in delta.rowsOf(characterTable.cloud))
+        if (local.contains(r['id'])) await _characterToLocal(r),
+    ];
+    final back = {for (final r in rows) r['id']};
+    var applied = 0;
+    final deleted = <String>[];
+    final gone = <String>[];
+    await _db.transaction(() async {
+      for (final stone in delta.tombstones) {
+        // Aynı sayfada satır geri geldiyse (silinip yeniden yaratıldı) taze
+        // olan kalır.
+        if (back.contains(stone.rowId)) continue;
+        final hit = await _db.customSelect(
+          'SELECT updated_at FROM world_characters WHERE id = ?',
+          variables: [Variable<String>(stone.rowId)],
+        ).getSingleOrNull();
+        final at = hit?.data['updated_at'];
+        if (hit == null || (at is int && at > stone.deletedAt)) continue;
+        (stone.kind == 'gone' ? gone : deleted).add(stone.rowId);
+      }
+      for (final row in rows) {
+        if (await _write(characterTable.local, characterTable.key, row)) {
+          applied++;
+        }
+      }
+      await _db.worldCharactersDao.setCloudRevision(delta.revision);
+    });
+    return (applied: applied, deleted: deleted, gone: gone);
+  }
+
+  /// Sahip kapsamından gelen satır: bulutta duruyor (`is_online`), dünya bağı
+  /// `payload_json.worldId`'den — bulut kolonu dünya bulutta değilse NULL
+  /// (101 C), bağı orada aramak karakteri dünyasından koparırdı.
+  Future<Map<String, Object?>> _characterToLocal(
+      Map<String, dynamic> cloud) async {
+    final out = await _toLocal(characterTable, cloud);
+    Object? world = cloud['world_id'];
+    try {
+      final p = jsonDecode('${cloud['payload_json']}');
+      if (p is Map && p.containsKey('worldId')) world = p['worldId'];
+    } catch (_) {}
+    out['world_id'] = world is String ? world : '';
+    out['is_online'] = 1;
+    return out;
+  }
+
+  /// Bu kullanıcının bulutta olup bu cihazda olmayan karakterleri. Çöpteki
+  /// karakter de sayılmaz: silmesi henüz buluta gitmemiş olabilir.
+  Future<List<CloudCharacter>> listCloudOnlyCharacters() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return const [];
+    final rows = await _client
+        .from('world_characters')
+        .select('id, payload_json')
+        .eq('owner_id', uid);
+    final local = {
+      for (final r in await _db.customSelect(
+              'SELECT id FROM world_characters UNION '
+              "SELECT source_id FROM trash_items WHERE kind = 'character'")
+          .get())
+        r.read<String>('id'),
+    };
+    return [
+      for (final r in rows)
+        if (!local.contains(r['id']))
+          (id: r['id'] as String, name: _nameOf(r['payload_json'])),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  static String _nameOf(Object? payload) {
+    try {
+      final p = jsonDecode('$payload');
+      final entity = p is Map ? p['entity'] : null;
+      final name = entity is Map ? entity['name'] : null;
+      return name is String ? name : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Bulutta olup bu cihazda olmayan karakteri indirir. Görselleri ref olarak
+  /// iner, `AssetRefResolver` ilk gösterimde çeker.
+  Future<CloudPullResult> downloadCharacter(String id) async {
+    try {
+      final row = await _client
+          .from('world_characters')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (row == null) {
+        return CloudPullResult(error: StateError('Character not found: $id'));
+      }
+      await _write(characterTable.local, characterTable.key,
+          await _characterToLocal(row));
+      return const CloudPullResult(applied: 1);
+    } catch (e) {
+      return CloudPullResult(error: e);
+    }
   }
 
   // ── Faz 5c — paket ───────────────────────────────────────────────────────
@@ -295,9 +454,11 @@ class CloudPullService {
     var removed = 0;
     // Paketin kendi satırı EN SON: çocuklardan önce yazılsaydı yarım inen
     // paket hub listesinde görünürdü (push'ta tersine, FK yüzünden önce).
+    // Karakter dünya turundan çıktı (Faz 5g) ama dünyanın pull'u onu yine
+    // getiriyor: DM'in ikinci cihazı oyuncuların karakterlerini buradan alır.
     final tables = package
         ? [...packageTables.skip(1), packageTables.first]
-        : mirrorTables;
+        : [...mirrorTables, characterTable];
     // Medya çözümü ağ değil ama dosya sistemi — transaction dışında yapılıyor
     // ki yazma kilidi disk I/O'su kadar açık kalmasın.
     final prepared = <MirrorTable, List<Map<String, Object?>>>{};
@@ -532,6 +693,7 @@ class CloudPullService {
 final Map<String, MirrorTable> _tableOf = {
   for (final t in mirrorTables) t.cloud: t,
   for (final t in packageTables) t.cloud: t,
+  characterTable.cloud: characterTable,
 };
 
 /// `get_world_delta`'nın döndürdüğü tek sayfa.
@@ -584,16 +746,21 @@ class CloudTombstone {
     required this.table,
     required this.rowId,
     required this.deletedAt,
+    this.kind,
   });
 
   factory CloudTombstone.fromJson(Map<String, dynamic> json) => CloudTombstone(
         table: json['table_name'] as String,
         rowId: json['row_id'] as String,
         deletedAt: CloudPullService._unixOf(json['deleted_at']) ?? 0,
+        kind: json['kind'] as String?,
       );
 
   final String table;
   final String rowId;
+
+  /// Yalnız karakter kapsamında (101): `deleted` ya da `gone`.
+  final String? kind;
 
   /// Unix **saniye** — yerel `updated_at` ile aynı birim.
   final int deletedAt;
@@ -616,6 +783,16 @@ typedef CloudWorld = ({
 
 /// Bulutta olup bu cihazda olmayan bir paket (Faz 5c).
 typedef CloudPackage = ({String id, String name});
+
+/// Bulutta olup bu cihazda olmayan bir karakter (Faz 5g).
+typedef CloudCharacter = ({String id, String name});
+
+/// Karakter pull'unun sonucu: satırlar uygulandı, silmeler çağırana kaldı.
+typedef CharacterPullResult = ({
+  CloudPullResult pull,
+  List<String> deleted,
+  List<String> gone,
+});
 
 /// Yerelde aynı adlı başka bir paket var — paket adı yerelde UNIQUE.
 class CloudPackageNameTaken implements Exception {

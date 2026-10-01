@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/cloud_pull_service.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -52,8 +52,10 @@ tags: [file]
 - **Ters dönüşümler:** ISO → unix saniye, `boolean` → 0/1, `jsonb` → TEXT, `rename` tersine. Bulut-yalnızı kolonlar (`revision`, `dm_only_keys`, kapsam dışı `owner_id`) yerele **sızmaz**.
 - **Medya:** `dmt-content://{sha}` → `ContentRefIndex.fileForSha` ile bu cihazdaki yol. Bayt burada yoksa ref **olduğu gibi kalır**; [[asset_ref_resolver]] onu zaten çözüyor, `MissingMediaReporter` sha'yı indirme kuyruğuna yazıyor (Faz 3.5).
 
+- **Karakter — sahip kapsamı (Faz 5g).** `pullCharacters` `get_character_delta(since)` sayfalarını `applyCharacters` ile uygular, damga `cloud_scopes.cloud_revision`. Yalnız bu cihazda **olan** karakter güncellenir; olmayan hub'ın "Bulutta, bu cihazda yok" bölümünden iner (`listCloudOnlyCharacters` — çöpteki karakter de sayılmaz; `downloadCharacter`). Sahip kapsamından gelen satır yerelde `is_online = 1` ve dünya bağı `payload_json.worldId`'den: bulut kolonu dünya bulutta değilse NULL (101 C). Tombstone'lar uygulanmaz, LWW'den geçip türüyle döner (`deleted` / `gone`) — çöpe atmak ve hub listesi `CharacterListNotifier.applyCloudRemovals`'ın işi. Aynı sayfada geri gelen satırın tombstone'u atlanır. Dünyanın `apply`'ı `characterTable`'ı yine okuyor (DM'in ikinci cihazı oyuncu karakterlerini oradan alır); yarım dünya indirmesi (`_discard`) kendi kapsamından inmiş (`is_online`) karakteri silmiyor.
+
 ## Notes
-- Test: `test/application/services/cloud_pull_apply_test.dart` (14 test) — `apply` üzerinden, ağsız. Sonuncusu **round-trip**: pull edilen satır push'a verildiğinde bayt bayt aynı gövdeyi üretiyor; echo guard'ın çalışması buna bağlı.
+- Test: `test/application/services/cloud_pull_apply_test.dart` (17 test) — `apply` üzerinden, ağsız. Sonuncusu **round-trip**: pull edilen satır push'a verildiğinde bayt bayt aynı gövdeyi üretiyor; echo guard'ın çalışması buna bağlı.
 - **İndirme — kabuk en son (Faz 5c).** Yarım inmiş dünya/paket hiçbir listede görünmemeli: açılabilseydi varsayılan ayarlarını "şimdi" damgasıyla kaydeder, LWW'yi kazanır ve buluttaki gerçek ayarları ezerdi. Dünyada `worlds` satırı bütün sayfalardan sonra yazılıyor (`apply`'ın damga UPDATE'i satır yokken no-op); pakette paketin satırı `get_package_delta`'nın son sayfasında geliyor ve `apply` paket tablolarını ters sırada (çocuklar önce, `packages` en son) yazıyor. Push damgası indirmenin **başına** çekiliyor: inen satırlar ondan eski, ilk açılışta buluta geri gitmez. Yarıda kalan indirme ham SQL ile siliniyor — DAO silmesi `sync_tombstones` bırakır, sonraki push buluttaki gerçek satırları silerdi. RLS dünyayı gizlerse RPC boş ama "tamam" dönüyor; revizyon 0 ise indirme hata sayılıyor (boş kabuk doğmasın). Paket adı yerelde UNIQUE: aynı adlı yerel paket varsa indirme ağa hiç çıkmadan `CloudPackageNameTaken` döner.
 - **Liste:** `listCloudOnlyWorlds` sahibi bu kullanıcı olan ve sayacı > 0 olan dünyaları (Faz 4'ten önce yalnız multiplayer için yayınlanmış, aynası boş dünyaları eliyor); PostgREST bire-bir gömmeyi bazen nesne bazen tek elemanlı liste döndürüyor, `_revisionOf` ikisini de okuyor.
 - Bilinçli sınırlar (§4.8, §4.8.2): paketin canlı sinyali yok (uzlaştırma anı açılış), oyuncu tarafı yok (Faz 5.5), görseller DM'in öbür cihazı açıkken gelir (§2.7).
