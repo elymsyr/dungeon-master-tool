@@ -63,6 +63,7 @@ import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/class_resources_card.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/save_sync_indicator.dart' show CharacterOnlineRow;
 import '../../widgets/section_jump_pad.dart';
 
 import '../database/entity_card.dart';
@@ -3743,9 +3744,14 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // O2: one read — `isConfigured` alone drew a cloud icon for a guest.
     final hasCloud = ref.watch(hasAccountProvider);
-    // 039+040: personal_characters retired. Char is "online" iff user is
-    // signed in — world_characters RLS auto-mirrors every owned row.
-    final isOnline = hasCloud;
+    // Faz 5g — karakterin kendi anahtarı; online dünyadaki karakter zorunlu
+    // online.
+    final worldId = character.worldId;
+    final isOnline = hasCloud &&
+        ((worldId != null && ref.watch(onlineWorldIdsProvider).contains(worldId)) ||
+            (ref.watch(onlineCharacterIdsProvider).valueOrNull
+                    ?.contains(character.id) ??
+                false));
 
     final (icon, color) = _resolveIcon(palette, hasCloud, isOnline);
 
@@ -3852,8 +3858,11 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                 SaveInfoSection(
                   localUpdatedAt: updatedAt,
                 ),
-
-
+                if (hasCloud) ...[
+                  const SizedBox(height: 12),
+                  CharacterOnlineRow(
+                      palette: palette, characterId: character.id),
+                ],
               ],
             ),
           ),

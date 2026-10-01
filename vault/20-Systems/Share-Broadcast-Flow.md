@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-09-24
+updated: 2026-10-01
 tags: [system, sync, multiplayer]
 ---
 
@@ -104,7 +104,7 @@ Tier tohumu kaldırılmadan önce online olmuş dünyalarda gerçek buluttaki `e
 
 Outbox + `SyncEngine` kaldırıldı. Kalan dört yazma yolu doğrudan yazar, last-write-wins, hata yutulur (yerel Drift kaynak-doğru):
 
-- Karakter → `CharacterListNotifier._pushCharacterToMirror` (medya bundle + `world_characters` upsert)
+- Karakter → Faz 5g'den beri doğrudan değil: karakter turu ([[cloud_push_provider]] `characterEdited` → 1 sn → [[cloud_push_service]] `pushCharacters`, medyası `characters/{id}/`). `world_characters` yine abone tablo; turun yazdığı satırın yankısı `markPushed` ile eleniyor
 - Kart paylaşımı → `EntityShareService`
 - Paket paylaşımı → `share_package_to_world` RPC
 - Projeksiyon → `ProjectionOutputOnline._upsert` (120 ms / 500 ms kademeli debounce)

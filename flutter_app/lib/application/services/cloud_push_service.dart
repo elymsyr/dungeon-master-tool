@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart';
+import '../../data/database/sync_stamp.dart';
+import '../../domain/entities/character_ext.dart' show kGuestReleasedOwnerId;
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import 'cloud_mirror_tables.dart';
@@ -133,6 +135,118 @@ class CloudPushService {
   Future<Map<String, WorldMediaRef>> packageMediaRefs(String packageId) async =>
       mediaRefsOf(await collectPackage(
           packageId, DateTime.fromMillisecondsSinceEpoch(0), ''));
+
+  /// Faz 5g — karakter turu, karakterlerin **tek** yazma yolu. Kapı rol
+  /// değil sahiplik: oyuncunun çevrimdışı düzenlemesi de böyle gidiyor.
+  ///
+  /// Giden karakterler ([collectCharacters]): [ownerId]'nin online
+  /// karakterleri (kendi anahtarı açık ya da üyesi olduğu online dünyada,
+  /// [worlds]) ve bu cihazda online işaretli dünyaların bütün karakterleri
+  /// (DM: sahipsiz olanlar, oyuncunun karakterine yaptığı düzenleme). Damga
+  /// `cloud_scopes`'ta, tombstone'lar [characterScope] altında.
+  ///
+  /// [media] satırlardan önce karakter başına ref'lerle çağrılır (boş
+  /// ref'liler dahil — çağıran yankı damgası da basıyor) ve yükleyemediği
+  /// karakterlerin id'lerini döner. Medyanın rezervasyonu karakterin bulut
+  /// satırına bağlı: ilk kez giden karakterinki satırdan sonra bir kez daha
+  /// denenir. Öbür cihaz o arada satırı görürse görsel `AssetRefResolver`'ın
+  /// yeniden denemesiyle gelir.
+  ///
+  /// Yazılan satırlar yerelde online işaretlenir: online dünyadaki karakter
+  /// dünya multiplayer'dan çıkınca da online kalır (kullanıcının kararı).
+  Future<CloudPushResult> pushCharacters({
+    required String ownerId,
+    Set<String> worlds = const {},
+    bool full = false,
+    Future<Set<String>> Function(Map<String, Map<String, WorldMediaRef>> refs)?
+        media,
+  }) async {
+    final dao = _db.worldCharactersDao;
+    final mark = await dao.cloudMark();
+    final cutoff = DateTime.now();
+    final since = full
+        ? DateTime.fromMillisecondsSinceEpoch(0)
+        : (mark.pushedAt ?? DateTime.fromMillisecondsSinceEpoch(0));
+
+    var pushed = 0;
+    var deleted = 0;
+    final rejected = <String>[];
+    final revs = <int>[];
+    try {
+      deleted = await _sendTombstones(characterScope);
+      final rows = await collectCharacters(ownerId, worlds, since);
+      if (rows.isNotEmpty) {
+        final refs = {
+          for (final r in rows)
+            r['id'] as String:
+                mediaRefsOf([CloudPushBatch(characterTable.cloud, [r])]),
+        };
+        final again = await media?.call(refs) ?? const <String>{};
+        await _upsert(characterTable.cloud, rows, rejected, revs,
+            revision: 'owner_revision', owner: ownerId);
+        pushed = rows.length;
+        final failed = rejected.map((r) => r.split('/').last).toSet();
+        await dao.markOnline([
+          for (final r in rows)
+            if (!failed.contains(r['id'])) r['id'] as String,
+        ]);
+        if (again.isNotEmpty) {
+          await media?.call({
+            for (final id in again)
+              if (!failed.contains(id)) id: refs[id]!,
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('CloudPushService.pushCharacters aborted: '
+          '${isOfflineError(e) ? 'offline' : e}');
+      return CloudPushResult(
+          pushed: pushed, deleted: deleted, rejected: rejected, error: e);
+    }
+    await dao.setCloudPushAt(cutoff);
+    // Dünyadaki gerekçeyle ([pushWorld]): kendi yazmalarımızın sinyali bize
+    // de geliyor, boşluksuz kendi dizimizse pull onu geri indirmesin.
+    final end = deleted == 0 ? ownRunEnd(mark.revision, revs) : null;
+    if (end != null) await dao.setCloudRevision(end, ifEquals: mark.revision);
+    return CloudPushResult(pushed: pushed, deleted: deleted, rejected: rejected);
+  }
+
+  /// Karakter turunun satırları — **ağ yok** ([collect]'in eşi).
+  Future<List<Map<String, dynamic>>> collectCharacters(
+    String ownerId,
+    Set<String> worlds,
+    DateTime since,
+  ) async {
+    final inWorlds = List.filled(worlds.length, '?').join(', ');
+    final rows = await _collectTable(characterTable, '', since, const {},
+        where: 'updated_at >= ? AND ((owner_id = ? AND (is_online = 1'
+            '${worlds.isEmpty ? '' : ' OR world_id IN ($inWorlds)'})) '
+            'OR world_id IN (SELECT id FROM worlds WHERE is_online = 1))',
+        variables: [
+          Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
+          Variable<String>(ownerId),
+          for (final w in worlds) Variable<String>(w),
+        ]);
+    for (final r in rows) {
+      // Yerelde dünyasız karakter boş dize; bulutta NULL. Dünya bulutta
+      // yoksa (online değil) 101'in trigger'ı NULL'a çekiyor, bağ
+      // `payload_json.worldId`'de kalıyor.
+      if (r['world_id'] == '') r['world_id'] = null;
+      // Misafirin "bıraktım" işareti yerel — uuid kolonuna yazılamaz.
+      if (r['owner_id'] == kGuestReleasedOwnerId) r['owner_id'] = null;
+    }
+    return rows;
+  }
+
+  /// Karakterin buluttan kalkması ("yerele al"): satır ve medyası (CASCADE)
+  /// gider, sahibin öbür cihazları `gone` görüp yerel kopyalarını tutar.
+  Future<void> unpublishCharacter(String id) async {
+    await _client.rpc('unpublish_character', params: {'p_character_id': id});
+    await _db.customStatement(
+      'DELETE FROM sync_tombstones WHERE world_id = ? AND row_id = ?',
+      [characterScope, id],
+    );
+  }
 
   /// Push'un geri aldığı revizyonlar [base]'in hemen ardından boşluksuz bir
   /// dizi mi? Öyleyse dizinin sonu döner, değilse null — araya başka bir yazar
@@ -343,23 +457,33 @@ class CloudPushService {
     return out;
   }
 
+  /// [where] ve [variables] verilirse kapsam/damga koşulunun yerine geçer
+  /// (karakter turu, Faz 5g).
   Future<List<Map<String, dynamic>>> _collectTable(
     MirrorTable t,
     String scopeId,
     DateTime since,
     Map<String, List<String>> dmOnlyKeys, {
     String? ownerId,
+    String? where,
+    List<Variable<Object>>? variables,
   }) async {
     final cols = [...t.cols, ...t.dateCols];
+    // `>=`, `>` değil: `updated_at` saniye, damga tur başındaki an. Tur
+    // sürerken damgayla aynı saniyede düzenlenen satır `>` ile bir sonraki
+    // turda da atlanır ve kaybolurdu. Sınır saniyesinin satırları bir kez
+    // daha gider — upsert idempotent, 097 yalnız eskiyi atlıyor.
     // `sinceAll` tabloyu damgadan bağımsız her tur gönderir: paketin kendi
     // satırı çocuklarının FK hedefi, bulutta yoksa çocuklar reddedilirdi.
     final rows = await _db.customSelect(
-      'SELECT ${cols.join(', ')} FROM ${t.local} '
-      'WHERE ${t.scope} = ?${t.sinceAll ? '' : ' AND updated_at > ?'}',
-      variables: [
-        Variable<String>(scopeId),
-        if (!t.sinceAll) Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
-      ],
+      'SELECT ${cols.join(', ')} FROM ${t.local} WHERE '
+      '${where ?? '${t.scope} = ?${t.sinceAll ? '' : ' AND updated_at >= ?'}'}',
+      variables: variables ??
+          [
+            Variable<String>(scopeId),
+            if (!t.sinceAll)
+              Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
+          ],
     ).get();
     if (rows.isEmpty) return const [];
 
@@ -422,7 +546,7 @@ class CloudPushService {
       'SELECT c.id, c.encounter_id, c.entity_id, c.name, c.init, c.ac, '
       'c.hp, c.max_hp, c.token_id, c.sort_order, c.updated_at '
       'FROM combatants c JOIN encounters e ON e.id = c.encounter_id '
-      'WHERE e.world_id = ? AND c.updated_at > ?',
+      'WHERE e.world_id = ? AND c.updated_at >= ?',
       variables: [
         Variable<String>(worldId),
         Variable<int>(since.millisecondsSinceEpoch ~/ 1000),
@@ -467,19 +591,30 @@ class CloudPushService {
   ///
   /// Yazılan satırların bulut revizyonları [revs]'e eklenir. 097'nin LWW
   /// guard'ının atladığı satır (bulutta daha yeni düzenleme var) dönmez.
+  ///
+  /// Karakter turu (Faz 5g) sahip sayacını okur: [revision]
+  /// `owner_revision`, ve yalnız [owner]'ın satırları sayılır — DM'in
+  /// yazdığı oyuncu karakteri oyuncunun sayacını ilerletiyor.
   Future<void> _upsert(
     String table,
     List<Map<String, dynamic>> rows,
     List<String> rejected,
-    List<int> revs,
-  ) async {
+    List<int> revs, {
+    String revision = 'revision',
+    String? owner,
+  }) async {
     for (var i = 0; i < rows.length; i += _chunk) {
       final slice = rows.sublist(i, (i + _chunk).clamp(0, rows.length));
       try {
-        final back = await _client.from(table).upsert(slice).select('revision');
+        final back = await _client
+            .from(table)
+            .upsert(slice)
+            .select(owner == null ? revision : '$revision, owner_id');
         for (final r in back) {
-          final v = r['revision'];
-          if (v is num) revs.add(v.toInt());
+          final v = r[revision];
+          if (v is num && (owner == null || r['owner_id'] == owner)) {
+            revs.add(v.toInt());
+          }
         }
       } catch (e) {
         if (isOfflineError(e) || slice.length == 1 && e is! PostgrestException) {
@@ -492,7 +627,8 @@ class CloudPushService {
           continue;
         }
         for (final row in slice) {
-          await _upsert(table, [row], rejected, revs);
+          await _upsert(table, [row], rejected, revs,
+              revision: revision, owner: owner);
         }
       }
     }
@@ -571,6 +707,7 @@ Map<String, WorldMediaRef> mediaRefsOf(Iterable<CloudPushBatch> batches) {
 final Map<String, MirrorTable> _mirrorByCloud = {
   for (final t in mirrorTables) t.cloud: t,
   for (final t in packageTables) t.cloud: t,
+  characterTable.cloud: characterTable,
 };
 
 /// Medya kolonunun değeri düz bir ref ya da JSON metni (galeri, alanlar,

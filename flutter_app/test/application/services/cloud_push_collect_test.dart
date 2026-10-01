@@ -10,6 +10,8 @@
 //   4. Combatant: dünya encounter'dan gelir, koşullar JSON kolona iner.
 //   5. Tombstone: DAO silme yolunda yazılır.
 //   6. Faz 4b — paket (kullanıcı kapsamlı) ve karakter satırları.
+//   7. Faz 5g — karakter turu: kapı sahiplik, tombstone karakter kapsamına,
+//      medya satırlardan önce (ilk kez gidende bir kez daha sonra).
 
 import 'dart:convert';
 
@@ -221,37 +223,165 @@ void main() {
     await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
       id: 'ch1',
       worldId: 'w1',
+      ownerId: const Value('u1'),
       templateId: 'dnd5e',
       templateName: 'Fighter',
       payloadJson: const Value('{"name":"Kael"}'),
       referencedEntityIdsJson: const Value('["e1","e2"]'),
+      isOnline: const Value(true),
       updatedAt: Value(DateTime(2026, 6, 1)),
     ));
-    final row = (await svc.collect('w1', epoch, const {}))
-        .firstWhere((b) => b.table == 'world_characters')
-        .rows
-        .single;
+    final row = (await svc.collectCharacters('u1', const {}, epoch)).single;
     expect(row['referenced_entity_ids'], ['e1', 'e2']);
     expect(row.containsKey('referenced_entity_ids_json'), false);
-    // Blob'a dokunulmuyor — byte-for-byte kuralı (world_characters_dao).
     expect(row['payload_json'], '{"name":"Kael"}');
+    // Dünya turundan çıktı (Faz 5g): tek yol karakter turu.
+    expect(
+        (await svc.collect('w1', epoch, const {}))
+            .any((b) => b.table == 'world_characters'),
+        false);
   });
 
-  test('karakter silinince tombstone dünyaya yazılır', () async {
+  // ── Faz 5g ────────────────────────────────────────────────────────────
+
+  Future<void> putChar(String id,
+      {String world = '',
+      String? owner = 'u1',
+      bool online = false,
+      DateTime? at}) async {
     await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
-      id: 'ch1',
-      worldId: 'w1',
+      id: id,
+      worldId: world,
+      ownerId: Value(owner),
       templateId: 'dnd5e',
       templateName: 'Fighter',
+      isOnline: Value(online),
+      updatedAt: Value(at ?? DateTime(2026, 6, 1)),
     ));
-    await db.worldCharactersDao.deleteById('ch1');
-    final row = (await db
-            .customSelect('SELECT table_name, row_id, world_id '
-                'FROM sync_tombstones')
-            .get())
-        .single;
-    expect(row.read<String>('table_name'), 'world_characters');
-    expect(row.read<String>('world_id'), 'w1');
+  }
+
+  test('watermark: damgayla aynı saniyede düzenlenen satır kaçmaz', () async {
+    // Damga tur başındaki an (ms), `updated_at` saniye: tur sürerken aynı
+    // saniyede düzenlenen satır sonraki turda da gitmeli.
+    final mark = DateTime(2026, 3, 1, 12, 0, 5, 100);
+    await putEntity('e-same', DateTime(2026, 3, 1, 12, 0, 5, 900));
+    final rows = (await svc.collect('w1', mark, const {}))
+        .firstWhere((b) => b.table == 'world_entities')
+        .rows;
+    expect(rows.map((r) => r['id']), ['e-same']);
+    await putChar('c-same', online: true, at: DateTime(2026, 3, 1, 12, 0, 5, 900));
+    expect((await svc.collectCharacters('u1', const {}, mark)).map((r) => r['id']),
+        ['c-same']);
+  });
+
+  test('karakter turu: kapı sahiplik ve anahtar, ya da DM\'in online dünyası',
+      () async {
+    await db.worldsDao.upsert(WorldsCompanion.insert(
+        id: 'w-off', worldName: 'Kapalı'));
+    await db.worldsDao.upsert(WorldsCompanion.insert(
+        id: 'w-player', worldName: 'Oyuncu olduğum'));
+    await putChar('own-online', online: true);
+    await putChar('own-local');
+    await putChar('own-offline-world', world: 'w-off');
+    await putChar('own-member-world', world: 'w-player');
+    await putChar('dm-unowned', world: 'w1', owner: null);
+    await putChar('dm-player', world: 'w1', owner: 'u2');
+    await putChar('other-elsewhere', world: 'w-off', owner: 'u2', online: true);
+    await putChar('own-old', online: true, at: DateTime(2020));
+
+    final rows =
+        await svc.collectCharacters('u1', {'w-player'}, DateTime(2025));
+    expect(rows.map((r) => r['id']).toSet(), {
+      'own-online',
+      'own-member-world',
+      'dm-unowned',
+      'dm-player',
+    });
+    // Yerelde dünyasız boş dize; bulutta NULL.
+    expect(rows.firstWhere((r) => r['id'] == 'own-online')['world_id'], isNull);
+  });
+
+  test('karakter silinince tombstone karakter kapsamına, yalnız bulutta duranın',
+      () async {
+    await putChar('on', online: true);
+    await putChar('local');
+    await putChar('dropped', online: true);
+    await db.worldCharactersDao.deleteById('on');
+    await db.worldCharactersDao.deleteById('local');
+    // Sahiplik başkasına geçti (dropMirror): satır yalnız bu cihazdan kalkar.
+    await db.worldCharactersDao.deleteById('dropped', tombstone: false);
+    final rows = await db
+        .customSelect('SELECT row_id, world_id FROM sync_tombstones')
+        .get();
+    expect(rows.map((r) => r.read<String>('row_id')), ['on']);
+    expect(rows.single.read<String>('world_id'), '@characters');
+  });
+
+  test('dünya yerelden silinince karakterlerine tombstone yazılmaz', () async {
+    await putChar('dm-player', world: 'w1', owner: 'u2', online: true);
+    await db.worldCharactersDao.deleteByWorld('w1');
+    expect(await db.customSelect('SELECT * FROM sync_tombstones').get(),
+        isEmpty, reason: 'oyuncunun karakteri DM\'in cihazından silinmemeli');
+  });
+
+  test('karakter turu: medya satırlardan önce, yazılan satır online işaretlenir',
+      () async {
+    final sha = 'b' * 64;
+    await db.worldCharactersDao.upsert(WorldCharactersCompanion.insert(
+      id: 'ch1',
+      worldId: '',
+      ownerId: const Value('u1'),
+      templateId: 'dnd5e',
+      templateName: 'Fighter',
+      payloadJson: Value('{"entity":{"imagePath":"dmt-content://$sha.png"}}'),
+      updatedAt: Value(DateTime(2026, 6, 1)),
+    ));
+    await db.worldCharactersDao.setOnline('ch1', true);
+    await db.worldCharactersDao.setOnline('ch1', false);
+    // Anahtar açık ama satır henüz bulutta değil.
+    await (db.update(db.worldCharacters)..where((t) => t.id.equals('ch1')))
+        .write(const WorldCharactersCompanion(isOnline: Value(true)));
+
+    final cloud = await FakePostgrest.start(uid: 'u1');
+    addTearDown(cloud.close);
+    final remote = CloudPushService(db: db, client: cloud.client);
+    cloud.replies.add(() => (
+          200,
+          [
+            {'owner_revision': 1, 'owner_id': 'u1'}
+          ]
+        ));
+
+    final calls = <Map<String, Set<String>>>[];
+    var upsertsBefore = -1;
+    final res = await remote.pushCharacters(
+        ownerId: 'u1',
+        media: (refs) async {
+          calls.add({for (final e in refs.entries) e.key: e.value.keys.toSet()});
+          if (calls.length == 1) {
+            upsertsBefore =
+                cloud.calls.where((c) => c.method == 'POST').length;
+          }
+          // İlk kez giden karakter: rezervasyon satırı bulamaz.
+          return {'ch1'};
+        });
+    expect(res.error, isNull);
+    expect(calls.first, {
+      'ch1': {sha}
+    });
+    expect(upsertsBefore, 0);
+    expect(calls.length, 2, reason: 'yüklenemeyen satırdan sonra yeniden');
+    expect(cloud.requests, contains('POST /rest/v1/world_characters'));
+    expect((await db.worldCharactersDao.getById('ch1'))!.isOnline, true);
+    final mark = await db.worldCharactersDao.cloudMark();
+    expect(mark.pushedAt, isNotNull);
+    expect(mark.revision, 1, reason: 'boşluksuz kendi dizimiz');
+
+    // Damga ilerledi: sınır saniyesinden sonraki tur aynı satırı göndermez.
+    expect(
+        await remote.collectCharacters(
+            'u1', const {}, mark.pushedAt!.add(const Duration(seconds: 1))),
+        isEmpty);
   });
 
   test('paket: ebeveyn her tur gider, çocuklar damgaya bakar', () async {

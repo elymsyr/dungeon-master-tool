@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-23
+updated: 2026-10-01
 tags: [file]
 ---
 
@@ -15,7 +15,7 @@ tags: [file]
 > The outbound Supabase push layer plus the self-echo / unpublish-guard bookkeeping. Wraps the `SupabaseClient`: `push*` methods write to the cloud mirror tables (some via direct `.upsert`, some via SECURITY-DEFINER RPCs), `fetchInitialState` / `fetchEntity` pull on subscribe, and a family of `_stamp` / `_isEcho` / `registerExpected*` helpers let `[[world_mirror_applier]]` decide whether an inbound CDC event is our own echo or a destructive event that should be suppressed.
 
 > [!warning] Push yüzeyi daraldı (2026-08-24)
-> 618 → ~300 satır. `pushEntity`, `deleteEntity`, `pushWorldState`, `pushMapData`, `pushSession`, `pushSettings`, `fetchEntity` ve tüm `*PersonalPackage*` / `*PersonalCharacter*` metotları silindi. Kalan doğrudan yazmalar: `pushCharacter`, `deleteCharacter`, `shareWorldPackage`, `unshareWorldPackage`, `fetchInitialState` + echo damgaları. Outbox aracılığı yok — çağıran doğrudan çağırır. Bkz. [[Share-Broadcast-Flow]].
+> 618 → ~300 satır. `pushEntity`, `deleteEntity`, `pushWorldState`, `pushMapData`, `pushSession`, `pushSettings`, `fetchEntity` ve tüm `*PersonalPackage*` / `*PersonalCharacter*` metotları silindi. Kalan doğrudan yazmalar: `shareWorldPackage`, `unshareWorldPackage`, `fetchInitialState` + echo damgaları. `pushCharacter` / `deleteCharacter` Faz 5g'de kalktı: karakter karakter turuyla gidiyor ([[cloud_push_service]] `pushCharacters`), pompa yazdığı id'leri `markPushed` ile damgalıyor ki paylaşım yayınındaki yankı (yerel yolların yerine ref taşıyan satır) uygulanmasın. Outbox aracılığı yok — çağıran doğrudan çağırır. Bkz. [[Share-Broadcast-Flow]].
 
 ## Inputs / Outputs
 **Inputs**

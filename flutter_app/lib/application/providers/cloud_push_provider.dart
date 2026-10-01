@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../data/database/sync_stamp.dart' show characterScope;
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../services/cloud_pull_service.dart';
@@ -16,12 +17,15 @@ import '../services/content_ref_index.dart';
 import '../services/world_media_sync.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
+import 'character_provider.dart' show characterListProvider;
 import 'cloud_sync_status_provider.dart';
 import 'connectivity_provider.dart';
 import '../../data/database/database_provider.dart';
 import 'entity_provider.dart';
+import 'online_worlds_provider.dart';
 import 'package_provider.dart' show activePackageProvider, packageListProvider;
 import 'role_provider.dart';
+import 'world_mirror_provider.dart' show worldMirrorServiceProvider;
 
 /// Faz 4 push servisi. Supabase yapılandırılmamışsa ya da oturum yoksa null —
 /// uygulama tamamen yerel çalışır.
@@ -86,6 +90,21 @@ final cloudOnlyPackagesProvider =
   }
 });
 
+/// Faz 5g — bu kullanıcının bulutta olup bu cihazda olmayan karakterleri.
+/// Hub'ın karakter listesi değişince yeniden sorulur.
+final cloudOnlyCharactersProvider =
+    FutureProvider<List<CloudCharacter>>((ref) async {
+  final svc = ref.watch(cloudPullServiceProvider);
+  ref.watch(characterListProvider.select((s) => s.valueOrNull?.length));
+  if (svc == null) return const [];
+  try {
+    return await svc.listCloudOnlyCharacters();
+  } catch (e) {
+    debugPrint('cloudOnlyCharacters: ${isOfflineError(e) ? 'offline' : e}');
+    return const [];
+  }
+});
+
 /// Bulut aynasının istemci tarafındaki tek sürücüsü: yazma tamponu sustuğunda
 /// push, bulut revizyonu değiştiğinde pull.
 ///
@@ -108,11 +127,17 @@ final cloudOnlyPackagesProvider =
 /// bağlantı geri gelince [reconcileAll] — dünyayı açmak gerekmez. Faz 5e'den
 /// beri online paketler de aynı anlarda ve medyalarıyla; paketin canlı
 /// sinyali yok, zamanlayıcıyla yeniden denenmez.
+///
+/// Karakter (Faz 5g) kendi turunda: kapsamı sahibi, sinyali kullanıcı başına
+/// `character_revisions` satırı (kanal oturum boyunca açık, dünyadan
+/// bağımsız), düzenlemeden sonra 1 sn.
 class CloudPushPump {
   CloudPushPump(this._ref) {
     _buffer = _ref.read(pendingWriteBufferProvider);
     _buffer.tick.addListener(_onTick);
     _ref.listen<AsyncValue<bool>>(connectivityStreamProvider, _onConnectivity);
+    _ref.listen(authProvider, (_, next) => _bindCharacters(next?.uid),
+        fireImmediately: true);
   }
 
   final Ref _ref;
@@ -402,6 +427,11 @@ class CloudPushPump {
   /// inen satırları bir sonraki kayıtta eski halleriyle ezerdi. Öbür
   /// cihazın düzenlemesini bir sonraki açılışta görür.
   Future<void> reconcileAll() async {
+    try {
+      await catchUpCharacters();
+    } catch (e) {
+      debugPrint('CloudSync: uzlaştırma karakter hata=$e');
+    }
     final db = _ref.read(appDatabaseProvider);
     final worlds = await db.worldsDao.getAll();
     for (final w in worlds) {
@@ -640,6 +670,173 @@ class CloudPushPump {
         retry: false)));
   }
 
+  // ── Faz 5g — karakter ───────────────────────────────────────────────────
+
+  /// Karakter düzenlemesinden sonraki sessizlik (kullanıcının kararı): canlı
+  /// oyunda oyuncunun HP'si DM'e dünyanın 3 sn'sini beklemeden gitsin.
+  static const Duration _charIdle = Duration(seconds: 1);
+
+  Timer? _charTimer;
+  Timer? _charSignalTimer;
+  Timer? _charResub;
+  RealtimeChannel? _charChannel;
+  String? _charUid;
+
+  /// Karakter yerelde değişti (kaydedildi, silindi, anahtarı açıldı). Turun
+  /// kapısı sahiplik — karakterin bulutta olup olmadığına tur bakar.
+  void characterEdited() {
+    _charTimer?.cancel();
+    _charTimer = Timer(_charIdle, () => unawaited(pushCharacters()));
+  }
+
+  /// Karakter turu. [full] damgayı yok sayar: dünya multiplayer olunca
+  /// karakterleri kapsama girdi ama düzenlenmedikleri için damgadan eski.
+  Future<CloudPushResult> pushCharacters({bool full = false}) async {
+    final svc = _ref.read(cloudPushServiceProvider);
+    final uid = _ref.read(authProvider)?.uid;
+    if (svc == null || uid == null) return const CloudPushResult(skipped: true);
+    return _shown(
+        characterScope,
+        CloudSyncIssue.push,
+        () => _rows.run(() => _logged(
+            'push karakter',
+            svc.pushCharacters(
+                ownerId: uid,
+                worlds: _ref.read(onlineWorldIdsProvider),
+                full: full,
+                media: _characterMedia))));
+  }
+
+  /// Satırlardan önce karakter başına medya (`characters/{id}/`). Yükleyemediği
+  /// karakterler döner — servis onları satırdan sonra bir kez daha dener.
+  /// Yeni bir görsel çıktıysa karakterin artık anılmayan görseli silinir
+  /// (öbür cihazın tazesini [WorldMediaSync.pruneGrace] koruyor): portre
+  /// değiştikçe eskisi kotada birikmesin.
+  Future<Set<String>> _characterMedia(
+      Map<String, Map<String, WorldMediaRef>> refs) async {
+    final media = _ref.read(worldMediaSyncProvider);
+    final failed = <String>{};
+    for (final MapEntry(key: id, value: shas) in refs.entries) {
+      if (media == null || shas.isEmpty) continue;
+      try {
+        final rep =
+            await media.upload(id, shas, scope: MediaScope.character);
+        if (rep.failed.isNotEmpty) {
+          failed.add(id);
+        } else if (rep.uploaded > 0) {
+          await media.prune(id, shas.keys.toSet(), scope: MediaScope.character);
+        }
+      } on WorldMediaQuotaException catch (e) {
+        _ref.read(worldMediaQuotaProvider.notifier).state ??= e.pool;
+        break;
+      } catch (e) {
+        // İlk kez giden karakter: rezervasyon bulut satırını arıyor
+        // (`not_scope_owner`), satırdan sonra yeniden.
+        debugPrint('CloudSync: medya karakter $id ${isOfflineError(e) ? 'offline' : e}');
+        failed.add(id);
+      }
+    }
+    // Paylaşım yayını kendi yazmamızı geri getiriyor; satır yerel yolların
+    // yerine ref taşıdığı için uygulanmamalı (eski doğrudan yolun yankı
+    // damgası). Satırlardan hemen önce: 3 sn'lik pencere medyayla dolmasın.
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    for (final id in refs.keys) {
+      mirror?.markPushed(id);
+    }
+    return failed;
+  }
+
+  /// Karakter kapsamının uzlaştırması: push, sonra pull (sıranın gerekçesi
+  /// [catchUp]'ta). Kanal `SUBSCRIBED` olunca, sahibin sinyalinde ve
+  /// [reconcileAll]'da.
+  Future<void> catchUpCharacters() async {
+    if (_ref.read(cloudPullServiceProvider) == null) return;
+    await _buffer.flush();
+    // Karakterin dünyası online mı, bu listeye bakılarak karar veriliyor;
+    // çevrimdışı açılışta boş kalmış olabilir.
+    await _ref.read(onlineWorldIdsProvider.notifier).refresh();
+    final pushed = await pushCharacters();
+    if (pushed.skipped) return;
+    final svc = _ref.read(cloudPullServiceProvider);
+    if (svc == null) return;
+    final res = await _rows.run(() => svc.pullCharacters());
+    final pull = res.pull;
+    debugPrint('CloudSync: pull karakter +${pull.applied} '
+        '-${res.deleted.length} ~${res.gone.length} rev=${pull.revision}'
+        '${pull.error != null ? ' hata=${pull.error}' : ''}');
+    _status.report(characterScope, CloudSyncIssue.pull, error: pull.error);
+    // Öbür cihazda online yapılan karakter yerelde yok, pull onu uygulamaz:
+    // hub'ın "bulutta, bu cihazda yok" listesi buradan tazelenir.
+    _ref.invalidate(cloudOnlyCharactersProvider);
+    if (pull.applied > 0 || res.deleted.isNotEmpty || res.gone.isNotEmpty) {
+      await _ref.read(characterListProvider.notifier).applyCloudRemovals(
+          deleted: res.deleted,
+          gone: res.gone,
+          onlineWorlds: _ref.read(onlineWorldIdsProvider));
+    }
+  }
+
+  /// Sahibin kanalı: oturum açıkken tek kanal, dünyalardan bağımsız.
+  /// `SUBSCRIBED` (ilk bağlanma ve her yeniden bağlanma) uzlaştırır.
+  void _bindCharacters(String? uid) {
+    if (uid == _charUid) return;
+    _charUid = uid;
+    _charResub?.cancel();
+    final old = _charChannel;
+    _charChannel = null;
+    if (!SupabaseConfig.isConfigured) return;
+    final client = Supabase.instance.client;
+    if (old != null) unawaited(client.removeChannel(old));
+    if (uid == null) return;
+    _charChannel = client.channel('dmt:characters:$uid')
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'character_revisions',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'owner_id',
+          value: uid,
+        ),
+        callback: (p) {
+          final rev = p.newRecord['revision'];
+          if (rev is num) _onCharacterSignal(rev.toInt());
+        },
+      )
+      ..subscribe((status, error) {
+        switch (status) {
+          case RealtimeSubscribeStatus.subscribed:
+            unawaited(catchUpCharacters());
+          case RealtimeSubscribeStatus.channelError:
+          case RealtimeSubscribeStatus.timedOut:
+            debugPrint('CloudSync: karakter kanalı $status: $error');
+            _charResub?.cancel();
+            _charResub = Timer(const Duration(seconds: 30), () {
+              if (_ref.read(authProvider)?.uid != uid) return;
+              _charUid = null;
+              _bindCharacters(uid);
+            });
+          case RealtimeSubscribeStatus.closed:
+            break;
+        }
+      });
+  }
+
+  /// Öbür cihazın turu sayacı satır başına artırıyor: pencere patlamayı tek
+  /// uzlaştırmaya indirir; kendi turumuzun yankısını damga eler.
+  void _onCharacterSignal(int revision) {
+    _charSignalTimer?.cancel();
+    _charSignalTimer = Timer(_signalIdle, () async {
+      await _rows.run(() async {});
+      final mark =
+          await _ref.read(appDatabaseProvider).worldCharactersDao.cloudMark();
+      debugPrint('CloudSync: karakter sinyali rev=$revision '
+          'yerel=${mark.revision}');
+      if (revision <= mark.revision) return;
+      await catchUpCharacters();
+    });
+  }
+
   Future<CloudPushResult> pushActivePackage() =>
       _ref.read(activePackageProvider) == null
           ? Future.value(const CloudPushResult(skipped: true))
@@ -678,6 +875,11 @@ class CloudPushPump {
   void dispose() {
     _timer?.cancel();
     _signalTimer?.cancel();
+    _charTimer?.cancel();
+    _charSignalTimer?.cancel();
+    _charResub?.cancel();
+    final ch = _charChannel;
+    if (ch != null) unawaited(Supabase.instance.client.removeChannel(ch));
     for (final t in _mediaRetry.values) {
       t.cancel();
     }

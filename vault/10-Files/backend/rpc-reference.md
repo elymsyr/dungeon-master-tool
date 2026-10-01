@@ -36,10 +36,10 @@ tags: [file]
 - `get_user_total_storage_used(p_user_id uuid) → bigint` — cloud_backups + community_assets (+ posts/shared_items) total; **excludes** free_media + transient (002/003). `authenticated` + `service_role`.
 - `get_user_storage_used(p_user_id uuid) → bigint` — cloud_backups only (001).
 - ~~`get_transient_access`, `transient_reserve`, `transient_touch`, `transient_evict_pop`, `transient_*_cap_bytes`, `report_missing_shas`~~ — **099'da silindi** (Faz 5d, transient havuz kalktı).
-- `media_reserve(_scope text, _id text, _items jsonb) → jsonb` — yüklemeden önce; `_scope` `'world'` | `'package'` (100, 099'un `world_media_reserve`'ünün yerine). Yalnız kapsamın sahibi (`_media_scope_owner`; id `^[A-Za-z0-9_-]{1,100}$`, R2 key'inin parçası); her öğe `{sha, ext, bytes, kind, mime}`; limiti aşan `too_large`'da döner (hata değil), zaten yüklü atlanır, rezerve edilip yüklenmemiş yeniden döner; kişi başı 1 GB (`media_user_full`, dünyalar + paketler) ya da toplam 9 GB (`media_pool_full`) aşılırsa hiçbir satır yazılmaz. Dönüş `{upload: [sha], too_large: [sha]}`. `authenticated`.
+- `media_reserve(_scope text, _id text, _items jsonb) → jsonb` — yüklemeden önce; `_scope` `'world'` | `'package'` | `'character'` (100; karakter 101, sahibi ya da dünyasının DM'i rezerve eder). Yalnız kapsamın sahibi (`_media_scope_owner`; id `^[A-Za-z0-9_-]{1,100}$`, R2 key'inin parçası); her öğe `{sha, ext, bytes, kind, mime}`; limiti aşan `too_large`'da döner (hata değil), zaten yüklü atlanır, rezerve edilip yüklenmemiş yeniden döner; kişi başı 1 GB (`media_user_full`, dünyalar + paketler) ya da toplam 9 GB (`media_pool_full`) aşılırsa hiçbir satır yazılmaz. Dönüş `{upload: [sha], too_large: [sha]}`. `authenticated`.
 - `media_confirm(_scope text, _id text, _shas text[]) → int` — PUT'u biten sha'lar okunabilir olur; yalnız o kapsamın satırları (100). `authenticated`, yalnız sahip.
 - `get_media_quota() → jsonb` — `{user_used, user_cap, total_used, total_cap}`; "multiplayer aç"ın ve paketi online yapmanın ön hesabı (099; 100'den beri `user_used` paket medyasını da sayar). `authenticated`.
-- `media_sign_put(p_user uuid, p_scope text, p_id text, p_shas text[]) → (sha256, r2_key, bytes, mime)` / `media_sign_get(p_user uuid, p_shas text[]) → (sha256, r2_key)` — Worker'ın toplu imza izni, N sha tek sorgu (100). Put: kapsamın sahibi + rezervasyon; get: dünya üyeliği ya da paket sahipliği + onay. Key'i `media_r2_key` kurar (`worlds/{id}/…` | `packages/{id}/…`). `service_role`.
+- `media_sign_put(p_user uuid, p_scope text, p_id text, p_shas text[]) → (sha256, r2_key, bytes, mime)` / `media_sign_get(p_user uuid, p_shas text[]) → (sha256, r2_key)` — Worker'ın toplu imza izni, N sha tek sorgu (100). Put: kapsamın sahibi + rezervasyon; get: dünya üyeliği, paket sahipliği ya da karakterin sahipliği / dünyasının üyeliği + onay. Key'i `media_r2_key` kurar (`worlds/{id}/…` | `packages/{id}/…` | `characters/{id}/…`, 101). `service_role`.
 - `r2_evict_pop(_limit int default 20) → setof (id bigint, r2_key text)` — tahliye kuyruğunu boşaltır, `FOR UPDATE SKIP LOCKED`; obje o arada yeniden canlandıysa (`pub_assets` / `world_media` satırı var — `worlds/` ve 100'den beri `packages/` öneki) satırı düşürür ama döndürmez (090 → 099 → 100). Worker cron'u ve `/admin/evict-sweep` çağırır.
 - `media_total_cap_bytes() → 9 GB`, `world_media_user_cap_bytes() → 1 GB`, `world_media_max_bytes(kind) → bigint | null` (IMMUTABLE, 099).
 
@@ -48,7 +48,9 @@ tags: [file]
 - `create_world_invite(world_id text, expires_secs int, uses int default 1) → text` — DM-only, generates 8-char base32 code (026).
 - `redeem_world_invite(code text) → table(world_id, world_name)` — player joins as member (026).
 - `regenerate_world_invite`, `ensure_world_invite`, `publish_world(...)` (beta-gated, per-user 10-world cap), `share_package_to_world`, `unshare_world_package` (043/044/055).
-- `claim_character(p_character_id text)`, `release_character`, `assign_character`, `remove_from_world`, `delete_character` (026/034/036/038).
+- `claim_character(p_character_id text)`, `release_character`, `assign_character`, `remove_from_world`, `delete_character` (026/034/036/038). 101: `remove_from_world` payload'daki `worldId`'yi de boşaltıyor.
+- `get_character_delta(p_since bigint, p_limit int) → jsonb` (101) — çağıranın karakterleri ve `character_tombstones`'u (`kind` deleted|gone), `get_world_delta` sözleşmesi; damga `character_revisions`. `authenticated`.
+- `unpublish_character(p_character_id text)` (101) — "yerele al": sahibin dünyasız satırını siler, tombstone `gone`; online dünyadaki karakterde `P0005`. `authenticated`.
 
 ### Admin / general
 - `is_admin() → bool` — `auth.uid()` in `app_admins` (003). The gate for every `admin_*` RPC + the edge function.

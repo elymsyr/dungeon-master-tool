@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../application/providers/account_gate.dart';
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/character_provider.dart'
+    show characterByIdProvider, characterListProvider, onlineCharacterIdsProvider;
 import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/cloud_sync_status_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
@@ -16,6 +19,7 @@ import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../core/utils/error_format.dart';
+import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
 import '../l10n/app_localizations.dart';
@@ -747,31 +751,7 @@ class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: widget.palette.successBtnBg.withValues(alpha: 0.15),
-                  borderRadius: widget.palette.br,
-                  border: Border.all(color: widget.palette.successBtnBg),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.cloud_done,
-                        size: 14, color: widget.palette.successBtnBg),
-                    const SizedBox(width: 6),
-                    Text(
-                      l10n.packageIsOnline,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: widget.palette.successBtnBg,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _OnlineBadge(l10n.packageIsOnline, widget.palette),
               const SizedBox(width: 4),
               IconButton(
                 tooltip: l10n.packageOnlineOff,
@@ -902,6 +882,166 @@ class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
         setState(() => _busy = false);
         _reload();
       }
+    }
+  }
+}
+
+/// "Online" rozeti — paketin ve karakterin anahtarı ortak.
+class _OnlineBadge extends StatelessWidget {
+  const _OnlineBadge(this.text, this.palette);
+  final String text;
+  final DmToolColors palette;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: palette.successBtnBg.withValues(alpha: 0.15),
+          borderRadius: palette.br,
+          border: Border.all(color: palette.successBtnBg),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_done, size: 14, color: palette.successBtnBg),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: palette.successBtnBg,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Faz 5g — karakterin kendi "bulutta dursun" anahtarı: karakter ekranının
+/// Save & Sync diyaloğunda ve hub'ın karakter ayarlarında. Online dünyadaki
+/// karakter zorunlu online: anahtar kilitli görünür ve nedenini söyler.
+///
+/// Açmak tam tur gönderir (görselleriyle, `characters/{id}/`). Kapatmak
+/// ("yerele al") bulut satırını ve medyasını siler; öbür cihazlar yerel
+/// kopyalarını tutar.
+class CharacterOnlineRow extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  final String characterId;
+  const CharacterOnlineRow(
+      {super.key, required this.palette, required this.characterId});
+
+  @override
+  ConsumerState<CharacterOnlineRow> createState() => _CharacterOnlineRowState();
+}
+
+class _CharacterOnlineRowState extends ConsumerState<CharacterOnlineRow> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    if (!ref.watch(hasAccountProvider)) return const SizedBox.shrink();
+    final c = ref.watch(characterByIdProvider(widget.characterId));
+    if (c == null) return const SizedBox.shrink();
+    final worldId = c.worldId;
+    final locked =
+        worldId != null && ref.watch(onlineWorldIdsProvider).contains(worldId);
+    if (locked) return _OnlineBadge(l10n.charOnlineLocked, widget.palette);
+    // Turun kapısı sahiplik: başkasının ya da sahipsiz karakteri gitmez.
+    if (!c.isOwnedBy(ref.watch(authProvider)?.uid)) {
+      return const SizedBox.shrink();
+    }
+    final online =
+        ref.watch(onlineCharacterIdsProvider).valueOrNull?.contains(c.id) ??
+            false;
+    if (online) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _OnlineBadge(l10n.charIsOnline, widget.palette),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: l10n.charOnlineOff,
+            icon: const Icon(Icons.cloud_off, size: 16),
+            onPressed: _busy ? null : _makeOffline,
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+          ),
+        ],
+      );
+    }
+    return _ActionButton(
+      icon: Icons.cloud_upload,
+      label: _busy ? l10n.publishingEllipsis : l10n.charOnlineOn,
+      onPressed: _busy ? null : _makeOnline,
+      palette: widget.palette,
+    );
+  }
+
+  bool _offline() =>
+      !(ref.read(connectivityStreamProvider).valueOrNull ?? true);
+
+  Future<void> _makeOnline() async {
+    final l10n = L10n.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_offline()) {
+      messenger
+          .showSnackBar(SnackBar(content: Text(l10n.internetRequiredRetry)));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(characterListProvider.notifier)
+          .setOnline(widget.characterId, true);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.charNowOnline)));
+    } catch (e) {
+      // Bayrak kalıyor: tur bir sonraki uzlaştırmada yeniden dener.
+      messenger.showSnackBar(
+          SnackBar(content: Text(l10n.publishDialogFailed(formatError(e)))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _makeOffline() async {
+    final l10n = L10n.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_offline()) {
+      messenger
+          .showSnackBar(SnackBar(content: Text(l10n.internetRequiredOffline)));
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.charOnlineOff),
+        content: Text(l10n.charOfflineBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.btnCancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.charOnlineOff)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(characterListProvider.notifier)
+          .setOnline(widget.characterId, false);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.charNowOffline)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.unpublishFailed('$e'))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 }

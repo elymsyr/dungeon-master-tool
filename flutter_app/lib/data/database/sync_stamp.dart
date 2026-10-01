@@ -14,6 +14,11 @@ import 'package:drift/drift.dart';
 ///    ayrıca hatırlanıyor. Push satırı bulutta DELETE eder, oradaki
 ///    `tg_world_tombstone` trigger'ı `world_tombstones`'a yazar ve yerel kayıt
 ///    düşer.
+/// Faz 5g — karakterin bulut kapsamı. Karakter bir dünyanın değil sahibinin
+/// kapsamında gidiyor: tombstone'u (`sync_tombstones.world_id`) ve damgası
+/// (`cloud_scopes.scope`) bu anahtarla. Dünya id'leri uuid, çakışmaz.
+const String characterScope = '@characters';
+
 extension SyncStamp on DatabaseConnectionUser {
   /// Buluta bildirilecek silmeyi kaydeder. `worldId` boş bırakılırsa satır
   /// hiçbir dünya taramasına düşmez — dünya kapsamlı tablolarda hep verilmeli.

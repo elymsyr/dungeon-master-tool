@@ -143,13 +143,15 @@ class AssetService {
 
   /// Worker'dan toplu imza: [shas] için ~1 saatlik R2 URL'leri. İzni olmayan
   /// sha haritada **yer almaz** (hata değil). `put` yalnız kapsamın sahibine
-  /// ve rezerve edilmiş sha'lara ([worldId] ya da [packageId], Faz 5e), `get`
-  /// dünyanın üyelerine ya da paketin sahibine ve yüklenmiş sha'lara verilir.
+  /// ve rezerve edilmiş sha'lara ([worldId], [packageId] ya da [characterId];
+  /// Faz 5e, 5g), `get` dünyanın üyelerine, paketin sahibine, karakterin
+  /// sahibine ya da dünyasının üyelerine ve yüklenmiş sha'lara verilir.
   Future<Map<String, String>> signWorldMedia(
     String op,
     List<String> shas, {
     String? worldId,
     String? packageId,
+    String? characterId,
   }) async {
     final token = _requireToken();
     final req = await _httpClient
@@ -161,6 +163,7 @@ class AssetService {
       'shas': shas,
       'world_id': ?worldId,
       'package_id': ?packageId,
+      'character_id': ?characterId,
     }));
     final res = await _guard(req, req.close, _stall);
     final body = await _readBody(res);

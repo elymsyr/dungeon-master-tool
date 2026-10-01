@@ -13,7 +13,7 @@ tags: [moc]
 ## Key Files
 - [[soundpad_engine]] — audio playback/mixing via flutter_soloud. See [[Audio-SoLoud]].
 - [[soundpack_catalog_service]] — list installed soundpacks.
-- [[media_bundler]] · [[media_manifest_restorer]] — bundle/restore media on export/import.
+- [[media_manifest_restorer]] — restore media on import. (`media_bundler` — the character's direct-push media path — was removed in Faz 5g; character media goes through [[world_media_sync]] `MediaScope.character`.)
 - [[free_media_service]] — fetch free-tier media (quota-exempt).
 - [[first_party_art_service]] — `dmt-art://` kart görselleri (app bundle → R2 catalog).
 - [[entity_image_upload]] — upload entity portrait to media storage.

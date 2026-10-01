@@ -449,6 +449,7 @@ const List<String> _v12Indexes = <String>[
 ///   ref'inin cihaz-yerel çözümü.
 /// - `migration_progress` (F11): raw-path migrator resume state.
 /// - `sync_tombstones` (Faz 4): buluta bildirilecek silmeler.
+/// - `cloud_scopes` (Faz 5g): kendi satırı olmayan bulut kapsamının damgaları.
 const List<String> _sideTablesDDL = <String>[
   // asset_refs
   'CREATE TABLE IF NOT EXISTS asset_refs ('
@@ -508,6 +509,16 @@ const List<String> _sideTablesDDL = <String>[
       ')',
   'CREATE INDEX IF NOT EXISTS idx_sync_tombstones_world '
       'ON sync_tombstones (world_id)',
+
+  // cloud_scopes — Faz 5g: dünya ve paket push/pull damgalarını kendi
+  // satırlarında taşıyor (`last_cloud_push_at`, `cloud_revision`). Karakterin
+  // kapsamı ise sahibi: tek satır, `characterScope`. Yan tablo, çünkü Drift
+  // kolonu v14 bump'ı ve gerçek bir `onUpgrade` adımı isterdi.
+  'CREATE TABLE IF NOT EXISTS cloud_scopes ('
+      'scope TEXT PRIMARY KEY, '
+      'last_push_at INTEGER, '
+      'cloud_revision INTEGER NOT NULL DEFAULT 0'
+      ')',
 ];
 
 /// Yeniden adlandırma zamanı damgası (`.dmtz` birleştirmesinde isim LWW'si). Schema bump yok — her

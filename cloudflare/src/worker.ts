@@ -115,13 +115,13 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
 const CATALOG_PATH_REGEX = /^\/catalog\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
-// Dünya / paket id'si R2 key'inin parçası — yalnız güvenli karakterler
+// Dünya / paket / karakter id'si R2 key'inin parçası — yalnız güvenli karakterler
 // (100'ün `_media_scope_owner`'ı aynı kalıba bakıyor).
 const SCOPE_ID_REGEX = /^[A-Za-z0-9_-]{1,100}$/;
 // Key'i SQL kuruyor; yine de yalnız medya önekleri imzalanır — bozuk bir
 // satır `pub/` ya da başka bir öneke imza aldırmasın.
 const MEDIA_KEY_REGEX =
-  /^(worlds|packages)\/[A-Za-z0-9_-]{1,100}\/[0-9a-f]{64}(\.[a-z0-9]{1,10})?$/;
+  /^(worlds|packages|characters)\/[A-Za-z0-9_-]{1,100}\/[0-9a-f]{64}(\.[a-z0-9]{1,10})?$/;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -660,7 +660,7 @@ async function handleAdminPurgeUser(
   });
 }
 
-// POST /world-media/sign {op: 'put', world_id | package_id, shas}
+// POST /world-media/sign {op: 'put', world_id | package_id | character_id, shas}
 //                       | {op: 'get', shas}
 // → {urls: {sha: url}, expires_in}. İzin TEK RPC ile, N sha birden; bayt
 // worker'dan geçmez. İzni olmayan sha haritada yoktur (hata değil). PUT'un
@@ -684,6 +684,7 @@ async function handleWorldMediaSign(
     op?: unknown;
     world_id?: unknown;
     package_id?: unknown;
+    character_id?: unknown;
     shas?: unknown;
   };
   try {
@@ -714,14 +715,17 @@ async function handleWorldMediaSign(
       if (!(await env.UL_RL.limit({ key: userId })).success) {
         return rateLimitedResponse(UL_LIMIT_PER_MIN, 60);
       }
-      const worldId = typeof body.world_id === 'string' ? body.world_id : '';
-      const packageId =
-        typeof body.package_id === 'string' ? body.package_id : '';
-      const scope: MediaScope = packageId ? 'package' : 'world';
-      const scopeId = packageId || worldId;
-      if ((worldId && packageId) || !SCOPE_ID_REGEX.test(scopeId)) {
+      const ids: [MediaScope, string][] = (
+        [
+          ['world', body.world_id],
+          ['package', body.package_id],
+          ['character', body.character_id],
+        ] as [MediaScope, unknown][]
+      ).filter((e): e is [MediaScope, string] => typeof e[1] === 'string' && e[1] !== '');
+      if (ids.length !== 1 || !SCOPE_ID_REGEX.test(ids[0][1])) {
         return jsonResponse(400, { error: 'invalid_scope' });
       }
+      const [scope, scopeId] = ids[0];
       const rows = await mediaSignPut(
         env.SUPABASE_URL,
         env.SUPABASE_SERVICE_ROLE_KEY,
