@@ -227,3 +227,9 @@ flutter test test/application/services/world_catalog_publish_test.dart
 ```
 
 (Worker `HEAD` kabul etmez — `curl -I` 405 döner, GET kullan.)
+
+```bash
+adb tcpip 5555
+adb -s a25072cc shell ip route 2>&1 | head
+adb connect 192.168.1.128:5555
+```
