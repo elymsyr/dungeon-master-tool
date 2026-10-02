@@ -90,4 +90,23 @@ void main() {
       2.0,
     );
   });
+
+  // Aynı açık, `world_map_data` tarafı: `deactivate` `saveMapData`'yı da
+  // koşulsuz çağırıyor (el testi 1.2'de bulutta revizyonu artıran satır).
+  test('aynı içerikli saveMapData hiçbir şeyi kirletmez', () async {
+    await repo.saveMapData('Barovia', {'eras': [], 'scale': 1.0});
+    final before = await worldUpdatedAt();
+    final row0 = (await db.worldMapDataDao.get('Barovia'))!;
+
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    await repo.saveMapData('Barovia', {'eras': [], 'scale': 1.0});
+
+    expect(await worldUpdatedAt(), before);
+    expect((await db.worldMapDataDao.get('Barovia'))!.updatedAt,
+        row0.updatedAt);
+
+    await repo.saveMapData('Barovia', {'eras': [], 'scale': 2.0});
+    expect((await db.worldMapDataDao.get('Barovia'))!.dataJson,
+        contains('2.0'));
+  });
 }

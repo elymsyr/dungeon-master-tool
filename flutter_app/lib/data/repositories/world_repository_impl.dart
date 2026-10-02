@@ -257,9 +257,16 @@ class WorldRepositoryImpl implements CampaignRepository {
   ) async {
     await _requireWorld(worldId);
     await _db.transaction(() async {
+      // `saveSettingsPatch`'teki korumanın aynısı: `WorldMapScreen.deactivate`
+      // harita sekmesinden her çıkışta buraya yazıyor; aynı gövdeyi yeni
+      // `updated_at` ile yazmak bulutta `world_map_data` revizyonunu boşuna
+      // artırıyordu (el testi 1.2).
+      final dataJson = jsonEncode(mapData);
+      final row = await _db.worldMapDataDao.get(worldId);
+      if (row != null && row.dataJson == dataJson) return;
       await _db.worldMapDataDao.upsert(WorldMapDataCompanion(
         worldId: Value(worldId),
-        dataJson: Value(jsonEncode(mapData)),
+        dataJson: Value(dataJson),
         updatedAt: Value(DateTime.now()),
       ));
       await _touchWorld(worldId);
