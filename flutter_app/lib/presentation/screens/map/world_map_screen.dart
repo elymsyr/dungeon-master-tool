@@ -10,6 +10,7 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/online/world_role.dart';
@@ -74,15 +75,25 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final worldId =
         data['world_id'] as String? ?? ref.read(activeCampaignProvider);
     final notifier = ref.read(worldMapProvider.notifier);
-    final mapData = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
-    // Cross-device açılışta ilk `_init` boş `mapData` ile çalışır (yerel
-    // Drift'te `world_map_data` yok); `_applyMapDataRow` cloud'dan dolar ve
-    // revision bump eder. Notifier zaten bu worldId için init olduysa ama
-    // hâlâ boşsa (`hasContent == false`) ve yeni veri geldiyse re-init et.
+    final rawMapData = data['map_data'] as Map?;
+    final mapData = Map<String, dynamic>.from(rawMapData ?? {});
+    // Notifier bu dünya için kuruluysa yalnız blob başkası tarafından
+    // değiştiyse re-init: öteki cihazın pin ekleme/silme/taşıması pull →
+    // `reload` ile blob'a iner ve revision bump eder. Yerel düzenleme blob'u
+    // `syncToCampaignData` ile anında yazdığı için parmak izi eşleşir.
     if (notifier.isInitializedFor(worldId)) {
-      if (notifier.hasContent) return;
-      if (mapData.isEmpty) return;
+      if (notifier.hasSeenMapData(rawMapData)) return;
+      // Bu cihazın henüz diske inmemiş düzenlemesi var: `reload` blob'u
+      // eski Drift satırıyla ezdi. Notifier'ı koru, blob'u ona geri hizala.
+      final bufferKey = 'settings:${data['world_id'] ?? 'local'}:map_data';
+      if (ref.read(pendingWriteBufferProvider).isPending(bufferKey)) {
+        notifier.syncToCampaignData();
+        return;
+      }
+      // Cross-device açılış: ilk init boştu, bulut da henüz boş.
+      if (!notifier.hasContent && mapData.isEmpty) return;
     }
+    notifier.markMapDataSeen(rawMapData);
     // Viewport now lives in sibling `map_view` (local-only). Prefer it; fall
     // back to legacy nested scale/pan keys inside `map_data` for worlds saved
     // before the split. `init` reads scale/pan_x/pan_y off the map it receives.
@@ -1633,7 +1644,16 @@ class _DraggablePinState extends State<_DraggablePin> {
         final delta = (d.globalPosition - _dragStart!) / scale;
         setState(() => _dragOffset = _pinStartPos! + delta);
       },
-      onLongPressEnd: (_) => _commitDrag(),
+      // Kıpırdatmadan bırakılan basılı tutma = sağ tık menüsü (mobil).
+      onLongPressEnd: (d) {
+        final start = _dragStart;
+        if (start != null &&
+            (d.globalPosition - start).distance < kTouchSlop) {
+          setState(() => _dragOffset = null);
+          _showContextMenu(context, d.globalPosition);
+        }
+        _commitDrag();
+      },
       // Desktop mouse: click-drag without delay.
       onPanStart: (d) {
         _dragStart = d.globalPosition;
@@ -1925,7 +1945,16 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                       final delta = (d.globalPosition - _dragStart!) / scale;
                       setState(() => _dragOffset = _pinStartPos! + delta);
                     },
-                    onLongPressEnd: (_) => _commitDrag(),
+                    // Kıpırdatmadan bırakılan basılı tutma = sağ tık menüsü (mobil).
+                    onLongPressEnd: (d) {
+                      final start = _dragStart;
+                      if (start != null &&
+                          (d.globalPosition - start).distance < kTouchSlop) {
+                        setState(() => _dragOffset = null);
+                        _showContextMenu(context, d.globalPosition);
+                      }
+                      _commitDrag();
+                    },
                     // Desktop mouse: hızlı tıkla-sürükle aynı pan handler'la.
                     onPanStart: (d) {
                       _dragStart = d.globalPosition;
