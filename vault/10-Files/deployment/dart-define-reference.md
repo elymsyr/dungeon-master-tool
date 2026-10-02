@@ -23,7 +23,7 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- Injection point: every `flutter build` in [[ci-build]] appends `--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}` (values from GitHub repo secrets). Local dev passes the same flags to `flutter run`.
+- Injection point: every `flutter build` in [[ci-build]] appends `--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}` (values from GitHub repo secrets). `DMT_WORKER_URL` is **not** passed since 2026-10-02: the stale secret overrode the compiled-in default, so GitHub builds uploaded no media while `flutter run` (no define → default) worked. Local dev passes the same flags to `flutter run`.
 
 **Outputs**
 - `SupabaseConfig.isConfigured` (bool) gates all online behavior.

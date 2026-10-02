@@ -62,8 +62,7 @@ jobs:
         run: |
           flutter build apk --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Rename artifact
         run: |
@@ -108,7 +107,7 @@ jobs:
       - name: Build Windows
         working-directory: ${{ env.WORKING_DIR }}
         run: |
-          flutter build windows --release --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}
+          flutter build windows --release --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         shell: pwsh
@@ -165,8 +164,7 @@ jobs:
         run: |
           flutter build linux --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         run: |
@@ -213,8 +211,7 @@ jobs:
         run: |
           flutter build ios --release --no-codesign \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         run: |
@@ -263,8 +260,7 @@ jobs:
         run: |
           flutter build macos --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=DMT_WORKER_URL=${{ secrets.DMT_WORKER_URL }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         run: |
