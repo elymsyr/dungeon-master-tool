@@ -4,12 +4,10 @@ import 'package:dungeon_master_tool/application/providers/entity_provider.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Bulut sync kaldırıldıktan sonra oyuncuya giden kartın TEK içerik kaynağı
-/// `entity_shares.payload_json`. `world_entities` aynası yok; bu round-trip
-/// bozulursa oyuncu kartı boş ya da eksik görür, üstelik sessizce.
-///
-/// Yazan taraf: `entityToRaw` (entity_share_prepare → EntityShareService).
-/// Okuyan taraf: `entityFromRaw` (WorldMirrorApplier blob'a yazar, UI okur).
+/// Blob'daki ham kart şeklinin JSON round-trip'i: `entityToRaw` yazar,
+/// `entityFromRaw` okur. Bozulursa kart boş ya da eksik görünür, üstelik
+/// sessizce. (Paylaşım kopyası `payload_json` 103'te düştü; oyuncunun kartı
+/// artık `sharedEntityRowToRaw` ile aynı şekle giriyor.)
 void main() {
   group('entity share payload round-trip', () {
     final full = Entity(
@@ -63,9 +61,8 @@ void main() {
     });
 
     test('linked flag round-trips — it decides who owns the card body', () {
-      // payload_json linked kartlar için NULL gönderilir (gövde kurulu
-      // paketten gelir), ama bayrağın kendisi kaybolmamalı: kaybolursa
-      // paylaşım yolu kartı homebrew sanıp gövdesini kopyalar.
+      // Linked kartın gövdesi kurulu paketten gelir; bayrak kaybolursa kart
+      // homebrew sanılır (oyuncuda gri kart hesabı da ona bakıyor).
       final linked = full.copyWith(linked: true);
       expect(throughTheWire(linked).linked, isTrue);
       expect(throughTheWire(full).linked, isFalse);

@@ -13,7 +13,7 @@ tags: [reference, glossary]
 - **CDC** — Change Data Capture. Postgres → client realtime stream. Artık yalnızca DM'in paylaşım kanalındaki beş tabloyu taşır. See [[Share-Broadcast-Flow]].
 - **MoC** — Map of Content. A domain index note in `00-Maps/` linking its file notes.
 - **Outbox** — *tarihsel.* Bekleyen mutasyonların yerel kuyruğuydu, `(table, pk, op)` başına birleştirilirdi. Bulut sync ile birlikte kaldırıldı (2026-08-24); yazmalar artık doğrudan, last-write-wins.
-- **Share payload** — `entity_shares.payload_json`: DM'in paylaşım anındaki kart kopyası. Faz 5.5b'den (2026-10-02) beri oyuncu okumuyor; gövde `get_shared_entities`'ten geliyor. DM eski istemciler için yazmaya devam ediyor, kolon sonra kalkacak. Bkz. [[Share-Broadcast-Flow]].
+- **Share payload** — eski `entity_shares.payload_json` (078): DM'in paylaşım anındaki kart kopyası. 2026-10-02'de düştü (migration 103); gövde DM'in bulut aynasından `get_shared_entities` ile gelir, oyuncuda yerelde durur. Bkz. [[Share-Broadcast-Flow]].
 - **Coalescing** — overwriting an existing pending write for the same row instead of queuing a duplicate.
 - **Echo suppression** — skipping inbound CDC events that echo the client's own recent push (3 s window).
 - **SyncTier** — fast (realtime) vs slow (10 s batched) routing of writes. See `sync_tier.dart` (kaldırıldı).

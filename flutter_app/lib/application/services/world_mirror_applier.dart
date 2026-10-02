@@ -15,10 +15,12 @@ import '../providers/auth_provider.dart';
 import '../providers/online_projection_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/character_provider.dart';
+import '../providers/cloud_push_provider.dart' show cloudPullServiceProvider;
 import '../providers/entity_share_provider.dart';
 import '../providers/world_characters_provider.dart';
 import '../providers/package_link_provider.dart';
 import '../providers/package_provider.dart';
+import '../providers/role_provider.dart' show currentWorldRoleProvider;
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
@@ -43,9 +45,9 @@ Future<dynamic> _decodeJsonMaybeOffload(String s) {
 /// profil sonrası 33-50ms'e çıkarılabilir.
 const Duration _kBatchWindow = Duration(milliseconds: 16);
 
-/// Faz 5.5b — oyuncunun kart tazelemesi için sessizlik penceresi. DM'in bir
+/// Faz 5.5b — oyuncunun kart doğrulaması için sessizlik penceresi. DM'in bir
 /// push turu satır başına bir `world_revisions` sinyali üretiyor; tur
-/// bitince tek `get_shared_entities` çağrısı yeter.
+/// bitince tek doğrulama yeter.
 const Duration _kSharedIdle = Duration(seconds: 1);
 
 /// Bir online world için `applyInitialState` en az bir kez tamamlandı mı —
@@ -94,11 +96,12 @@ class WorldMirrorApplier {
   /// ile atlanan event'lerde boşa bump atılmasın).
   bool _revisionDirty = false;
 
-  /// Faz 5.5b — worldId → oyuncunun `get_shared_entities`'ten gördüğü en
-  /// büyük kart revizyonu. Bellekte: dünya her açılışta zaten 0'dan çekiyor.
-  final Map<String, int> _sharedRevision = {};
+  /// Faz 5.5b — oyuncunun bekleyen kart doğrulaması.
   Timer? _sharedTimer;
-  bool _sharedFull = false;
+
+  /// Drift'e yazılmış ama blob'a henüz işlenmemiş paylaşılan kartlar (dünya
+  /// yüklenirken yazılanlar). Applier dünya başına kuruluyor.
+  final List<Map<String, Object?>> _sharedUninjected = [];
 
   /// Captured at construction (host provider building → `ref` clean). The
   /// notifier is owned by the stable `activeCampaignProvider`, so it stays
@@ -115,8 +118,22 @@ class WorldMirrorApplier {
     _batcher = _EventBatcher(window: _kBatchWindow, onFlush: _flushBatch);
   }
 
-  bool _isDm(String worldId) =>
-      _campaign.cachedWorldRole(worldId) == WorldRole.dm;
+  /// Açık dünyada provider'ın beklediği çözülmüş rol, değilse önbellek.
+  /// Önbellek ([ActiveCampaignNotifier.cachedWorldRole]) çözülmemişse ya da
+  /// ağ hatası yediyse `none` döner ve DM'i oyuncu sanar — DM'in Drift'ine
+  /// kırpılmış (`dm_notes`'suz) kart ya da buluttaki eski dünya kimliği
+  /// yazılırdı.
+  WorldRole _roleOf(String worldId) =>
+      ref.read(activeCampaignProvider) == worldId
+          ? ref.read(currentWorldRoleProvider).valueOrNull ?? WorldRole.none
+          : _campaign.cachedWorldRole(worldId);
+
+  bool _isDm(String worldId) => _roleOf(worldId) == WorldRole.dm;
+
+  /// Oyuncunun kart doğrulamasının kapısı — yalnız açık dünya için.
+  bool _isPlayerOf(String worldId) =>
+      ref.read(activeCampaignProvider) == worldId &&
+      _roleOf(worldId) == WorldRole.player;
 
   PendingWriteBuffer get _buffer => ref.read(pendingWriteBufferProvider);
 
@@ -158,21 +175,19 @@ class WorldMirrorApplier {
   Future<void> applyInitialState(String worldId) async {
     if (_disposed) return;
     ref.invalidate(worldEntitySharesProvider(worldId));
+    // Oyuncunun kartları yerelde (Drift); açılışta yalnız doğrulanır.
+    // Beklenmez: kartlar zaten görünüyor, seed'in geri kalanını tutmasın.
+    unawaited(_syncShared(worldId));
     await _applyWorldMeta(worldId);
     if (_disposed) return;
-    final snapshot = await mirror.fetchInitialState(worldId,
-        withShares: !_isDm(worldId));
+    final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
     if (snapshot.characters.isEmpty &&
-        snapshot.sharedEntities.isEmpty &&
         snapshot.projection == null) {
       _markInitialSyncSettled(worldId);
       _bumpRevision();
       return;
     }
-
-    // Paylaşılan kartların gövdeleri (oyuncu; DM'e hiç istenmiyor).
-    _injectShared(worldId, snapshot.sharedEntities);
 
     if (snapshot.characters.isNotEmpty) {
       final notifier = ref.read(worldCharactersProvider(worldId).notifier);
@@ -230,52 +245,53 @@ class WorldMirrorApplier {
   /// `entity_shares` CDC — artık yalnız izin (Faz 5.5b). Gövde
   /// `get_shared_entities`'ten gelir; `payload_json` okunmuyor.
   ///
-  /// Yeni paylaşım tam tazeleme ister: paylaşılan kart eski olabilir,
-  /// revizyonu oyuncunun damgasının gerisinde kalır. Geri çekmede gövde
-  /// SİLİNMEZ — kart gri görünür (`revokedSharedEntityIdsProvider`, §2.5).
+  /// Yeni paylaşım doğrulamayı tetikler: kart yerelde yoksa iner. Geri
+  /// çekmede gövde SİLİNMEZ — kart gri görünür
+  /// (`revokedSharedEntityIdsProvider`, §2.5).
   Future<void> _applyEntityShareEvent(WorldSyncEvent e) async {
     ref.invalidate(worldEntitySharesProvider(e.worldId));
     if (e.eventType != PostgresChangeEvent.delete) {
-      scheduleSharedRefresh(e.worldId, full: true);
+      scheduleSharedRefresh(e.worldId);
     }
   }
 
-  /// Faz 5.5b — oyuncunun kartlarını buluttan tazeler. [full] değilse
-  /// yalnız son görülen revizyondan sonrakiler (DM'in düzeltmesi, yeni
-  /// kart). Çağrılar [_kSharedIdle] boyunca birleşir.
-  void scheduleSharedRefresh(String worldId, {bool full = false}) {
-    if (_disposed || _isDm(worldId)) return;
-    _sharedFull |= full;
+  /// Faz 5.5b — oyuncunun kartlarını doğrular ([_syncShared]). Çağrılar
+  /// [_kSharedIdle] boyunca birleşir.
+  void scheduleSharedRefresh(String worldId) {
+    if (_disposed || !_isPlayerOf(worldId)) return;
     _sharedTimer?.cancel();
-    _sharedTimer = Timer(_kSharedIdle, () {
-      final f = _sharedFull;
-      _sharedFull = false;
-      unawaited(_refreshShared(worldId, full: f));
-    });
+    _sharedTimer =
+        Timer(_kSharedIdle, () => unawaited(_syncShared(worldId)));
   }
 
-  Future<void> _refreshShared(String worldId, {required bool full}) async {
-    final since = full ? 0 : (_sharedRevision[worldId] ?? 0);
-    final List<Map<String, dynamic>> rows;
+  /// Damga listesiyle doğrular, yalnız eksik/değişen kartı indirip Drift'e
+  /// yazar ([CloudPullService.syncSharedEntities]); yazılanları açık
+  /// dünyanın blob'una da işler. DM'e hiç yazılmaz: kendi kartları yerelde
+  /// ve yerel MEDYA YOLLARIYLA duruyor ([_isPlayerOf]).
+  Future<void> _syncShared(String worldId) async {
+    if (_disposed || !_isPlayerOf(worldId)) return;
+    final svc = ref.read(cloudPullServiceProvider);
+    if (svc == null) return;
+    final List<Map<String, Object?>> written;
     try {
-      rows = await mirror.fetchSharedEntities(worldId, since);
+      final res = await svc.syncSharedEntities(worldId);
+      if (_disposed) return;
+      written = res.written;
+      ref.read(sharedEntityStampIdsProvider(worldId).notifier).state =
+          res.visible;
     } catch (e) {
       debugPrint('CloudSync: paylaşılan kartlar $worldId '
           '${isOfflineError(e) ? 'offline' : e}');
       return;
     }
-    if (_disposed) return;
-    if (_injectShared(worldId, rows)) _bumpRevision();
-  }
-
-  /// `get_shared_entities` satırlarını oyuncunun blob'una yazar, damgayı
-  /// ilerletir. Linked kartın gövdesi kurulu paketten gelir, atlanır. DM'e
-  /// hiç yazılmaz: kendi kartları yerelde ve yerel MEDYA YOLLARIYLA duruyor,
-  /// buluttaki içerik ref'leri onları ezerdi.
-  bool _injectShared(String worldId, List<Map<String, dynamic>> rows) {
-    if (rows.isEmpty || _isDm(worldId)) return false;
+    debugPrint('CloudSync: paylaşılan kartlar $worldId +${written.length}');
+    if (_disposed || ref.read(activeCampaignProvider) != worldId) return;
+    _sharedUninjected.addAll(written);
     final data = _campaign.data;
-    if (data == null) return false;
+    // Dünya hâlâ yükleniyor: açılışın Drift okuması bu yazmadan önce bitmiş
+    // olabilir. Satırlar bekler; açılışın `applyInitialState`'i blob
+    // yüklendikten sonra yeniden doğrular ve onlar o zaman işlenir.
+    if (data == null || _sharedUninjected.isEmpty) return;
     final raw = data['entities'];
     final Map<String, dynamic> entities;
     if (raw is Map<String, dynamic>) {
@@ -284,16 +300,11 @@ class WorldMirrorApplier {
       entities = <String, dynamic>{};
       data['entities'] = entities;
     }
-    var changed = false;
-    for (final row in rows) {
-      final rev = (row['revision'] as num?)?.toInt() ?? 0;
-      if (rev > (_sharedRevision[worldId] ?? 0)) _sharedRevision[worldId] = rev;
-      final id = row['id'] as String?;
-      if (id == null || row['linked'] == true) continue;
-      entities[id] = sharedEntityRowToRaw(row);
-      changed = true;
+    for (final row in _sharedUninjected) {
+      entities[row['id'] as String] = sharedEntityRowToRaw(row);
     }
-    return changed;
+    _sharedUninjected.clear();
+    _bumpRevision();
   }
 
   Future<void> _applyCharacterEvent(WorldSyncEvent e) => applyCharacterCdc(

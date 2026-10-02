@@ -1,7 +1,7 @@
 ---
 type: system
 domain: media
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [system]
 ---
 
@@ -59,7 +59,7 @@ tags: [system]
 - **İndirme eager'dır** (2026-09-12): `marketplace_listing_provider.downloadAsNewCopy` payload'ı kurduktan sonra `remoteMediaRefs` ile bütün cloud+public ref'leri gezip `AssetRefResolver` üzerinden 4'erli diske çeker (`marketplaceDownloadProgressProvider` ile `done/total`). Öncesi tembeldi — bayt ancak kart ilk çizilirken iniyordu, yani "indirdim" diyen kullanıcı çevrimdışına geçince dünyayı görselsiz açıyordu. Kısmi başarı kasıtlı olarak zararsız: düşen ref çizim anında yeniden denenir, indirme başarısız sayılmaz.
 - Kart görselleri (`cacheDir/art/`) **paket/dünya silindiğinde temizlenir**; boyut cap'i yoktur, yaşam süresini referans belirler. `EvictionSweeper` bu dizini kapsamaz (o `cacheDir/content/` üzerinde çalışır ve şu an hiçbir yerde instantiate edilmiyor).
 - `pub/` DELETE Worker'da **yasak** — silimi refcount belirler, doğrudan DELETE başkasının listing'ini yok ederdi.
-- Paylaşım gövdeleri R2'de değil Postgres'te: `entity_shares.payload_json` ≤ **512 KB** (CHECK), dünya başına ≤ **4000** satır (`max_shares_per_world()` + trigger, 088). `worlds` silimi satırları CASCADE'le düşürür (026).
+- `entity_shares` yalnız izin (gövde kopyası `payload_json` ve 512 KB CHECK'i 103'te düştü); dünya başına ≤ **4000** satır (`max_shares_per_world()` + trigger, 088). `worlds` silimi satırları CASCADE'le düşürür (026).
 
 ## Related
 - MoCs: [[Media-and-Assets]], [[Backend-Infra]]

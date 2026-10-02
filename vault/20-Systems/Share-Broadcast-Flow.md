@@ -38,32 +38,33 @@ Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pul
 
 ## Paylaşılan kartın gövdesi nereden geliyor
 
-> [!info] Faz 5.5b (2026-10-02) — gövde `get_shared_entities`'ten
-> Oyuncu `entity_shares.payload_json`'ı **okumuyor**. `entity_shares` yalnız izin; gövde DM'in bulut aynasındaki `world_entities` satırından, 094'ün `get_shared_entities(world, since)` RPC'siyle geliyor. DM'in düzeltmesi yeniden paylaşmadan oyuncuya gidiyor. DM hâlâ `payload_json` yazıyor (eski istemciler için); kolon §2.5'e göre sonra kalkacak.
+> [!info] Faz 5.5b (2026-10-02) — gövde DM'in bulut aynasından, oyuncuda yerelde
+> `entity_shares` yalnız izin (`payload_json` migration **103**'te düştü); gövde DM'in `world_entities` satırından, sunucuda kırpılmış geliyor ve oyuncunun Drift'ine yazılıyor. Açılışta ve her sinyalde yalnız **doğrulama**: damga listesi (`get_shared_entity_stamps`, migration 102) yerelle karşılaştırılır, eksik/değişen kart id ile iner. DM'in düzeltmesi yeniden paylaşmadan gidiyor: push turu + sinyal.
 
 ```
 DM "Paylaş" der
   └─ shareEntityWithPlayers()            entity_share_prepare.dart
        ├─ ilişki kapanışı (transitive)   — bağlantılı kartlar da paylaşılır
-       └─ INSERT entity_shares(...)      — izin (+ eski istemciler için payload)
+       └─ INSERT entity_shares(...)      — yalnız izin
 DM'in push turu (CloudPushService)
   └─ world_entities satırı + dm_only_keys = dmOnlyKeysBySlug(şema)[slug]
        └─ world_revisions sinyali
 
-Oyuncu — WorldMirrorApplier
-  ├─ açılış: fetchInitialState → get_shared_entities(world, 0)
-  ├─ entity_shares INSERT/UPDATE → tam tazeleme (since 0; kart eski olabilir)
-  ├─ world_revisions sinyali   → get_shared_entities(world, son revizyon)
-  │     (1 sn sessizlikte birleşir — DM'in turu satır başına sinyal üretir)
-  └─ _injectShared: sharedEntityRowToRaw(row) → data['entities'][id]
+Oyuncu — WorldMirrorApplier._syncShared → CloudPullService.syncSharedEntities
+  tetik: açılış · entity_shares INSERT/UPDATE · world_revisions sinyali
+         (1 sn sessizlikte birleşir — DM'in turu satır başına sinyal üretir)
+  ├─ get_shared_entity_stamps(world)        → (id, updated_at, linked)
+  ├─ yerel updated_at ile karşılaştır       → eksik / daha yeni, linked hariç
+  ├─ get_shared_entities(world, 0, ids)     → yalnız onlar
+  └─ Drift'e yaz (LWW) + açık dünyanın blob'una işle
 ```
 
-- **Redaksiyon SQL'de, karar Dart'ta (§2.6).** `dmOnlyKeysBySlug` ([[entity_share_prepare]]) neyin sır olduğuna karar veren tek fonksiyon: hem `redactDmOnly`'nin listesi hem bulut satırının `dm_only_keys`'i. RPC `dm_notes`'u hiç seçmiyor, `fields_json::jsonb - dm_only_keys` yapıyor; `dm_only_keys` NULL ise (şemada olmayan kategori) kart hiç dönmüyor. İki yolun aynı alanları sakladığının koruması: `test/application/services/shared_entity_redaction_parity_test.dart`.
+- **Redaksiyon SQL'de, karar Dart'ta (§2.6).** `dmOnlyKeysBySlug` ([[entity_share_prepare]]) neyin sır olduğuna karar veren tek fonksiyon: bulut satırının `dm_only_keys`'i buradan gelir. RPC `dm_notes`'u hiç seçmiyor, `fields_json::jsonb - dm_only_keys` yapıyor; `dm_only_keys` NULL ise (şemada olmayan kategori) kart hiç dönmüyor. Oyuncuya giden kartta sır kalmadığının koruması: `test/application/services/shared_entity_redaction_test.dart` (gerçek SQL'inki `verify_094` §6 ve `verify_102`).
 - `sharedEntityRowToRaw` RPC satırını `entityToRaw` şekline çevirir ([[entity_provider]]'ın `entityFromRaw`'ı okur). Round-trip koruması: `entity_share_payload_test.dart`.
 - **Linked kart** RPC'den gelse de atlanır: gövdesi oyuncunun kurulu paketinden gelir. Paketteki `secrets` alanları zaten oyuncunun diskinde — paket dağıtımı ayrı bir problem.
 - Medya: bulut satırı push'ta `dmt-content://{sha}{ext}`'e çevrilmiş; baytlar dünyanın R2 medyasında ([[world_media_sync]]), oyuncu imzalı URL'le çeker ([[asset_ref_resolver]]). Bkz. [[Media-Storage-Tiers]].
 - DM'e gövde yazılmaz: [[world_mirror_applier]] rol DM ise atlar, buluttaki içerik ref'leri DM'in yerel dosya yollarını ezerdi.
-- **Un-share = DELETE, gövde silinmez (§2.5).** Kart oyuncuda gri ve "DM bu kartı artık paylaşmıyor" etiketiyle kalır: `revokedSharedEntityIdsProvider` (`visible_entity_provider.dart`) blob'daki her homebrew kartı paylaşım listesiyle karşılaştırır. Gövdeler bellekte; dünya yeniden açılınca geri çekilen kart inmez, gri kart yalnız o oturumda görünür. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
+- **Un-share = DELETE, gövde silinmez (§2.5).** Kart oyuncunun Drift'inde kalır, gri ve "DM bu kartı artık paylaşmıyor" etiketiyle görünür — dünya yeniden açılınca da: `revokedSharedEntityIdsProvider` (`visible_entity_provider.dart`, hesabı saf `revokedSharedIds`) blob'daki her homebrew kartı paylaşım listesiyle **ve** son doğrulamanın görünür listesiyle (`sharedEntityStampIdsProvider`, `v_shared_entities`) karşılaştırır. İkincisi DM'in **sildiği** kartı yakalar: silme paylaşım satırını bırakıyor, kart buluttan gidince listeden düşer. Paylaşım listesi (`worldEntitySharesProvider`) hatayı yukarı iletir — boş liste her kartı griye çevirirdi. Yeniden paylaşılırsa doğrulama yeni halini indirir (geri çekiliyken düzenlenmiş olsa da — karşılaştırma kart başına `updated_at`). `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
 
 ## Paylaşım ne zaman tetiklenir
 
@@ -73,15 +74,15 @@ Hepsi `EntitySharer.setShared(entityId:, shared:, worldId:)` üzerinden geçer �
 
 1. **Kart menüsü** — açık karttaki "Share" toggle'ı (`entity_card.dart`). Artık DM + offline (rol `none`) için görünür; yalnız oyuncuda gizli — projeksiyon menüsüyle aynı kapı.
 2. **Oluşturma kutucuğu** — "Yeni kart" diyaloğundaki *Share with players* checkbox'ı, dünya offline olsa da. Varsayılan **tier'a bağlı**: Tier 0 (lookup) ve Tier 1 (içerik) açık, Tier 2 (NPC, sahne, quest — DM'e ait kampanya içeriği) ve `seedExcludedSlugs` (canavar, loot) kapalı. Bu tier kuralı artık **yalnızca varsayılan kutucuk hâli**; paylaşımı kendisi yapmıyor. Kullanıcı kutuya dokunduysa seçim kategori değişse de korunur (`entity_sidebar._showCreateDialog`).
-3. **Otomatik güncelleme** — işaretli bir kart düzenlenince push kendiliğinden tekrarlanır: `EntityNotifier._pushIfShared`, `_writeEntityToCampaign`'in [[pending_write_buffer]] flush'ına asılıdır (750–2000 ms debounce), yani tuş başına değil satır diske yazıldığında bir kez. Kapılar: world online + rol DM + yerel `shared_entities` işareti (eskiden bulut satırı sorgulanıyordu — artık yerel set kaynak-doğru, ağ turu yok).
+3. **Düzenleme** — paylaşım satırına dokunmaz (`_pushIfShared` 2026-10-02'de kalktı). Düzenleme bulut aynasına push turuyla çıkar, `world_revisions` sinyali oyuncunun doğrulamasını tetikler.
 
 4. **Publish tohumu** — DM dünyayı online'a aldığında `seedAndAnnounceWorldContent` ([[online_world_widgets]]) → `seedSharedContentToPlayers` ([[entity_share_prepare]]) `shared_entities` setindeki kartları tek seferde yükler.
    - Seçim kuralı saf hâlde `seedShareIds(entities, markedIds)`: işaretler ∩ dünyada gerçekten duran kartlar. Silinmiş kartın artık işareti blob'da kalabiliyor; onu sokmak gövdesiz satır yazardı.
    - `allowedSlugs` parametresi **kaldırıldı** (2026-09-14). Kategori filtresi kalmadığı için kapanış davranışı her iki yolda aynı: DM bir kartı paylaştığında relation kapanışı da gider, yoksa oyuncuda dangling satır kalır.
-   - `linked == true` kart da işaretliyse gider — DM bilinçli seçmiştir. Gövdesi yine `payload_json = NULL` ile boş kalır, oyuncunun kurulu paketinden gelir.
+   - `linked == true` kart da işaretliyse gider — DM bilinçli seçmiştir. Gövdesi oyuncunun kurulu paketinden gelir.
    - Bayrak yok: `unpublishWorld` bulut satırlarını cascade siliyor, tekrar online olmak sıfırdan tohumlamalı. İşaret seti yerelde durduğu için tohum aynı listeyi tekrar yükler.
    - **Publish'in İKİ girişi var** ve ikisi de bu yardımcıdan geçmek zorunda: dünya ayarları toggle'ı (`online_world_section._publish`, hub'dan aktif OLMAYAN bir dünya için de açılabiliyor) ve dünya içindeki "Make Online" (`save_sync_indicator._makeOnline`). Hub yolu `campaignData`'yı geçirir — kartlar, şema **ve işaret seti** o blob'dan okunur; provider'lar her zaman AKTİF kampanyayı okur, yani oradan tohumlamak yanlış dünyanın kartlarını paylaşırdı.
-   - **Yazma toplu.** `EntityShareService.shareManyWithAll` tek `DELETE ... IN (...)` + 50'lik `INSERT` parçaları atar. Bir parça düşerse (512KB/kart ya da 4000 satır tavanı) o parça satır satır tekrar denenir ve yazılamayan id'ler `debugPrint`'e düşer — publish hiçbir durumda düşmez.
+   - **Yazma toplu.** `EntityShareService.shareManyWithAll` tek `DELETE ... IN (...)` + 50'lik `INSERT` parçaları atar. Bir parça düşerse (4000 satır tavanı) o parça satır satır tekrar denenir ve yazılamayan id'ler `debugPrint`'e düşer — publish hiçbir durumda düşmez.
    - DM tek `AlertDialog` ile bilgilendirilir (`worldContentSharedTitle` / `...Body`). Koruma: `test/application/services/entity_share_seed_test.dart`.
 
 ## Paketlenmiş dünya işaretle gelir

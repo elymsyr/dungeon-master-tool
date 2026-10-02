@@ -1,4 +1,4 @@
-# Online — elle doğrulama listesi (2026-09-23)
+# Online — elle doğrulama listesi (2026-09-23, güncelleme 2026-10-02)
 
 `online-sync-redesign.md`'deki bütün "bekleyen doğrulama" maddeleri, tek
 oturumda koşulacak sırayla. Yıkıcı adımlar (multiplayer'ı kapatma, paket
@@ -15,13 +15,37 @@ silme) en sonda.
 Aegis dünyasının id'si: `47272f9a-baf7-4eb6-acdf-267f8dfc6b4e`. Aşağıda
 `<W>` bu id demek.
 
+**Hangi faz nerede.** Biten her fazın elle görülecek davranışı en az bir
+adımda. Bir fazı tek başına doğrulamak istersen buradan başla.
+
+| Faz | Ne | Adımlar |
+|---|---|---|
+| 0 | Worker'ın hız sınırı KV'siz | 1.4 |
+| 1 | `.dmtz` dışa/içe aktarma | 10.3, 11.7, 16.1–16.3 |
+| 2.5 | Dünya kimliği isimden id'ye | 16.4, 16.5 |
+| 3 | Bulut şeması + RLS | 1.1 (`verify_094`) |
+| 3.5 | `dmt-content://` medya ref'i | 1.3, 3.2, 3.5 |
+| 4a | Dünya push'u | 1.3, 2.1–2.3 |
+| 4b | Paket + karakter push'u | 6.2, 6.5, 7.1, 7.2 |
+| 5a | Dünya pull'u, echo guard | 1.2, 2.1–2.5 |
+| 5b | Canlı sinyal, sunucu tarafı LWW | 2.1, 2.5, 4.4 |
+| 5c | İkinci cihaza indirme | 2.6, 7.3 |
+| 5d | Dünya medyası R2'de | 3, 4, 5.2, 5.4, 9.1, 9.3 |
+| 5e | Paket medyası, arka plan uzlaştırması | 12 |
+| 5f (1. kısım) | Arka plan uzlaştırması, kota bildirimi, süre log'ları | 4.2–4.4, 8, 11.4 |
+| 5g | Karakterin kendi kapsamı | 6.6, 13 |
+| 5.5a | Oyuncunun ikinci cihazı, davet kodsuz | 14 |
+| 5.5b + ek + 103 | Kartlar buluttan, oyuncuda yerelde, gri kart | 5, 15 |
+| 6 | LAN kalktı | 10 |
+| 9 | İşlem geri bildirimi | 11 |
+
 ---
 
 ## 0. Hazırlık
 
 - [ ] Üç cihazı da çalışma ağacının son haliyle ve üç `--dart-define`'la
-      derle. Faz 5f'nin 1. kısmı (paralel yükleme, arka plan uzlaştırması,
-      süre log'ları) henüz commit'lenmedi; derleme onu içermeli.
+      derle. Eski derlemeli bir cihaz testleri geçersiz kılar (103'ten beri
+      eski sürümün paylaşımı düşüyor).
 - [ ] Log'u açık tut. Masaüstünde `flutter run` konsolu; Android'de
       `adb logcat | grep -E "CloudSync|AssetRefResolver|WorldMediaSync"`.
       Her adımda log'u da not et.
@@ -40,14 +64,33 @@ select revision from world_revisions where world_id = '<W>';
 select count(*) from world_entities where world_id = '<W>';
 ```
 
+- [ ] A'da **Deneme** adında yeni bir dünya oluştur (multiplayer kapalı):
+      15–20 kart, çoğunda görsel, bir dünya haritası ve 5 MB'tan büyük bir
+      görsel. 3.6, 3.7, 8, 11.2 ve 9.3 bunu kullanıyor.
+
+> **İki şeyi yapma.**
+> - **Aegis'i hub'dan kopyalama.** Dünya kopyalama bugün asıl dünyayı
+>   boşaltıyor: kartlar ve öteki satırlar kopyaya taşınıyor
+>   (`docs/KNOWN_ISSUES.md`). Kopya gereken her yerde Deneme'yi kullan.
+> - **B'de online dünyayı ya da paketi uygulamadan silme.** DM'in silmesi
+>   bulut kopyasını da siler; A'dan da gider. "Bulutta, bu cihazda yok"
+>   listesine düşmek için B'yi sıfırla: Android'de Ayarlar → Uygulamalar →
+>   uygulama → Depolama → Verileri temizle, sonra yeniden giriş;
+>   masaüstünde uygulama kapalıyken `<dataRoot>/users/<uid>` klasörünün
+>   adını değiştir (test bitince eski adına döndürürsün).
+
 ---
 
 ## 1. Temel sağlık — tek cihaz (A)
 
-**1.1 Migration doğrulamaları.** SQL Editor'de sırayla
-`supabase/scripts/verify_096.sql` ve `verify_099.sql` dosyalarının içeriğini
-çalıştır.
-- Beklenen: `096 OK`, `099 OK`.
+**1.1 Migration doğrulamaları.** SQL Editor'de `supabase/scripts/` altındaki
+şu dosyaların içeriğini sırayla çalıştır: `verify_088_089.sql`,
+`verify_094.sql`, `verify_096.sql`, `verify_097.sql`, `verify_098.sql`,
+`verify_099.sql`, `verify_100.sql`, `verify_102.sql`, `verify_103.sql`.
+Hepsi `ROLLBACK` ile bitiyor, kalıcı bir şey yazmıyor.
+- Beklenen: her biri tek satır `NNN OK` (ilki `088+089 OK`).
+- `verify_094`'te `5.1 OYUNCU world_entities OKUYABILIYOR` ya da `6.4 DM'E
+  OZEL ALAN OYUNCUYA SIZDI` patlarsa gizlilik hatası: dur ve bana getir.
 
 **1.2 Echo guard.** A'da dünyayı aç, **hiçbir şeye dokunmadan** 30 sn bekle,
 kapat. Bunu üç kez yap. Her seferinde:
@@ -70,6 +113,14 @@ select substr(image_path,1,14) from world_entities
 
 - Beklenen: sayı A'daki kart sayısıyla aynı; `image_path` hep `dmt-content://`.
   `/home/...` görünmemeli.
+
+**1.4 Hesapsız katalog (Faz 0).** Hesaptan çık. Marketplace'te resmi
+kataloğu aç, bu cihazda olmayan bir **paketi** kur (dünya değil: aynı
+katalog dünyasını iki kez kurmak kartları taşır, §15.13). Sonra yeniden
+giriş yap.
+- Beklenen: liste geliyor, paket kuruluyor, "çok fazla istek" hatası yok.
+  Worker'ın hız sınırı artık KV'ye yazmıyor; Cloudflare panelinde KV yazma
+  sayısı bu sırada artmamalı (bakması isteğe bağlı).
 
 ---
 
@@ -96,6 +147,16 @@ A'yı tamamen kapat. B'de dünyayı aç, savaş ekranına git.
 yap. 1 dk sonra B'de aynı kartın açıklamasını "B" yap. Sonra A'nın internetini
 aç, dünyayı kapatıp yeniden aç.
 - Beklenen: iki cihazda da "B" (sonra düzenlenen kazanır, varış sırası değil).
+
+**2.6 İkinci cihaza ilk indirme (Faz 5c).** B'yi sıfırla (§0'daki uyarı),
+DM hesabıyla gir. Hub → Dünyalar → "Bulutta, bu cihazda yok" → Aegis → İndir.
+- Beklenen: ilerleme çubuğu doluyor, dünya yerel listeye geçiyor. Log'da
+  `CloudSync: indirme <W> +N … ms`.
+- Beklenen: dünyayı aç. Kartlar, dünya haritası ve pinleri, oturumlar, mind
+  map ve 2.4'teki savaş (sıra, tur, HP, durum etkileri) A'daki gibi;
+  görseller birkaç saniyede geliyor.
+- Beklenen: açılışta satır buluta geri gitmiyor. `push <W> ↑N` satırı
+  görünürse N 0 olmalı (indirme push damgasını başına çekiyor).
 
 ---
 
@@ -131,6 +192,31 @@ encounter'a savaş haritası arka planı koy.
 kapatıp aç, kartları kaydır, dünya haritasına ve savaş haritasına git.
 - Beklenen: bütün görseller geliyor. B'nin log'unda
   `AssetRefResolver: ... indirilemedi` yok.
+
+**3.6 Kotayı aşan dünya yayınlanmıyor (Faz 5d, isteğe bağlı).** Tavanı
+geçici düşür:
+
+```sql
+create or replace function public.world_media_user_cap_bytes()
+returns bigint language sql immutable set search_path = public, pg_temp
+as $$ select 1::bigint $$;
+```
+
+A'da Deneme → Multiplayer On.
+- Beklenen: "Bu dünyanın medyası X yer istiyor, bulutta ise Y kaldı…" ve
+  dünya online olmuyor (davet kodu yok, bulutta `worlds` satırı yok).
+- Sonra tavanı geri al: aynı fonksiyon, `1::bigint * 1024 * 1024 * 1024`.
+
+**3.7 Multiplayer aç (Faz 5d).** A'da Deneme → Multiplayer On.
+- Beklenen: "Dünya medyası yükleniyor n/N" overlay'i doluyor. Bitince limit
+  üstü dosyaların listesi (§0'daki 5 MB'lık görsel).
+- Beklenen: log'da `multiplayer açıldı <id>: N satır … ms` ve
+  `multiplayer medya <id> ↑N <bayt> … ms (toplam)` (§8 için de not et).
+
+```sql
+select count(*), sum(bytes) from world_media
+ where world_id = '<Deneme id>' and uploaded;   -- limit altı dosya sayısı
+```
 
 ---
 
@@ -181,21 +267,25 @@ kartın adını değiştir. Dünyayı kapatmadan interneti aç.
 
 ## 5. Oyuncu — katılım ve kart paylaşımı (A + P)
 
+Temel akış. Faz 5.5b'nin ayrıntılı adımları (sırlar, gri kart, yerelde
+doğrulama, DM'in ikinci cihazı) §15'te.
+
 **5.1 Katılım.** A'da dünyanın Multiplayer bölümünden davet kodunu kopyala.
 P'de hub → Dünyalar → "Katıl" → kodu gir.
 - Beklenen: "\"Aegis\" dünyasına katıldın" ve "Oyuncu olarak katıldın".
 
-**5.2 Kart paylaşma (görselli).** A'da **görseli olan** bir kartın menüsünden
-"Paylaş" → "Tüm oyuncularla paylaş".
-- Beklenen: P'de kart görünür, görseli de gelir.
+**5.2 Kart paylaşma (görselli).** A'da **görseli olan** bir kartın menüsünde
+"Paylaş"ı işaretle.
+- Beklenen: A'da "Tüm oyuncularla paylaşıldı" snackbar'ı. P'de kart görünür,
+  görseli de gelir.
 
 ```sql
 select count(*) from entity_shares where world_id = '<W>';  -- 1 artar
 ```
 
-**5.3 Tek oyuncuya paylaşma.** Başka bir kartı "Tek tek oyuncular" ile P'nin
-hesabına paylaş.
-- Beklenen: P'de görünür. İkinci bir oyuncu hesabın varsa o hesapta görünmemeli.
+**5.3 İkinci kart.** Başka bir homebrew kartın menüsünde "Paylaş"ı işaretle.
+- Beklenen: P'de görünür. (Tek tek oyunculara paylaşma bugün arayüzde yok;
+  sunucu `shared_with`'i destekliyor ama onu yazan diyalog kullanılmıyor.)
 
 **5.4 Paylaşılan karta sonradan görsel.** A'da 5.2'deki karta **yeni** bir
 görsel ekle.
@@ -211,9 +301,11 @@ doldur.
 - Beklenen: P'de o alan **görünmez**. Bu bir gizlilik testi; görünürse hemen
   dur ve bana getir.
 
-**5.7 Paylaşımı kaldırma.** A'da 5.3'teki kartta "Paylaşımı kaldır".
-- Beklenen: P'de kart kalkar. Gri kart + etiket Faz 5.5'in işi; şimdilik ne
-  olduğunu not et.
+**5.7 Paylaşımı kaldırma.** A'da 5.3'teki kartın menüsünde "Paylaş"
+işaretini kaldır.
+- Beklenen: A'da "Oyuncularla paylaşım durduruldu". P'de kart **kalkmaz**,
+  soluk görünür; üstüne gelince "DM bu kartı artık paylaşmıyor" (§2.5,
+  ayrıntısı §15.4).
 
 **5.8 DM çevrimdışıyken oyuncu.** A'yı tamamen kapat. P'de uygulamayı kapatıp
 aç, dünyaya gir.
@@ -254,8 +346,8 @@ Karakterde HP ya da ekipman değiştir, kaydet. İnterneti aç, dünyayı kapat�
   A'ya gelir. Eski sistemde bu düzenleme sessizce kayboluyordu.
 
 **6.6 Karakter görseli.** Karaktere portre ekle.
-- Beklenen, bugünkü kodla: A'da **görünmez** (bilinen sınır, karakter medyası
-  henüz buluta çıkmıyor). Görünürse haber ver, belgeyi düzeltelim.
+- Beklenen: A'da birkaç saniyede görünür. Faz 5g'den beri karakter medyası
+  bulutta (`characters/{id}/`); ayrıntısı §13.7 ve §13.12.
 
 **6.7 Savaşta oyuncu.** A'da bir encounter'a P'nin karakterini ekle, savaşı
 başlat, P'ye projekte et.
@@ -272,18 +364,23 @@ başlat, P'ye projekte et.
 ```sql
 select id, name, revision from user_packages;
 select count(*) from user_package_entities where package_id = '<paket id>';
+select count(*) from user_package_schemas  where package_id = '<paket id>';
 ```
 
-- Beklenen: kart sayısı tutar.
+- Beklenen: kart ve şema sayısı yereldekiyle tutar; satırların `owner_id`'si
+  oturumun uid'i.
 
 **7.2 Paket düzenleme.** A'da bir kartın adını değiştir, bir kart sil; B'de
 paketi aç.
 - Beklenen: ikisi de yansır. Paket görselleri 5e'den beri B'de **gelir**
   (§12).
+- Beklenen: silinen kart bulutta da yok:
+  `select count(*) from user_package_entities where package_id = '<paket id>'`
+  bir azaldı.
 
-**7.3 Yarıda kalan indirme (5c'nin tek eksiği).** B'de paketi ya da dünyayı
-sil. Hub → "Bulutta, bu cihazda yok" → İndir. İlerleme çubuğu yarıdayken
-B'nin internetini kes.
+**7.3 Yarıda kalan indirme (5c'nin tek eksiği).** B'yi sıfırla (§0'daki
+uyarı — paketi ya da dünyayı uygulamadan **silme**). Hub → "Bulutta, bu
+cihazda yok" → İndir. İlerleme çubuğu yarıdayken B'nin internetini kes.
 - Beklenen: yarım dünya/paket listede **görünmez**. İnternet gelince tekrar
   "İndir" çalışır ve tamamlanır.
 
@@ -297,8 +394,8 @@ yaz.
 
 - [ ] **Dünya açılışı.** A'da ve B'de dünyayı üç kez aç-kapat:
       `açılış <W> yerel=… ms toplam=… ms`. `toplam − yerel` bulut beklemesi.
-- [ ] **Multiplayer aç.** Aegis'in bir kopyasında (9.3'teki kopya işe
-      yarar) "Multiplayer On": `multiplayer açıldı <id>: N satır … ms` ve
+- [ ] **Multiplayer aç.** 3.7'deki iki satır (Deneme):
+      `multiplayer açıldı <id>: N satır … ms` ve
       `multiplayer medya <id> ↑N <bayt> … ms (toplam)`.
 - [ ] **Arka plan yüklemesi.** A'da bir karta 10–15 görsel ekle:
       `medya <W> ↑N <bayt> … ms`.
@@ -333,17 +430,19 @@ select count(*) from world_media where world_id = '<W>' and sha256 = '<sha>';
   paketi aç, bir kartı düzenle → B'deki paket offline'a düşer, bulutta
   yeniden belirmez.
 
-**9.3 Multiplayer'ı kapatma.** Aegis'in bir kopyasıyla yap, asıl dünyayla
-değil; kapatma bütün üye verisini buluttan siler. Kopyayı multiplayer aç,
-3.1'deki gibi yüklenmesini bekle, sonra "Çok Oyunculu Kapalı".
+**9.3 Multiplayer'ı kapatma.** Deneme'yle yap (3.7'de multiplayer açıldı),
+asıl dünyayla değil; kapatma bütün üye verisini buluttan siler. Kopya
+kullanma (§0). Deneme → "Çok Oyunculu Kapalı".
 
 ```sql
-select count(*) from world_media where world_id = '<kopya id>';            -- 0
-select count(*) from r2_evict_queue where r2_key like 'worlds/<kopya id>/%'; -- > 0
+select count(*) from world_media where world_id = '<Deneme id>';            -- 0
+select count(*) from r2_evict_queue where r2_key like 'worlds/<Deneme id>/%'; -- > 0
 ```
 
 - Beklenen: en çok 1 saat sonra (cron) ikinci sorgu 0. Cloudflare → R2 →
-  `dmt-assets` içinde `worlds/<kopya id>/` boş.
+  `dmt-assets` içinde `worlds/<Deneme id>/` boş.
+- Beklenen: A'da Deneme yerel bir dünya olarak duruyor; kartları ve
+  görselleri yerinde.
 
 ---
 
@@ -399,8 +498,10 @@ içindeki araç çubuğundaki kayıt simgesi.
 düzenle, eli çek.
 - Beklenen: kısa süre bulut-ok simgesi (eşitleniyor), sonra bulut-tik.
   Save & Sync diyaloğunda "BULUT · Son eşitleme HH:mm".
-  Sonra multiplayer'ı kapat → simge hemen yalnız kayda döner (bulut simgesi
-  ya da rozet kalmaz). Aynısı online paketi "Online kapat"la.
+- Kapatma kısmını yalnız Deneme'de yap, Aegis'te değil (bulut verisini
+  siler; 9.3 ile birleştirebilirsin): multiplayer'ı kapat → simge hemen
+  yalnız kayda döner (bulut simgesi ya da rozet kalmaz). Aynısı online
+  paketi "Yerele Al"la.
 
 **11.3 Çevrimdışı bekliyor.** Online dünyadayken ağı kes, bir kart düzenle.
 - Beklenen: simge üstü çizili bulut; tooltip "Çevrimdışı — değişiklikler bu
@@ -572,6 +673,13 @@ X'te K2'yi sil.
 - Beklenen: Y'de K2 birkaç saniye içinde Karakterler'den kalkıyor ve
   Ayarlar → Çöp Kutusu'nda görünüyor. Oradan geri yüklenebiliyor.
 
+**13.10b Dünyasız karakter.** X'te hub → Karakterler → yeni karakter;
+sihirbazın dünya seçicisinde dünya yerine "Yerleşik SRD (varsayılan)"ı
+bırak. **K3**'ü kaydet, online yap; Y'de indir. İki cihazda da
+K3 açıkken X'te HP'yi değiştir.
+- Beklenen: Y'de birkaç saniyede değişiyor — canlı senkron dünyasız
+  karakterde de (çıkış kriteri 1). K3'ün dişlisinde dünya atanmamış.
+
 ### Kısım B — farklı hesap (X: H1 DM, Y: H2 oyuncu)
 
 Y'de H1'den çık, H2 ile gir.
@@ -662,7 +770,9 @@ dünyayı hub'dan silmesi **dünyadan ayrılmak** demek, onunla taklit edilemez.
 - Beklenen: oyuncu ekranı açılıyor (DM ekranı değil).
 - Beklenen: Karakterler sekmesinde "Your" altında P1, portresiyle. P1 için
   "Available to Claim" altında ikinci bir kopya yok.
-- Beklenen: DM'in paylaştığı kart görünüyor.
+- Beklenen: DM'in paylaştığı kart görünüyor. Log'da
+  `CloudSync: paylaşılan kartlar <dünya> +N` (N paylaşılan homebrew kart
+  sayısı; boş cihaz hepsini indiriyor). Masa'dan çıkıp yeniden girince `+0`.
 
 **14.4 Canlı.** Y'de (H2) P1'in HP'sini değiştir.
 - Beklenen: X'te P1 açıkken birkaç saniyede değişiyor (5g'nin sahip kapsamı).
@@ -675,17 +785,22 @@ dünyayı hub'dan silmesi **dünyadan ayrılmak** demek, onunla taklit edilemez.
 ## 15. Faz 5.5b — oyuncunun kartları buluttan (iki cihaz, SQL yok)
 
 Kartın gövdesi artık paylaşım satırından değil, DM'in bulut aynasından
-(`get_shared_entities`) geliyor. Sır alanları sunucuda kırpılıyor. Düzen §14
-gibi: X'te **H1** (DM), Y'de **H2** (oyuncu), dünya **Masa**.
+(`get_shared_entities`) geliyor ve oyuncunun cihazına yazılıyor. Sır alanları
+sunucuda kırpılıyor. Açılışta yalnız doğrulama: değişmeyen kart yeniden inmez.
+Düzen §14 gibi: X'te **H1** (DM), Y'de **H2** (oyuncu), dünya **Masa**.
 
 **15.0 Hazırlık**
-- [ ] İki cihazda da yeni derleme. Migration ya da worker değişmedi.
-- [ ] X'te Masa'da bir NPC kartı **K1** yarat: açıklama yaz, "Secrets
-      (DM-only)" alanına `GİZLİ-1`, DM Notes'a `GİZLİ-2` yaz. Kartı paylaş.
+- [x] 102 ve 103 uygulandı (2026-10-02). İsteğe bağlı:
+      `supabase/scripts/verify_103.sql` → `103 OK`. İki cihaz da yeni
+      derlemede olmalı (eski sürümün paylaşımı 103'ten sonra düşer).
+- [ ] İki cihazda da yeni derleme. Worker değişmedi.
+- [ ] X'te Masa'da bir NPC kartı **K1** yarat: portre koy, açıklama yaz,
+      "Secrets (DM-only)" alanına `GİZLİ-1`, DM Notes'a `GİZLİ-2` yaz.
+      Kartın menüsünde "Paylaş"ı işaretle.
 
 **15.1 Paylaşım.** Y'de Masa açık.
 - Beklenen: K1 birkaç saniyede kenar çubuğunda beliriyor (yeni kart DM'in
-  push turunu bekliyor, ~3–5 sn). Açıklama görünüyor.
+  push turunu bekliyor, ~3–5 sn). Açıklama ve portre görünüyor.
 - Beklenen: kartta ne `GİZLİ-1` ne `GİZLİ-2` var; Secrets ve DM Notes
   bölümleri hiç yok.
 
@@ -706,12 +821,105 @@ kart **K2**'yi paylaş.
 
 **15.5 Yeniden açılış.** K1'in paylaşımını tekrar kapat. Y'de Masa'dan çık,
 yeniden gir.
-- Beklenen: K1 hiç yok (gövde bellekteydi; bilinen sınır, §4.8.9). K2 var.
+- Beklenen: K1 hâlâ gri ve etiketli. K2 var.
+- Beklenen: log'da `CloudSync: paylaşılan kartlar <dünya> +0` (hiçbir kart
+  yeniden inmedi).
+- X'te K1'i geri çekiliyken düzenle, sonra yeniden paylaş. Beklenen: Y'de gri
+  hâl kalkıyor ve yeni hali geliyor.
+
+**15.5b Çevrimdışı açılış.** X'te K1'in paylaşımını yeniden kapat (Y'de
+griye döner). Y'nin ağını kes, uygulamayı kapatıp aç, Masa'yı aç.
+- Beklenen: K1 ve K2 görünüyor (kartlar cihazda). K1 çevrimdışıyken gri
+  **değil**: gri hâli paylaşım listesi veriyor, liste ağdan geliyor (bilinen
+  sınır). Ağı aç — K1 griye dönüyor.
 
 **15.6 Çevrimdışı.** Y'nin ağını kes, X'te K2'yi düzenle, Y'nin ağını aç.
 - Beklenen: kanal yeniden bağlanınca K2'nin yeni hali geliyor. Log'da
   `CloudSync: paylaşılan kartlar ... offline` satırı kesinti sırasında
   görülebilir.
+
+**15.7 DM kartı siliyor.** X'te K2'yi sil.
+- Beklenen: Y'de K2 birkaç saniyede soluk ve etiketli ("DM bu kartı artık
+  paylaşmıyor"); kalkmıyor. Normal görünmeye devam ederse ❌ — paylaşım
+  satırı silmede duruyor, gri hâli doğrulamanın listesi veriyor.
+
+**15.8 Yeni kart diyaloğundan paylaşım.** X'te kenar çubuğundan yeni bir NPC
+kartı **K3** yarat; diyalogdaki "Oyuncularla paylaş" kutusu işaretli gelir,
+öyle bırak.
+- Beklenen: K3 Y'de birkaç saniyede beliriyor.
+- Beklenen: aynı diyalogda Monster kategorisini seçince kutu işaretsiz
+  geliyor (canavar ve loot kendiliğinden paylaşılmaz).
+
+**15.9 İlişki zinciri.** X'te paylaşılmamış bir NPC kartı **K4** yarat.
+Başka bir homebrew kart **K5**'in bir ilişki alanına (ör. Location ya da
+Faction) K4'ü bağla, sonra yalnız K5'i paylaş.
+- Beklenen: Y'de K5 ve K4 ikisi de görünüyor; K5'teki ilişki satırı boş
+  değil, K4'e açılıyor. (X'te K4'ün menüsünde "Paylaş" işaretsiz kalır:
+  zincir yalnız bulut satırını yazıyor, DM'in işaretini değil — bugünkü
+  davranış.)
+
+**15.10 Paket kartı.** X'te bir SRD kartını (ör. bir canavar) aç, menüsüne
+bak.
+- Beklenen: "Yerleşik — her zaman paylaşılır" (işaretli, değiştirilemez).
+  Y'de aynı kart paylaşmaya gerek kalmadan görünüyor: gövdesi Y'nin kurulu
+  SRD paketinden gelir, buluttan inmez (log'daki `+N` artmaz).
+
+**15.11 Önceden işaretleme (publish tohumu).** X'te multiplayer kapalı yeni
+bir dünya **Tohum** yarat, iki homebrew kart ekle. Birinin menüsünde
+"Paylaş"ı işaretle.
+- Beklenen: "Paylaşıma işaretlendi — dünya online olunca gidecek".
+- Tohum'da multiplayer'ı aç, davet kodunu Y'ye ver, Y katılsın, Tohum'u
+  açsın. Beklenen: Y'de yalnız işaretli kart görünüyor, öteki yok.
+
+**15.12 DM'in ikinci cihazı — sırlar yerinde.** Y'de H2'den çık, H1 ile gir.
+Hub → Dünyalar → "Bulutta, bu cihazda yok" → Masa → İndir, aç. K1'i aç.
+- Beklenen: K1'in Secrets'ında `GİZLİ-3`, DM Notes'unda `GİZLİ-2` duruyor;
+  portre görünüyor. Sırlar boşsa ❌: DM'in cihazına oyuncu için kırpılmış
+  kart yazılmış demek.
+- X'te K1'in açıklamasını değiştir. Beklenen: Y'de (H1) yeni açıklama
+  geliyor, sırlar hâlâ yerinde.
+- Bitince Y'de H1'den çıkıp H2'ye dönebilirsin.
+
+**15.13 Aynı katalog dünyası iki tarafta (isteğe bağlı).** X'te resmi
+katalogdan bir dünya kur, multiplayer aç, bir **homebrew** kartını paylaş;
+Y o dünyaya katılmadan önce aynı katalog dünyasını kendisi de kursun, sonra
+davet koduyla katılsın.
+- Beklenen: Y'nin kendi kopyasındaki o kart yerinde kalıyor, kaybolmuyor.
+  X'in dünyasında o kart Y'de görünmüyor (bilinen sınır: katalog dünyasının
+  kart id'leri iki cihazda aynı). Log'da
+  `CloudSync: paylaşılan kart … başka dünyada, atlandı`.
+- Aynı katalog dünyasını **tek cihaza iki kez** kurma: ikinci kurulum
+  birincinin kartlarını kendine taşır (kopyalamadaki hatanın aynısı).
+
+## 16. Yerel temeller — Faz 1 ve 2.5 (tek cihaz, SQL yok)
+
+Yıkıcı değil. **Multiplayer'ı kapalı** dünya, paket ve karakterle yap:
+online birini silmek bulut kopyasını da siler.
+
+**16.1 `.dmtz` paket.** Görselli yerel bir paketi dışa aktar, paketi sil,
+dosyayı içe aktar.
+- Beklenen: paket kartları, şeması ve görselleriyle geri geliyor.
+
+**16.2 `.dmtz` karakter.** Portreli yerel bir karakteri dışa aktar, sil,
+içe aktar.
+- Beklenen: karakter portresi ve bütün alanlarıyla geri geliyor.
+
+**16.3 Birleştirme.** Yerel bir dünyayı dışa aktar. Sonra o dünyada bir
+kartın (**M1**) açıklamasını değiştir ve başka bir kartı (**M2**) sil.
+Dosyayı içe aktar.
+- Beklenen: soru sorulmadan mevcut dünyanın üzerine birleşiyor; M2 geri
+  geliyor (silme yayılmaz), M1 senin yeni açıklamanla kalıyor (sonra
+  düzenlenen kazanır).
+
+**16.4 Aynı adlı iki dünya.** **İkiz** adında iki dünya oluştur, ikisine de
+farklı görselli birer kart koy. Biri açıp kapat, sonra ötekini.
+- Beklenen: hub ikisini de listeliyor; her biri kendi kartını ve görselini
+  açıyor. Birini kapatınca ötekinin görseli kırılmıyor (medya klasörü id
+  ile ayrı).
+
+**16.5 Yeniden adlandırma.** Görselli, oturumu ve kurulu paketi olan bir
+dünyanın adını değiştir.
+- Beklenen: görseller, oturumlar ve paketler duruyor.
 
 ---
 

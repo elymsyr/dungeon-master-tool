@@ -1709,8 +1709,8 @@ class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
         msg = pushed ? L10n.of(context)!.shareStopped : L10n.of(context)!.shareUnmarked;
       } else {
         msg = pushed
-            ? 'Shared with all players'
-            : 'Marked to share — goes out when the world goes online';
+            ? L10n.of(context)!.shareStarted
+            : L10n.of(context)!.shareMarked;
       }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()

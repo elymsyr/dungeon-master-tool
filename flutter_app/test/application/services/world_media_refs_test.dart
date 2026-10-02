@@ -1,6 +1,6 @@
 // Faz 5d — dünya medyasının iki ucu aynı sha'ları görmeli:
 //
-//   Paylaşım: yerel yollar → payload'da `dmt-content://{sha}{ext}`
+//   Projeksiyon: yerel yollar → anlık görüntüde `dmt-content://{sha}{ext}`
 //   Push:     giden satırlar → yüklenecek sha'lar ve sınıfları (`mediaRefsOf`)
 //
 // Ayrışırlarsa oyuncu hiç yüklenmemiş bir sha'yı ister ve görsel asla gelmez

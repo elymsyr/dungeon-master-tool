@@ -17,22 +17,17 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../services/entity_media_cleanup_service.dart';
-import '../services/entity_share_prepare.dart';
 import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
-import '../../domain/entities/online/world_role.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
-import 'cloud_sync_status_provider.dart';
-import 'online_worlds_provider.dart';
 import 'event_bus_provider.dart';
 import 'package_link_provider.dart' show packageReferenceOverlayProvider;
 import 'role_provider.dart';
 import 'auth_provider.dart';
 import 'save_state_provider.dart';
-import 'shared_entity_provider.dart';
 import 'ui_state_provider.dart';
 
 const _uuid = Uuid();
@@ -767,36 +762,11 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
               json: row,
               worldId: worldId,
             );
-        await _pushIfShared(entity.id, worldId);
+        // Paylaşılan kartın düzenlemesi oyuncuya bulut aynasından gidiyor
+        // (push turu + `world_revisions` sinyali, Faz 5.5b); paylaşım
+        // satırına dokunmak gerekmiyor.
       },
     );
-  }
-
-  /// Paylaşıma işaretli bir kartın düzenlemesini otomatik iter.
-  /// Debounce'lu write flush'ına asılı, yani her tuş vuruşunda değil, satır
-  /// diske yazıldığında bir kez. İşaretsiz kart / offline world / DM olmayan
-  /// kullanıcı → no-op.
-  Future<void> _pushIfShared(String entityId, String? worldId) async {
-    if (worldId == null) return;
-    if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
-    try {
-      if (await _ref.read(currentWorldRoleProvider.future) != WorldRole.dm) {
-        return;
-      }
-      if (!_ref.read(sharedEntityIdsProvider).contains(entityId)) return;
-      await _ref
-          .read(entitySharerProvider)
-          .share(entityId: entityId, worldId: worldId);
-      _ref
-          .read(cloudSyncStatusProvider.notifier)
-          .report(worldId, CloudSyncIssue.share);
-    } catch (e) {
-      debugPrint('entity auto re-share failed for $entityId: $e');
-      // Kuyruk yok: kart yeniden düzenlenene kadar oyuncuda eski hali kalır.
-      _ref
-          .read(cloudSyncStatusProvider.notifier)
-          .report(worldId, CloudSyncIssue.share, error: e);
-    }
   }
 
   /// F2: row-level delete. Drops the id from the in-memory blob then
@@ -832,10 +802,8 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 /// held in the campaign blob's `entities` map — the exact inverse of
 /// [entityFromRaw].
 ///
-/// Bu şekil aynı zamanda `entity_shares.payload_json`'ın da şekli: DM bir kartı
-/// paylaştığında oyuncuya giden şey budur, oyuncu da doğrudan kendi blob'una
-/// yazar. İkisinin aynı fonksiyondan geçmesi, paylaşımın DM'in gördüğü kartla
-/// birebir aynı olmasını garanti eder.
+/// Oyuncunun paylaşılan kartı da blob'a aynı şekille girer
+/// (`sharedEntityRowToRaw`, Faz 5.5b).
 Map<String, dynamic> entityToRaw(Entity e) {
   return {
     'name': e.name,

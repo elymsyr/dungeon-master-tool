@@ -1,13 +1,13 @@
-// Faz 5.5b — redaksiyon Dart'tan SQL'e geçerken aynı alanlar saklanıyor mu
-// (§2.6: "iki yorumlayıcının ayrışması tam olarak sır sızdıran senaryo").
+// Faz 5.5b — oyuncuya giden kartta DM'e özel hiçbir şey yok (§2.6: karar
+// Dart'ta, uygulama SQL'de).
 //
-//   flutter test test/application/services/shared_entity_redaction_parity_test.dart
+//   flutter test test/application/services/shared_entity_redaction_test.dart
 //
-// Eski yol: `redactDmOnly(entityToRaw(e))` → `entity_shares.payload_json`.
-// Yeni yol: `CloudPushService.collect` bulut satırını `dm_only_keys` ile
-// yazar → `get_shared_entities` `dm_notes`'u seçmez, `fields_json::jsonb -
+// Yol: `CloudPushService.collect` bulut satırını `dm_only_keys` ile yazar →
+// `get_shared_entities` `dm_notes`'u seçmez, `fields_json::jsonb -
 // dm_only_keys` yapar → `sharedEntityRowToRaw`. SQL adımı burada birebir
-// taklit ediliyor (094'teki SELECT); ikisi aynı kartı vermeli.
+// taklit ediliyor (094/102'deki SELECT; gerçek SQL'in koruması verify_094 §6
+// ve verify_102). Sonuç: kart aynen, yalnız sırları ve DM notu eksik.
 
 import 'dart:convert';
 
@@ -85,7 +85,7 @@ void main() {
         .firstWhere((r) => r['id'] == e.id);
   }
 
-  test('yerleşik şemanın her gizli alanı iki yolda da saklanıyor', () async {
+  test('yerleşik şemanın her gizli alanı oyuncudan saklanıyor', () async {
     final schema = generateBuiltinDnd5eV2Schema().schema;
     final keys = dmOnlyKeysBySlug(schema);
     final withSecrets = keys.entries.where((e) => e.value.isNotEmpty).toList();
@@ -112,10 +112,6 @@ void main() {
         },
       );
 
-      final old = entityFromRaw(
-          e.id,
-          jsonDecode(jsonEncode(redactDmOnly(entityToRaw(e), secret)))
-              as Map<String, dynamic>);
       final sql = sqlSharedEntity(await cloudRow(e, keys));
       expect(sql, isNotNull, reason: slug);
       final fresh = entityFromRaw(
@@ -123,7 +119,9 @@ void main() {
           sharedEntityRowToRaw(
               jsonDecode(jsonEncode(sql)) as Map<String, dynamic>));
 
-      expect(fresh, equals(old), reason: slug);
+      expect(fresh,
+          equals(e.copyWith(dmNotes: '', fields: {public: 'görünür'})),
+          reason: slug);
       expect(jsonEncode(entityToRaw(fresh)), isNot(contains('SIR')),
           reason: slug);
       expect(fresh.fields[public], 'görünür', reason: slug);

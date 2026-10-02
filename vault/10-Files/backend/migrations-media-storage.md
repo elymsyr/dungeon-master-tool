@@ -5,7 +5,7 @@ path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 05
 layer: backend
 language: sql
 status: stable
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -49,7 +49,7 @@ tags: [file]
 - `get_pub_upload_allowed` (service_role) Worker PUT kapısı; `get_r2_pool_stats()` (admin) havuz doluluğu.
 
 ## 088 — paylaşım gövdesi sınırları
-`entity_shares.payload_json` ≤ **512 KB** (`chk_entity_shares_payload_size`, NOT VALID — yeni yazmalarda tam zorlanır, mevcut tabloyu taramaz) ve dünya başına ≤ **4000** satır (`max_shares_per_world()` + `trg_enforce_world_share_limits` BEFORE INSERT; UPDATE saymaz ki rutin payload güncellemesi tam 4000'de patlamasın). `max_share_payload_bytes()` client pre-check'i için var — CHECK ifadesi fonksiyon çağıramaz, iki sabit birlikte değiştirilir. Doğrulama: `supabase/scripts/verify_088_089.sql`.
+`entity_shares.payload_json` ≤ **512 KB** (`chk_entity_shares_payload_size`, NOT VALID — yeni yazmalarda tam zorlanır, mevcut tabloyu taramaz) ve dünya başına ≤ **4000** satır (`max_shares_per_world()` + `trg_enforce_world_share_limits` BEFORE INSERT; UPDATE saymaz ki rutin payload güncellemesi tam 4000'de patlamasın). `max_share_payload_bytes()` client pre-check'i için vardı. **103** sütunu, CHECK'i ve bu fonksiyonu düşürdü; satır tavanı kalıyor. Doğrulama: `supabase/scripts/verify_088_089.sql`.
 
 ## 099 — dünya medyası bulutta, transient kalktı (Faz 5d)
 - **`world_media`** `(world_id → worlds ON DELETE CASCADE, sha256, ext, bytes, kind, mime, uploaded, created_at)`, PK `(world_id, sha256)`, `idx_world_media_sha`. `ext` CHECK `^(\.[a-z0-9]{1,10})?$` (R2 key'inin parçası). RLS: üyeler okur, sahip siler; yazma yalnız RPC'den. Satır rezervasyonla `uploaded = false` doğar, onaysız satır imzalanmaz ama kotaya sayılır.

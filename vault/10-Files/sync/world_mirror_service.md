@@ -20,7 +20,7 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Constructor: `SupabaseClient client`.
-- `fetchInitialState(worldId, {withShares})` / `fetchEntity(worldId, entityId)` / `fetchWorldMeta(worldId)` reads.
+- `fetchInitialState(worldId)` / `fetchEntity(worldId, entityId)` / `fetchWorldMeta(worldId)` reads.
 - Echo/guard queries called by the applier: `isEchoOf(event)`, `isEchoOfId/MapData/Session/Settings/Package/WorldPackage/PersonalPackageEntity`, `isExpectedUnpublish`, `isExpectedCharDelete`.
 
 **Outputs**
@@ -41,8 +41,7 @@ tags: [file]
 - **Char-delete guard (leave_beta orphans):** `_expectedCharDelete` mirror of the above for `world_characters` DELETE — keeps the local copy when the server deletes an orphan online character.
 - **`_entityRow`:** maps a blob entity to the wide `world_entities` columns (`category_slug` via `_categoryFor` = lowercased hyphenated `type`, defaults `npc`; jsonEncodes images/tags/pdfs/attributes; preserves `package_id`/`package_entity_id`/`linked`).
 - **`pushWorldState`** goes through the `publish_world` RPC (SECURITY DEFINER, owner_id from `auth.uid()`) — avoids RLS/upsert noise; player blocked by RLS.
-- **`fetchInitialState`** returns `(characters, sharedEntities, projection)` — the share channel's accumulated state, seeded on world open. Faz 5f: the three queries run concurrently (`Future.wait`, which forwards the first error unwrapped so the offline log classification survives); world open awaits this, and it used to be three sequential round trips. `withShares: false` skips the shared cards entirely — the DM keeps its own card bodies locally. Faz 5.5b: the cards come from `get_shared_entities(world, 0)` instead of `entity_shares` rows.
-- **`fetchSharedEntities(worldId, since)`** (Faz 5.5b) — the player's card gate: the 094 RPC returns permitted cards with `dm_notes` unselected and `dm_only_keys` stripped from `fields_json`, only those with `revision > since`. Errors propagate (the applier logs offline and keeps what it has).
+- **`fetchInitialState`** returns `(characters, projection)` — the share channel's accumulated state, seeded on world open. Faz 5f: the three queries run concurrently (`Future.wait`, which forwards the first error unwrapped so the offline log classification survives); world open awaits this, and it used to be three sequential round trips. Shared cards are no longer part of it (Faz 5.5b): the player keeps them in Drift and verifies them through [[cloud_pull_service]] `syncSharedEntities`.
 - **`fetchWorldMeta`** reads `worlds.meta_json` and hands it to `decodeWorldMeta` ([[world_meta_sync]]) — dünya kartının açıklaması/etiketleri/kapağı. Çözülemezse null; çağıran (`WorldMirrorApplier._applyWorldMeta`) yamasız devam eder.
 
 ## Notes

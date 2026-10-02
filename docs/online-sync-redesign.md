@@ -20,7 +20,10 @@ uzlaşıyor, hub'dan online yapılıyor.
 oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor.
 **5.5b bitti (2026-10-02, [§4.8.9](#489-faz-55b--oyuncunun-kartları-get_shared_entitiesten--bitti)):**
 oyuncu kartları `get_shared_entities`'ten okuyor, DM'in düzeltmesi yeniden
-paylaşmadan gidiyor, geri çekilen kart gri.
+paylaşmadan gidiyor, geri çekilen kart gri. **Eki ([§4.8.10](#4810-faz-55b-eki--kartlar-oyuncuda-yerelde-doğrulamayla--bitti)):**
+kartlar oyuncunun Drift'inde, açılışta yalnız doğrulama (102 deploy edildi);
+`entity_shares` saf izin, `payload_json` düştü ([§4.8.11](#4811-entity_shares-saf-izin--kart-kopyası-kalktı--bitti),
+103 deploy edildi).
 **Sıradaki ([§4.8.5](#485-sıradaki-fazlar--taslak)):** 5.5c oyuncu mind map'i
 ve `world_member_state` → 7 kota ve ölçüm.
 
@@ -933,7 +936,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy edildi; el testi bekliyor — §4.8.6) |
 | ~~**5g**~~ | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 101 + worker deploy edildi; el testi bekliyor — §4.8.7) |
 | ~~**5.5a**~~ | Oyuncu çoklu cihaz — üyelik listesi, `materializeWorld` | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | hayır | ✅ bitti (2026-10-02; migration yok, el testi bekliyor — §4.8.8) |
-| ~~**5.5b**~~ | Kartlar `get_shared_entities`'ten, oyuncu sinyali, gri kart | `entity_shares.payload_json` okunmuyor; DM'in düzeltmesi oyuncuya yeniden paylaşmadan gidiyor | hayır (094 hazırdı) | ✅ bitti (2026-10-02; eşdeğerlik testi yeşil, el testi bekliyor — §4.8.9) |
+| ~~**5.5b**~~ | Kartlar `get_shared_entities`'ten, oyuncu sinyali, gri kart | `entity_shares.payload_json` okunmuyor; DM'in düzeltmesi oyuncuya yeniden paylaşmadan gidiyor | evet (102, 103) | ✅ bitti (2026-10-02; testler yeşil, 102 + 103 deploy edildi; el testi bekliyor — §4.8.9–§4.8.11) |
 | 5.5c | Oyuncu mind map'i + `world_member_state` | oyuncunun dünyadaki kendi durumu ikinci cihazına iniyor | evet | taslak |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -3231,6 +3234,11 @@ istiyor). Oyuncu `world_revisions` sinyalini dinlemiyordu (§4.8.1).
 
 ### Uygulamada çıkan farklar
 
+> Aynı gün kullanıcının isteğiyle değişti (§4.8.10, §4.8.11): kartlar oyuncuda
+> yerelde, açılışta doğrulama; `payload_json` düştü. Aşağıdaki "gövde bellekte"
+> ve "`payload_json` kalkıyor" satırları, "yeni paylaşım tam tazeleme" ve
+> "CDC hâlâ `payload_json` taşıyor" sınırları geçersiz.
+
 | Belgede yazan | Uygulanan |
 |---|---|
 | §2.5: geri çekilince `get_shared_entity_ids` ile liste karşılaştırması | `entity_shares` listesiyle (oyuncu zaten okuyor, CDC'si de var). Fark yalnız `dm_only_keys` NULL kartta; onun gövdesi zaten hiç inmiyor |
@@ -3246,6 +3254,97 @@ istiyor). Oyuncu `world_revisions` sinyalini dinlemiyordu (§4.8.1).
   satır buluta 3 sn sonra çıkıyor; oyuncuya sinyalle o zaman geliyor.
 - **`entity_shares` CDC'si hâlâ `payload_json` taşıyor** (DM yazdığı için):
   kolon düşene kadar Realtime trafiği eskisi gibi.
+
+## 4.8.10 Faz 5.5b eki — Kartlar oyuncuda yerelde, doğrulamayla ✅ bitti
+
+*Uygulandı 2026-10-02, kullanıcının isteğiyle ("gri kartlar lokale yazılsın,
+her seferinde baştan çekilmek yerine doğrulama yapılsın"). Migration **102**
+deploy edildi; el testi `online-el-testi.md` §15.*
+
+### Sorun
+
+5.5b'de oyuncunun kartları bellekteydi: her açılış izinli kartların hepsini
+yeniden indiriyordu, geri çekilen kart yeniden açılışta kayboluyordu, oyuncu
+çevrimdışı hiçbir kart göremiyordu.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **102** | `get_shared_entity_stamps(world)` → izinli kartların `(id, updated_at, linked)`'i, gövdesiz. `get_shared_entities`'e `p_ids TEXT[] DEFAULT NULL`; iki parametreli imza düştü (PostgREST'te belirsiz kalırdı), eski istemcinin çağrısı varsayılanla çalışıyor. İkisi de `v_shared_entities`'ten. `verify_102.sql`; `verify_094` 4.3 yeni imzaya |
+| **`CloudPullService.syncSharedEntities`** | damga listesi → yerel `world_entities.updated_at` ile karşılaştırma (`sharedEntitiesToFetch`, ağsız) → yalnız eksik/daha yeni kart id ile, 500'lük parçalar → `applySharedEntities` (ağsız; pull'un `_toLocal` + LWW `_write`'ı, tek transaction, medya ref'i yerel dosyaya) |
+| **`WorldMirrorApplier._syncShared`** | açılışta (beklenmeden — kartlar depodan zaten yüklü), paylaşım INSERT/UPDATE'inde, sinyalde; 1 sn birleştirme. Yazılanlar açık dünyanın blob'una da işleniyor. Bellekteki revizyon damgası ve tam tazeleme kalktı |
+| **`fetchInitialState`** | kartsız: karakterler + projeksiyon |
+
+Karşılaştırma revizyon damgası yerine kart başına `updated_at` üstünden:
+geri çekiliyken düzenlenip yeniden paylaşılan kart da yakalanıyor (dünya
+damgası onu atlardı). `updated_at` DM'in yerel saniye damgası (push öyle
+yazıyor), oyuncunun satırı da onu taşıyor.
+
+### Çıkış kriteri
+
+- `shared_entity_sync_test.dart`: boş cihazda yalnız homebrew iner (linked
+  istenmez); ikinci doğrulamada hiçbir gövde inmez; DM düzeltince yalnız o
+  kart; geri çekilen kart yerelde kalır, geri çekiliyken düzenlenip yeniden
+  paylaşılınca yeni hali iner; yerel daha yeni satır ezilmez.
+- 001→102 temiz Postgres 16'da hatasız; `verify_094`–`100` ve `verify_102`
+  yeşil. `test/application` + `test/presentation` + `test/data` yeşil (902),
+  `flutter analyze` yeni bulgu vermiyor.
+- Elle: 102 deploy, sonra §15.
+
+### Bilinçli sınırlar
+
+- **Her sinyalde damga listesi iniyor** (paylaşım başına ~60 bayt; 4000
+  tavanında ~250 KB). Ölçüm isterse sinyal yolu revizyon damgasına döner,
+  liste yalnız açılışta ve paylaşım değişiminde.
+- **Gri kart hiç silinmiyor.** DM kartı tamamen silse de oyuncuda gri kalır;
+  oyuncunun silme düğmesi yok.
+- **Aynı saniyede iki düzenleme** aynı damgayı taşır; ikincisi bir sonraki
+  düzenlemeye kadar oyuncuya gitmez (DM'in kendi pull'unda da aynı sınır).
+- **Çevrimdışı gri yok.** Gri kart paylaşım listesine bakıyor, liste ağdan
+  geliyor; çevrimdışı açılışta geri çekilen kart normal görünür, bağlantı
+  gelince griye döner.
+- **Aynı id oyuncunun başka dünyasında** (katalog dünyası kart id'leri
+  deterministik; oyuncu aynı dünyayı kendisi de indirmişse): kart bu dünyaya
+  yazılmaz, oyuncunun kendi dünyasındaki kopyası taşınmasın diye (yerel PK
+  yalnız `id`). Kart oyuncuda görünmez. Kök neden katalog kurulumunun id
+  üretimi — ayrı iş (DM'in pull'u ve aynı katalog dünyasını iki kez indirmek
+  de aynı sınıfa giriyor).
+
+### İnceleme (2026-10-02)
+
+| Bulgu | Düzeltme |
+|---|---|
+| Doğrulamanın rol kapısı `cachedWorldRole` önbelleğiydi; çözülmemiş ya da ağ hatası yemişse `none` dönüyor, DM'i oyuncu sanıyordu. DM'in ikinci cihazına kırpılmış (`dm_notes`'suz) kart yazılır, sonraki düzenlemede sırrı silinmiş hali buluta geri giderdi. Aynı kapı `_applyWorldMeta`'da buluttaki eski dünya kimliğini DM'in çevrimdışı düzenlemesinin üstüne yazdırabiliyordu | `WorldMirrorApplier._roleOf`: açık dünyada provider'ın beklediği çözülmüş `currentWorldRoleProvider`, değilse önbellek. `_isDm` ve `_isPlayerOf` ondan; doğrulama yalnız açık dünyada ve `player` iken |
+| Dünya yüklenirken (`data == null`) biten doğrulamanın yazdığı kart blob'a girmiyordu; açılışın Drift okuması yazmadan önce bittiyse kart o oturumda görünmüyordu | Yazılanlar `_sharedUninjected`'te bekliyor, blob yüklendikten sonraki doğrulamada işleniyor |
+| Katalog dünyasının deterministik id'li kartı oyuncunun kendi dünyasındakini taşıyordu | Yabancı dünya kontrolü (bilinçli sınırlarda) |
+| DM paylaşılan kartı **silince** paylaşım satırı duruyor: kart oyuncuda gri değil, normal görünüyordu — ve artık kalıcı olduğu için hiç kalkmıyordu (bellekteyken yeniden açılışta kayboluyordu) | Gri kart ayrıca son doğrulamanın listesine bakıyor (`sharedEntityStampIdsProvider`, `get_shared_entity_stamps`, yani `v_shared_entities` — §2.5'in asıl niyeti). Silme sinyal üretiyor (tombstone sayacı artırır), oyuncu yeniden doğrulayıp kartı griye çeviriyor |
+| `worldEntitySharesProvider` ağ hatasında boş liste dönüyordu: online oyuncuda geçici bir hata **her** kartı griye çeviriyordu | Hata yukarı çıkıyor; tazelemede hata önceki listeyi koruyor (Riverpod `copyWithPrevious`) |
+| Paylaşım snackbar'ının iki metni İngilizce sabitti | `shareStarted` / `shareMarked` × 4 dil |
+
+Testler: `shared_entity_sync_test` (6, yabancı dünya ve görünür liste dahil),
+`revoked_shared_ids_test` (3).
+
+## 4.8.11 `entity_shares` saf izin — kart kopyası kalktı ✅ bitti
+
+*Uygulandı 2026-10-02, kullanıcının kararıyla: "herkesin güncel sürüm
+kullandığını varsayarak ilerleyelim". Migration **103** deploy edildi.
+Eski sürümün paylaşımı 103'ten sonra düşer — bilinçli.*
+
+| Parça | Ne |
+|---|---|
+| **103** | `entity_shares.payload_json`, 088'in 512 KB CHECK'i ve `max_share_payload_bytes()` düştü; 4000 satır tavanı kaldı. `verify_103.sql`; `verify_088_089`'dan 512 KB adımı çıktı |
+| **`EntityShareService`** | yalnız izin satırı; `shareManyWithAll(worldId, entityIds)` |
+| **`shareEntityWithPlayers`** | ilişki kapanışı + izin satırları; kopya kurma, medya remap'i ve `redactDmOnly` silindi (sırrın tek kararı `dmOnlyKeysBySlug`, uygulaması SQL) |
+| **`EntityNotifier._pushIfShared`** | kalktı: her düzenlemede paylaşım satırını silip yeniden yazıyordu — oyuncuda kart bir an gri yanıp sönerdi. Düzenleme push turu + sinyalle gidiyor. Tek bildireni olduğu için `CloudSyncIssue.share` ve `cloudSyncProblemShare` (× 4 dil) da gitti |
+| **Testler** | `entity_share_redact_test` silindi; eşdeğerlik testi `shared_entity_redaction_test` oldu (kart aynen, yalnız sırları ve DM notu eksik) |
+
+001→103 temiz Postgres 16'da hatasız, 103 ikinci kez de; `verify_088_089`–`100`,
+`verify_102`, `verify_103` yeşil. `test/application`, `test/presentation`,
+`test/data`, `test/domain` yeşil (bilinen `bundled_pack_resolve_test` dışında).
+
+Kazanç (§2.5'in tablosu): tek nüsha; 512 KB sınırı yok; `entity_shares`
+CDC'si artık yalnız izin satırı taşıyor; DM'in düzeltince yeniden yazması yok.
 
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
 
