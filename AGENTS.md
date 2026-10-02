@@ -63,7 +63,7 @@ flutter run \
   --dart-define=DMT_WORKER_URL=https://dmt-assets.<acct>.workers.dev
 ```
 
-Release builds take the same three defines (see [.github/workflows/build.yml](.github/workflows/build.yml)): `flutter build apk|windows|linux|macos --release`, `flutter build ios --release --no-codesign`.
+Release builds take `SUPABASE_URL` and `SUPABASE_ANON_KEY` (CI leaves `DMT_WORKER_URL` to its compiled-in default) (see [.github/workflows/build.yml](.github/workflows/build.yml)): `flutter build apk|windows|linux|macos --release`, `flutter build ios --release --no-codesign`.
 
 ### Content pipeline tools
 
