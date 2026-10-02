@@ -79,9 +79,11 @@ final worldMirrorApplierProvider =
     await sync.subscribe(
       worldId,
       onSubscribed: onResubscribed,
+      // Faz 5.5b — oyuncuda aynı sinyal kart tazelemesi: DM'in düzeltmesi
+      // yeniden paylaşmadan gelir.
       onRevision: isDm
           ? (rev) => ref.read(cloudPushPumpProvider).onSignal(worldId, rev)
-          : null,
+          : (_) => applier.scheduleSharedRefresh(worldId),
     );
   } else {
     // Zaten subscribe iken (örn. world reopen aynı oturumda) catch-up et.

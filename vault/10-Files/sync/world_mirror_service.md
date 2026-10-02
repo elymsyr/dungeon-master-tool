@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -41,9 +41,9 @@ tags: [file]
 - **Char-delete guard (leave_beta orphans):** `_expectedCharDelete` mirror of the above for `world_characters` DELETE — keeps the local copy when the server deletes an orphan online character.
 - **`_entityRow`:** maps a blob entity to the wide `world_entities` columns (`category_slug` via `_categoryFor` = lowercased hyphenated `type`, defaults `npc`; jsonEncodes images/tags/pdfs/attributes; preserves `package_id`/`package_entity_id`/`linked`).
 - **`pushWorldState`** goes through the `publish_world` RPC (SECURITY DEFINER, owner_id from `auth.uid()`) — avoids RLS/upsert noise; player blocked by RLS.
-- **`fetchInitialState`** returns `(characters, shares, projection)` — the share channel's accumulated state, seeded on world open. Faz 5f: the three queries run concurrently (`Future.wait`, which forwards the first error unwrapped so the offline log classification survives); world open awaits this, and it used to be three sequential round trips. `withShares: false` skips `entity_shares` entirely — the DM keeps its own card bodies locally and the applier discarded the payloads, so every DM open downloaded every share body for nothing.
+- **`fetchInitialState`** returns `(characters, sharedEntities, projection)` — the share channel's accumulated state, seeded on world open. Faz 5f: the three queries run concurrently (`Future.wait`, which forwards the first error unwrapped so the offline log classification survives); world open awaits this, and it used to be three sequential round trips. `withShares: false` skips the shared cards entirely — the DM keeps its own card bodies locally. Faz 5.5b: the cards come from `get_shared_entities(world, 0)` instead of `entity_shares` rows.
+- **`fetchSharedEntities(worldId, since)`** (Faz 5.5b) — the player's card gate: the 094 RPC returns permitted cards with `dm_notes` unselected and `dm_only_keys` stripped from `fields_json`, only those with `revision > since`. Errors propagate (the applier logs offline and keeps what it has).
 - **`fetchWorldMeta`** reads `worlds.meta_json` and hands it to `decodeWorldMeta` ([[world_meta_sync]]) — dünya kartının açıklaması/etiketleri/kapağı. Çözülemezse null; çağıran (`WorldMirrorApplier._applyWorldMeta`) yamasız devam eder.
-- **`fetchEntity`** single row — used after an `entity_shares` INSERT CDC (the share doesn't mutate `world_entities`, so no CDC fires for the now-visible row).
 
 ## Notes
 - F4 retired the bulk `pushEntities` path — every entity edit flows per-row through the outbox.

@@ -294,6 +294,7 @@
   "worldsDeletedCloudSnack": "Welt in den Papierkorb verschoben. Cloud-Kopie entfernt.",
   "cloudOnlyTitle": "In der Cloud, nicht auf diesem Gerät",
   "cloudOnlyWorldsHint": "Deine Online-Welten von deinen anderen Geräten und Welten, denen du als Spieler beigetreten bist. Lade eine herunter, um sie auch hier zu nutzen – ohne Einladungscode.",
+  "sharedEntityRevoked": "Der SL teilt diese Karte nicht mehr.",
   "cloudOnlyPackagesHint": "Deine Online-Pakete von deinen anderen Geräten. Lade eines herunter, um es auch hier zu nutzen.",
   "cloudPackageNameTaken": "Auf diesem Gerät gibt es bereits ein Paket namens \"{name}\". Benenne es zuerst um.",
   "cloudOnlyDownload": "Herunterladen",

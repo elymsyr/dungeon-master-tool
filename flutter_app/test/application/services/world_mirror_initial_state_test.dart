@@ -1,6 +1,6 @@
 // Faz 5f — dünya açılışının bulut seed'i. Açılış bunu bekliyor: üç sorgu
-// sırayla üç gidiş-dönüştü, şimdi eşzamanlı; DM paylaşım gövdelerini hiç
-// istemiyor (applier onları DM'de atıyordu).
+// sırayla üç gidiş-dönüştü, şimdi eşzamanlı; DM paylaşılan kartları hiç
+// istemiyor (applier onları DM'de atıyordu). Kartlar 5.5b'den beri RPC'den.
 //
 //   flutter test test/application/services/world_mirror_initial_state_test.dart
 
@@ -23,7 +23,7 @@ void main() {
     peak = 0;
     for (final (table, body) in [
       ('world_characters', <Object>[{'id': 'c1'}]),
-      ('entity_shares', <Object>[{'entity_id': 'e1'}]),
+      ('rpc/get_shared_entities', <Object>[{'id': 'e1'}]),
       ('world_projection', <String, Object>{'world_id': 'w1'}),
     ]) {
       cloud.routes['/rest/v1/$table'] = (_) async {
@@ -41,14 +41,15 @@ void main() {
     final s = await mirror.fetchInitialState('w1');
     expect(peak, 3);
     expect(s.characters.single['id'], 'c1');
-    expect(s.shares.single['entity_id'], 'e1');
+    expect(s.sharedEntities.single['id'], 'e1');
     expect(s.projection?['world_id'], 'w1');
   });
 
-  test('DM paylaşım gövdelerini istemez', () async {
+  test('DM paylaşılan kartları istemez', () async {
     final s = await mirror.fetchInitialState('w1', withShares: false);
-    expect(s.shares, isEmpty);
-    expect(cloud.requests.where((r) => r.contains('entity_shares')), isEmpty);
+    expect(s.sharedEntities, isEmpty);
+    expect(cloud.requests.where((r) => r.contains('get_shared_entities')),
+        isEmpty);
     expect(s.characters, hasLength(1));
   });
 }

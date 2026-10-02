@@ -9,11 +9,11 @@ import '../../core/utils/error_format.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../data/database/sync_stamp.dart' show characterScope;
 import '../../domain/entities/online/world_role.dart';
-import '../../domain/entities/schema/field_schema.dart';
 import '../services/cloud_pull_service.dart';
 import '../services/cloud_push_service.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/content_ref_index.dart';
+import '../services/entity_share_prepare.dart' show dmOnlyKeysBySlug;
 import '../services/world_media_sync.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
@@ -227,7 +227,7 @@ class CloudPushPump {
         () => _rows.run(() => _logged(
             'push $id',
             svc.pushWorld(id,
-                dmOnlyKeys: _dmOnlyKeys(),
+                dmOnlyKeys: dmOnlyKeysBySlug(_ref.read(worldSchemaProvider)),
                 full: full,
                 beforeRows: full ? null : (refs) => _uploadNew(id, refs)))));
   }
@@ -859,21 +859,6 @@ class CloudPushPump {
           'yazılamadı: ${res.rejected.take(5).join(", ")}');
     }
     return res;
-  }
-
-  /// Kategori slug → oyuncudan gizlenecek alan anahtarları. Şemayı yorumlayan
-  /// taraf istemci, uygulayan taraf `get_shared_entities` (§2.6).
-  Map<String, List<String>> _dmOnlyKeys() {
-    final schema = _ref.read(worldSchemaProvider);
-    return {
-      for (final c in schema.categories)
-        c.slug: [
-          for (final f in c.fields)
-            if (f.visibility == FieldVisibility.dmOnly ||
-                f.visibility == FieldVisibility.private_)
-              f.fieldKey,
-        ],
-    };
   }
 
   void dispose() {

@@ -18,6 +18,8 @@ import 'role_provider.dart';
 ///          görünür (built-in SRD + custom/official add-on packages).
 ///       2) entity_shares'te (shared_with=me VEYA NULL) kaydı olan homebrew
 ///          (linked=false) entity'ler görünür.
+///       3) Paylaşımı geri çekilmiş ama gövdesi cihazda duran kartlar
+///          ([revokedSharedEntityIdsProvider]) — gri gösterilir (§2.5).
 ///     (Character'a referans gönderen entity'ler de görünmeli ama
 ///     referenced_entity_ids tracking PR-O6.5'te eklenecek.)
 ///
@@ -30,6 +32,7 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
     activeCampaignIdProvider,
     builtinPackageIdProvider,
     installedWorldPackageIdsProvider,
+    revokedSharedEntityIdsProvider,
   ],
   (ref) {
     final all = ref.watch(entityProvider);
@@ -53,7 +56,7 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
         ref.watch(installedWorldPackageIdsProvider(worldId)).valueOrNull ??
             const <String>{};
 
-    final allowedIds = <String>{};
+    final allowedIds = <String>{...ref.watch(revokedSharedEntityIdsProvider)};
     // Homebrew (linked == false) yalnızca entity_shares ile görünür.
     for (final s in shares) {
       if (s.sharedWith == null || s.sharedWith == auth.uid) {
@@ -76,6 +79,40 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
     return {
       for (final e in all.entries)
         if (allowedIds.contains(e.key)) e.key: e.value,
+    };
+  },
+);
+
+/// Faz 5.5b — oyuncunun cihazında gövdesi duran ama DM'in artık paylaşmadığı
+/// kartlar. Oyuncunun blob'undaki her homebrew (linked=false) kart bir
+/// paylaşımdan geldi; listede yoksa paylaşım geri çekilmiştir. Gövde
+/// silinmez, kart gri ve etiketli görünür (§2.5).
+///
+/// Paylaşım listesi yüklenmeden boş: yoksa açılışta her kart bir an gri olur.
+/// Gövdeler bellekte ([WorldMirrorApplier]); dünya yeniden açılınca geri
+/// çekilen kart hiç inmez, gri kart yalnız o oturumda görünür.
+final revokedSharedEntityIdsProvider = Provider<Set<String>>(
+  dependencies: [
+    entityProvider,
+    currentWorldRoleProvider,
+    activeCampaignIdProvider,
+  ],
+  (ref) {
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    if (role != WorldRole.player) return const <String>{};
+    final uid = ref.watch(authProvider)?.uid;
+    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+    if (uid == null || worldId == null) return const <String>{};
+    final shares = ref.watch(worldEntitySharesProvider(worldId)).valueOrNull;
+    if (shares == null) return const <String>{};
+    final shared = {
+      for (final s in shares)
+        if (s.sharedWith == null || s.sharedWith == uid) s.entityId,
+    };
+    return {
+      for (final e in ref.watch(entityProvider).entries)
+        if (!e.value.linked && !shared.contains(e.key)) e.key,
     };
   },
 );

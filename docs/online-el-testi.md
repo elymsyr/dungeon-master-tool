@@ -672,6 +672,47 @@ dünyayı hub'dan silmesi **dünyadan ayrılmak** demek, onunla taklit edilemez.
   çalışıyor (tek kullanımlıksa ve §13'te kullanıldıysa zaten tükenmişti; bu
   adımda bir hak daha gitmemeli — emin değilsen atla).
 
+## 15. Faz 5.5b — oyuncunun kartları buluttan (iki cihaz, SQL yok)
+
+Kartın gövdesi artık paylaşım satırından değil, DM'in bulut aynasından
+(`get_shared_entities`) geliyor. Sır alanları sunucuda kırpılıyor. Düzen §14
+gibi: X'te **H1** (DM), Y'de **H2** (oyuncu), dünya **Masa**.
+
+**15.0 Hazırlık**
+- [ ] İki cihazda da yeni derleme. Migration ya da worker değişmedi.
+- [ ] X'te Masa'da bir NPC kartı **K1** yarat: açıklama yaz, "Secrets
+      (DM-only)" alanına `GİZLİ-1`, DM Notes'a `GİZLİ-2` yaz. Kartı paylaş.
+
+**15.1 Paylaşım.** Y'de Masa açık.
+- Beklenen: K1 birkaç saniyede kenar çubuğunda beliriyor (yeni kart DM'in
+  push turunu bekliyor, ~3–5 sn). Açıklama görünüyor.
+- Beklenen: kartta ne `GİZLİ-1` ne `GİZLİ-2` var; Secrets ve DM Notes
+  bölümleri hiç yok.
+
+**15.2 Düzeltme yeniden paylaşmadan gidiyor.** X'te K1'in açıklamasını
+değiştir, paylaşıma dokunma.
+- Beklenen: Y'de K1 açıkken birkaç saniyede yeni açıklama.
+- X'te K1'in Secrets alanını değiştir (`GİZLİ-3`). Beklenen: Y'de hiçbir yerde
+  görünmüyor.
+
+**15.3 Eski kartı paylaşmak.** X'te uzun zamandır duran, hiç paylaşılmamış bir
+kart **K2**'yi paylaş.
+- Beklenen: Y'de birkaç saniyede beliriyor.
+
+**15.4 Geri çekme — gri kart.** X'te K1'in paylaşımını kapat.
+- Beklenen: Y'de K1 kenar çubuğunda kalıyor ama soluk; üstüne gelince
+  "DM bu kartı artık paylaşmıyor". Açınca kartın en üstünde aynı etiket.
+- X'te K1'i yeniden paylaş. Beklenen: Y'de soluk hâl ve etiket kalkıyor.
+
+**15.5 Yeniden açılış.** K1'in paylaşımını tekrar kapat. Y'de Masa'dan çık,
+yeniden gir.
+- Beklenen: K1 hiç yok (gövde bellekteydi; bilinen sınır, §4.8.9). K2 var.
+
+**15.6 Çevrimdışı.** Y'nin ağını kes, X'te K2'yi düzenle, Y'nin ağını aç.
+- Beklenen: kanal yeniden bağlanınca K2'nin yeni hali geliyor. Log'da
+  `CloudSync: paylaşılan kartlar ... offline` satırı kesinti sırasında
+  görülebilir.
+
 ---
 
 ## Sonuçları bana nasıl getireceksin

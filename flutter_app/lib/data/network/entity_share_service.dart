@@ -16,9 +16,10 @@ class EntityShareService {
   EntityShareService(this.client);
 
   Future<List<EntityShare>> listForWorld(String worldId) async {
+    // Yalnız izin kolonları: `payload_json` Faz 5.5b'den beri okunmuyor.
     final rows = await client
         .from('entity_shares')
-        .select()
+        .select('entity_id, world_id, shared_with, shared_by, shared_at')
         .eq('world_id', worldId);
     return (rows as List)
         .map((r) => EntityShare.fromJson(r as Map<String, dynamic>))

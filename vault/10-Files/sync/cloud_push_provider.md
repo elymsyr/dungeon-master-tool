@@ -5,14 +5,14 @@ path: flutter_app/lib/application/providers/cloud_push_provider.dart
 layer: application
 language: dart
 status: active
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [file]
 ---
 
 # `cloud_push_provider.dart`
 
 > [!abstract] Primary Purpose
-> Bulut aynasının **ne zaman** koşacağına karar veren ince katman. `PendingWriteBuffer.tick`'i dinler, 3 sn sessizlikten sonra açık olanın push turunu başlatır — önce dünya, sonra paket. Ayrıca turun girdilerini toplar: açık içeriğin kimliği ve şemadan türeyen `dm_only_keys` haritası.
+> Bulut aynasının **ne zaman** koşacağına karar veren ince katman. `PendingWriteBuffer.tick`'i dinler, 3 sn sessizlikten sonra açık olanın push turunu başlatır — önce dünya, sonra paket. Ayrıca turun girdilerini toplar: açık içeriğin kimliği ve şemadan türeyen `dm_only_keys` haritası (`dmOnlyKeysBySlug`, paylaşımın `redactDmOnly`'siyle aynı fonksiyon — Faz 5.5b).
 >
 > Faz 5a'dan beri pull da buradan, Faz 5b'den beri **canlı**: dünya kanalı her `SUBSCRIBED`'da `catchUp`'ı, her `world_revisions` sinyalinde `onSignal`'ı çağırıyor ([[world_mirror_applier]] provider'ı bağlıyor). Push ve pull tek şeritten geçiyor.
 >

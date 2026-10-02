@@ -24,8 +24,8 @@ class WorldSyncService {
   /// resubscribe retry'ında da yeniden kullanılır.
   final Map<String, void Function()> _onSubscribedCbs = {};
 
-  /// worldId → `world_revisions` sinyali (Faz 5b). Yalnız DM kaydeder;
-  /// resubscribe retry'ı binding'i buradan yeniden kurar.
+  /// worldId → `world_revisions` sinyali (Faz 5b; oyuncuda 5.5b).
+  /// Resubscribe retry'ı binding'i buradan yeniden kurar.
   final Map<String, void Function(int revision)> _onRevisionCbs = {};
 
   /// channelError/timedOut sonrası bekleyen resubscribe timer'ları.
@@ -58,9 +58,9 @@ class WorldSyncService {
   ///
   /// [onRevision] verilirse kanala `world_revisions` de bağlanır: bulut
   /// aynasındaki her yazma sayacı artırır, callback yeni değeri alır (§2.3 —
-  /// CDC değil, uyandırma sinyali). Yalnız DM verir; oyuncunun ayna kapısı
-  /// yok, sinyal ona boşa mesaj olurdu. Binding kanal kurulurken eklenir —
-  /// zaten açık bir kanala sonradan eklenmez.
+  /// CDC değil, uyandırma sinyali). DM'de bulut aynasının pull'u, oyuncuda
+  /// `get_shared_entities` tazelemesi (Faz 5.5b). Binding kanal kurulurken
+  /// eklenir — zaten açık bir kanala sonradan eklenmez.
   Future<void> subscribe(String worldId,
       {void Function()? onSubscribed,
       void Function(int revision)? onRevision}) async {
@@ -205,7 +205,8 @@ class WorldSyncService {
   static const _mirrorTables = <String>[
     // DM'in canlı yayını (projeksiyon manifesti).
     'world_projection',
-    // DM'in paylaştığı kartlar — gövdeleri payload_json'da.
+    // DM'in paylaştığı kartların izni. Gövde `get_shared_entities`'ten
+    // (Faz 5.5b); `payload_json` artık okunmuyor.
     'entity_shares',
     // Oyuncunun karakter sayfası (claim/assign dahil).
     'world_characters',
