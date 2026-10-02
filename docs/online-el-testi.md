@@ -96,10 +96,9 @@ official katalog kalıyor.
    yerelde online işaretli dünyayı ya da karakteri silme sırasında geri
    yazabilir.
 2. **Tablolar.** SQL Editor'de `supabase/scripts/wipe_user_content.sql`.
-   Önce olduğu gibi çalıştır (ROLLBACK ile biter): tablodaki sayıların hepsi
-   0 olmalı, yalnız hesap/admin/bildirim/hata raporu tabloları dolu
-   kalabilir. TRUNCATE hata verirse dur, hatayı bana getir. Doğruysa sondaki
-   `ROLLBACK`'i `COMMIT` yap, yeniden çalıştır.
+   Olduğu gibi çalıştır, doğrudan siler: sonuç tablosunda `hedef` satırlarının
+   hepsi 0 olmalı; yalnız hesap/admin/bildirim/hata raporu tabloları dolu
+   kalabilir. TRUNCATE hata verirse hiçbir şey silinmez — hatayı bana getir.
 3. **Supabase Storage.** Dashboard → Storage'da şu bucket'ları boşalt (ya
    da `BUCKET=<ad> supabase/scripts/wipe_storage.sh`, service role key'le):
    `shared-payloads` (marketplace içerikleri), `free-media` (ücretsiz
