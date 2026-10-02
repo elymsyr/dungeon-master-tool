@@ -1778,13 +1778,6 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                         ),
                         child: Row(
                           children: rowFields.map((f) {
-                            // hp/max_hp locked everywhere: damage/heal flows
-                            // through rest buttons + combat tracker (not this
-                            // widget). Manual edit removed to prevent mis-edit
-                            // vs level-up math. Bonus adjustments go through
-                            // the top-level `extra_hp` field.
-                            final lockedHp =
-                                f.$1 == 'hp' || f.$1 == 'max_hp';
                             // `level` / `ac` are derived (root level field +
                             // resolver AC) — always read-only, never write the
                             // stale stored value back via onChanged.
@@ -1792,8 +1785,7 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                             final field = TextFormField(
                               key: ValueKey('cs_${f.$1}'),
                               controller: _controllers[f.$1],
-                              readOnly:
-                                  isDerived || lockedHp || widget.readOnly,
+                              readOnly: isDerived || widget.readOnly,
                               textAlign: TextAlign.center,
                               decoration: InputDecoration(
                                 labelText: f.$2,
