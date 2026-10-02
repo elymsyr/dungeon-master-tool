@@ -293,7 +293,7 @@
   },
   "worldsDeletedCloudSnack": "Dünya çöp kutusuna taşındı. Bulut kopyası silindi.",
   "cloudOnlyTitle": "Bulutta, bu cihazda yok",
-  "cloudOnlyWorldsHint": "Öteki cihazlarındaki online dünyaların. İndirirsen burada da çalışabilirsin.",
+  "cloudOnlyWorldsHint": "Öteki cihazlarındaki online dünyaların ve oyuncu olarak katıldığın dünyalar. İndirirsen burada da kullanabilirsin — davet kodu gerekmez.",
   "cloudOnlyPackagesHint": "Öteki cihazlarındaki online paketlerin. İndirirsen burada da kullanabilirsin.",
   "cloudPackageNameTaken": "Bu cihazda \"{name}\" adlı bir paket zaten var. Önce onu yeniden adlandır.",
   "cloudOnlyDownload": "İndir",

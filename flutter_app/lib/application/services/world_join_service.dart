@@ -13,8 +13,11 @@ import 'world_meta_sync.dart';
 
 /// "Join with code" akışını koordine eder:
 ///   1. RPC redeem_world_invite → (worldId, worldName)
-///   2. Lokal Drift'te boş bir Campaign kabuğu upsert et
+///   2. [materializeWorld]: lokal Drift'te boş bir Campaign kabuğu upsert et
 ///   3. caller hub list invalidation yapar
+///
+/// İkinci cihaz 1'i atlar: üyelik zaten var, [listMemberWorlds] dünyayı
+/// listeler ve doğrudan 2 çalışır.
 ///
 /// Dünyanın içeriği ARTIK katılırken çekilmez. Oyuncu boş bir kabukla başlar;
 /// içerik DM paylaştıkça `entity_shares` ve projeksiyon manifesti üzerinden
@@ -35,18 +38,50 @@ class WorldJoinService {
 
   Future<({String worldId, String worldName})> joinWithCode(String code) async {
     final res = await membership.redeemInvite(code);
+    return materializeWorld(res.worldId, res.worldName);
+  }
 
+  /// Faz 5.5a — oyuncu olarak üyesi olduğum, bu cihazda olmayan dünyalar.
+  /// Hub'ın "bulutta, bu cihazda yok" bölümünde listelenir; DM'in kendi
+  /// dünyaları oraya `listCloudOnlyWorlds` ile geliyor.
+  Future<List<({String id, String name})>> listMemberWorlds() async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return const [];
+    final rows = await supabase
+        .from('world_members')
+        .select('world_id, worlds(world_name)')
+        .eq('user_id', uid)
+        .eq('role', 'player');
+    final local = {for (final w in await db.worldsDao.getAll()) w.id};
+    return [
+      for (final r in rows)
+        if (!local.contains(r['world_id']))
+          (
+            id: r['world_id'] as String,
+            name: (r['worlds'] as Map?)?['world_name'] as String? ?? '',
+          ),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  /// Üyesi olunan dünyanın yerel kabuğunu kurar — her yeni cihazda bir kez.
+  /// Davet kodu harcamaz (§2.9: `redeemInvite` yalnız ilk katılışta). İçerik
+  /// burada inmez: dünya açılınca `applyInitialState` paylaşılan kartları,
+  /// karakterleri (oyuncunun kendisininki dahil) ve projeksiyonu getirir.
+  Future<({String worldId, String worldName})> materializeWorld(
+    String worldId,
+    String worldName,
+  ) async {
     // Şablon id'si gerekli — SRD bootstrap'ı ona bakıyor. İçerik çekilmez.
     String? templateId;
     try {
       final row = await supabase
           .from('worlds')
           .select('template_id')
-          .eq('id', res.worldId)
+          .eq('id', worldId)
           .maybeSingle();
       templateId = row?['template_id'] as String?;
     } catch (e, st) {
-      debugPrint('joinWithCode template fetch error: $e\n$st');
+      debugPrint('materializeWorld template fetch error: $e\n$st');
     }
     // Ayrı select: `meta_json` migration 093 ile geldi. Aynı select'te
     // olsaydı kolon yoksa/erişilemezse template_id de kaybolur, dünya
@@ -56,23 +91,23 @@ class WorldJoinService {
       final row = await supabase
           .from('worlds')
           .select('meta_json')
-          .eq('id', res.worldId)
+          .eq('id', worldId)
           .maybeSingle();
       meta = decodeWorldMeta(row?['meta_json']);
     } catch (e, st) {
-      debugPrint('joinWithCode meta fetch error: $e\n$st');
+      debugPrint('materializeWorld meta fetch error: $e\n$st');
     }
 
     final now = DateTime.now().toUtc();
     // Dünya kimliği id — isim yalnız etiket. Eskiden burada isim çakışması
     // "Ad (2)" ile çözülüyordu, çünkü `repository.save` isimle anahtarlıyordu;
     // sonucu, aynı dünyanın telefonda ve laptop'ta farklı ada sahip olmasıydı.
-    final existingById = await db.worldsDao.getById(res.worldId);
-    final localName = existingById?.worldName ?? res.worldName;
+    final existingById = await db.worldsDao.getById(worldId);
+    final localName = existingById?.worldName ?? worldName;
     if (existingById == null) {
       await db.worldsDao.upsert(
         WorldsCompanion.insert(
-          id: res.worldId,
+          id: worldId,
           worldName: localName,
           // Şablon id'si yerel satıra da yazılır: `load()` SRD self-heal'i ve
           // built-in kategori overlay'i buna bakıyor.
@@ -85,9 +120,9 @@ class WorldJoinService {
 
     if (meta != null) {
       try {
-        await repository.saveSettingsPatch(res.worldId, {'metadata': meta});
+        await repository.saveSettingsPatch(worldId, {'metadata': meta});
       } catch (e, st) {
-        debugPrint('joinWithCode meta apply error: $e\n$st');
+        debugPrint('materializeWorld meta apply error: $e\n$st');
       }
     }
 
@@ -98,13 +133,13 @@ class WorldJoinService {
       try {
         await SrdCorePackageBootstrap(db).ensureInstalled();
         await SrdCoreBootstrap(db).ensureImported(
-          worldId: res.worldId,
+          worldId: worldId,
           build: generateBuiltinDnd5eV2Schema(),
         );
       } catch (e, st) {
-        debugPrint('joinWithCode SRD link error: $e\n$st');
+        debugPrint('materializeWorld SRD link error: $e\n$st');
       }
     }
-    return (worldId: res.worldId, worldName: localName);
+    return (worldId: worldId, worldName: localName);
   }
 }

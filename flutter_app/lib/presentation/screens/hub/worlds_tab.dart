@@ -16,6 +16,7 @@ import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
+import '../../../application/providers/world_join_provider.dart';
 import '../../../application/providers/world_membership_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
@@ -120,6 +121,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final campaignInfoList = ref.watch(campaignInfoListProvider);
     final cloudWorlds =
         ref.watch(cloudOnlyWorldsProvider).valueOrNull ?? const <CloudWorld>[];
+    final memberWorlds = ref.watch(memberWorldsProvider).valueOrNull ??
+        const <({String id, String name})>[];
     final filter = ref.watch(worldsFilterProvider);
     final worldPkgs =
         ref.watch(worldPackageNamesProvider).valueOrNull ??
@@ -433,9 +436,25 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               ),
 
               CloudOnlySection(
-                items: {for (final w in cloudWorlds) w.id: w.name},
+                items: {
+                  for (final w in cloudWorlds) w.id: w.name,
+                  for (final w in memberWorlds) w.id: w.name,
+                },
                 hint: l10n.cloudOnlyWorldsHint,
                 download: (id, onProgress) async {
+                  // Oyuncu olarak üyesi olunan dünya: içerik indirilmez,
+                  // yalnız kabuk kurulur; kartlar dünya açılınca gelir.
+                  if (memberWorlds.any((w) => w.id == id)) {
+                    final w = memberWorlds.firstWhere((w) => w.id == id);
+                    try {
+                      await ref
+                          .read(worldJoinServiceProvider)
+                          .materializeWorld(w.id, w.name);
+                      return const CloudPullResult();
+                    } catch (e) {
+                      return CloudPullResult(error: e);
+                    }
+                  }
                   final svc = ref.read(cloudPullServiceProvider);
                   if (svc == null) return const CloudPullResult(skipped: true);
                   return svc.downloadWorld(
