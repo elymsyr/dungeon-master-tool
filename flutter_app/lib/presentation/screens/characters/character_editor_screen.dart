@@ -2311,6 +2311,15 @@ class _CharacterEditorScreenState
           ...character.entity.fields,
           f.fieldKey: v,
         };
+        // Manual hp/max_hp edit in the combat_stats grid: keep the top-level
+        // mirror in step (see _writeHp) so stat chips and _readHp agree.
+        // Empty (mid-typing) cells leave the mirror alone.
+        if (f.fieldKey == 'combat_stats' && v is Map) {
+          for (final k in const ['hp', 'max_hp']) {
+            final n = int.tryParse('${v[k] ?? ''}');
+            if (n != null) updatedFields[k] = n;
+          }
+        }
         final nextCharacter = character.copyWith(
           entity: character.entity.copyWith(fields: updatedFields),
         );
