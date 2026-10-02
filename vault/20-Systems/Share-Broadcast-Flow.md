@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [system, sync, multiplayer]
 ---
 
@@ -26,7 +26,7 @@ Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pul
 | Tablo | Taşıdığı | Yazan |
 |---|---|---|
 | `world_projection` | DM'in canlı yayını (projeksiyon manifesti) | DM — [[projection_output_online]] |
-| `entity_shares` | Paylaşılan kartlar + **gövdeleri** (`payload_json`) | DM — `entity_share_prepare.dart` |
+| `entity_shares` | Paylaşılan kartların izni (gövde Faz 5.5b'den beri `get_shared_entities`'ten) | DM — `entity_share_prepare.dart` |
 | `world_characters` | Oyuncunun karakter sayfası, claim/assign | Oyuncu ve DM |
 | `world_packages` | DM'in dünyaya paylaştığı paketler | DM — `world_packages_provider` |
 | `world_members` | Üyelik / rol | RPC'ler |
@@ -38,35 +38,32 @@ Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pul
 
 ## Paylaşılan kartın gövdesi nereden geliyor
 
-`world_entities` aynası olmadığı için `entity_shares` artık sadece bir işaret değil, **kartı taşıyan kanal**:
+> [!info] Faz 5.5b (2026-10-02) — gövde `get_shared_entities`'ten
+> Oyuncu `entity_shares.payload_json`'ı **okumuyor**. `entity_shares` yalnız izin; gövde DM'in bulut aynasındaki `world_entities` satırından, 094'ün `get_shared_entities(world, since)` RPC'siyle geliyor. DM'in düzeltmesi yeniden paylaşmadan oyuncuya gidiyor. DM hâlâ `payload_json` yazıyor (eski istemciler için); kolon §2.5'e göre sonra kalkacak.
 
 ```
 DM "Paylaş" der
   └─ shareEntityWithPlayers()            entity_share_prepare.dart
        ├─ ilişki kapanışı (transitive)   — bağlantılı kartlar da paylaşılır
-       ├─ _payloadWithContentRefs        — yerel yollar → dmt-content://{sha}{ext}
-       │     ├─ YÜKLEME YOK, KALICI YAZMA YOK (baytlar dünyanın bulut medyasında — [[world_media_sync]])
-       │     └─ redactDmOnly()            — dmOnly/private alanlar + dm_notes silinir
-       └─ her kapanış üyesi için:
-            EntityShareService.shareWithAll(
-              entityId, worldId,
-              payload: entityToRaw(entity),   ← linked kartlarda null
-            )
-                 └─ INSERT entity_shares(..., payload_json)
-                        └─ CDC ──▶ oyuncu
-                             WorldMirrorApplier._applyEntityShareEvent
-                               ├─ payload_json decode
-                               └─ data['entities'][id] = payload
+       └─ INSERT entity_shares(...)      — izin (+ eski istemciler için payload)
+DM'in push turu (CloudPushService)
+  └─ world_entities satırı + dm_only_keys = dmOnlyKeysBySlug(şema)[slug]
+       └─ world_revisions sinyali
+
+Oyuncu — WorldMirrorApplier
+  ├─ açılış: fetchInitialState → get_shared_entities(world, 0)
+  ├─ entity_shares INSERT/UPDATE → tam tazeleme (since 0; kart eski olabilir)
+  ├─ world_revisions sinyali   → get_shared_entities(world, son revizyon)
+  │     (1 sn sessizlikte birleşir — DM'in turu satır başına sinyal üretir)
+  └─ _injectShared: sharedEntityRowToRaw(row) → data['entities'][id]
 ```
 
-- `entityToRaw` / `entityFromRaw` ([[entity_provider]]) simetrik çifttir; payload şekli campaign blob'undaki `entities` satırının şeklidir. Round-trip koruması: `test/application/services/entity_share_payload_test.dart`.
-- **DM'e özel içerik payload'a girmez (2026-09-11).** `redactDmOnly` giden kopyadan şemada `FieldVisibility.dmOnly` / `private_` işaretli her alanı (`secrets`, `tactics`, …) ve birinci sınıf `dm_notes` kolonunu siler. `payload_json` oyuncunun tek içerik kaynağı olduğu için kırpma burada yapılmak zorunda; DM'in kendi satırı tam kalır. Projeksiyon yolunda aynı işi [[entity_snapshot_builder]] yapar. Koruma: `test/application/services/entity_share_redact_test.dart`.
-- **UYARI — linked kartlar kapsam dışı.** `payload_json = NULL` olduğundan gövde oyuncunun kurulu paketinden gelir; o paketteki `secrets` alanları zaten oyuncunun diskindedir. Paket dağıtımı ayrı bir problem.
-- **`payload_json = NULL` → linked (paket / built-in) kart.** Gövdesi oyuncunun kurulu paketinden gelir; kopyalamak fork-on-edit riski ve gereksiz trafik olurdu.
-- Görseller `AssetRef`'e çevrilmeden paylaşılırsa oyuncu çözemez (RLS yok, dosya sistemi yok). `ProjectionOutputOnline._warnRawPaths` debug'da bunu yakalar.
-- **Medya paylaşım anında yüklenmez.** Payload içerik-adresli `dmt-content://{sha}{ext}` taşır. 2026-09-08'den (Phase C) 5d'ye kadar baytlar talep üzerine akıyordu (`missing_shas` → DM'in açık cihazı → transient havuz); **Faz 5d (2026-09-23) ile** multiplayer dünyanın bütün medyası zaten R2'de (`worlds/{worldId}/…`), push turu yüklüyor ([[world_media_sync]]) ve oyuncu imzalı URL'le doğrudan çekiyor ([[asset_ref_resolver]]). DM çevrimdışıyken de görsel gelir; `missing_shas`, oturum kapısı ve presence kalktı. Bkz. [[Media-Storage-Tiers]].
-- DM kendi payload'ını geri yazmaz: [[world_mirror_applier]] rol DM ise gövde enjeksiyonunu atlar, aksi halde payload'ın içerik ref'leri DM'in yerel dosya yollarını ezerdi.
-- **Un-share = DELETE.** Applier gövdeyi de düşürür (`_removeSharedEntity`) — aksi halde oyuncuda erişilemez ama duran bir kopya kalırdı. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
+- **Redaksiyon SQL'de, karar Dart'ta (§2.6).** `dmOnlyKeysBySlug` ([[entity_share_prepare]]) neyin sır olduğuna karar veren tek fonksiyon: hem `redactDmOnly`'nin listesi hem bulut satırının `dm_only_keys`'i. RPC `dm_notes`'u hiç seçmiyor, `fields_json::jsonb - dm_only_keys` yapıyor; `dm_only_keys` NULL ise (şemada olmayan kategori) kart hiç dönmüyor. İki yolun aynı alanları sakladığının koruması: `test/application/services/shared_entity_redaction_parity_test.dart`.
+- `sharedEntityRowToRaw` RPC satırını `entityToRaw` şekline çevirir ([[entity_provider]]'ın `entityFromRaw`'ı okur). Round-trip koruması: `entity_share_payload_test.dart`.
+- **Linked kart** RPC'den gelse de atlanır: gövdesi oyuncunun kurulu paketinden gelir. Paketteki `secrets` alanları zaten oyuncunun diskinde — paket dağıtımı ayrı bir problem.
+- Medya: bulut satırı push'ta `dmt-content://{sha}{ext}`'e çevrilmiş; baytlar dünyanın R2 medyasında ([[world_media_sync]]), oyuncu imzalı URL'le çeker ([[asset_ref_resolver]]). Bkz. [[Media-Storage-Tiers]].
+- DM'e gövde yazılmaz: [[world_mirror_applier]] rol DM ise atlar, buluttaki içerik ref'leri DM'in yerel dosya yollarını ezerdi.
+- **Un-share = DELETE, gövde silinmez (§2.5).** Kart oyuncuda gri ve "DM bu kartı artık paylaşmıyor" etiketiyle kalır: `revokedSharedEntityIdsProvider` (`visible_entity_provider.dart`) blob'daki her homebrew kartı paylaşım listesiyle karşılaştırır. Gövdeler bellekte; dünya yeniden açılınca geri çekilen kart inmez, gri kart yalnız o oturumda görünür. `REPLICA IDENTITY FULL` (migration 052) sayesinde DELETE payload'ı `world_id` taşır, realtime filtresine takılır.
 
 ## Paylaşım ne zaman tetiklenir
 

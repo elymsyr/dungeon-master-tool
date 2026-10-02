@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: sync
-updated: 2026-10-01
+updated: 2026-10-02
 tags: [moc]
 ---
 
@@ -39,7 +39,7 @@ tags: [moc]
 
 **Paylaşım yayını** ([[Share-Broadcast-Flow]]):
 - [[world_sync_service]] — beş tabloya Realtime abonelik + birleşik CDC event stream'i.
-- [[world_mirror_applier]] — inbound event'leri yerel state'e uygular; paylaşılan kartın gövdesini `payload_json`'dan yazar.
+- [[world_mirror_applier]] — inbound event'leri yerel state'e uygular; paylaşılan kartın gövdesini `get_shared_entities`'ten yazar (Faz 5.5b).
 - [[world_mirror_service]] — doğrudan push (karakter, paket paylaşımı) + 3 sn echo damgası.
 - [[projection_output_online]] — DM'in canlı yayını (`world_projection` manifesti).
 
@@ -52,7 +52,7 @@ tags: [moc]
 
 **Bulut aynası:** DM'in dünya kanalı `SUBSCRIBED` (açılış · reconnect · uygulama öne gelir) → `catchUp`: tampon flush → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet) → satır indiyse `ActiveCampaignNotifier.reload()` (blob'u Drift'ten tazeler, yoksa inen veri ekrana çıkmaz). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihaz yazınca: `world_revisions` sinyali → 1 sn debounce → sayaç yerel damgadan büyükse aynı `catchUp`. Kendi push'umuzun sinyali eşik altında kalır: push, bulutta boşluksuz bir revizyon dizisi bıraktıysa damgayı dizinin sonuna çekiyor ([[cloud_push_service]] `ownRunEnd`).
 
-**Paylaşım:** DM "Paylaş" → görseller `AssetRef`'e → `entity_shares` satırı **gövdesiyle** → CDC → oyuncunun [[world_mirror_applier]]'ı blob'a yazar. Adımlar: [[Share-Broadcast-Flow]].
+**Paylaşım:** DM "Paylaş" → `entity_shares` izin satırı → CDC → oyuncunun [[world_mirror_applier]]'ı gövdeyi `get_shared_entities`'ten çekip blob'a yazar (Faz 5.5b; sunucuda kırpılmış). Adımlar: [[Share-Broadcast-Flow]].
 
 **`.dmtz`:** Dışa aktar → `ContentCodec.loadItem` → zip (manifest + payload + extras + medya, diskten akıtılarak). İçe aktar → format kontrolü → medya sha doğrulamasıyla diske → `ContentCodec.applyItem` (aynı id varsa [[world_merge]] ile birleştirir). Yol taşınabilirliği `manifest.data_root` + `rewriteRoots`.
 

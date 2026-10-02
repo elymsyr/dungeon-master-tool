@@ -294,6 +294,7 @@
   "worldsDeletedCloudSnack": "Monde placé dans la corbeille. Copie cloud supprimée.",
   "cloudOnlyTitle": "Dans le cloud, pas sur cet appareil",
   "cloudOnlyWorldsHint": "Vos mondes en ligne de vos autres appareils et les mondes rejoints en tant que joueur. Téléchargez-en un pour l'utiliser ici aussi — sans code d'invitation.",
+  "sharedEntityRevoked": "Le MJ ne partage plus cette fiche.",
   "cloudOnlyPackagesHint": "Vos paquets en ligne de vos autres appareils. Téléchargez-en un pour l'utiliser ici aussi.",
   "cloudPackageNameTaken": "Un paquet nommé « {name} » existe déjà sur cet appareil. Renommez-le d'abord.",
   "cloudOnlyDownload": "Télécharger",

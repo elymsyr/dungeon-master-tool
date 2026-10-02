@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_sync_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-23
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -20,8 +20,8 @@ tags: [file]
 > [!warning] `_mirrorTables` beşe indi (2026-08-24)
 > `world_projection`, `entity_shares`, `world_characters`, `world_packages`, `world_members` (+ `worlds`, id filtresiyle). `world_entities` / `world_map_data` / `world_sessions` / `world_settings` / `world_mind_map_*` abonelikleri kaldırıldı. **Bu listeye tablo eklemek, oyuncunun cihazına DM'in paylaşmadığı veri göndermek demektir.** Bkz. [[Share-Broadcast-Flow]].
 
-> [!note] `world_revisions` sinyali — yalnız DM (2026-09-23, Faz 5b)
-> `subscribe(..., onRevision:)` verilirse kanala `_mirrorTables` dışında bir binding daha eklenir: `world_revisions` (`world_id` filtresi). Tablo içerik taşımıyor, yalnız dünyanın bulut sayacı — bu yüzden yukarıdaki "listeye tablo eklemek veri sızdırır" kuralına takılmıyor, ama yine de yalnız DM veriyor: oyuncunun ayna kapısı yok (Faz 5.5), sinyal ona her DM yazmasında boşa mesaj olurdu. Callback `_onRevisionCbs`'te duruyor, resubscribe retry'ı binding'i oradan yeniden kuruyor; olay `events` akışına **düşmüyor** (applier'ın işi değil). Binding kanal kurulurken eklenir — açık bir kanala sonradan eklenmez. Tüketicisi [[cloud_push_provider]] (`onSignal`).
+> [!note] `world_revisions` sinyali — DM ve (5.5b'den beri) oyuncu (2026-09-23, Faz 5b)
+> `subscribe(..., onRevision:)` verilirse kanala `_mirrorTables` dışında bir binding daha eklenir: `world_revisions` (`world_id` filtresi). Tablo içerik taşımıyor, yalnız dünyanın bulut sayacı — bu yüzden yukarıdaki "listeye tablo eklemek veri sızdırır" kuralına takılmıyor, Faz 5.5b'den (2026-10-02) beri oyuncu da veriyor: sinyal onun `get_shared_entities` tazelemesi ([[world_mirror_applier]] `scheduleSharedRefresh`, 1 sn birleştirme). Callback `_onRevisionCbs`'te duruyor, resubscribe retry'ı binding'i oradan yeniden kuruyor; olay `events` akışına **düşmüyor** (applier'ın işi değil). Binding kanal kurulurken eklenir — açık bir kanala sonradan eklenmez. Tüketicileri [[cloud_push_provider]] (DM, `onSignal`) ve [[world_mirror_applier]] (oyuncu).
 
 ## Inputs / Outputs
 **Inputs**

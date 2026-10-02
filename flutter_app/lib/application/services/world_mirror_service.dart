@@ -148,13 +148,13 @@ class WorldMirrorService {
   /// CDC yalnızca bundan SONRAKİ değişimleri taşır, o yüzden bu seed şart.
   ///
   /// Üç sorgu eşzamanlı (Faz 5f): dünya açılışı bunu bekliyor, sırayla üç
-  /// gidiş-dönüştü. [withShares] false ise paylaşımlar hiç istenmez — DM
-  /// kendi paylaştığı kartların gövdesini zaten yerelde tutuyor ve applier
-  /// onları atıyordu; her açılışta bütün paylaşım gövdeleri boşa iniyordu.
+  /// gidiş-dönüştü. [withShares] false ise paylaşılan kartlar hiç istenmez —
+  /// DM kendi kartlarının gövdesini zaten yerelde tutuyor. Kartlar Faz
+  /// 5.5b'den beri `get_shared_entities`'ten ([fetchSharedEntities]).
   Future<
     ({
       List<Map<String, dynamic>> characters,
-      List<Map<String, dynamic>> shares,
+      List<Map<String, dynamic>> sharedEntities,
       Map<String, dynamic>? projection,
     })
   >
@@ -165,7 +165,7 @@ class WorldMirrorService {
       final res = await Future.wait<Object?>([
         client.from('world_characters').select().eq('world_id', worldId),
         withShares
-            ? client.from('entity_shares').select().eq('world_id', worldId)
+            ? _sharedEntities(worldId, 0)
             : Future.value(const <Map<String, dynamic>>[]),
         client
             .from('world_projection')
@@ -175,17 +175,30 @@ class WorldMirrorService {
       ]);
       return (
         characters: (res[0] as List).cast<Map<String, dynamic>>(),
-        shares: (res[1] as List).cast<Map<String, dynamic>>(),
+        sharedEntities: res[1] as List<Map<String, dynamic>>,
         projection: res[2] as Map<String, dynamic>?,
       );
     } catch (e) {
       _logMirrorError('fetchInitialState', e);
       return (
         characters: const <Map<String, dynamic>>[],
-        shares: const <Map<String, dynamic>>[],
+        sharedEntities: const <Map<String, dynamic>>[],
         projection: null,
       );
     }
+  }
+
+  /// Faz 5.5b — oyuncunun kart kapısı: izinli kartlar, sunucuda kırpılmış
+  /// (§2.6), revizyonu [since]'ten büyük olanlar. Hata yukarı çıkar.
+  Future<List<Map<String, dynamic>>> fetchSharedEntities(
+          String worldId, int since) =>
+      _sharedEntities(worldId, since);
+
+  Future<List<Map<String, dynamic>>> _sharedEntities(
+      String worldId, int since) async {
+    final rows = await client.rpc('get_shared_entities',
+        params: {'p_world_id': worldId, 'p_since_revision': since});
+    return (rows as List).cast<Map<String, dynamic>>();
   }
 
   /// `worlds.meta_json` — dünya kartının açıklaması/etiketleri/kapağı.

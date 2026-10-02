@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -193,7 +195,7 @@ Future<void> shareEntityWithPlayers(
   // Relation + image field keys per category slug.
   final relationKeys = <String, List<String>>{};
   final imageKeys = <String, List<String>>{};
-  final dmOnlyKeys = <String, List<String>>{};
+  final dmOnlyKeys = dmOnlyKeysBySlug(worldSchema);
   for (final c in worldSchema.categories) {
     relationKeys[c.slug] = [
       for (final f in c.fields)
@@ -202,12 +204,6 @@ Future<void> shareEntityWithPlayers(
     imageKeys[c.slug] = [
       for (final f in c.fields)
         if (f.fieldType == FieldType.image) f.fieldKey,
-    ];
-    dmOnlyKeys[c.slug] = [
-      for (final f in c.fields)
-        if (f.visibility == FieldVisibility.dmOnly ||
-            f.visibility == FieldVisibility.private_)
-          f.fieldKey,
     ];
   }
 
@@ -304,6 +300,53 @@ Map<String, dynamic> redactDmOnly(
       ..removeWhere((k, _) => dmOnlyFieldKeys.contains(k));
   }
   return out;
+}
+
+/// Kategori slug → oyuncudan gizlenecek alan anahtarları: şemada
+/// [FieldVisibility.dmOnly] / `private_` işaretli alanlar. Sırrın ne olduğuna
+/// karar veren TEK yer — hem [redactDmOnly]'nin listesi hem bulut satırının
+/// `dm_only_keys`'i (uygulayan `get_shared_entities`) buradan gelir (§2.6).
+Map<String, List<String>> dmOnlyKeysBySlug(WorldSchema schema) => {
+      for (final c in schema.categories)
+        c.slug: [
+          for (final f in c.fields)
+            if (f.visibility == FieldVisibility.dmOnly ||
+                f.visibility == FieldVisibility.private_)
+              f.fieldKey,
+        ],
+    };
+
+/// Faz 5.5b — `get_shared_entities` satırını oyuncunun blob'undaki ham kart
+/// şekline ([entityToRaw]'ın şekli) çevirir. Satır zaten kırpılmış gelir:
+/// `dm_notes` hiç seçilmiyor, `fields_json`'dan `dm_only_keys` çıkarılmış.
+/// Medya kolonları DM'in push'unda `dmt-content://` ref'ine çevrilmiş.
+Map<String, dynamic> sharedEntityRowToRaw(Map<String, dynamic> row) {
+  dynamic decode(Object? v, Object fallback) {
+    if (v is! String || v.isEmpty) return v ?? fallback;
+    try {
+      return jsonDecode(v);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  return {
+    'name': row['name'] ?? '',
+    'type': row['category_slug'],
+    'source': row['source'] ?? '',
+    'description': row['description'] ?? '',
+    'images': decode(row['images_json'], const []),
+    'image_path': row['image_path'] ?? '',
+    'tags': decode(row['tags_json'], const []),
+    'dm_notes': '',
+    'pdfs': decode(row['pdfs_json'], const []),
+    'location_id': row['location_id'],
+    'attributes': decode(row['fields_json'], const <String, dynamic>{}),
+    if (row['package_id'] != null) 'package_id': row['package_id'],
+    if (row['package_entity_id'] != null)
+      'package_entity_id': row['package_entity_id'],
+    if (row['linked'] == true) 'linked': true,
+  };
 }
 
 /// Stops sharing a single entity with players. No cascade unshare —

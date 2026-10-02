@@ -18,9 +18,11 @@ uzlaşıyor, hub'dan online yapılıyor.
 **5g bitti (2026-10-01, [§4.8.7](#487-faz-5g--karakter-kendi-kapsamı-tek-yol--bitti)).**
 **5.5a bitti (2026-10-02, [§4.8.8](#488-faz-55a--oyuncunun-ikinci-cihazı-davet-kodsuz--bitti)):**
 oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor.
-**Sıradaki ([§4.8.5](#485-sıradaki-fazlar--taslak)):** 5.5b kartlar
-`get_shared_entities`'ten → 5.5c oyuncu mind map'i ve `world_member_state` →
-7 kota ve ölçüm.
+**5.5b bitti (2026-10-02, [§4.8.9](#489-faz-55b--oyuncunun-kartları-get_shared_entitiesten--bitti)):**
+oyuncu kartları `get_shared_entities`'ten okuyor, DM'in düzeltmesi yeniden
+paylaşmadan gidiyor, geri çekilen kart gri.
+**Sıradaki ([§4.8.5](#485-sıradaki-fazlar--taslak)):** 5.5c oyuncu mind map'i
+ve `world_member_state` → 7 kota ve ölçüm.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -907,8 +909,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 > **5e → 5g → 5.5 → 7** var. 5e 5d'nin medya yolunu dünyaya bağlı olmaktan
 > çıkarıp genelleştiriyor ve canlı sinyale dokunmuyor, bu yüzden en düşük
 > riskli olanı. **5e bitti (2026-10-01, §4.8.6); 5g bitti (2026-10-01,
-> §4.8.7); 5.5 üçe bölündü (kullanıcı, 2026-10-02), 5.5a bitti (§4.8.8);
-> sırada 5.5b → 5.5c → 7.**
+> §4.8.7); 5.5 üçe bölündü (kullanıcı, 2026-10-02), 5.5a bitti (§4.8.8),
+> 5.5b bitti (§4.8.9); sırada 5.5c → 7.**
 > 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
 > iskeletini kullanıyor. 5.5, 5g'nin karakteri ikinci cihaza indirmesinin
 > üstüne kuruluyor. 5g de 5d'nin denenmemiş yollarına dayanıyor (karakter
@@ -931,7 +933,7 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy edildi; el testi bekliyor — §4.8.6) |
 | ~~**5g**~~ | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 101 + worker deploy edildi; el testi bekliyor — §4.8.7) |
 | ~~**5.5a**~~ | Oyuncu çoklu cihaz — üyelik listesi, `materializeWorld` | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | hayır | ✅ bitti (2026-10-02; migration yok, el testi bekliyor — §4.8.8) |
-| 5.5b | Kartlar `get_shared_entities`'ten, oyuncu sinyali, gri kart | `entity_shares.payload_json` okunmuyor; DM'in düzeltmesi oyuncuya yeniden paylaşmadan gidiyor | evet | taslak |
+| ~~**5.5b**~~ | Kartlar `get_shared_entities`'ten, oyuncu sinyali, gri kart | `entity_shares.payload_json` okunmuyor; DM'in düzeltmesi oyuncuya yeniden paylaşmadan gidiyor | hayır (094 hazırdı) | ✅ bitti (2026-10-02; eşdeğerlik testi yeşil, el testi bekliyor — §4.8.9) |
 | 5.5c | Oyuncu mind map'i + `world_member_state` | oyuncunun dünyadaki kendi durumu ikinci cihazına iniyor | evet | taslak |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
@@ -2744,7 +2746,8 @@ her parça ayrı test edilip ayrı commit'leniyor.*
 - **5.5a ✅ bitti (2026-10-02) → [§4.8.8](#488-faz-55a--oyuncunun-ikinci-cihazı-davet-kodsuz--bitti).**
   `joinWithCode` → `redeemInvite` + `materializeWorld`; üyelik listesi hub'ın
   dünya sekmesinde; inen karakterin dünyayla eşleşmesi.
-- **5.5b — kartlar RPC'den.** İzinli kartların `get_shared_entities`'ten
+- **5.5b ✅ bitti (2026-10-02) → [§4.8.9](#489-faz-55b--oyuncunun-kartları-get_shared_entitiesten--bitti).**
+  Plan: izinli kartların `get_shared_entities`'ten
   çekilmesi (`entity_shares.payload_json` okunmuyor, sonra kalkıyor — §2.5),
   oyuncunun sinyali (§4.8.1: "Oyuncu sinyal almıyor"), paylaşım geri
   çekilince gri kart + etiket (`get_shared_entity_ids`). Redaksiyon
@@ -3176,6 +3179,73 @@ gövde); `flutter analyze` yeni bulgu vermiyor. Uçtan uca hali
   kez listelerdi.
 - **Kabuk kurulup dünya açılmadan bırakılırsa** dünya boş görünür; içerik
   ilk açılışta gelir.
+
+## 4.8.9 Faz 5.5b — Oyuncunun kartları `get_shared_entities`'ten ✅ bitti
+
+*Uygulandı 2026-10-02; migration yok (094 hazırdı), el testi sona
+(`online-el-testi.md` §15).*
+
+### Sorun
+
+Oyuncunun kart gövdesi `entity_shares.payload_json`'dı: paylaşım anındaki
+kopya. DM kartı düzeltince oyuncuya ancak `_pushIfShared` yeniden yazınca
+gidiyordu; geri çekilen kartın gövdesi oyuncudan siliniyordu (§2.5 gri kart
+istiyor). Oyuncu `world_revisions` sinyalini dinlemiyordu (§4.8.1).
+
+### Koddan çıkan
+
+- DM'in bulut aynası her kartı `dm_only_keys` ile zaten yazıyor (5b), 094'ün
+  `get_shared_entities`'i hazır. Sunucu tarafında iş yok.
+- Neyin sır olduğu iki yerde aynı kodla hesaplanıyordu: paylaşım
+  (`shareEntityWithPlayers` → `redactDmOnly`) ve push
+  (`CloudPushPump._dmOnlyKeys` → `dm_only_keys`). §2.6'nın "iki yorumlayıcı
+  ayrışır" riski SQL'den önce burada vardı.
+- Oyuncudaki gövde yalnız bellekte (`data['entities']`), Drift'e yazılmıyor.
+  Her açılış zaten baştan çekiyor.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **`dmOnlyKeysBySlug`** | `entity_share_prepare.dart`; sırrın tek karar fonksiyonu. Paylaşım ve push artık bunu çağırıyor |
+| **`sharedEntityRowToRaw`** | RPC satırı → `entityToRaw` şekli (`dm_notes` boş, JSON kolonları çözülmüş) |
+| **`WorldMirrorService`** | `fetchInitialState`'in paylaşım sorgusu yerine `get_shared_entities(world, 0)`; `fetchSharedEntities(world, since)` |
+| **`WorldMirrorApplier`** | `_injectShared` (linked atlanır, DM'e yazılmaz, bellekte revizyon damgası). Tetikler: açılış; `entity_shares` INSERT/UPDATE → tam tazeleme (paylaşılan kart eski olabilir); sinyal → damgadan sonrası. 1 sn sessizlikte birleşiyor — DM'in turu satır başına sinyal üretiyor. DELETE gövdeyi silmiyor |
+| **Sinyal** | `world_mirror_provider.dart` oyuncuya da `onRevision` veriyor |
+| **Gri kart** | `revokedSharedEntityIdsProvider`: blob'daki homebrew kart paylaşım listesinde yoksa geri çekilmiş. `visibleEntityProvider` onları da gösteriyor; kenar çubuğunda soluk + ipucu, kart ayrıntısında etiket (`sharedEntityRevoked` × 4 dil) |
+| **`listForWorld`** | Yalnız izin kolonları; `payload_json` artık inmiyor |
+
+### Çıkış kriteri — testle karşılanan kısım
+
+- **Redaksiyon eşdeğerliği** (faz başında istenen):
+  `shared_entity_redaction_parity_test.dart`. Yerleşik şemanın gizli alan
+  taşıyan her kategorisi için kart iki yoldan geçiyor: eski
+  `redactDmOnly(entityToRaw(e))` ile gerçek `CloudPushService.collect` +
+  094'ün SELECT'inin birebir taklidi + `sharedEntityRowToRaw`. İkisi aynı
+  `Entity`'yi veriyor, hiçbir sır değeri sızmıyor. Şemada olmayan kategori
+  `NULL` yazılıyor ve buluttan hiç dönmüyor.
+- `world_mirror_initial_state_test` RPC'ye uyarlandı. İlgili testler + 
+  `test/presentation` yeşil (277), `flutter analyze` yeni bulgu vermiyor.
+- `payload_json` okunmuyor; DM'in düzeltmesinin yeniden paylaşmadan gitmesi
+  ve gri kart elle bekliyor: `online-el-testi.md` §15.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §2.5: geri çekilince `get_shared_entity_ids` ile liste karşılaştırması | `entity_shares` listesiyle (oyuncu zaten okuyor, CDC'si de var). Fark yalnız `dm_only_keys` NULL kartta; onun gövdesi zaten hiç inmiyor |
+| §2.5: "yerel önbellekteki kopya silinmiyor" | Gövde bellekte: gri kart o oturumda görünür, dünya yeniden açılınca geri çekilen kart hiç inmez. Kalıcı önbellek ayrı iş (oyuncunun çevrimdışı okuması da onunla gelir) |
+| §2.5: `payload_json` kalkıyor | Oyuncu okumuyor; DM yazmaya devam ediyor (eski istemciler). Kolonun düşmesi ayrı adım |
+
+### Bilinçli sınırlar
+
+- **Yeni paylaşım tam tazeleme.** Her `entity_shares` INSERT'i (birleşik)
+  bütün izinli kartları yeniden çekiyor; dünya başına 4000 paylaşım tavanı
+  var. Ölçüm isterse kart id'siyle filtreleyen bir RPC.
+- **Yeni kart DM'in turunu bekliyor.** DM kartı yaratıp hemen paylaşırsa
+  satır buluta 3 sn sonra çıkıyor; oyuncuya sinyalle o zaman geliyor.
+- **`entity_shares` CDC'si hâlâ `payload_json` taşıyor** (DM yazdığı için):
+  kolon düşene kadar Realtime trafiği eskisi gibi.
 
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
 
