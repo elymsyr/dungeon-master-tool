@@ -1,8 +1,8 @@
 # Online Senkronizasyon Yeniden Tasarımı — "tam online geri dönüyor, LAN kalkıyor"
 
 Durum: **uygulama başladı** — dal `online-again`, Faz 0, Faz 1, Faz 2.5, Faz 3,
-Faz 3.5, 4a, 4b, 5a, 5b, 5c, 5d, 5e, 6 ve 9 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
-Migration 095–098 **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
+Faz 3.5, 4a, 4b, 5a, 5b, 5c, 5d, 5e, 5g, 5.5a, 6 ve 9 bitti (bkz. [BÖLÜM 4](#bölüm-4--roadmap)).
+Migration 095–101 ve worker **deploy edildi**, 5b ve 5c elle doğrulandı (2026-09-23);
 5c'de yalnız yarıda kalan indirme elle denenmedi. **5d (dünya medyası bulutta,
 [§4.8.3](#483-faz-5d--dünya-medyası-bulutta--bitti)) deploy edildi ve kısmen
 elle doğrulandı:** aynı hesapla ikinci cihaz ve DM + oyuncu (oyuncu tarafında
@@ -13,12 +13,14 @@ paralel yükleme, açılışın eşzamanlı sorguları, uygulama açılınca ve 
 gelince arka plan uzlaştırması, kota bildirimi, süre log'ları. Kalanı
 (önizleme, sıkıştırma, önden çekme, genel profil) el testindeki ölçüme bağlı.
 **5e bitti (2026-10-01, [§4.8.6](#486-faz-5e--paket-dünyayla-aynı-yol--bitti)):**
-paket medyası R2'de (migration 100, deploy bekliyor), paket açılmadan da
+paket medyası R2'de (migration 100 + worker deploy edildi), paket açılmadan da
 uzlaşıyor, hub'dan online yapılıyor.
-**Sıradaki (2026-09-24'te revize edildi, [§4.8.5](#485-sıradaki-fazlar--taslak)):**
-5g karakter
-(kendi online anahtarı, dünya gibi canlı, medyası bulutta) → 5.5 oyuncu
-çoklu cihaz → 7 kota ve ölçüm.
+**5g bitti (2026-10-01, [§4.8.7](#487-faz-5g--karakter-kendi-kapsamı-tek-yol--bitti)).**
+**5.5a bitti (2026-10-02, [§4.8.8](#488-faz-55a--oyuncunun-ikinci-cihazı-davet-kodsuz--bitti)):**
+oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor.
+**Sıradaki ([§4.8.5](#485-sıradaki-fazlar--taslak)):** 5.5b kartlar
+`get_shared_entities`'ten → 5.5c oyuncu mind map'i ve `world_member_state` →
+7 kota ve ölçüm.
 
 > **Bu belge nasıl uygulanır — önce bunu oku.**
 >
@@ -905,7 +907,8 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 > **5e → 5g → 5.5 → 7** var. 5e 5d'nin medya yolunu dünyaya bağlı olmaktan
 > çıkarıp genelleştiriyor ve canlı sinyale dokunmuyor, bu yüzden en düşük
 > riskli olanı. **5e bitti (2026-10-01, §4.8.6); 5g bitti (2026-10-01,
-> §4.8.7); sırada 5.5 → 7.**
+> §4.8.7); 5.5 üçe bölündü (kullanıcı, 2026-10-02), 5.5a bitti (§4.8.8);
+> sırada 5.5b → 5.5c → 7.**
 > 5g hem o genelleşmiş medya yolunu hem de 5b'nin sinyal
 > iskeletini kullanıyor. 5.5, 5g'nin karakteri ikinci cihaza indirmesinin
 > üstüne kuruluyor. 5g de 5d'nin denenmemiş yollarına dayanıyor (karakter
@@ -925,9 +928,11 @@ tıklanacak bir şey ya da yeşil olacak bir test var.
 | ~~**5c**~~ | Paket pull'u + "bu cihaza indir" + ilk senkron ilerlemesi | ikinci cihaz dünyayı/paketi zip'siz alıyor | evet | ✅ bitti (098 deploy edildi, dünya + paket adımları elle doğrulandı; yarıda kalan indirme test edilecek) |
 | ~~**5d**~~ | Dünya medyası bulutta — transient'in yerine kalıcı, dünya başına R2 | multiplayer dünyanın her görseli, DM çevrimdışıyken de, her üye cihazda görünüyor | evet + worker | ✅ bitti (099 + worker deploy edildi; ikinci cihaz ve DM + oyuncu savaş haritası elle doğrulandı, kart paylaşımı / karakter bekliyor — §4.8.3) |
 | 5f | Hız ve optimizasyon — dünya yükleme, görsel indirme/yükleme, uygulamanın geneli | ölçülen süreler hedefin altında; yarım kalan medya kendiliğinden tamamlanıyor | evet | **1. kısım bitti** (paralel PUT, açılış, arka plan uzlaştırma, ölçüm log'ları — §4.8.4); ölçüm ve kalan kısım el testine bağlı |
-| ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy ve el testi bekliyor — §4.8.6) |
-| ~~**5g**~~ | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 101 + worker deploy ve el testi bekliyor — §4.8.7) |
-| 5.5 | Oyuncu çoklu cihaz — üyelik, "Online dünyalarım", paylaşılan kartlar | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | evet | taslak (5g'den sonra daraldı) |
+| ~~**5e**~~ | Paket: dünyayla aynı yol, canlı hariç — hub anahtarı, arka plan uzlaştırması, medya R2'de | ikinci cihaza inen paket görselleriyle geliyor; çevrimdışı düzenleme paket açılmadan buluta çıkıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 100 + worker deploy edildi; el testi bekliyor — §4.8.6) |
+| ~~**5g**~~ | Karakter: kendi online anahtarı, canlı sinyal, tek push yolu, medya R2'de | online karakter öbür cihazda **canlı** değişiyor ve görselleriyle iniyor; online olmayan karakterin hiçbir baytı buluta çıkmıyor | evet + worker | ✅ bitti (2026-10-01; testler yeşil, 101 + worker deploy edildi; el testi bekliyor — §4.8.7) |
+| ~~**5.5a**~~ | Oyuncu çoklu cihaz — üyelik listesi, `materializeWorld` | oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan kartlarıyla | hayır | ✅ bitti (2026-10-02; migration yok, el testi bekliyor — §4.8.8) |
+| 5.5b | Kartlar `get_shared_entities`'ten, oyuncu sinyali, gri kart | `entity_shares.payload_json` okunmuyor; DM'in düzeltmesi oyuncuya yeniden paylaşmadan gidiyor | evet | taslak |
+| 5.5c | Oyuncu mind map'i + `world_member_state` | oyuncunun dünyadaki kendi durumu ikinci cihazına iniyor | evet | taslak |
 | ~~**6**~~ | LAN'ı sil | `lan_sync/` yok, analyze temiz | hayır | ✅ bitti (2026-09-24; analyze + test yeşil, el testi sona — §4.8.5) |
 | 7 | Kural, kota, ölçüm | gerçek sayılar ölçüldü | evet | taslak |
 | 8 | Sonraya bırakılanlar | — | — | açık |
@@ -2733,13 +2738,20 @@ durur ve ikinci cihaza yalnız karakter iner.*
 ### Faz 5.5 — Oyuncu çoklu cihaz
 
 *5g'den sonra daraldı. 5g oyuncunun karakterini ikinci cihazına indiriyor,
-5.5 onu dünyaya bağlıyor.*
+5.5 onu dünyaya bağlıyor. Kullanıcının kararıyla (2026-10-02) üçe bölündü;
+her parça ayrı test edilip ayrı commit'leniyor.*
 
-`joinWithCode` → `redeemInvite` + `materializeWorld`; "Online dünyalarım"
-ekranı; inen karakterin dünyayla eşleşmesi ("benim karakterim" sorgusunu
-5g'nin sahip kapsamı veriyor); oyuncu mind map'i; `world_member_state`;
-izinli kartların RPC'den çekilmesi ve oyuncunun sinyali (§4.8.1: "Oyuncu
-sinyal almıyor"); paylaşım geri çekilince gri kart + etiket.
+- **5.5a ✅ bitti (2026-10-02) → [§4.8.8](#488-faz-55a--oyuncunun-ikinci-cihazı-davet-kodsuz--bitti).**
+  `joinWithCode` → `redeemInvite` + `materializeWorld`; üyelik listesi hub'ın
+  dünya sekmesinde; inen karakterin dünyayla eşleşmesi.
+- **5.5b — kartlar RPC'den.** İzinli kartların `get_shared_entities`'ten
+  çekilmesi (`entity_shares.payload_json` okunmuyor, sonra kalkıyor — §2.5),
+  oyuncunun sinyali (§4.8.1: "Oyuncu sinyal almıyor"), paylaşım geri
+  çekilince gri kart + etiket (`get_shared_entity_ids`). Redaksiyon
+  `redactDmOnly`'den 094'ün `dm_only_keys`'ine geçiyor; ikisinin aynı alanları
+  sakladığı faz başında testle gösterilmeli. Sunucu tarafı 094'te hazır.
+- **5.5c — oyuncunun kendi durumu.** Oyuncu mind map'i (`owner_id`) ve
+  `world_member_state`. Tablolar ve RLS 094'te hazır.
 
 ### Faz 6 — LAN'ı sil ✅ bitti (2026-09-24)
 `lan_sync/` 6 dosya (2.733 satır), provider + dialog, **41 l10n anahtarı ×
@@ -2897,7 +2909,7 @@ El testi sona: `online-el-testi.md` §11.
 
 *Kullanıcının kararı (2026-09-24): paket dünyayla aynı yöntemle online
 olacak ama canlı olması gerekmiyor; görseller ve medya da buluta çıkmalı.
-Uygulandı 2026-10-01; migration 100 + worker deploy bekliyor, el testi sona
+Uygulandı 2026-10-01; migration 100 + worker deploy edildi, el testi sona
 (`online-el-testi.md` §12).*
 
 ### Sorun
@@ -2996,7 +3008,7 @@ Elle bekleyen: 1–4'ün uçtan uca hali (`online-el-testi.md` §12).
 
 ## 4.8.7 Faz 5g — Karakter: kendi kapsamı, tek yol ✅ bitti
 
-*Uygulandı 2026-10-01; migration 101 + worker deploy bekliyor, el testi sona
+*Uygulandı 2026-10-01; migration 101 + worker deploy edildi, el testi sona
 (`online-el-testi.md` §13).*
 
 ### Sorun
@@ -3105,6 +3117,65 @@ Elle bekleyen: 1–4'ün uçtan uca hali ve DM silme hatasının kapandığı
 - **Yankı.** Paylaşım yayınından ya da pull'dan gelen satır yerelde öbür
   cihazın düzenleme zamanıyla duruyor; bu cihazın bir sonraki turu onu aynı
   gövdeyle geri yazabilir. Echo guard sayacı kıpırdatmıyor, döngü yok.
+
+## 4.8.8 Faz 5.5a — Oyuncunun ikinci cihazı, davet kodsuz ✅ bitti
+
+*Uygulandı 2026-10-02; migration yok, el testi sona (`online-el-testi.md` §14).*
+
+### Sorun
+
+Oyuncu dünyaya bir cihazdan katıldıktan sonra öbür cihazında o dünyayı
+görmenin tek yolu davet kodunu yeniden girmekti. `redeem_world_invite` mevcut
+üyede de `uses_left`'i düşürüyor: tek kullanımlık kodla ikinci cihaz hiç
+giremiyordu, çok kullanımlıkta her cihaz bir hak yakıyordu. Hub'ın
+"Bulutta, bu cihazda yok" bölümü (5c) yalnız sahibi olunan dünyaları
+(`worlds.owner_id`) listeliyordu.
+
+### Koddan çıkan
+
+- Üyelik zaten cihazdan bağımsız: `onlineWorldIdsProvider` açılışta
+  `world_members`'tan doluyor. Eksik olan yalnız yerel kabuk.
+- Kabuk kurulunca açılıştaki `applyInitialState` paylaşılan kartları
+  (`entity_shares.payload_json`), dünyanın karakterlerini (oyuncununki dahil)
+  ve projeksiyonu zaten getiriyor.
+- "Benim karakterim" eşleşmesi zaten var: `WorldCharactersView`'ın "Your"
+  bölümü `owner_id`'ye bakıyor. §2.9'un uyardığı "oyuncu yeni karakter
+  yaratmaya kalkar" durumu karakter dünya anlık görüntüsüyle indiği için
+  oluşmuyor.
+- Sunucu değişikliği gerekmiyor: oyuncu kendi `world_members` satırını ve
+  üyesi olduğu `worlds` satırını RLS'le okuyabiliyor.
+
+### Yapılanlar
+
+| Parça | Ne |
+|---|---|
+| **`WorldJoinService`** | `joinWithCode` = `redeemInvite` + `materializeWorld`. `materializeWorld(worldId, worldName)` eski gövde: şablon + meta, yerel `worlds` satırı (varsa dokunmaz), SRD bağı. `listMemberWorlds()`: `world_members` (`role = 'player'`, `worlds(world_name)` gömülü), bu cihazda olmayanlar |
+| **`memberWorldsProvider`** | `world_join_provider.dart`; yerel dünya listesi değişince yeniden soruluyor, çevrimdışıyken boş |
+| **Hub** | Dünya sekmesinin "Bulutta, bu cihazda yok" bölümü üyelikleri de listeliyor. "İndir" üyelik için içerik indirmiyor, yalnız kabuğu kuruyor; içerik dünya açılınca geliyor |
+| **l10n** | `cloudOnlyWorldsHint` × 4 dil (üyelikleri ve "davet kodu gerekmez"i anıyor) |
+
+### Çıkış kriteri — elle bekliyor
+
+Oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor, karakteri ve paylaşılan
+kartlarıyla. Kodun kendisi bir sorgu ve mevcut kabuk kurulumunun ayrılması;
+yeni dal yalnız UI'da. Birim testi yazılmadı (Supabase sorgusu + mevcut
+gövde); `flutter analyze` yeni bulgu vermiyor. Uçtan uca hali
+`online-el-testi.md` §14.
+
+### Uygulamada çıkan farklar
+
+| Belgede yazan | Uygulanan |
+|---|---|
+| §1.5 / §2.9: ayrı "Online dünyalarım" ekranı | Hub dünya sekmesinin mevcut "Bulutta, bu cihazda yok" bölümü (kullanıcı, 2026-10-02). DM'in dünyaları ve oyuncunun üyelikleri aynı yerde |
+| §2.9: "bu cihaza indir" | Üyelik için indirme yok, kabuk kuruluyor: oyuncunun içeriği bugün hâlâ paylaşım kanalından geliyor (5.5b'ye kadar `payload_json`) |
+
+### Bilinçli sınırlar
+
+- **DM rolündeki üyelik listelenmiyor.** DM'in dünyası `listCloudOnlyWorlds`
+  ile tam iniyor; `role = 'dm'` satırını burada da göstermek aynı dünyayı iki
+  kez listelerdi.
+- **Kabuk kurulup dünya açılmadan bırakılırsa** dünya boş görünür; içerik
+  ilk açılışta gelir.
 
 ## 4.9 Kod incelemesinden çıkan düzeltmeler
 

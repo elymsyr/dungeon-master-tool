@@ -443,7 +443,7 @@ yap.
 
 ## 12. Faz 5e — paket medyası ve arka plan uzlaştırması (A + B)
 
-**12.0 Deploy.** Önce `supabase/migrations/100_package_media.sql`, sonra
+**12.0 Deploy — yapıldı.** Önce `supabase/migrations/100_package_media.sql`, sonra
 `supabase/scripts/verify_100.sql` → `100 OK` (ve `verify_099.sql` → `099 OK`).
 **Hemen ardından** `wrangler deploy` (arada imza ucu 502 döner). Sonra iki
 cihazda da uygulamanın yeni derlemesi — eskisi dünya medyası yükleyemez.
@@ -508,7 +508,7 @@ masaüstünde `flutter run` konsolundan, Android'de
 `adb logcat | grep CloudSync` ile.
 
 **13.0 Hazırlık**
-- [ ] Deploy sırası: `100` → `101_character_scope.sql` → `wrangler deploy`.
+- [x] Deploy sırası (yapıldı): `100` → `101_character_scope.sql` → `wrangler deploy`.
       Sonra iki cihaza da yeni derleme. Eski derleme karakteri eski yoldan
       yazar; öyle bir cihaz varsa test geçersiz.
 - [ ] X'te multiplayer'ı kapalı bir dünya: **Yerel**. Karakter yaratmak bir
@@ -635,6 +635,42 @@ ile gir. Hub → Karakterler.
   X'teki gibi olmalı.
 - Beklenen: K1 bu listede yok (yerele alındı, Y'de zaten var), K2 de yok
   (silindi).
+
+## 14. Faz 5.5a — oyuncunun ikinci cihazı, davet kodsuz (iki cihaz, SQL yok)
+
+§13'ün düzeni: cihazlar **X** ve **Y**, hesaplar **H1** (DM) ve **H2**
+(oyuncu). Oyuncunun "ikinci cihazı" X'te H2'ye geçilerek elde ediliyor: her
+hesabın cihazda ayrı veritabanı var, X'teki H2 veritabanı boş. Oyuncunun
+dünyayı hub'dan silmesi **dünyadan ayrılmak** demek, onunla taklit edilemez.
+
+**14.0 Hazırlık**
+- [ ] İki cihazda da yeni derleme. Migration ya da worker değişmedi.
+- [ ] §13 Kısım B'nin sonundaki gibi: X'te H1'in multiplayer dünyası
+      **Masa**, Y'de H2 Masa'ya katılmış ve portreli bir karakteri var
+      (**P1**). DM Masa'da en az bir kartı paylaşmış.
+
+**14.1 Liste.** X'te H1'den çık, H2 ile gir. Hub → Dünyalar.
+- Beklenen: "Bulutta, bu cihazda yok" altında Masa var. Açıklama metni
+  oyuncu olarak katılınan dünyaları ve "davet kodu gerekmez"i anıyor.
+- Beklenen: H1'in başka dünyaları bu listede yok.
+
+**14.2 Kabuk.** Masa'nın yanında İndir.
+- Beklenen: bir iki saniyede "indirildi" bildirimi; Masa yerel listeye
+  geçiyor, buluttaki listeden düşüyor. Davet kodu sorulmuyor.
+
+**14.3 İçerik.** Masa'yı aç.
+- Beklenen: oyuncu ekranı açılıyor (DM ekranı değil).
+- Beklenen: Karakterler sekmesinde "Your" altında P1, portresiyle. P1 için
+  "Available to Claim" altında ikinci bir kopya yok.
+- Beklenen: DM'in paylaştığı kart görünüyor.
+
+**14.4 Canlı.** Y'de (H2) P1'in HP'sini değiştir.
+- Beklenen: X'te P1 açıkken birkaç saniyede değişiyor (5g'nin sahip kapsamı).
+
+**14.5 Geri dönüş.** X'te H2'den çık, H1 ile gir. Masa'yı aç → üyeler.
+- Beklenen: H2 üyelerde bir kez görünüyor. Masa'nın davet kodu hâlâ
+  çalışıyor (tek kullanımlıksa ve §13'te kullanıldıysa zaten tükenmişti; bu
+  adımda bir hak daha gitmemeli — emin değilsen atla).
 
 ---
 
