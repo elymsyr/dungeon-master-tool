@@ -12,8 +12,6 @@ import '../../../application/providers/shared_entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/pinned_entity_provider.dart';
-import '../../../application/providers/visible_entity_provider.dart'
-    show revokedSharedEntityIdsProvider;
 import '../../../application/services/entity_image_upload.dart';
 import '../../../application/services/entity_share_prepare.dart';
 import '../../../domain/entities/online/world_role.dart';
@@ -299,10 +297,6 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     // cihaza gelmiş olabilir (paket kartları tam gövdeyle kurulu) — burası
     // görüntülenmeyi kesen kapı.
     final isPlayer = ref.watch(isPlayerViewProvider);
-    // Faz 5.5b — DM paylaşımı geri çekti; gövde cihazda kaldı (§2.5).
-    final revoked = isPlayer &&
-        ref.watch(revokedSharedEntityIdsProvider
-            .select((ids) => ids.contains(widget.entityId)));
 
     // Re-resolve category from the live entity.categorySlug so a sync that
     // rewrites an entity's slug (e.g., package re-install with a renamed
@@ -559,23 +553,6 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
 
     final children = <Widget>[
-      if (revoked) ...[
-        Row(
-          children: [
-            Icon(Icons.link_off,
-                size: 16, color: palette.sidebarLabelSecondary),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                L10n.of(context)!.sharedEntityRevoked,
-                style: TextStyle(
-                    fontSize: 12, color: palette.sidebarLabelSecondary),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-      ],
       // === HEADER: portrait + name/subtitle/desc/source. Row on tablet+,
       // image-on-top Column on phone so the name field has room to breathe.
       if (stackHeaderVertical)

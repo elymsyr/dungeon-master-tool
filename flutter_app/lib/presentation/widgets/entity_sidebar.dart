@@ -13,8 +13,6 @@ import '../../application/providers/pinned_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/shared_entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
-import '../../application/providers/visible_entity_provider.dart'
-    show revokedSharedEntityIdsProvider;
 import '../../application/services/entity_share_prepare.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/builtin/content.dart'
@@ -242,10 +240,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     // işaret seti yanlış dünyanın (aktif world'ün) blob'undan gelirdi.
     final sharedEntityIds = (widget.pinning && !isPlayer)
         ? ref.watch(sharedEntityIdsProvider)
-        : const <String>{};
-    // Faz 5.5b — oyuncuda DM'in geri çektiği kartlar gri.
-    final revokedIds = isPlayer
-        ? ref.watch(revokedSharedEntityIdsProvider)
         : const <String>{};
     _ShareFilter classifyShareMode(
       String? pkgId,
@@ -726,7 +720,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                           dimmed: isOther,
                           pinned: pinned.contains(entity.id),
                           shared: sharedEntityIds.contains(entity.id),
-                          revoked: revokedIds.contains(entity.id),
                         );
                       },
                     );
@@ -1513,8 +1506,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   /// Single entity row used by the sidebar list. [dimmed] = true for the
   /// "Other entities" section shown below the matches when a search query
   /// is active — opacity 0.5 so the matched block visually leads.
-  /// [revoked]: DM bu kartı artık paylaşmıyor (oyuncu, Faz 5.5b) — soluk ve
-  /// açıklamalı.
   Widget _entityRow(
     _EntitySummary entity,
     Map<String, EntityCategorySchema> catMap,
@@ -1522,7 +1513,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     required bool dimmed,
     required bool pinned,
     required bool shared,
-    bool revoked = false,
   }) {
     final cat = catMap[entity.categorySlug];
     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
@@ -1571,7 +1561,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       shared,
     );
     final row = Opacity(
-      opacity: revoked ? 0.4 : (dimmed ? 0.5 : 1.0),
+      opacity: dimmed ? 0.5 : 1.0,
       child: touchDrag
           ? LongPressDraggable<String>(
               key: ValueKey(entity.id),
@@ -1590,9 +1580,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               child: inner,
             ),
     );
-    return revoked
-        ? Tooltip(message: L10n.of(context)!.sharedEntityRevoked, child: row)
-        : row;
+    return row;
   }
 
   Widget _entityRowInner(

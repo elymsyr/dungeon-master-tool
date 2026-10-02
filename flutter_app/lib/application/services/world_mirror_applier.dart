@@ -245,14 +245,11 @@ class WorldMirrorApplier {
   /// `entity_shares` CDC — artık yalnız izin (Faz 5.5b). Gövde
   /// `get_shared_entities`'ten gelir; `payload_json` okunmuyor.
   ///
-  /// Yeni paylaşım doğrulamayı tetikler: kart yerelde yoksa iner. Geri
-  /// çekmede gövde SİLİNMEZ — kart gri görünür
-  /// (`revokedSharedEntityIdsProvider`, §2.5).
+  /// Her değişim doğrulamayı tetikler: yeni paylaşılan kart iner, geri
+  /// çekilen kart oyuncunun cihazından silinir.
   Future<void> _applyEntityShareEvent(WorldSyncEvent e) async {
     ref.invalidate(worldEntitySharesProvider(e.worldId));
-    if (e.eventType != PostgresChangeEvent.delete) {
-      scheduleSharedRefresh(e.worldId);
-    }
+    scheduleSharedRefresh(e.worldId);
   }
 
   /// Faz 5.5b — oyuncunun kartlarını doğrular ([_syncShared]). Çağrılar
@@ -265,20 +262,20 @@ class WorldMirrorApplier {
   }
 
   /// Damga listesiyle doğrular, yalnız eksik/değişen kartı indirip Drift'e
-  /// yazar ([CloudPullService.syncSharedEntities]); yazılanları açık
-  /// dünyanın blob'una da işler. DM'e hiç yazılmaz: kendi kartları yerelde
-  /// ve yerel MEDYA YOLLARIYLA duruyor ([_isPlayerOf]).
+  /// yazar, listede olmayanı siler ([CloudPullService.syncSharedEntities]);
+  /// ikisini de açık dünyanın blob'una işler. DM'e hiç yazılmaz: kendi
+  /// kartları yerelde ve yerel MEDYA YOLLARIYLA duruyor ([_isPlayerOf]).
   Future<void> _syncShared(String worldId) async {
     if (_disposed || !_isPlayerOf(worldId)) return;
     final svc = ref.read(cloudPullServiceProvider);
     if (svc == null) return;
     final List<Map<String, Object?>> written;
+    final Set<String> visible;
     try {
       final res = await svc.syncSharedEntities(worldId);
       if (_disposed) return;
       written = res.written;
-      ref.read(sharedEntityStampIdsProvider(worldId).notifier).state =
-          res.visible;
+      visible = res.visible;
     } catch (e) {
       debugPrint('CloudSync: paylaşılan kartlar $worldId '
           '${isOfflineError(e) ? 'offline' : e}');
@@ -291,7 +288,7 @@ class WorldMirrorApplier {
     // Dünya hâlâ yükleniyor: açılışın Drift okuması bu yazmadan önce bitmiş
     // olabilir. Satırlar bekler; açılışın `applyInitialState`'i blob
     // yüklendikten sonra yeniden doğrular ve onlar o zaman işlenir.
-    if (data == null || _sharedUninjected.isEmpty) return;
+    if (data == null) return;
     final raw = data['entities'];
     final Map<String, dynamic> entities;
     if (raw is Map<String, dynamic>) {
@@ -303,6 +300,12 @@ class WorldMirrorApplier {
     for (final row in _sharedUninjected) {
       entities[row['id'] as String] = sharedEntityRowToRaw(row);
     }
+    // Geri çekilen kart blob'dan da düşer. Drift'in silinen id'leri değil
+    // liste esas: açılışın Drift okuması silmeden önce bitmiş olabilir.
+    final before = entities.length;
+    entities.removeWhere(
+        (id, e) => !visible.contains(id) && (e as Map?)?['linked'] != true);
+    if (_sharedUninjected.isEmpty && entities.length == before) return;
     _sharedUninjected.clear();
     _bumpRevision();
   }
