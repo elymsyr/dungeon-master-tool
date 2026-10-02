@@ -38,6 +38,7 @@ tags: [file]
 - Audio: `flutter_soloud` (gapless game-audio engine; needs `libasound2-dev` on Linux CI — see [[Audio-SoLoud]]). `yaml` parses soundpad theme configs.
 - Online: `supabase_flutter` (auth + Postgres + storage), `connectivity_plus` (SyncEngine wake-on-online), `package_info_plus` (runtime app version → admin heartbeat).
 - Utility/UI: `uuid`, `crypto`, `intl`, `logger`, `url_launcher`, `collection`, `file_picker`, `flutter_markdown`, `pdfrx`, `cupertino_icons`.
+- 3D dice roller: `flutter_scene` (renders through Flutter GPU, enabled per platform runner/manifest/plist) + `vector_math` (see [[dice_physics]]).
 
 **Codegen toolchain (dev_dependencies):**
 - `build_runner` orchestrates: `freezed`, `json_serializable`, `drift_dev`. `riverpod_generator`/`riverpod_annotation`/`riverpod_lint`/`custom_lint` were removed 2026-10-02 (Flutter 3.47 upgrade): no file used them, and they pinned `analyzer` to 7.x, which cannot read the 3.47 framework sources. Test/mocking: `flutter_test`, `mocktail`. `flutter_lints` ^6.0.0 (base for [[analysis_options]]). `flutter_launcher_icons` generates icons.

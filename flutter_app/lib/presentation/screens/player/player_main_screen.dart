@@ -22,6 +22,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/dice/dice_fab.dart';
 import '../../widgets/world_open_splash.dart';
 import '../../widgets/entity_sidebar.dart';
 import '../../widgets/lazy_indexed_stack.dart';
@@ -404,11 +405,22 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
             ScreenType.phone => tabStack,
           },
         ),
-        floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
-            ? FloatingActionButton.small(
-                heroTag: 'player_main_screen_entity_sidebar_fab',
-                onPressed: _showMobileSidebar,
-                child: const Icon(Icons.list),
+        // Mobile/tablet: entity sidebar on the database tab, dice on every
+        // tab (desktop places dice in the Stack).
+        floatingActionButton: screen != ScreenType.desktop
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_tabIndex == 0) ...[
+                    FloatingActionButton.small(
+                      heroTag: 'player_main_screen_entity_sidebar_fab',
+                      onPressed: _showMobileSidebar,
+                      child: const Icon(Icons.list),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  const DiceFab(),
+                ],
               )
             : null,
         bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
@@ -682,6 +694,16 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                     ],
                   ),
                 ),
+              // Dice — bottom right of the content, left of an open right sidebar.
+              ValueListenableBuilder<double>(
+                valueListenable: _rightSidebarWidthNotifier,
+                builder: (_, width, child) => Positioned(
+                  right: (_rightSidebar == _RightSidebar.none ? 0 : width) + 16,
+                  bottom: 16,
+                  child: child!,
+                ),
+                child: const DiceFab(),
+              ),
             ],
           );
   }

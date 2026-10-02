@@ -189,10 +189,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
           onOpenEntity: widget.onOpenEntity,
         ),
 
-        // Floating zoom controls — bottom-right
+        // Floating zoom controls — bottom-right, above the host's dice button
         Positioned(
           right: 16,
-          bottom: 16,
+          bottom: 88,
           child: _FloatingControls(
             notifier: notifier,
             mapState: mapState,

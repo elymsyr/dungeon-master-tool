@@ -38,6 +38,7 @@ import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
 import '../widgets/world_open_splash.dart';
 import '../widgets/characters_sidebar.dart';
+import '../widgets/dice/dice_fab.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
@@ -1185,6 +1186,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 );
               },
             ),
+            // Dice — bottom right of the content, left of an open right sidebar.
+            ValueListenableBuilder<RightSidebar>(
+              valueListenable: _rightSidebarCtrl,
+              builder: (_, current, _) => ValueListenableBuilder<double>(
+                valueListenable: _rightSidebarWidthNotifier,
+                builder: (_, width, child) => Positioned(
+                  right: (current == RightSidebar.none ? 0 : width) + 16,
+                  bottom: 16,
+                  child: child!,
+                ),
+                child: const DiceFab(),
+              ),
+            ),
           ],
         ),
 
@@ -1220,24 +1234,29 @@ class _MainScreenState extends ConsumerState<MainScreen>
         },
       ),
 
-      // FAB for mobile/tablet entity sidebar
-      floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
+      // FABs for mobile/tablet: entity sidebar + card history on the
+      // database tab, dice on every tab (desktop places dice in the Stack).
+      floatingActionButton: screen != ScreenType.desktop
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FloatingActionButton.small(
-                  heroTag: 'main_screen_card_history_fab',
-                  shape: RoundedRectangleBorder(borderRadius: palette.cbr),
-                  onPressed: _showCardHistory,
-                  child: const Icon(Icons.history),
-                ),
-                const SizedBox(height: 10),
-                FloatingActionButton.small(
-                  heroTag: 'main_screen_entity_sidebar_fab',
-                  shape: RoundedRectangleBorder(borderRadius: palette.cbr),
-                  onPressed: _showMobileSidebar,
-                  child: const Icon(Icons.list),
-                ),
+                if (_tabIndex == 0) ...[
+                  FloatingActionButton.small(
+                    heroTag: 'main_screen_card_history_fab',
+                    shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+                    onPressed: _showCardHistory,
+                    child: const Icon(Icons.history),
+                  ),
+                  const SizedBox(height: 10),
+                  FloatingActionButton.small(
+                    heroTag: 'main_screen_entity_sidebar_fab',
+                    shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+                    onPressed: _showMobileSidebar,
+                    child: const Icon(Icons.list),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                const DiceFab(),
               ],
             )
           : null,

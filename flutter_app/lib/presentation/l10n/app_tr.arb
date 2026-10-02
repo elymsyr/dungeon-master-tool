@@ -2188,5 +2188,9 @@
   "packageUploadingMedia": "Paket medyası yükleniyor {done}/{total}…",
   "packageQuotaExceeded": "Bu paketin medyası {need} yer istiyor, bulutta ise {left} kaldı. Bazı görselleri kaldır ya da başka bir dünyayı veya paketi yerele al.",
   "packageTooLargeBody": "Bu dosyalar boyut limitinin üstünde (görseller 5 MB, ses 10 MB, PDF 20 MB), öteki cihazlarına gitmeyecekler. Burada çalışmaya devam ederler.",
-  "packageMediaIncomplete": "Paket online, ama medyanın tamamı henüz buluta çıkmadı. Kalanı bir sonraki eşitlemede yüklenecek."
+  "packageMediaIncomplete": "Paket online, ama medyanın tamamı henüz buluta çıkmadı. Kalanı bir sonraki eşitlemede yüklenecek.",
+  "diceRollerTooltip": "Zar at",
+  "diceRoll": "At",
+  "diceRollSelection": "{dice} at",
+  "diceTapToClose": "Kapatmak için dokun"
 }
