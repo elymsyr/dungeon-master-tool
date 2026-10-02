@@ -1,5 +1,80 @@
 # Release Notes
 
+## Dungeon Master Tool v18.1.0 — Dice on the Table (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release adds a 3D dice roller. A dice button sits in the bottom-right corner of every world screen and of the character sheet, and the dice tumble across your screen and land on the result. Skills and saving throws on a character sheet roll with one tap. Nothing changes in your data, so this version installs over v18.0.0.
+
+---
+
+### Dice
+
+#### 3D dice roller
+
+Tap the dice button in the bottom-right corner to open the dice menu. Tap a die to roll just that one, or build a set with **+** and **−** and press **Roll**. The dice are thrown in 3D over a lightly dimmed screen, cast shadows on it, and a card at the top shows each result and the total. Tap while the dice are moving to skip to the result, and tap again to close.
+
+- The button is on every tab of a world, for both the DM and players, and on the character sheet.
+- Dice available: d4, d6, d8, d10, d12, d20 and d100. Up to 30 dice per roll; a d100 counts as two.
+- Rolls only show on your own screen. They are not saved, not written to the combat log and not sent to players.
+- On a device that cannot draw the 3D dice, you get the result card on its own.
+
+#### Roll from the character sheet
+
+Tap a row in a character's skills or saving throws to roll a d20 with that row's bonus added. The result card shows the skill name and the total with the bonus. The proficiency dots and the misc box keep working as before. A row with no total yet does not roll.
+
+#### Dice themes
+
+**Settings → Dice theme** picks the colour of your dice. Each app theme has its own dice colours. **Auto** (the default) follows the app theme you are using.
+
+---
+
+### Smaller improvements
+
+- **Mind map** — the zoom controls moved up so they do not overlap the dice button.
+- **l10n** — new keys for the dice roller and dice theme, in English, Turkish, German and French.
+
+---
+
+### Deprecations & removals
+
+- **Mobile session dice sheet** — the small dice sheet on the mobile session's Combat tab is replaced by the new dice button, which is on every tab. The desktop session's left-panel dice buttons, which write to the combat log, are unchanged.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.0.0` → `18.1.0`.
+- **In-app migrations:** none. Your data is not touched.
+- **Online groups:** v18.1.0 works with v18.0.0. Players do not need to update at the same time.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Flutter 3.47.6** — required by Flutter GPU / `flutter_scene`, which renders the dice. CI moved from 3.41.6. The unused Riverpod codegen packages (`riverpod_generator`, `riverpod_annotation`, `riverpod_lint`, `custom_lint`) were removed because they pinned an analyzer that cannot read the 3.47 framework sources.
+- **Flutter GPU** — enabled in the Linux and Windows runners, the Android manifest and the iOS/macOS `Info.plist` (`FLTEnableFlutterGPU`).
+- **Dice** — the result is picked by `Random` before the throw; the physics runs off the UI isolate and only shows it. See `vault/10-Files/combat-vtt/dice_physics.md`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.0.0 — Online, Everywhere You Play (Beta)
 
 **Release date:** October 2026

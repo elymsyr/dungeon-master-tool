@@ -6,7 +6,7 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 2 October 2026 (v18.0.0) — player mind-map entry added. The
+**Last reviewed:** 3 October 2026 (v18.1.0) — no changes to the open list. The
 v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `flutter analyze`
 0 errors / 0 warnings, worker `npm run typecheck` clean.
 
