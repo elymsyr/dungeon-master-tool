@@ -101,6 +101,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         _SidebarHeader(
           palette: palette,
           activeWorld: activeWorld,
+          worldName: ref.watch(activeWorldNameProvider).valueOrNull,
         ),
         Expanded(
           child: isOnline
@@ -173,9 +174,11 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
 class _SidebarHeader extends StatelessWidget {
   final DmToolColors palette;
   final String? activeWorld;
+  final String? worldName;
   const _SidebarHeader({
     required this.palette,
     required this.activeWorld,
+    required this.worldName,
   });
 
   @override
@@ -195,7 +198,7 @@ class _SidebarHeader extends StatelessWidget {
             child: Text(
               activeWorld == null
                   ? 'Characters'
-                  : 'Characters · $activeWorld',
+                  : 'Characters · ${worldName ?? ''}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
