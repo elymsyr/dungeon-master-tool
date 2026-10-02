@@ -17,7 +17,7 @@ tags: [moc]
 - [[wrangler_config]] (`wrangler.toml`) — R2 bucket, `[[ratelimits]]` binding'leri, env vars. Tüm rate limiting burada; KV sayacı 2026-09-21'de kaldırıldı.
 - [[migrations-auth-social]] — 001–005 backups/assets/social/marketplace.
 - [[migrations-online-worlds]] — 026 shared worlds + invites + realtime mirror.
-- [[migrations-media-storage]] — 053 free-media bucket, 089 pinned havuzu, **099 dünya medyası** (`world_media`, transient'in sökülmesi), **100 paket medyası** (aynı tabloda `package_id` kapsamı, kapsamlı RPC'ler), **101 karakter medyası** (`character_id` kapsamı, `characters/`).
+- [[migrations-media-storage]] — 053 free-media bucket, 089 pinned havuzu, **099 dünya medyası** (`world_media`, transient'in sökülmesi), **100 paket medyası** (aynı tabloda `package_id` kapsamı, kapsamlı RPC'ler), **101 karakter medyası** (`character_id` kapsamı, `characters/`), **104 anında R2 temizliği** (`world_media` silinince `pg_net` → worker sweep).
 - [[migrations-cloud-mirror]] — 094 satır bazlı bulut aynası, revizyon sinyali, tombstone, oyuncunun tek okuma kapısı.
 - [[migrations-security]] — 072/073 RLS hardening + revoke anon execute.
 - [[rpc-reference]] — key RPCs: `media_reserve/confirm` (100), `r2_evict_pop`, `get_user_total_storage_used`, `is_admin`, `delete_my_account` (083).

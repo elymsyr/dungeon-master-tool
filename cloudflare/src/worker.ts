@@ -56,6 +56,9 @@ export interface Env {
   MAX_UPLOAD_BYTES: string;
   // wrangler secret put ADMIN_TOKEN — /admin/* + /catalog/* write gate.
   ADMIN_TOKEN?: string;
+  // wrangler secret put SWEEP_TOKEN — yalnız /admin/evict-sweep. Supabase
+  // Vault'ta da duruyor (104): DB'nin elindeki token bucket'ı silemesin.
+  SWEEP_TOKEN?: string;
   // Faz 5d — R2'nin S3 API'si için imza bilgileri. Hesap id'si ve bucket adı
   // [vars]'ta; anahtar çifti `wrangler secret put` ile. Biri eksikse
   // /world-media/sign 503 döner.
@@ -452,8 +455,11 @@ async function handleCatalogPut(
 
 // ── Admin gate ───────────────────────────────────────────────────────────────
 // ADMIN_TOKEN secret yoksa endpoint kapalı. Token Bearer ile gelir.
-function checkAdminAuth(request: Request, env: Env): boolean {
-  const expected = env.ADMIN_TOKEN;
+function checkAdminAuth(
+  request: Request,
+  env: Env,
+  expected = env.ADMIN_TOKEN,
+): boolean {
   if (!expected || expected.length < 16) return false;
   const header = request.headers.get('Authorization') ?? '';
   if (!header.startsWith('Bearer ')) return false;
@@ -462,7 +468,8 @@ function checkAdminAuth(request: Request, env: Env): boolean {
 
 // /admin/evict-sweep — r2_evict_queue'dan N satır al, R2'da sil. Kuyruğa
 // refcount'u sıfırlanan `pub/` objeleri ve satırı silinen dünya medyası
-// (`worlds/`) düşer. Asıl boşaltan saatlik cron; bu elle tetik.
+// (`worlds/`) düşer. 104'ten beri `world_media` silinince Supabase (pg_net)
+// SWEEP_TOKEN ile çağırıyor; saatlik cron yedek, ADMIN_TOKEN elle tetik.
 async function handleEvictSweep(
   request: Request,
   env: Env,
@@ -470,7 +477,10 @@ async function handleEvictSweep(
   if (request.method !== 'POST') {
     return jsonResponse(405, { error: 'method_not_allowed' });
   }
-  if (!checkAdminAuth(request, env)) {
+  if (
+    !checkAdminAuth(request, env) &&
+    !checkAdminAuth(request, env, env.SWEEP_TOKEN)
+  ) {
     return jsonResponse(401, { error: 'admin_auth_required' });
   }
   const limitParam = new URL(request.url).searchParams.get('limit');

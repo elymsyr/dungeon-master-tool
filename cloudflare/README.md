@@ -68,6 +68,21 @@ Web istemcisi R2'ye doğrudan gideceği için bucket'ta CORS gerekir (masaüstü
 mobil için gerekmez): R2 → bucket → Settings → CORS, `GET` ve `PUT`, izinli
 başlıklar `content-type`.
 
+**Anında R2 temizliği (104):** `world_media` satırı silinince (dünya/paket/
+karakter yerele alındı, hesap silindi) Supabase `pg_net` ile
+`/admin/evict-sweep`'i çağırır. Token yalnız o ucu açar; `ADMIN_TOKEN`
+veritabanına konmaz:
+```bash
+openssl rand -hex 32                     # aynı değer iki yere
+npx wrangler secret put SWEEP_TOKEN
+```
+Supabase tarafı (SQL Editor, bir kez):
+```sql
+SELECT vault.create_secret('https://dmt-assets.<acct>.workers.dev', 'dmt_worker_url');
+SELECT vault.create_secret('<aynı hex>', 'dmt_sweep_token');
+```
+Secret'lardan biri yoksa trigger sessizce atlar; saatlik cron yine boşaltır.
+
 ### 5. Local test
 ```bash
 npx wrangler dev
@@ -222,7 +237,7 @@ final bytes = await asset.cacheSizeBytes();
 | `PUT` | `/assets/pub/{sha}{ext}` | Bearer JWT | Rezervasyon + MIME + boyut + R2 put |
 | `DELETE` | `/assets/{userId}/...` | Bearer JWT | Prefix check + R2 delete |
 | `POST` | `/world-media/sign` | Bearer JWT | `{op: put\|get, world_id?, shas}` → tek RPC → ≤100 presigned URL (1 sa) |
-| `POST` | `/admin/evict-sweep` | ADMIN_TOKEN | `r2_evict_queue`'yu boşalt (asıl yol saatlik cron) |
+| `POST` | `/admin/evict-sweep` | ADMIN_TOKEN / SWEEP_TOKEN | `r2_evict_queue`'yu boşalt — `world_media` silinince Supabase çağırır (104), saatlik cron yedek |
 | `OPTIONS` | `/*` | — | CORS preflight |
 
 **Hata kodları:**

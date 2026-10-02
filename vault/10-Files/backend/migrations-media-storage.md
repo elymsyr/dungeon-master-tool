@@ -1,7 +1,7 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 055_online_count_limits.sql, 060_asset_access_shared_world.sql, 065_transient_shared_pool.sql, 089_media_pool_budgets.sql, 092_media_on_demand.sql, 099_world_media.sql, 100_package_media.sql
+path: supabase/migrations/053_free_media_bucket.sql, 054_transient_share.sql, 055_online_count_limits.sql, 060_asset_access_shared_world.sql, 065_transient_shared_pool.sql, 089_media_pool_budgets.sql, 092_media_on_demand.sql, 099_world_media.sql, 100_package_media.sql, 104_media_evict_now.sql
 layer: backend
 language: sql
 status: stable
@@ -71,3 +71,8 @@ tags: [file]
 - Medya tarafı (I): `world_media.character_id` (→ `world_characters` CASCADE) üçüncü kapsam, `world_media_one_scope` üç kolonlu, `world_media_character_sha_key`. Beş argümanlı `media_r2_key(world, package, character, sha, ext)` (`characters/{id}/…`), dört argümanlısı ona sarılıyor. `_media_scope_owner('character')`: karakterin sahibi ya da dünyasının sahibi (DM sahipsiz karakterin görselini yükler). RLS: sahibi ve dünyasının üyeleri okur, sahibi ya da dünyanın sahibi siler. `_media_usage` karakterinkini sahibine, sahipsizse dünyanın sahibine sayar. Tahliye ve `r2_evict_pop` `characters/`'ı tanıyor; `media_reserve/confirm/sign_put/sign_get` üç kapsamlı.
 - Karakter satırının kendisi (sayaç, tombstone, delta, RPC'ler) [[migrations-cloud-mirror]]'da.
 - Doğrulama: ayrı verify betiği yok; 001→101 temiz Postgres 16'da hatasız, 101 iki kez koşunca da, `verify_094`–`100` yeşil; istemcinin yazmaları geri alınan bir işlemde denendi (`online-sync-redesign.md` §4.8.7).
+
+## 104 — R2 temizliği hemen (pg_net)
+- `world_media` üzerinde `trg_world_media_kick_sweep` (AFTER DELETE, FOR EACH STATEMENT, `REFERENCING OLD TABLE AS gone`) → `kick_r2_evict_sweep()`: satır silindiyse `net.http_post` ile worker'ın `/admin/evict-sweep?limit=500`'ünü çağırır. Bütün silme yolları (dünya/paket/karakter yerele alma, hesap silme, sahibin elle silmesi) tek trigger'dan geçer; `dmt.evict_kicked` transaction-yerel bayrağıyla transaction başına en çok bir istek.
+- URL ve token Vault'ta (`dmt_worker_url`, `dmt_sweep_token`); biri yoksa ya da `pg_net` kurulu değilse sessizce atlar. Token worker'ın `SWEEP_TOKEN`'ı — `ADMIN_TOKEN` DB'ye konmaz (`/admin/purge-all`'ı da açıyor). `pg_net` commit'ten sonra gönderir, rollback'te düşer, yeniden denemez: saatlik cron yedek.
+- Doğrulama: `verify_104.sql` (`104 OK`; Vault secret'ı yoksa "yalnız cron" notice'i) — boş DELETE istek atmaz, dünya + paket CASCADE'i tek istek. Lokal stub'da `net` / `vault` şemaları sahte; 001→104 hatasız, 104 iki kez de, `verify_094`–`103` yeşil.
