@@ -513,9 +513,10 @@ class CloudPullService {
   /// karşılaştırılır, yalnız eksik ya da buluttaki hali daha yeni olanlar
   /// `get_shared_entities(world, 0, ids)` ile iner ve yerele yazılır.
   ///
-  /// Listede olmayan yerel kart geri çekilmiş karttır: silinmez, oyuncuda
-  /// gri kalır (§2.5). Döner: yazılan satırlar yerel kolonlarıyla (açık
-  /// dünyanın blob'una işlemek için) ve listedeki id'ler. Hata yukarı çıkar.
+  /// Listede olmayan yerel homebrew kart geri çekilmiş (ya da DM'in sildiği)
+  /// karttır: oyuncunun cihazından silinir. Döner: yazılan satırlar yerel
+  /// kolonlarıyla (açık dünyanın blob'una işlemek için) ve listedeki id'ler.
+  /// Hata yukarı çıkar — liste alınamazsa hiçbir şey silinmez.
   Future<({List<Map<String, Object?>> written, Set<String> visible})>
       syncSharedEntities(String worldId) async {
     final stamps = [
@@ -536,10 +537,32 @@ class CloudPullService {
         rows.add(Map<String, dynamic>.from(r as Map));
       }
     }
-    return (
-      written: await applySharedEntities(rows),
-      visible: {for (final s in stamps) s['id'] as String},
-    );
+    final visible = {for (final s in stamps) s['id'] as String};
+    final written = await applySharedEntities(rows);
+    await removeUnsharedEntities(worldId, visible);
+    return (written: written, visible: visible);
+  }
+
+  /// [worldId]'deki homebrew (linked=false) kartlardan [visible]'da olmayanları
+  /// siler — **ağ yok**. Oyuncunun bu dünyadaki her homebrew kartı bir
+  /// paylaşımdan geldi. Tombstone yazılmaz: oyuncu bu dünyayı push etmez.
+  Future<void> removeUnsharedEntities(
+      String worldId, Set<String> visible) async {
+    final gone = [
+      for (final r in await _db.customSelect(
+        'SELECT id FROM world_entities WHERE world_id = ? AND linked = 0',
+        variables: [Variable<String>(worldId)],
+      ).get())
+        if (!visible.contains(r.read<String>('id'))) r.read<String>('id'),
+    ];
+    if (gone.isEmpty) return;
+    await _db.transaction(() async {
+      for (final id in gone) {
+        await _db.customStatement(
+            'DELETE FROM world_entities WHERE id = ? AND world_id = ?',
+            [id, worldId]);
+      }
+    });
   }
 
   /// Damga listesinden çekilmesi gereken kartlar — **ağ yok**. Linked kart

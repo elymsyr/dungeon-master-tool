@@ -45,7 +45,7 @@ adımda. Bir fazı tek başına doğrulamak istersen buradan başla.
 | 5f (1. kısım) | Arka plan uzlaştırması, kota bildirimi, süre log'ları | 4.2–4.4, 8, 11.4 |
 | 5g | Karakterin kendi kapsamı | 6.6, 13 |
 | 5.5a | Oyuncunun ikinci cihazı, davet kodsuz | 14 |
-| 5.5b + ek + 103 | Kartlar buluttan, oyuncuda yerelde, gri kart | 5, 15 |
+| 5.5b + ek + 103 | Kartlar buluttan, oyuncuda yerelde, geri çekilen kart silinir | 5, 15 |
 | 6 | LAN kalktı | 10 |
 | 9 | İşlem geri bildirimi | 11 |
 
@@ -434,9 +434,9 @@ doldur.
 
 **5.7 Paylaşımı kaldırma.** A'da 5.3'teki kartın menüsünde "Paylaş"
 işaretini kaldır.
-- Beklenen: A'da "Oyuncularla paylaşım durduruldu". P'de kart **kalkmaz**,
-  soluk görünür; üstüne gelince "DM bu kartı artık paylaşmıyor" (§2.5,
-  ayrıntısı §15.4).
+- Beklenen: A'da "Oyuncularla paylaşım durduruldu". P'de kart birkaç
+  saniyede **kalkar** — listeden de cihazdan da; açıksa "bulunamadı" olur
+  (ayrıntısı §15.4).
 
 **5.8 DM çevrimdışıyken oyuncu.** A'yı tamamen kapat. P'de uygulamayı kapatıp
 aç, dünyaya gir.
@@ -959,24 +959,23 @@ değiştir, paylaşıma dokunma.
 kart **K2**'yi paylaş.
 - Beklenen: Y'de birkaç saniyede beliriyor.
 
-**15.4 Geri çekme — gri kart.** X'te K1'in paylaşımını kapat.
-- Beklenen: Y'de K1 kenar çubuğunda kalıyor ama soluk; üstüne gelince
-  "DM bu kartı artık paylaşmıyor". Açınca kartın en üstünde aynı etiket.
-- X'te K1'i yeniden paylaş. Beklenen: Y'de soluk hâl ve etiket kalkıyor.
+**15.4 Geri çekme.** X'te K1'in paylaşımını kapat.
+- Beklenen: Y'de K1 birkaç saniyede kenar çubuğundan kalkıyor; açık sekmesi
+  "bulunamadı" gösteriyor.
+- X'te K1'i yeniden paylaş. Beklenen: Y'de K1 yeniden iniyor.
 
 **15.5 Yeniden açılış.** K1'in paylaşımını tekrar kapat. Y'de Masa'dan çık,
 yeniden gir.
-- Beklenen: K1 hâlâ gri ve etiketli. K2 var.
+- Beklenen: K1 yok. K2 var.
 - Beklenen: log'da `CloudSync: paylaşılan kartlar <dünya> +0` (hiçbir kart
   yeniden inmedi).
-- X'te K1'i geri çekiliyken düzenle, sonra yeniden paylaş. Beklenen: Y'de gri
-  hâl kalkıyor ve yeni hali geliyor.
+- X'te K1'i geri çekiliyken düzenle, sonra yeniden paylaş. Beklenen: Y'de K1
+  yeni haliyle geliyor.
 
-**15.5b Çevrimdışı açılış.** X'te K1'in paylaşımını yeniden kapat (Y'de
-griye döner). Y'nin ağını kes, uygulamayı kapatıp aç, Masa'yı aç.
-- Beklenen: K1 ve K2 görünüyor (kartlar cihazda). K1 çevrimdışıyken gri
-  **değil**: gri hâli paylaşım listesi veriyor, liste ağdan geliyor (bilinen
-  sınır). Ağı aç — K1 griye dönüyor.
+**15.5b Çevrimdışı açılış.** Y'nin ağını kes. X'te K1'in paylaşımını
+yeniden kapat. Y'de uygulamayı kapatıp aç, Masa'yı aç.
+- Beklenen: K1 ve K2 görünüyor (kartlar cihazda; geri çekmeyi Y henüz
+  bilmiyor — bilinen sınır). Ağı aç — K1 birkaç saniyede kalkıyor.
 
 **15.6 Çevrimdışı.** Y'nin ağını kes, X'te K2'yi düzenle, Y'nin ağını aç.
 - Beklenen: kanal yeniden bağlanınca K2'nin yeni hali geliyor. Log'da
@@ -984,9 +983,8 @@ griye döner). Y'nin ağını kes, uygulamayı kapatıp aç, Masa'yı aç.
   görülebilir.
 
 **15.7 DM kartı siliyor.** X'te K2'yi sil.
-- Beklenen: Y'de K2 birkaç saniyede soluk ve etiketli ("DM bu kartı artık
-  paylaşmıyor"); kalkmıyor. Normal görünmeye devam ederse ❌ — paylaşım
-  satırı silmede duruyor, gri hâli doğrulamanın listesi veriyor.
+- Beklenen: Y'de K2 birkaç saniyede kalkıyor. Görünmeye devam ederse ❌ —
+  paylaşım satırı silmede duruyor, silmeyi doğrulamanın listesi veriyor.
 
 **15.8 Yeni kart diyaloğundan paylaşım.** X'te kenar çubuğundan yeni bir NPC
 kartı **K3** yarat; diyalogdaki "Oyuncularla paylaş" kutusu işaretli gelir,

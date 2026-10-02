@@ -18,17 +18,10 @@ final entityShareServiceProvider = Provider<EntityShareService?>((ref) {
 /// PR-O6'da bu eklenmiyor; manuel invalidate UI'dan).
 ///
 /// Hata yukarı çıkar: boş liste "hiçbir kart paylaşılmıyor" demek, oyuncuda
-/// her kartı gri yapardı. Tazelemede hata önceki listeyi korur.
+/// her kartı gizlerdi. Tazelemede hata önceki listeyi korur.
 final worldEntitySharesProvider =
     FutureProvider.family<List<EntityShare>, String>((ref, worldId) async {
   final svc = ref.watch(entityShareServiceProvider);
   if (svc == null) return const [];
   return svc.listForWorld(worldId);
 });
-
-/// Faz 5.5b — oyuncunun son kart doğrulamasında görünür olan kartlar
-/// (`get_shared_entity_stamps`, `get_shared_entities` ile aynı predikat).
-/// Paylaşım satırı duran ama bulutta artık olmayan kart — DM sildi — burada
-/// yoktur ve gri görünür. İlk doğrulamaya kadar null.
-final sharedEntityStampIdsProvider =
-    StateProvider.family<Set<String>?, String>((ref, worldId) => null);

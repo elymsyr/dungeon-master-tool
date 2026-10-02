@@ -1,6 +1,6 @@
 // Oyuncunun paylaşılan kartları yerelde (102): açılışta ve her sinyalde yalnız
 // doğrulama — damga listesi yerelle karşılaştırılır, eksik/değişen kart id
-// ile iner, geri çekilen kart yerelde kalır (gri).
+// ile iner, geri çekilen kart yerelden silinir.
 //
 //   flutter test test/application/services/shared_entity_sync_test.dart
 
@@ -122,19 +122,28 @@ void main() {
     expect((await local('e1'))!['description'], 'açıklama ${iso(t2)}');
   });
 
-  test('geri çekilen kart yerelde kalır (gri), yeniden paylaşılınca güncellenir',
+  test('geri çekilen kart silinir, linked kart kalır; yeniden paylaşılınca iner',
       () async {
-    cloudHas([body('e1', t1)]);
+    cloudHas([body('e1', t1), body('e3', t1)]);
     await svc.syncSharedEntities('w1');
-    // Geri çekildi ya da DM sildi: listede yok (gri), gövde yerelde.
-    cloudHas([]);
+    await db.worldEntitiesDao.upsert(WorldEntitiesCompanion.insert(
+      id: 'p1',
+      worldId: 'w1',
+      categorySlug: 'npc',
+      name: 'paket',
+      linked: const Value(true),
+    ));
+    // e1 geri çekildi ya da DM sildi: listede yok, gövde yerelden silinir.
+    cloudHas([body('e3', t1)]);
     final res = await svc.syncSharedEntities('w1');
     expect(res.written, isEmpty);
-    expect(res.visible, isEmpty);
-    expect(await local('e1'), isNotNull);
+    expect(res.visible, {'e3'});
+    expect(await local('e1'), isNull);
+    expect(await local('e3'), isNotNull);
+    expect(await local('p1'), isNotNull);
 
-    // Geri çekiliyken düzenlenmiş, sonra yeniden paylaşılmış.
-    cloudHas([body('e1', t2)]);
+    // Yeniden paylaşıldı: baştan iner.
+    cloudHas([body('e1', t2), body('e3', t1)]);
     fetched.clear();
     await svc.syncSharedEntities('w1');
     expect(fetched, [

@@ -301,7 +301,6 @@
   "worldsDeletedCloudSnack": "World moved to trash. Cloud copy removed.",
   "cloudOnlyTitle": "In the cloud, not on this device",
   "cloudOnlyWorldsHint": "Your online worlds from your other devices, and worlds you joined as a player. Download one to use it here too — no invite code needed.",
-  "sharedEntityRevoked": "The DM no longer shares this card.",
   "cloudOnlyPackagesHint": "Your online packages from your other devices. Download one to use it here too.",
   "cloudPackageNameTaken": "A package named \"{name}\" already exists on this device. Rename it first.",
   "@cloudPackageNameTaken": {

@@ -20,7 +20,8 @@ uzlaşıyor, hub'dan online yapılıyor.
 oyuncu ikinci cihazdan dünyaya davet kodsuz dönüyor.
 **5.5b bitti (2026-10-02, [§4.8.9](#489-faz-55b--oyuncunun-kartları-get_shared_entitiesten--bitti)):**
 oyuncu kartları `get_shared_entities`'ten okuyor, DM'in düzeltmesi yeniden
-paylaşmadan gidiyor, geri çekilen kart gri. **Eki ([§4.8.10](#4810-faz-55b-eki--kartlar-oyuncuda-yerelde-doğrulamayla--bitti)):**
+paylaşmadan gidiyor, geri çekilen kart oyuncudan siliniyor (el testi sonrası,
+gri kart kalktı). **Eki ([§4.8.10](#4810-faz-55b-eki--kartlar-oyuncuda-yerelde-doğrulamayla--bitti)):**
 kartlar oyuncunun Drift'inde, açılışta yalnız doğrulama (102 deploy edildi);
 `entity_shares` saf izin, `payload_json` düştü ([§4.8.11](#4811-entity_shares-saf-izin--kart-kopyası-kalktı--bitti),
 103 deploy edildi).
@@ -435,9 +436,9 @@ helper'ları 026'dan beri var.
 
 ### Paylaşımı geri çekme
 
-İzin satırını silmek yeterli. Oyuncunun yerel önbelleğindeki kopya
-**silinmiyor** — gri görünür, "DM bu kartı artık paylaşmıyor" etiketi
-taşır, yenilenmez. Karakter o karta bağlıysa özellik eksiğe düşer,
+İzin satırını silmek yeterli. Oyuncunun cihazındaki kopya bir sonraki
+doğrulamada **silinir** (2026-10-02, el testi: kullanıcı gri kartı
+istemedi — "DM paylaşmayı bırakınca oyuncu kartı artık görmesin"). Karakter o karta bağlıysa özellik eksiğe düşer,
 `CharacterResolver` uyarı üretir.
 
 ### Kazanç
@@ -3297,13 +3298,16 @@ yazıyor), oyuncunun satırı da onu taşıyor.
 - **Her sinyalde damga listesi iniyor** (paylaşım başına ~60 bayt; 4000
   tavanında ~250 KB). Ölçüm isterse sinyal yolu revizyon damgasına döner,
   liste yalnız açılışta ve paylaşım değişiminde.
-- **Gri kart hiç silinmiyor.** DM kartı tamamen silse de oyuncuda gri kalır;
-  oyuncunun silme düğmesi yok.
+- ~~**Gri kart hiç silinmiyor.**~~ Kalktı (2026-10-02, el testi §5.7):
+  doğrulama listede olmayan homebrew kartı oyuncunun Drift'inden ve açık
+  blob'dan siliyor (`removeUnsharedEntities`); `entity_shares` DELETE de
+  doğrulamayı tetikliyor. Gri kart (`revokedSharedEntityIdsProvider`,
+  `sharedEntityStampIdsProvider`, `sharedEntityRevoked`) silindi.
 - **Aynı saniyede iki düzenleme** aynı damgayı taşır; ikincisi bir sonraki
   düzenlemeye kadar oyuncuya gitmez (DM'in kendi pull'unda da aynı sınır).
-- **Çevrimdışı gri yok.** Gri kart paylaşım listesine bakıyor, liste ağdan
-  geliyor; çevrimdışı açılışta geri çekilen kart normal görünür, bağlantı
-  gelince griye döner.
+- **Çevrimdışı silme yok.** Silmeyi damga listesi veriyor, liste ağdan
+  geliyor; çevrimdışı açılışta geri çekilen kart görünür, bağlantı gelince
+  kalkar.
 - **Aynı id oyuncunun başka dünyasında** (katalog dünyası kart id'leri
   deterministik; oyuncu aynı dünyayı kendisi de indirmişse): kart bu dünyaya
   yazılmaz, oyuncunun kendi dünyasındaki kopyası taşınmasın diye (yerel PK
