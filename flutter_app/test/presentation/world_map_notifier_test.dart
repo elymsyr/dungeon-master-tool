@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -222,6 +224,29 @@ void main() {
       expect(_state(n).imagePath, '');
       expect(_state(n).pins, isEmpty);
       expect(n.viewTransform.value.scale, 1.0);
+    });
+  });
+
+  // Ekran yalnız blob başkası tarafından değiştiyse re-init ediyor. Drift'e
+  // yazılıp `reload` ile geri okunan aynı harita "değişti" sayılmamalı,
+  // öteki cihazdan gelen pin silme sayılmalı.
+  group('WorldMapNotifier — map_data parmak izi', () {
+    test('Drift gidiş-dönüşü aynı, pin silme farklı', () {
+      final c = _makeContainer();
+      addTearDown(c.dispose);
+      final n = c.read(worldMapProvider.notifier);
+      final local = <String, dynamic>{
+        'scale': 1.0,
+        'pins': [
+          {'id': 'p1', 'x': 10.5, 'y': 20.0},
+          {'id': 'p2', 'x': 1.0, 'y': 2.0},
+        ],
+      };
+      n.markMapDataSeen(local);
+      expect(n.hasSeenMapData(jsonDecode(jsonEncode(local)) as Map), isTrue);
+      final remote = Map<String, dynamic>.from(local)
+        ..['pins'] = [(local['pins'] as List).first];
+      expect(n.hasSeenMapData(remote), isFalse);
     });
   });
 }

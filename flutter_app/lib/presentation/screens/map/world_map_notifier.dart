@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -243,6 +244,18 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   /// "kayıp harita" olarak yayılırdı. Kullanıcı pin/görsel/era eklerse
   /// `hasContent` true olur → save serbest.
   bool _initializedWithContent = false;
+
+  /// `campaign.data['map_data']`'nın bu notifier'ın en son gördüğü hali
+  /// ([init] öncesi ekran işaretler, [syncToCampaignData] kendisi yazar).
+  /// Blob bundan farklıysa onu başka biri değiştirmiş demek — öteki cihazın
+  /// pin düzenlemesi pull → `reload` ile geldi; ekran re-init etmeli.
+  String? _seenMapJson;
+
+  bool hasSeenMapData(Map? mapData) =>
+      _seenMapJson == jsonEncode(mapData ?? const {});
+
+  void markMapDataSeen(Map? mapData) =>
+      _seenMapJson = jsonEncode(mapData ?? const {});
 
   WorldMapNotifier(this._ref) : super(const WorldMapState());
 
@@ -523,6 +536,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       'era_end_label': state.eraEndLabel,
       'pin_size': state.pinSize.name,
     };
+    markMapDataSeen(campaign.data!['map_data'] as Map);
   }
 
   // -------------------------------------------------------------------------

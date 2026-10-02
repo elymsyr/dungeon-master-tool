@@ -1330,67 +1330,92 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   Offset? _posAtResizeStart;
 
   Widget _buildCornerHandle(String corner, DmToolColors palette) {
-    const hs = 10.0; // visual handle size
-    // Hit area is much larger than the visible handle so fingers — and
-    // imprecise mouse drags — can land on it. Visible square stays 10x10.
-    final double hit = _isTouchDevice ? 44.0 : 24.0;
-    final double offset = hit / 2;
+    // Hit area — ekran pikseli. Tuvalin ölçeğine bölünüyor ki uzaklaşınca
+    // tutamaç küçülmesin. Kutu düğümün **içinde**, köşeye yaslı: düğümün
+    // kutusu (`RepaintBoundary` dahil) kendi sınırı dışını hit-test etmiyor,
+    // köşeye ortalanmış eski kutunun yalnız iç çeyreği tutulabiliyordu.
+    final double hitScreen = _isTouchDevice ? 44.0 : 24.0;
     final (
       double? left,
       double? right,
       double? top,
       double? bottom,
+      Alignment align,
     ) = switch (corner) {
-      'tl' => (-offset as double?, null, -offset as double?, null),
-      'tr' => (null, -offset as double?, -offset as double?, null),
-      'bl' => (-offset as double?, null, null, -offset as double?),
-      _ /* br */ => (null, -offset as double?, null, -offset as double?),
+      'tl' => (0.0, null, 0.0, null, Alignment.topLeft),
+      'tr' => (null, 0.0, 0.0, null, Alignment.topRight),
+      'bl' => (0.0, null, null, 0.0, Alignment.bottomLeft),
+      _ /* br */ => (null, 0.0, null, 0.0, Alignment.bottomRight),
     };
     final cursor = switch (corner) {
       'tl' || 'br' => SystemMouseCursors.resizeUpLeftDownRight,
       _ => SystemMouseCursors.resizeUpRightDownLeft,
     };
 
-    return Positioned(
-      left: left,
-      right: right,
-      top: top,
-      bottom: bottom,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onPanStart: (d) {
-          _resizeStart = d.globalPosition;
-          _sizeAtResizeStart = Size(widget.node.width, widget.node.height);
-          _posAtResizeStart = Offset(widget.node.x, widget.node.y);
-          _resizeCorner = corner;
-        },
-        onPanUpdate: (d) => _onCornerResizeUpdate(d),
-        onPanEnd: (_) {
-          _resizeStart = null;
-          _sizeAtResizeStart = null;
-          _posAtResizeStart = null;
-          _resizeCorner = null;
-          widget.notifier.commitSizeOverride(widget.node.id);
-          if (_mobileResizeMode) _exitMobileMode();
-        },
-        child: MouseRegion(
-          cursor: cursor,
-          child: SizedBox(
-            width: hit,
-            height: hit,
-            child: Center(
+    return ValueListenableBuilder(
+      valueListenable: widget.notifier.viewTransform,
+      builder: (context, vt, child) {
+        final n = widget.node;
+        // Dört köşe düğümü tamamen kaplamasın — gövde sürüklenebilir kalsın.
+        final hit = (hitScreen / vt.scale)
+            .clamp(0.0, (n.width < n.height ? n.width : n.height) / 3);
+        final hs = 10.0 / vt.scale; // visual handle size
+        return Positioned(
+          left: left,
+          right: right,
+          top: top,
+          bottom: bottom,
+          width: hit,
+          height: hit,
+          child: _cornerHandleGesture(
+            corner,
+            cursor,
+            Align(
+              alignment: align,
               child: Container(
                 width: hs,
                 height: hs,
                 decoration: BoxDecoration(
                   color: palette.tabIndicator,
-                  borderRadius: BorderRadius.circular(2),
-                  border: Border.all(color: palette.canvasBg, width: 1),
+                  borderRadius: BorderRadius.circular(2 / vt.scale),
+                  border: Border.all(
+                    color: palette.canvasBg,
+                    width: 1 / vt.scale,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _cornerHandleGesture(
+    String corner,
+    MouseCursor cursor,
+    Widget handle,
+  ) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: (d) {
+        _resizeStart = d.globalPosition;
+        _sizeAtResizeStart = Size(widget.node.width, widget.node.height);
+        _posAtResizeStart = Offset(widget.node.x, widget.node.y);
+        _resizeCorner = corner;
+      },
+      onPanUpdate: (d) => _onCornerResizeUpdate(d),
+      onPanEnd: (_) {
+        _resizeStart = null;
+        _sizeAtResizeStart = null;
+        _posAtResizeStart = null;
+        _resizeCorner = null;
+        widget.notifier.commitSizeOverride(widget.node.id);
+        if (_mobileResizeMode) _exitMobileMode();
+      },
+      child: MouseRegion(
+        cursor: cursor,
+        child: SizedBox.expand(child: handle),
       ),
     );
   }
