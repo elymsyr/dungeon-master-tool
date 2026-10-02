@@ -33,18 +33,40 @@ class DiceFab extends ConsumerWidget {
     final box = context.findRenderObject()! as RenderBox;
     final anchor = box.localToGlobal(Offset.zero, ancestor: navigator.overlay!.context.findRenderObject()) & box.size;
     DiceKit.load(look).ignore(); // build the 3D dice while the menu is open
-    navigator.push(PageRouteBuilder<void>(
-      opaque: false,
-      barrierColor: Colors.black45,
-      barrierDismissible: true,
-      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      transitionDuration: const Duration(milliseconds: 150),
-      reverseTransitionDuration: const Duration(milliseconds: 150),
-      // Transparent Material: text styles + ink, without painting over the dim.
-      pageBuilder: (_, _, _) => Material(type: MaterialType.transparency, child: _DiceMenu(anchor: anchor, look: look)),
-      transitionsBuilder: (_, animation, _, child) => FadeTransition(opacity: animation, child: child),
-    ));
+    _pushDiceRoute(context, _DiceMenu(anchor: anchor, look: look));
   }
+}
+
+/// Throws [counts] straight away (no menu), e.g. a d20 for a skill check;
+/// [modifier] is added to the dice total and [label] titles the result card.
+void rollDice(BuildContext context, WidgetRef ref, Map<String, int> counts, {int modifier = 0, String? label}) {
+  final look = resolveDiceLook(ref.read(uiStateProvider).diceTheme, ref.read(themeProvider));
+  _pushDiceRoute(
+    context,
+    Builder(
+      builder: (context) => DiceRollView(
+        counts: counts,
+        look: look,
+        modifier: modifier,
+        label: label,
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    ),
+  );
+}
+
+void _pushDiceRoute(BuildContext context, Widget child) {
+  Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
+    opaque: false,
+    barrierColor: Colors.black45,
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    transitionDuration: const Duration(milliseconds: 150),
+    reverseTransitionDuration: const Duration(milliseconds: 150),
+    // Transparent Material: text styles + ink, without painting over the dim.
+    pageBuilder: (_, _, _) => Material(type: MaterialType.transparency, child: child),
+    transitionsBuilder: (_, animation, _, child) => FadeTransition(opacity: animation, child: child),
+  ));
 }
 
 /// The open menu: a Roll button and one row per die kind stacked above an X
