@@ -78,7 +78,7 @@ telefona kopyala. "MB" burada MiB (limitler de öyle: 5 MB = 5 242 880 bayt).
 | `02-orta-tur1..3/` | her birinde 15 görsel, 1.5–3 MB (set başına ~34 MB) | 4.1 → tur1, 4.2 → tur2, 4.3 → tur3 |
 | `03-kart-limit/` | `kart-4.8MB-sinir-alti.jpg` (gitmeli), `kart-7MB-limit-ustu.jpg` (gitmemeli) | 3.3, 0.8 Deneme |
 | `04-harita/` | `harita-8MB.jpg` (gitmeli), `harita-12MB-limit-ustu.jpg` (gitmemeli), `savas-haritasi-3MB.jpg` | 3.4, 0.8 Deneme |
-| `05-portre/` | `portre-1.jpg`, `portre-2.jpg` (1 MB), `portre-5MB-limit-ustu.jpg` (portre limiti 4 MB) | 6.6, 13.1, 13.7, 13.12 |
+| `05-portre/` | `portre-1.jpg`, `portre-2.jpg` (1 MB), `portre-5MB-limit-ustu.jpg` (karakter medyası limiti 5 MB; dosya 5 MiB'ı ~2 KB aşıyor) | 6.6, 13.1, 13.7, 13.12 |
 | `06-paket/` | `paket-1.png`, `paket-2.png`, `paket-3-yeni.jpg`, `paket-6MB-limit-ustu.jpg` | 7.1, 12.1, 12.3 |
 | `07-metin/` | `aciklama-310KB.txt` (bulut satır sınırı 256 KB) | 11.4 |
 
@@ -477,8 +477,10 @@ Karakterde HP ya da ekipman değiştir, kaydet. İnterneti aç, dünyayı kapat�
   A'ya gelir. Eski sistemde bu düzenleme sessizce kayboluyordu.
 
 **6.6 Karakter görseli.** Karaktere portre ekle (`05-portre/portre-1.jpg`).
-İsteğe bağlı: `portre-5MB-limit-ustu.jpg` (portre limiti 4 MB) → limit
-uyarısı, A'da kırık ikon.
+İsteğe bağlı: `portre-5MB-limit-ustu.jpg` (karakter medyası limiti 5 MB; dosya 5 MiB'ı ~2 KB aşıyor) → limit
+uyarısı, A'da kırık ikon. Limit testi için A'nın daha önce görmediği bir
+dosya kullan: `kart-7MB-limit-ustu.jpg` 3.3'te A'nın kartına eklendiği için
+A onu kendi diskinden çözer (`ContentRefIndex`) ve bulutta olmadan gösterir.
 - Beklenen: A'da birkaç saniyede görünür. Faz 5g'den beri karakter medyası
   bulutta (`characters/{id}/`); ayrıntısı §13.7 ve §13.12.
 
