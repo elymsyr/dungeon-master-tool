@@ -5,7 +5,7 @@ path: .github/workflows/build.yml
 layer: backend
 language: yaml
 status: stable
-updated: 2026-06-09
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -18,7 +18,7 @@ tags: [file]
 **Inputs**
 - Triggers: `release` (`types: [published]`) and `workflow_dispatch`.
 - `permissions: contents: write` (needed to attach assets to the release).
-- Env: `FLUTTER_VERSION: "3.41.6"`, `WORKING_DIR: flutter_app`.
+- Env: `FLUTTER_VERSION: "3.47.6"`, `WORKING_DIR: flutter_app`.
 - Secrets consumed: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DMT_WORKER_URL` (all passed as `--dart-define`); Android signing — `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`; `GITHUB_TOKEN` for release upload.
 
 **Outputs**
@@ -33,7 +33,7 @@ tags: [file]
 - Spec / reference: [[Platform-Targets]]
 
 ## Key Logic / Variables
-- Five parallel jobs, each with the same prelude: checkout → `subosito/flutter-action@v2` (3.41.6, stable, cached) → `flutter pub get` → `dart run build_runner build --delete-conflicting-outputs`.
+- Five parallel jobs, each with the same prelude: checkout → `subosito/flutter-action@v2` (3.47.6, stable, cached) → `flutter pub get` → `dart run build_runner build --delete-conflicting-outputs`.
 - All `flutter build` invocations append the three `--dart-define` flags (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DMT_WORKER_URL`) — these compile-time consts are how the app gets its backend config (see [[dart-define-reference]]).
 - Per-platform specifics:
   - **build-android** (`ubuntu-22.04`): `setup-java@v4` zulu 17; restores keystore by base64-decoding `ANDROID_KEYSTORE_BASE64` into `android/upload.jks` and writing `android/key.properties`. HARD-FAILS (`exit 1`) if `ANDROID_KEYSTORE_BASE64` is empty, to prevent shipping a debug-signed release. `flutter build apk --release`.

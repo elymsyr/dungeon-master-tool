@@ -64,7 +64,7 @@ See [flutter_app/README.md](flutter_app/README.md) for full architecture documen
 ## Coding Standards
 
 - Follow the lint rules defined in `analysis_options.yaml` (flutter_lints).
-- Use **Riverpod** for state management. Annotate providers with `@riverpod` where possible.
+- Use **Riverpod** for state management with hand-written providers (Riverpod codegen is not installed).
 - Use **Freezed** for immutable model classes.
 - Use **Drift** for all database access. Never use raw SQL outside DAOs.
 - Keep the domain layer free of Flutter and third-party package imports.
