@@ -3381,5 +3381,16 @@
     }
   },
   "packageTooLargeBody": "These files are over the size limit (images 5 MB, audio 10 MB, PDF 20 MB), so your other devices won't get them. They keep working here.",
-  "packageMediaIncomplete": "The package is online, but not all media reached the cloud yet. The rest uploads at the next sync."
+  "packageMediaIncomplete": "The package is online, but not all media reached the cloud yet. The rest uploads at the next sync.",
+  "diceRollerTooltip": "Roll dice",
+  "diceRoll": "Roll",
+  "diceRollSelection": "Roll {dice}",
+  "@diceRollSelection": {
+    "placeholders": {
+      "dice": {
+        "type": "String"
+      }
+    }
+  },
+  "diceTapToClose": "Tap to close"
 }

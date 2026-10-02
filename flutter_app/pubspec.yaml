@@ -68,6 +68,10 @@ dependencies:
   # Runtime app version (pubspec → admin heartbeat)
   package_info_plus: ^8.0.2
 
+  # 3D dice roller (Flutter GPU)
+  flutter_scene: ^0.23.0
+  vector_math: ^2.4.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

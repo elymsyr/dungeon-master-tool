@@ -2188,5 +2188,9 @@
   "packageUploadingMedia": "Paketmedien werden hochgeladen {done}/{total}…",
   "packageQuotaExceeded": "Die Medien dieses Pakets brauchen {need}, im Cloud-Speicher sind aber nur noch {left} frei. Entferne einige Bilder oder nimm eine andere Welt oder ein anderes Paket offline.",
   "packageTooLargeBody": "Diese Dateien überschreiten das Größenlimit (Bilder 5 MB, Audio 10 MB, PDF 20 MB) und erreichen deine anderen Geräte nicht. Hier funktionieren sie weiter.",
-  "packageMediaIncomplete": "Das Paket ist online, aber noch nicht alle Medien sind in der Cloud. Der Rest wird bei der nächsten Synchronisierung hochgeladen."
+  "packageMediaIncomplete": "Das Paket ist online, aber noch nicht alle Medien sind in der Cloud. Der Rest wird bei der nächsten Synchronisierung hochgeladen.",
+  "diceRollerTooltip": "Würfeln",
+  "diceRoll": "Würfeln",
+  "diceRollSelection": "{dice} würfeln",
+  "diceTapToClose": "Zum Schließen tippen"
 }

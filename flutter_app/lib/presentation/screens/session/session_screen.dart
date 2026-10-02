@@ -846,40 +846,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // MOBILE LAYOUT
   // ============================================================
   Widget _buildMobileLayout(DmToolColors palette, CombatState combat, Encounter? enc) {
-    return Stack(
+    // Dice live in MainScreen's FAB (DiceFab), on every tab.
+    return Column(
       children: [
-        Column(
-          children: [
-            // Top tab bar: Combat | Log | Map
-            _buildMobileTabBar(palette),
-            // Tab content — full remaining height
-            Expanded(
-              child: LazyIndexedStack(
-                index: _mobileTabIndex,
-                children: [
-                  _buildMobileCombatTab(palette, combat, enc),
-                  _buildMobileLogTab(palette, combat),
-                  _buildMobileBattleMapTab(palette, enc),
-                  const ProjectionPanel(),
-                  _buildMobileEntityStatsTab(palette),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // Dice FAB only on Combat tab
-        if (_mobileTabIndex == 0)
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton(
-              heroTag: 'session_screen_dice_fab',
-              mini: true,
-              shape: RoundedRectangleBorder(borderRadius: palette.cbr),
-              onPressed: () => _showDiceBottomSheet(palette),
-              child: const Icon(Icons.casino),
-            ),
+        // Top tab bar: Combat | Log | Map
+        _buildMobileTabBar(palette),
+        // Tab content — full remaining height
+        Expanded(
+          child: LazyIndexedStack(
+            index: _mobileTabIndex,
+            children: [
+              _buildMobileCombatTab(palette, combat, enc),
+              _buildMobileLogTab(palette, combat),
+              _buildMobileBattleMapTab(palette, enc),
+              const ProjectionPanel(),
+              _buildMobileEntityStatsTab(palette),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -1213,62 +1197,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           },
         );
       },
-    );
-  }
-
-  void _showDiceBottomSheet(DmToolColors palette) {
-    int? lastRoll;
-    String? lastDie;
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(palette.cardBorderRadius)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (lastRoll != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    '$lastDie: $lastRoll',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: palette.tabActiveText),
-                  ),
-                ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [4, 6, 8, 10, 12, 20, 100].map((d) =>
-                  SizedBox(
-                    width: 72,
-                    height: 48,
-                    child: FilledButton(
-                      onPressed: () {
-                        final roll = _rng.nextInt(d) + 1;
-                        ref.read(combatProvider.notifier).addLog('d$d: $roll');
-                        setSheetState(() {
-                          lastRoll = roll;
-                          lastDie = 'd$d';
-                        });
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: palette.featureCardBg,
-                        foregroundColor: palette.tabActiveText,
-                      ),
-                      child: Text('d$d', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ).toList(),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

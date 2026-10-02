@@ -53,6 +53,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/dice/dice_fab.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/expandable_section.dart';
@@ -627,6 +628,8 @@ class _CharacterEditorScreenState
           ],
         ),
         body: _buildCardBody(context, palette, character, playerCat, template),
+        // Embedded in a world screen, that screen's dice button is already there.
+        floatingActionButton: embedded ? null : const DiceFab(),
       ),
     );
   }
@@ -805,7 +808,8 @@ class _CharacterEditorScreenState
               children: [
                 ListView.builder(
                   controller: _sheetScroll,
-                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+                  // Bottom room so the dice button never covers the last row.
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 96),
                   itemCount: rows.length,
                   itemBuilder: (_, i) =>
                       KeyedSubtree(key: _rowKeys[i], child: rows[i]),

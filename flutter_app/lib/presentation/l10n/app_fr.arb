@@ -2188,5 +2188,9 @@
   "packageUploadingMedia": "Envoi des médias du paquet {done}/{total}…",
   "packageQuotaExceeded": "Les médias de ce paquet nécessitent {need}, mais il ne reste que {left} d'espace cloud. Retirez des images ou repassez un autre monde ou paquet en local.",
   "packageTooLargeBody": "Ces fichiers dépassent la limite de taille (images 5 Mo, audio 10 Mo, PDF 20 Mo) : vos autres appareils ne les recevront pas. Ils restent utilisables ici.",
-  "packageMediaIncomplete": "Le paquet est en ligne, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé à la prochaine synchronisation."
+  "packageMediaIncomplete": "Le paquet est en ligne, mais tous les médias ne sont pas encore dans le cloud. Le reste sera envoyé à la prochaine synchronisation.",
+  "diceRollerTooltip": "Lancer les dés",
+  "diceRoll": "Lancer",
+  "diceRollSelection": "Lancer {dice}",
+  "diceTapToClose": "Touchez pour fermer"
 }

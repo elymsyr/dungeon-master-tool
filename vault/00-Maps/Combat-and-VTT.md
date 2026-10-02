@@ -19,6 +19,7 @@ tags: [moc]
 - [[world_map_data_dao]] — save/load map grids.
 - [[map_pins_dao]] — pinned markers/labels.
 - [[grid_canvas]] — grid render + token placement widget.
+- [[dice_physics]] — 3D dice roller: bottom-right dice button on world + character screens, results decided before the throw.
 
 ## Data Flow
 DM edits initiative/HP → [[combat_provider]] → [[combat_dao]] (Drift) → [[Sync-and-Realtime]]. Map edits → [[world_map_data_dao]] + [[map_pins_dao]]. Snapshot built for [[Projection-Second-Screen]] with [[fog_externalizer]].
