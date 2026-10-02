@@ -58,7 +58,11 @@ class _PlayerCharacterTabState extends ConsumerState<PlayerCharacterTab> {
       color: palette.tabBg,
       child: Column(
         children: [
-          _Header(palette: palette, activeWorld: activeWorld),
+          _Header(
+            palette: palette,
+            activeWorld: activeWorld,
+            worldName: ref.watch(activeWorldNameProvider).valueOrNull,
+          ),
           if (worldId != null)
             MembersStrip(worldId: worldId, palette: palette),
           Expanded(
@@ -83,7 +87,12 @@ class _PlayerCharacterTabState extends ConsumerState<PlayerCharacterTab> {
 class _Header extends StatelessWidget {
   final DmToolColors palette;
   final String? activeWorld;
-  const _Header({required this.palette, required this.activeWorld});
+  final String? worldName;
+  const _Header({
+    required this.palette,
+    required this.activeWorld,
+    required this.worldName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +111,7 @@ class _Header extends StatelessWidget {
             child: Text(
               activeWorld == null
                   ? 'Your Characters'
-                  : 'Characters · $activeWorld',
+                  : 'Characters · ${worldName ?? ''}',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
