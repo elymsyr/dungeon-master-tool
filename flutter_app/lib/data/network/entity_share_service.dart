@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,16 +6,14 @@ import '../../domain/entities/online/entity_share.dart';
 
 /// public.entity_shares CRUD. RLS DM yetkisi enforces.
 ///
-/// Bulut sync kaldırıldıktan sonra bu tablo yalnızca bir görünürlük işareti
-/// değil, **kartın kendisini taşıyan kanal**. `world_entities` aynası artık
-/// yok; oyuncu paylaşılan kartın içeriğini `payload_json`'dan alır. Payload
-/// yazmadan paylaşmak, oyuncuda boş kart demektir.
+/// Tablo yalnız izin: "bu dünyanın üyeleri bu kartı okuyabilir" (§2.5).
+/// Gövde DM'in bulut aynasında; oyuncu onu `get_shared_entities`'ten alır
+/// (Faz 5.5b). Kart kopyası taşıyan `payload_json` 103'te düştü.
 class EntityShareService {
   final SupabaseClient client;
   EntityShareService(this.client);
 
   Future<List<EntityShare>> listForWorld(String worldId) async {
-    // Yalnız izin kolonları: `payload_json` Faz 5.5b'den beri okunmuyor.
     final rows = await client
         .from('entity_shares')
         .select('entity_id, world_id, shared_with, shared_by, shared_at')
@@ -27,14 +24,9 @@ class EntityShareService {
   }
 
   /// World-wide share (shared_with NULL). Aynı entity için tekrar idempotent.
-  ///
-  /// [payload] paylaşılan entity'nin tam JSON'u — oyuncu tarafındaki tek
-  /// içerik kaynağı. Görselleri `AssetRef`'e çevrilmiş olmalı (bkz.
-  /// `entity_share_prepare.dart`), aksi halde oyuncu çözemez.
   Future<void> shareWithAll({
     required String entityId,
     required String worldId,
-    Map<String, dynamic>? payload,
   }) async {
     final uid = client.auth.currentUser?.id;
     if (uid == null) throw StateError('auth required');
@@ -50,7 +42,6 @@ class EntityShareService {
       'world_id': worldId,
       'shared_with': null,
       'shared_by': uid,
-      'payload_json': payload == null ? null : jsonEncode(payload),
     });
   }
 
@@ -60,18 +51,18 @@ class EntityShareService {
   /// yüz homebrew kartlı bir dünyada publish dakikalarca sürüyordu. Burada
   /// silme tek sorguya, insert 50'lik parçalara iner.
   ///
-  /// Bir parça toptan düşerse (512KB/kart CHECK'i ya da 4000 satır tavanı —
-  /// migration 088) o parça satır satır tekrar denenir, böylece tek bozuk
-  /// kart geri kalanını götürmez. Dönen değer: yazılamayan kart id'leri.
+  /// Bir parça toptan düşerse (4000 satır tavanı — migration 088) o parça
+  /// satır satır tekrar denenir, böylece tek bozuk satır geri kalanını
+  /// götürmez. Dönen değer: yazılamayan kart id'leri.
   Future<List<String>> shareManyWithAll({
     required String worldId,
-    required Map<String, Map<String, dynamic>?> payloads,
+    required Iterable<String> entityIds,
   }) async {
     final uid = client.auth.currentUser?.id;
     if (uid == null) throw StateError('auth required');
-    if (payloads.isEmpty) return const [];
+    final ids = entityIds.toList(growable: false);
+    if (ids.isEmpty) return const [];
 
-    final ids = payloads.keys.toList(growable: false);
     for (var i = 0; i < ids.length; i += 200) {
       await client
           .from('entity_shares')
@@ -86,9 +77,6 @@ class EntityShareService {
           'world_id': worldId,
           'shared_with': null,
           'shared_by': uid,
-          'payload_json': payloads[id] == null
-              ? null
-              : jsonEncode(payloads[id]),
         };
 
     final failed = <String>[];
@@ -113,7 +101,6 @@ class EntityShareService {
     required String entityId,
     required String worldId,
     required String userId,
-    Map<String, dynamic>? payload,
   }) async {
     final uid = client.auth.currentUser?.id;
     if (uid == null) throw StateError('auth required');
@@ -129,7 +116,6 @@ class EntityShareService {
       'world_id': worldId,
       'shared_with': userId,
       'shared_by': uid,
-      'payload_json': payload == null ? null : jsonEncode(payload),
     });
   }
 

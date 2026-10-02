@@ -118,7 +118,8 @@ abstract class FieldSchema with _$FieldSchema {
 /// ("Secrets", "Tactics", …) hiç render edilmez.
 ///
 /// Veri oyuncunun cihazında bulunabilir (kurulu paket kartları tam gövdeyle
-/// gelir, `entity_shares` payload'ı ise kırpılır) — burası **görüntülemeyi**
+/// gelir, paylaşılan kart `get_shared_entities`'te kırpılır) — burası
+/// **görüntülemeyi**
 /// kesen kapı. Kart render eden her yol buradan geçmeli.
 ///
 /// Düşen alan yoksa liste aynen döner; çağıranların satır/grid cache'i

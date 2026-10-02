@@ -506,6 +506,98 @@ class CloudPullService {
     return CloudPullApplied(applied: applied, removed: removed);
   }
 
+  // ── Oyuncunun paylaşılan kartları (102) ──────────────────────────────────
+
+  /// Oyuncunun [worldId]'deki paylaşılan kartlarını doğrular: izinli kartların
+  /// damga listesi (`get_shared_entity_stamps`, gövdesiz) yerelle
+  /// karşılaştırılır, yalnız eksik ya da buluttaki hali daha yeni olanlar
+  /// `get_shared_entities(world, 0, ids)` ile iner ve yerele yazılır.
+  ///
+  /// Listede olmayan yerel kart geri çekilmiş karttır: silinmez, oyuncuda
+  /// gri kalır (§2.5). Döner: yazılan satırlar yerel kolonlarıyla (açık
+  /// dünyanın blob'una işlemek için) ve listedeki id'ler. Hata yukarı çıkar.
+  Future<({List<Map<String, Object?>> written, Set<String> visible})>
+      syncSharedEntities(String worldId) async {
+    final stamps = [
+      for (final r in await _client.rpc('get_shared_entity_stamps',
+          params: {'p_world_id': worldId}) as List)
+        Map<String, dynamic>.from(r as Map),
+    ];
+    final need = await sharedEntitiesToFetch(worldId, stamps);
+    final rows = <Map<String, dynamic>>[];
+    // Tek istekte binlerce id gövdeyi şişiriyor; dünya başına 4000 paylaşım.
+    for (var i = 0; i < need.length; i += _page) {
+      final ids = need.sublist(i, (i + _page).clamp(0, need.length));
+      for (final r in await _client.rpc('get_shared_entities', params: {
+        'p_world_id': worldId,
+        'p_since_revision': 0,
+        'p_ids': ids,
+      }) as List) {
+        rows.add(Map<String, dynamic>.from(r as Map));
+      }
+    }
+    return (
+      written: await applySharedEntities(rows),
+      visible: {for (final s in stamps) s['id'] as String},
+    );
+  }
+
+  /// Damga listesinden çekilmesi gereken kartlar — **ağ yok**. Linked kart
+  /// hiç çekilmez (gövdesi kurulu paketten gelir); yereldeki satır aynı ya da
+  /// daha yeniyse de.
+  Future<List<String>> sharedEntitiesToFetch(
+      String worldId, List<Map<String, dynamic>> stamps) async {
+    final local = {
+      for (final r in await _db.customSelect(
+        'SELECT id, updated_at FROM world_entities WHERE world_id = ?',
+        variables: [Variable<String>(worldId)],
+      ).get())
+        r.read<String>('id'): r.data['updated_at'] as int?,
+    };
+    return [
+      for (final s in stamps)
+        if (s['linked'] != true &&
+            !((local[s['id']] ?? -1) >= (_unixOf(s['updated_at']) ?? 0)))
+          s['id'] as String,
+    ];
+  }
+
+  /// `get_shared_entities` satırlarını yerele yazar — **ağ yok**. Medya
+  /// ref'leri yerel dosyaya çözülür, LWW [_write]'ın. Linked satır atlanır.
+  /// Yazılanları yerel kolonlarıyla döner.
+  Future<List<Map<String, Object?>>> applySharedEntities(
+      List<Map<String, dynamic>> rows) async {
+    final t = mirrorTables.firstWhere((t) => t.cloud == 'world_entities');
+    final prepared = [
+      for (final r in rows)
+        if (r['linked'] != true) await _toLocal(t, r),
+    ];
+    final written = <Map<String, Object?>>[];
+    if (prepared.isEmpty) return written;
+    await _db.transaction(() async {
+      for (final row in prepared) {
+        // Aynı id oyuncunun başka bir dünyasında: katalog dünyasının kart
+        // id'leri deterministik, iki cihazda aynı. PK yalnız `id` — yazmak
+        // kartı oyuncunun kendi dünyasından buraya taşırdı. Kart burada
+        // görünmez, her doğrulamada yeniden istenir (nadir).
+        final foreign = await _db.customSelect(
+          'SELECT 1 FROM world_entities WHERE id = ? AND world_id <> ?',
+          variables: [
+            Variable<String>(row['id'] as String),
+            Variable<String>(row['world_id'] as String),
+          ],
+        ).getSingleOrNull();
+        if (foreign != null) {
+          debugPrint('CloudSync: paylaşılan kart ${row['id']} başka dünyada, '
+              'atlandı');
+          continue;
+        }
+        if (await _write(t.local, t.key, row)) written.add(row);
+      }
+    });
+    return written;
+  }
+
   // ── Satır yazma ──────────────────────────────────────────────────────────
 
   /// Bulut satırını yerel kolonlara çevirir. Bilinmeyen kolonlar (`revision`,

@@ -52,7 +52,7 @@ tags: [moc]
 
 **Bulut aynası:** DM'in dünya kanalı `SUBSCRIBED` (açılış · reconnect · uygulama öne gelir) → `catchUp`: tampon flush → push turu (`updated_at > damga` → upsert) → pull turu (`get_world_delta(world, cloud_revision)` → LWW uygula → damgayı ilerlet) → satır indiyse `ActiveCampaignNotifier.reload()` (blob'u Drift'ten tazeler, yoksa inen veri ekrana çıkmaz). Sıra bağlayıcı; gerekçesi [[cloud_pull_service]]. Karşı cihaz yazınca: `world_revisions` sinyali → 1 sn debounce → sayaç yerel damgadan büyükse aynı `catchUp`. Kendi push'umuzun sinyali eşik altında kalır: push, bulutta boşluksuz bir revizyon dizisi bıraktıysa damgayı dizinin sonuna çekiyor ([[cloud_push_service]] `ownRunEnd`).
 
-**Paylaşım:** DM "Paylaş" → `entity_shares` izin satırı → CDC → oyuncunun [[world_mirror_applier]]'ı gövdeyi `get_shared_entities`'ten çekip blob'a yazar (Faz 5.5b; sunucuda kırpılmış). Adımlar: [[Share-Broadcast-Flow]].
+**Paylaşım:** DM "Paylaş" → `entity_shares` izin satırı → CDC → oyuncunun [[world_mirror_applier]]'ı doğrular: damga listesi yerelle karşılaştırılır, yalnız eksik/değişen kart `get_shared_entities`'ten iner ve oyuncunun Drift'ine yazılır (Faz 5.5b, migration 102; sunucuda kırpılmış). Adımlar: [[Share-Broadcast-Flow]].
 
 **`.dmtz`:** Dışa aktar → `ContentCodec.loadItem` → zip (manifest + payload + extras + medya, diskten akıtılarak). İçe aktar → format kontrolü → medya sha doğrulamasıyla diske → `ContentCodec.applyItem` (aynı id varsa [[world_merge]] ile birleştirir). Yol taşınabilirliği `manifest.data_root` + `rewriteRoots`.
 

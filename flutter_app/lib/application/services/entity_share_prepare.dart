@@ -16,7 +16,6 @@ import '../providers/online_worlds_provider.dart';
 import '../providers/pinned_entity_provider.dart' show parseEntityIdSet;
 import '../providers/role_provider.dart';
 import '../providers/shared_entity_provider.dart';
-import 'content_ref_index.dart';
 import 'world_media_sync.dart';
 
 /// Ref köprüsü — paylaşım hem widget'lardan (`WidgetRef`) hem
@@ -162,17 +161,14 @@ Set<String> seedShareIds(
 ///  1. Walks the relation graph from [entityIds] (transitive closure) so
 ///     linked entities the card points at get shared too — otherwise the
 ///     player sees a card with dangling relation rows.
-///  2. Rewrites every still-local image (portrait, gallery, and `image`-type
-///     custom fields) **in the payload only** to a content-addressed
-///     `dmt-content://{sha}{ext}` ref. Nothing is uploaded here and the DM's
-///     own entity is left untouched — the bytes are already in the world's
-///     cloud media: the push round uploads every image its rows mention
-///     (Faz 5d, [WorldMediaSync]).
-///  3. Inserts the world-wide `entity_shares` rows.
+///  2. Inserts the world-wide `entity_shares` rows — permission only. The
+///     body reaches the player from the DM's cloud mirror through
+///     `get_shared_entities`, redacted server-side (Faz 5.5b); media are
+///     already in the world's cloud media ([WorldMediaSync]).
 ///
 /// Linked (package / built-in) entities are traversed THROUGH (to discover
-/// nested custom entities) but never re-uploaded or persisted — editing them
-/// would fork-on-edit. The entry [entityIds] are always shared even if linked
+/// nested custom entities); their bodies come from the player's installed
+/// package. The entry [entityIds] are always shared even if linked
 /// (explicit user action); cascade targets are restricted to non-linked.
 ///
 /// Kapanış hem tekil paylaşımda hem publish tohumunda aynı: DM bir kartı
@@ -192,20 +188,14 @@ Future<void> shareEntityWithPlayers(
   final Map<String, Entity> cards = entities ?? ref.read(entityProvider);
   final WorldSchema worldSchema = schema ?? ref.read(worldSchemaProvider);
 
-  // Relation + image field keys per category slug.
-  final relationKeys = <String, List<String>>{};
-  final imageKeys = <String, List<String>>{};
-  final dmOnlyKeys = dmOnlyKeysBySlug(worldSchema);
-  for (final c in worldSchema.categories) {
-    relationKeys[c.slug] = [
-      for (final f in c.fields)
-        if (f.fieldType == FieldType.relation) f.fieldKey,
-    ];
-    imageKeys[c.slug] = [
-      for (final f in c.fields)
-        if (f.fieldType == FieldType.image) f.fieldKey,
-    ];
-  }
+  // Relation field keys per category slug.
+  final relationKeys = <String, List<String>>{
+    for (final c in worldSchema.categories)
+      c.slug: [
+        for (final f in c.fields)
+          if (f.fieldType == FieldType.relation) f.fieldKey,
+      ],
+  };
 
   // Transitive closure over relation fields (cycle-guarded).
   final closure = <String>{};
@@ -223,35 +213,20 @@ Future<void> shareEntityWithPlayers(
   }
 
   // Insert the share rows. Cascade is limited to non-linked entities; the
-  // entry entity is shared regardless.
-  //
-  // Her satır kartın kendi JSON'unu taşır, oyuncunun tek içerik kaynağı bu
-  // payload. Yerel görseller payload'da içerik-adresli ref'e çevrilir; baytlar
-  // dünyanın bulut medyasında (push turu yüklüyor).
-  final index = ref.read(contentRefIndexProvider);
-  final payloads = <String, Map<String, dynamic>?>{};
-  for (final id in closure) {
-    final e = cards[id];
-    if (e == null) continue;
-    if (e.linked && !entityIds.contains(id)) continue;
-    // Linked (paket/built-in) kartın gövdesi zaten oyuncunun kurulu
-    // paketinden geliyor; payload göndermek kopya olurdu.
-    payloads[id] = e.linked
-        ? null
-        : await _payloadWithContentRefs(
-            index,
-            e,
-            imageKeys[e.categorySlug] ?? const [],
-            dmOnlyKeys[e.categorySlug] ?? const [],
-          );
-  }
+  // entry entity is shared regardless. Satır yalnız izin: gövde DM'in bulut
+  // aynasından `get_shared_entities` ile, sunucuda kırpılmış gider (§2.6).
+  final ids = [
+    for (final id in closure)
+      if (cards[id] case final e?)
+        if (!e.linked || entityIds.contains(id)) id,
+  ];
 
   // Tek sorguda sil + 50'lik parçalar hâlinde yaz. Kart başına iki round
   // trip atan eski döngü, tohum yolunda (yüzlerce kart) publish'i
   // dakikalarca bekletiyordu.
   try {
     final failed =
-        await svc.shareManyWithAll(worldId: worldId, payloads: payloads);
+        await svc.shareManyWithAll(worldId: worldId, entityIds: ids);
     if (failed.isNotEmpty) {
       debugPrint('shareEntityWithPlayers: ${failed.length} kart yazılamadı: '
           '${failed.take(5).join(", ")}');
@@ -261,51 +236,10 @@ Future<void> shareEntityWithPlayers(
   }
 }
 
-/// [e]'nin paylaşım gövdesi — yerel medya yolları `dmt-content://{sha}{ext}`
-/// ile değiştirilmiş hâlde. Yükleme YOK, kalıcı yazma YOK: DM'in kendi satırı
-/// yerel yollarını korur. Okunamayan bir dosya olduğu gibi bırakılır (oyuncuda
-/// çözülemez — zaten kopyası olmayan bir dosyaydı).
-Future<Map<String, dynamic>> _payloadWithContentRefs(
-  ContentRefIndex index,
-  Entity e,
-  List<String> imageFieldKeys,
-  List<String> dmOnlyFieldKeys,
-) async {
-  final remap = <String, String>{};
-  for (final path in localMediaPathsOf(e, imageFieldKeys)) {
-    final ref = await index.refFor(path);
-    if (ref != null) remap[path] = ref;
-  }
-  return redactDmOnly(
-    entityToRaw(remapEntityMedia(e, remap, imageFieldKeys)),
-    dmOnlyFieldKeys,
-  );
-}
-
-/// Paylaşım gövdesinden DM'e özel her şeyi siler: şemada
-/// [FieldVisibility.dmOnly] / `private_` işaretli alanlar (`secrets`,
-/// `tactics`, …) ve kartın birinci sınıf `dm_notes` kolonu.
-///
-/// `entity_shares.payload_json` oyuncunun **tek** içerik kaynağı, yani
-/// buradan çıkan her şey oyuncunun eline geçer. Gövde DM'in diskinde tam
-/// kalır; yalnızca giden kopya kırpılır.
-Map<String, dynamic> redactDmOnly(
-  Map<String, dynamic> raw,
-  List<String> dmOnlyFieldKeys,
-) {
-  final out = Map<String, dynamic>.from(raw)..['dm_notes'] = '';
-  final attrs = out['attributes'];
-  if (attrs is Map<String, dynamic> && dmOnlyFieldKeys.isNotEmpty) {
-    out['attributes'] = Map<String, dynamic>.from(attrs)
-      ..removeWhere((k, _) => dmOnlyFieldKeys.contains(k));
-  }
-  return out;
-}
-
 /// Kategori slug → oyuncudan gizlenecek alan anahtarları: şemada
 /// [FieldVisibility.dmOnly] / `private_` işaretli alanlar. Sırrın ne olduğuna
-/// karar veren TEK yer — hem [redactDmOnly]'nin listesi hem bulut satırının
-/// `dm_only_keys`'i (uygulayan `get_shared_entities`) buradan gelir (§2.6).
+/// karar veren TEK yer: bulut satırının `dm_only_keys`'i buradan gelir,
+/// uygulayan `get_shared_entities` (§2.6).
 Map<String, List<String>> dmOnlyKeysBySlug(WorldSchema schema) => {
       for (final c in schema.categories)
         c.slug: [

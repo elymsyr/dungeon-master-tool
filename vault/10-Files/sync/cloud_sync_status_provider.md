@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/cloud_sync_status_provider.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -17,7 +17,6 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - [[cloud_push_provider]] (`CloudPushPump`) — push / pull / medya turlarının başı (`started`), sonu (`ended`) ve sonucu (`report`); online olmayan öğede `remove`, rol çözülemeyen online dünyada `markOffline`.
-- `entity_provider._pushIfShared` — paylaşılan kartın otomatik yeniden gönderimi (`share` türü).
 
 **Outputs**
 - `cloudSyncStatusProvider` → `Map<String, CloudSyncStatus>`; anahtar dünyada id, pakette **paket adı** (paket ekranı `activeCampaignProvider`'ı adla override ettiği için gösterge tek okumayla ikisini de bulur).
@@ -25,11 +24,11 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `core/utils/error_format.dart` (`isOfflineError`, `formatError`).
-- Used by: `save_sync_indicator.dart` (araç çubuğu simgesi + diyalogdaki "Bulut" bölümü ve Yeniden dene), [[cloud_push_provider]], `entity_provider.dart`.
+- Used by: `save_sync_indicator.dart` (araç çubuğu simgesi + diyalogdaki "Bulut" bölümü ve Yeniden dene), [[cloud_push_provider]].
 - Domain map: [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
-- **Türler birbirini temizlemez** (`push`, `pull`, `media`, `quota`, `share`): her tür kendi son sonucuyla değişir — pull'un başarısı push'un reddettiği satırları silmez.
+- **Türler birbirini temizlemez** (`push`, `pull`, `media`, `quota`; `share` 2026-10-02'de `_pushIfShared` ile kalktı): her tür kendi son sonucuyla değişir — pull'un başarısı push'un reddettiği satırları silmez.
 - **Ağ hatası sorun değil:** öğe `offline`'a düşer, eski sorun yerinde kalır; bağlantı gelince ilk tur ikisini de temizler. Başka hata `problems[kind]`'a `formatError` metniyle; hatasız ama reddedilen satır/dosya `CloudSyncProblem(count)` (error null).
 - `syncedAt` yalnız temiz bir **push** turunda ilerler.
 - **Kayıt yalnız online öğe için:** pompa online olmayan öğede turu başlatmadan `remove` çağırıyor; `ended` olmayan kaydı geri açmıyor. Yoksa yerel dünyada gösterge her 3 sn'de "eşitleniyor"a dönerdi. Multiplayer / paket online kapatma UI'ı da (`save_sync_indicator`, `online_world_section`) kaydı hemen siliyor — yoksa kapatılan öğe bir sonraki tura kadar "eşit" ya da sorun rozetiyle görünürdü.

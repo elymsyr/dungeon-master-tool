@@ -15,9 +15,7 @@ BEGIN;
 DO $$
 DECLARE
   v_user  UUID;
-  v_world TEXT;
   v_sha   TEXT := repeat('a', 64);
-  v_ok    BOOLEAN;
   v_key   TEXT;
 BEGIN
   SELECT id INTO v_user FROM auth.users LIMIT 1;
@@ -26,27 +24,9 @@ BEGIN
   END IF;
 
   -- ── 088.1 — sabitler yerinde ────────────────────────────────────────────
-  ASSERT public.max_share_payload_bytes() = 524288, 'payload cap != 512KB';
   ASSERT public.max_shares_per_world()    = 4000,   'share cap != 4000';
 
-  -- ── 088.2 — 512 KB üstü gövde reddedilir ────────────────────────────────
-  -- Yalnızca NOT NULL kolonlar: `state_json` 077'de düşürüldü (bulut aynası yok).
-  INSERT INTO public.worlds (id, owner_id, world_name)
-    VALUES ('verify-088', v_user, 'verify')
-    RETURNING id INTO v_world;
-
-  v_ok := FALSE;
-  BEGIN
-    INSERT INTO public.entity_shares (entity_id, world_id, shared_by, payload_json)
-      VALUES ('e1', v_world, v_user, repeat('x', 524289));
-  EXCEPTION WHEN check_violation THEN
-    v_ok := TRUE;
-  END;
-  ASSERT v_ok, '512 KB üstü payload_json kabul edildi';
-
-  -- Tam sınırda olan geçer.
-  INSERT INTO public.entity_shares (entity_id, world_id, shared_by, payload_json)
-    VALUES ('e2', v_world, v_user, repeat('x', 524288));
+  -- ── 088.2 — 512 KB gövde sınırı 103'te sütunla birlikte düştü ──────────
 
   -- ── 088.3 — satır limiti trigger'ı bağlı ────────────────────────────────
   ASSERT EXISTS (SELECT 1 FROM pg_trigger

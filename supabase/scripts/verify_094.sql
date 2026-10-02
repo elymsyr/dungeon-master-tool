@@ -6,9 +6,8 @@
 -- başarısız assertion exception olarak patlar.
 --
 -- Kapsam — docs/online-sync-redesign.md §3.4'ün "RLS testleri opsiyonel
--- değil" maddesi. Bugün gizliliği `redactDmOnly` sağlıyor ve yanlış yapmak
--- imkansız: sır hiç gönderilmiyor. 094'ten sonra sır SUNUCUDA duruyor ve tek
--- yanlış politika onu oyuncuya açar. Bu yüzden her ayna tablosu için
+-- değil" maddesi. 094'ten önce sır hiç gönderilmiyordu; artık SUNUCUDA
+-- duruyor ve tek yanlış politika onu oyuncuya açar. Bu yüzden her ayna tablosu için
 -- "oyuncu rolüyle oku, boş dönmeli" testi var.
 --
 -- Rol taklidi: SET LOCAL ROLE + request.jwt.claims. Tablo sahibi postgres
@@ -188,7 +187,7 @@ BEGIN
 
   -- dm_notes RPC'nin donus tipinde HIC olmamali (bosaltmak degil, secmemek).
   ASSERT position('dm_notes' IN pg_get_function_result(
-      'public.get_shared_entities(text,bigint)'::regprocedure)) = 0,
+      'public.get_shared_entities(text,bigint,text[])'::regprocedure)) = 0,
     '4.3 get_shared_entities dm_notes donduruyor';
 
   -- ══ 5 — OYUNCU ROLU ════════════════════════════════════════════════════

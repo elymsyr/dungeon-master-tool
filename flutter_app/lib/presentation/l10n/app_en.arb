@@ -3017,6 +3017,8 @@
   "shareBuiltinAlways": "Built-in — always shared",
   "shareStopped": "Stopped sharing with players",
   "shareUnmarked": "Unmarked for sharing",
+  "shareStarted": "Shared with all players",
+  "shareMarked": "Marked to share — goes out when the world goes online",
   "lblUnknown": "Unknown",
   "chatGroupFallback": "Group",
   "bmReveal": "Reveal",
@@ -3296,14 +3298,6 @@
   },
   "cloudSyncProblemMedia": "Couldn't upload files: {error} — retrying automatically",
   "@cloudSyncProblemMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "cloudSyncProblemShare": "A shared card couldn't be sent to players: {error}",
-  "@cloudSyncProblemShare": {
     "placeholders": {
       "error": {
         "type": "String"

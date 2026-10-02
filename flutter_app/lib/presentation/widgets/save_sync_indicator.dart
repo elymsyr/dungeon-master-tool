@@ -352,7 +352,6 @@ class _CloudSyncInfo extends ConsumerWidget {
             ? l10n.cloudSyncProblemMediaFailed(p.count)
             : l10n.cloudSyncProblemMedia(p.error!),
         CloudSyncIssue.quota => l10n.worldMediaQuotaFull,
-        CloudSyncIssue.share => l10n.cloudSyncProblemShare(p.error ?? ''),
       };
 }
 

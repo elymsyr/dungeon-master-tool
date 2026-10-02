@@ -15,14 +15,14 @@ tags: [file]
 > The inbound consumer of the **DM's share channel** — the counterpart to `[[world_mirror_service]]`'s push side. Subscribes to `WorldSyncService.events`, batches them in a 16 ms window, and applies each event to local state. Five tables only: the projection manifest, shared cards (permission only; bodies from `get_shared_entities` since Faz 5.5b), player characters, DM-shared packages, and membership — plus `worlds` meta for delete → trash/purge.
 
 > [!warning] Tam dünya aynası kaldırıldı (2026-08-24)
-> Dosya ~1540 satırdan ~900'e indi. `world_entities`, `world_map_data`, `world_sessions`, `world_settings`, `world_mind_map_*` handler'ları ve `applyInitialState`'in tam-dünya çekimi silindi. Paylaşılan kartın gövdesi artık `entity_shares.payload_json`'dan geliyor — `fetchEntity` round-trip'i yok. Bkz. [[Share-Broadcast-Flow]].
+> Dosya ~1540 satırdan ~900'e indi. `world_entities`, `world_map_data`, `world_sessions`, `world_settings`, `world_mind_map_*` handler'ları ve `applyInitialState`'in tam-dünya çekimi silindi. Paylaşılan kartın gövdesi o gün `entity_shares.payload_json`'dan geliyordu; Faz 5.5b'den beri `get_shared_entities`'ten, 102'den beri oyuncunun Drift'inde (103 sütunu düşürdü). Bkz. [[Share-Broadcast-Flow]].
 
 ## Inputs / Outputs
 **Inputs**
 - Constructor: `Ref ref`, `WorldMirrorService mirror`, `WorldSyncService sync`.
 - Subscribed: `sync.events` (`WorldSyncEvent` stream) → `_EventBatcher.add`.
 - Reads: `mirror.isEchoOf*` / `isExpectedUnpublish` / `isExpectedCharDelete`, `pendingWriteBufferProvider.isPending`, `authProvider`.
-- `applyInitialState(worldId)` pulls `mirror.fetchInitialState` → `(characters, sharedEntities, projection)`; CDC only carries changes made after the subscription, so this seed is load-bearing. The DM passes `withShares: false` (Faz 5f): it never applies share payloads, so they aren't fetched.
+- `applyInitialState(worldId)` pulls `mirror.fetchInitialState` → `(characters, projection)` (oyuncunun kartları ayrı: `_syncShared`, beklenmez); CDC only carries changes made after the subscription, so this seed is load-bearing.
 
 **Outputs**
 - Mutates active campaign blob via `activeCampaignProvider.notifier` (captured at construction as `_campaign`, a stable `ActiveCampaignNotifier`).
@@ -52,8 +52,8 @@ tags: [file]
 - **JSON offload:** `_decodeJsonMaybeOffload` runs `compute()` for payloads >= `_kDecodeOffloadBytes = 4096`.
 
 ## Faz 5.5b — kartlar RPC'den (2026-10-02)
-- Oyuncunun kart gövdesi `get_shared_entities`'ten: `_injectShared(worldId, rows)` her satırı `sharedEntityRowToRaw` ([[entity_share_prepare]]) ile `data['entities'][id]`'ye yazar, `_sharedRevision[worldId]`'i (bellekte) en büyük revizyona ilerletir. Linked satır atlanır (gövde kurulu paketten), DM'e hiç yazılmaz (yerel medya yolları).
-- Üç tetik: `applyInitialState` (since 0), `entity_shares` INSERT/UPDATE (tam tazeleme — paylaşılan kart eski olabilir, revizyonu damganın gerisinde), `world_revisions` sinyali (`scheduleSharedRefresh(worldId)`, since = damga; `world_mirror_provider.dart` oyuncuya `onRevision` olarak bağlar). Hepsi `_kSharedIdle = 1 sn` sessizlikte tek çağrıya birleşir; `full` istekleri OR'lanır. `stop()` zamanlayıcıyı iptal eder.
+- Oyuncunun kartları **yerelde (Drift)**, dünya açılınca depodan geliyor. `_syncShared(worldId)` yalnız doğrular: [[cloud_pull_service]] `syncSharedEntities` damga listesini yerelle karşılaştırıp eksik/değişeni id ile indirir ve yazar (102); dönen satırlar `sharedEntityRowToRaw` ([[entity_share_prepare]]) ile açık dünyanın `data['entities']`'ine de işlenir; damga listesinin id'leri `sharedEntityStampIdsProvider`'a yazılır (DM'in sildiği kart griye döner). DM'e hiç yazılmaz (yerel medya yolları): kapı `_isPlayerOf` — dünya açık ve rolü `player` olmalı. Rol `_roleOf`'tan: açık dünyada provider'ın beklediği çözülmüş `currentWorldRoleProvider`, değilse `cachedWorldRole` önbelleği (`worldRoleProvider`). Önbellek çözülmemişse ya da ağ hatası yediyse `none` döner ve DM'i oyuncu sanardı — kırpılmış gövde ya da buluttaki eski dünya kimliği (`_applyWorldMeta`) DM'in Drift'ine yazılırdı; `_isDm` de aynı yoldan. Dünya hâlâ yükleniyorsa (`data == null`) yazılan satırlar `_sharedUninjected`'te bekler — açılışın Drift okuması yazmadan önce bitmiş olabilir; `completeLoad`'un `applyInitialState`'i blob yüklendikten sonra yeniden doğrular ve onları işler.
+- Üç tetik: `applyInitialState` (beklenmeden), `entity_shares` INSERT/UPDATE, `world_revisions` sinyali (`world_mirror_provider.dart` oyuncuya `onRevision` olarak bağlar). Sinyal ve paylaşım `scheduleSharedRefresh` ile `_kSharedIdle = 1 sn` sessizlikte birleşir; `stop()` zamanlayıcıyı iptal eder.
 - `entity_shares` DELETE gövdeyi **silmez** (`_removeSharedEntity` kalktı): kart gri görünür (`revokedSharedEntityIdsProvider`, §2.5). `payload_json` hiç okunmuyor (`_decodeSharePayload` kalktı).
 
 ## Notes
@@ -61,5 +61,5 @@ tags: [file]
 - Shared-package materialization (`_materializeSharedPackageLocally`) re-runs `PackageSyncService.sync` with Tier-0 lookup resolution; retries once on a one-off error.
 
 ## Medya (2026-09-08 → Faz 5d, 2026-09-23)
-- **Rol DM ise gövde enjeksiyonu tümüyle atlanır** (`_isDm`). Payload `dmt-content://` ref taşıyor; DM'e geri yazmak onun **yerel dosya yollarını ezerdi**.
+- **Rol DM ise kart doğrulaması tümüyle atlanır** (`_isPlayerOf`). Buluttaki satır `dmt-content://` ref taşıyor; DM'e geri yazmak onun **yerel dosya yollarını ezerdi**.
 - Talep-üzerine medya **kalktı (Faz 5d)**: applier artık ne eksik sha bildiriyor (`MissingMediaReporter`) ne de DM tarafında `missing_shas` → `serve` çağırıyor; oturum kapısı (`isSessionOpen`) da gitti. Baytlar multiplayer açılınca zaten dünyanın bulut medyasında ([[world_media_sync]]); oyuncu görseli çizerken [[asset_ref_resolver]] imzalı URL'le çeker. Bkz. [[Media-Storage-Tiers]].

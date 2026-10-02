@@ -88,9 +88,12 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
 /// paylaşımdan geldi; listede yoksa paylaşım geri çekilmiştir. Gövde
 /// silinmez, kart gri ve etiketli görünür (§2.5).
 ///
+/// Paylaşım listesi DM'in sildiği kartı görmez (satır duruyor); son
+/// doğrulamanın listesi ([sharedEntityStampIdsProvider]) görür.
+///
 /// Paylaşım listesi yüklenmeden boş: yoksa açılışta her kart bir an gri olur.
-/// Gövdeler bellekte ([WorldMirrorApplier]); dünya yeniden açılınca geri
-/// çekilen kart hiç inmez, gri kart yalnız o oturumda görünür.
+/// Gövdeler oyuncunun Drift'inde kalıcı (`CloudPullService
+/// .syncSharedEntities`); gri kart dünya yeniden açılınca da gri.
 final revokedSharedEntityIdsProvider = Provider<Set<String>>(
   dependencies: [
     entityProvider,
@@ -110,9 +113,26 @@ final revokedSharedEntityIdsProvider = Provider<Set<String>>(
       for (final s in shares)
         if (s.sharedWith == null || s.sharedWith == uid) s.entityId,
     };
-    return {
-      for (final e in ref.watch(entityProvider).entries)
-        if (!e.value.linked && !shared.contains(e.key)) e.key,
-    };
+    return revokedSharedIds(
+      ref.watch(entityProvider),
+      shared,
+      ref.watch(sharedEntityStampIdsProvider(worldId)),
+    );
   },
 );
+
+/// [revokedSharedEntityIdsProvider]'ın hesabı: homebrew kart paylaşım
+/// listesinde ([shared]) yoksa ya da son doğrulamanın listesinde ([visible],
+/// henüz yoksa null) yoksa gri.
+Set<String> revokedSharedIds(
+  Map<String, Entity> entities,
+  Set<String> shared,
+  Set<String>? visible,
+) =>
+    {
+      for (final e in entities.entries)
+        if (!e.value.linked &&
+            (!shared.contains(e.key) ||
+                (visible != null && !visible.contains(e.key))))
+          e.key,
+    };

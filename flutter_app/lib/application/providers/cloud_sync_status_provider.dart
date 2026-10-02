@@ -5,7 +5,7 @@ import '../../core/utils/error_format.dart';
 
 /// Faz 9 — bulut aynasında bir şeyin ters gittiği yer. Her tür kendi son
 /// sonucuyla değişir: pull'un başarısı push'un reddettiği satırları silmez.
-enum CloudSyncIssue { push, pull, media, quota, share }
+enum CloudSyncIssue { push, pull, media, quota }
 
 class CloudSyncProblem {
   const CloudSyncProblem(this.count, {this.error});
