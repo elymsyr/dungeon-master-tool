@@ -6,9 +6,9 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 21 September 2026 — world-copy entry added; everything else unchanged
-since v17.0.0 (14 September 2026), when `flutter test` was 1509 passing / 0 failing,
-`flutter analyze` 0 errors / 0 warnings and the worker `npm run typecheck` clean.
+**Last reviewed:** 2 October 2026 (v18.0.0) — player mind-map entry added. The
+v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `flutter analyze`
+0 errors / 0 warnings, worker `npm run typecheck` clean.
 
 ---
 
@@ -34,6 +34,12 @@ since v17.0.0 (14 September 2026), when `flutter test` was 1509 passing / 0 fail
   primary key to `{worldId, id}` — the latter is a schema change, so it rides with the next
   Drift version bump. Copying also leaves the new world's image paths pointing into the *source*
   world's media folder, so deleting the source orphans the copy's art.
+- **A player's mind map does not reach their second device** — the player's own mind map
+  in a world stays on the device it was made on. Deferred to the next sync phase (5.5c in
+  [online-sync-redesign.md](online-sync-redesign.md)).
+- **Battle map display toggles are inconsistent** — view helpers such as *Show all HP* and
+  *Clean tokens* (`bmShowAllHp`, `bmCleanTokens`) each behave in their own way. They will be
+  moved to a single standard.
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
 

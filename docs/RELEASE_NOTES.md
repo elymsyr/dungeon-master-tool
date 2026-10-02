@@ -1,5 +1,147 @@
 # Release Notes
 
+## Dungeon Master Tool v18.0.0 — Online, Everywhere You Play (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release brings back full online sync. A world, a package or a character you put online is kept in the cloud and stays the same on every device you sign in on, and a multiplayer world's pictures now reach players even when the DM is offline. LAN sync is gone. To move content without an account, use the new `.dmtz` export and import. Your local data carries over on first launch. Update every device in your group, players included.
+
+> **Heads-up for online groups:** the DM and every player need v18.0.0. Shared cards now travel a new way, so a player on an older version stops receiving the DM's shared cards.
+
+> **Heads-up for LAN sync users:** LAN sync has been removed. Export a world, package or character to a `.dmtz` file and import it on the other device, or put it online.
+
+---
+
+### Highlights
+
+- **Live online worlds** — put a world online and every edit shows up on your other devices within seconds, with your pictures.
+- **Pictures in the cloud** — a multiplayer world's pictures are stored online, so players see them even when the DM is offline.
+- **Online packages and characters** — packages and characters get their own online switch and follow you between devices too.
+- **Players on a second device** — a player can open their worlds on a new device without asking the DM for an invite code again.
+- **Shared cards that stay up to date** — when the DM edits a shared card, players get the change without sharing it again.
+- **`.dmtz` files** — export a world, package or character to one file and import it anywhere, with no account and no network.
+- **Aegis Act 1 `0.14.0`** — Radenhall is rewritten and 25 new cards are added, with new creatures and quests.
+
+---
+
+### Online play
+
+#### Live online worlds
+
+Turn a world online from its sync indicator or from the world's settings in the hub. From then on every change, including cards, maps, map pins, the mind map, sessions, combat and settings, goes to the cloud a few seconds after you make it, and your other signed-in devices pick it up live. If two devices edit the same thing, the most recent edit wins. Edits you make offline go up the next time you connect.
+
+A world that is online but not yet on this device appears in the hub under **In the cloud, not on this device**. Tap download and it arrives with a progress bar. A half-finished download never shows up as a broken world.
+
+#### Pictures live in the cloud
+
+Turning multiplayer on uploads all of the world's pictures, maps, audio and PDFs to the cloud. Before, players only got pictures while the DM's app was running. Now they get them at any time, and so does the DM's second device. Uploads run in parallel and resume on their own if they are interrupted. If you take content offline again, its cloud copy is deleted right away.
+
+- Each account has 1 GB of cloud media.
+- Per-file limits: maps and battle maps 10 MB, pictures 5 MB, audio 10 MB, PDFs 20 MB, character media 5 MB.
+- A file over its limit stays on your device and keeps working there, and the app tells you it was not uploaded.
+
+#### Online packages
+
+A package can be put online from the hub or from the package's Save & Sync dialog. Its cards and pictures then follow you to your other devices. Packages are not live like worlds. They catch up when you open them, when the app starts, when you sign in and when the connection comes back. Deleting an online package also deletes its cloud copy.
+
+#### Online characters
+
+Characters have their own online switch, off by default. An online character changes live on your other devices and downloads with its portrait. A character in a multiplayer world is always online. The switch only appears for characters in an offline world or with no world. You can keep up to 10 online characters per account. A character that is not online never leaves your device.
+
+#### Players on a second device
+
+A player who signs in on a new device sees the worlds they have joined under **In the cloud, not on this device** and can download them with their character and the cards the DM shared. No invite code is needed.
+
+#### Shared cards
+
+Cards the DM shares are now kept on the player's device and checked each time the world opens, so only new or changed cards download. If the DM fixes a typo on a shared card, the player gets the fix without the DM sharing it again. If the DM stops sharing a card, it is removed from the player's device. DM notes and DM-only fields never reach a player.
+
+#### You can see what sync is doing
+
+Background sync work is no longer silent. Online worlds and packages show whether they are syncing, waiting offline or up to date, and a failed upload, download, media transfer, quota check or share appears as an error you can see. Before, those errors only went to the log.
+
+---
+
+### Moving content without an account
+
+#### `.dmtz` export and import
+
+The **Export** menu on the hub's Worlds and Packages tabs saves a world or package as a single `.dmtz` file, pictures included. The menu also imports one. In the character editor the button exports the character. Importing merges into what you already have and never wipes it: if the world already exists on the device, its sections are combined. Characters are imported from inside a world.
+
+---
+
+### Aegis
+
+#### Aegis Act 1 0.14.0
+
+Ravenhall is now **Radenhall** and has been rewritten. It is a wooded hollow near the equator with stone rings, timber houses under the trees, a mixed population and a village elder. A druid there can sense the illness, and the recipe for the Resistance Draught is traded there. Orvan's offer is now a single card, **Nereden Geldiler**, which covers the missing ships, how to stop them and proof of the disease.
+
+The world grows from 195 to 217 cards. New additions include the Hıkka (with **Kavkı**, **Yumuşak** and **Bırakmayan** and their traits and actions), the locations **Mavnacılar Hanı** and **Gelgit Ağzı**, the NPCs **Iraz** and **Sevran**, and the quests **Taşların Bildiği**, **Sayım Açığı**, **Son Yazılı Emir** and **Gelgit Gecesi**. The new cards come with new artwork. **Yazılmayan Emir** and **Susan Kule** have been removed.
+
+---
+
+### Smaller improvements
+
+- **Combat** — HP and max HP can be edited directly in the combat stats grid.
+- **Characters** — the player tab and sidebar show which world a character belongs to.
+- **Mobile hub** — on narrow screens, the Copy / Export / Delete buttons show only their icon, with the label as a tooltip.
+- **Hub** — the Export button matches the buttons next to it.
+- **Maps** — leaving the map tab no longer saves the map again when nothing changed.
+- **Worlds** — two worlds can share a name without getting mixed up. Worlds are now tracked by an internal id instead of their name.
+- **l10n** — new keys for online sync, `.dmtz` transfer and sync status, in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Renaming a world** — renaming a world no longer breaks its pictures.
+- **Making a world online from the hub** — this failed with "World not found". Fixed.
+
+---
+
+### Deprecations & removals
+
+- **LAN sync** — removed, together with its dialog and device pairing. Use online sync, or `.dmtz` files for moving content without an account.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `17.1.2` → `18.0.0`.
+- **In-app migrations:** on first launch the local database upgrades in place and **keeps your data**. World media folders are renamed from the world's name to its id once, and the image paths inside the world are updated to match. Both steps are safe to run again.
+- **Everyone in an online group needs v18.0.0:** players on an older version no longer receive shared cards.
+- **LAN sync users:** move content with `.dmtz` export and import instead.
+- **Aegis:** download Aegis Act 1 (`0.14.0`) again from **Marketplace → Official** to get the new cards and art.
+- **Accounts:** online sync needs an account. Using the app only on one device works as before.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Drift schema v13** — the one upgrade step (v12 → v13) adds `is_online`, `cloud_revision` and `updated_at` columns. Cloud push scans for rows changed since the last push, with no outbox, and deletions go through the `sync_tombstones` side table.
+- **Media refs** — synced bodies carry the device-independent `dmt-content://{sha}{ext}`. Cloud media lives in R2 under `worlds/{id}/`, `packages/{id}/` and the character scope.
+- **Backend** — this release requires the October 2026 Supabase migrations and worker deploy (see the deployment doc). Worker rate limits moved from KV to the platform rate-limit binding.
+- **CI** — release builds no longer pass `DMT_WORKER_URL`, so the compiled-in default is used.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v17.1.2 — Pins, Pictures and Battlemaps (Beta)
 
 **Release date:** September 2026
