@@ -25,7 +25,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `flutter_scene` (Flutter GPU), `vector_math` — see [[pubspec]].
-- Used by: `main_screen.dart`, `player_main_screen.dart`, `character_editor_screen.dart` (standalone route only; embedded editors rely on the host's button).
+- Used by: `field_widget_factory.dart` (proficiency table rows → `rollDice`), `main_screen.dart`, `player_main_screen.dart`, `character_editor_screen.dart` (standalone route only; embedded editors rely on the host's button).
 - Domain map: [[Combat-and-VTT]]
 
 ## Key Logic / Variables
@@ -36,6 +36,7 @@ tags: [file]
 - **Dice themes:** `diceLooks` maps every app theme name to a resin/ink colour pair. `UiState.diceTheme` is a theme name or `'auto'`; `resolveDiceLook(setting, appTheme)` picks the look (`auto` → the active app theme, unknown → `dark`). `DiceFab` resolves it and passes it down to `DiceRollView`. Picked in Settings → Dice theme.
 - **Fallback:** if `DiceKit.load()` fails (no Flutter GPU), the roll shows only the result card; the failure is `debugPrint`ed (bug-report log).
 - **Interaction:** tap a die = throw just that one; +/− build a set, Roll throws it. Tap during the tumble skips to the landed dice; tap after closes. Back / Esc / the dim close the menu.
+- **Direct roll (`rollDice(context, ref, counts, modifier:, label:)`):** throws without the menu; the result card adds `modifier` to the dice total and shows `label` above it. The proficiency table (skills / saving throws, `field_widget_factory.dart`) calls it on a row tap: d20 + that row's Total, titled with the row name. Rows without a computable total (no `stat_block`) don't roll.
 - **Platform switch:** Flutter GPU is enabled in the Linux and Windows runners (`DartProject`), Android manifest meta-data and iOS/macOS `Info.plist` (`FLTEnableFlutterGPU`); web needs nothing.
 
 ## Notes

@@ -27,6 +27,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/map/world_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
+import '../dice/dice_fab.dart';
 import '../markdown_text_area.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
@@ -4412,73 +4413,82 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                     ? (total >= 0 ? '+$total' : '$total')
                     : '—';
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      _ProfDot(
-                        active: proficient,
-                        tooltip: L10n.of(context)!.lblProficient,
-                        onTap: readOnly
-                            ? null
-                            : () => _updateRow(i, {'proficient': !proficient}),
-                      ),
-                      _ProfDot(
-                        active: expertise,
-                        doubled: true,
-                        tooltip: L10n.of(context)!.lblExpertise,
-                        onTap: readOnly
-                            ? null
-                            : () => _updateRow(i, {'expertise': !expertise}),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: Text(name, style: const TextStyle(fontSize: 12)),
-                      ),
-                      SizedBox(
-                        width: 34,
-                        child: Text(
-                          ability,
-                          style: TextStyle(fontSize: 10, color: outline),
+                // Tap a row: d20 + its total. The dots and the misc field
+                // sit deeper, so they keep their own taps.
+                return InkWell(
+                  hoverColor: Colors.transparent,
+                  onTap: totalStr == '—'
+                      ? null
+                      : () => rollDice(context, ref, const {'d20': 1},
+                          modifier: total, label: name),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        _ProfDot(
+                          active: proficient,
+                          tooltip: L10n.of(context)!.lblProficient,
+                          onTap: readOnly
+                              ? null
+                              : () => _updateRow(i, {'proficient': !proficient}),
                         ),
-                      ),
-                      SizedBox(
-                        width: 44,
-                        child: TextFormField(
-                          key: ValueKey('pt_${schema.fieldKey}_${i}_misc'),
-                          initialValue: misc == 0 ? '' : misc.toString(),
-                          readOnly: readOnly,
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 12),
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              vertical: 4,
-                              horizontal: 2,
+                        _ProfDot(
+                          active: expertise,
+                          doubled: true,
+                          tooltip: L10n.of(context)!.lblExpertise,
+                          onTap: readOnly
+                              ? null
+                              : () => _updateRow(i, {'expertise': !expertise}),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(name, style: const TextStyle(fontSize: 12)),
+                        ),
+                        SizedBox(
+                          width: 34,
+                          child: Text(
+                            ability,
+                            style: TextStyle(fontSize: 10, color: outline),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 44,
+                          child: TextFormField(
+                            key: ValueKey('pt_${schema.fieldKey}_${i}_misc'),
+                            initialValue: misc == 0 ? '' : misc.toString(),
+                            readOnly: readOnly,
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(fontSize: 12),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 4,
+                                horizontal: 2,
+                              ),
+                              border: InputBorder.none,
+                              hintText: '0',
                             ),
-                            border: InputBorder.none,
-                            hintText: '0',
-                          ),
-                          onChanged: (v) =>
-                              _updateRow(i, {'misc': int.tryParse(v) ?? 0}),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 40,
-                        child: Text(
-                          totalStr,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: proficient || expertise
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
+                            onChanged: (v) =>
+                                _updateRow(i, {'misc': int.tryParse(v) ?? 0}),
                           ),
                         ),
-                      ),
-                    ],
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            totalStr,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: proficient || expertise
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }),

@@ -296,9 +296,18 @@ DiceRoll _throwInBackground((Map<String, int>, double, double) a) =>
 /// Throws [counts] and shows the roll filling the screen. A tap skips to the
 /// landed dice; a tap after they land calls [onClose].
 class DiceRollView extends StatefulWidget {
-  const DiceRollView({super.key, required this.counts, required this.look, required this.onClose});
+  const DiceRollView({
+    super.key,
+    required this.counts,
+    required this.look,
+    required this.onClose,
+    this.modifier = 0,
+    this.label,
+  });
   final Map<String, int> counts;
   final String look;
+  final int modifier; // added to the dice total, e.g. a skill bonus
+  final String? label; // what was rolled, e.g. "Stealth"
   final VoidCallback onClose;
 
   @override
@@ -405,7 +414,7 @@ class _DiceRollViewState extends State<DiceRollView> {
             top: MediaQuery.paddingOf(context).top + 16,
             left: 16,
             right: 16,
-            child: _ResultCard(roll),
+            child: _ResultCard(roll, modifier: widget.modifier, label: widget.label),
           ),
       ]),
     );
@@ -413,19 +422,22 @@ class _DiceRollViewState extends State<DiceRollView> {
 }
 
 class _ResultCard extends StatelessWidget {
-  const _ResultCard(this.roll);
+  const _ResultCard(this.roll, {this.modifier = 0, this.label});
   final DiceRoll roll;
+  final int modifier;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final single = roll.dice.length == 1 || (roll.results.length == 1 && roll.results.values.first.length == 1);
-    final breakdown = single
-        ? roll.results.keys.single
+    final dice = single
+        ? (modifier == 0 ? roll.results.keys.single : '${roll.results.keys.single}: ${roll.total}')
         : [
             for (final MapEntry(key: k, value: vs) in roll.results.entries)
               vs.length == 1 ? '$k: ${vs.single}' : '${vs.length}$k: ${vs.join(' + ')} = ${vs.reduce((a, b) => a + b)}',
           ].join('  ·  ');
+    final breakdown = modifier == 0 ? dice : '$dice ${modifier > 0 ? '+' : '−'} ${modifier.abs()}';
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.85, end: 1),
       duration: const Duration(milliseconds: 220),
@@ -441,8 +453,10 @@ class _ResultCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
+                if (label != null)
+                  Text(label!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: scheme.onSurfaceVariant)),
                 Text(
-                  '${roll.total}',
+                  '${roll.total + modifier}',
                   style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: scheme.onSurface),
                 ),
                 Text(
