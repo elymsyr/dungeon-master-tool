@@ -61,6 +61,8 @@ class UiState {
 
   // Theme & Locale
   final String themeName;
+  /// Zar teması: bir tema adı ya da 'auto' (aktif temayı izler).
+  final String diceTheme;
   final String localeCode;
 
   // Volume
@@ -116,6 +118,7 @@ class UiState {
     this.pdfActiveIndex = -1,
     this.charactersSidebarInlineId,
     this.themeName = 'dark',
+    this.diceTheme = 'auto',
     this.localeCode = 'en',
     this.volume = 1.0,
     this.autoLocalSave = true,
@@ -150,6 +153,7 @@ class UiState {
     int? pdfActiveIndex,
     Object? charactersSidebarInlineId = _sentinel,
     String? themeName,
+    String? diceTheme,
     String? localeCode,
     double? volume,
     bool? autoLocalSave,
@@ -187,6 +191,7 @@ class UiState {
           ? this.charactersSidebarInlineId
           : charactersSidebarInlineId as String?,
       themeName: themeName ?? this.themeName,
+      diceTheme: diceTheme ?? this.diceTheme,
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
@@ -222,6 +227,7 @@ class UiState {
     'pdfActiveIndex': pdfActiveIndex,
     'charactersSidebarInlineId': charactersSidebarInlineId,
     'themeName': themeName,
+    'diceTheme': diceTheme,
     'localeCode': localeCode,
     'volume': volume,
     'autoLocalSave': autoLocalSave,
@@ -269,6 +275,7 @@ class UiState {
       pdfActiveIndex: json['pdfActiveIndex'] as int? ?? -1,
       charactersSidebarInlineId: json['charactersSidebarInlineId'] as String?,
       themeName: json['themeName'] as String? ?? 'dark',
+      diceTheme: json['diceTheme'] as String? ?? 'auto',
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,

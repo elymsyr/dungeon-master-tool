@@ -3392,5 +3392,7 @@
       }
     }
   },
-  "diceTapToClose": "Tap to close"
+  "diceTapToClose": "Tap to close",
+  "lblDiceTheme": "Dice theme",
+  "diceThemeAuto": "Auto (by theme)"
 }

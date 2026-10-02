@@ -23,6 +23,7 @@ import '../../dialogs/theme_builder_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
+import '../../widgets/dice/dice_roll_view.dart';
 
 class SettingsTab extends ConsumerStatefulWidget {
   const SettingsTab({super.key});
@@ -114,6 +115,25 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                     ),
                   );
                 },
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- DICE THEME ---
+              Text(l10n.lblDiceTheme, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final name in ['auto', ...themeNames])
+                    ChoiceChip(
+                      avatar: _dieSwatch(resolveDiceLook(name, currentTheme)),
+                      label: Text(name == 'auto' ? l10n.diceThemeAuto : name[0].toUpperCase() + name.substring(1)),
+                      selected: ref.watch(uiStateProvider.select((s) => s.diceTheme)) == name,
+                      onSelected: (_) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(diceTheme: name)),
+                    ),
+                ],
               ),
 
               const SizedBox(height: 32),
@@ -439,6 +459,19 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           Expanded(child: Text(path, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary), overflow: TextOverflow.ellipsis)),
         ],
       ),
+    );
+  }
+
+  Widget _dieSwatch(String look) {
+    final c = diceLooks[look]!;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.body,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black26),
+      ),
+      alignment: Alignment.center,
+      child: Text('20', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c.ink)),
     );
   }
 

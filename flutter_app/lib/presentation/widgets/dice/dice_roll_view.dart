@@ -159,7 +159,37 @@ MeshGeometry _dieGeometry(DieShape s) {
   return g.build();
 }
 
-/// The dice scene, built once per app run: a number atlas, rounded mesh and
+/// Resin and number colours per app theme, keyed by theme name.
+const diceLooks = <String, ({Color body, Color ink})>{
+  'dark': (body: Color(0xFF1F4E79), ink: Color(0xFFF0F4F8)),
+  'light': (body: Color(0xFFF4F6FA), ink: Color(0xFF2C5282)),
+  'parchment': (body: Color(0xFFE8D5A9), ink: Color(0xFF5D4037)),
+  'ocean': (body: Color(0xFF006D7A), ink: Color(0xFFE0F7FA)),
+  'emerald': (body: Color(0xFF0B6B3A), ink: Color(0xFFE8FFF1)),
+  'midnight': (body: Color(0xFF2A1260), ink: Color(0xFFD1C4FF)),
+  'soft': (body: Color(0xFF5865F2), ink: Color(0xFFFFFFFF)),
+  'baldur': (body: Color(0xFF2A1A12), ink: Color(0xFFD4AF6A)),
+  'grim': (body: Color(0xFF7A0F1C), ink: Color(0xFFF3E6C8)),
+  'obsidian': (body: Color(0xFF111111), ink: Color(0xFFD0202A)),
+  'frost': (body: Color(0xFFDDF4F2), ink: Color(0xFF1D6B69)),
+  'amethyst': (body: Color(0xFF6A2C7A), ink: Color(0xFFF3E5F5)),
+  'sunset': (body: Color(0xFFD9542B), ink: Color(0xFF2B1118)),
+  'nord': (body: Color(0xFF4C566A), ink: Color(0xFF88C0D0)),
+  'rose': (body: Color(0xFFF8BBD0), ink: Color(0xFFAD1457)),
+  'terminal': (body: Color(0xFF0A0A0A), ink: Color(0xFF00FF41)),
+  'terra': (body: Color(0xFFC2410C), ink: Color(0xFFFFF8E7)),
+  'jade': (body: Color(0xFF00A86B), ink: Color(0xFFF0FFF8)),
+  'mono': (body: Color(0xFFFFFFFF), ink: Color(0xFF000000)),
+  'carmine': (body: Color(0xFFDC143C), ink: Color(0xFFFFFFFF)),
+};
+
+/// The dice look for a `diceTheme` setting: 'auto' follows [appTheme].
+String resolveDiceLook(String setting, String appTheme) {
+  final name = setting == 'auto' ? appTheme : setting;
+  return diceLooks.containsKey(name) ? name : 'dark';
+}
+
+/// The dice scene, built per dice look (only the last one is kept): a number atlas, rounded mesh and
 /// resin material per die shape, lit by one shadow-casting light over an
 /// invisible floor that only catches the shadows. Fails where Flutter GPU is
 /// not available; the roller then shows results without the 3D dice.
@@ -168,10 +198,14 @@ class DiceKit {
   final Scene scene;
   final Map<String, (MeshGeometry, PhysicallyBasedMaterial)> looks;
 
-  static Future<DiceKit>? _kit;
-  static Future<DiceKit> load() => _kit ??= _build();
+  static (String, Future<DiceKit>)? _kit;
+  static Future<DiceKit> load(String look) {
+    final kit = _kit;
+    if (kit != null && kit.$1 == look) return kit.$2;
+    return (_kit = (look, _build(diceLooks[look] ?? diceLooks['dark']!))).$2;
+  }
 
-  static Future<DiceKit> _build() async {
+  static Future<DiceKit> _build(({Color body, Color ink}) look) async {
     try {
       // Touch the GPU once first: without Flutter GPU this throws right here,
       // before the engine starts its own loads (whose failures go unhandled).
@@ -179,11 +213,7 @@ class DiceKit {
       await Scene.initializeStaticResources();
       final looks = <String, (MeshGeometry, PhysicallyBasedMaterial)>{};
       for (final s in dieShapes.values) {
-        final atlas = await _numberAtlas(
-          s,
-          const Color(0xFF7A0F1C), // oxblood resin
-          const Color(0xFFF3E6C8), // ivory ink
-        );
+        final atlas = await _numberAtlas(s, look.body, look.ink);
         final mat = PhysicallyBasedMaterial(baseColorTexture: await Texture2D.fromImage(atlas))
           ..roughnessFactor = 0.32
           ..metallicFactor = 0.0
@@ -266,8 +296,9 @@ DiceRoll _throwInBackground((Map<String, int>, double, double) a) =>
 /// Throws [counts] and shows the roll filling the screen. A tap skips to the
 /// landed dice; a tap after they land calls [onClose].
 class DiceRollView extends StatefulWidget {
-  const DiceRollView({super.key, required this.counts, required this.onClose});
+  const DiceRollView({super.key, required this.counts, required this.look, required this.onClose});
   final Map<String, int> counts;
+  final String look;
   final VoidCallback onClose;
 
   @override
@@ -290,7 +321,7 @@ class _DiceRollViewState extends State<DiceRollView> {
     // The throw is simulated up front (~90 ms for 30 dice on desktop), off
     // the UI isolate so the screen doesn't hitch.
     final roll = compute(_throwInBackground, (widget.counts, view.trayX, view.trayZ));
-    final kit = DiceKit.load().then<DiceKit?>((k) => k, onError: (_) => null);
+    final kit = DiceKit.load(widget.look).then<DiceKit?>((k) => k, onError: (_) => null);
     Future.wait([roll, kit]).then((r) {
       if (!mounted) return;
       final roll = r[0] as DiceRoll, kit = r[1] as DiceKit?;
