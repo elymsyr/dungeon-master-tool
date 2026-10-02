@@ -2192,5 +2192,7 @@
   "diceRollerTooltip": "Würfeln",
   "diceRoll": "Würfeln",
   "diceRollSelection": "{dice} würfeln",
-  "diceTapToClose": "Zum Schließen tippen"
+  "diceTapToClose": "Zum Schließen tippen",
+  "lblDiceTheme": "Würfeldesign",
+  "diceThemeAuto": "Automatisch (nach Thema)"
 }

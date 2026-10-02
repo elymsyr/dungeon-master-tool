@@ -2192,5 +2192,7 @@
   "diceRollerTooltip": "Zar at",
   "diceRoll": "At",
   "diceRollSelection": "{dice} at",
-  "diceTapToClose": "Kapatmak için dokun"
+  "diceTapToClose": "Kapatmak için dokun",
+  "lblDiceTheme": "Zar teması",
+  "diceThemeAuto": "Otomatik (temaya göre)"
 }

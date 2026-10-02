@@ -3,17 +3,19 @@ import 'package:dungeon_master_tool/presentation/theme/palettes.dart';
 import 'package:dungeon_master_tool/presentation/widgets/dice/dice_fab.dart';
 import 'package:dungeon_master_tool/presentation/widgets/dice/dice_roll_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // Tests have no Flutter GPU, so this also walks the results-only fallback.
   testWidgets('menu builds a set, rolls it, shows the result, tap closes', (tester) async {
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(ProviderScope(
+        child: MaterialApp(
       theme: buildThemeData('dark'),
       localizationsDelegates: L10n.localizationsDelegates,
       supportedLocales: L10n.supportedLocales,
       home: const Scaffold(floatingActionButton: DiceFab()),
-    ));
+    )));
 
     await tester.tap(find.byType(DiceFab));
     await tester.pumpAndSettle();
@@ -37,5 +39,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DiceRollView), findsNothing);
     expect(find.byIcon(Icons.casino), findsOneWidget); // back to the plain button
+  });
+
+  test('dice look follows the app theme on auto, else the pick', () {
+    expect(diceLooks.keys, unorderedEquals(themeNames));
+    expect(resolveDiceLook('auto', 'nord'), 'nord');
+    expect(resolveDiceLook('rose', 'nord'), 'rose');
+    expect(resolveDiceLook('gone', 'nord'), 'dark');
   });
 }
