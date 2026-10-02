@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Empty the campaign-backups bucket via Storage API. Service role key needed
+# Empty a Storage bucket (default campaign-backups; BUCKET=free-media etc.) via Storage API. Service role key needed
 # (project settings → API → service_role secret). The SQL trigger blocks
 # direct DELETE on storage.objects so the REST API is the only path.
 #
 # Usage:
 #   export SUPABASE_URL='https://YOUR-PROJECT.supabase.co'
 #   export SUPABASE_SERVICE_ROLE_KEY='eyJ...'
-#   ./wipe_storage.sh                       # all users
+#   BUCKET=free-media ./wipe_storage.sh     # all users
 #   ./wipe_storage.sh <USER_UUID>           # single user prefix
 #
 # Notes
@@ -21,7 +21,7 @@ set -euo pipefail
 : "${SUPABASE_URL:?SUPABASE_URL not set}"
 : "${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY not set}"
 
-BUCKET='campaign-backups'
+BUCKET="${BUCKET:-campaign-backups}"
 PREFIX="${1:-}"
 PAGE_SIZE=1000
 
