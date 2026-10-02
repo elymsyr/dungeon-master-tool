@@ -5,7 +5,7 @@ path: flutter_app/pubspec.yaml
 layer: core
 language: yaml
 status: stable
-updated: 2026-06-09
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -31,7 +31,7 @@ tags: [file]
 
 ## Key Logic / Variables
 **Key runtime deps (with their role):**
-- State / models: `flutter_riverpod` + `riverpod_annotation`, `freezed_annotation`, `json_annotation`.
+- State / models: `flutter_riverpod` (hand-written providers — no Riverpod codegen), `freezed_annotation`, `json_annotation`.
 - Storage / DB: `drift` + `sqlite3_flutter_libs` (Drift = the Supabase Postgres mirror, see [[drift_database]]), `msgpack_dart`, `shared_preferences`, `path_provider`, `path`.
 - Routing: `go_router`. Fonts: `google_fonts`.
 - Desktop multi-window (projection second screen): `window_manager`, `desktop_multi_window`, `screen_retriever` (see [[Multi-Window-IPC]]).
@@ -40,7 +40,7 @@ tags: [file]
 - Utility/UI: `uuid`, `crypto`, `intl`, `logger`, `url_launcher`, `collection`, `file_picker`, `flutter_markdown`, `pdfrx`, `cupertino_icons`.
 
 **Codegen toolchain (dev_dependencies):**
-- `build_runner` orchestrates: `freezed`, `riverpod_generator`, `json_serializable`, `drift_dev`. `custom_lint` + `riverpod_lint` add lints. Test/mocking: `flutter_test`, `mocktail`. `flutter_lints` ^6.0.0 (base for [[analysis_options]]). `flutter_launcher_icons` generates icons.
+- `build_runner` orchestrates: `freezed`, `json_serializable`, `drift_dev`. `riverpod_generator`/`riverpod_annotation`/`riverpod_lint`/`custom_lint` were removed 2026-10-02 (Flutter 3.47 upgrade): no file used them, and they pinned `analyzer` to 7.x, which cannot read the 3.47 framework sources. Test/mocking: `flutter_test`, `mocktail`. `flutter_lints` ^6.0.0 (base for [[analysis_options]]). `flutter_launcher_icons` generates icons.
 - CI MUST run `dart run build_runner build --delete-conflicting-outputs` after `pub get` (generated files are gitignored).
 
 **Asset bundling (`flutter.assets`), with key constants:**

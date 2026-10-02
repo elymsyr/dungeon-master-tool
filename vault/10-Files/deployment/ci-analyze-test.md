@@ -5,7 +5,7 @@ path: .github/workflows/analyze-test.yml
 layer: backend
 language: yaml
 status: stable
-updated: 2026-09-14
+updated: 2026-10-02
 tags: [file]
 ---
 
@@ -17,7 +17,7 @@ tags: [file]
 ## Inputs / Outputs
 **Inputs**
 - Triggers: `workflow_dispatch` only (manual). Inputs `run_analyze` (default true), `run_tests` (default true), both `boolean`.
-- Env: `FLUTTER_VERSION: "3.41.6"`, `WORKING_DIR: flutter_app`.
+- Env: `FLUTTER_VERSION: "3.47.6"`, `WORKING_DIR: flutter_app`.
 - Reads: the `flutter_app` package source and `cloudflare/` (checked out via `actions/checkout@v4`).
 
 **Outputs**
@@ -34,7 +34,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - Three jobs, all on `ubuntu-22.04`. `analyze` and `test` are gated by `if: ${{ inputs.run_analyze }}` / `if: ${{ inputs.run_tests }}`; `worker` always runs.
-- Shared Flutter setup: `subosito/flutter-action@v2` (version `3.41.6`, channel `stable`, `cache: true`) → `flutter pub get` → `dart run build_runner build --delete-conflicting-outputs` (codegen MUST run before analyze/test because freezed/drift/riverpod outputs are gitignored).
+- Shared Flutter setup: `subosito/flutter-action@v2` (version `3.47.6`, channel `stable`, `cache: true`) → `flutter pub get` → `dart run build_runner build --delete-conflicting-outputs` (codegen MUST run before analyze/test because freezed/drift/riverpod outputs are gitignored).
 - Analyze: `flutter analyze --no-fatal-infos` — errors and warnings fail the job; the ~30 info-level lints do not. `set -o pipefail` keeps `tee` from masking the exit code.
 - Test: installs `libsqlite3-dev` first (Drift tests load `libsqlite3.so`, which the runtime-only package lacks), then a single `flutter test --reporter=expanded --file-reporter=json:test-results/test.json | tee test.log`.
 - Logs upload with `if: always()`, so a failing run still leaves them for review.

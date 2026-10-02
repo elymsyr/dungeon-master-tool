@@ -164,7 +164,7 @@ The DM can project to a pop-out desktop window (`desktop_multi_window`, driven b
 
 ## Conventions
 
-- **Riverpod** for state (`@riverpod` where possible), **Freezed** for immutable models, **Drift** for persistence.
+- **Riverpod** for state (hand-written providers; Riverpod codegen is not installed), **Freezed** for immutable models, **Drift** for persistence.
 - `snake_case` files, `PascalCase` classes. Lints in [flutter_app/analysis_options.yaml](flutter_app/analysis_options.yaml) promote `use_build_context_synchronously`, `cancel_subscriptions`, and `close_sinks` to warnings.
 - **Every user-facing string is localized.** Add the key to `lib/presentation/l10n/app_en.arb` first, then `app_tr.arb`, `app_de.arb`, `app_fr.arb`; read it as `L10n.of(context)!.keyName`.
 - Comments and prose in this repo are a mix of Turkish and English — match the surrounding file.

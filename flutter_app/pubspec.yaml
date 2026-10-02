@@ -14,7 +14,6 @@ dependencies:
 
   # State Management
   flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
 
   # Immutable Models
   freezed_annotation: ^3.0.0
@@ -83,11 +82,8 @@ dev_dependencies:
   # Code Generation
   build_runner: ^2.4.15
   freezed: ^3.0.0
-  riverpod_generator: ^2.6.3
   json_serializable: ^6.9.4
   drift_dev: ^2.22.1
-  custom_lint: ^0.7.5
-  riverpod_lint: ^2.6.3
 
 # Vendored + patched copy of desktop_multi_window 0.2.1. The upstream Linux
 # native code quits (and segfaults) the whole app when a sub-window is closed;

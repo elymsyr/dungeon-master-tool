@@ -155,7 +155,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   Future<bool> create(String packageName, {WorldSchema? template}) async {
     try {
       await _repo.create(packageName, template: template);
-      return load(packageName);
+      return await load(packageName);
     } catch (e, st) {
       debugPrint('Package create error: $e\n$st');
       return false;

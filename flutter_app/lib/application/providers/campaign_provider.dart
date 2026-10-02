@@ -377,7 +377,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       final worldId = await _repo.create(worldName,
           template: template, includeSrd: includeSrd);
-      return load(worldId);
+      return await load(worldId);
     } catch (e, st) {
       debugPrint('Campaign create error: $e\n$st');
       return false;
