@@ -5,7 +5,7 @@
 **Release date:** October 2026
 **Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-This release adds a 3D dice roller. A dice button sits in the bottom-right corner of every world screen and of the character sheet, and the dice tumble across your screen and land on the result. Skills and saving throws on a character sheet roll with one tap. Nothing changes in your data, so this version installs over v18.0.0.
+This release adds a 3D dice roller. A dice button sits in the bottom-right corner of every world screen and of the character sheet, and the dice tumble across your screen and land on the result. Skills and saving throws on a character sheet roll with one tap. Aegis Act 1 moves to `0.17.0` with three quests and ten new cards, and the mobile battle map toolbar is easier to use on a touch screen. Your data is not changed, so this version installs over v18.0.0.
 
 ---
 
@@ -13,11 +13,12 @@ This release adds a 3D dice roller. A dice button sits in the bottom-right corne
 
 #### 3D dice roller
 
-Tap the dice button in the bottom-right corner to open the dice menu. Tap a die to roll just that one, or build a set with **+** and **−** and press **Roll**. The dice are thrown in 3D over a lightly dimmed screen, cast shadows on it, and a card at the top shows each result and the total. Tap while the dice are moving to skip to the result, and tap again to close.
+Tap the dice button in the bottom-right corner to open the dice menu. Tap a die to roll just that one, or build a set with **+** and **−** and press **Roll**. The dice are thrown in 3D over a lightly dimmed screen, and a card at the top shows each result and the total. Tap while the dice are moving to skip to the result, and tap again to close.
 
 - The button is on every tab of a world, for both the DM and players, and on the character sheet.
 - Dice available: d4, d6, d8, d10, d12, d20 and d100. Up to 30 dice per roll; a d100 counts as two.
 - Rolls only show on your own screen. They are not saved, not written to the combat log and not sent to players.
+- Phones use a lighter look so the throw stays smooth: each die gets a soft shadow on the floor, and the dice are not glossy. Desktop keeps full shadows and the glossy finish.
 - On a device that cannot draw the 3D dice, you get the result card on its own.
 
 #### Roll from the character sheet
@@ -30,9 +31,25 @@ Tap a row in a character's skills or saving throws to roll a d20 with that row's
 
 ---
 
+### Aegis
+
+#### Aegis Act 1 0.17.0
+
+Orvan's offer now opens three quests at once. **Nereden Geldiler** is still his job, but the player-facing part only says what he wants and what he pays. **İyi Yazı** is now only about the travel paper. The new quest **Ufuktaki Kıta** is about boarding a ship, crossing the sea and reaching Vorstrand; it ends when land comes into view (**Kara Göründü**), which closes the act. Orvan's signature is now paid up front.
+
+The travel paper is now issued by name at the counter, and the counter-signature is given in the signers' rooms (in the Council Building, the Divanhanesi and Elymsyr). Corin's promotion has been removed. Radenhall's elder druid and path scout now have names, **Halder** and **Addluin**.
+
+The world grows from 217 to 227 cards. New: the quest **Ufuktaki Kıta**, the scene **Kara Göründü**, the location **Açık Deniz**, Radenhall's healer **Iven** and bard **Tamsin**, **Aysel**, **Rüstem** and **İğne** at Mavnacılar Hanı, Captain **Maren** and the signer **Selvi**. These ten cards do not have artwork yet. Every card can now be reached from the Fihrist and from at least one other card.
+
+---
+
 ### Smaller improvements
 
-- **Mind map** — the zoom controls moved up so they do not overlap the dice button.
+- **Mobile battle map toolbar** — bigger buttons, icons and text, a taller tool panel that scrolls, and the dice button sits inside the bar's right end.
+- **Mobile layouts** — the session's quick-log row and the soundpad's volume row are taller, and leave room for the dice button at their right end.
+- **Floating buttons** — the dice and other floating buttons use your theme's main button colour and corner shape.
+- **Mind map** — the zoom controls are stacked right above the dice button, at the same size.
+- **Conditions** — the built-in template no longer has a separate *Applied Condition* category. **Conditions** is listed with the DM's own categories in the sidebar, where you can add your own, and a character's *current conditions* field links to it. A world that already has Applied Condition cards keeps them.
 - **l10n** — new keys for the dice roller and dice theme, in English, Turkish, German and French.
 
 ---
@@ -40,14 +57,16 @@ Tap a row in a character's skills or saving throws to roll a d20 with that row's
 ### Deprecations & removals
 
 - **Mobile session dice sheet** — the small dice sheet on the mobile session's Combat tab is replaced by the new dice button, which is on every tab. The desktop session's left-panel dice buttons, which write to the combat log, are unchanged.
+- **Applied Condition category** — replaced by **Conditions** (see *Smaller improvements*).
 
 ---
 
 ### Upgrade notes
 
 - **App version bump:** `18.0.0` → `18.1.0`.
-- **In-app migrations:** none. Your data is not touched.
+- **In-app migrations:** a world's template drops the empty *Applied Condition* category the first time the world opens. It only happens when the world has no Applied Condition cards, and it is safe to run again. Nothing else in your data changes.
 - **Online groups:** v18.1.0 works with v18.0.0. Players do not need to update at the same time.
+- **Aegis:** download Aegis Act 1 (`0.17.0`) again from **Marketplace → Official** to get the new quests and cards.
 
 ---
 
@@ -55,6 +74,7 @@ Tap a row in a character's skills or saving throws to roll a d20 with that row's
 
 The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
 
+- **The 3D dice can be slow on some phones**: the dice now use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
 - **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
 - **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
 - **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
@@ -67,7 +87,8 @@ The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 - **Flutter 3.47.6** — required by Flutter GPU / `flutter_scene`, which renders the dice. CI moved from 3.41.6. The unused Riverpod codegen packages (`riverpod_generator`, `riverpod_annotation`, `riverpod_lint`, `custom_lint`) were removed because they pinned an analyzer that cannot read the 3.47 framework sources.
 - **Flutter GPU** — enabled in the Linux and Windows runners, the Android manifest and the iOS/macOS `Info.plist` (`FLTEnableFlutterGPU`).
-- **Dice** — the result is picked by `Random` before the throw; the physics runs off the UI isolate and only shows it. See `vault/10-Files/combat-vtt/dice_physics.md`.
+- **Dice** — the result is picked by `Random` before the throw; the physics runs off the UI isolate and only shows it. On Android/iOS, `pixelRatio` is capped at 1.25 and the shadow map, shadow-catcher floor and clearcoat are replaced by per-die blob shadows. See `vault/10-Files/combat-vtt/dice_physics.md`.
+- **Built-in template 2.10.0** — `applied-condition` is retired; `condition` is shown under Tier 2 (`dmAuthoredLookupSlugs`), and PC `current_conditions` targets it. `migrateDropAppliedCondition` rewrites a stored schema at load only if no entity uses the slug.
 
 ---
 

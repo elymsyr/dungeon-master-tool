@@ -6,7 +6,7 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 3 October 2026 (v18.1.0) — no changes to the open list. The
+**Last reviewed:** 4 October 2026 (v18.1.0) — added *3D dice roller is slow on phones*. The
 v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `flutter analyze`
 0 errors / 0 warnings, worker `npm run typecheck` clean.
 
@@ -58,7 +58,7 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
     (30 dice) GPU time on that iGPU. **Still not verified on a phone**; if it still stutters,
     profile on device (`flutter run --profile`, UI vs raster) — not yet measured: the app under
     the non-opaque dice route is re-rasterized every frame (Impeller has no raster cache).
- from the proficiency table without opening the menu first pays the
+  - Still open: a direct roll from the proficiency table without opening the menu first pays the
     `DiceKit` build and shader warm-up at throw time, so that first throw can stall briefly.
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
