@@ -40,6 +40,19 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
 - **Battle map display toggles are inconsistent** — view helpers such as *Show all HP* and
   *Clean tokens* (`bmShowAllHp`, `bmCleanTokens`) each behave in their own way. They will be
   moved to a single standard.
+- **3D dice roller is slow on phones (release build)** — reported on v18.1.0: the first menu
+  open freezes and the throw animation runs at a low frame rate. Two causes found and
+  mitigated in `b4900cf7`, **not yet verified on a device**:
+  - *First-open freeze:* `Texture2D.fromImage` built each number atlas's mip chain on the UI
+    isolate with sRGB `pow()` per texel (~5M px over 8 atlases; 982 ms desktop AOT). The atlases
+    now use `TextureContent.data` (plain byte average, 62 ms).
+  - *Low FPS:* the full-screen `ShadowCatcherMaterial` floor runs a 16-tap shadow lookup on every
+    pixel, so phones are fill-bound. `pixelRatio` is now capped at 1.25 on Android/iOS
+    (`_maxPixelRatio` in [dice_roll_view.dart](../flutter_app/lib/presentation/widgets/dice/dice_roll_view.dart)),
+    2 on desktop. If dice look soft, raise it to 1.5; if it still stutters, profile with
+    `flutter run --profile` (UI vs raster time) before trying further cuts (FXAA, smaller atlas).
+  - Still open: a direct roll from the proficiency table without opening the menu first pays the
+    `DiceKit` build and shader warm-up at throw time, so that first throw can stall briefly.
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
 
