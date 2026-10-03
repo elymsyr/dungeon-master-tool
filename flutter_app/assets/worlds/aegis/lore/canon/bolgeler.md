@@ -348,6 +348,7 @@ yapar, kimse konuşmaz (§1.2).
 | **Nehir Muhafızı çavuşu** *(insan)* | Zincirin denenmemesi | Zincir mekanizmasının bakımsız olduğunu | Boğaz, kuleler, hangi geminin ne zaman geçtiği | 🟡 ad |
 | **Vinç ustası** *(gnome)* | Tezgahının kapanmaması | Bazı gece boşaltmalarına vinç verdiğini | Kayıtsız yükün **resmi** limandan nasıl geçtiği — Gizli Liman hattının ikinci taşıyıcısı | 🟡 ad |
 | **Çevirmen** *(yarı-elf)* | Bir sonraki işi | Duyduğu her şeyi | **Vorstrand**'dan gelen taze haber; kıtada kimsenin doğrulayamadığı cümleler | 🟡 ad |
+| **Kaptan — Maren** *(insan)* — *Dürüst Terazi* | Gemisinin dolu kalkması, tam dönmesi | Kaybolan gemilerden birini tanıdığını | Yasal yolculuk: karşı-imzalı kağıdı olanı tayfa yazar; gelmeyen bir geminin adı *(2026-10-03)* | ✅ |
 
 > **İki taşıyıcı kuralı:** *kayıtsız geçiş nasıl satın alınır* sorusu artık iki
 > limanda birden var — Gizli Liman'da **Sicim**, Elymsyr'de **vinç ustası.** Masa
@@ -655,12 +656,14 @@ Lucid Triton'dan 4–5 gün (§1.7) — ve oraya tek bir dar patika iniyor.
 hastalık bulaştıysa en yaşlı druid bunu sezebilir. Bu bir **olasılık** (README A3):
 sezip sezmediği, ve sezerse söyleyip söylemediği DM'in. Zar yazılmadı.
 
-### 4.6 NPC ihtiyacı — 2
+### 4.6 NPC ihtiyacı — 4 (adlar KARAR, 2026-10-03)
 
 | Rol | Ne istiyor | Ne gizliyor | Hangi kapıyı açar | Durum |
 |---|---|---|---|---|
-| **En yaşlı druid** *(insan ya da elf)* — köyün yaşlısı | Radenhall'ın kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladığı, hangi yöne yürüdüğü · bir karakterdeki hastalığı **sezebilir** · şerbetin tarifi ve takası | 🟡 ad |
-| **Patika gözcüsü** *(elf, yanında dev bir kurt)* | Kimsenin davetsiz patikadan geçmemesi | Son aylarda patikadan geçmeyi deneyen ilk kişilerin kim olduğunu | Kimin Radenhall'ı aradığı — ve neden | 🟡 ad |
+| **En yaşlı druid — Halder** *(insan ya da elf)* — köyün yaşlısı | Radenhall'ın kayda girmemesi | Çürümeyi **ne zamandır** bildiğini | Blight'ın doğadaki okunuşu: nerede başladığı, hangi yöne yürüdüğü · bir karakterdeki hastalığı **sezebilir** · şerbetin tarifi ve takası | ✅ |
+| **Patika gözcüsü — Addluin** *(elf, yanında dev bir kurt)* | Kimsenin davetsiz patikadan geçmemesi | Son aylarda patikadan geçmeyi deneyen ilk kişilerin kim olduğunu | Kimin Radenhall'ı aradığı — ve neden | ✅ |
+| **Şifacı — Iven** *(insan)* | Otların zamanında toplanması; kabilede kimsenin şerbetsiz kalmaması | Şehirdeki ruhsatlı şerbetin tarifinin buradan çıktığını bildiğini — kimse sormadı | Şerbeti kaynatan el: tarifin ve takasın **ikinci taşıyıcısı** (§4.7) | ✅ |
+| **Ozan — Tamsin** *(halfling)* | Şarkıların bir sonraki kuşağa eksiksiz geçmesi | — | Radenhall'ın geçmişi, şarkının diliyle (§4.3: tarih şarkıya yazılır; ozanlar ve şifacılar en saygın üyeler) | ✅ |
 
 ### 4.7 Direnç Şerbeti — tarifi ve takası burada (KARAR, 2026-10-01)
 

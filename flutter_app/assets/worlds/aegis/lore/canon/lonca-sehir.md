@@ -250,16 +250,19 @@ geçiş memuru değil; onun kendi çırağı). Salonda konuşmadığı şeyi bur
 > kimin geçirdiği bu işin içinde bir iz olarak kalıyor. **Gemilerin neden kaybolduğu
 > yazılmadı** — Orvan bilmiyor, kanon da bilmiyor; M0.6'ya bağlanıp bağlanmayacağı da
 > açık.
-3. *"Param yok. Verebileceğim şey imza."*
+3. *"Param yok. Verebileceğim şey imza, ve imzayı şimdi veririm. Hanemin payı işin sonunda."*
+   *(2026-10-03: imza peşin, miras iş bitince.)*
 
 **Ödül iki parça (KARAR, 2026-09-09 4. tur):**
 
 1. **Ücretsiz seyahat** = "iyi yazı" (act1.md §7.2): koltuğun karşı-imzalı geçiş
    kağıdı. Karşı-imzayı Orvan kendi atmaz; loncasının **imzacılarından** birine
-   attırır (§6.4). Perdenin sonundaki gemi biletini Meclis'in **en fakir** üyesi ödüyor —
+   attırır (§6.4) — ve **peşin** verir *(KARAR, 2026-10-03)*: teklif kabul edilince, işten önce;
+   Divanhanesi'nde **İmzacı — Selvi** imzalar. Perdenin sonundaki gemi biletini Meclis'in **en fakir** üyesi ödüyor —
    parayla değil yetkiyle. Grup gemiye para bulamazsa bile hat kapanmıyor.
 2. **Tüm mirasına ortaklık.** Verecek nakdi yok, ama bir **hane**si var: Sancarlar,
    Meclis'in en eski mührü. Teklif ettiği şey para değil, adının arkasındaki her şey.
+   **İş bitince** ödenir: cevap Orvan'a götürüldüğünde *(2026-10-03)*.
 
 > **Masanın görebileceği ince yer:** o miras **her gün küçülüyor.** Bu koltuğun geliri
 > akıştan gelir (§6.1), ve gemiler hem azalıyor hem kayboluyor — yani teklif ettiği
@@ -289,17 +292,18 @@ hastalığı susturması altı ayrı çıkarın toplamı (§6), tek üyenin konu
 
 | Basamak | Nerede | Ne olur |
 |---|---|---|
-| **Ön onay** | Karşı-İmza Masası (Geçiş Divanı) — Corin Sancar | Kağıt karşı-imza defterine geçer; ön onaysız kağıt hiçbir imzacının önüne çıkmaz |
-| **Kimlik ve kıyafet** | **Mavnacılar Hanı**'nın kileri | Kağıda yazılacak ad ve o ada uyan kıyafet. Kendi adıyla binmek isteyen atlar |
-| **Karşı-imza** | Sınır ve Ticaret'in bir imzacısı (§6.4) | Orvan teklifinin karşılığı olarak imzalatır. Karşı-imzalanmış kağıdın adı değişmez |
-| **Gemi** | Elymsyr ya da Gizli Liman | act1.md §7.2 |
+| **Kimlik ve kıyafet** | **Mavnacılar Hanı**'nın kileri — İğne | Kağıda yazılacak ad ve o ada uyan kıyafet. Kağıt adla alındığı için masadan **önce** gelir *(2026-10-03)*. Kendi adıyla binmek isteyen atlar |
+| **Kağıt ve ön onay** | Karşı-İmza Masası (Geçiş Divanı) — Corin Sancar | Ad ve bütün bilgiler kağıda yazılır, kağıt deftere geçer; masadan çıkmamış kağıt hiçbir imzacının önüne çıkmaz |
+| **Karşı-imza** | Bir **imzacı odası**nda Sınır ve Ticaret'in bir imzacısı (§6.4): Meclis · Divanhanesi · Elymsyr | Kağıdın boş yerleri varsa imzacı doldurur. Orvan teklifinin karşılığı olarak **peşin** imzalatır, Divanhanesi'nde **İmzacı — Selvi**'ye *(2026-10-03)*. Karşı-imzalanmış kağıdın adı değişmez |
+| **Gemi** | Elymsyr ya da Gizli Liman | Ayrı görev: `quest/Ufuktaki Kıta` *(2026-10-03)* — act1.md §7.2 |
 
 **Mavnacılar Hanı** (yeni yer, 2026-10-01): Nehir Yükleme Alanı'nın dibinde
 mavnacıların hanı; altındaki kilerde ad ve kıyafet hazırlanır. Ad uydurma değil:
 Orvan'ın loncasının defterine kendi eliyle yazdığı bir satır — Mertebeli Lonca Çocuğu
 için *İyi Yazı*'nın "sahte kimlik" sırrının yeri burası. Yolu bilen iki kişi: **Orvan**,
-ve adını borca kaptırmış **Kandil** (§7). Kilerdeki iki el (adı yazan, kıyafeti diken)
-**adlandırılmadı**, kart değil; kilerin bedeli DM'in.
+ve adını borca kaptırmış **Kandil** (§7). Hanın üç NPC'si (2026-10-03):
+**Hancı — Aysel** (merdiveni gösteren), **Mavnacı — Rüstem** (kantar fişleri; Elymsyr'e
+nehir yolu), ve kilerde **İğne** — adı yazan ve kıyafeti diken tek el. Kilerin bedeli DM'in.
 
 **Neden kilitlenmez:** bu görev yolun tek kapısı değil. Aynı yazıyı para da alır
 (act1.md §7.2), aynı bilgiyi liman hattı da taşır (Sicim + ayar ustası, §7). Meclis
@@ -336,12 +340,23 @@ adlardan bağımsızdır. İki hat birbirinin ön koşulu değil, aynı odaya ik
 **Her loncanın Meclis'te 5–10 imzacısı var**, ve loncanın adına atılan imzaları onlar
 atar: koltuk sahibi karar verir, imzacı imzalar. *(Ad değişebilir.)*
 
-- Geçiş kağıdının **karşı-imzası** bir imzacının elinden çıkar. **Karşı-İmza
-  Masası'nın işi ön onaydır** — kağıdı deftere geçirmek ve imzacıya yollamak. Masanın
-  adı "karşı-imza"yı taşıyor, çünkü kağıt oradan karşı-imzaya çıkar (*"Divan'a çıktım"*
-  = karşı-imza beklemek, `location/Kalem Binası`).
-- **Corin Sancar'ın terfisi** artık somut: loncanın imzacılarından biri olmak.
-- İmzacıların adları ve sayısı loncadan loncaya değişir; **hiçbiri adlandırılmadı.**
+- Geçiş kağıdı **Karşı-İmza Masası'ndan alınır, ve bir adla alınır** *(KARAR,
+  2026-10-03)*: memur adı ve bütün bilgileri kağıda yazar, deftere geçirir ve imzalar
+  (**ön onay**). *"Divan'a çıktım"* = geçiş kağıdı beklemek (`location/Kalem Binası`).
+- **Karşı-imza imzacı odalarında atılır** *(KARAR, 2026-10-03)*. Kağıt bir imzacı
+  odasına götürülür; imzacı kağıdın boş kalmış yerleri varsa doldurur ve imzalar.
+  Sınır ve Ticaret'in odaları üç yerde: **Meclis Binası** (en kalabalığı), loncanın evi
+  **Divanhanesi** (şehrin ticaret bölgesinde), ve **Elymsyr** (`location/Gümrük Binası`;
+  binası türetme).
+- ~~Corin Sancar'ın terfisi~~ — **kaldırıldı (2026-10-03).** Corin'in iki kaldıracı
+  kaldı: rüşvet · Orvan'ın adı.
+- İmzacıların adları ve sayısı loncadan loncaya değişir. **Adlandırılan tek imzacı:**
+  Divanhanesi'nin odasındaki **İmzacı — Selvi** *(2026-10-03)* — Orvan'ın kağıtlarını
+  imzalayan el; oda üçünün en sessizi.
+- 🟡 **İmzacı odasında ne istendiği açık** *(not, 2026-10-03)*: şimdilik **hiçbir şey** —
+  ön onaylı kağıdı getiren karşı-imzayı alır. Açık kalan bedeli: bir engel yoksa Orvan'ın
+  imzasının ağırlığı odadan değil, masadaki anahtardan (Orvan'ın adı) ve kilerden gelir.
+  Karar verilirse üç odanın kartı ve `npc/İmzacı — Selvi` birlikte güncellenir.
 
 ---
 
@@ -351,7 +366,7 @@ atar: koltuk sahibi karar verir, imzacı imzalar. *(Ad değişebilir.)*
 
 | NPC | Nerede | Ne istiyor | Ne gizliyor | Hangi kapıyı açar |
 |---|---|---|---|---|
-| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | Terfi. Kendi adıyla, karşı-imza yetkisi olan bir masa | O masada **Orvan'ın kayırmasıyla** oturuyor, ve bundan hoşlanmıyor | **Kilit** — karşı-imzayı verir ya da yığının altına kaydırır (5. tur) |
+| **Corin Sancar** — geçiş memuru *(insan)* | Karşı-İmza Masası | O masada adı yüzünden değil, işi yüzünden oturduğunun bilinmesi *(terfi 2026-10-03'te kaldırıldı)* | O masada **Orvan'ın kayırmasıyla** oturuyor, ve bundan hoşlanmıyor | **Kilit** — karşı-imzayı verir ya da yığının altına kaydırır (5. tur) |
 | **Kildrak Ferrun** — ayar ustası *(cüce)* | Demirci çarşısı | Damgasının temiz kalması | Eğelenmiş mührü daha önce de gördü, bir kez değil — hiçbirinde damga yoktu | Bir ad değil bir **yön** (5. tur): *"Bunda ayar damgası yok. Güneye gidin, bir liman arayın."* |
 | **Sindri** — simyacı çırağı *(gnome, bastırılan tanık)* | Şifacılar kışlası | Yazdığının doğru kalması | İlk beyanın kopyası onda | Hastalığın şehirde **bilindiğinin** belgesi |
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Borcunun ertelenmesi | Kolluğun kimi dövdüğünü ve kimin emrettiğini | Sokak hattı, lonca kolluğu, "iyi para"nın şehirdeki karşılığı |
@@ -383,7 +398,7 @@ görevinde karşı-imzayı verir ya da yığının altına kaydırır.
 | `npc` | Meclis'in altı koltuğu (§6) | ✅ |
 | `npc` | Sokağın beşi (§7) | ✅ |
 | `scene` | **Meclis oturumu** (altı inkâr, tek sessiz üye) · **Kapı önündeki teklif** (§6.2) · **Geçiş Divanı'nda sıra** | ✅ |
-| `quest` | **Nereden Geldiler** (limanda biter) · **İyi Yazı** (kıtadan çıkış); Orvan'ın ödülü **imza + mirasa ortaklık** (§6.2) | ✅ |
+| `quest` | **Nereden Geldiler** (limanda biter) · **İyi Yazı** (geçiş kağıdı) · **Ufuktaki Kıta** (kıtadan çıkış, 2026-10-03); Orvan'ın ödülü **imza + mirasa ortaklık** (§6.2) | ✅ |
 | `scene` | **Adı tanıyan üye** (§6.3) — gerçek adlar Meclis'e taşınırsa | ✅ |
 
 Toplam **24 kart, hepsi ✅.** Ad kararı bekleyen kalmadı.

@@ -858,7 +858,14 @@ birincinin değil.
   Yani ikinci kapı oyuncuları başka lokasyonlara yollar; liman tek başına
   bir çıkış değil, bir **kavşak**.
 
-**Bu bir görev değil (KARAR, 2026-09-09 2. tur).** "Yol hakkı" diye ayrı bir `quest`
+**Artık bir görev (KARAR, 2026-10-03).** Gemiye binmek ayrı bir görev oldu:
+`quest/Ufuktaki Kıta` — bir gemiye binmek, denizi geçmek, Vorstrand'a varmak. Ufukta kara
+göründüğünde kapanır (`scene/Kara Göründü`), ve perde orada biter. Yol hâlâ serbest; görev
+yolu değil gemiyi taşıyor. Orvan'ın teklifi **üç işi birden** açar: `Nereden Geldiler`
+(ana iş) · `İyi Yazı` (yalnız geçiş kağıdı; imza **peşin**) · `Ufuktaki Kıta` (gemi).
+Elymsyr'in yasal gemisi `npc/Kaptan — Maren`'in *Dürüst Terazi*'si; deniz `location/Açık Deniz`.
+
+~~**Bu bir görev değil (KARAR, 2026-09-09 2. tur).**~~ *(geri alındı)* "Yol hakkı" diye ayrı bir `quest`
 kartı yazılmıyor. Meridia'da yol serbesttir: köyden çıkmak, limana gitmek, şehre
 yürümek kimseden izin istemez. Fiyatı olan tek şey **gemiye binmek** — o da bir
 görev değil, oyuncular bir gemiye binmek istediğinde açılan **pazarlık sahnesi**
@@ -1153,7 +1160,7 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
 32. **Corin Sancar kanıt olmaktan çıktı, engel oldu** (`lonca-sehir.md` §6.2).
     *Geçiş Divanı'nda Sıra* artık bir soruşturma değil bir kilit: oyuncunun elinde
     Orvan'ın imzası var, Corin ikinciyi vermiyor. Üç kaldıraç: rüşvet · Orvan'ın adı
-    · Corin'in terfisi.
+    · ~~Corin'in terfisi~~ *(2026-10-03'te kaldırıldı)*.
 33. **Orvan Sancar'ın sicili kirlendi** (`lonca-sehir.md` §6.1). Kayıran, iş çeviren,
     her iyiliğin karşılığını isteyen bir adam — ve hastalık konusunda doğruyu söyleyen
     tek koltuk. Salonun ona bakmamasının sebebi artık kayıtsızlık değil: **sözü ucuz.**
