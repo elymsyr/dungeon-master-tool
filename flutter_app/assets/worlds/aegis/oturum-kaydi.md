@@ -76,10 +76,10 @@ mirasa ortaklık.
 
 | Durak | Kart | Anahtar | Bu masada |
 |---|---|---|---|
-| Ön onay | `Geçiş Divanı'nda Sıra` — Corin | rüşvet · Orvan'ın adı · Corin'in terfisi (imzacı olmak) | Ranger'ın annesinin hanesi aynı loncada; Corin soyadı tanıyabilir — istersen |
-| Kimlik ve kıyafet | `Mavnacılar Hanı` — kiler | yolu Orvan ya da Kandil gösterir; bedeli senin | **Ranger** rıhtımda tanınır; **paladin** cezalı. Bu durak ikisine de en çok lazım |
-| Karşı-imza | Orvan'ın bir imzacısı | Orvan'ın teklifi | İmzayı işten **önce** mi **sonra** mı verdirdiği senin: gemileri denizde arayacak masaya kağıt işten önce lazım olabilir |
-| Gemi | `Gümrük Rıhtımı` (Elymsyr) · `Geçiş Pazarlığı` (Gizli Liman) | iyi yazı ikisinde de geçer | — |
+| Kimlik ve kıyafet | `Mavnacılar Hanı` — kilerde `İğne`; merdiveni `Hancı — Aysel` gösterir | yolu Orvan ya da Kandil gösterir; bedeli senin | **Ranger** rıhtımda tanınır; **paladin** cezalı. Bu durak ikisine de en çok lazım. Kağıt adla alındığı için masadan **önce** |
+| Kağıt ve ön onay | `Geçiş Divanı'nda Sıra` — Corin | rüşvet · Orvan'ın adı | Ranger kendi adıyla gelirse: annesinin hanesi aynı loncada, Corin soyadı tanıyabilir — istersen |
+| Karşı-imza | İmzacı odası: Meclis (en kalabalık) · Divanhanesi · Elymsyr'de Gümrük Binası — Orvan'ın kağıdını Divanhanesi'nde `İmzacı — Selvi` imzalar | Orvan'ın teklifi | İmza işten **önce** (karar 2026-10-03); miras iş bitince |
+| Gemi | Ayrı görev: `Ufuktaki Kıta` — `Gümrük Rıhtımı` (Elymsyr, `Kaptan — Maren`) · `Geçiş Pazarlığı` (Gizli Liman) | iyi yazı ikisinde de geçer | Son sahne `Kara Göründü`: ufukta kara |
 
 **2 · Orvan'ın işi** (`Nereden Geldiler`) — üç ucu var:
 
@@ -107,7 +107,7 @@ mirasa ortaklık.
   içinde işler.
 
 **Senin kararın (kartlarda bilerek boş):** gemilerin neden kaybolduğu · şerbetin takas
-karşılığı · kilerin bedeli · imzanın işten önce mi sonra mı geldiği · druidin sezip
+karşılığı · kilerin bedeli · imzacı odasında ne istendiği · druidin sezip
 sezmediği.
 
 ---

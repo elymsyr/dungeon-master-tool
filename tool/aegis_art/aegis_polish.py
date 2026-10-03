@@ -453,8 +453,8 @@ LIGHT = {
 "npc|Kapı Komutanı — Nevra": "the shade of a gatehouse arch with cold light from outside, the open register bright under her hand",
 "npc|Başkumandan Yardımcısı — Aren": "one shuttered window throwing a single bar of light across a dim stone chamber, most of the face in shadow",
 "npc|Kule Nöbetçisi — Vrask": "hard coastal sun and mirror glare, salt haze, bronze scales flashing",
-"npc|En Yaşlı Druid": "warm dappled forest light, clear summer air, sun through leaves on a pale plant-fibre robe",
-"npc|Patika Gözcüsü": "bright mountain-path sun, warm grey rock, green forest below",
+"npc|En Yaşlı Druid — Halder": "warm dappled forest light, clear summer air, sun through leaves on a pale plant-fibre robe",
+"npc|Patika Gözcüsü — Addluin": "bright mountain-path sun, warm grey rock, green forest below",
 
 "trait|Acıyı Tanımaz": "cold dawn light on wet trampled grass, long blue shadows, grey lifeless skin",
 "trait|Bulaştıran Yara": "harsh close daylight, clinical and unflinching, sharp detail in the wound",
@@ -1031,7 +1031,7 @@ LIGHT.update({
 })
 
 SUBJECT.update({
-"npc|En Yaşlı Druid":
+"npc|En Yaşlı Druid — Halder":
  "A very old woman standing straight-backed, a sun-browned face of deep lines, white hair to the "
  "waist with black raven feathers braided into it, clear pale green eyes, wearing a light undyed "
  "robe woven from bamboo fibre that reads like linen, a string of dried seeds around her neck, "
@@ -1101,7 +1101,7 @@ SUBJECT.update({
  "counter beside a ragged hanging curtain a narrow stone stair going down, and at its foot a "
  "glimpse of a lamplit cellar with a writing table, an open ledger and a quill, and a tailor's "
  "table with folded coats and a pair of boots",
-"npc|Patika Gözcüsü":
+"npc|Patika Gözcüsü — Addluin":
  "A tall broad-shouldered male elf scout standing on a single narrow rocky mountain path, long "
  "hair tied back, wearing natural earthy clothes of woven plant fibre and soft undyed leather with "
  "layered shoulder guards made of large overlapping dried leaves, a short bow held low in one hand "
