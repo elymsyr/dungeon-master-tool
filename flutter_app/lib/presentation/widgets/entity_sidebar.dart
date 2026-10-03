@@ -17,7 +17,8 @@ import '../../application/services/entity_share_prepare.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/builtin/content.dart'
     show seedExcludedSlugs, tier1Slugs;
-import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
+import '../../domain/entities/schema/builtin/lookups.dart'
+    show dmAuthoredLookupSlugs, tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../l10n/app_localizations.dart';
@@ -199,9 +200,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       n == null ? null : _SortMode.values.where((e) => e.name == n).firstOrNull;
 
   /// Map slug → tier number (0/1/2) using the canonical built-in slug lists.
-  /// Custom (user-authored) categories not in any list fall through to tier 2.
+  /// Custom (user-authored) categories not in any list fall through to tier 2,
+  /// as do the DM-authored lookups (`condition`).
   int _tierFor(String slug) {
-    if (tier0Slugs.contains(slug)) return 0;
+    if (tier0Slugs.contains(slug) && !dmAuthoredLookupSlugs.contains(slug)) {
+      return 0;
+    }
     if (tier1Slugs.contains(slug)) return 1;
     return 2;
   }

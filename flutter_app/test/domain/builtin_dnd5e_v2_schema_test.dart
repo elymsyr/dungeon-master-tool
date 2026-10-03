@@ -10,24 +10,24 @@ void main() {
   final schema = build.schema;
 
   group('Builtin D&D 5e v2 Schema', () {
-    test('ships 39 Tier-0 + 22 Tier-1 + 15 Tier-2 = 76 categories', () {
-      expect(schema.categories.length, 76);
+    test('ships 39 Tier-0 + 22 Tier-1 + 14 Tier-2 = 75 categories', () {
+      expect(schema.categories.length, 75);
       expect(tier0Slugs.length, 39);
       expect(tier1Slugs.length, 22);
-      expect(tier2Slugs.length, 15);
+      expect(tier2Slugs.length, 14);
     });
 
     test('Tier order in catalog: Tier-0, Tier-1, Tier-2', () {
       final slugs = schema.categories.map((c) => c.slug).toList();
       expect(slugs.sublist(0, 39), tier0Slugs);
       expect(slugs.sublist(39, 61), tier1Slugs);
-      expect(slugs.sublist(61, 76), tier2Slugs);
+      expect(slugs.sublist(61, 75), tier2Slugs);
     });
 
     test('schema metadata', () {
       expect(schema.schemaId, 'builtin-dnd5e-default-v2');
       expect(schema.baseSystem, 'dnd5e');
-      expect(schema.version, '2.9.0');
+      expect(schema.version, '2.10.0');
       expect(schema.originalHash, 'builtin-dnd5e-default-v2');
     });
 
@@ -363,17 +363,13 @@ void main() {
       expect(keys, isNot(contains('casting_ability_ref')));
       expect(keys, isNot(contains('pact_magic_slots')));
       final cc = pc.fields.firstWhere((f) => f.fieldKey == 'current_conditions');
-      expect(cc.validation.allowedTypes, ['applied-condition']);
+      expect(cc.validation.allowedTypes, ['condition']);
     });
 
-    test('applied-condition references condition + ability', () {
-      final ac = schema.categories.firstWhere((c) => c.slug == 'applied-condition');
-      final cr = ac.fields.firstWhere((f) => f.fieldKey == 'condition_ref');
-      expect(cr.validation.allowedTypes, ['condition']);
-      expect(cr.isRequired, true);
-      final freq = ac.fields.firstWhere((f) => f.fieldKey == 'save_frequency');
-      expect(freq.validation.allowedValues,
-          ['none', 'start-of-turn', 'end-of-turn', 'when-damaged']);
+    test('applied-condition is retired; condition is a seeded lookup', () {
+      expect(schema.categories.map((c) => c.slug), isNot(contains('applied-condition')));
+      expect(tier0Slugs, contains('condition'));
+      expect(dmAuthoredLookupSlugs, {'condition'});
     });
 
     test('location parent_location_ref self-references', () {

@@ -113,17 +113,11 @@ Kısaltmalar: **T** = FieldType, **Z** = zorunlu, **D** = default.
 Sözleşmenin tamamı [character-blueprint.md](character-blueprint.md) — dünya
 blueprint'inde PC aktarılmaz; karakterler `blueprint.json`'a gider.
 
-### 3.3 Applied Condition — `applied-condition`
+### 3.3 ~~Applied Condition~~ — kaldırıldı (şema 2.10.0)
 
-| key | T | Z | D | İçerik |
-|---|---|---|---|---|
-| `condition_ref` | relation→`condition` | ✓ | — | Tek uuid string. |
-| `source_entity_ref` | relation→`npc`,`player-character`,`monster`,`animal` | | — | Tek uuid string. |
-| `duration_rounds` | integer | | — | ≥ 0; yoksa süresiz. |
-| `save_dc` | integer | | — | 1..30. |
-| `save_ability_ref` | relation→`ability` | | — | Tek uuid string. |
-| `save_frequency` | enum | | — | `none` / `start-of-turn` / `end-of-turn` / `when-damaged` |
-| `notes` | textarea | | `''` | Serbest metin. |
+`applied-condition` kategorisi yok. Özel bir durum (condition) gerekiyorsa
+`categories.condition` altına yazılır; SRD'nin 15 durumu zaten seed'li ve
+`{"_lookup": "condition", "name": "Prone"}` ile referanslanır.
 
 ### 3.4 Location — `location`
 
