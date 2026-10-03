@@ -214,7 +214,11 @@ class DiceKit {
       final looks = <String, (MeshGeometry, PhysicallyBasedMaterial)>{};
       for (final s in dieShapes.values) {
         final atlas = await _numberAtlas(s, look.body, look.ink);
-        final mat = PhysicallyBasedMaterial(baseColorTexture: await Texture2D.fromImage(atlas))
+        // `data` averages mips as plain bytes. The default (`color`) does it
+        // in linear light: millions of pow() calls on the UI isolate, a
+        // multi-second freeze on a phone, for a two-colour atlas.
+        final tex = await Texture2D.fromImage(atlas, content: TextureContent.data);
+        final mat = PhysicallyBasedMaterial(baseColorTexture: tex)
           ..roughnessFactor = 0.32
           ..metallicFactor = 0.0
           ..clearcoat = 0.8
@@ -252,6 +256,10 @@ class DiceKit {
 const _fov = 24 * vm.degrees2Radians;
 const _wallMargin = 0.8; // world units between the tray walls and the screen edge
 const _cardReserve = 110.0; // logical px kept free at the top for the result card
+// Phone GPUs are fill-bound on the full-screen shadow floor; MSAA smooths the
+// lower resolution. Tune here if dice look soft or still stutter.
+final _maxPixelRatio =
+    defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS ? 1.25 : 2.0;
 
 /// Camera and tray for a screen of [size]: dice keep a steady on-screen size
 /// (a die across is ~20% of the short side, 72–120 px) and the tray fills the
@@ -404,8 +412,9 @@ class _DiceRollViewState extends State<DiceRollView> {
                 camera: _view!.camera,
                 autoTick: !_settled,
                 onTick: _tick,
-                // Dice are ~100 px across; past 2× a phone just pays fill rate.
-                pixelRatio: math.min(2.0, MediaQuery.devicePixelRatioOf(context)),
+                // Dice are ~100 px across; past this a device just pays fill
+                // rate (every floor pixel runs a 16-tap shadow lookup).
+                pixelRatio: math.min(_maxPixelRatio, MediaQuery.devicePixelRatioOf(context)),
               ),
             ),
           ),
