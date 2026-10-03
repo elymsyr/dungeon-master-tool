@@ -51,7 +51,14 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
     (`_maxPixelRatio` in [dice_roll_view.dart](../flutter_app/lib/presentation/widgets/dice/dice_roll_view.dart)),
     2 on desktop. If dice look soft, raise it to 1.5; if it still stutters, profile with
     `flutter run --profile` (UI vs raster time) before trying further cuts (FXAA, smaller atlas).
-  - Still open: a direct roll from the proficiency table without opening the menu first pays the
+  - *Follow-up (pixelRatio alone barely helped):* measured with a profile harness on an AMD iGPU,
+    saturating the GPU so frame time = GPU time. Shadow map + full-screen catcher ≈ 50% of GPU
+    time, clearcoat ≈ 35% more with 30 dice, MSAA ≈ 16%. Phones now skip shadows and clearcoat
+    and draw a blob shadow per die (`_phone` in `dice_roll_view.dart`): −53% (1 die) / −65%
+    (30 dice) GPU time on that iGPU. **Still not verified on a phone**; if it still stutters,
+    profile on device (`flutter run --profile`, UI vs raster) — not yet measured: the app under
+    the non-opaque dice route is re-rasterized every frame (Impeller has no raster cache).
+ from the proficiency table without opening the menu first pays the
     `DiceKit` build and shader warm-up at throw time, so that first throw can stall briefly.
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
