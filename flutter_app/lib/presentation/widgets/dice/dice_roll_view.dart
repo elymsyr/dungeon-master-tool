@@ -189,14 +189,29 @@ String resolveDiceLook(String setting, String appTheme) {
   return diceLooks.containsKey(name) ? name : 'dark';
 }
 
+// A soft round shadow, dark in the middle: what a phone draws under each die
+// instead of a shadow map.
+Future<Texture2D> _blobTexture() async {
+  const n = 64.0, c = Offset(n / 2, n / 2);
+  final rec = ui.PictureRecorder();
+  Canvas(rec).drawCircle(
+    c,
+    n / 2,
+    Paint()..shader = ui.Gradient.radial(c, n / 2, const [Color(0x8C000000), Color(0x00000000)], const [0.25, 1]),
+  );
+  return Texture2D.fromImage(await rec.endRecording().toImage(n.toInt(), n.toInt()), content: TextureContent.data);
+}
+
 /// The dice scene, built per dice look (only the last one is kept): a number atlas, rounded mesh and
 /// resin material per die shape, lit by one shadow-casting light over an
-/// invisible floor that only catches the shadows. Fails where Flutter GPU is
-/// not available; the roller then shows results without the 3D dice.
+/// invisible floor that only catches the shadows. Phones skip the shadow map
+/// and the clearcoat and lay a [blob] under each die instead. Fails where
+/// Flutter GPU is not available; the roller then shows results without the 3D dice.
 class DiceKit {
-  DiceKit._(this.scene, this.looks);
+  DiceKit._(this.scene, this.looks, this.blob);
   final Scene scene;
   final Map<String, (MeshGeometry, PhysicallyBasedMaterial)> looks;
+  final (MeshGeometry, UnlitMaterial)? blob; // phones only
 
   static (String, Future<DiceKit>)? _kit;
   static Future<DiceKit> load(String look) {
@@ -221,7 +236,7 @@ class DiceKit {
         final mat = PhysicallyBasedMaterial(baseColorTexture: tex)
           ..roughnessFactor = 0.32
           ..metallicFactor = 0.0
-          ..clearcoat = 0.8
+          ..clearcoat = _phone ? 0 : 0.8
           ..clearcoatRoughness = 0.08;
         looks[s.name] = (_dieGeometry(s), mat);
       }
@@ -229,21 +244,29 @@ class DiceKit {
         ..directionalLight = DirectionalLight(
           direction: vm.Vector3(-0.6, -1.0, -0.5),
           intensity: 2.2,
-          castsShadow: true,
+          castsShadow: !_phone,
           // The view is one flat tray seen from above: a single cascade
           // fitted to it (DiceView sets shadowMaxDistance) covers it all.
           shadowCascadeCount: 1,
         );
-      scene.add(Node(
-        mesh: Mesh(PlaneGeometry(width: 200, depth: 200), ShadowCatcherMaterial(shadowIntensity: 0.6, aoStrength: 0)),
-      ));
+      if (!_phone) {
+        scene.add(Node(
+          mesh: Mesh(PlaneGeometry(width: 200, depth: 200), ShadowCatcherMaterial(shadowIntensity: 0.6, aoStrength: 0)),
+        ));
+      }
+      final blob = _phone
+          ? (PlaneGeometry(), UnlitMaterial(colorTexture: await _blobTexture())..alphaMode = AlphaMode.blend)
+          : null;
       // Compile the pipelines and upload the atlases now (the menu is open,
       // nothing rolls yet), so the first throw doesn't stall on its first frame.
-      final probes = [for (final (g, m) in looks.values) Node(mesh: Mesh(g, m))];
+      final probes = [
+        for (final (g, m) in looks.values) Node(mesh: Mesh(g, m)),
+        if (blob != null) Node(mesh: Mesh(blob.$1, blob.$2)),
+      ];
       probes.forEach(scene.add);
       await scene.warmUp([RenderView(camera: DiceView(const Size(400, 800)).camera)]);
       probes.forEach(scene.remove);
-      return DiceKit._(scene, looks);
+      return DiceKit._(scene, looks, blob);
     } catch (e) {
       debugPrint('dice: 3D unavailable, showing results only: $e');
       rethrow;
@@ -256,10 +279,13 @@ class DiceKit {
 const _fov = 24 * vm.degrees2Radians;
 const _wallMargin = 0.8; // world units between the tray walls and the screen edge
 const _cardReserve = 110.0; // logical px kept free at the top for the result card
-// Phone GPUs are fill-bound on the full-screen shadow floor; MSAA smooths the
-// lower resolution. Tune here if dice look soft or still stutter.
-final _maxPixelRatio =
-    defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS ? 1.25 : 2.0;
+// Phone GPUs can't afford what desktop draws. Measured at a phone's pixel
+// count, the shadow map + full-screen catcher were half the GPU time and
+// clearcoat a third more with many dice, so phones drop both (blob shadows
+// instead) and render at a capped pixel ratio, MSAA smoothing the rest.
+final _phone =
+    defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+final _maxPixelRatio = _phone ? 1.25 : 2.0;
 
 /// Camera and tray for a screen of [size]: dice keep a steady on-screen size
 /// (a die across is ~20% of the short side, 72–120 px) and the tray fills the
@@ -326,7 +352,7 @@ class _DiceRollViewState extends State<DiceRollView> {
   DiceView? _view;
   DiceRoll? _roll;
   DiceKit? _kit;
-  final _nodes = <Node>[];
+  final _nodes = <Node>[], _blobs = <Node>[];
   double _t = 0;
   bool _settled = false;
 
@@ -344,13 +370,16 @@ class _DiceRollViewState extends State<DiceRollView> {
       final roll = r[0] as DiceRoll, kit = r[1] as DiceKit?;
       if (kit != null) {
         kit.scene.directionalLight!.shadowMaxDistance = view.shadowDistance;
+        final blob = kit.blob;
         for (final d in roll.dice) {
           final (geometry, material) = kit.looks[d.shape.name]!;
-          final node = Node(mesh: Mesh(geometry, material));
-          _place(node, d, 0);
-          kit.scene.add(node);
-          _nodes.add(node);
+          _nodes.add(Node(mesh: Mesh(geometry, material)));
+          if (blob != null) _blobs.add(Node(mesh: Mesh(blob.$1, blob.$2)));
         }
+        for (var i = 0; i < roll.dice.length; i++) {
+          _place(i, roll.dice[i], 0);
+        }
+        [..._blobs, ..._nodes].forEach(kit.scene.add);
       }
       setState(() {
         _roll = roll;
@@ -362,16 +391,24 @@ class _DiceRollViewState extends State<DiceRollView> {
 
   @override
   void dispose() {
-    for (final n in _nodes) {
+    for (final n in [..._nodes, ..._blobs]) {
       _kit?.scene.remove(n);
     }
     super.dispose();
   }
 
-  void _place(Node node, ThrownDie d, int step) {
+  void _place(int i, ThrownDie d, int step) {
     final (p, q) = d.poseAt(step);
-    node.position = p;
-    node.rotation = q;
+    _nodes[i]
+      ..position = p
+      ..rotation = q;
+    if (_blobs.isEmpty) return;
+    // Where the die's centre falls along the light (-0.6, -1, -0.5), on the
+    // floor, and wider as it rises.
+    final w = 1.9 * d.shape.radius + 0.3 * p.y;
+    _blobs[i]
+      ..position = vm.Vector3(p.x - 0.6 * p.y, 0.01, p.z - 0.5 * p.y)
+      ..scale = vm.Vector3(w, 1, w);
   }
 
   void _tick(Duration _, double dt) {
@@ -381,7 +418,7 @@ class _DiceRollViewState extends State<DiceRollView> {
     _t += math.min(dt, 1 / 30);
     final step = (_t * diceSimHz).floor();
     for (var i = 0; i < roll.dice.length; i++) {
-      _place(_nodes[i], roll.dice[i], step);
+      _place(i, roll.dice[i], step);
     }
     if (step >= roll.steps - 1) setState(() => _settled = true);
   }
