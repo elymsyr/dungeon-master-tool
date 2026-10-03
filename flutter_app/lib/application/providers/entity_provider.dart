@@ -79,6 +79,12 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
         schema = worldmapPatched;
         dirty = true;
       }
+      final appliedDropped =
+          migrateDropAppliedCondition(schema, data?['entities']);
+      if (appliedDropped != null) {
+        schema = appliedDropped;
+        dirty = true;
+      }
       if (dirty) {
         if (data != null) {
           final serialized = deepCopyJson(schema.toJson());
@@ -268,6 +274,36 @@ WorldSchema? _migrateWorldmapAllowedSections(WorldSchema schema) {
   }
   if (!dirty) return null;
   return schema.copyWith(categories: newCats);
+}
+
+/// Built-in template 2.10.0 retired `applied-condition` (`condition` covers
+/// it). Drops it from a stored schema and repoints relations that targeted it
+/// (PC `current_conditions`) at `condition` — but only while no entity in
+/// [entities] (the world's `entities` map, `type` = slug) still uses it, so a
+/// world that authored one keeps its cards. Null when nothing changes.
+@visibleForTesting
+WorldSchema? migrateDropAppliedCondition(WorldSchema schema, Object? entities) {
+  const retired = 'applied-condition';
+  if (!schema.categories.any((c) => c.slug == retired)) return null;
+  if (entities is Map &&
+      entities.values.any((e) => e is Map && e['type'] == retired)) {
+    return null;
+  }
+  return schema.copyWith(categories: [
+    for (final cat in schema.categories)
+      if (cat.slug != retired)
+        cat.copyWith(fields: [
+          for (final f in cat.fields)
+            (f.validation.allowedTypes?.contains(retired) ?? false)
+                ? f.copyWith(
+                    validation: f.validation.copyWith(allowedTypes: {
+                      for (final t in f.validation.allowedTypes!)
+                        t == retired ? 'condition' : t,
+                    }.toList()),
+                  )
+                : f,
+        ]),
+  ]);
 }
 
 /// Aktif kampanyadaki entity'lerin reactive state'i.

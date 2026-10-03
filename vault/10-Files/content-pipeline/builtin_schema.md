@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/{builtin_dnd5e_v2_schema.da
 layer: domain
 language: dart
 status: stable
-updated: 2026-09-12
+updated: 2026-10-04
 tags: [file]
 ---
 
@@ -34,10 +34,10 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- **Actual category counts** (verified): **Tier 0 = 39** (`lookups.dart` `tier0Slugs`), **Tier 1 = 22** (`content.dart`), **Tier 2 = 15** (`dm.dart`) → **76 categories total**.
-- **Tier 0 (39 lookups, seeded)**: `ability`, `skill`, `damage-type`, `condition`, `creature-type`, `language`, `weapon-property`, `weapon-mastery`, `spell-school`, `magic-item-category`, `sense`, `hazard`, `arcane-focus`, `druidic-focus`, `holy-symbol`, `size`, `rarity`, `coin`, `lifestyle`, `duration-unit`, `body-slot`, `alignment`, `weapon-category`, `armor-category`, `tool-category`, `feat-category`, `action`, `area-shape`, `attitude`, `illumination`, `travel-pace`, `plane`, `casting-component`, `casting-time-unit`, `speed-type`, `cover`, `tier-of-play`, `character-state`, `resource-pool`. These are the canonical names everything else references (Open5e `_lookup` placeholders, SRD `lookup()` calls) and are seeded as `isBuiltin=true` Entity rows on first launch.
+- **Actual category counts** (verified): **Tier 0 = 39** (`lookups.dart` `tier0Slugs`), **Tier 1 = 22** (`content.dart`), **Tier 2 = 14** (`dm.dart`) → **75 categories total** (schema 2.10.0).
+- **Tier 0 (39 lookups, seeded)**: `ability`, `skill`, `damage-type`, `condition`, `creature-type`, `language`, `weapon-property`, `weapon-mastery`, `spell-school`, `magic-item-category`, `sense`, `hazard`, `arcane-focus`, `druidic-focus`, `holy-symbol`, `size`, `rarity`, `coin`, `lifestyle`, `duration-unit`, `body-slot`, `alignment`, `weapon-category`, `armor-category`, `tool-category`, `feat-category`, `action`, `area-shape`, `attitude`, `illumination`, `travel-pace`, `plane`, `casting-component`, `casting-time-unit`, `speed-type`, `cover`, `tier-of-play`, `character-state`, `resource-pool`. `condition` is the one Tier-0 slug the UI files under Tier 2 (`dmAuthoredLookupSlugs`): the DM authors custom conditions there, but it stays a seeded lookup so SRD `lookup('condition', …)` refs keep resolving. These are the canonical names everything else references (Open5e `_lookup` placeholders, SRD `lookup()` calls) and are seeded as `isBuiltin=true` Entity rows on first launch.
 - **Tier 1 (22 content shapes, rows external)**: `class`, `subclass`, `species`, `subspecies`, `background`, `feat`, `spell`, `weapon`, `armor`, `tool`, `adventuring-gear`, `ammunition`, `pack`, `mount`, `vehicle`, `trinket`, `magic-item`, `monster`, `trait`, `creature-action`, `animal`, `starter-bundle`. Rows come from the SRD core pack ([[srd-pack-content]]) or installed packages; the schema ships shape only.
-- **Tier 2 (15 DM categories, never seeded)**: `npc`, `player-character`, `applied-condition`, `location`, `scene`, `quest`, `encounter`, `trap`, `poison`, `curse`, `environmental-effect`, `hireling`, `service`, `lore`, `campaign`. The last two are reference-material documents (guides, handouts): each has only `pages` (markdown list) + `pdfs` (pdf list) and an empty `allowedInSections`.
+- **Tier 2 (14 DM categories, never seeded)**: `npc`, `player-character`, `location`, `scene`, `quest`, `encounter`, `trap`, `poison`, `curse`, `environmental-effect`, `hireling`, `service`, `lore`, `campaign`. The last two are reference-material documents (guides, handouts): each has only `pages` (markdown list) + `pdfs` (pdf list) and an empty `allowedInSections`. `applied-condition` was retired in 2.10.0 (no pack or world ever authored one); PC `current_conditions` targets `condition`, and `migrateDropAppliedCondition` (`entity_provider.dart`) drops it from a stored schema at load unless a card still uses it.
 - Tier-1 relation fields reference Tier-0 slugs via `FieldValidation.allowedTypes`; `groups.dart` defines shared `FieldGroup` ids (grpIdentity, grpCombat, grpSpellcasting, …) so the editor renders the same layout across installs.
 - Encounter config/layout: `combat_stats` field key, initiative-desc sort, columns Lvl/Init/AC/HP; conditions read from the catalog at runtime (left empty in config).
 

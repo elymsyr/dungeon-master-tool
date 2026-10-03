@@ -147,7 +147,7 @@ Kısaltmalar: **T** = FieldType, **Z** = zorunlu, **D** = default.
 | `vulnerability_refs` | relation→`damage-type` (list) | | `[]` | `["<uuid>", ...]` |
 | `damage_immunity_refs` | relation→`damage-type` (list) | | `[]` | `["<uuid>", ...]` |
 | `condition_immunity_refs` | relation→`condition` (list) | | `[]` | `["<uuid>", ...]` |
-| `current_conditions` | relation→`applied-condition` (list) | | `[]` | `["<uuid>", ...]` |
+| `current_conditions` | relation→`condition` (list) | | `[]` | `["<uuid>", ...]` |
 
 ### 3.9 Traits & Actions grubu
 
@@ -470,7 +470,7 @@ Background kartı: `granted_skill_refs`, `granted_tool_refs`,
 | Damage Vulnerabilities | `vulnerability_refs` | relation→damage-type (list) | `["damage-type-uuid", ...]` |
 | Damage Immunities | `damage_immunity_refs` | relation→damage-type (list) | `["damage-type-uuid", ...]` |
 | Condition Immunities | `condition_immunity_refs` | relation→condition (list) | `["condition-uuid", ...]` |
-| Current Conditions | `current_conditions` | relation→applied-condition (list) | `["applied-condition-uuid", ...]` |
+| Current Conditions | `current_conditions` | relation→condition (list) | `["condition-uuid", ...]` |
 
 ### 7.11 Aksiyon ve Trait Eşleme
 

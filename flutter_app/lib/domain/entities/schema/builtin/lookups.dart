@@ -51,6 +51,12 @@ const tier0Slugs = <String>[
   'resource-pool',
 ];
 
+/// Tier-0 catalogs the UI files under Tier 2: the DM authors their own rows
+/// here (custom conditions for an encounter), but the category stays a seeded
+/// lookup — the SRD rows still ship and `lookup('condition', 'Prone')` refs in
+/// SRD content keep resolving.
+const dmAuthoredLookupSlugs = <String>{'condition'};
+
 /// One row of the Tier-0 category output: the category schema plus its
 /// canonical seed rows (already-flattened `fields` maps).
 class Tier0CategoryBuild {

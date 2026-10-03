@@ -14,7 +14,6 @@ const _uuid = Uuid();
 const tier2Slugs = <String>[
   'npc',
   'player-character',
-  'applied-condition',
   'location',
   'scene',
   'quest',
@@ -39,7 +38,6 @@ List<EntityCategorySchema> buildTier2Dm({
   return [
     _npcCategory(schemaId, now, i++),
     _playerCharacterCategory(schemaId, now, i++),
-    _appliedConditionCategory(schemaId, now, i++),
     _locationCategory(schemaId, now, i++),
     _sceneCategory(schemaId, now, i++),
     _questCategory(schemaId, now, i++),
@@ -409,7 +407,7 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.relation('vulnerability_refs', 'Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
-  fb.relation('current_conditions', 'Current Conditions', const ['applied-condition'], isList: true, g: grpResistances);
+  fb.relation('current_conditions', 'Current Conditions', const ['condition'], isList: true, g: grpResistances);
   // Traits / Actions / Reactions — populated from species top-level trait_refs
   // and class/subclass per-level granted_*_refs at creation + level-up. PC
   // owns the same field shape NPC/monster uses so card rendering is uniform.
@@ -478,35 +476,6 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
     now: now,
     allowedInSections: const ['encounter', 'mindmap', 'worldmap', 'projection'],
     filterFieldKeys: const ['xp'],
-  );
-}
-
-EntityCategorySchema _appliedConditionCategory(String schemaId, String now, int orderIndex) {
-  final catId = _uuid.v4();
-  final fb = _FB(catId, now);
-  fb.relation('condition_ref', 'Condition', const ['condition'], required_: true);
-  fb.relation('source_entity_ref', 'Source', const ['npc', 'player-character', 'monster', 'animal']);
-  fb.integer('duration_rounds', 'Duration (rounds)', min: 0, help: 'null = indefinite');
-  fb.integer('save_dc', 'Save DC', min: 1, max: 30);
-  fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
-  fb.enum_('save_frequency', 'Save Frequency',
-      const ['none', 'start-of-turn', 'end-of-turn', 'when-damaged']);
-  fb.textarea('notes', 'Notes');
-
-  return _mk(
-    schemaId: schemaId,
-    categoryId: catId,
-    name: 'Applied Condition',
-    slug: 'applied-condition',
-    color: '#9c27b0',
-    icon: 'healing',
-    fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-    ],
-    orderIndex: orderIndex,
-    now: now,
-    allowedInSections: const ['encounter'],
   );
 }
 
