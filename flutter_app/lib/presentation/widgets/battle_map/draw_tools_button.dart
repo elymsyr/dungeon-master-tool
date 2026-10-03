@@ -155,8 +155,8 @@ class _DrawToolsButtonState extends State<DrawToolsButton> {
         onTap: _openPicker,
         borderRadius: palette.cbr,
         child: Container(
-          width: 56,
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          width: 72,
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: active ? palette.tabIndicator.withValues(alpha: 0.2) : null,
             borderRadius: palette.cbr,
@@ -168,12 +168,12 @@ class _DrawToolsButtonState extends State<DrawToolsButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon,
-                  size: 18,
+                  size: 26,
                   color: active ? palette.tabIndicator : palette.tabText),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(L10n.of(context)!.bmDraw,
                   style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 12,
                       color: active ? palette.tabIndicator : palette.tabText)),
             ],
           ),

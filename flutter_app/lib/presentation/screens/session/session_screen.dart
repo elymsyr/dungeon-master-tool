@@ -15,6 +15,7 @@ import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/providers/world_characters_provider.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../widgets/dice/dice_fab.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
@@ -1053,25 +1054,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ),
                 ),
         ),
-        // Log input pinned at bottom
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        // Log input pinned at bottom; the dice button sits in its right end
+        Container(
+          height: kDiceFabRowHeight,
+          padding: const EdgeInsets.only(left: 12, right: kDiceFabLane),
           child: Row(
             children: [
               Expanded(
                 child: MarkdownTextArea(
                   controller: _logInputController,
-                  decoration: InputDecoration(hintText: L10n.of(context)!.sessionQuickLogHint, isDense: true, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
-                  textStyle: const TextStyle(fontSize: 13),
+                  decoration: InputDecoration(hintText: L10n.of(context)!.sessionQuickLogHint, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+                  textStyle: const TextStyle(fontSize: 15),
                   maxLines: 1,
                   onSubmitted: (_) => _addLogEntry(),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 8),
               FilledButton(
                 onPressed: _addLogEntry,
-                style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
-                child: Text(L10n.of(context)!.sessionAdd, style: const TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                child: Text(L10n.of(context)!.sessionAdd, style: const TextStyle(fontSize: 14)),
               ),
             ],
           ),

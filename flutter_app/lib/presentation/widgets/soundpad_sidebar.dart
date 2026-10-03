@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../core/utils/screen_type.dart';
 import '../../data/services/soundpad_engine.dart';
 import '../../domain/entities/audio/audio_models.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'dice/dice_fab.dart';
 
 /// Sağ sidebar veya mobil tab olarak gösterilen Soundpad paneli.
 /// Tek scroll: Music → SFX → Ambience + alt global controls.
@@ -632,15 +634,19 @@ class _GlobalControls extends ConsumerWidget {
     final notifier = ref.read(soundpadStateProvider.notifier);
     final volume = ref.watch(uiStateProvider.select((s) => s.volume));
 
+    // Mobile/tablet show this as a tab whose bottom-right corner holds the
+    // dice button: a taller row with a lane kept free for it.
+    final tab = getScreenType(context) != ScreenType.desktop;
     return Container(
-      padding: const EdgeInsets.all(10),
+      height: tab ? kDiceFabRowHeight : null,
+      padding: tab ? const EdgeInsets.only(left: 12, right: kDiceFabLane) : const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: palette.tabBg,
         border: Border(top: BorderSide(color: palette.sidebarDivider)),
       ),
       child: Row(
         children: [
-          Icon(Icons.volume_down, size: 16, color: palette.tabText),
+          Icon(Icons.volume_down, size: tab ? 22 : 16, color: palette.tabText),
           Expanded(
             child: Slider(
               value: volume,
@@ -650,27 +656,17 @@ class _GlobalControls extends ConsumerWidget {
             ),
           ),
           SizedBox(
-            width: 32,
+            width: tab ? 40 : 32,
             child: Text(
               '${(volume * 100).round()}%',
-              style: TextStyle(fontSize: 10, color: palette.tabText),
+              style: TextStyle(fontSize: tab ? 13 : 10, color: palette.tabText),
             ),
           ),
-          const SizedBox(width: 6),
-          Tooltip(
-            message: l10n.soundpadStopAll,
-            child: Material(
-              color: palette.tokenBorderHostile,
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: notifier.stopAll,
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(Icons.stop, size: 18, color: Colors.white),
-                ),
-              ),
-            ),
+          IconButton(
+            tooltip: l10n.soundpadStopAll,
+            visualDensity: tab ? null : VisualDensity.compact,
+            onPressed: notifier.stopAll,
+            icon: Icon(Icons.stop, size: tab ? 26 : 20),
           ),
         ],
       ),

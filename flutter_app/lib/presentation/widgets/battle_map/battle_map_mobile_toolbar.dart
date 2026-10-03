@@ -7,6 +7,7 @@ import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../dice/dice_fab.dart';
 import 'battlemap_picker_flow.dart';
 import 'draw_tools_button.dart';
 import '../../l10n/app_localizations.dart';
@@ -48,12 +49,13 @@ class BattleMapMobileToolbar extends ConsumerWidget {
     )));
     final notifier = ref.read(battleMapProvider(encounterId).notifier);
 
+    // Tall enough that the dice button sits inside the bar's right end.
     return Container(
-      height: 44,
+      height: kDiceFabRowHeight,
       color: palette.tabBg,
       child: Row(
         children: [
-          const SizedBox(width: 4),
+          const SizedBox(width: 16), // same as the dice button's right margin
           // Quick tool buttons — 4 most common tools
           _MiniToolButton(
             tool: BattleMapTool.navigate,
@@ -111,8 +113,8 @@ class BattleMapMobileToolbar extends ConsumerWidget {
             },
             borderRadius: palette.br,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Icon(Icons.cast, size: 18, color: palette.tabText),
+              padding: const EdgeInsets.all(10),
+              child: Icon(Icons.cast, size: 24, color: palette.tabText),
             ),
           ),
           const Spacer(),
@@ -121,11 +123,11 @@ class BattleMapMobileToolbar extends ConsumerWidget {
             onTap: () => _showFullSheet(context, encounterId),
             borderRadius: palette.br,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Icon(Icons.expand_less, size: 22, color: palette.tabText),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Icon(Icons.expand_less, size: 28, color: palette.tabText),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: kDiceFabLane), // clear of the dice button
         ],
       ),
     );
@@ -167,7 +169,7 @@ class _MiniToolButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: palette.br,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
           borderRadius: palette.br,
@@ -175,7 +177,7 @@ class _MiniToolButton extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          size: 18,
+          size: 24,
           color: isActive ? palette.tabIndicator : palette.tabText,
         ),
       ),
@@ -233,22 +235,12 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
       decoration: BoxDecoration(
         color: palette.tabBg,
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(palette.cardBorderRadius + 8),
+          top: Radius.circular(palette.cardBorderRadius),
         ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          const SizedBox(height: 8),
-          Container(
-            width: 32,
-            height: 4,
-            decoration: BoxDecoration(
-              color: palette.sidebarDivider,
-              borderRadius: palette.br,
-            ),
-          ),
           const SizedBox(height: 8),
 
           // Tab bar
@@ -258,25 +250,25 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
             labelColor: palette.tabActiveText,
             unselectedLabelColor: palette.tabText,
             indicatorSize: TabBarIndicatorSize.tab,
-            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: const TextStyle(fontSize: 14),
             dividerColor: palette.sidebarDivider,
             tabs: [
-              Tab(text: L10n.of(context)!.bmTabTools, height: 32),
-              Tab(text: L10n.of(context)!.bmGrid, height: 32),
-              Tab(text: L10n.of(context)!.bmTabView, height: 32),
+              Tab(text: L10n.of(context)!.bmTabTools, height: 44),
+              Tab(text: L10n.of(context)!.bmGrid, height: 44),
+              Tab(text: L10n.of(context)!.bmTabView, height: 44),
             ],
           ),
 
           // Tab content
           SizedBox(
-            height: 180,
+            height: 260,
             child: TabBarView(
               controller: _tabController,
               children: [
-                _ToolsTab(tb: tb, notifier: notifier, palette: palette),
-                _GridTab(tb: tb, notifier: notifier, palette: palette),
-                _ViewTab(tb: tb, notifier: notifier, palette: palette),
+                SingleChildScrollView(child: _ToolsTab(tb: tb, notifier: notifier, palette: palette)),
+                SingleChildScrollView(child: _GridTab(tb: tb, notifier: notifier, palette: palette)),
+                SingleChildScrollView(child: _ViewTab(tb: tb, notifier: notifier, palette: palette)),
               ],
             ),
           ),
@@ -307,14 +299,14 @@ class _ToolsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Tool grid — wraps across rows
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: L10n.of(context)!.bmNavigate, tb: tb, notifier: notifier, palette: palette),
               // All measure / AoE / shape tools merged into one picker button.
@@ -347,7 +339,7 @@ class _ToolsTab extends StatelessWidget {
           Row(
             children: [
               Text(L10n.of(context)!.bmShapeLayer,
-                  style: TextStyle(fontSize: 13, color: palette.tabText)),
+                  style: TextStyle(fontSize: 15, color: palette.tabText)),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -359,8 +351,9 @@ class _ToolsTab extends StatelessWidget {
                   child: DropdownButton<int>(
                     value: tb.activeLayer.index,
                     isDense: true,
+                    iconSize: 28,
                     dropdownColor: palette.tabBg,
-                    style: TextStyle(fontSize: 13, color: palette.tabText),
+                    style: TextStyle(fontSize: 15, color: palette.tabText),
                     items: [
                       DropdownMenuItem(value: 0, child: Text(L10n.of(context)!.bmLayerBackground)),
                       DropdownMenuItem(value: 1, child: Text(L10n.of(context)!.bmLayerObject)),
@@ -398,7 +391,7 @@ class _GridTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
           // Grid visible toggle
@@ -460,19 +453,20 @@ class _GridTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(L10n.of(context)!.bmDiagonalRule,
-                  style: TextStyle(fontSize: 13, color: palette.tabText)),
+                  style: TextStyle(fontSize: 15, color: palette.tabText)),
               DropdownButton<int>(
                 value: diagonalRuleFromInt(tb.diagonalRule).index,
                 isDense: true,
+                iconSize: 28,
                 dropdownColor: palette.tabBg,
-                style: TextStyle(fontSize: 13, color: palette.tabText),
+                style: TextStyle(fontSize: 15, color: palette.tabText),
                 items: [
                   for (final r in DiagonalRule.values)
                     DropdownMenuItem(
                       value: r.index,
                       child: Text(diagonalRuleLabel(r),
                           style: TextStyle(
-                              fontSize: 13, color: palette.tabText)),
+                              fontSize: 15, color: palette.tabText)),
                     ),
                 ],
                 onChanged: (v) {
@@ -505,7 +499,7 @@ class _ViewTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
           // Action buttons row
@@ -534,15 +528,15 @@ class _ViewTab extends ConsumerWidget {
             children: [
               Text(
                 L10n.of(context)!.bmTokenSize,
-                style: TextStyle(fontSize: 12, color: palette.tabText),
+                style: TextStyle(fontSize: 15, color: palette.tabText),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: SliderTheme(
                   data: SliderThemeData(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
                     activeTrackColor: palette.tabIndicator,
                     thumbColor: palette.tabIndicator,
                     overlayColor: palette.tabIndicator.withValues(alpha: 0.2),
@@ -559,7 +553,7 @@ class _ViewTab extends ConsumerWidget {
               const SizedBox(width: 4),
               Text(
                 '${tb.tokenSize}px',
-                style: TextStyle(fontSize: 11, color: palette.tabText),
+                style: TextStyle(fontSize: 14, color: palette.tabText),
               ),
             ],
           ),
@@ -598,8 +592,8 @@ class _SheetToolButton extends StatelessWidget {
       onTap: () => notifier.setTool(tool),
       borderRadius: palette.cbr,
       child: Container(
-        width: 56,
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        width: 72,
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
           borderRadius: palette.cbr,
@@ -608,12 +602,12 @@ class _SheetToolButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: isActive ? palette.tabIndicator : palette.tabText),
-            const SizedBox(height: 2),
+            Icon(icon, size: 26, color: isActive ? palette.tabIndicator : palette.tabText),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 12,
                 color: isActive ? palette.tabIndicator : palette.tabText,
               ),
               textAlign: TextAlign.center,
@@ -647,7 +641,7 @@ class _SheetActionButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: palette.cbr,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           border: Border.all(color: palette.sidebarDivider),
           borderRadius: palette.cbr,
@@ -655,9 +649,9 @@ class _SheetActionButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: palette.tabText),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 10, color: palette.tabText)),
+            Icon(icon, size: 20, color: palette.tabText),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 13, color: palette.tabText)),
           ],
         ),
       ),
@@ -688,7 +682,7 @@ class _SwitchRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(label, style: TextStyle(fontSize: 12, color: palette.tabText)),
+              child: Text(label, style: TextStyle(fontSize: 15, color: palette.tabText)),
             ),
             Checkbox(
               value: value,
@@ -696,7 +690,6 @@ class _SwitchRow extends StatelessWidget {
               activeColor: palette.tabIndicator,
               side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
             ),
           ],
         ),
@@ -730,11 +723,11 @@ class _SpinBoxRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: TextStyle(fontSize: 12, color: palette.tabText)),
+          child: Text(label, style: TextStyle(fontSize: 15, color: palette.tabText)),
         ),
         _MobileSpinBox(value: value, min: min, max: max, palette: palette, onChanged: onChanged),
         const SizedBox(width: 4),
-        Text(suffix, style: TextStyle(fontSize: 11, color: palette.tabText.withValues(alpha: 0.6))),
+        Text(suffix, style: TextStyle(fontSize: 14, color: palette.tabText.withValues(alpha: 0.6))),
       ],
     );
   }
@@ -759,7 +752,7 @@ class _MobileSpinBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
+      height: 40,
       decoration: BoxDecoration(
         border: Border.all(color: palette.sidebarDivider),
         borderRadius: palette.br,
@@ -773,11 +766,11 @@ class _MobileSpinBox extends StatelessWidget {
             palette: palette,
           ),
           Container(
-            width: 40,
+            width: 52,
             alignment: Alignment.center,
             child: Text(
               '$value',
-              style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+              style: TextStyle(fontSize: 15, color: palette.tabActiveText),
             ),
           ),
           _SpinBtn(
@@ -803,10 +796,10 @@ class _SpinBtn extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Icon(
           icon,
-          size: 14,
+          size: 20,
           color: onPressed != null ? palette.tabText : palette.tabText.withValues(alpha: 0.3),
         ),
       ),

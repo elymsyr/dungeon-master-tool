@@ -208,6 +208,7 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFF26C6DA),
             srdRule: const Color(0xFF26C6DA),
             srdSubtitle: const Color(0xFF7FB5C0),
+            primaryBtnBg: const Color(0xFF00838F),
           )
           as DmToolColors,
 
@@ -237,6 +238,7 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFF66BB6A),
             srdRule: const Color(0xFF66BB6A),
             srdSubtitle: const Color(0xFF8DAB91),
+            primaryBtnBg: const Color(0xFF2E7D32),
           )
           as DmToolColors,
 
@@ -266,6 +268,7 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFFB388FF),
             srdRule: const Color(0xFF7C4DFF),
             srdSubtitle: const Color(0xFF7E7E92),
+            primaryBtnBg: const Color(0xFF651FFF),
             cardHeadingUppercase: true,
           )
           as DmToolColors,
@@ -507,6 +510,7 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFFEA80FC),
             srdRule: const Color(0xFFAB47BC),
             srdSubtitle: const Color(0xFFB0A0BC),
+            primaryBtnBg: const Color(0xFF7B1FA2),
           )
           as DmToolColors,
 
@@ -1004,6 +1008,13 @@ ThemeData buildThemeData(String themeName) {
       ),
     ),
 
+    // FAB — oluştur butonu ile aynı renk, kart köşesi
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: palette.primaryBtnBg,
+      foregroundColor: palette.primaryBtnText,
+      shape: RoundedRectangleBorder(borderRadius: cr),
+    ),
+
     // IconButton
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
@@ -1164,8 +1175,8 @@ ThemeData buildThemeData(String themeName) {
       surfaceTintColor: Colors.transparent,
       modalBackgroundColor: palette.tabBg,
       modalBarrierColor: Colors.black.withValues(alpha: 0.4),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: cr.topLeft),
       ),
     ),
   );

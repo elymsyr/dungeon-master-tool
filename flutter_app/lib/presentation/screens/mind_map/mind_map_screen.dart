@@ -189,10 +189,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
           onOpenEntity: widget.onOpenEntity,
         ),
 
-        // Floating zoom controls — bottom-right, above the host's dice button
+        // Floating zoom controls — stacked right above the host's dice button
+        // (16 margin + 40 small FAB + 10 gap), same size and spacing.
         Positioned(
           right: 16,
-          bottom: 88,
+          bottom: 66,
           child: _FloatingControls(
             notifier: notifier,
             mapState: mapState,
@@ -234,7 +235,7 @@ class _FloatingControls extends StatelessWidget {
             palette: palette,
             onPressed: () => _showWorkspaceMenu(context, workspaces),
           ),
-        if (workspaces.isNotEmpty) const SizedBox(height: 4),
+        if (workspaces.isNotEmpty) const SizedBox(height: 10),
 
         _FloatingButton(
           icon: Icons.center_focus_strong,
@@ -242,14 +243,14 @@ class _FloatingControls extends StatelessWidget {
           palette: palette,
           onPressed: notifier.centerView,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
         _FloatingButton(
           icon: Icons.add,
           tooltip: L10n.of(context)!.zoomIn,
           palette: palette,
           onPressed: notifier.zoomIn,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
         _FloatingButton(
           icon: Icons.remove,
           tooltip: L10n.of(context)!.zoomOut,
@@ -342,12 +343,12 @@ class _FloatingButtonState extends State<_FloatingButton> {
       child: GestureDetector(
         onTap: widget.onPressed,
         child: Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: _hovered ? palette.uiFloatingHoverBg : palette.uiFloatingBg,
               border: Border.all(color: palette.uiFloatingBorder),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: palette.cbr,
             ),
             child: Icon(
               widget.icon,

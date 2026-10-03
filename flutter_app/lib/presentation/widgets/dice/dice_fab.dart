@@ -9,6 +9,14 @@ import '../../theme/dm_tool_colors.dart';
 import 'dice_physics.dart';
 import 'dice_roll_view.dart';
 
+/// Right inset that keeps a bottom-pinned row clear of the mobile dice
+/// button: 16 margin + 40 small FAB + 8 gap.
+const kDiceFabLane = 64.0;
+
+/// Height for such a row so the dice button sits centered inside it:
+/// 16 margin + 40 small FAB + 16.
+const kDiceFabRowHeight = 72.0;
+
 /// The dice button, bottom right on world and character screens. Opens the
 /// dice menu above itself over a lightly dimmed screen; the dice are thrown on
 /// that same dim and a tap after they land closes it.
@@ -17,12 +25,11 @@ class DiceFab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final look = resolveDiceLook(ref.watch(uiStateProvider.select((s) => s.diceTheme)), ref.watch(themeProvider));
-    return FloatingActionButton(
+    // Small, like the sidebar/history FABs stacked above it.
+    return FloatingActionButton.small(
       heroTag: 'dice_fab',
       tooltip: L10n.of(context)!.diceRollerTooltip,
-      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onPressed: () => _open(context, look),
       child: const Icon(Icons.casino),
     );
@@ -100,7 +107,6 @@ class _DiceMenuState extends State<_DiceMenu> {
     if (thrown != null) return DiceRollView(counts: thrown, look: widget.look, onClose: _close);
 
     final l10n = L10n.of(context)!;
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final size = MediaQuery.sizeOf(context);
     final a = widget.anchor;
     final selection = [
@@ -134,10 +140,9 @@ class _DiceMenuState extends State<_DiceMenu> {
       ),
       Positioned.fromRect(
         rect: a,
-        child: FloatingActionButton(
+        child: FloatingActionButton.small(
           heroTag: null,
           tooltip: l10n.btnClose,
-          shape: RoundedRectangleBorder(borderRadius: palette.cbr),
           onPressed: _close,
           child: const Icon(Icons.close),
         ),
@@ -148,19 +153,24 @@ class _DiceMenuState extends State<_DiceMenu> {
   // [−] [+] (dN): tapping the die itself throws just that one die.
   Widget _row(String kind, double width) {
     final n = _counts[kind] ?? 0;
+    final style = IconButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: Theme.of(context).extension<DmToolColors>()!.cbr));
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         IconButton.filledTonal(
           visualDensity: VisualDensity.compact,
+          style: style,
           onPressed: n == 0 ? null : () => _add(kind, -1),
           icon: const Icon(Icons.remove, size: 18),
         ),
+        const SizedBox(width: 8),
         IconButton.filledTonal(
           visualDensity: VisualDensity.compact,
+          style: style,
           onPressed: _dice + diceIn(kind) > maxDicePerRoll ? null : () => _add(kind, 1),
           icon: const Icon(Icons.add, size: 18),
         ),
+        const SizedBox(width: 8),
         SizedBox(
           width: width,
           child: Center(
