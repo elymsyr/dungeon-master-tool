@@ -128,9 +128,9 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(child: DicePreview(look: resolveDiceLook(diceTheme, currentTheme))),
-                    _diceLookList(l10n.diceLooksThemes, ['auto', ...themeNames.where(diceLooks.containsKey)], diceTheme, currentTheme, palette, l10n),
+                    _diceLookList(l10n.diceLooksThemes, ['auto', ...themeNames.where(diceLooks.containsKey)], diceTheme, currentTheme, palette, l10n, phone),
                     const SizedBox(height: 12),
-                    _diceLookList(l10n.diceLooksOthers, [...diceLooks.keys.where((k) => !themeNames.contains(k))], diceTheme, currentTheme, palette, l10n),
+                    _diceLookList(l10n.diceLooksOthers, [...diceLooks.keys.where((k) => !themeNames.contains(k))], diceTheme, currentTheme, palette, l10n, phone),
                   ],
                 );
               }),
@@ -461,29 +461,59 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
     );
   }
 
-  Widget _diceLookList(String title, List<String> names, String selected, String appTheme, DmToolColors palette, L10n l10n) {
+  Widget _diceLookList(String title, List<String> names, String selected, String appTheme, DmToolColors palette, L10n l10n, bool phone) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.sidebarLabelSecondary)),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            // Each chip in its own dice look: the body colour, the ink for the label.
-            for (final (name, look) in [for (final n in names) (n, diceLooks[resolveDiceLook(n, appTheme)]!)])
-              ChoiceChip(
-                label: Text(name == 'auto' ? l10n.diceThemeAuto : name[0].toUpperCase() + name.substring(1)),
-                labelStyle: diceFont(look).copyWith(color: look.ink),
-                backgroundColor: look.body,
-                selectedColor: look.body,
-                checkmarkColor: look.ink,
-                side: BorderSide(color: name == selected ? look.ink : Colors.black26, width: name == selected ? 2 : 1),
-                selected: name == selected,
-                onSelected: (_) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(diceTheme: name)),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: phone ? 3 : 6,
+            childAspectRatio: 1.5,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: names.length,
+          itemBuilder: (context, i) {
+            // Each card in its own dice look: the body colour, the ink and font for a "20".
+            final name = names[i];
+            final look = diceLooks[resolveDiceLook(name, appTheme)]!;
+            final isSelected = name == selected;
+            return InkWell(
+              borderRadius: palette.br,
+              onTap: () => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(diceTheme: name)),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: look.body,
+                  borderRadius: palette.br,
+                  border: Border.all(
+                    color: isSelected ? look.ink : palette.featureCardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('20', style: diceFont(look).copyWith(color: look.ink, fontSize: 20, height: 1)),
+                    const SizedBox(height: 4),
+                    Text(
+                      name == 'auto' ? l10n.diceThemeAuto : name[0].toUpperCase() + name.substring(1),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: look.ink,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-          ],
+            );
+          },
         ),
       ],
     );
