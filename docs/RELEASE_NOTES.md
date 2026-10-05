@@ -1,5 +1,90 @@
 # Release Notes
 
+## Dungeon Master Tool v18.2.0 — Find It Faster (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release makes it easier to find the card you want when you add one to another card: search now reads tags, categories and card text, and cards that fit the character are suggested at the top. Dice get ten new named styles with a 3D preview in Settings. Aegis Act 1 moves to `0.19.0` with a new side job, **Maskeli İş**, its own battle map, and artwork for every card. Your data is not changed, so this version installs over v18.1.0.
+
+---
+
+### Cards
+
+#### Smarter search when adding a card
+
+When you press **+** on a field to add a card (an item to an inventory, a spell, a feat), the search now looks at more than the name. A word also matches the card's tags, its category and its text, so "evocation", "beast" or "heavy armor" find what you expect. Cards that match more of your words, and match them in the name, come first.
+
+- Cards that fit the character's class, species or background are listed under **Suggested** at the top and are ranked higher in search. Giving a Wizard an item no longer means scrolling through every item in the game.
+- This works for your own content too: a card that links to the class, or names it in its text or tags, counts as a fit.
+- About 1,290 built-in SRD cards (items, spells, monsters, animals and feats) now carry 2–5 tags each, such as school, type or habitat, so they can be searched and suggested.
+
+#### Line breaks in card text
+
+Pressing Enter in a card's text field now starts a new line when the text is shown. Before, a single line break was joined into a space.
+
+---
+
+### Dice
+
+#### Named dice styles
+
+**Settings → Dice theme** now has ten named styles next to the theme colours: gold, silver, marble, wood, bone, galaxy, infernal, crystal, dragon-eye and arcane. The choices are split into **Themes** and **Others**, and each one is drawn in its own look. A 3D d20 above the list shows the style you picked, facing its 20. Each style has its own font for the numbers; without a network connection the numbers use a plain serif font.
+
+---
+
+### Aegis
+
+#### Aegis Act 1 0.19.0
+
+The Customs Governor in Elymsyr now has a job for the party, **Maskeli İş**. The Military Law Guild has bought a house on one of the upper terraces and is turning it into a guild room. The job is to go in masked, take a small locked chest from the cellar for the Governor, and burn the building. The Governor's aide, a red dragonborn with no name, guides the party through it. The pay is 50 gold per person and an item the DM picks.
+
+- The house has one battle map with all three floors: ground floor and upper floor side by side, and the cellar below.
+- The world grows from 227 to 239 cards. New: the quest, the Governor's aide, the location **Askeri Hukuk Odası**, the encounter **Gece Şantiyesi**, three enemies (**Şantiye Bekçisi**, **Kiralık Pala**, **Bekçibaşı**) and five of their actions.
+- Every card now has artwork, including the ten cards from 0.17.0 that had none.
+
+---
+
+### Smaller improvements
+
+- **Floating buttons** — the buttons in the bottom-right corner (dice, mind map zoom and others) now line up in one column with the same margins and size on every screen.
+- **l10n** — new keys for the *Suggested* section and the *Themes* / *Others* dice style groups, in English, Turkish, German and French.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.1.0` → `18.2.0`.
+- **Online groups:** v18.2.0 works with v18.1.0. Players do not need to update at the same time.
+- **Aegis:** download Aegis Act 1 (`0.19.0`) again from **Marketplace → Official** to get the new job, battle map and artwork.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Picker search** — ranking and suggestions live in the pure-Dart `entity_search.dart` (`rankEntities`, `suggestedEntityIds`, `EntityRanking`). Worst whole-SRD keystroke is ~11 ms on desktop AOT, under the dialog's 150 ms debounce. See `vault/10-Files/world-content/entity_search.md`.
+- **SRD pack 1.8.0** — `srd_tags.dart` adds curated tags; `srdCorePackVersion` 1.6.0 → 1.8.0.
+- **Dice looks** — `DiceLook` covers the theme resins and the ten named styles on the same resin material; the preview builds one `DiceKit` at a time and die meshes are cached per shape.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.1.0 — Dice on the Table (Beta)
 
 **Release date:** October 2026
