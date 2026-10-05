@@ -1,5 +1,105 @@
 # Release Notes
 
+## Dungeon Master Tool v18.3.0 — Draw and Combine (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.3.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release lets you draw freehand on the mind map and join two maps into one battle map. Settings for a world, package or character now open from a single button, and the screens themselves have a button for them. Aegis Act 1 moves to `0.22.0` with the sea chapter: two ships, 23 new cards and a battle map for each ship. Your data is not changed, so this version installs over v18.2.0.
+
+---
+
+### Mind map
+
+#### Freehand drawing
+
+A pen button now sits above the **Center** button on the mind map. With the pen on, you draw freehand on the map; press **Move** to go back to moving and selecting.
+
+- Pick a colour from the list, or make your own with the colour picker. There are three line widths.
+- The eraser removes a whole line when you touch it. One erase drag is undone in one step.
+- Lines get thicker and thinner as you zoom, within limits, so they stay readable.
+- On a touch screen, a resting palm is ignored and two fingers still zoom.
+- Drawings are saved with the map. In an online world they reach your other devices too.
+
+---
+
+### Battle map
+
+#### Add Map
+
+Next to **Open Map** there is now **Add Map**. Pick a second map from the same picker, drag it into place, set its size with the slider or the ±1% buttons, and choose whether it goes above or below the current map. The two are joined into one map image.
+
+- If the new map makes the battle map grow up or to the left, tokens, drawings, measurements, shapes and fog move with it and stay in place on the map.
+
+---
+
+### Settings
+
+#### One settings dialog per world, package and character
+
+The settings for a world, a package or a character now open in one dialog, the same one from the hub and from inside. The world screen and the package screen have buttons for the world or package settings and for **App Settings**.
+
+---
+
+### Aegis
+
+#### Aegis Act 1 0.22.0
+
+The party now goes to sea. **Maren'in Rotası** opens the voyage, and on the open sea two ships meet: the merchant ship **Dürüst Terazi** and the orc warship **Kara Yelken**, led by **Ork Kaptan — Mordha**. The fight on deck is the encounter **Borda Borda**, with three more scenes around it.
+
+- The world grows from 239 to 262 cards: the two ships, two named NPCs, four scenes, five enemies with six actions and a trait, a trinket and a lore card on the Black Fleet.
+- Each ship has one battle map with all its decks side by side.
+- Every new card has artwork.
+
+---
+
+### Smaller improvements
+
+- **Dice theme** — the dice style list in Settings is laid out as a grid that fits the screen width.
+- **l10n** — new keys for the mind map pen, Add Map and *App Settings*, in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Characters** — after switching worlds, the character opened in the previous world no longer stays open in the sidebar.
+- **Characters** — when a world is deleted, its characters' class levels are now moved to the matching SRD classes, so their levels are kept.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.2.0` → `18.3.0`.
+- **Online groups:** v18.3.0 works with v18.2.0. Players do not need to update at the same time.
+- **Aegis:** download Aegis Act 1 (`0.22.0`) again from **Marketplace → Official** to get the sea chapter, battle maps and artwork.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Mind map strokes** — stored in `mind_maps[mapId].strokes` and carried across devices by the `world_settings` mirror (`mind_map_strokes_sync_test.dart`).
+- **Add Map** — both images are baked into one PNG that becomes `mapPath`; growth up or left shifts every overlay by the same offset.
+- **Settings dialogs** — `showWorldSettingsDialog`, `showPackageSettingsDialog`, `showCharacterSettingsDialog`; `SettingsTab(appearanceOnly:)` for a focused dialog.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.2.0 — Find It Faster (Beta)
 
 **Release date:** October 2026
