@@ -54,7 +54,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   String _fingerprintOf(Map<String, dynamic> scoped) {
     final nodes = scoped['nodes'];
     final edges = scoped['edges'];
-    return jsonEncode({'n': nodes, 'e': edges});
+    return jsonEncode({'n': nodes, 'e': edges, 's': scoped['strokes']});
   }
 
   @override
@@ -89,7 +89,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
       // İlk init boş veriyle yapıldı; cloud sync sonrası re-init için izinli.
       // Ama kullanıcı bu arada node eklemişse (state non-empty) re-init etme.
       final currentState = ref.read(mindMapProvider);
-      if (currentState.nodes.isNotEmpty || currentState.edges.isNotEmpty) {
+      if (currentState.nodes.isNotEmpty ||
+          currentState.edges.isNotEmpty ||
+          currentState.strokes.isNotEmpty) {
         _consumedRealData = true;
         _appliedFingerprint = fp;
         return;
@@ -116,7 +118,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     // yazıp bulut'a göndermek tüm cihazlarda mind map'i siler. Sessiz dön.
     final preCheckState = ref.read(mindMapProvider);
     final userHasContent = preCheckState.nodes.isNotEmpty ||
-        preCheckState.edges.isNotEmpty;
+        preCheckState.edges.isNotEmpty ||
+        preCheckState.strokes.isNotEmpty;
     if (!_consumedRealData && !userHasContent) {
       super.deactivate();
       return;
@@ -133,6 +136,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
       final mindMapData = <String, dynamic>{
         'nodes': mapState.nodes.map((n) => n.toJson()).toList(),
         'edges': mapState.edges.map((e) => e.toJson()).toList(),
+        'strokes': mapState.strokes.map((s) => s.toJson()).toList(),
         'scale': vt.scale,
         'pan_x': vt.panOffset.dx,
         'pan_y': vt.panOffset.dy,
@@ -180,7 +184,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final notifier = ref.read(mindMapProvider.notifier);
-    final mapState = ref.watch(mindMapProvider);
+    // Strokes excluded — see MindMapCanvas.build.
+    final mapState = ref.watch(
+        mindMapProvider.select((s) => s.copyWith(strokes: const [])));
 
     return Stack(
       children: [
@@ -239,6 +245,63 @@ class _FloatingControls extends StatelessWidget {
           ),
         if (workspaces.isNotEmpty) const SizedBox(height: kFabGap),
 
+        ListenableBuilder(
+          listenable: Listenable.merge(
+              [notifier.penColor, notifier.penWidth, notifier.erasing]),
+          builder: (context, _) {
+            final l10n = L10n.of(context)!;
+            final penColor = notifier.penColor.value;
+            final erasing = notifier.erasing.value;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (penColor != null) ...[
+                  _FloatingButton(
+                    icon: Icons.pan_tool_outlined,
+                    tooltip: l10n.mindMapMoveTool,
+                    palette: palette,
+                    onPressed: notifier.exitPen,
+                  ),
+                  const SizedBox(height: kFabGap),
+                  _FloatingButton(
+                    icon: Icons.auto_fix_normal,
+                    tooltip: l10n.mindMapEraser,
+                    palette: palette,
+                    active: erasing,
+                    onPressed: notifier.toggleEraser,
+                  ),
+                  const SizedBox(height: kFabGap),
+                  Builder(
+                    builder: (context) => _FloatingButton(
+                      icon: Icons.line_weight,
+                      tooltip: l10n.mindMapPenWidth,
+                      palette: palette,
+                      onPressed: () => _showPenWidths(context, penColor),
+                      child: _WidthLine(
+                          width: notifier.penWidth.value,
+                          color: palette.uiFloatingText),
+                    ),
+                  ),
+                  const SizedBox(height: kFabGap),
+                ],
+                Builder(
+                  builder: (context) => _FloatingButton(
+                    icon: Icons.edit,
+                    tooltip: l10n.mindMapPen,
+                    palette: palette,
+                    active: penColor != null && !erasing,
+                    onPressed: penColor == null || erasing
+                        ? () => notifier.selectPen(notifier.lastPenColor)
+                        : () => _showPenColors(context, penColor),
+                    child: penColor == null ? null : _Swatch(color: penColor),
+                  ),
+                ),
+                const SizedBox(height: kFabGap),
+              ],
+            );
+          },
+        ),
+
         _FloatingButton(
           icon: Icons.center_focus_strong,
           tooltip: L10n.of(context)!.mindMapCenterView,
@@ -261,6 +324,86 @@ class _FloatingControls extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// Menu anchored to the left of the button in [context].
+  RelativeRect _leftOf(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final rect = box.localToGlobal(Offset.zero, ancestor: overlay) & box.size;
+    return RelativeRect.fromRect(
+        rect.translate(-56, 0), Offset.zero & overlay.size);
+  }
+
+  Future<void> _showPenWidths(BuildContext context, Color penColor) async {
+    final current = notifier.penWidth.value;
+    final picked = await showMenu<double>(
+      context: context,
+      position: _leftOf(context),
+      color: palette.uiFloatingBg,
+      constraints: const BoxConstraints(minWidth: 48, maxWidth: 48),
+      items: [
+        for (final w in MindMapNotifier.penWidths)
+          PopupMenuItem<double>(
+            value: w,
+            height: 36,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Container(
+                width: 36,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: w == current ? palette.uiFloatingHoverBg : null,
+                  borderRadius: palette.cbr,
+                ),
+                child: _WidthLine(width: w, color: penColor),
+              ),
+            ),
+          ),
+      ],
+    );
+    if (picked != null) notifier.setPenWidth(picked);
+  }
+
+  Future<void> _showPenColors(BuildContext context, Color current) async {
+    final picked = await showMenu<Object>(
+      context: context,
+      position: _leftOf(context),
+      color: palette.uiFloatingBg,
+      constraints: const BoxConstraints(minWidth: 48, maxWidth: 48),
+      items: [
+        for (final c in MindMapNotifier.penColors)
+          PopupMenuItem<Object>(
+            value: c,
+            height: 36,
+            padding: EdgeInsets.zero,
+            child: Center(child: _Swatch(color: c, selected: c == current)),
+          ),
+        PopupMenuItem<Object>(
+          value: 'custom',
+          height: 36,
+          padding: EdgeInsets.zero,
+          child: Center(
+            child: Tooltip(
+              message: L10n.of(context)!.mindMapCustomColor,
+              child: Icon(Icons.palette_outlined,
+                  size: 20, color: palette.uiFloatingText),
+            ),
+          ),
+        ),
+      ],
+    );
+    if (picked is Color) {
+      notifier.selectPen(picked);
+    } else if (picked == 'custom' && context.mounted) {
+      final custom = await showDialog<Color>(
+        context: context,
+        builder: (_) => _CustomColorDialog(initial: current, palette: palette),
+      );
+      if (custom != null) notifier.selectPen(custom);
+    }
   }
 
   void _showWorkspaceMenu(
@@ -316,14 +459,138 @@ class _FloatingControls extends StatelessWidget {
   }
 }
 
+/// Pen thickness preview: a short rounded bar [width] px thick.
+class _WidthLine extends StatelessWidget {
+  final double width;
+  final Color color;
+  const _WidthLine({required this.width, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: width,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(width / 2),
+      ),
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  final Color color;
+  final bool selected;
+  const _Swatch({required this.color, this.selected = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: selected
+          ? Icon(Icons.check,
+              size: 14,
+              color: color.computeLuminance() > 0.5
+                  ? Colors.black
+                  : Colors.white)
+          : null,
+    );
+  }
+}
+
+/// Free color pick — HSV sliders over a live preview.
+class _CustomColorDialog extends StatefulWidget {
+  final Color initial;
+  final DmToolColors palette;
+  const _CustomColorDialog({required this.initial, required this.palette});
+
+  @override
+  State<_CustomColorDialog> createState() => _CustomColorDialogState();
+}
+
+class _CustomColorDialogState extends State<_CustomColorDialog> {
+  late HSVColor _hsv = HSVColor.fromColor(widget.initial);
+
+  Widget _slider(String label, double value, double max,
+      HSVColor Function(double) apply) {
+    final text = TextStyle(color: widget.palette.uiFloatingText, fontSize: 12);
+    return Row(
+      children: [
+        SizedBox(width: 72, child: Text(label, style: text)),
+        Expanded(
+          child: Slider(
+            value: value,
+            max: max,
+            activeColor: _hsv.toColor(),
+            onChanged: (v) => setState(() => _hsv = apply(v)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = widget.palette;
+    return AlertDialog(
+      backgroundColor: palette.uiFloatingBg,
+      title: Text(l10n.mindMapCustomColor,
+          style: TextStyle(color: palette.uiFloatingText, fontSize: 14)),
+      content: SizedBox(
+        width: 300,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: _hsv.toColor(),
+                borderRadius: palette.cbr,
+                border: Border.all(color: palette.uiFloatingBorder),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _slider(l10n.colorHue, _hsv.hue, 360, _hsv.withHue),
+            _slider(l10n.colorSaturation, _hsv.saturation, 1,
+                _hsv.withSaturation),
+            _slider(l10n.colorBrightness, _hsv.value, 1, _hsv.withValue),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.btnCancel,
+              style: TextStyle(color: palette.uiFloatingText)),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _hsv.toColor()),
+          child: Text(l10n.btnSave),
+        ),
+      ],
+    );
+  }
+}
+
 class _FloatingButton extends StatefulWidget {
   final IconData icon;
+
+  /// When set, replaces [icon] (pen color dot, thickness bar).
+  final Widget? child;
+
+  /// Selected tool — drawn in the hover colors.
+  final bool active;
   final String tooltip;
   final DmToolColors palette;
   final VoidCallback onPressed;
 
   const _FloatingButton({
     required this.icon,
+    this.child,
+    this.active = false,
     required this.tooltip,
     required this.palette,
     required this.onPressed,
@@ -339,6 +606,7 @@ class _FloatingButtonState extends State<_FloatingButton> {
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
+    final lit = _hovered || widget.active;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -348,17 +616,19 @@ class _FloatingButtonState extends State<_FloatingButton> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _hovered ? palette.uiFloatingHoverBg : palette.uiFloatingBg,
+              color: lit ? palette.uiFloatingHoverBg : palette.uiFloatingBg,
               border: Border.all(color: palette.uiFloatingBorder),
               borderRadius: palette.cbr,
             ),
-            child: Icon(
-              widget.icon,
-              size: 18,
-              color: _hovered
-                  ? palette.uiFloatingHoverText
-                  : palette.uiFloatingText,
-            ),
+            child: widget.child != null
+                ? Center(child: widget.child)
+                : Icon(
+                    widget.icon,
+                    size: 18,
+                    color: lit
+                        ? palette.uiFloatingHoverText
+                        : palette.uiFloatingText,
+                  ),
           ),
         ),
       );

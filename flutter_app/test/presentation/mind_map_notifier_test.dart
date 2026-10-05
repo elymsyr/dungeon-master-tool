@@ -510,4 +510,56 @@ void main() {
       expect(n.viewTransform.value.scale, isNot(1.0));
     });
   });
+
+  group('MindMapNotifier — Pen strokes', () {
+    late ProviderContainer c;
+    late MindMapNotifier n;
+
+    setUp(() {
+      c = _makeContainer();
+      n = c.read(mindMapProvider.notifier);
+    });
+    tearDown(() => c.dispose());
+
+    test('addStroke is undoable and hit-testable', () {
+      n.addStroke(const [Offset(0, 0), Offset(100, 0)], Colors.red, 4);
+      final id = _state(n).strokes.single.id;
+      expect(n.hitTestStroke(const Offset(50, 5)), id);
+      expect(n.hitTestStroke(const Offset(50, 40)), isNull);
+
+      n.undo();
+      expect(_state(n).strokes, isEmpty);
+      n.redo();
+      n.deleteStroke(id);
+      expect(_state(n).strokes, isEmpty);
+    });
+
+    test('pen tool survives undo', () {
+      n.selectPen(Colors.blue);
+      n.addStroke(const [Offset(1, 1)], Colors.blue, 3);
+      n.undo();
+      expect(n.penColor.value, Colors.blue);
+      n.exitPen();
+      expect(n.penColor.value, isNull);
+      expect(n.lastPenColor, Colors.blue);
+    });
+
+    test('stroke JSON round-trips', () {
+      const s = MindMapStroke(
+        id: 'a',
+        color: Color(0xFF123456),
+        width: 2.5,
+        zoom: 0.4,
+        points: [Offset(1.24, 2), Offset(-3, 4.56)],
+      );
+      final back = MindMapStroke.fromJson(s.toJson());
+      expect(back.id, 'a');
+      expect(back.color, const Color(0xFF123456));
+      expect(back.width, 2.5);
+      expect(back.zoom, 0.4);
+      expect(MindMapStroke.fromJson(const {'points': []}).zoom, 1,
+          reason: 'strokes saved before zoom was stored');
+      expect(back.points, const [Offset(1.2, 2), Offset(-3, 4.6)]);
+    });
+  });
 }
