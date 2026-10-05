@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +23,7 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
+import '../../widgets/battle_map/map_compose_dialog.dart';
 
 // ---------------------------------------------------------------------------
 // Tool enum
@@ -974,16 +975,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Map image
   // -------------------------------------------------------------------------
 
-  Future<void> pickMapImage(BuildContext context) async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
-    );
-    if (result == null || result.files.single.path == null) return;
-    if (!context.mounted) return;
-    await applyMapImage(context, result.files.single.path!);
-  }
-
   /// Applies a map image from any source — a freshly picked local path or an
   /// already-stored ref (e.g. a location's `battlemaps` entry).
   /// `localizeMapImage` is a no-op for non-local refs, so reused refs skip the
@@ -1003,6 +994,130 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       encounterId: encounterId,
       mapPath: stored,
     );
+    unawaited(cleanupMapImageRef(
+      _ref.read,
+      removedRef: oldRef,
+      flushPrefix: 'settings:',
+    ));
+  }
+
+  /// Combines another map with the current one: the DM places it in
+  /// [showMapComposeDialog], then both are baked into one new background
+  /// image so the projection / player / cloud pipelines keep seeing a single
+  /// `mapPath`. When the new map reaches above or left of the old one the
+  /// canvas origin moves, so every canvas-space layer is shifted to stay on
+  /// the same spot of the old map.
+  Future<void> addMapImage(BuildContext context, String pathOrRef) async {
+    final base = state.backgroundImage;
+    if (base == null) return applyMapImage(context, pathOrRef);
+    final overlay = await _loadImageFromFile(pathOrRef);
+    if (overlay == null || !context.mounted) return;
+    final placement =
+        await showMapComposeDialog(context, base: base, overlay: overlay);
+    if (placement == null || !mounted) {
+      overlay.dispose();
+      return;
+    }
+
+    final baseRect =
+        Offset.zero & Size(base.width.toDouble(), base.height.toDouble());
+    final union = baseRect.expandToInclude(placement.rect);
+    final shift = -union.topLeft;
+    final w = union.width.ceil();
+    final h = union.height.ceil();
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..filterQuality = FilterQuality.high;
+    void drawOverlay() => canvas.drawImageRect(
+          overlay,
+          Offset.zero &
+              Size(overlay.width.toDouble(), overlay.height.toDouble()),
+          placement.rect.shift(shift),
+          paint,
+        );
+    if (placement.below) drawOverlay();
+    canvas.drawImage(base, shift, paint);
+    if (!placement.below) drawOverlay();
+    final composite = await recorder.endRecording().toImage(w, h);
+    overlay.dispose();
+    final png = await composite.toByteData(format: ui.ImageByteFormat.png);
+    composite.dispose();
+    if (png == null || !mounted) return;
+
+    final tmpDir = await Directory.systemTemp.createTemp('dmt_map_');
+    final tmp = File('${tmpDir.path}/combined_map.png');
+    await tmp.writeAsBytes(png.buffer.asUint8List());
+    final stored = await localizeMapImage(_ref.read, tmp.path);
+    if (stored != tmp.path) unawaited(tmpDir.delete(recursive: true));
+    final img = await _loadImageFromFile(stored);
+    if (img == null || !mounted) return;
+
+    // Fog / legacy annotation bitmaps must match the canvas size (players
+    // stretch the fog over the whole map), so they are always re-rendered.
+    Future<ui.Image?> reframe(ui.Image? src) async {
+      if (src == null) return null;
+      final r = ui.PictureRecorder();
+      Canvas(r).drawImage(src, shift, Paint());
+      return r.endRecording().toImage(w, h);
+    }
+
+    final fog = await reframe(state.fogImage);
+    final annot = await reframe(state.annotationImage);
+    if (!mounted) return;
+    final oldRef = state.mapPath;
+    state = state.copyWith(
+      backgroundImage: img,
+      mapPath: stored,
+      canvasWidth: w,
+      canvasHeight: h,
+      fogImage: fog,
+      annotationImage: annot,
+      tokenPositions: {
+        for (final e in state.tokenPositions.entries) e.key: e.value + shift,
+      },
+      strokes: [
+        for (final s in state.strokes)
+          DrawStroke(
+            path: s.path.shift(shift),
+            color: s.color,
+            width: s.width,
+            rawPoints: [for (final p in s.rawPoints) p + shift],
+            isErase: s.isErase,
+            layer: s.layer,
+          ),
+      ],
+      persistentMeasurements: [
+        for (final m in state.persistentMeasurements)
+          MeasurementMark(
+            type: m.type,
+            start: m.start + shift,
+            end: m.end + shift,
+            isPersistent: m.isPersistent,
+            layer: m.layer,
+            colorHex: m.colorHex,
+            sweepDeg: m.sweepDeg,
+          ),
+      ],
+      shapes: [
+        for (final s in state.shapes)
+          s.copyWith(points: [for (final p in s.points) p + shift]),
+      ],
+    );
+    // Keep the old map where it was on screen.
+    final vt = viewTransform.value;
+    viewTransform.value = ViewTransform(
+      scale: vt.scale,
+      panOffset: vt.panOffset - shift * vt.scale,
+    );
+
+    _ref.read(combatProvider.notifier).saveMapData(
+      encounterId: encounterId,
+      mapPath: stored,
+    );
+    _fogDirtyForProjection = true;
+    _scheduleDrawingsSync();
+    await save();
     unawaited(cleanupMapImageRef(
       _ref.read,
       removedRef: oldRef,

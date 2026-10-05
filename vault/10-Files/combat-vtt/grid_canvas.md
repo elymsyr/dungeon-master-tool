@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/battle_map/battle_map_painter.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-10-05
 tags: [file]
 ---
 
@@ -43,6 +43,8 @@ tags: [file]
 - AoE color: `m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800'`; default kept here (not in `hexToColor`) so DM/player null-color AoEs stay distinct (player uses literal `#ff9800`).
 - Vector shapes split by `ShapeLayer.background` (drawn canvas-space under tokens by `BattleMapPainter`) vs object/GM layers (drawn screen-space ABOVE tokens by `BattleMapForegroundPainter`). GM shapes are DM-only by construction (never sent to players). `paintShapeList` takes a `project` fn + `scaleFactor` (1 inside a canvas transform, else `vt.scale`).
 - `shouldRepaint`: only `mapState != old || isDmView != old` (transform/tick handled by the repaint Listenable).
+
+- **Harita birleştirme (2026-10-05).** Toolbar'da *Open Map* yanında *Add Map* (`openBattlemapPicker(add: true)`). `BattleMapNotifier.addMapImage` yeni haritayı `map_compose_dialog.dart`'ta yerleştirtir (sürükle, kaydırıcı/tekerlek ile boyut, üstte/altta), ikisini tek PNG'ye pişirip `mapPath` olarak kaydeder — projeksiyon/oyuncu/bulut tek arka plan görmeye devam eder. Yeni harita eskinin üstüne/soluna taşarsa canvas orijini kayar: token, stroke, ölçüm, shape, fog ve legacy annotation aynı offset'le kaydırılır; fog her durumda yeni canvas boyutuna yeniden çizilir (oyuncu fog'u canvas'a geriyor). Pişirildiği için sonradan ayrı ayrı düzenlenemez.
 
 ## Notes
 - PATH CORRECTION: requested glob `**/battle_map/grid_canvas.dart` does not exist. Note kept as `grid_canvas.md` so existing wikilinks resolve, but it documents `flutter_app/lib/presentation/screens/battle_map/battle_map_painter.dart` (the actual main grid render widget). Related files in the same dir: `battle_map_screen.dart`, `battle_map_notifier.dart`, `render/aoe_render.dart`.

@@ -101,6 +101,16 @@ class BattleMapToolbar extends ConsumerWidget {
             },
           ),
           const SizedBox(width: 8),
+          // Combine another map with the current one
+          _ToolbarButton(
+            icon: Icons.add_photo_alternate_outlined,
+            tooltip: L10n.of(context)!.bmAddMapTooltip,
+            palette: palette,
+            onPressed: () async {
+              await openBattlemapPicker(context, ref, notifier, add: true);
+            },
+          ),
+          const SizedBox(width: 8),
           // Project to player screen
           _ToolbarButton(
             icon: Icons.cast,
