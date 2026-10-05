@@ -3394,5 +3394,7 @@
   },
   "diceTapToClose": "Tap to close",
   "lblDiceTheme": "Dice theme",
-  "diceThemeAuto": "Auto (by theme)"
+  "diceThemeAuto": "Auto (by theme)",
+  "diceLooksThemes": "Themes",
+  "diceLooksOthers": "Others"
 }

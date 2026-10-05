@@ -2194,5 +2194,7 @@
   "diceRollSelection": "{dice} at",
   "diceTapToClose": "Kapatmak için dokun",
   "lblDiceTheme": "Zar teması",
-  "diceThemeAuto": "Otomatik (temaya göre)"
+  "diceThemeAuto": "Otomatik (temaya göre)",
+  "diceLooksThemes": "Temalar",
+  "diceLooksOthers": "Diğerleri"
 }
