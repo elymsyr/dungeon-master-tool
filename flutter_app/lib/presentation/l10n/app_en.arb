@@ -1425,6 +1425,7 @@
   "encounterAddColumn": "Add Column",
   "searchHint": "Search...",
   "entitySelectorEmpty": "No entities found",
+  "entitySelectorSuggested": "Suggested",
   "packageNameExists": "Package \"{name}\" already exists",
   "@packageNameExists": {
     "placeholders": {

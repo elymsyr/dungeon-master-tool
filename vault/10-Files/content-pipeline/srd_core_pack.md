@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/srd_core_pack.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-09-15
+updated: 2026-10-05
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 **Outputs**
 - `SrdCorePack buildSrdCorePack()` — `{entities: <uuid → wire-format entity>, metadata}`.
 - `srdStableEntityId(slug, name)` — `uuid.v5(_srdNamespaceUuid, 'slug:name')`, shared with `SrdCorePackageBootstrap`.
-- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.6.0'`.
+- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.8.0'`.
 
 ## Dependencies & Links
 - Depends on: [[srd-pack-content]] (all 20+ content files), [[srd_helpers]] (`packEntity`, `lookup`, `ref`), `package:uuid`.
@@ -37,6 +37,7 @@ tags: [file]
 - **Duplicate-id guard (Pass 1)** — ids are `slug:name` derived, so two rows sharing a name silently overwrote each other. `Uncanny Dodge` (Rogue L5 vs a Hunter option) and `Fiendish Vigor` (Fiend Patron L3 vs a Warlock invocation) both shipped that way; the builder now throws.
 - `srdCorePackVersion` is hoisted top-level so `SrdCorePackageBootstrap` can compare against the stored DB version WITHOUT building the full ~2000-entity pack first; bump it on any content change to force re-seed. **`1.4.0`** (2026-09-12) carries the `resource-pool` `display_name` labels — without the bump an existing install keeps the slug-named rows and never sees them.
 - **`_artedSlugs` (Pass 1)** — slugs whose every row has bundled art (`assets/art/srd/{uuid}.webp`); pass 1 stamps `image_path = dmt-art://{uuid}.webp` for them. Slug-level, not a uuid list, so a slug may only be added once ALL its rows have art. **`1.6.0`** (2026-09-15) added `weapon`, `armor`, `tool`, `adventuring-gear`, `ammunition`, `pack`, `mount`, `vehicle`, `animal` (325 images); only `trait` and `creature-action` remain art-less.
+- **Tags (Pass 1)** — `srd_core/srd_tags.dart`'s `srdTags[slug][name]` overwrites `row['tags']` (2–5 lowercase; ~1.290 cards: items, mounts/vehicles, all spells, monsters, animals, Origin/General/Fighting Style/Epic Boon feats). Class/species/background names there feed [[entity_search]]'s Suggested section (e.g. origin feats carry their backgrounds); the rest are search words the uuid lookup refs can't provide — spell: role + damage type + `ritual` + school; monster: type + subtype + habitat/family + `legendary`/`wild shape`. **`1.8.0`** (2026-10-05). `srd_tags_test` checks every key names a real row and the count stays ≥ 1000.
 - Pass 2 `_resolveRefs`: unknown `_ref` becomes `''` (caught by the integrity test `srd_core_pack_test.dart`).
 - `trinket` slug intentionally unpopulated (SRD 5.2.1 omits the d100 trinket table).
 

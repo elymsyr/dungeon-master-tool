@@ -1360,6 +1360,7 @@
   "encounterAddColumn": "Spalte hinzufügen",
   "searchHint": "Suchen...",
   "entitySelectorEmpty": "Keine Entitäten gefunden",
+  "entitySelectorSuggested": "Vorgeschlagen",
   "packageNameExists": "Paket \"{name}\" existiert bereits",
   "exportPackageDone": "\"{name}\" mit {count} Entitäten exportiert.",
   "exportFailed": "Export fehlgeschlagen: {error}",

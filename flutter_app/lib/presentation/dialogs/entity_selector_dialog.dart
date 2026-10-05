@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/services/entity_search.dart';
 import '../theme/dm_tool_colors.dart';
 import 'entity_preview_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -22,6 +23,9 @@ import '../l10n/app_localizations.dart';
 ///   bundled SRD maps, deduped by (slug, name). Character-sheet pickers pass
 ///   the character's standalone-package entities here so options picked from
 ///   official packages at creation remain addable post-creation.
+/// [contextFields]: field values of the card being edited. Its class /
+///   species / background refs pick the rows shown under "Suggested" and
+///   boosted in search (see `suggestedEntityIds`).
 Future<List<String>?> showEntitySelectorDialog({
   required BuildContext context,
   required WidgetRef ref,
@@ -30,6 +34,7 @@ Future<List<String>?> showEntitySelectorDialog({
   List<String> excludeIds = const [],
   bool includeBuiltinSrd = false,
   List<Entity> extraEntities = const [],
+  Map<String, dynamic>? contextFields,
 }) async {
   return showDialog<List<String>>(
     context: context,
@@ -40,6 +45,7 @@ Future<List<String>?> showEntitySelectorDialog({
       excludeIds: excludeIds,
       includeBuiltinSrd: includeBuiltinSrd,
       extraEntities: extraEntities,
+      contextFields: contextFields,
     ),
   );
 }
@@ -51,6 +57,7 @@ class _EntitySelectorDialog extends StatefulWidget {
   final List<String> excludeIds;
   final bool includeBuiltinSrd;
   final List<Entity> extraEntities;
+  final Map<String, dynamic>? contextFields;
 
   const _EntitySelectorDialog({
     required this.ref,
@@ -59,6 +66,7 @@ class _EntitySelectorDialog extends StatefulWidget {
     this.excludeIds = const [],
     this.includeBuiltinSrd = false,
     this.extraEntities = const [],
+    this.contextFields,
   });
 
   @override
@@ -76,6 +84,17 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   late final Set<String> _excludeSet = widget.excludeIds.toSet();
   late final Set<String>? _allowedSet = widget.allowedTypes?.toSet();
   late final List<Entity> _baseList = _buildBaseList();
+
+  /// Bağlama uyan satırlar — dialog açılışında bir kez hesaplanır.
+  late final Set<String> _suggested = widget.contextFields == null
+      ? const {}
+      : suggestedEntityIds(_baseList, widget.contextFields!, _previewEntities);
+  late final EntityRanking _ranking =
+      EntityRanking(_baseList, suggested: _suggested);
+  late final List<Entity> _suggestedList = [
+    for (final e in _baseList)
+      if (_suggested.contains(e.id)) e,
+  ];
 
   List<Entity> _buildBaseList() {
     final out = <Entity>[];
@@ -126,16 +145,21 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
-    // F4: search filter only — base list pre-filtered once in initState.
-    // Lowercase the query once instead of per item.
-    final List<Entity> filtered;
-    if (_search.isEmpty) {
-      filtered = _baseList;
+    // F4: base list pre-filtered once; only ranking runs per keystroke.
+    // Boş aramada öneriler ayrı bölüm (sonra Tümü); arama varken sıralamada
+    // öne çıkar. Satır: String = bölüm başlığı, Entity = kayıt.
+    final List<Object> rows;
+    if (_search.trim().isNotEmpty) {
+      rows = _ranking.rank(_search);
+    } else if (_suggestedList.isEmpty) {
+      rows = _baseList;
     } else {
-      final q = _search.toLowerCase();
-      filtered = [
-        for (final e in _baseList)
-          if (e.name.toLowerCase().contains(q)) e,
+      final l10n = L10n.of(context)!;
+      rows = [
+        '${l10n.entitySelectorSuggested} (${_suggestedList.length})',
+        ..._suggestedList,
+        l10n.filterAll,
+        ..._baseList,
       ];
     }
 
@@ -174,23 +198,38 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
             const SizedBox(height: 8),
             // Liste
             Expanded(
-              child: filtered.isEmpty
+              child: rows.isEmpty
                   ? Center(child: Text(L10n.of(context)!.entitySelectorEmpty, style: TextStyle(color: palette.sidebarLabelSecondary)))
                   : ListView.builder(
-                      itemCount: filtered.length,
+                      itemCount: rows.length,
                       itemBuilder: (context, i) {
-                        final entity = filtered[i];
+                        final row = rows[i];
+                        if (row is String) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                            child: Text(row,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: palette.sidebarLabelSecondary)),
+                          );
+                        }
+                        final entity = row as Entity;
                         final isSelected = _selected.contains(entity.id);
 
+                        // Önerilen bölümündeki satır Tümü'nde tekrar eder —
+                        // key indeksle ayrışır.
                         return ListTile(
-                          key: ValueKey(entity.id),
+                          key: ValueKey('$i:${entity.id}'),
                           dense: true,
                           selected: isSelected,
                           selectedTileColor: palette.tabIndicator.withValues(alpha: 0.1),
-                          leading: Container(
-                            width: 8, height: 8,
-                            decoration: BoxDecoration(color: palette.tabText, shape: BoxShape.circle),
-                          ),
+                          leading: _suggested.contains(entity.id)
+                              ? Icon(Icons.auto_awesome, size: 12, color: palette.tabIndicator)
+                              : Container(
+                                  width: 8, height: 8,
+                                  decoration: BoxDecoration(color: palette.tabText, shape: BoxShape.circle),
+                                ),
                           title: Text(entity.name, style: const TextStyle(fontSize: 13)),
                           subtitle: Text(
                             entity.source.isEmpty
