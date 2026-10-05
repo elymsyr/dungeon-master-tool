@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/unbounded_stack.dart';
 import 'mind_map_notifier.dart';
@@ -39,6 +40,16 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   Offset? _cursorCanvas;
   final _canvasFocusNode = FocusNode();
 
+  // Pen input — raw pointer events, so a stroke starts on the first sample
+  // instead of after the gesture arena's pan slop.
+  final _live = LiveStroke();
+  int? _penPointer;
+  PointerDeviceKind? _penKind;
+  final _downPointers = <int>{};
+  // Once a stylus touches the canvas, fingers stop drawing (palm rejection)
+  // and only pan/zoom.
+  bool _stylusSeen = false;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +59,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   @override
   void dispose() {
     _canvasFocusNode.dispose();
+    _live.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -66,14 +78,32 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final notifier = ref.read(mindMapProvider.notifier);
-    final mapState = ref.watch(mindMapProvider);
+    // Strokes are left out so a finished stroke doesn't rebuild every node
+    // card (a visible hitch at pen-up); the stroke layer watches them alone.
+    final mapState = ref.watch(
+        mindMapProvider.select((s) => s.copyWith(strokes: const [])));
+    return ListenableBuilder(
+      listenable: Listenable.merge([notifier.penColor, notifier.erasing]),
+      builder: (context, _) =>
+          _buildBody(context, notifier, mapState, notifier.penColor.value),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, MindMapNotifier notifier,
+      MindMapState mapState, Color? penColor) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final penOn = penColor != null;
+    if (!penOn) _resetPen();
 
     final inMoveMode = mapState.moveModeNodeId != null;
-    final cursor = inMoveMode
-        ? SystemMouseCursors.move
-        : SystemMouseCursors.basic;
+    final cursor = penOn
+        ? (notifier.erasing.value
+            ? SystemMouseCursors.cell
+            : SystemMouseCursors.precise)
+        : inMoveMode
+            ? SystemMouseCursors.move
+            : SystemMouseCursors.basic;
 
     return KeyboardListener(
       focusNode: _canvasFocusNode,
@@ -88,6 +118,10 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
             }
           },
           child: Listener(
+            onPointerDown: penOn ? (e) => _penDown(e, notifier) : null,
+            onPointerMove: penOn ? (e) => _penMove(e, notifier) : null,
+            onPointerUp: penOn ? (e) => _penUp(e, notifier) : null,
+            onPointerCancel: penOn ? _penCancel : null,
             onPointerSignal: (signal) {
               if (signal is PointerScrollEvent) {
                 final canvasPos = notifier.screenToCanvas(signal.localPosition);
@@ -110,10 +144,15 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               },
               onScaleStart: notifier.onScaleStart,
               onScaleUpdate: (d) {
+                // A live stroke owns the single pointer; pinch/pan resume
+                // once a second finger cancels it.
+                if (_penPointer != null) return;
                 notifier.onScaleUpdate(d);
               },
               onScaleEnd: (_) => notifier.onScaleEnd(),
-              onTapUp: inMoveMode
+              onTapUp: penOn
+                  ? null
+                  : inMoveMode
                   ? (d) {
                       final canvasPos =
                           notifier.screenToCanvas(d.localPosition);
@@ -147,10 +186,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                 _handleContextMenu(
                     d.localPosition, d.globalPosition, notifier, palette);
               },
-              onLongPressStart: (d) {
-                _handleContextMenu(
-                    d.localPosition, d.globalPosition, notifier, palette);
-              },
+              onLongPressStart: penOn
+                  ? null
+                  : (d) {
+                      _handleContextMenu(d.localPosition, d.globalPosition,
+                          notifier, palette);
+                    },
               child: DragTarget<String>(
                 onWillAcceptWithDetails: (_) => true,
                 onAcceptWithDetails: (details) =>
@@ -175,8 +216,11 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                               child: child,
                             );
                           },
-                          child: _buildCanvasContent(
-                              palette, notifier, mapState),
+                          child: IgnorePointer(
+                            ignoring: penOn,
+                            child: _buildCanvasContent(
+                                palette, notifier, mapState, penOn),
+                          ),
                         ),
                       ],
                     ),
@@ -193,6 +237,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     DmToolColors palette,
     MindMapNotifier notifier,
     MindMapState mapState,
+    bool penOn,
   ) {
     final vt = notifier.viewTransform.value;
     final scale = vt.scale;
@@ -281,8 +326,130 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               ),
             );
           }),
+
+        // Pen strokes sit above nodes so cards can be circled/annotated.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              child: Consumer(
+                builder: (_, ref, _) {
+                  final strokes =
+                      ref.watch(mindMapProvider.select((s) => s.strokes));
+                  // Width depends on zoom (clamped) → repaint on zoom (paths
+                  // stay cached); a pan doesn't repaint, shouldRepaint skips it.
+                  return ValueListenableBuilder<MindMapViewTransform>(
+                    valueListenable: notifier.viewTransform,
+                    builder: (_, vt, _) => CustomPaint(
+                      painter: MindMapStrokesPainter(strokes, vt.scale),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              child: CustomPaint(painter: LiveStrokePainter(_live)),
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  // -------------------------------------------------------------------------
+  // Pen input
+  // -------------------------------------------------------------------------
+
+  /// Eraser reach around the nib, screen px.
+  static const double _eraserRadius = 10;
+
+  // Eraser drag state: last probe (canvas) and whether this drag already
+  // pushed its single undo step.
+  Offset? _eraseLast;
+  bool _eraseUndone = false;
+
+  void _penDown(PointerDownEvent e, MindMapNotifier notifier) {
+    _downPointers.add(e.pointer);
+    if (e.kind == PointerDeviceKind.stylus) _stylusSeen = true;
+
+    if (_penPointer != null) {
+      // Second finger on a finger-stroke → it's a pinch, drop the stroke.
+      // A stylus stroke ignores the palm.
+      if (_penKind == PointerDeviceKind.touch) _cancelStroke();
+      return;
+    }
+    if (_downPointers.length > 1) return;
+
+    final canDraw = switch (e.kind) {
+      PointerDeviceKind.stylus => true,
+      PointerDeviceKind.touch => !_stylusSeen,
+      PointerDeviceKind.mouse => e.buttons == kPrimaryMouseButton,
+      _ => false,
+    };
+    final color = notifier.penColor.value;
+    if (!canDraw || color == null) return;
+
+    _penPointer = e.pointer;
+    _penKind = e.kind;
+    final pos = notifier.screenToCanvas(e.localPosition);
+    if (notifier.erasing.value) {
+      _eraseUndone = false;
+      _eraseLast = pos;
+      _erase(pos, notifier);
+      return;
+    }
+    final scale = notifier.viewTransform.value.scale;
+    _live.start(pos, color, notifier.penWidth.value, scale);
+  }
+
+  void _erase(Offset to, MindMapNotifier notifier) {
+    final from = _eraseLast ?? to;
+    _eraseLast = to;
+    final scale = notifier.viewTransform.value.scale;
+    if (notifier.eraseStrokes(from, to, _eraserRadius / scale,
+        pushUndo: !_eraseUndone)) {
+      _eraseUndone = true;
+    }
+  }
+
+  void _penMove(PointerMoveEvent e, MindMapNotifier notifier) {
+    if (e.pointer != _penPointer) return;
+    final pos = notifier.screenToCanvas(e.localPosition);
+    if (_eraseLast != null) return _erase(pos, notifier);
+    final scale = notifier.viewTransform.value.scale;
+    _live.add(pos, 1.5 / scale);
+  }
+
+  void _penUp(PointerUpEvent e, MindMapNotifier notifier) {
+    _downPointers.remove(e.pointer);
+    if (e.pointer != _penPointer) return;
+    if (_eraseLast != null) return _cancelStroke();
+    _live.add(notifier.screenToCanvas(e.localPosition), double.infinity);
+    final scale = notifier.viewTransform.value.scale;
+    notifier.addStroke(
+        simplifyStroke(_live.rendered, 0.3 / scale), _live.color, _live.width,
+        zoom: _live.scale);
+    _cancelStroke();
+  }
+
+  void _penCancel(PointerCancelEvent e) {
+    _downPointers.remove(e.pointer);
+    if (e.pointer == _penPointer) _cancelStroke();
+  }
+
+  void _cancelStroke() {
+    _penPointer = null;
+    _penKind = null;
+    _eraseLast = null;
+    _live.clear();
+  }
+
+  void _resetPen() {
+    _downPointers.clear();
+    if (_penPointer != null) _cancelStroke();
   }
 
   Rect _computeViewportRect(MindMapNotifier notifier) {
@@ -341,14 +508,48 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     final scale = notifier.viewTransform.value.scale;
     final edgeId = notifier.hitTestEdge(
         canvasPos, threshold: MindMapNotifier.edgeContextHitRadius / scale);
+    final strokeId = edgeId == null
+        ? notifier.hitTestStroke(canvasPos, threshold: 12 / scale)
+        : null;
     if (edgeId != null) {
       notifier.setSelectedEdge(edgeId);
       showMindMapEdgeMenu(
           context, globalPosition, edgeId, notifier, palette);
+    } else if (strokeId != null) {
+      _showStrokeMenu(globalPosition, strokeId, notifier, palette);
     } else {
       _showCanvasContextMenu(
           context, globalPosition, canvasPos, notifier, palette);
     }
+  }
+
+  void _showStrokeMenu(
+    Offset globalPos,
+    String strokeId,
+    MindMapNotifier notifier,
+    DmToolColors palette,
+  ) {
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+          globalPos.dx, globalPos.dy, globalPos.dx + 1, globalPos.dy + 1),
+      color: palette.uiFloatingBg,
+      items: [
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
+              const SizedBox(width: 8),
+              Text(L10n.of(context)!.mindMapDeleteDrawing,
+                  style: TextStyle(color: Colors.red[300], fontSize: 13)),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'delete') notifier.deleteStroke(strokeId);
+    });
   }
 
   void _showCanvasContextMenu(
@@ -436,7 +637,9 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     final shift = HardwareKeyboard.instance.isShiftPressed;
 
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      if (mapState.moveModeNodeId != null) {
+      if (notifier.penColor.value != null) {
+        notifier.exitPen();
+      } else if (mapState.moveModeNodeId != null) {
         notifier.exitMoveMode();
       } else if (mapState.resizeModeNodeId != null) {
         notifier.exitResizeMode();

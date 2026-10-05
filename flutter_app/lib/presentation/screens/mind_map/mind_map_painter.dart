@@ -403,3 +403,168 @@ class MindMapPainter extends CustomPainter {
         old.dragOverrides != dragOverrides;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Pen strokes
+// ---------------------------------------------------------------------------
+
+/// Smooth path through [pts]: quadratic segments between midpoints, so raw
+/// pointer samples never show as corners.
+Path buildStrokePath(List<Offset> pts) {
+  final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+  for (var i = 1; i < pts.length - 1; i++) {
+    final mid = Offset.lerp(pts[i], pts[i + 1], 0.5)!;
+    path.quadraticBezierTo(pts[i].dx, pts[i].dy, mid.dx, mid.dy);
+  }
+  if (pts.length > 1) path.lineTo(pts.last.dx, pts.last.dy);
+  return path;
+}
+
+/// Ramer–Douglas–Peucker: drops points that lie within [eps] of the line
+/// through their neighbours. Shape is kept to [eps]; the saved stroke (and
+/// the synced blob) shrinks several-fold.
+List<Offset> simplifyStroke(List<Offset> pts, double eps) {
+  if (pts.length < 3) return List.of(pts);
+  final keep = List<bool>.filled(pts.length, false)
+    ..[0] = true
+    ..[pts.length - 1] = true;
+  final stack = <(int, int)>[(0, pts.length - 1)];
+  while (stack.isNotEmpty) {
+    final (a, b) = stack.removeLast();
+    final ab = pts[b] - pts[a];
+    final len = ab.distance;
+    var maxD = 0.0;
+    var idx = -1;
+    for (var i = a + 1; i < b; i++) {
+      final ap = pts[i] - pts[a];
+      final d = len == 0
+          ? ap.distance
+          : (ab.dx * ap.dy - ab.dy * ap.dx).abs() / len;
+      if (d > maxD) {
+        maxD = d;
+        idx = i;
+      }
+    }
+    if (idx >= 0 && maxD > eps) {
+      keep[idx] = true;
+      stack
+        ..add((a, idx))
+        ..add((idx, b));
+    }
+  }
+  return [for (var i = 0; i < pts.length; i++) if (keep[i]) pts[i]];
+}
+
+// Strokes are immutable — build each path once, not on every repaint.
+final _strokePaths = Expando<Path>();
+
+void paintStroke(Canvas canvas, List<Offset> pts, Color color, double width,
+    {Path? path}) {
+  if (pts.isEmpty) return;
+  if (pts.length == 1) {
+    canvas.drawCircle(pts.first, width / 2, Paint()..color = color);
+    return;
+  }
+  canvas.drawPath(
+    path ?? buildStrokePath(pts),
+    Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round,
+  );
+}
+
+/// Committed strokes. Width depends on zoom ([MindMapStroke.canvasWidthAt]),
+/// so a zoom repaints (paths stay cached); a pan reuses the recorded layer.
+class MindMapStrokesPainter extends CustomPainter {
+  final List<MindMapStroke> strokes;
+  final double scale;
+  const MindMapStrokesPainter(this.strokes, this.scale);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final s in strokes) {
+      final path = s.points.length > 1
+          ? (_strokePaths[s] ??= buildStrokePath(s.points))
+          : null;
+      paintStroke(canvas, s.points, s.color, s.canvasWidthAt(scale),
+          path: path);
+    }
+  }
+
+  @override
+  bool shouldRepaint(MindMapStrokesPainter old) =>
+      old.strokes != strokes || old.scale != scale;
+}
+
+/// The stroke under the pen right now — repaints per pointer move via
+/// [repaint], without rebuilding any widget.
+///
+/// Raw samples are low-pass filtered (each kept point moves only part of the
+/// way toward the pen) so sensor jitter never reaches the line. The filter
+/// trails the pen slightly; [tail] is the raw pen position, drawn as the last
+/// segment so the line still ends exactly under the nib.
+class LiveStroke extends ChangeNotifier {
+  /// Share of the distance to the raw sample a filtered point covers.
+  /// Lower = smoother but rounder corners.
+  static const double follow = 0.45;
+
+  final List<Offset> points = [];
+  Offset? tail;
+  Color color = const Color(0xFFEF5350);
+
+  /// Screen px; [scale] is the zoom at stroke start (zoom is locked while
+  /// a stroke is live).
+  double width = 4;
+  double scale = 1;
+
+  void start(Offset p, Color c, double w, double s) {
+    points
+      ..clear()
+      ..add(p);
+    tail = p;
+    color = c;
+    width = w;
+    scale = s;
+    notifyListeners();
+  }
+
+  /// Samples closer than [minDist] to the last kept point only move [tail].
+  void add(Offset raw, double minDist) {
+    if (points.isEmpty) return;
+    tail = raw;
+    final last = points.last;
+    if ((raw - last).distance >= minDist) {
+      points.add(last + (raw - last) * follow);
+    }
+    notifyListeners();
+  }
+
+  /// Filtered points plus the raw end — what is drawn and what gets saved.
+  List<Offset> get rendered {
+    final t = tail;
+    if (t == null || t == points.last) return points;
+    return [...points, t];
+  }
+
+  void clear() {
+    if (points.isEmpty) return;
+    points.clear();
+    tail = null;
+    notifyListeners();
+  }
+}
+
+class LiveStrokePainter extends CustomPainter {
+  final LiveStroke live;
+  LiveStrokePainter(this.live) : super(repaint: live);
+
+  @override
+  void paint(Canvas canvas, Size size) =>
+      paintStroke(canvas, live.rendered, live.color, live.width / live.scale);
+
+  @override
+  bool shouldRepaint(LiveStrokePainter old) => old.live != live;
+}

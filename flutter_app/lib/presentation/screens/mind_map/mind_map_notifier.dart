@@ -41,6 +41,64 @@ class NodeOverride {
   int get hashCode => Object.hash(pos, size);
 }
 
+/// Freehand pen stroke. [points] are canvas-space; [width] is the screen px
+/// chosen at draw time and [zoom] the view scale it was drawn at.
+@immutable
+class MindMapStroke {
+  final String id;
+  final Color color;
+  final double width;
+  final double zoom;
+  final List<Offset> points;
+
+  const MindMapStroke({
+    required this.id,
+    required this.color,
+    required this.width,
+    this.zoom = 1,
+    required this.points,
+  });
+
+  /// On-screen width may grow to this multiple of [width] when zooming in.
+  static const double maxGrow = 2;
+
+  /// Canvas-px width to paint at view [scale]. The line scales with the
+  /// content (a sketch keeps its look), but its on-screen width is held in
+  /// [1 px, maxGrow × width] — drawn zoomed-out it doesn't balloon when you
+  /// zoom in, and zoomed-out it never vanishes.
+  double canvasWidthAt(double scale) =>
+      (width * scale / zoom).clamp(math.min(1.0, width), width * maxGrow) /
+      scale;
+
+  static double _r(double v) => (v * 10).roundToDouble() / 10;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'color': color.toARGB32(),
+        'width': width,
+        'zoom': zoom,
+        // Flat [x0, y0, x1, y1, …] rounded to 0.1 px — keeps the blob small.
+        'points': [
+          for (final p in points) ...[_r(p.dx), _r(p.dy)],
+        ],
+      };
+
+  factory MindMapStroke.fromJson(Map<String, dynamic> json) {
+    final flat = (json['points'] as List? ?? const [])
+        .map((v) => (v as num).toDouble())
+        .toList();
+    return MindMapStroke(
+      id: json['id'] as String? ?? _uuid.v4(),
+      color: Color((json['color'] as num? ?? 0xFFEF5350).toInt()),
+      width: (json['width'] as num? ?? 3).toDouble(),
+      zoom: (json['zoom'] as num? ?? 1).toDouble(),
+      points: [
+        for (var i = 0; i + 1 < flat.length; i += 2) Offset(flat[i], flat[i + 1]),
+      ],
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -48,6 +106,7 @@ class NodeOverride {
 class MindMapState {
   final List<MindMapNode> nodes;
   final List<MindMapEdge> edges;
+  final List<MindMapStroke> strokes;
   final String? selectedNodeId;
   final String? selectedEdgeId;
   final String? connectingFromId;
@@ -57,6 +116,7 @@ class MindMapState {
   const MindMapState({
     this.nodes = const [],
     this.edges = const [],
+    this.strokes = const [],
     this.selectedNodeId,
     this.selectedEdgeId,
     this.connectingFromId,
@@ -67,6 +127,7 @@ class MindMapState {
   MindMapState copyWith({
     List<MindMapNode>? nodes,
     List<MindMapEdge>? edges,
+    List<MindMapStroke>? strokes,
     String? selectedNodeId,
     String? selectedEdgeId,
     String? connectingFromId,
@@ -81,6 +142,7 @@ class MindMapState {
     return MindMapState(
       nodes: nodes ?? this.nodes,
       edges: edges ?? this.edges,
+      strokes: strokes ?? this.strokes,
       selectedNodeId: clearSelectedNode ? null : (selectedNodeId ?? this.selectedNodeId),
       selectedEdgeId: clearSelectedEdge ? null : (selectedEdgeId ?? this.selectedEdgeId),
       connectingFromId: clearConnectingFrom ? null : (connectingFromId ?? this.connectingFromId),
@@ -95,6 +157,7 @@ class MindMapState {
       other is MindMapState &&
           nodes == other.nodes &&
           edges == other.edges &&
+          strokes == other.strokes &&
           selectedNodeId == other.selectedNodeId &&
           selectedEdgeId == other.selectedEdgeId &&
           connectingFromId == other.connectingFromId &&
@@ -102,7 +165,7 @@ class MindMapState {
           resizeModeNodeId == other.resizeModeNodeId;
 
   @override
-  int get hashCode => Object.hash(nodes, edges, selectedNodeId, selectedEdgeId, connectingFromId, moveModeNodeId, resizeModeNodeId);
+  int get hashCode => Object.hash(nodes, edges, strokes, selectedNodeId, selectedEdgeId, connectingFromId, moveModeNodeId, resizeModeNodeId);
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +192,34 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   /// Temporary size overrides during resize gestures.
   final ValueNotifier<Map<String, Size>> sizeOverrides =
       ValueNotifier<Map<String, Size>>(const {});
+
+  /// Pen tool: non-null = drawing with this color. Kept out of
+  /// [MindMapState] so undo/redo never toggles the tool.
+  final ValueNotifier<Color?> penColor = ValueNotifier<Color?>(null);
+
+  /// Color the pen comes back with when re-selected.
+  Color lastPenColor = penColors.first;
+
+  /// Screen-px stroke width — one of [penWidths].
+  final ValueNotifier<double> penWidth = ValueNotifier<double>(penWidths[1]);
+
+  /// Pen tool in eraser mode: a touched stroke is removed whole.
+  final ValueNotifier<bool> erasing = ValueNotifier<bool>(false);
+
+  static const List<double> penWidths = [2, 4, 8];
+
+  static const List<Color> penColors = [
+    Color(0xFFEF5350),
+    Color(0xFFFFA726),
+    Color(0xFFFFEE58),
+    Color(0xFF66BB6A),
+    Color(0xFF42A5F5),
+    Color(0xFFAB47BC),
+    Color(0xFFEC407A),
+    Color(0xFF8D6E63),
+    Color(0xFFFFFFFF),
+    Color(0xFF212121),
+  ];
 
   // F7: per-node override notifier. Each node's Positioned listens only to
   // its own notifier so a single drag tick fires one builder, not N. The
@@ -166,6 +257,9 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     edgeTick.dispose();
     dragOverrides.dispose();
     sizeOverrides.dispose();
+    penColor.dispose();
+    penWidth.dispose();
+    erasing.dispose();
     for (final n in _nodeOverrideNotifiers.values) {
       n.dispose();
     }
@@ -184,6 +278,9 @@ class MindMapNotifier extends StateNotifier<MindMapState>
         .toList();
     final edgesList = (data['edges'] as List? ?? [])
         .map((e) => MindMapEdge.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    final strokesList = (data['strokes'] as List? ?? [])
+        .map((s) => MindMapStroke.fromJson(Map<String, dynamic>.from(s as Map)))
         .toList();
 
     // Viewport now lives in sibling `mind_map_views[mapId]` (local-only).
@@ -205,7 +302,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
       panOffset: Offset(panX, panY),
     );
 
-    state = MindMapState(nodes: nodesList, edges: edgesList);
+    state = MindMapState(
+        nodes: nodesList, edges: edgesList, strokes: strokesList);
     clearUndoRedo();
   }
 
@@ -222,6 +320,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     final mindMapData = {
       'nodes': state.nodes.map((n) => n.toJson()).toList(),
       'edges': state.edges.map((e) => e.toJson()).toList(),
+      'strokes': state.strokes.map((s) => s.toJson()).toList(),
     };
     final mindMaps =
         Map<String, dynamic>.from(campaign.data!['mind_maps'] as Map? ?? {});
@@ -239,7 +338,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     campaign.data!['mind_map_views'] = views;
   }
 
-  void _debouncedSave() {
+  void _debouncedSave({WriteKind kind = WriteKind.spatial}) {
     syncToCampaignData();
     final campaign = _ref.read(activeCampaignProvider.notifier);
     final mindMaps = campaign.data?['mind_maps'];
@@ -253,7 +352,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     // — autoDispose notifier'ı pending timer'dan önce dispose olabiliyor.
     _ref.read(pendingWriteBufferProvider).schedule(
           key: 'settings:$worldId:mind_maps',
-          kind: WriteKind.spatial,
+          kind: kind,
           action: () async {
             final latest = campaign.data?['mind_maps'];
             if (latest is! Map) return;
@@ -432,7 +531,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
 
   /// Fit all nodes into the viewport.
   void centerView() {
-    if (state.nodes.isEmpty || _viewportSize == Size.zero) {
+    if ((state.nodes.isEmpty && state.strokes.isEmpty) ||
+        _viewportSize == Size.zero) {
       viewTransform.value = const MindMapViewTransform();
       return;
     }
@@ -475,6 +575,14 @@ class MindMapNotifier extends StateNotifier<MindMapState>
       if (top < minY) minY = top;
       if (right > maxX) maxX = right;
       if (bottom > maxY) maxY = bottom;
+    }
+    for (final s in state.strokes) {
+      for (final p in s.points) {
+        if (p.dx < minX) minX = p.dx;
+        if (p.dy < minY) minY = p.dy;
+        if (p.dx > maxX) maxX = p.dx;
+        if (p.dy > maxY) maxY = p.dy;
+      }
     }
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
@@ -851,6 +959,97 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     );
     edgeTick.value++;
     _debouncedSave();
+  }
+
+  // -------------------------------------------------------------------------
+  // Pen strokes
+  // -------------------------------------------------------------------------
+
+  void selectPen(Color color) {
+    lastPenColor = color;
+    penColor.value = color;
+    erasing.value = false;
+  }
+
+  void setPenWidth(double width) {
+    penWidth.value = width;
+    erasing.value = false;
+  }
+
+  void toggleEraser() => erasing.value = !erasing.value;
+
+  void exitPen() {
+    penColor.value = null;
+    erasing.value = false;
+  }
+
+  void addStroke(List<Offset> points, Color color, double width,
+      {double zoom = 1}) {
+    if (points.isEmpty) return;
+    _pushUndo();
+    final stroke = MindMapStroke(
+      id: _uuid.v4(),
+      color: color,
+      width: width,
+      zoom: zoom,
+      points: List.unmodifiable(points),
+    );
+    state = state.copyWith(strokes: [...state.strokes, stroke]);
+    // 2 s reset-on-edit: while the user keeps drawing, the whole-blob encode
+    // + Drift write waits for a pause instead of landing mid-stroke.
+    _debouncedSave(kind: WriteKind.viewport);
+  }
+
+  void deleteStroke(String id) {
+    _pushUndo();
+    state = state.copyWith(
+        strokes: state.strokes.where((s) => s.id != id).toList());
+    _debouncedSave();
+  }
+
+  /// Eraser: removes every stroke within [radius] (canvas px) of the
+  /// segment [from]→[to]; a fast swipe can't skip a thin line between two
+  /// pointer samples. [pushUndo] lets one drag become one undo step.
+  /// Returns true if anything was removed.
+  bool eraseStrokes(Offset from, Offset to, double radius,
+      {required bool pushUndo}) {
+    final step = math.max(radius / 2, 0.5);
+    final n = ((to - from).distance / step).ceil();
+    final probes = [for (var i = 0; i <= n; i++) Offset.lerp(from, to, n == 0 ? 0 : i / n)!];
+    final keep = state.strokes
+        .where((s) => !probes.any((p) => _strokeNear(s, p, radius)))
+        .toList();
+    if (keep.length == state.strokes.length) return false;
+    if (pushUndo) _pushUndo();
+    state = state.copyWith(strokes: keep);
+    _debouncedSave(kind: WriteKind.viewport);
+    return true;
+  }
+
+  /// Topmost stroke within [threshold] (+ half its width) of [point].
+  String? hitTestStroke(Offset point, {double threshold = 10.0}) {
+    for (final s in state.strokes.reversed) {
+      if (_strokeNear(s, point, threshold)) return s.id;
+    }
+    return null;
+  }
+
+  bool _strokeNear(MindMapStroke s, Offset p, double threshold) {
+    final r = threshold + s.canvasWidthAt(viewTransform.value.scale) / 2;
+    final pts = s.points;
+    if (pts.length == 1) return (pts.first - p).distance <= r;
+    for (var i = 1; i < pts.length; i++) {
+      if (_distToSegment(p, pts[i - 1], pts[i]) <= r) return true;
+    }
+    return false;
+  }
+
+  static double _distToSegment(Offset p, Offset a, Offset b) {
+    final ab = b - a;
+    final len2 = ab.dx * ab.dx + ab.dy * ab.dy;
+    if (len2 == 0) return (p - a).distance;
+    final t = (((p - a).dx * ab.dx + (p - a).dy * ab.dy) / len2).clamp(0.0, 1.0);
+    return (p - (a + ab * t)).distance;
   }
 
   // -------------------------------------------------------------------------
