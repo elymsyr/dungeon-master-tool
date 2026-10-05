@@ -11,6 +11,7 @@ import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/pinned_entity_provider.dart';
+import '../../application/providers/shared_entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
@@ -25,6 +26,8 @@ import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/link_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
+import 'hub/packages_tab.dart';
+import 'hub/settings_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/save_sync_indicator.dart';
@@ -150,6 +153,7 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
         // Zincirin son halkası: entity_card'ın pin butonu bunu watch eder ve
         // build()'i activeCampaignProvider'ı okur.
         pinnedEntityIdsProvider.overrideWith(PinnedEntityNotifier.new),
+        sharedEntityIdsProvider.overrideWith(SharedEntityNotifier.new),
       ],
       child: _PackageScreenContent(
         packageName: packageName,
@@ -469,6 +473,19 @@ class _PackageScreenContentState
                   : () => setState(() => _editMode = !_editMode),
             );
           }),
+          // Paket ayarları — hub kartındaki ayarlar penceresiyle aynı.
+          IconButton(
+            icon: const Icon(Icons.info_outline, size: 20),
+            tooltip: L10n.of(context)!.tabSettings,
+            onPressed: () =>
+                showPackageSettingsDialog(context, ref, widget.packageName),
+          ),
+          // Uygulama ayarları — tema, zar teması, dil.
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            tooltip: L10n.of(context)!.appSettings,
+            onPressed: () => SettingsTab.show(context),
+          ),
           const SizedBox(width: 4),
         ],
       ),

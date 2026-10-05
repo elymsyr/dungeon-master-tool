@@ -99,6 +99,12 @@ Future<void> updatePackageMetadata(
   ref.invalidate(packageMetadataProvider(packageName));
   ref.invalidate(packageListProvider);
 
+  // Açık paket ise notifier'ın `_data` kopyası bayatlamasın — sonraki tam
+  // save() eski metadata'yı geri yazardı.
+  if (ref.read(activePackageProvider) == packageName) {
+    ref.read(activePackageProvider.notifier).data?['metadata'] = newMetadata;
+  }
+
   // Kapak değiştiyse eski cloud resmini best-effort sil.
   if (ref.read(authProvider) != null) {
     final cleanup = ref.read(entityMediaCleanupServiceProvider);

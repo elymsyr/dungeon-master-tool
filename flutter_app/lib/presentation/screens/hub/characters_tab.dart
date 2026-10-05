@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
@@ -30,6 +31,8 @@ import '../../widgets/save_info_section.dart';
 import '../../widgets/save_sync_indicator.dart' show CharacterOnlineRow;
 import '../../widgets/cloud_only_section.dart';
 import '../../widgets/compactable_button.dart';
+import '../../widgets/content_archive_menu.dart';
+import '../../../application/services/content_transfer/content_item.dart';
 import '../../../application/providers/cloud_push_provider.dart';
 import '../../../application/services/cloud_pull_service.dart';
 import '../../../data/database/database_provider.dart';
@@ -326,7 +329,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                                     palette: palette,
                                     layout: MetadataTileLayout.leftAvatar,
                                     onSettings: () =>
-                                        _showCharacterSettings(c.id, palette),
+                                        showCharacterSettingsDialog(context, ref, c.id),
                                     infoChips: infoChips,
                                   ),
                                 ),
@@ -387,10 +390,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     foregroundColor: palette.dangerBtnText,
                   ),
                 );
-                // Import butonu 039 model'de Characters Tab'da YOK. Kullanıcı
-                // kuralı: "Karakteri yalnızca dünya içinden import edebiliriz."
-                // World view (sidebar / player tab) üst kısmında dedicated
-                // Import buton var.
                 return Row(
                   children: [
                     Expanded(
@@ -407,6 +406,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       onPressed: selected != null ? _copyCharacter : null,
                       icon: const Icon(Icons.content_copy, size: 18),
                       label: L10n.of(context)!.charCopyToWorldAction,
+                    ),
+                    const SizedBox(width: 8),
+                    ContentArchiveMenu(
+                      type: ContentItemType.character,
+                      selectedId: selected?.id,
+                      selectedName: selected?.entity.name,
                     ),
                     const SizedBox(width: 8),
                     actionButton,
@@ -684,142 +689,157 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     }
   }
 
-  Future<void> _showCharacterSettings(
-      String characterId, DmToolColors palette) async {
-    final l10n = L10n.of(context)!;
-    final list = ref.read(characterListProvider).valueOrNull ?? const [];
-    final c = list.where((x) => x.id == characterId).firstOrNull;
-    if (c == null) return;
+}
 
-    DateTime? updatedAt;
-    try {
-      updatedAt = DateTime.parse(c.updatedAt);
-    } catch (_) {}
+/// Karakter ayarları (ad, açıklama, tag, portre, online). Hub kartı ve
+/// karakter editöründeki ayarlar butonu ortak kullanır.
+Future<void> showCharacterSettingsDialog(
+  BuildContext context,
+  WidgetRef ref,
+  String characterId,
+) async {
+  final l10n = L10n.of(context)!;
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  // Açık dünya/paket/karakter ekranından çağrılabilir — bekleyen yazımlar
+  // diske insin ki aşağıdaki okuma güncel olsun.
+  await ref.read(pendingWriteBufferProvider).flush();
+  final list = ref.read(characterListProvider).valueOrNull ?? const [];
+  final c = list.where((x) => x.id == characterId).firstOrNull;
+  if (c == null || !context.mounted) return;
 
-    var workingName = c.entity.name;
-    var workingDescription = c.entity.description;
-    var workingTags = [...c.entity.tags];
-    var workingCover = c.entity.imagePath;
+  DateTime? updatedAt;
+  try {
+    updatedAt = DateTime.parse(c.updatedAt);
+  } catch (_) {}
 
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.charSettingsTitle(c.entity.name)),
-          content: SizedBox(
-            width: 440,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MetadataEditorSection(
+  var workingName = c.entity.name;
+  var workingDescription = c.entity.description;
+  var workingTags = [...c.entity.tags];
+  var workingCover = c.entity.imagePath;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        title: Text(l10n.charSettingsTitle(c.entity.name)),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MetadataEditorSection(
+                  name: workingName,
+                  description: workingDescription,
+                  tags: workingTags,
+                  coverImagePath: workingCover,
+                  onNameChanged: (v) => workingName = v,
+                  onDescriptionChanged: (v) => workingDescription = v,
+                  onTagsChanged: (v) =>
+                      setDialogState(() => workingTags = v),
+                  onCoverChanged: (v) =>
+                      setDialogState(() => workingCover = v),
+                  coverKind: MediaKind.characterPortrait,
+                  coverScopeId: c.id,
+                ),
+                const SizedBox(height: 16),
+                Divider(height: 1, color: palette.featureCardBorder),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.description,
+                        size: 16, color: palette.sidebarLabelSecondary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(l10n.charTemplateLine(c.templateName),
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: palette.tabActiveText)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.public,
+                        size: 16, color: palette.sidebarLabelSecondary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        () {
+                          final infos = ref.read(campaignInfoListProvider).valueOrNull ??
+                              const [];
+                          final worldName = c.resolvedWorldName(infos);
+                          final label = worldName.isEmpty
+                              ? l10n.charWorldOrphan
+                              : worldName;
+                          return c.worldId == null &&
+                                  label == l10n.charWorldOrphan
+                              ? label
+                              : l10n.charWorldLine(label);
+                        }(),
+                        style: TextStyle(
+                            fontSize: 13, color: palette.tabActiveText),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (updatedAt != null)
+                  Row(
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 16,
+                          color: palette.sidebarLabelSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.charLastEdited(updatedAt.toLocal().toString().split('.').first),
+                        style: TextStyle(
+                            fontSize: 12, color: palette.tabActiveText),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                SaveInfoSection(
+                  localUpdatedAt: updatedAt,
+                ),
+                const SizedBox(height: 12),
+                CharacterOnlineRow(palette: palette, characterId: c.id),
+                const SizedBox(height: 12),
+                MarketplacePanel(
+                  itemType: 'character',
+                  localId: c.id,
+                  title: c.entity.name,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await ref.read(characterListProvider.notifier).updateMetadata(
+                    id: c.id,
                     name: workingName,
                     description: workingDescription,
                     tags: workingTags,
                     coverImagePath: workingCover,
-                    onNameChanged: (v) => workingName = v,
-                    onDescriptionChanged: (v) => workingDescription = v,
-                    onTagsChanged: (v) =>
-                        setDialogState(() => workingTags = v),
-                    onCoverChanged: (v) =>
-                        setDialogState(() => workingCover = v),
-                    coverKind: MediaKind.characterPortrait,
-                    coverScopeId: c.id,
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(height: 1, color: palette.featureCardBorder),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.description,
-                          size: 16, color: palette.sidebarLabelSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(l10n.charTemplateLine(c.templateName),
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: palette.tabActiveText)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.public,
-                          size: 16, color: palette.sidebarLabelSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          () {
-                            final label = _worldLabel(c, l10n);
-                            return c.worldId == null &&
-                                    label == l10n.charWorldOrphan
-                                ? label
-                                : l10n.charWorldLine(label);
-                          }(),
-                          style: TextStyle(
-                              fontSize: 13, color: palette.tabActiveText),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (updatedAt != null)
-                    Row(
-                      children: [
-                        Icon(Icons.access_time,
-                            size: 16,
-                            color: palette.sidebarLabelSecondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          l10n.charLastEdited(updatedAt.toLocal().toString().split('.').first),
-                          style: TextStyle(
-                              fontSize: 12, color: palette.tabActiveText),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 12),
-                  SaveInfoSection(
-                    localUpdatedAt: updatedAt,
-                  ),
-                  const SizedBox(height: 12),
-                  CharacterOnlineRow(palette: palette, characterId: c.id),
-                  const SizedBox(height: 12),
-                  MarketplacePanel(
-                    itemType: 'character',
-                    localId: c.id,
-                    title: c.entity.name,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.btnCancel),
-            ),
-            FilledButton(
-              onPressed: () async {
-                await ref.read(characterListProvider.notifier).updateMetadata(
-                      id: c.id,
-                      name: workingName,
-                      description: workingDescription,
-                      tags: workingTags,
-                      coverImagePath: workingCover,
-                    );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.settingsSaved)),
                   );
-                }
-              },
-              child: Text(l10n.btnSave),
-            ),
-          ],
-        ),
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.settingsSaved)),
+                );
+              }
+            },
+            child: Text(l10n.btnSave),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
