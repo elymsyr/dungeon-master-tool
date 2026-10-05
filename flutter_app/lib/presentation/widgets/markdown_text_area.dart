@@ -365,6 +365,8 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
 
     return MarkdownBody(
       data: text,
+      // Enter in the editor means a new line; don't fold it into a space.
+      softLineBreak: true,
       // Touch devices: selection gestures swallow vertical drag → no scroll.
       selectable: !isTouchPlatform,
       styleSheet: widget.markdownStyleSheet ?? _defaultStyleSheet(palette),
