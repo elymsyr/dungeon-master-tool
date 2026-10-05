@@ -113,7 +113,7 @@ anlatıyla yazılır, `pages[]` içindeki rakamlar kilitlenmez.
 Haneler ayrı kart değil — ait oldukları loncanın kartı içinde yazılır. Bir hane
 masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi kartını alır.
 
-## 3. `location` — 36
+## 3. `location` — 37
 
 | Kart | Üst (`parent_location_ref`) | Ne | Durum |
 |---|---|---|---|
@@ -134,6 +134,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Gümrük Binası** | Elymsyr | Yükün açıldığı, tartıldığı ve yazıldığı salon; valinin odası üst katta | ✅ |
 | **Aşağı Rıhtım** | Elymsyr | İki yakadaki antrepolar, hangarlar, gnome vinçleri. Gece boşaltmalarının yeri | ✅ |
 | **Kanyon Asansörleri** | Elymsyr | Kanyon duvarındaki ahşap hat; mal iç yerleşimlere buradan çıkar. Halatçıların kendi çetelesi | ✅ |
+| **Askeri Hukuk Odası** | Elymsyr | Üst teraslarda iki katlı, kilerli ev; lonca limanda oda kuruyor, üst katta inşaat. Kilerde kilitli sandık; tek battlemap, üç kat (2026-10-05) | ✅ |
 | **Votumar** | Meridia | Paladin Şatosu. Beyaz kireçtaşı, askeri valilik, "Sarsılmaz Zırh" | ✅ |
 | **Gözcü Kuleleri Hattı** | Votumar | İşaret ağı: gece ateş, gündüz dev aynalar. En uçta deniz feneri | ✅ |
 | **Radenhall Avlusu** | Meridia | Kıyı dağlarının çevirdiği ormanlık çanak; dev taş dairesi, iç ve dış halkalar, ağaç altında tahta evler. Ekvatora yakın, hava açık. Bölgenin tamamı **Yazısız** — ve bu bir tercih | ✅ |
@@ -204,7 +205,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Sindri** — simyacı çırağı *(gnome)* | Şifacılar kışlası | Hastalığın şehirde **bilindiğinin** belgesi | ✅ |
 | **Kandil** — borçlu esnaf *(insan)* | Çarşı | Sokak hattı, lonca kolluğu, şehirde "iyi para" | ✅ |
 | **Çavuş Krusk** — kolluk çavuşu *(yarı-orc)* | Kapılar / gece devriyesi | Kapılar, gece hareketi, kimin şehre girdiği | ✅ |
-| **Hancı — Aysel** *(insan)* | Mavnacılar Hanı | Kilerin merdiveni; hangi mavnanın ne zaman inip çıktığı | ✅ |
+| **Hancı — Aysel** *(tiefling; kocası Kerem ile)* | Mavnacılar Hanı | Kilerin merdiveni; hangi mavnanın ne zaman inip çıktığı | ✅ |
 | **Mavnacı — Rüstem** *(insan)* | Mavnacılar Hanı | Elymsyr'e nehir yolu; kantar fişleri listeyi tutmuyor (valinin defterinin şehirdeki izi) | ✅ |
 | **İğne** *(gnome)* | Mavnacılar Hanı — kiler | Kağıda yazılacak ad ve o ada uyan kıyafet; verdiği her adı hatırlar | ✅ |
 | **İmzacı — Selvi** *(insan)* | Divanhanesi — imzacı odası | Orvan'ın **peşin** imzası; üç imzacı odasını bilir (2026-10-03) | ✅ |
@@ -218,6 +219,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 | **Vinç Ustası** *(gnome)* | Tezgahının kapanmaması | Bazı gece boşaltmalarına vinç verdiğini | Kayıtsız yükün **resmi** limandan geçişi | 🟡 ad |
 | **Çevirmen** *(yarı-elf)* | Bir sonraki işi | Duyduğu her şeyi | **Vorstrand**'dan taze haber | 🟡 ad |
 | **Kaptan — Maren** *(insan)* | Gemisinin dolu kalkması, tam dönmesi | Kaybolan gemilerden birini tanıdığını | Yasal yolculuk: kağıdı olanı *Dürüst Terazi*'ye tayfa yazar; gelmeyen bir geminin adı (2026-10-03) | ✅ |
+| **Valinin Yardımcısı** *(ejderdoğan, kırmızı)* | Valinin rahat uyuması | Evi önceden gezdiğini; sandıkta ne olduğunu bilmediğini | `Maskeli İş`: maskeler, evin planı, sokağa kadar yol. Adı yok, vali *beyefendi* der (2026-10-05) | ✅ |
 
 **Votumar** — `bolgeler.md` §3.7
 
@@ -257,7 +259,7 @@ masada karşılaşılan bir şeye dönüştüğünde (bir konak, bir isim) kendi
 Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'le girer —
 `npc/Konsey Aracısı`'nın **Kadife** olmadan önceki hali gibi.
 
-## 5. `monster` — 7
+## 5. `monster` — 10
 
 | Kart | Ne | Durum |
 |---|---|---|
@@ -269,6 +271,9 @@ Adlandırma kuralları aşağıda hazır; kart unvanla yazılır ve ad tek grep'
 | **Yumuşak** | Hıkka, yeni kabuk atmış yavru. Small, AC 11, HP 7, CR 1/8. Fiziksel hasara zayıf, dövüşmez | ✅ |
 | **Kavkı** | Hıkka, yetişkin. Small, AC 14, HP 13, CR 1/4. Karaya çıkan bu; kışkırtılınca eşik yok | ✅ |
 | **Bırakmayan** | Kabuk değiştirmeyi bırakmış yaşlı. Small, AC 18, HP 44, CR 2, büyüsüz fiziksele dirençli. Sudan çıkmaz, kovalamaz | ✅ |
+| **Şantiye Bekçisi** | Kiralık liman işçisi. Medium, AC 12, HP 9, CR 1/8 (SRD Cultist statı) | ✅ |
+| **Kiralık Pala** | Rıhtımdan kiralanmış kılıç. AC 13, HP 11, CR 1/8 (SRD Pirate statı) | ✅ |
+| **Bekçibaşı** | Evi gece tutan adam; sandığın anahtarı onda. AC 17, HP 84, CR 4 (SRD Pirate Captain statı; tabancası SRD Pistol) | ✅ |
 
 Son üçü `location/Gelgit Ağzı` kolonisi — `bolge §5.3`, ırk kartı `lore/Hıkka — Kitaplardaki Kayıt`.
 
@@ -288,6 +293,7 @@ Statblokların gövdesi; `monster` kartlarına ref'lenir.
 | **Durmayan Adım** | `trait` | Alton: yarı HP altında hız 40 ft, fırsat saldırısı yemez | ✅ |
 | **Kesik Kesik** | `trait` | Merla: sıra başında açıkta 1d6 — 1-2 eylem kaybı, 5-6 ek saldırı | ✅ |
 | **Erken Güçlenme** | `trait` | Kromanna: ilk turunda ek Pençe | ✅ |
+| **Çengel** · **Pala** · **Üç Saldırı** · **İnce Kılıç** · **Pistol** | `creature-action` | `Maskeli İş`'in üç bekçisi (2026-10-05) | ✅ |
 
 ## 7. `curse` — 1
 
@@ -322,13 +328,14 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Dilekçe Avlusu** | Meclis Binası | **Kilit sahnesi** (kapı turu): Meclis Salonu'na giriş. Lonca hattı · Halim'in anlattıkları · bir koltuğun adı · rüşvet/sabır | ✅ |
 | **Ayar Masası** | Yukarı Çarşı | **Kilit sahnesi** (kapı turu): Kildrak yüzüğü okur, ad değil **yön** verir — limana ikinci kapı | ✅ |
 
-## 9. `encounter` — 1
+## 9. `encounter` — 2
 
 | Kart | Ne | Durum |
 |---|---|---|
 | **Şafak Çatışması** | Üç Dönüşmüş, toplam 100 XP (zorluk `Low`). Yumuşatma kolu: Alton önce, diğer ikisi bir tur sonra | ✅ |
+| **Gece Şantiyesi** | Askeri Hukuk Odası'nı gece tutan kiralık bekçiler: 4 bekçi · 2 pala · bekçibaşı, 1250 XP (`High`). Dövüşmeden de geçilir | ✅ |
 
-## 10. `quest` — 8
+## 10. `quest` — 9
 
 | Kart | Zincir | Durum |
 |---|---|---|
@@ -340,6 +347,7 @@ bedeli girer (`mekanikler.md` §6–7). Dünyanın kalan sapmaları ayrı kart:
 | **Gelgit Gecesi** | Argenfon'un sehpalarını boşaltan Hıkka kolonisi. **Amaç: yuvayı bulmak.** Yalnız köye uğrayan masaya açılır; dört kapanış (yer bulundu · şatoya bildirildi · baskın durdu · köy arkada bırakıldı) | ✅ |
 | **Son Yazılı Emir** | Votumar'ın kapı kartı: Gümüşsu'da görüleni şatoya anlatmak. Muhatap **Aren**, ikna elde yazı varsa zarsız. İki kapı — mühürlü yazı (masa taşır, başkentte kapı açar) ya da sivil kıyafetli bir asker. Varhan'ın giderken bıraktığı iki maddelik emir `secrets`'ta | ✅ |
 | **Sayım Açığı** | Şato ambarının sayımı tutmuyor. **Torvun** verir, çünkü kendisi arayamaz (arayan bildirir). Cevap ikili: bir çırak alıyor **ve** iki aydır yazılmayan bir çıkış onu gizliyor. Karar: insanı mı, boşluğu mu bildireceksin | ✅ |
+| **Maskeli İş** | Elymsyr'de **valinin teklifi** (2026-10-05): Askeri Hukuk'un limanda kurduğu odanın kilerinden kilitli sandığı (kantar fişleri) almak, sonra binayı maskelerle yakmak. Kişi başı 50 altın ve bir eşya (DM seçer). Yolu kırmızı ejderdoğan yardımcı gösterir | ✅ |
 
 ## 11. `background` — 9
 
@@ -437,15 +445,15 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 |---|---|---|---|---|
 | `campaign` | 1 | — | — | 1 |
 | `lore` | 22 | 1 | — | 23 |
-| `location` | 36 | — | — | 36 |
-| `npc` | 40 | 8 | — | 48 |
-| `monster` | 7 | — | — | 7 |
-| `creature-action` | 16 | — | — | 16 |
+| `location` | 37 | — | — | 37 |
+| `npc` | 41 | 8 | — | 49 |
+| `monster` | 10 | — | — | 10 |
+| `creature-action` | 21 | — | — | 21 |
 | `trait` | 31 | — | — | 31 |
 | `curse` | 1 | — | — | 1 |
 | `scene` | 16 | — | — | 16 |
-| `encounter` | 1 | — | — | 1 |
-| `quest` | 8 | — | — | 8 |
+| `encounter` | 2 | — | — | 2 |
+| `quest` | 9 | — | — | 9 |
 | `background` | 9 | — | — | 9 |
 | `adventuring-gear` | 8 | 1 | — | 9 |
 | `trinket` | 7 | — | — | 7 |
@@ -453,9 +461,11 @@ Sapma defteri [`alt-siniflar.md` §6](alt-siniflar.md).
 | `subclass` | 4 | — | — | 4 |
 | `animal` | 1 | — | — | 1 |
 | `resource-pool` | 9 | — | — | 9 |
-| **Toplam** | **217** | **10** | **—** | **227** |
+| **Toplam** | **229** | **10** | **—** | **239** |
 
-**217/227 ✅, 10 🟡, 0 ⬜** *(2026-10-03, üç görev: `quest/Ufuktaki Kıta` · `scene/Kara Göründü` · `location/Açık Deniz` · `npc/Kaptan — Maren` · `npc/İmzacı — Selvi` eklendi; 222'den 227'ye. İyi Yazı yalnız kağıda daraldı, gemi yeni göreve geçti; Orvan'ın imzası peşin. Fihrist'ten ve en az bir başka karttan ulaşılamayan kart kalmadı.)*
+**229/239 ✅, 10 🟡, 0 ⬜** *(2026-10-05, Maskeli İş: `quest/Maskeli İş` · `npc/Valinin Yardımcısı` · `location/Askeri Hukuk Odası` · `encounter/Gece Şantiyesi` · üç `monster` · beş `creature-action` eklendi; 227'den 239'a.)*
+
+Öncesi: **217/227 ✅, 10 🟡** *(2026-10-03, üç görev: `quest/Ufuktaki Kıta` · `scene/Kara Göründü` · `location/Açık Deniz` · `npc/Kaptan — Maren` · `npc/İmzacı — Selvi` eklendi; 222'den 227'ye. İyi Yazı yalnız kağıda daraldı, gemi yeni göreve geçti; Orvan'ın imzası peşin. Fihrist'ten ve en az bir başka karttan ulaşılamayan kart kalmadı.)*
 
 Öncesi: **212/222 ✅, 10 🟡** *(2026-10-03, imzacı odaları ve Mavnacılar Hanı: `npc/Hancı — Aysel` · `npc/Mavnacı — Rüstem` · `npc/İğne` eklendi; 219'dan 222'ye. Corin'in terfisi kaldırıldı, geçiş kağıdı adla alınır, karşı-imza imzacı odalarında atılır.)*
 

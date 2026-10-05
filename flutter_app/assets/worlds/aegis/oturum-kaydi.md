@@ -18,7 +18,7 @@
 |---|---|
 | Oyuncular / karakterler | **Wizard** — arşivci, meraktan yolda · **Paladin** — Başkumandan'ı ısrarla ikna edip soruşturmaya geldi · **Ranger** — mertebeli lonca ailesinin dışlanan çocuğu; annesi mücevherci ve Ticaret Loncası'nda kendi hanesinin başı (loncanın başı değil). Annesinin gözüne girmenin peşinde |
 | Seviye | |
-| Paket sürümü | 0.8.0 |
+| Paket sürümü | 0.8.0 (Oturum 1) · 0.14.0 (Oturum 2) · 0.19.0 (Oturum 3) |
 
 **Ad notu:** bu masada Halim'in adı **Vorga**. Kayıtta kartlarla eşleşsin diye
 *Halim* yazılır.
@@ -28,7 +28,7 @@
 Her oturumun sonunda güncellenir: kartlardaki başlangıç durumundan bu masada ne
 değişti.
 
-*(Oturum 2 sonu)*
+*(Oturum 3 sonu)*
 
 - **Gümüşsu:** ayakta. Dönüşüm köye saldırdı, karakterler köyü kurtardı. Oturum 2'de
   bir gece daha orada kaldılar.
@@ -37,11 +37,15 @@ değişti.
   yolu bulundu ve köylülere öğretildi. Kavkıların sığınağı **aranmadı**; yeri bilinmiyor.
 - **Karakterlerin durumu:** **paladin hastalığı kaptı** (Oturum 1). Paladin
   Başkumandan Varhan'dan ceza aldı: Votumar'a dönecek, **1 yıl hapis**, ardından
-  yargılanma; yargılanmanın tarihi öne ya da geriye çekilebilir. Karakterler Lucid
-  Triton'da, Orvan Sancar'ın teklifini dinlemiş halde.
+  yargılanma; yargılanmanın tarihi öne ya da geriye çekilebilir. Karakterler
+  **Elymsyr'de**, yeni kimlikleriyle: valinin işini bitirdiler, imzalı kağıtları ellerinde;
+  yardımcı onları gemiye götürürken ortalık sakinleşsin diye limanın yakınında bir
+  açıklıkta çay içiyorlar. Gemiye henüz binmediler.
 - **Ölen / yer değiştiren NPC'ler:** Corvin karakterleri Gizli Liman'ın kapısına
   getirdi ve soktu; kendisi içeri girmedi. Halim (Vorga) Lucid Triton'da; karakterleri
-  Orvan'ın teklifine o çağırdı.
+  Orvan'ın teklifine o çağırdı. **Elymsyr Valisi** karakterleri tanıyordu; işini
+  yaptılar, ödüllerini ve imzalı kağıtlarını o verdi. **Valinin Yardımcısı** onları
+  gümrük binasından valiye götürdü, dönüşte gemiye götürüyor.
 - **Karakterlerin bildiği:** köyün klasik söylentileri · Umay'dan hastalar hakkında
   biraz bilgi · Duran'dan Corvin'in adı · hastalık eski bir kara vebaya benziyor, ve
   içinde büyü var: hastalar büyüyle **bir yere bağlı** gibi · Fare'den: limana üç
@@ -49,15 +53,16 @@ değişti.
   yüzüğün hikayesi ve mühür yüzünün çizimi · üçlü ***Kader*** gemisiyle geldi, gemi şu an limanda değil ·
   Caelynn'den (30 altına): Sicim'deki kitabın bilgisi · Sicim'den: Kadife
   hakkında bir miktar bilgi · Kavkıları bayıltan karışım · Meclis dinledi ve geri
-  çevirdi · Orvan'ın teklifi ve izlenecek yol (aşağıda).
+  çevirdi · Orvan'ın teklifi ve izlenecek yol (aşağıda) · valinin işi (`Maskeli İş`).
 - **Karakterlerin elindeki eşya ve ipuçları:** **Mühürsüz Yüzük** (eğelenmiş, değerli,
-  işi yapanın damgası yok) · Mine'ın çizdiği mühür.
+  işi yapanın damgası yok) · Mine'ın çizdiği mühür · Orvan'dan alınan **ön onay kağıdı**
+  (boş geldi, artık **imzalı**) · **yeni kimlikler** ve eşyalar · valinin ödülü.
 - **Orvan'ın teklifi — izlenecek yol:** önce **Karşı-İmza Masası** → gizli kimliklerin
   ve kıyafetlerin alınacağı yer → son imza için **Orvan'ın imzası** → ardından limandan
-  gemiyle açılma izni hazır. Karakterler teklife olumlu bakıyor; şimdilik kabul etmiş
-  sayılır, ama yola henüz çıkmadılar.
+  gemiyle açılma izni hazır. **Oturum 3'te kabul ettiler** ve yolu yürüdüler: ön onay
+  kağıdı → kimlik ve eşya → imza (Elymsyr'de, validen) → sırada gemi.
 - **Orvan'ın tavsiyesi:** hastalık hakkında daha çok bilgi için Radenhall'a gitmeleri.
-- **Açık iplikler:** teklifin kesin kabulü ve yolu · Radenhall · paladinin cezası (hapis /
+- **Açık iplikler:** gemiye biniş · Orvan'ın işi (kaybolan gemiler, kanıt) · Radenhall · paladinin cezası (hapis /
   yargılanma tarihi) ve teklifle çakışması · paladinin hastalığı · Kavkıların sığınağı ·
   Kadife'nin kimin adamı olduğu · Sicim'in kitabı · *Kader* ve kaptanı · Mine'ın çizdiği mührün ne olduğu.
 
@@ -129,6 +134,45 @@ En yeni en üstte.
 **Sonraki oturum için DM notu:**
 **Tasarıma geri bildirim:** (masada işlemeyen / işleyen — aşağıdaki tabloya da yaz)
 -->
+
+### Oturum 3 — 2026-10-05
+
+**Nerede başladı:** Lucid Triton, Kapı Önündeki Teklif'in hemen ardı.
+
+**Ne oldu:**
+
+*Lucid Triton*
+- Karakterler Orvan Sancar'ın teklifini **kabul etti**; **boş ön onay kağıdını**
+  aldılar.
+- Oradan yeni kimliklerini ve eşyalarını da alıp Elymsyr'e geçtiler.
+
+*Elymsyr*
+- İmza için gümrük binasına gittiler; orada **Valinin Yardımcısı** onları aldı ve
+  valiye götürdü. **Vali onları tanıyordu.**
+- Valinin işini yaptılar (`Maskeli İş`).
+- Döndüklerinde gece olmuştu. Validen **ödüllerini** ve **imzalı kağıtlarını** aldılar.
+- Yardımcı onları gemiye götürdü; ama biraz daha gece olsun, ortalık sakinleşsin diye
+  yakında bir açıklıkta oturup çay içmeye koyuldular. Oturum burada bitti.
+
+**Karşılaşılan NPC'ler ve tutumları:**
+- **Orvan Sancar** — teklif kabul edildi; boş ön onay kağıdını verdi.
+- **Valinin Yardımcısı** — gümrük binasında karakterleri alıp valiye götürdü; dönüşte
+  gemiye götürüyor.
+- **Elymsyr Valisi** — karakterleri tanıyordu; işini verdi, ödülü ve imzalı kağıtları
+  verdi.
+
+**Karakterlerin öğrendiği:** yukarıdaki *Dünyanın bu masadaki hâli* → *Karakterlerin bildiği*.
+
+**Açık kalan:**
+- Gemiye biniş ve açılış.
+- Orvan'ın işi: kaybolan gemiler, Meclis'e götürülecek kanıt.
+- Paladinin cezası (Votumar emri) ve hastalığı; Radenhall.
+- Valinin karakterleri nereden tanıdığı.
+
+**Sonraki oturum için DM notu:** oturum Elymsyr'de, limanın yakınındaki açıklıkta, çay
+başında, yardımcıyla gemiye inmeyi beklerken açılır.
+
+**Tasarıma geri bildirim:** —
 
 ### Oturum 2 — 2026-09-20
 

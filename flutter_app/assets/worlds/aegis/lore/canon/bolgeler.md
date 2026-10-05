@@ -349,10 +349,23 @@ yapar, kimse konuşmaz (§1.2).
 | **Vinç ustası** *(gnome)* | Tezgahının kapanmaması | Bazı gece boşaltmalarına vinç verdiğini | Kayıtsız yükün **resmi** limandan nasıl geçtiği — Gizli Liman hattının ikinci taşıyıcısı | 🟡 ad |
 | **Çevirmen** *(yarı-elf)* | Bir sonraki işi | Duyduğu her şeyi | **Vorstrand**'dan gelen taze haber; kıtada kimsenin doğrulayamadığı cümleler | 🟡 ad |
 | **Kaptan — Maren** *(insan)* — *Dürüst Terazi* | Gemisinin dolu kalkması, tam dönmesi | Kaybolan gemilerden birini tanıdığını | Yasal yolculuk: karşı-imzalı kağıdı olanı tayfa yazar; gelmeyen bir geminin adı *(2026-10-03)* | ✅ |
+| **Valinin Yardımcısı** *(ejderdoğan, kırmızı)* | Valinin rahat uyuması; kendi adının hiçbir defterde valininkinin yanında geçmemesi | Evi önceden gezdiğini; sandıkta ne olduğunu **bilmediğini** | Valinin kayda geçmeyen işi (§2.8): maskeler, evin planı, sokağa kadar yol *(2026-10-05)* | ✅ unvanla |
 
 > **İki taşıyıcı kuralı:** *kayıtsız geçiş nasıl satın alınır* sorusu artık iki
 > limanda birden var — Gizli Liman'da **Sicim**, Elymsyr'de **vinç ustası.** Masa
 > hangi limana giderse gitsin hat kapanmıyor.
+
+### 2.8 Valinin işi — Maskeli İş (KARAR, 2026-10-05)
+
+**Askeri Hukuk Loncası** Elymsyr'de, üst teraslardan birinde iki katlı, kilerli eski bir ev aldı ve kendine bir **oda** kuruyor; üst katında inşaat başladı. Kentte ilk kez gümrüğün yanında başka bir loncanın kâtipleri oturacak: sınırda kimin sözü geçer çatışmasının ([`lonca-sehir.md` §2](lonca-sehir.md)) limandaki yüzü. Vali bunu istemiyor, çünkü defteri (§2.7) yalan söylüyor.
+
+- **Teklif.** Valinin, limana yeni inmiş — kimsenin tanımadığı — yüzlere verecek bir işi var: **maskelerle gidip binayı yakmak**, ama **önce** kilerdeki kilitli küçük sandığı vali için almak. Teklif bir olasılıktır; masa reddedebilir.
+- **Sandık.** İçinde **kantar fişleri**: kantarla defterin tutmadığını gösteren deste, valinin sırrının kanıtı. Vali yalnız *"bana ait bir şey"* der.
+- **Ödül.** Kişi başı **50 altın** ve **bir eşya**; eşyaya DM karar verir.
+- **Yardımcı.** Kırmızı pullu bir ejderdoğan; kibar, vali gibi kadife ve temiz giyimli. **Adı yok** — vali ona *beyefendi* der. Karakterleri avluda bulan, maskeleri veren ve iş boyunca yol gösteren o.
+- **Düşmanlar.** Evi gece kiralık eller bekler: `Şantiye Bekçisi` · `Kiralık Pala` · `Bekçibaşı` (SRD Cultist · Pirate · Pirate Captain statları).
+
+Kartlar: `quest/Maskeli İş` · `npc/Valinin Yardımcısı` · `location/Askeri Hukuk Odası` (tek battlemap, üç kat) · `encounter/Gece Şantiyesi`.
 
 ---
 
