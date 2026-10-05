@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/dialogs/entity_preview_dialog.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-09-07
+updated: 2026-10-05
 tags: [file]
 ---
 
@@ -33,6 +33,6 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[field_widget_factory]], `entity_provider` (`entityProvider`, `worldSchemaProvider`), `expandable_markdown.dart`, `dm_tool_colors.dart`.
-- Opened from: [[entity_link|entityPreviewHandler]] — the long-press entry point for ref links, wired into `EntityLink` and the three direct `_navigateToEntity` `InkWell`s in [[field_widget_factory]] (relation field, reference list row, inline relation chip). The editable `InputChip` list is deliberately not wired: `InputChip` has no `onLongPress`. Also opened from the character-creation wizard's pickers (class / background / species in `_EntityPickStep`, entity-backed lineage rows in `_RaceStep`, `subclass_step.dart`, `spells_step.dart`, `feats_step.dart`'ın tool/skill/spell seçenek satır ve çipleri + feat başlığı) via `EntityPreviewLongPress` / a direct `InkWell.onLongPress`, with [[package_source_entities|wizardEntitiesProvider]] as the entity map. Ve `entity_selector_dialog.dart`'ın `+` seçici listesinden (`ListTile.onLongPress`) — orada entity haritası kampanya + (istenmişse) bundled SRD + `extraEntities` birleşimi, ilk uzun basmada tembel kurulur.
+- Opened from: [[entity_link|entityPreviewHandler]] — the long-press entry point for ref links, wired into `EntityLink` and the three direct `_navigateToEntity` `InkWell`s in [[field_widget_factory]] (relation field, reference list row, inline relation chip). The editable `InputChip` list is deliberately not wired: `InputChip` has no `onLongPress`. Also opened from the character-creation wizard's pickers (class / background / species in `_EntityPickStep`, entity-backed lineage rows in `_RaceStep`, `subclass_step.dart`, `spells_step.dart`, `feats_step.dart`'ın tool/skill/spell seçenek satır ve çipleri + feat başlığı) via `EntityPreviewLongPress` / a direct `InkWell.onLongPress`, with [[package_source_entities|wizardEntitiesProvider]] as the entity map. Ve `entity_selector_dialog.dart`'ın `+` seçici listesinden (`ListTile.onLongPress`) — orada entity haritası kampanya + (istenmişse) bundled SRD + `extraEntities` birleşimi, ilk uzun basmada tembel kurulur (bağlam alanı verilen seçicide [[entity_search|öneriler]] için açılışta kurulur).
 - Domain map: [[World-and-Content]]
 - System flow: [[Ref-Resolution-Hard-vs-Soft]]

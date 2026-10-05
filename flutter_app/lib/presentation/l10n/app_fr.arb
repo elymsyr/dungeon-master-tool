@@ -1360,6 +1360,7 @@
   "encounterAddColumn": "Ajouter une colonne",
   "searchHint": "Rechercher...",
   "entitySelectorEmpty": "Aucune entité trouvée",
+  "entitySelectorSuggested": "Suggérés",
   "packageNameExists": "Le paquet \"{name}\" existe déjà",
   "exportPackageDone": "\"{name}\" exporté avec {count} entités.",
   "exportFailed": "Échec de l'export : {error}",

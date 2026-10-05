@@ -11,6 +11,7 @@ import 'creature_actions.dart';
 import 'feats.dart';
 import 'feats_class.dart';
 import 'gear.dart';
+import 'srd_tags.dart';
 import 'magic_items.dart';
 import 'monsters.dart';
 import 'mounts.dart';
@@ -40,7 +41,7 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.6.0';
+const srdCorePackVersion = '1.8.0';
 
 /// `tool/art_gen` görseli olan slug'lar. Bu kategorilerin HER satırının
 /// görseli var (1247 + 325 sıradan ekipman/hayvan, 2026-09), diğerlerinin
@@ -186,6 +187,8 @@ SrdCorePack buildSrdCorePack() {
       if (_artedSlugs.contains(slug)) {
         row['image_path'] = AssetRef.formatArtUri(id);
       }
+      final tags = srdTags[slug]?[key];
+      if (tags != null) row['tags'] = tags;
       entities[id] = row;
       if (name != null) slugIndex[name] = id;
     }

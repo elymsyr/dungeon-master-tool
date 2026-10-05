@@ -1360,6 +1360,7 @@
   "encounterAddColumn": "Sütun Ekle",
   "searchHint": "Ara...",
   "entitySelectorEmpty": "Varlık bulunamadı",
+  "entitySelectorSuggested": "Önerilen",
   "packageNameExists": "\"{name}\" paketi zaten var",
   "exportPackageDone": "\"{name}\" {count} varlıkla dışa aktarıldı.",
   "exportFailed": "Dışa aktarma başarısız: {error}",

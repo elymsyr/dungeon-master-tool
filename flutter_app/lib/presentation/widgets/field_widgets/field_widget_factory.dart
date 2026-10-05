@@ -180,6 +180,7 @@ class FieldWidgetFactory {
             entities: entities,
             ref: ref,
             panelId: panelId,
+            entityFields: entityFields,
           );
         }
         return _ReferenceListFieldWidget(
@@ -190,6 +191,7 @@ class FieldWidgetFactory {
           entities: entities,
           ref: ref,
           panelId: panelId,
+          entityFields: entityFields,
         );
       }
       if (schema.fieldType == FieldType.image) {
@@ -275,6 +277,7 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
         panelId: panelId,
+        entityFields: entityFields,
       ),
       FieldType.statBlock => _StatBlockFieldWidget(
         schema: schema,
@@ -1368,6 +1371,8 @@ class _RelationFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
   final String? panelId;
+  /// Düzenlenen kartın alanları — seçicide öneri bağlamı.
+  final Map<String, dynamic>? entityFields;
 
   const _RelationFieldWidget({
     required this.schema,
@@ -1377,6 +1382,7 @@ class _RelationFieldWidget extends StatelessWidget {
     this.entities,
     this.ref,
     this.panelId,
+    this.entityFields,
   });
 
   @override
@@ -1450,6 +1456,7 @@ class _RelationFieldWidget extends StatelessWidget {
                   allowedTypes: schema.validation.allowedTypes,
                   includeBuiltinSrd: true,
                   extraEntities: entities?.values.toList() ?? const [],
+                  contextFields: entityFields,
                 );
                 if (result != null && result.isNotEmpty) {
                   onChanged(result.first);
@@ -2199,6 +2206,8 @@ class _ReferenceListFieldWidget extends StatefulWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
   final String? panelId;
+  /// Düzenlenen kartın alanları — seçicide öneri bağlamı.
+  final Map<String, dynamic>? entityFields;
 
   const _ReferenceListFieldWidget({
     required this.schema,
@@ -2208,6 +2217,7 @@ class _ReferenceListFieldWidget extends StatefulWidget {
     this.entities,
     this.ref,
     this.panelId,
+    this.entityFields,
   });
 
   @override
@@ -2327,6 +2337,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                         includeBuiltinSrd: true,
                         extraEntities:
                             widget.entities?.values.toList() ?? const [],
+                        contextFields: widget.entityFields,
                       );
                       if (result != null) {
                         for (final id in result) {
@@ -2594,6 +2605,8 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
   final String? panelId;
+  /// Düzenlenen kartın alanları — seçicide öneri bağlamı.
+  final Map<String, dynamic>? entityFields;
 
   const _InlineRelationListFieldWidget({
     required this.schema,
@@ -2603,6 +2616,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     this.entities,
     this.ref,
     this.panelId,
+    this.entityFields,
   });
 
   /// Ids for a relation **list**. Every envelope goes through
@@ -2752,6 +2766,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
                 excludeIds: ids,
                 includeBuiltinSrd: true,
                 extraEntities: entities?.values.toList() ?? const [],
+                contextFields: entityFields,
               );
               if (result != null && result.isNotEmpty) {
                 onChanged([...ids, ...result]);
