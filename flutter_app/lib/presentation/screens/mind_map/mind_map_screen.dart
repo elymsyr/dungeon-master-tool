@@ -8,6 +8,7 @@ import '../../../application/providers/mind_map_id_provider.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/dice/dice_fab.dart';
 import 'mind_map_canvas.dart';
 import 'mind_map_notifier.dart';
 import '../../l10n/app_localizations.dart';
@@ -189,11 +190,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
           onOpenEntity: widget.onOpenEntity,
         ),
 
-        // Floating zoom controls — stacked right above the host's dice button
-        // (16 margin + 40 small FAB + 10 gap), same size and spacing.
+        // Floating zoom controls — stacked right above the host's dice button,
+        // same size and spacing. Padding: the Scaffold insets its FAB by the
+        // safe area too (landscape phone, no bottom bar).
         Positioned(
-          right: 16,
-          bottom: 66,
+          right: kFabMargin + MediaQuery.paddingOf(context).right,
+          bottom: kAboveDiceFab + MediaQuery.paddingOf(context).bottom,
           child: _FloatingControls(
             notifier: notifier,
             mapState: mapState,
@@ -235,7 +237,7 @@ class _FloatingControls extends StatelessWidget {
             palette: palette,
             onPressed: () => _showWorkspaceMenu(context, workspaces),
           ),
-        if (workspaces.isNotEmpty) const SizedBox(height: 10),
+        if (workspaces.isNotEmpty) const SizedBox(height: kFabGap),
 
         _FloatingButton(
           icon: Icons.center_focus_strong,
@@ -243,14 +245,14 @@ class _FloatingControls extends StatelessWidget {
           palette: palette,
           onPressed: notifier.centerView,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: kFabGap),
         _FloatingButton(
           icon: Icons.add,
           tooltip: L10n.of(context)!.zoomIn,
           palette: palette,
           onPressed: notifier.zoomIn,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: kFabGap),
         _FloatingButton(
           icon: Icons.remove,
           tooltip: L10n.of(context)!.zoomOut,

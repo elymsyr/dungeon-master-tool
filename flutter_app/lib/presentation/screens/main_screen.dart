@@ -1192,8 +1192,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
               builder: (_, current, _) => ValueListenableBuilder<double>(
                 valueListenable: _rightSidebarWidthNotifier,
                 builder: (_, width, child) => Positioned(
-                  right: (current == RightSidebar.none ? 0 : width) + 16,
-                  bottom: 16,
+                  right: (current == RightSidebar.none ? 0 : width) + kFabMargin,
+                  bottom: kFabMargin,
                   child: child!,
                 ),
                 child: const DiceFab(),
@@ -1241,20 +1241,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (_tabIndex == 0) ...[
-                  FloatingActionButton.small(
+                  StackFab(
                     heroTag: 'main_screen_card_history_fab',
-                    shape: RoundedRectangleBorder(borderRadius: palette.cbr),
                     onPressed: _showCardHistory,
                     child: const Icon(Icons.history),
                   ),
-                  const SizedBox(height: 10),
-                  FloatingActionButton.small(
+                  const SizedBox(height: kFabGap),
+                  StackFab(
                     heroTag: 'main_screen_entity_sidebar_fab',
-                    shape: RoundedRectangleBorder(borderRadius: palette.cbr),
                     onPressed: _showMobileSidebar,
                     child: const Icon(Icons.list),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: kFabGap),
                 ],
                 const DiceFab(),
               ],

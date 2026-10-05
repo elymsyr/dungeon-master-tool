@@ -9,6 +9,36 @@ import '../../theme/dm_tool_colors.dart';
 import 'dice_physics.dart';
 import 'dice_roll_view.dart';
 
+/// The bottom-right button column — dice at the bottom, history/sidebar or
+/// mind map zoom stacked above it, dice menu rows over those: one margin, one
+/// size, one gap, on every platform.
+const kFabMargin = 16.0;
+const kFabSize = 40.0;
+const kFabGap = 10.0;
+
+/// Bottom inset for a column stacked right above the dice button.
+const kAboveDiceFab = kFabMargin + kFabSize + kFabGap;
+
+/// A button of that column: small FAB, card corners, a true 40×40 (no 48 tap
+/// padding on phones, so columns line up the same as on desktop).
+class StackFab extends StatelessWidget {
+  const StackFab({super.key, required this.onPressed, required this.child, this.tooltip, this.heroTag});
+  final VoidCallback? onPressed;
+  final Widget child;
+  final String? tooltip;
+  final Object? heroTag;
+
+  @override
+  Widget build(BuildContext context) => FloatingActionButton.small(
+        heroTag: heroTag,
+        tooltip: tooltip,
+        shape: RoundedRectangleBorder(borderRadius: Theme.of(context).extension<DmToolColors>()!.cbr),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        onPressed: onPressed,
+        child: child,
+      );
+}
+
 /// Right inset that keeps a bottom-pinned row clear of the mobile dice
 /// button: 16 margin + 40 small FAB + 8 gap.
 const kDiceFabLane = 64.0;
@@ -26,8 +56,7 @@ class DiceFab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final look = resolveDiceLook(ref.watch(uiStateProvider.select((s) => s.diceTheme)), ref.watch(themeProvider));
-    // Small, like the sidebar/history FABs stacked above it.
-    return FloatingActionButton.small(
+    return StackFab(
       heroTag: 'dice_fab',
       tooltip: L10n.of(context)!.diceRollerTooltip,
       onPressed: () => _open(context, look),
@@ -77,7 +106,8 @@ void _pushDiceRoute(BuildContext context, Widget child) {
 }
 
 /// The open menu: a Roll button and one row per die kind stacked above an X
-/// that sits exactly where the dice button was. Rolling swaps it for the dice.
+/// that sits exactly where the dice button was, the dice on the same 40+10
+/// pitch as the buttons they cover. Rolling swaps it for the dice.
 class _DiceMenu extends StatefulWidget {
   const _DiceMenu({required this.anchor, required this.look});
   final Rect anchor;
@@ -116,7 +146,7 @@ class _DiceMenuState extends State<_DiceMenu> {
     return Stack(children: [
       Positioned(
         right: size.width - a.right,
-        bottom: size.height - a.top + 4,
+        bottom: size.height - a.top,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: a.top - MediaQuery.paddingOf(context).top - 12),
           // Short screens (a phone on its side) scroll the rows; Roll stays reachable.
@@ -131,7 +161,7 @@ class _DiceMenuState extends State<_DiceMenu> {
                   icon: const Icon(Icons.casino, size: 18),
                   label: Text(selection.isEmpty ? l10n.diceRoll : l10n.diceRollSelection(selection)),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: kFabGap),
                 for (final k in diceKinds) _row(k, a.width),
               ],
             ),
@@ -140,8 +170,7 @@ class _DiceMenuState extends State<_DiceMenu> {
       ),
       Positioned.fromRect(
         rect: a,
-        child: FloatingActionButton.small(
-          heroTag: null,
+        child: StackFab(
           tooltip: l10n.btnClose,
           onPressed: _close,
           child: const Icon(Icons.close),
@@ -155,7 +184,7 @@ class _DiceMenuState extends State<_DiceMenu> {
     final n = _counts[kind] ?? 0;
     final style = IconButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: Theme.of(context).extension<DmToolColors>()!.cbr));
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(bottom: kFabGap),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         IconButton.filledTonal(
           visualDensity: VisualDensity.compact,
@@ -177,8 +206,7 @@ class _DiceMenuState extends State<_DiceMenu> {
             child: Badge(
               isLabelVisible: n > 0,
               label: Text('$n'),
-              child: FloatingActionButton.small(
-                heroTag: null,
+              child: StackFab(
                 onPressed: () => setState(() => _thrown = {kind: 1}),
                 child: Text(kind, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
               ),
