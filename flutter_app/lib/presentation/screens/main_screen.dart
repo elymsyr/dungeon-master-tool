@@ -114,12 +114,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // session/karakter panelleri global alanları okuyor.
     final worldKey = ref.read(activeCampaignProvider) ?? '';
     final storedView = WorldViewState.stored(uiState, worldKey);
-    if (storedView != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(uiStateProvider.notifier).update(storedView.applyTo);
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Kaydı olmayan dünya önceki dünyanın açık karakterini miras almasın.
+      ref.read(uiStateProvider.notifier).update(storedView?.applyTo ??
+          (s) => s.copyWith(charactersSidebarInlineId: null));
+    });
     final view = storedView ?? WorldViewState.of(uiState);
     _tabIndex = view.mainTabIndex;
     _sidebarOpen = uiState.sidebarOpen;
