@@ -49,16 +49,6 @@ class CharactersSidebar extends ConsumerStatefulWidget {
 }
 
 class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
-  String? _inlineCharacterId;
-
-  @override
-  void initState() {
-    super.initState();
-    // Restore last-opened inline character so close+reopen lands at the
-    // same view.
-    _inlineCharacterId =
-        ref.read(uiStateProvider).charactersSidebarInlineId;
-  }
 
   void _openInline(String id) {
     final inline = widget.onOpenCharacter;
@@ -66,14 +56,12 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       inline(id);
       return;
     }
-    setState(() => _inlineCharacterId = id);
     ref
         .read(uiStateProvider.notifier)
         .update((s) => s.copyWith(charactersSidebarInlineId: id));
   }
 
   void _closeInline() {
-    setState(() => _inlineCharacterId = null);
     ref
         .read(uiStateProvider.notifier)
         .update((s) => s.copyWith(charactersSidebarInlineId: null));
@@ -81,9 +69,13 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    if (_inlineCharacterId != null) {
+    // Global (dünya başına restore edilen) alanı izle: dünya değişince
+    // önceki dünyanın karakteri açık kalmasın.
+    final inlineId = ref.watch(
+        uiStateProvider.select((s) => s.charactersSidebarInlineId));
+    if (inlineId != null) {
       return CharacterEditorScreen(
-        characterId: _inlineCharacterId!,
+        characterId: inlineId,
         onClose: _closeInline,
       );
     }
