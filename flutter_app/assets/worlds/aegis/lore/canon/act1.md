@@ -1059,6 +1059,31 @@ sahnenin adı ve harita görüntüsü.
 Dönüşmüş'leri neden taşıdığı · gemilerin kaybolmasıyla Kara Donanma'nın bağı · Caelynn ve
 Holg'un rotası · ork kaptanın adı · ablukanın Meridia kıyısına gelip gelmediği (M0.6).
 
+### 7.8 Kara Yelken — perdenin son savaşı (KARAR, 2026-10-05)
+
+elymsyr gemiden perdenin sonuna kadarki kartları istedi (A12). Kartlar:
+
+- **Gemiler.** `location/Kara Yelken` ve `location/Dürüst Terazi`.
+- **Kara Yelken'in tayfası:** `npc/Ork Kaptan — Mordha` (ork kadın) · Davulcu · iki Kancacı · sekiz Ork Savaşçı; alt bölmede sekiz on Dönüşmüş, bir ya da iki Dönüşmüş Ork. Statlar SRD *Tough Boss* (CR 2) · *Tough* (1/2) · *Warrior Infantry* (1/4); Dönüşmüş Ork §5.3'ten türer (22 can, *Düşmeyen*).
+- **Davul.** Ritim alt bölmeden çıkanları yönetir: *Gel* (iki Dönüşmüş daha) · *Vur* (60 ft içinde tepkiyle pençe) · *Dur* (orklara saldırmazlar). Davul susarsa en yakındakine saldırırlar. **Ritmin onlara neden geçtiği yazılmadı** — §4.2'nin *kimin emrini beklediği kanon değil* kuralı bozulmadı.
+- **Taktik.** Önden Dönüşmüş'ler geçer, orklar karşı güvertede savunma dağılınca. Kaptan kıçta, davulun yanında; davul sustuysa ve yarı canının altındaysa teslim olur, karşılığında alt bölmedekilere dokunulmamasını ister.
+- **Kaptanın derdi** (§6.2 ilkesi: kimse kötü olduğu için hareket etmiyor): alt bölmedekilerin bir kısmı kendi tayfası; biri çare sözü verdi, karşılığında bu suda durmasını istedi. Söz veren **yazılmadı**.
+- **Sahneler.** `scene/Kaçakçı Güvertesi` (Caelynn/Holg; iki gemide de *Öte'ye yakın suda gece davul duyulur* söylentisi) · `scene/Davul Sesi` (üç turluk kovalamaca, başarı avantaj getirir) · `encounter/Borda Borda` · `scene/Karantina Gecesi` (ısırılanlar; §4.1 maruziyeti).
+- **Dürüst Terazi.** Yirmi iki kişi kadar; `npc/Terazi Çavuşu — Hulda` (emekli Nehir Muhafızı, cüce kadın) ve dört muhafız; Elymsyr kulelerinden hurdaya çıkmış bir balista (+6, 3d10). Muhafızların ücretini Maren ödüyor.
+
+**Kanon eşiği.** Dönüşmüş taşıyan ve onları davulla yöneten bir gemi, hastalığın **kullanıldığını** gösterir; §4.5'in *Act 1 yalnız gizlemeyi kanıtlar* cümlesi bu gemide gevşedi. Hastalığın **birinin eseri** olduğu yine kanıtlanmaz.
+
+**Adlar ve hikaye bağları (KARAR, 2026-10-05, A13).** elymsyr türetmeleri onayladı ve adları istedi: gemi **Kara Yelken**, kaptan **Mordha** (ork kadın), çavuş **Hulda** (cüce kadın). Kart adları (*Borda Borda* · *Davul Sesi* · *Karantina Gecesi* · *Kaçakçı Güvertesi*) onaylandı. İki tayfa da kadın erkek karışık; *Dürüst Terazi*'de insan, cüce, yarı-elf, yarı-ork, halfling ve gnome var. Yeni iki kart:
+
+- **`trinket/Kader'in Ad Tahtası`.** Kara Yelken'in küpeştesinde, ganimetlerin arasında. *Kader*'in dönüş yolunda bu suda bu gemiyle karşılaştığını kanıtlar; kaptanının ve tayfasının nerede olduğunu, kimin adına taşıdığını kanıtlamaz.
+- **`lore/Kara Donanma — Bilinen Hali`.** Rıhtımlarda anlatılan kadarı; kimin donanması olduğu yazılı değil.
+
+Bağlar: kamarada **karakterleri bekleyen bir kağıt** (yasal yoldan geldilerse geçiş adları — İğne, imzacı odası ve Orvan bilir; kaçak yoldan geldilerse eşkal — Kadife gibi biri görmüş olur), **kimin yazdığı yazılmadı**; alt bölmeden çıkanlarda **Arcana DC 13** ile üç yabancıdaki bir yere bağlı izin aynısı; `quest/Nereden Geldiler`'de Kara Yelken hastalığın kanıtı olarak, kayıpların nedeni olarak değil.
+
+**Dönüşmüş Orklar** (elymsyr, 2026-10-05): bedenleri bozulmuş — eğri omurga, kaymış yüz, şişmiş ya da uzamış uzuvlar — ve çatlaklarından, gözlerinden, ağızlarından koyu mor, siyaha çalan bir sıvı sızar. **Hiçbiri ötekine benzemez.** İnsan Dönüşmüş'ün betimi (§4.2) değişmedi.
+
+**Bilerek yazılmayanlar:** kayıplarla bağ · diğer üç gemi · Caelynn/Holg rotası · Dönüşmüş'lerin hastayı tanıyıp tanımadığı · çare sözünü veren · kamaradaki kağıdı yazan · abluka.
+
 ---
 
 ## 8. Bu belgeden çıkan yazım listesi
@@ -1246,6 +1271,8 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     kara gövdeli, kara yelkenli, davullu bir ork savaş gemisi; kaptanı normal bir ork,
     Dönüşmüş'ler alt bölmede. *Dürüst Terazi* ticaret yolundan sapıp ilk üçünden kurtulur,
     en küçüğüyle karşılaşır; Maren bunu yolda anlatır (`scene/Maren'in Rotası`).
+45. **Perdenin son savaşı yazıldı** (§7.8): `location/Kara Yelken`, davulla yönetilen Dönüşmüş'ler, `encounter/Borda Borda` ve çevresindeki üç sahne.
+46. **Adlar ve hikaye bağları** (§7.8, A13): Kara Yelken · Mordha (ork kadın) · Hulda (cüce kadın); `trinket/Kader'in Ad Tahtası` ve `lore/Kara Donanma — Bilinen Hali`; kamaradaki kağıt ve Arcana DC 13 izi.
 
 **Açık:**
 
