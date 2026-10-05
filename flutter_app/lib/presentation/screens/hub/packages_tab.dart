@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
@@ -282,7 +283,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                 palette: palette,
                                 layout: MetadataTileLayout.topBanner,
                                 onSettings: () =>
-                                    _showPackageSettings(info.name, palette),
+                                    showPackageSettingsDialog(context, ref, info.name),
                               ),
                             ),
                           );
@@ -628,149 +629,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     );
   }
 
-  Future<void> _showPackageSettings(String packageName, DmToolColors palette) async {
-    final l10n = L10n.of(context)!;
-
-    Map<String, dynamic> data;
-    try {
-      data = await ref.read(packageRepositoryProvider).load(packageName);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.of(context)!.packageLoadFailed('$e'))),
-        );
-      }
-      return;
-    }
-
-    // Fetch local updatedAt from the DB row for SaveInfoSection.
-    final packageRow =
-        await ref.read(appDatabaseProvider).packagesDao.getByName(packageName);
-    final localUpdatedAt = packageRow?.updatedAt;
-    if (!mounted) return;
-
-    final schemaMap = data['world_schema'] as Map<String, dynamic>?;
-    final templateName = schemaMap?['name'] as String? ?? 'Unknown';
-
-    final existingMeta = data['metadata'];
-    final workingMeta = existingMeta is Map
-        ? Map<String, dynamic>.from(existingMeta)
-        : <String, dynamic>{};
-    workingMeta['description'] ??= '';
-    workingMeta['tags'] ??= <String>[];
-    workingMeta['cover_image_path'] ??= '';
-    var workingName = packageName;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-        title: Text(L10n.of(context)!.worldsSettingsTitle(packageName)),
-        content: SizedBox(
-          width: 440,
-          child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MetadataEditorSection(
-                showNameField: true,
-                name: workingName,
-                description: workingMeta['description'] as String? ?? '',
-                tags: ((workingMeta['tags'] as List?) ?? const [])
-                    .whereType<String>()
-                    .toList(),
-                coverImagePath:
-                    workingMeta['cover_image_path'] as String? ?? '',
-                onNameChanged: (v) => workingName = v,
-                onDescriptionChanged: (v) =>
-                    workingMeta['description'] = v,
-                onTagsChanged: (v) =>
-                    setDialogState(() => workingMeta['tags'] = v),
-                onCoverChanged: (v) => setDialogState(
-                    () => workingMeta['cover_image_path'] = v),
-                coverKind: MediaKind.packageCover,
-                coverScopeId: packageName,
-              ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
-                  const SizedBox(width: 6),
-                  Text(L10n.of(context)!.worldsTemplateLine(templateName),
-                      style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SaveInfoSection(
-                localUpdatedAt: localUpdatedAt,
-              ),
-              // Faz 5e — paketi hub'dan online yapmak / yerele almak.
-              if (packageRow != null) ...[
-                const SizedBox(height: 12),
-                PackageOnlineRow(palette: palette, packageId: packageRow.id),
-              ],
-              const SizedBox(height: 12),
-              MarketplacePanel(
-                itemType: 'package',
-                localId: packageName,
-                title: packageName,
-              ),
-            ],
-          ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.btnCancel),
-          ),
-          FilledButton(
-            onPressed: () async {
-              // Ad değiştiyse adı yeniden adlandır.
-              if (workingName != packageName) {
-                try {
-                  await ref.read(packageRepositoryProvider).renamePackage(
-                        packageName,
-                        workingName,
-                      );
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
-                    );
-                  }
-                  return;
-                }
-                // Aktif paket yeniden adlandırıldıysa provider'ı güncelle.
-                if (ref.read(activePackageProvider) == packageName) {
-                  await ref
-                      .read(activePackageProvider.notifier)
-                      .load(workingName);
-                }
-                packageName = workingName;
-                if (ctx.mounted) {
-                  setDialogState(() {});
-                }
-              }
-              await updatePackageMetadata(ref, packageName, workingMeta);
-              ref.invalidate(packageListProvider);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.settingsSaved)),
-                );
-              }
-            },
-            child: Text(l10n.btnSave),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-
   Future<void> _loadPackage(String name) async {
     final l10n = L10n.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
@@ -821,4 +679,157 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       if (mounted) context.go('/package');
     }
   }
+}
+
+/// Paket ayarları (ad, açıklama, tag, kapak, online). Hub kartı ve paket
+/// ekranındaki ayarlar butonu ortak kullanır.
+Future<void> showPackageSettingsDialog(
+  BuildContext context,
+  WidgetRef ref,
+  String packageName,
+) async {
+  final l10n = L10n.of(context)!;
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  // Açık dünya/paket/karakter ekranından çağrılabilir — bekleyen yazımlar
+  // diske insin ki aşağıdaki okuma güncel olsun.
+  await ref.read(pendingWriteBufferProvider).flush();
+
+  Map<String, dynamic> data;
+  try {
+    data = await ref.read(packageRepositoryProvider).load(packageName);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.packageLoadFailed('$e'))),
+      );
+    }
+    return;
+  }
+
+  // Fetch local updatedAt from the DB row for SaveInfoSection.
+  final packageRow =
+      await ref.read(appDatabaseProvider).packagesDao.getByName(packageName);
+  final localUpdatedAt = packageRow?.updatedAt;
+  if (!context.mounted) return;
+
+  final schemaMap = data['world_schema'] as Map<String, dynamic>?;
+  final templateName = schemaMap?['name'] as String? ?? 'Unknown';
+
+  final existingMeta = data['metadata'];
+  final workingMeta = existingMeta is Map
+      ? Map<String, dynamic>.from(existingMeta)
+      : <String, dynamic>{};
+  workingMeta['description'] ??= '';
+  workingMeta['tags'] ??= <String>[];
+  workingMeta['cover_image_path'] ??= '';
+  var workingName = packageName;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+      title: Text(L10n.of(context)!.worldsSettingsTitle(packageName)),
+      content: SizedBox(
+        width: 440,
+        child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MetadataEditorSection(
+              showNameField: true,
+              name: workingName,
+              description: workingMeta['description'] as String? ?? '',
+              tags: ((workingMeta['tags'] as List?) ?? const [])
+                  .whereType<String>()
+                  .toList(),
+              coverImagePath:
+                  workingMeta['cover_image_path'] as String? ?? '',
+              onNameChanged: (v) => workingName = v,
+              onDescriptionChanged: (v) =>
+                  workingMeta['description'] = v,
+              onTagsChanged: (v) =>
+                  setDialogState(() => workingMeta['tags'] = v),
+              onCoverChanged: (v) => setDialogState(
+                  () => workingMeta['cover_image_path'] = v),
+              coverKind: MediaKind.packageCover,
+              coverScopeId: packageName,
+            ),
+            const SizedBox(height: 12),
+            Divider(height: 1, color: palette.featureCardBorder),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 6),
+                Text(L10n.of(context)!.worldsTemplateLine(templateName),
+                    style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SaveInfoSection(
+              localUpdatedAt: localUpdatedAt,
+            ),
+            // Faz 5e — paketi hub'dan online yapmak / yerele almak.
+            if (packageRow != null) ...[
+              const SizedBox(height: 12),
+              PackageOnlineRow(palette: palette, packageId: packageRow.id),
+            ],
+            const SizedBox(height: 12),
+            MarketplacePanel(
+              itemType: 'package',
+              localId: packageName,
+              title: packageName,
+            ),
+          ],
+        ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.btnCancel),
+        ),
+        FilledButton(
+          onPressed: () async {
+            // Ad değiştiyse adı yeniden adlandır.
+            if (workingName != packageName) {
+              try {
+                await ref.read(packageRepositoryProvider).renamePackage(
+                      packageName,
+                      workingName,
+                    );
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
+                  );
+                }
+                return;
+              }
+              // Aktif paket yeniden adlandırıldıysa provider'ı güncelle.
+              if (ref.read(activePackageProvider) == packageName) {
+                await ref
+                    .read(activePackageProvider.notifier)
+                    .load(workingName);
+              }
+              packageName = workingName;
+              if (ctx.mounted) {
+                setDialogState(() {});
+              }
+            }
+            await updatePackageMetadata(ref, packageName, workingMeta);
+            ref.invalidate(packageListProvider);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.settingsSaved)),
+              );
+            }
+          },
+          child: Text(l10n.btnSave),
+        ),
+      ],
+    ),
+    ),
+  );
 }

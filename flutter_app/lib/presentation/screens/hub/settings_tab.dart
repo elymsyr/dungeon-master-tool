@@ -26,7 +26,21 @@ import '../../theme/palettes.dart';
 import '../../widgets/dice/dice_roll_view.dart';
 
 class SettingsTab extends ConsumerStatefulWidget {
-  const SettingsTab({super.key});
+  const SettingsTab({super.key, this.appearanceOnly = false});
+
+  /// Yalnız tema, zar teması ve dil bölümleri.
+  final bool appearanceOnly;
+
+  /// Dünya/karakter/paket içinden açılan uygulama ayarları penceresi.
+  static Future<void> show(BuildContext context) => showDialog<void>(
+        context: context,
+        builder: (ctx) => Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+            child: const SettingsTab(appearanceOnly: true),
+          ),
+        ),
+      );
 
   @override
   ConsumerState<SettingsTab> createState() => _SettingsTabState();
@@ -173,6 +187,8 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               ),
               const SizedBox(height: 32),
 
+              // Uygulama ayarları penceresi yalnız tema/zar/dil gösterir.
+              if (!widget.appearanceOnly) ...[
               // --- VOLUME ---
               Text(l10n.settingsVolume, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
@@ -317,6 +333,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                     ),
                   ),
                 ),
+              ],
               ],
             ],
           ),

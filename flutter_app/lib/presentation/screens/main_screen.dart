@@ -11,13 +11,11 @@ import '../../application/providers/cloud_push_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
-import '../../application/providers/locale_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../dialogs/screencast_display_picker.dart';
-import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
@@ -31,10 +29,11 @@ import '../../core/utils/screen_type.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
+import 'hub/settings_tab.dart';
+import 'hub/worlds_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../../application/providers/visible_entity_provider.dart';
 import '../theme/dm_tool_colors.dart';
-import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
 import '../widgets/world_open_splash.dart';
 import '../widgets/characters_sidebar.dart';
@@ -487,6 +486,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
   /// Template-level numeric rules (ASI levels, HP table, AC constants).
   /// Saving goes through applyTemplateUpdate, which persists the schema and
   /// bumps the campaign revision so sheets/planner recompute immediately.
+  void _openWorldSettings() {
+    final worldId = ref.read(activeCampaignProvider);
+    if (worldId == null) return;
+    showWorldSettingsDialog(context, ref, worldId,
+        ref.read(activeWorldNameProvider).valueOrNull ?? worldId);
+  }
+
   void _openRuleSettings() {
     RuleConfigDialog.show(
       context,
@@ -783,6 +789,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     ImportPackageDialog.show(context);
                   case 'rules':
                     _openRuleSettings();
+                  case 'settings':
+                    _openWorldSettings();
+                  case 'app_settings':
+                    SettingsTab.show(context);
                   case 'bug':
                     BugReportDialog.show(context);
                   default:
@@ -794,14 +804,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       if (mode != ProjectionOutputMode.none) {
                         _togglePhoneProjectionMode(mode);
                       }
-                    }
-                    // Theme selection
-                    if (action.startsWith('theme:')) {
-                      ref.read(themeProvider.notifier).setTheme(action.substring(6));
-                    }
-                    // Language selection
-                    if (action.startsWith('lang:')) {
-                      ref.read(localeProvider.notifier).setLocale(action.substring(5));
                     }
                 }
               },
@@ -829,20 +831,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 if (editMode)
                   PopupMenuItem(value: 'rules', child: Row(children: [const Icon(Icons.tune, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.ruleSettingsTitle)])),
                 const PopupMenuDivider(),
-                ...themeNames.map((name) => PopupMenuItem(
-                  value: 'theme:$name',
-                  child: Row(children: [
-                    Container(width: 14, height: 14, decoration: BoxDecoration(color: themePalettes[name]?.canvasBg, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
-                    const SizedBox(width: 8),
-                    Text(name[0].toUpperCase() + name.substring(1)),
-                  ]),
-                )),
-                const PopupMenuDivider(),
-                const PopupMenuItem(value: 'lang:en', child: Text('English')),
-                const PopupMenuItem(value: 'lang:tr', child: Text('Türkçe')),
-                const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
-                const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
-                const PopupMenuDivider(),
+                PopupMenuItem(value: 'settings', child: Row(children: [const Icon(Icons.info_outline, size: 18), const SizedBox(width: 8), Text(l10n.tabSettings)])),
+                PopupMenuItem(value: 'app_settings', child: Row(children: [const Icon(Icons.settings_outlined, size: 18), const SizedBox(width: 8), Text(l10n.appSettings)])),
                 PopupMenuItem(value: 'bug', child: Row(children: [const Icon(Icons.bug_report_outlined, size: 18), const SizedBox(width: 8), Text(l10n.menuReportBug)])),
                 ];
               },
@@ -862,45 +852,17 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 tooltip: L10n.of(context)!.ruleSettingsTitle,
                 onPressed: _openRuleSettings,
               ),
-            // Tema
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.palette, size: 20),
-              tooltip: l10n.lblTheme,
-              onSelected: (name) =>
-                  ref.read(themeProvider.notifier).setTheme(name),
-              itemBuilder: (_) => themeNames
-                  .map((name) => PopupMenuItem(
-                        value: name,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: themePalettes[name]?.canvasBg,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white24),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(name[0].toUpperCase() + name.substring(1)),
-                          ],
-                        ),
-                      ))
-                  .toList(),
+            // Dünya ayarları — hub kartındaki ayarlar penceresiyle aynı.
+            IconButton(
+              icon: const Icon(Icons.info_outline, size: 20),
+              tooltip: l10n.tabSettings,
+              onPressed: _openWorldSettings,
             ),
-            // Dil
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.language, size: 20),
-              tooltip: l10n.lblLanguage,
-              onSelected: (code) =>
-                  ref.read(localeProvider.notifier).setLocale(code),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'en', child: Text('English')),
-                PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-                PopupMenuItem(value: 'de', child: Text('Deutsch')),
-                PopupMenuItem(value: 'fr', child: Text('Français')),
-              ],
+            // Uygulama ayarları — tema, zar teması, dil.
+            IconButton(
+              icon: const Icon(Icons.settings_outlined, size: 20),
+              tooltip: l10n.appSettings,
+              onPressed: () => SettingsTab.show(context),
             ),
             // Bug report
             IconButton(

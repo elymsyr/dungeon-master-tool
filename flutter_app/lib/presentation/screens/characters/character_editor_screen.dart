@@ -18,11 +18,9 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
-import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
-import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../application/services/package_source_entities.dart';
@@ -49,9 +47,10 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
+import '../hub/characters_tab.dart';
+import '../hub/settings_tab.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/dice/dice_fab.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -68,8 +67,6 @@ import '../../widgets/save_sync_indicator.dart' show CharacterOnlineRow;
 import '../../widgets/section_jump_pad.dart';
 
 import '../database/entity_card.dart';
-import '../../../application/services/content_transfer/content_item.dart';
-import '../../widgets/content_archive_menu.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
@@ -497,17 +494,6 @@ class _CharacterEditorScreenState
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
-            // `.dmtz` dışa aktarma — karakteri hesapsız yedeklemek ya da
-            // başka bir kuruluma taşımak için. İçe aktarma burada YOK:
-            // kullanıcı kuralı "karakteri yalnızca dünya içinden import
-            // edebiliriz".
-            if (!embedded)
-              ContentArchiveMenu(
-                type: ContentItemType.character,
-                selectedId: character.id,
-                selectedName: character.entity.name,
-                showImport: false,
-              ),
             // Cloud save & sync — desktop/tablet only. On phone the entry
             // moves into the overflow menu below to free AppBar space.
             if (getScreenType(context) != ScreenType.phone)
@@ -533,15 +519,12 @@ class _CharacterEditorScreenState
                       );
                     case 'import':
                       ImportPackageDialog.show(context);
+                    case 'settings':
+                      showCharacterSettingsDialog(context, ref, character.id);
+                    case 'app_settings':
+                      SettingsTab.show(context);
                     case 'bug':
                       BugReportDialog.show(context);
-                    default:
-                      if (action.startsWith('theme:')) {
-                        ref.read(themeProvider.notifier).setTheme(action.substring(6));
-                      }
-                      if (action.startsWith('lang:')) {
-                        ref.read(localeProvider.notifier).setLocale(action.substring(5));
-                      }
                   }
                 },
                 itemBuilder: (_) => [
@@ -553,20 +536,8 @@ class _CharacterEditorScreenState
                   const PopupMenuDivider(),
                   PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                   const PopupMenuDivider(),
-                  ...themeNames.map((name) => PopupMenuItem(
-                    value: 'theme:$name',
-                    child: Row(children: [
-                      Container(width: 14, height: 14, decoration: BoxDecoration(color: themePalettes[name]?.canvasBg, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
-                      const SizedBox(width: 8),
-                      Text(name[0].toUpperCase() + name.substring(1)),
-                    ]),
-                  )),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(value: 'lang:en', child: Text('English')),
-                  const PopupMenuItem(value: 'lang:tr', child: Text('Türkçe')),
-                  const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
-                  const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
-                  const PopupMenuDivider(),
+                  PopupMenuItem(value: 'settings', child: Row(children: [const Icon(Icons.info_outline, size: 18), const SizedBox(width: 8), Text(l10n.tabSettings)])),
+                  PopupMenuItem(value: 'app_settings', child: Row(children: [const Icon(Icons.settings_outlined, size: 18), const SizedBox(width: 8), Text(l10n.appSettings)])),
                   PopupMenuItem(value: 'bug', child: Row(children: [const Icon(Icons.bug_report_outlined, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.menuReportBug)])),
                 ],
               ),
@@ -577,45 +548,18 @@ class _CharacterEditorScreenState
                 tooltip: l10n.importPackage,
                 onPressed: () => ImportPackageDialog.show(context),
               ),
-              // Theme
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.palette, size: 20),
-                tooltip: l10n.lblTheme,
-                onSelected: (name) =>
-                    ref.read(themeProvider.notifier).setTheme(name),
-                itemBuilder: (_) => themeNames
-                    .map((name) => PopupMenuItem(
-                          value: name,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: themePalettes[name]?.canvasBg,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white24),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(name[0].toUpperCase() + name.substring(1)),
-                            ],
-                          ),
-                        ))
-                    .toList(),
+              // Karakter ayarları — hub kartındaki ayarlar penceresiyle aynı.
+              IconButton(
+                icon: const Icon(Icons.info_outline, size: 20),
+                tooltip: l10n.tabSettings,
+                onPressed: () =>
+                    showCharacterSettingsDialog(context, ref, character.id),
               ),
-              // Language
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.language, size: 20),
-                tooltip: l10n.lblLanguage,
-                onSelected: (code) =>
-                    ref.read(localeProvider.notifier).setLocale(code),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'en', child: Text('English')),
-                  PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-                  PopupMenuItem(value: 'de', child: Text('Deutsch')),
-                  PopupMenuItem(value: 'fr', child: Text('Français')),
-                ],
+              // Uygulama ayarları — tema, zar teması, dil.
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, size: 20),
+                tooltip: l10n.appSettings,
+                onPressed: () => SettingsTab.show(context),
               ),
               // Bug report
               IconButton(

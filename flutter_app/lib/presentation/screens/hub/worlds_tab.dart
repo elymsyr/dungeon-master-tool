@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/cloud_push_provider.dart';
@@ -370,7 +371,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                   palette: palette,
                                   layout: MetadataTileLayout.topBanner,
                                   onSettings: () =>
-                                      _showCampaignSettings(info, palette),
+                                      showWorldSettingsDialog(context, ref, info.id, info.name),
                                   topRightOverlay: isOnlineMember
                                       ? [
                                           _OnlineRoleBadge(
@@ -901,171 +902,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
   }
 
-  Future<void> _showCampaignSettings(
-    CampaignInfo info,
-    DmToolColors palette,
-  ) async {
-    final l10n = L10n.of(context)!;
-    final worldId = info.id;
-
-    // Load campaign data and check drift against its source template.
-    Map<String, dynamic> data;
-    try {
-      data = await ref.read(campaignRepositoryProvider).load(worldId);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.worldsLoadFailed(e.toString()))),
-        );
-      }
-      return;
-    }
-
-    // Fetch local updatedAt from the DB row for SaveInfoSection.
-    final campaignRow =
-        await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
-    final localUpdatedAt = campaignRow?.updatedAt;
-
-    if (!mounted) return;
-
-    final schemaMap = data['world_schema'] as Map<String, dynamic>?;
-    final templateName =
-        schemaMap?['name'] as String? ?? l10n.worldsUnknownTemplate;
-
-    // Mutable metadata working copy — committed on Save.
-    final existingMeta = data['metadata'];
-    final workingMeta = existingMeta is Map
-        ? Map<String, dynamic>.from(existingMeta)
-        : <String, dynamic>{};
-    workingMeta['description'] ??= '';
-    workingMeta['tags'] ??= <String>[];
-    workingMeta['cover_image_path'] ??= '';
-    var workingName = info.name;
-    var savedName = info.name;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.worldsSettingsTitle(savedName)),
-          content: SizedBox(
-            width: 440,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MetadataEditorSection(
-                    showNameField: true,
-                    name: workingName,
-                    description: workingMeta['description'] as String? ?? '',
-                    tags: ((workingMeta['tags'] as List?) ?? const [])
-                        .whereType<String>()
-                        .toList(),
-                    coverImagePath:
-                        workingMeta['cover_image_path'] as String? ?? '',
-                    onNameChanged: (v) => workingName = v,
-                    onDescriptionChanged: (v) => workingMeta['description'] = v,
-                    onTagsChanged: (v) =>
-                        setDialogState(() => workingMeta['tags'] = v),
-                    onCoverChanged: (v) => setDialogState(
-                      () => workingMeta['cover_image_path'] = v,
-                    ),
-                    coverKind: MediaKind.worldCover,
-                    coverScopeId: worldId,
-                  ),
-                  const SizedBox(height: 12),
-                  Divider(height: 1, color: palette.featureCardBorder),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.description,
-                        size: 16,
-                        color: palette.sidebarLabelSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        l10n.worldsTemplateLine(templateName),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: palette.tabActiveText,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SaveInfoSection(
-                    localUpdatedAt: localUpdatedAt,
-                  ),
-                  const SizedBox(height: 12),
-                  MarketplacePanel(
-                    itemType: 'world',
-                    localId: worldId,
-                    title: savedName,
-                  ),
-                  const SizedBox(height: 12),
-                  Divider(height: 1, color: palette.featureCardBorder),
-                  const SizedBox(height: 12),
-                  OnlineWorldSection(
-                    campaignId: worldId,
-                    campaignName: savedName,
-                  ),
-                  const SizedBox(height: 12),
-                  Divider(height: 1, color: palette.featureCardBorder),
-                  const SizedBox(height: 12),
-                  WorldPackagesSection(campaignId: worldId),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.btnCancel),
-            ),
-            FilledButton(
-              onPressed: () async {
-                // Ad değiştiyse etiketi güncelle. Kimlik değişmiyor, yani
-                // açık dünyayı yeniden yüklemeye gerek yok — yalnız
-                // gövdedeki etiket tazeleniyor.
-                if (workingName != savedName) {
-                  try {
-                    await ref
-                        .read(campaignRepositoryProvider)
-                        .renameWorld(worldId, workingName);
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
-                      );
-                    }
-                    return;
-                  }
-                  if (ref.read(activeCampaignProvider) == worldId) {
-                    await ref.read(activeCampaignProvider.notifier).reload();
-                  }
-                  savedName = workingName;
-                  if (ctx.mounted) {
-                    setDialogState(() {});
-                  }
-                }
-                await updateCampaignMetadata(ref, worldId, workingMeta);
-                ref.invalidate(campaignInfoListProvider);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.worldsSettingsSaved)),
-                  );
-                }
-              },
-              child: Text(l10n.btnSave),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _createCampaign() async {
     final l10n = L10n.of(context)!;
     final name = _nameController.text.trim();
@@ -1129,4 +965,176 @@ class _OnlineRoleBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Dünya ayarları (ad, açıklama, tag, kapak, online, paketler). Hub kartı
+/// ve dünya içindeki ayarlar butonu ortak kullanır.
+Future<void> showWorldSettingsDialog(
+  BuildContext context,
+  WidgetRef ref,
+  String worldId,
+  String worldName,
+) async {
+  final l10n = L10n.of(context)!;
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  // Açık dünya/paket/karakter ekranından çağrılabilir — bekleyen yazımlar
+  // diske insin ki aşağıdaki okuma güncel olsun.
+  await ref.read(pendingWriteBufferProvider).flush();
+
+  // Load campaign data and check drift against its source template.
+  Map<String, dynamic> data;
+  try {
+    data = await ref.read(campaignRepositoryProvider).load(worldId);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.worldsLoadFailed(e.toString()))),
+      );
+    }
+    return;
+  }
+
+  // Fetch local updatedAt from the DB row for SaveInfoSection.
+  final campaignRow =
+      await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
+  final localUpdatedAt = campaignRow?.updatedAt;
+
+  if (!context.mounted) return;
+
+  final schemaMap = data['world_schema'] as Map<String, dynamic>?;
+  final templateName =
+      schemaMap?['name'] as String? ?? l10n.worldsUnknownTemplate;
+
+  // Mutable metadata working copy — committed on Save.
+  final existingMeta = data['metadata'];
+  final workingMeta = existingMeta is Map
+      ? Map<String, dynamic>.from(existingMeta)
+      : <String, dynamic>{};
+  workingMeta['description'] ??= '';
+  workingMeta['tags'] ??= <String>[];
+  workingMeta['cover_image_path'] ??= '';
+  var workingName = worldName;
+  var savedName = worldName;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        title: Text(l10n.worldsSettingsTitle(savedName)),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MetadataEditorSection(
+                  showNameField: true,
+                  name: workingName,
+                  description: workingMeta['description'] as String? ?? '',
+                  tags: ((workingMeta['tags'] as List?) ?? const [])
+                      .whereType<String>()
+                      .toList(),
+                  coverImagePath:
+                      workingMeta['cover_image_path'] as String? ?? '',
+                  onNameChanged: (v) => workingName = v,
+                  onDescriptionChanged: (v) => workingMeta['description'] = v,
+                  onTagsChanged: (v) =>
+                      setDialogState(() => workingMeta['tags'] = v),
+                  onCoverChanged: (v) => setDialogState(
+                    () => workingMeta['cover_image_path'] = v,
+                  ),
+                  coverKind: MediaKind.worldCover,
+                  coverScopeId: worldId,
+                ),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: palette.featureCardBorder),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.description,
+                      size: 16,
+                      color: palette.sidebarLabelSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      l10n.worldsTemplateLine(templateName),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SaveInfoSection(
+                  localUpdatedAt: localUpdatedAt,
+                ),
+                const SizedBox(height: 12),
+                MarketplacePanel(
+                  itemType: 'world',
+                  localId: worldId,
+                  title: savedName,
+                ),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: palette.featureCardBorder),
+                const SizedBox(height: 12),
+                OnlineWorldSection(
+                  campaignId: worldId,
+                  campaignName: savedName,
+                ),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: palette.featureCardBorder),
+                const SizedBox(height: 12),
+                WorldPackagesSection(campaignId: worldId),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () async {
+              // Ad değiştiyse etiketi güncelle. Kimlik değişmiyor, yani
+              // açık dünyayı yeniden yüklemeye gerek yok — yalnız
+              // gövdedeki etiket tazeleniyor.
+              if (workingName != savedName) {
+                try {
+                  await ref
+                      .read(campaignRepositoryProvider)
+                      .renameWorld(worldId, workingName);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(L10n.of(context)!.renameFailed('$e'))),
+                    );
+                  }
+                  return;
+                }
+                if (ref.read(activeCampaignProvider) == worldId) {
+                  await ref.read(activeCampaignProvider.notifier).reload();
+                }
+                savedName = workingName;
+                if (ctx.mounted) {
+                  setDialogState(() {});
+                }
+              }
+              await updateCampaignMetadata(ref, worldId, workingMeta);
+              ref.invalidate(campaignInfoListProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.worldsSettingsSaved)),
+                );
+              }
+            },
+            child: Text(l10n.btnSave),
+          ),
+        ],
+      ),
+    ),
+  );
 }
