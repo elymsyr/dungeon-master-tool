@@ -3,6 +3,7 @@ import 'package:dungeon_master_tool/application/providers/character_provider.dar
 import 'package:dungeon_master_tool/data/database/database_provider.dart';
 import 'package:dungeon_master_tool/domain/entities/character.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,12 +36,28 @@ void main() {
     final worldId = await repo.create('Doomed World',
         template: generateBuiltinDnd5eV2Schema().schema);
 
+    // Dünyanın SRD Wizard kopyası — id dünyaya özel (`uuidv5(worldId, srdId)`).
+    final worldEntities = (await repo.load(worldId))['entities'] as Map;
+    final wizardCopyId = worldEntities.entries
+        .firstWhere((e) =>
+            e.value is Map &&
+            e.value['type'] == 'class' &&
+            e.value['name'] == 'Wizard')
+        .key as String;
+
     final now = DateTime.now().toUtc().toIso8601String();
     await container.read(characterRepositoryProvider).save(Character(
           id: 'c1',
           templateId: 'dnd5e-v2',
           templateName: 'D&D 5e',
-          entity: const Entity(id: 'c1', categorySlug: 'player-character', name: 'Pip'),
+          entity: Entity(
+            id: 'c1',
+            categorySlug: 'player-character',
+            name: 'Pip',
+            fields: {
+              'class_levels': {wizardCopyId: 3},
+            },
+          ),
           worldId: worldId,
           createdAt: now,
           updatedAt: now,
@@ -55,5 +72,8 @@ void main() {
     final reloaded =
         await container.read(characterRepositoryProvider).loadAll();
     expect(reloaded.single.worldId, isNull);
+    // Sınıf id'si map *anahtarında*; o da SRD id'sine çevrilmeli.
+    expect(reloaded.single.entity.fields['class_levels'],
+        {srdStableEntityId('class', 'Wizard'): 3});
   });
 }
