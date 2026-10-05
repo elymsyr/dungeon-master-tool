@@ -2194,5 +2194,7 @@
   "diceRollSelection": "{dice} würfeln",
   "diceTapToClose": "Zum Schließen tippen",
   "lblDiceTheme": "Würfeldesign",
-  "diceThemeAuto": "Automatisch (nach Thema)"
+  "diceThemeAuto": "Automatisch (nach Thema)",
+  "diceLooksThemes": "Themen",
+  "diceLooksOthers": "Weitere"
 }

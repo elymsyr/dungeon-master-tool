@@ -122,19 +122,18 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               // --- DICE THEME ---
               Text(l10n.lblDiceTheme, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final name in ['auto', ...themeNames])
-                    ChoiceChip(
-                      avatar: _dieSwatch(resolveDiceLook(name, currentTheme)),
-                      label: Text(name == 'auto' ? l10n.diceThemeAuto : name[0].toUpperCase() + name.substring(1)),
-                      selected: ref.watch(uiStateProvider.select((s) => s.diceTheme)) == name,
-                      onSelected: (_) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(diceTheme: name)),
-                    ),
-                ],
-              ),
+              Builder(builder: (context) {
+                final diceTheme = ref.watch(uiStateProvider.select((s) => s.diceTheme));
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(child: DicePreview(look: resolveDiceLook(diceTheme, currentTheme))),
+                    _diceLookList(l10n.diceLooksThemes, ['auto', ...themeNames.where(diceLooks.containsKey)], diceTheme, currentTheme, palette, l10n),
+                    const SizedBox(height: 12),
+                    _diceLookList(l10n.diceLooksOthers, [...diceLooks.keys.where((k) => !themeNames.contains(k))], diceTheme, currentTheme, palette, l10n),
+                  ],
+                );
+              }),
 
               const SizedBox(height: 32),
 
@@ -462,16 +461,31 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
     );
   }
 
-  Widget _dieSwatch(String look) {
-    final c = diceLooks[look]!;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.body,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.black26),
-      ),
-      alignment: Alignment.center,
-      child: Text('20', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c.ink)),
+  Widget _diceLookList(String title, List<String> names, String selected, String appTheme, DmToolColors palette, L10n l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.sidebarLabelSecondary)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            // Each chip in its own dice look: the body colour, the ink for the label.
+            for (final (name, look) in [for (final n in names) (n, diceLooks[resolveDiceLook(n, appTheme)]!)])
+              ChoiceChip(
+                label: Text(name == 'auto' ? l10n.diceThemeAuto : name[0].toUpperCase() + name.substring(1)),
+                labelStyle: diceFont(look).copyWith(color: look.ink),
+                backgroundColor: look.body,
+                selectedColor: look.body,
+                checkmarkColor: look.ink,
+                side: BorderSide(color: name == selected ? look.ink : Colors.black26, width: name == selected ? 2 : 1),
+                selected: name == selected,
+                onSelected: (_) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(diceTheme: name)),
+              ),
+          ],
+        ),
+      ],
     );
   }
 

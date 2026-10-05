@@ -74,7 +74,7 @@ void main() {
   });
 
   test('dice look follows the app theme on auto, else the pick', () {
-    expect(diceLooks.keys, unorderedEquals(themeNames));
+    expect(diceLooks.keys, containsAll(themeNames)); // every theme has its resin; named styles follow
     expect(resolveDiceLook('auto', 'nord'), 'nord');
     expect(resolveDiceLook('rose', 'nord'), 'rose');
     expect(resolveDiceLook('gone', 'nord'), 'dark');

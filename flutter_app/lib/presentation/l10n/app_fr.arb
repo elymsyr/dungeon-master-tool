@@ -2194,5 +2194,7 @@
   "diceRollSelection": "Lancer {dice}",
   "diceTapToClose": "Touchez pour fermer",
   "lblDiceTheme": "Thème des dés",
-  "diceThemeAuto": "Auto (selon le thème)"
+  "diceThemeAuto": "Auto (selon le thème)",
+  "diceLooksThemes": "Thèmes",
+  "diceLooksOthers": "Autres"
 }
