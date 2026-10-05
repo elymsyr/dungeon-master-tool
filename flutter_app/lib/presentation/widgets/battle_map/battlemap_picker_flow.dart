@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,11 +15,15 @@ import '../../l10n/app_localizations.dart';
 /// device file or an already-uploaded image from a location entity's
 /// `battlemaps` field. Location refs skip re-upload because they are already
 /// `dmt-asset://` refs counted under `MediaKind.battleMap`.
+///
+/// [add] combines the picked map with the current one
+/// ([BattleMapNotifier.addMapImage]) instead of replacing it.
 Future<void> openBattlemapPicker(
   BuildContext context,
   WidgetRef ref,
-  BattleMapNotifier notifier,
-) async {
+  BattleMapNotifier notifier, {
+  bool add = false,
+}) async {
   final box = context.findRenderObject() as RenderBox?;
   final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
   RelativeRect position;
@@ -64,7 +69,13 @@ Future<void> openBattlemapPicker(
   if (source == null || !context.mounted) return;
 
   if (source == _PickerSource.device) {
-    await notifier.pickMapImage(context);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
+    );
+    final path = result?.files.single.path;
+    if (path == null || !context.mounted) return;
+    await (add ? notifier.addMapImage : notifier.applyMapImage)(context, path);
     return;
   }
 
@@ -76,7 +87,7 @@ Future<void> openBattlemapPicker(
   if (battlemaps.isEmpty) return;
   final picked = await _pickBattlemapImage(context, battlemaps);
   if (picked == null || !context.mounted) return;
-  await notifier.applyMapImage(context, picked);
+  await (add ? notifier.addMapImage : notifier.applyMapImage)(context, picked);
 }
 
 enum _PickerSource { device, location }

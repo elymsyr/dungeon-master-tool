@@ -503,7 +503,9 @@ class _ViewTab extends ConsumerWidget {
       child: Column(
         children: [
           // Action buttons row
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _SheetActionButton(
                 icon: Icons.fit_screen,
@@ -511,13 +513,20 @@ class _ViewTab extends ConsumerWidget {
                 palette: palette,
                 onTap: notifier.resetView,
               ),
-              const SizedBox(width: 8),
               _SheetActionButton(
                 icon: Icons.image_outlined,
                 label: L10n.of(context)!.bmOpenMap,
                 palette: palette,
                 onTap: () async {
                   await openBattlemapPicker(context, ref, notifier);
+                },
+              ),
+              _SheetActionButton(
+                icon: Icons.add_photo_alternate_outlined,
+                label: L10n.of(context)!.bmAddMap,
+                palette: palette,
+                onTap: () async {
+                  await openBattlemapPicker(context, ref, notifier, add: true);
                 },
               ),
             ],
