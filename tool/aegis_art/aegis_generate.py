@@ -55,14 +55,16 @@ def zimage_workflow(model: str, text_encoder: str, vae: str,
 
     ref verilirse img2img: boş latent yerine referans görselin latenti,
     denoise kadar üstüne boyanır (düşük denoise = referansa daha sadık).
+    size bir (genişlik, yükseklik) çifti de olabilir (job'da width/height).
     """
+    w, h = size if isinstance(size, tuple) else (size, size)
     latent = {
         "6": {"class_type": "EmptySD3LatentImage",
-              "inputs": {"width": size, "height": size, "batch_size": 1}},
+              "inputs": {"width": w, "height": h, "batch_size": 1}},
     } if ref is None else {
         "6a": {"class_type": "LoadImage", "inputs": {"image": ref}},
         "6b": {"class_type": "ImageScale",
-               "inputs": {"image": ["6a", 0], "width": size, "height": size,
+               "inputs": {"image": ["6a", 0], "width": w, "height": h,
                           "upscale_method": "lanczos", "crop": "center"}},
         "6": {"class_type": "VAEEncode",
               "inputs": {"pixels": ["6b", 0], "vae": ["3", 0]}},
@@ -140,7 +142,7 @@ def run_job(host: str, job: dict, model: str, text_encoder: str, vae: str,
         out_node = "7"
     else:
         wf = zimage_workflow(model, text_encoder, vae, job["prompt"], job["seed"],
-                             size,
+                             (job.get("width", size), job.get("height", size)),
                              upload_ref(host, job["ref"]) if job.get("ref") else None,
                              job.get("denoise", 1.0))
         out_node = "9"
