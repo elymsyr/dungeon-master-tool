@@ -854,8 +854,11 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (value is String) return remap[value] ?? value;
     if (value is Map) {
       final out = <String, dynamic>{};
+      // Anahtar da çevrilir: `class_levels` `{sınıfId: seviye}` — sınıf id'si
+      // anahtarda durur; çevrilmezse dünya silinince sınıf kaybolur.
       value.forEach((k, v) {
-        out[k.toString()] = _rewriteRefs(v, remap);
+        final key = k.toString();
+        out[remap[key] ?? key] = _rewriteRefs(v, remap);
       });
       return out;
     }
