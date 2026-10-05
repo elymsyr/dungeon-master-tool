@@ -1031,6 +1031,34 @@ sesler yükselir, bıçak çıkmaz.
 **Rıhtım İşçisi background'ı** (§2) burada eve döner: kancayı tanıyan adam
 kendiliğinden işe alınır, ve işçi ağı ona ilk gün konuşmaz ama ikinci gün konuşur.
 
+### 7.7 Açık Deniz — Kara Donanma'nın dört bölgesi (KARAR, 2026-10-05)
+
+İki kıta arasındaki yolun **dört bölgesinde Kara Donanma'nın dört gemisi** var, her
+bölgede başka bir gemi. Diğer üçünün ne olduğu **yazılmadı**.
+
+**Dördüncü bölge Vorstrand'a en yakın olanı, ve oradaki gemi dördünün en küçüğü:**
+
+- **Ork savaş gemisi.** Yelkenli; *Dürüst Terazi*'den biraz küçük ama çok değil.
+  Gövdesi kapkara, yelkenleri kapkara, güvertesinde savaş davulları var.
+- **Kaptanı normal bir ork**, dönüşmemiş. Tayfanın hepsi dönüşmüş değil.
+- **Dönüşmüş'ler geminin altında bir bölmede tutuluyor.** Dışarıdan gemi bir ork
+  savaş gemisinden başka bir şeye benzemez.
+
+**Maren'in rotası.** *Dürüst Terazi* normal ticaret yolundan hayli uzaklaşarak gider.
+Bu yüzden diğer gemilerden kurtulur ama en küçüğüyle karşılaşır. Maren bunu yolda
+anlatır: `scene/Maren'in Rotası`. Kartta karşılaşma bir olay olarak değil, bir durum
+olarak durur (A3): yay ilk üç bölgenin dışından geçer, ama Öte'ye yakın son suda
+dolanacak yer yoktur.
+
+**Türetme (onay bekliyor):** Maren'in sapma gerekçesi (gelmeyen gemilerin hepsi
+ticaret yolunu izliyordu; eski tayfasının gemisi de onlardan biriydi) · neden
+**yalnız dördüncüden** kaçamadığı (Öte'ye varan her rota son suda birleşir) ·
+sahnenin adı ve harita görüntüsü.
+
+**Bilerek yazılmayanlar:** diğer üç gemi · dördüncü geminin neden orada durduğu ve
+Dönüşmüş'leri neden taşıdığı · gemilerin kaybolmasıyla Kara Donanma'nın bağı · Caelynn ve
+Holg'un rotası · ork kaptanın adı · ablukanın Meridia kıyısına gelip gelmediği (M0.6).
+
 ---
 
 ## 8. Bu belgeden çıkan yazım listesi
@@ -1211,6 +1239,13 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     silindi"* izi çıktı. Üçlü **hiçbir defterde** yok. *Limanda bir kimlik silindi*
     bilgisinin tek taşıyıcısı artık Mine'ın eğelediği yüzük — ve Mine mührün **orijinal
     halini** karakterlere verebilir (hatırladığı eski yüzü çizer, §7.4).
+
+**Kapatılanlar (2026-10-05):**
+
+44. **Denizde Kara Donanma'nın dört gemisi var** (§7.7). Vorstrand'a en yakın ve en küçüğü
+    kara gövdeli, kara yelkenli, davullu bir ork savaş gemisi; kaptanı normal bir ork,
+    Dönüşmüş'ler alt bölmede. *Dürüst Terazi* ticaret yolundan sapıp ilk üçünden kurtulur,
+    en küçüğüyle karşılaşır; Maren bunu yolda anlatır (`scene/Maren'in Rotası`).
 
 **Açık:**
 
