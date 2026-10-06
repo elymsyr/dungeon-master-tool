@@ -1,5 +1,86 @@
 # Release Notes
 
+## Dungeon Master Tool v18.4.0 — Your Turn (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release lets online players move their own token on their turn. A dragged token now leaves a trail that shows how far it walked, and the last move can be undone. The battle map pen gets the same colour picker as the mind map pen. Your data is not changed, so this version installs over v18.3.0.
+
+---
+
+### Online play
+
+#### Players move their own token on their turn
+
+When you show a battle map to your online players and the encounter reaches a character that a player owns, that player can drag their own token. There is no request to approve: the move appears on your screen and on every player's screen as it happens.
+
+- The player sees a **Your turn** band and a green ring on their token. **Back to where your turn started** puts the token back where it stood when the turn began.
+- Only the token whose turn it is can be moved, and only by its owner. When the turn passes, the player can no longer move it.
+- A hidden token cannot be moved by its player, because the player cannot see it.
+- If grid snapping is on, the player's move snaps to the grid like yours.
+
+---
+
+### Battle map
+
+#### Movement trail
+
+While you drag a token, it leaves a dashed trail behind it: green for players, amber for NPCs, red for monsters. A label next to the token shows the distance walked in feet and metres, with diagonals counted the same way as the grid's distance rule.
+
+- Moving the same token again continues the count. Moving another token or starting a new round starts again.
+- **Undo move**, next to **Navigate** in the toolbar, takes back the last drag.
+
+#### Pen colour
+
+The battle map now has a colour button next to **Draw**, with the same colours and colour picker as the mind map pen. The colour is used for pen lines, area templates and shapes.
+
+---
+
+### Smaller improvements
+
+- **l10n** — new keys for the battle map pen colour, *Undo move*, *Your turn* and *Back to where your turn started*, in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Battle map** — a token drag interrupted by the system (for example a cancelled touch) now ends the drag instead of leaving it stuck.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.3.0` → `18.4.0`.
+- **Online groups:** v18.4.0 works with v18.3.0. A player needs v18.4.0 to move their own token; on v18.3.0 they still see the map as before.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Turn control** — the sixth subscribed table `world_turn_control` holds one grant per world; the player writes only through the `move_turn_token` RPC, the DM applies moves to the encounter (`turn_control_provider.dart`).
+- **Trail distance** — `gridPathFeet` counts diagonals along the whole path, so 5-10-5 stays correct across drags.
+- **Pen colour** — `PenColorButton` / `kPenColors` in `pen_color_picker.dart`, shared by the mind map and the battle map.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.3.0 — Draw and Combine (Beta)
 
 **Release date:** October 2026
