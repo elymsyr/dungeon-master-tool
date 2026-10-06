@@ -19,7 +19,7 @@ tags: [moc]
 - [[world_map_data_dao]] — save/load map grids.
 - [[map_pins_dao]] — pinned markers/labels.
 - [[grid_canvas]] — grid render + token placement widget.
-- [[turn_control_provider]] — online oyuncu kendi turunda kendi token'ını oynatır ("Sıra sende" + tur başına geri al). İzin `world_turn_control` (105), hareket `move_turn_token` RPC → DM → yayın.
+- [[turn_control_provider]] — online oyuncu kendi turunda kendi token'ını oynatır ("Sıra sende" + son sürüklemeyi geri al). İzin `world_turn_control` (105), hareket + ara noktalar `move_turn_token` RPC (107) → DM → yayın; hareket izi snapshot'ta (`trail`) herkese gider.
 - [[dice_physics]] — 3D dice roller: bottom-right dice button on world + character screens, results decided before the throw.
 - [[dice_log]] — landed rolls (free, skill check, saving throw) into the session log under username + character; players' via `log_dice_roll` (106).
 

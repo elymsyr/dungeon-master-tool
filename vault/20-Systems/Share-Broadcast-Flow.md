@@ -30,7 +30,7 @@ Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pul
 | `world_characters` | Oyuncunun karakter sayfası, claim/assign | Oyuncu ve DM |
 | `world_packages` | DM'in dünyaya paylaştığı paketler | DM — `world_packages_provider` |
 | `world_members` | Üyelik / rol | RPC'ler |
-| `world_turn_control` | Oyuncunun kendi turunda token oynatma izni (105). RLS: yalnız DM + sahip görür | DM izin yazar; oyuncu yalnız `move_turn_token` — [[turn_control_provider]] |
+| `world_turn_control` | Oyuncunun kendi turunda token oynatma izni (105); hareketin ara noktaları + adım türü (107). RLS: yalnız DM + sahip görür | DM izin yazar; oyuncu yalnız `move_turn_token` — [[turn_control_provider]] |
 | `world_dice_rolls` | Oyuncunun zar atışı → DM'in oturum günlüğü (106). RLS: yalnız DM görür; oyuncuya hiçbir şey gelmez | Oyuncu yalnız `log_dice_roll` — [[dice_log]] |
 
 (+ `worlds`, `id` filtresiyle — yalnızca dünya meta'sı.)
