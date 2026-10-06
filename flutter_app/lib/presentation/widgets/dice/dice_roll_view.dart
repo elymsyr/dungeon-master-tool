@@ -119,9 +119,11 @@ void _paintBody(Canvas c, Size size, DiceLook look, bool glow) {
   }
 }
 
-Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false}) {
+// [scale] shrinks the image, not the layout: UVs are shares of the atlas, so
+// the same mesh reads a smaller atlas just as well.
+Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false, double scale = 1}) {
   final rec = ui.PictureRecorder();
-  final canvas = Canvas(rec);
+  final canvas = Canvas(rec)..scale(scale);
   final w = _cols * _cell, h = _rows(s) * _cell;
   final body = glow ? Colors.black : look.body.withValues(alpha: look.opacity);
   final ink = glow ? look.accent : look.ink;
@@ -177,7 +179,19 @@ Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false}) {
       text(s.label(f.number), _atlasPoint(s, i, spot), 1.3 * r * px, 1.7 * r * px);
     }
   }
-  return rec.endRecording().toImage(w, h);
+  return rec.endRecording().toImage((w * scale).round(), (h * scale).round());
+}
+
+// `data` averages mips as plain bytes. The default (`color`) does it in linear
+// light: millions of pow() calls on the UI isolate, a multi-second freeze on a
+// phone, for a two-colour atlas.
+Future<Texture2D> _atlasTexture(DieShape s, DiceLook look, {bool glow = false, double scale = 1}) async {
+  final image = await _numberAtlas(s, look, glow: glow, scale: scale);
+  try {
+    return await Texture2D.fromImage(image, content: TextureContent.data);
+  } finally {
+    image.dispose(); // the texture holds its own copy
+  }
 }
 
 // Rounded die: the die shrunk by the rounding radius r, then grown by a ball of
@@ -423,25 +437,44 @@ class DiceKit {
   static Future<DiceKit> load(String look) {
     final kit = _kit;
     if (kit != null && kit.$1 == look) return kit.$2;
-    return (_kit = (look, _build(diceLooks[look] ?? diceLooks['dark']!))).$2;
+    return (_kit = (look, _build(diceLooks[look] ?? diceLooks['dark']!, dieShapes.values))).$2;
   }
 
-  static Future<DiceKit> _build(DiceLook look) async {
+  // The picker's previews, kept per look (tapping back is instant) but only
+  // the last few: each holds its atlases on the GPU.
+  static final _previews = <String, Future<DiceKit>>{};
+
+  /// Just a d20 on a half-size atlas, no floor or warm-up: what [DicePreview]
+  /// shows. A sixteenth of the work of [load], and it leaves the roller's kit
+  /// alone.
+  static Future<DiceKit> preview(String look) {
+    final kit = _kit;
+    if (kit != null && kit.$1 == look) return kit.$2; // the roller's has a d20 too
+    final p = _previews.remove(look) ?? _build(diceLooks[look] ?? diceLooks['dark']!, [dieShapes['d20']!], preview: true);
+    _previews[look] = p; // most recent last
+    if (_previews.length > 6) _previews.remove(_previews.keys.first);
+    return p;
+  }
+
+  static Future<DiceKit> _build(DiceLook look, Iterable<DieShape> shapes, {bool preview = false}) async {
     try {
+      // Ask for the font before anything else: pendingFonts() waits on every
+      // font google_fonts is loading, and the picker's chips start a dozen
+      // more as soon as they build. The atlas bakes the numbers in, so the
+      // font must be in first; offline and never fetched, google_fonts logs it
+      // and the numbers fall back to serif.
+      diceFont(look);
+      final font = GoogleFonts.pendingFonts();
       // Touch the GPU once first: without Flutter GPU this throws right here,
       // before the engine starts its own loads (whose failures go unhandled).
       Texture2D.fromPixels(Uint8List(4), 1, 1);
       await Scene.initializeStaticResources();
-      // The atlas is painted once: its font must be loaded first. Offline and
-      // never fetched, google_fonts logs it and the numbers fall back to serif.
-      diceFont(look);
-      await GoogleFonts.pendingFonts();
+      await font;
       final looks = <String, (MeshGeometry, PhysicallyBasedMaterial)>{}, backs = {...looks};
-      for (final s in dieShapes.values) {
-        // `data` averages mips as plain bytes. The default (`color`) does it
-        // in linear light: millions of pow() calls on the UI isolate, a
-        // multi-second freeze on a phone, for a two-colour atlas.
-        final tex = await Texture2D.fromImage(await _numberAtlas(s, look), content: TextureContent.data);
+      final scale = preview ? 0.5 : 1.0;
+      // All shapes at once: their atlases rasterize side by side.
+      await Future.wait([for (final s in shapes) () async {
+        final tex = await _atlasTexture(s, look, scale: scale);
         final mat = PhysicallyBasedMaterial(baseColorTexture: tex)
           ..roughnessFactor = look.roughness
           ..metallicFactor = look.metallic
@@ -449,7 +482,7 @@ class DiceKit {
           ..clearcoatRoughness = 0.08;
         if (look.glow) {
           mat
-            ..emissiveTexture = await Texture2D.fromImage(await _numberAtlas(s, look, glow: true), content: TextureContent.data)
+            ..emissiveTexture = await _atlasTexture(s, look, glow: true, scale: scale)
             ..emissiveFactor = vm.Vector4(1, 1, 1, 1)
             ..emissiveStrength = 1.6;
         }
@@ -472,7 +505,7 @@ class DiceKit {
           }
         }
         looks[s.name] = (_dieGeometry(s), mat);
-      }
+      }()]);
       final core = switch (look.core) {
         DiceCore.none => null,
         // Unlit: a core glows on its own, and lit it cost phones ~10%.
@@ -491,6 +524,8 @@ class DiceKit {
       // Seen from straight above, metal mirrors the environment's even
       // ceiling and reads as flat paint; tilted, it catches the horizon.
       if (look.metallic > 0) scene.environmentTransform = vm.Matrix3.rotationX(1.1);
+      // The preview lights its own scene from this one and needs no more.
+      if (preview) return DiceKit._(scene, looks, backs, null, core, look.core);
       if (!_phone) {
         scene.add(Node(
           mesh: Mesh(PlaneGeometry(width: 200, depth: 200), ShadowCatcherMaterial(shadowIntensity: 0.6, aoStrength: 0)),
@@ -589,8 +624,8 @@ Node _dieNode(DiceKit kit, DieShape shape, vm.Quaternion rest) {
 // --- widget -------------------------------------------------------------------
 
 /// A d20 in [look] seen straight down onto its 20, centred: the dice look
-/// picker's preview. Loading it also readies [DiceKit] for the next
-/// throw. Shows nothing where Flutter GPU is not available.
+/// picker's preview ([DiceKit.preview]). Shows nothing where Flutter GPU is
+/// not available.
 class DicePreview extends StatefulWidget {
   const DicePreview({super.key, required this.look, this.size = 120});
   final String look;
@@ -631,10 +666,12 @@ class _DicePreviewState extends State<DicePreview> {
   Future<void> _load() async {
     final look = widget.look;
     // Tapping through the chips: one kit build at a time, and once it is done
-    // only the look still selected is built, not every one tapped past.
-    await _building;
+    // only the look still selected is built, not every one tapped past. The
+    // first starts synchronously, so it asks for its font before the chips
+    // below ask for theirs (see DiceKit._build).
+    if (_building != null) await _building;
     if (!mounted || look != widget.look) return;
-    final build = DiceKit.load(look);
+    final build = DiceKit.preview(look);
     _building = build.then((_) {}, onError: (_) {});
     final DiceKit kit;
     try {
