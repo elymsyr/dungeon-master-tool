@@ -686,12 +686,17 @@ class DiceRollView extends StatefulWidget {
     required this.onClose,
     this.modifier = 0,
     this.label,
+    this.onRolled,
   });
   final Map<String, int> counts;
   final String look;
   final int modifier; // added to the dice total, e.g. a skill bonus
   final String? label; // what was rolled, e.g. "Stealth"
   final VoidCallback onClose;
+
+  /// Once, as soon as the throw is decided — before the dice even fly, so the
+  /// session log (and a player's DM) gets it without waiting for them to land.
+  final void Function(DiceRoll roll)? onRolled;
 
   @override
   State<DiceRollView> createState() => _DiceRollViewState();
@@ -713,6 +718,8 @@ class _DiceRollViewState extends State<DiceRollView> {
     // The throw is simulated up front (~90 ms for 30 dice on desktop), off
     // the UI isolate so the screen doesn't hitch.
     final roll = compute(_throwInBackground, (widget.counts, view.trayX, view.trayZ));
+    final onRolled = widget.onRolled;
+    if (onRolled != null) roll.then(onRolled).ignore();
     final kit = DiceKit.load(widget.look).then<DiceKit?>((k) => k, onError: (_) => null);
     Future.wait([roll, kit]).then((r) {
       if (!mounted) return;
@@ -732,10 +739,12 @@ class _DiceRollViewState extends State<DiceRollView> {
       setState(() {
         _roll = roll;
         _kit = kit;
-        _settled = kit == null;
       });
+      if (kit == null) _land();
     });
   }
+
+  void _land() => setState(() => _settled = true);
 
   @override
   void dispose() {
@@ -768,7 +777,7 @@ class _DiceRollViewState extends State<DiceRollView> {
     for (var i = 0; i < roll.dice.length; i++) {
       _place(i, roll.dice[i], step);
     }
-    if (step >= roll.steps - 1) setState(() => _settled = true);
+    if (step >= roll.steps - 1) _land();
   }
 
   void _tap() {
@@ -815,6 +824,19 @@ class _DiceRollViewState extends State<DiceRollView> {
   }
 }
 
+/// The dice line under a roll's total, e.g. "d20: 12 + 5" or
+/// "2d6: 3 + 4 = 7  ·  d8: 5".
+String rollBreakdown(DiceRoll roll, int modifier) {
+  final single = roll.dice.length == 1 || (roll.results.length == 1 && roll.results.values.first.length == 1);
+  final dice = single
+      ? (modifier == 0 ? roll.results.keys.single : '${roll.results.keys.single}: ${roll.total}')
+      : [
+          for (final MapEntry(key: k, value: vs) in roll.results.entries)
+            vs.length == 1 ? '$k: ${vs.single}' : '${vs.length}$k: ${vs.join(' + ')} = ${vs.reduce((a, b) => a + b)}',
+        ].join('  ·  ');
+  return modifier == 0 ? dice : '$dice ${modifier > 0 ? '+' : '−'} ${modifier.abs()}';
+}
+
 class _ResultCard extends StatelessWidget {
   const _ResultCard(this.roll, {this.modifier = 0, this.label});
   final DiceRoll roll;
@@ -824,14 +846,7 @@ class _ResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final single = roll.dice.length == 1 || (roll.results.length == 1 && roll.results.values.first.length == 1);
-    final dice = single
-        ? (modifier == 0 ? roll.results.keys.single : '${roll.results.keys.single}: ${roll.total}')
-        : [
-            for (final MapEntry(key: k, value: vs) in roll.results.entries)
-              vs.length == 1 ? '$k: ${vs.single}' : '${vs.length}$k: ${vs.join(' + ')} = ${vs.reduce((a, b) => a + b)}',
-          ].join('  ·  ');
-    final breakdown = modifier == 0 ? dice : '$dice ${modifier > 0 ? '+' : '−'} ${modifier.abs()}';
+    final breakdown = rollBreakdown(roll, modifier);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.85, end: 1),
       duration: const Duration(milliseconds: 220),

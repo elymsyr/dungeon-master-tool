@@ -7,14 +7,12 @@ import '../../../domain/entities/projection/projection_output_mode.dart';
 import '../../dialogs/screencast_display_picker.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../l10n/app_localizations.dart';
+import 'projection_panel.dart';
 
-/// AppBar projection toggle button. Adapts to the current platform + role:
-///
-/// - **Single available mode** (mobile, no online): direct tap toggles it.
-/// - **Multiple modes**: popup menu lists each available output with its
-///   current on/off state. Tapping an item toggles that specific mode —
-///   outputs fan out, so several can be live simultaneously (e.g. second
-///   window + online broadcast).
+/// AppBar projection button: a menu listing each available output with its
+/// on/off state — tapping one toggles it; outputs fan out, so several can be
+/// live at once (e.g. second window + online broadcast) — and, under them,
+/// the player view window.
 class ProjectionStatusIcon extends ConsumerWidget {
   const ProjectionStatusIcon({super.key});
 
@@ -28,26 +26,13 @@ class ProjectionStatusIcon extends ConsumerWidget {
     final anyActive = state.outputModes.isNotEmpty;
     final iconColor = anyActive ? palette.tokenBorderActive : null;
 
-    if (available.length <= 1) {
-      // Single-mode platforms: direct tap toggles.
-      final mode = available.isEmpty
-          ? ProjectionOutputMode.screencast
-          : available.first;
-      final active = state.outputModes.contains(mode);
-      return IconButton(
-        tooltip: active
-            ? 'Close ${_labelForMode(mode)} (Ctrl+Shift+P)'
-            : 'Open ${_labelForMode(mode)} (Ctrl+Shift+P)',
-        icon: Icon(_iconForMode(mode), size: 20, color: iconColor),
-        onPressed: () => _toggle(context, controller, mode, active),
-      );
-    }
-
+    // `none` is never an output; here it stands for the player view item.
     return PopupMenuButton<ProjectionOutputMode>(
       tooltip: L10n.of(context)!.projOutputs,
       icon: Icon(Icons.cast, size: 20, color: iconColor),
-      onSelected: (mode) =>
-          _toggle(context, controller, mode, state.outputModes.contains(mode)),
+      onSelected: (mode) => mode == ProjectionOutputMode.none
+          ? showPlayerViewWindow(context)
+          : _toggle(context, controller, mode, state.outputModes.contains(mode)),
       itemBuilder: (_) => [
         for (final mode in available)
           PopupMenuItem(
@@ -70,6 +55,18 @@ class ProjectionStatusIcon extends ConsumerWidget {
               ],
             ),
           ),
+        if (available.isNotEmpty) const PopupMenuDivider(),
+        PopupMenuItem(
+          value: ProjectionOutputMode.none,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.tv, size: 18),
+              const SizedBox(width: 8),
+              Text(L10n.of(context)!.sessionPlayerScreen),
+            ],
+          ),
+        ),
       ],
     );
   }

@@ -5,14 +5,14 @@ path: flutter_app/lib/presentation/widgets/dice/dice_physics.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-05
+updated: 2026-10-06
 tags: [file]
 ---
 
 # `dice_physics.dart` (+ `dice_roll_view.dart`, `dice_fab.dart`)
 
 > [!abstract] Primary Purpose
-> The 3D dice roller. A bottom-right dice button on world screens (DM + player) and the standalone character sheet opens a menu over a lightly dimmed screen; the chosen dice are thrown in 3D on that dim and a result card shows the total. Results are decided by `Random` **before** the throw; the physics only shows them. Screen-only: nothing is logged, saved or sent to players.
+> The 3D dice roller. A bottom-right dice button on world screens (DM + player) and the standalone character sheet opens a menu over a lightly dimmed screen; the chosen dice are thrown in 3D on that dim and a result card shows the total. Results are decided by `Random` **before** the throw; the physics only shows them. As soon as the throw is decided (before the dice fly), `DiceRollView.onRolled` hands the roll to [[dice_log]], which writes it to the open world's session log (a player's through `log_dice_roll`, migration 106); nothing else is saved.
 
 ## Inputs / Outputs
 **Inputs**

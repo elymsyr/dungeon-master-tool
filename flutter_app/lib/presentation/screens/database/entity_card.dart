@@ -779,6 +779,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       entities: ref.read(entityProvider),
       ref: ref,
       entityFields: entity.fields,
+      entityName: entity.name,
       compact: useCompact,
       panelId: widget.panelId,
     );

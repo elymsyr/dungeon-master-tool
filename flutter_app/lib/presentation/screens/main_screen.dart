@@ -39,9 +39,11 @@ import '../widgets/app_icon_image.dart';
 import '../widgets/world_open_splash.dart';
 import '../widgets/characters_sidebar.dart';
 import '../widgets/dice/dice_fab.dart';
+import '../widgets/dice/dice_log.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
+import '../widgets/projection/projection_panel.dart';
 import '../widgets/projection/projection_status_icon.dart';
 import '../widgets/save_sync_indicator.dart';
 import '../widgets/soundpad_sidebar.dart';
@@ -639,17 +641,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
     ref.watch(projectionEntitySyncProvider.select((_) => 0));
     // Online oyuncunun kendi turunda token oynatma izni (DM tarafı).
     ref.watch(dmTurnControlProvider.select((_) => 0));
+    // Oyuncuların zar atışları oturum günlüğüne (DM tarafı).
+    ref.watch(dmDiceLogProvider.select((_) => 0));
 
     final editMode = ref.watch(editModeProvider);
 
-    // Listen for projection panel navigation requests
+    // "View" on the projected snackbar → player view window.
     ref.listen<bool?>(projectionPanelNavigationProvider, (_, value) {
       if (value == true) {
-        setState(() => _tabIndex = 1);
-        ref.read(uiStateProvider.notifier).update(
-              (s) => s.copyWith(mainTabIndex: 1, sessionBottomTab: 2),
-            );
         ref.read(projectionPanelNavigationProvider.notifier).state = null;
+        showPlayerViewWindow(context);
       }
     });
 
@@ -798,6 +799,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     SettingsTab.show(context);
                   case 'bug':
                     BugReportDialog.show(context);
+                  case 'player_view':
+                    showPlayerViewWindow(context);
                   default:
                     if (action.startsWith('projection:')) {
                       final mode = ProjectionOutputMode.values.firstWhere(
@@ -830,6 +833,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                             mode, projState.outputModes.contains(mode))),
                       ]),
                     ),
+                PopupMenuItem(value: 'player_view', child: Row(children: [const Icon(Icons.tv, size: 18), const SizedBox(width: 8), Text(l10n.sessionPlayerScreen)])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 if (editMode)
                   PopupMenuItem(value: 'rules', child: Row(children: [const Icon(Icons.tune, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.ruleSettingsTitle)])),

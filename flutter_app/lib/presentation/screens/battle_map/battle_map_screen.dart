@@ -102,7 +102,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
             final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
             notifier.updateViewportSize(canvasSize);
 
-            return Listener(
+            final canvas = Listener(
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
                   notifier.zoomAtPoint(event.localPosition, event.scrollDelta.dy);
@@ -220,6 +220,26 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               ),
             ),  // GestureDetector
             );  // Listener
+
+            // Sidebar entity dropped on the map joins the encounter with its
+            // token where it was dropped.
+            return DragTarget<String>(
+              onWillAcceptWithDetails: (d) =>
+                  ref.read(combatProvider.notifier).canAddToEncounter(d.data),
+              onAcceptWithDetails: (d) => _dropEntity(
+                d.data,
+                (context.findRenderObject()! as RenderBox).globalToLocal(d.offset),
+              ),
+              builder: (_, candidates, _) => DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(
+                  border: candidates.isEmpty
+                      ? null
+                      : Border.all(color: palette.tabIndicator, width: 2),
+                ),
+                child: canvas,
+              ),
+            );
           }),
         ),
 
@@ -291,6 +311,25 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     final manual = s.tokenSizeMultipliers[combatantId];
     if (manual != null) return manual;
     return tokenCellSpan(_entityFor(entityId), ref.read(entityProvider));
+  }
+
+  /// Adds [entityId] to the encounter and centres its new token on [local]
+  /// (canvas-widget coordinates; the sidebar drags anchor on the pointer).
+  void _dropEntity(String entityId, Offset local) {
+    ref.read(combatProvider.notifier).addCombatantFromEntity(entityId);
+    final placed = ref.read(battleMapProvider(widget.encounterId)).tokenPositions;
+    final added = ref
+        .read(combatProvider)
+        .activeEncounter
+        ?.combatants
+        .where((c) => c.entityId == entityId && !placed.containsKey(c.id))
+        .lastOrNull;
+    if (added == null) return;
+    _notifier.moveToken(added.id, _notifier.screenToCanvas(local));
+    if (ref.read(battleMapProvider(widget.encounterId)).gridSnap) {
+      _notifier.snapTokenToGrid(added.id);
+    }
+    _notifier.persistTokenPositions();
   }
 
   Widget _buildTokenLayer(DmToolColors palette, BattleMapNotifier notifier) {

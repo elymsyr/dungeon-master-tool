@@ -6,9 +6,53 @@ import '../../theme/dm_tool_colors.dart';
 import 'projection_thumb_chip.dart';
 import '../../l10n/app_localizations.dart';
 
-/// DM-side control surface for the player screen — lives inside the
-/// Session tab's "Player Screen" bottom tab. Shows the open/close window
-/// toggle, the blackout button, and a horizontal scrolling list of
+/// Opens [ProjectionPanel] in a window — from the projection outputs menu
+/// and the "View" action of the projected snackbar.
+Future<void> showPlayerViewWindow(BuildContext context) {
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: palette.uiPopupBg,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: palette.br,
+        side: BorderSide(color: palette.featureCardBorder),
+      ),
+      child: SizedBox(
+        width: 640,
+        height: 520,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      L10n.of(ctx)!.sessionPlayerScreen,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    tooltip: L10n.of(ctx)!.btnClose,
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+            const Expanded(child: ProjectionPanel()),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// DM-side control surface for the player screen, shown in the player view
+/// window ([showPlayerViewWindow]). Shows the blackout button and a list of
 /// projection item thumbnails.
 ///
 /// Mirrors the Python `ui/widgets/player_screen_widget.py` placement.

@@ -28,6 +28,7 @@ import '../../screens/map/world_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
 import '../dice/dice_fab.dart';
+import '../dice/dice_log.dart';
 import '../markdown_text_area.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
@@ -126,6 +127,9 @@ class FieldWidgetFactory {
     /// Aynı entity'deki diğer field değerleri — proficiencyTable gibi
     /// cross-field lookup (stat_block, proficiency_bonus) gereksinimleri için.
     Map<String, dynamic>? entityFields,
+
+    /// The entity's name — a skill / save roll goes to the session log under it.
+    String? entityName,
 
     /// Inline-list rendering: relation lists collapse to a single comma-separated
     /// row instead of a Card with per-row entries. Used in grouped multi-column
@@ -349,6 +353,7 @@ class FieldWidgetFactory {
         readOnly: readOnly,
         onChanged: onChanged,
         entityFields: entityFields,
+        entityName: entityName,
       ),
       FieldType.tagList => _TagListFieldWidget(
         schema: schema,
@@ -4288,6 +4293,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
   final Map<String, dynamic>? entityFields;
+  final String? entityName;
 
   const _ProficiencyTableFieldWidget({
     required this.schema,
@@ -4295,6 +4301,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
     required this.readOnly,
     required this.onChanged,
     this.entityFields,
+    this.entityName,
   });
 
   /// Preset satir listesi + kayitli degerler. Blueprint/paket verisi tabloyu
@@ -4435,7 +4442,13 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                   onTap: totalStr == '—'
                       ? null
                       : () => rollDice(context, ref, const {'d20': 1},
-                          modifier: total, label: name),
+                          modifier: total,
+                          label: name,
+                          // save_bonuses / saving_throws: the rest are skills.
+                          kind: schema.fieldKey.startsWith('sav')
+                              ? DiceRollKind.save
+                              : DiceRollKind.skill,
+                          character: entityName),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(

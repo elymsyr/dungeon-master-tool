@@ -541,10 +541,6 @@
   "sessionActions": "Actions",
   "sessionAddAll": "Add all",
   "sessionNoOwnedChars": "No owned characters in this world.",
-  "sessionSession": "Session",
-  "sessionEventLog": "Event Log",
-  "sessionNoEvents": "No events yet",
-  "sessionAddLog": "Add Log",
   "sessionAdd": "Add",
   "sessionAddWithQuantity": "Add ({count})",
   "@sessionAddWithQuantity": {
@@ -555,22 +551,13 @@
     }
   },
   "sessionQuickLogHint": "Quick log entry... (@ to mention)",
-  "sessionNotes": "Notes",
-  "sessionBattleMap": "Battle Map",
   "sessionPlayerScreen": "Player Screen",
-  "sessionEntityStats": "Entity Stats",
-  "sessionDmNotesHint": "DM notes... (@ to mention)",
   "sessionNoActiveEncounter": "No active encounter",
   "sessionConditions": "Conditions",
   "sessionName": "Name",
   "sessionCombat": "Combat",
-  "sessionLog": "Log",
-  "sessionMap": "Map",
-  "sessionPlayer": "Player",
-  "sessionStats": "Stats",
   "sessionNoCombatants": "No combatants\nDrag entities from sidebar or use Quick Add",
   "sessionNoCombatantsShort": "No combatants",
-  "sessionSelectCombatantStats": "Select a combatant\nto view stats",
   "sessionEntityNotFound": "Entity not found",
   "sessionQuantity": "Quantity",
   "sessionCombatStats": "Combat Stats",
@@ -3408,6 +3395,23 @@
   "@diceRollSelection": {
     "placeholders": {
       "dice": {
+        "type": "String"
+      }
+    }
+  },
+  "diceLogRoll": "Roll",
+  "diceLogCheck": "{label} check",
+  "@diceLogCheck": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "diceLogSave": "{label} saving throw",
+  "@diceLogSave": {
+    "placeholders": {
+      "label": {
         "type": "String"
       }
     }

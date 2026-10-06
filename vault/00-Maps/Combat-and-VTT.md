@@ -21,6 +21,7 @@ tags: [moc]
 - [[grid_canvas]] — grid render + token placement widget.
 - [[turn_control_provider]] — online oyuncu kendi turunda kendi token'ını oynatır ("Sıra sende" + tur başına geri al). İzin `world_turn_control` (105), hareket `move_turn_token` RPC → DM → yayın.
 - [[dice_physics]] — 3D dice roller: bottom-right dice button on world + character screens, results decided before the throw.
+- [[dice_log]] — landed rolls (free, skill check, saving throw) into the session log under username + character; players' via `log_dice_roll` (106).
 
 ## Data Flow
 DM edits initiative/HP → [[combat_provider]] → [[combat_dao]] (Drift) → [[Sync-and-Realtime]]. Map edits → [[world_map_data_dao]] + [[map_pins_dao]]. Snapshot built for [[Projection-Second-Screen]] with [[fog_externalizer]].
