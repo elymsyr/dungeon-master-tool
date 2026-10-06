@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../utils/stroke_path.dart';
 import 'mind_map_notifier.dart';
+
+export '../../utils/stroke_path.dart';
 
 /// Paints the mind map background grid, workspaces, connection edges,
 /// and LOD template rectangles at extreme zoom-out.
@@ -407,53 +410,6 @@ class MindMapPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 // Pen strokes
 // ---------------------------------------------------------------------------
-
-/// Smooth path through [pts]: quadratic segments between midpoints, so raw
-/// pointer samples never show as corners.
-Path buildStrokePath(List<Offset> pts) {
-  final path = Path()..moveTo(pts.first.dx, pts.first.dy);
-  for (var i = 1; i < pts.length - 1; i++) {
-    final mid = Offset.lerp(pts[i], pts[i + 1], 0.5)!;
-    path.quadraticBezierTo(pts[i].dx, pts[i].dy, mid.dx, mid.dy);
-  }
-  if (pts.length > 1) path.lineTo(pts.last.dx, pts.last.dy);
-  return path;
-}
-
-/// Ramer–Douglas–Peucker: drops points that lie within [eps] of the line
-/// through their neighbours. Shape is kept to [eps]; the saved stroke (and
-/// the synced blob) shrinks several-fold.
-List<Offset> simplifyStroke(List<Offset> pts, double eps) {
-  if (pts.length < 3) return List.of(pts);
-  final keep = List<bool>.filled(pts.length, false)
-    ..[0] = true
-    ..[pts.length - 1] = true;
-  final stack = <(int, int)>[(0, pts.length - 1)];
-  while (stack.isNotEmpty) {
-    final (a, b) = stack.removeLast();
-    final ab = pts[b] - pts[a];
-    final len = ab.distance;
-    var maxD = 0.0;
-    var idx = -1;
-    for (var i = a + 1; i < b; i++) {
-      final ap = pts[i] - pts[a];
-      final d = len == 0
-          ? ap.distance
-          : (ab.dx * ap.dy - ab.dy * ap.dx).abs() / len;
-      if (d > maxD) {
-        maxD = d;
-        idx = i;
-      }
-    }
-    if (idx >= 0 && maxD > eps) {
-      keep[idx] = true;
-      stack
-        ..add((a, idx))
-        ..add((idx, b));
-    }
-  }
-  return [for (var i = 0; i < pts.length; i++) if (keep[i]) pts[i]];
-}
 
 // Strokes are immutable — build each path once, not on every repaint.
 final _strokePaths = Expando<Path>();

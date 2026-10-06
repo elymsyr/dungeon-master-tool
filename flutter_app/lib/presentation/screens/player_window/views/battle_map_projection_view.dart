@@ -14,6 +14,7 @@ import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../../domain/value_objects/grid_distance.dart';
 import '../../../../domain/value_objects/map_shape.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../utils/stroke_path.dart';
 import '../../../widgets/asset_ref_image.dart';
 import '../../battle_map/render/aoe_render.dart';
 
@@ -63,9 +64,17 @@ class _BattleMapProjectionViewState
   Offset _grabDelta = Offset.zero;
   Timer? _ownHold;
 
-  /// This turn's path, from the turn's start, sampled every half cell — drawn
-  /// dashed with the distance walked, like the DM's own trail.
-  List<Offset> _ownTrail = const [];
+  /// The viewer's own trail while they move (and until the broadcast catches
+  /// up) — the same model as the DM's `TokenMove`: [_ownPath] ends before the
+  /// token, [_ownStops] are the path indexes where each drag began (the undo
+  /// targets). Seeded from the broadcast trail, so a drag continues the trail
+  /// the DM shows. Only meaningful while [_ownPos] is set; otherwise the
+  /// broadcast trail is shown.
+  List<Offset> _ownPath = const [];
+  List<int> _ownStops = const [];
+
+  /// True once the current drag has moved — it then has its stop.
+  bool _legOpen = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -97,17 +106,42 @@ class _BattleMapProjectionViewState
     final t = snap.tokens.where((t) => t.id == grant.combatantId).firstOrNull;
     if (t == null ||
         (Offset(t.x, t.y) - own).distance <= snap.gridSize * 0.75) {
-      _ownPos = null;
+      _dropOwn();
       _ownHold?.cancel();
     }
+  }
+
+  /// Back to the broadcast: token and trail as the DM has them.
+  void _dropOwn() {
+    _ownPos = null;
+    _ownPath = const [];
+    _ownStops = const [];
   }
 
   void _holdOwn() {
     _ownHold?.cancel();
     _ownHold = Timer(const Duration(seconds: 2), () {
-      if (mounted && _ownPointer == null) setState(() => _ownPos = null);
+      if (mounted && _ownPointer == null) setState(_dropOwn);
     });
   }
+
+  /// The broadcast trail of the viewer's token as (path, stops) — path ends
+  /// before the token, like [_ownPath].
+  (List<Offset>, List<int>) _broadcastTrail(
+      BattleMapSnapshot snap, TurnGrant grant) {
+    final t = snap.trail;
+    if (t == null || t.id != grant.combatantId) return (const [], const []);
+    final pts = [
+      for (var i = 0; i + 1 < t.points.length; i += 2)
+        Offset(t.points[i], t.points[i + 1]),
+    ];
+    final path = pts.sublist(0, pts.length - 1);
+    return (path, [for (final k in t.stops) if (k < path.length) k]);
+  }
+
+  /// Trail samples are kept at least a quarter cell apart — the DM's rule,
+  /// so both sides build the same path from the same points.
+  static double _trailStep(BattleMapSnapshot snap) => snap.gridSize / 4;
 
   /// The viewer's grant when it is their turn on this map, else null.
   TurnGrant? _grantOn(BattleMapSnapshot snap) {
@@ -133,9 +167,17 @@ class _BattleMapProjectionViewState
     if ((e.localPosition - center).distance > math.max(radius, 24)) return;
     _ownHold?.cancel();
     _grabDelta = at - (e.localPosition - Offset(tf.dx, tf.dy)) / tf.scale;
+    // Still holding our own (unechoed) trail → keep it, even when an undo
+    // emptied it; else start from the trail the DM broadcasts.
+    if (_ownPos == null) {
+      final (path, stops) = _broadcastTrail(snap, grant);
+      _ownPath = path;
+      _ownStops = stops;
+    }
     setState(() {
       _ownPointer = e.pointer;
       _ownPos = at;
+      _legOpen = false;
     });
   }
 
@@ -149,29 +191,61 @@ class _BattleMapProjectionViewState
       p.dx.clamp(0, snap.canvasWidth.toDouble()),
       p.dy.clamp(0, snap.canvasHeight.toDouble()),
     );
-    final trail = _ownTrail.isEmpty ? [grant.origin] : _ownTrail;
+    var path = _ownPath;
+    var stops = _ownStops;
+    final newLeg = !_legOpen;
+    if (newLeg) {
+      // The drag's first move: it starts a stop where the token stood.
+      final from = _ownPos!;
+      if ((pos - from).distance < 1) return;
+      path = [...path, from];
+      stops = [...stops, path.length - 1];
+    }
+    final via = (pos - path.last).distance >= _trailStep(snap)
+        ? [pos]
+        : const <Offset>[];
     setState(() {
+      _legOpen = true;
       _ownPos = pos;
-      _ownTrail = (pos - trail.last).distance >= snap.gridSize / 2
-          ? [...trail, pos]
-          : trail;
+      _ownPath = [...path, ...via];
+      _ownStops = stops;
     });
-    ref.read(turnMoveSenderProvider)?.send(grant, pos);
+    ref
+        .read(turnMoveSenderProvider)
+        ?.send(grant, pos, via: via, newLeg: newLeg);
   }
 
   void _ownUp(PointerEvent e) {
     if (e.pointer != _ownPointer) return;
-    setState(() => _ownPointer = null);
+    setState(() {
+      _ownPointer = null;
+      _legOpen = false;
+    });
     _holdOwn();
   }
 
+  /// Takes back the last drag — the same step as the DM's undo button, which
+  /// the DM applies to its own copy of the trail.
   void _undoOwn(TurnGrant grant) {
+    if (_ownPointer != null) return;
+    final snap = widget.item.snapshot;
+    final (path, stops) = _ownPos != null
+        ? (_ownPath, _ownStops)
+        : _broadcastTrail(snap, grant);
+    final Offset target;
+    if (stops.isEmpty) {
+      target = grant.origin;
+    } else {
+      target = path[stops.last];
+    }
     setState(() {
-      _ownPos = grant.origin;
-      _ownTrail = const [];
+      _ownPos = target;
+      // Mirrors `BattleMapNotifier._dropLastStop`.
+      _ownPath = stops.length <= 1 ? const [] : path.sublist(0, stops.last + 1);
+      _ownStops = stops.isEmpty ? const [] : stops.sublist(0, stops.length - 1);
     });
     _holdOwn();
-    ref.read(turnMoveSenderProvider)?.send(grant, grant.origin);
+    ref.read(turnMoveSenderProvider)?.undo(grant, target);
   }
 
   @override
@@ -293,8 +367,8 @@ class _BattleMapProjectionViewState
       _ownHold?.cancel();
       setState(() {
         _ownPointer = null;
-        _ownPos = null;
-        _ownTrail = const [];
+        _legOpen = false;
+        _dropOwn();
       });
     });
     final grant = _grantOn(snap);
@@ -306,9 +380,30 @@ class _BattleMapProjectionViewState
               t.id == grant!.combatantId ? t.movedTo(own.dx, own.dy) : t,
           ]);
     final dragging = grant != null && _ownPointer != null;
-    final ownToken = grant == null || _ownTrail.isEmpty
-        ? null
-        : shown.tokens.firstWhere((t) => t.id == grant.combatantId);
+    // Our own trail while we move, else the one the DM broadcasts (any
+    // token — the DM's moves and every player's turn).
+    final ({String id, List<Offset> points, Color color})? trail;
+    if (own != null) {
+      trail = _ownPath.isEmpty
+          ? null
+          : (
+              id: grant!.combatantId,
+              points: [..._ownPath, own],
+              color: _ownTurnColor,
+            );
+    } else if (snap.trail case final t?
+        when shown.tokens.any((tok) => tok.id == t.id)) {
+      trail = (
+        id: t.id,
+        points: [
+          for (var i = 0; i + 1 < t.points.length; i += 2)
+            Offset(t.points[i], t.points[i + 1]),
+        ],
+        color: hexToColor(t.colorHex),
+      );
+    } else {
+      trail = null;
+    }
     final canvas = LayoutBuilder(builder: (context, constraints) {
       final size = Size(constraints.maxWidth, constraints.maxHeight);
       Widget c = CustomPaint(
@@ -320,9 +415,7 @@ class _BattleMapProjectionViewState
           tokenImages: _tokenImageCache,
           compact: isCompact,
           ownTokenId: grant?.combatantId,
-          ownTrail: ownToken == null
-              ? null
-              : [..._ownTrail, Offset(ownToken.x, ownToken.y)],
+          trail: trail,
         ),
       );
       if (grant != null) {
@@ -436,7 +529,7 @@ class _BattleMapProjectionViewState
 
 const _ownTurnColor = Color(0xFF4CAF50);
 
-/// "Your turn" pill over the map, with the back-to-turn-start button.
+/// "Your turn" pill over the map, with the undo-last-move button.
 class _OwnTurnBanner extends StatelessWidget {
   final VoidCallback onUndo;
 
@@ -463,7 +556,7 @@ class _OwnTurnBanner extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.undo, color: Colors.white),
-              tooltip: l10n.bmUndoToTurnStart,
+              tooltip: l10n.bmMoveUndo,
               onPressed: onUndo,
             ),
           ],
@@ -492,8 +585,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// The viewer's token while it is their turn — drawn with a ring.
   final String? ownTokenId;
 
-  /// Canvas-space path the viewer's token walked this turn, ending at it.
-  final List<Offset>? ownTrail;
+  /// Movement trail to draw: canvas-space path ending at token [id].
+  final ({String id, List<Offset> points, Color color})? trail;
 
   _BattleMapProjectionPainter({
     required this.snapshot,
@@ -502,7 +595,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
     required this.tokenImages,
     this.compact = false,
     this.ownTokenId,
-    this.ownTrail,
+    this.trail,
   });
 
   @override
@@ -599,14 +692,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
       for (final s in snapshot.strokes) {
         if ((s.layer == 0) != background) continue; // 0 = background
         if (s.points.length < 4) continue;
-        final path = Path()
-          ..moveTo(dx + s.points[0] * scale, dy + s.points[1] * scale);
-        for (var i = 2; i + 1 < s.points.length; i += 2) {
-          path.lineTo(
-              dx + s.points[i] * scale, dy + s.points[i + 1] * scale);
-        }
         canvas.drawPath(
-          path,
+          _strokePath(s.points, scale, dx, dy),
           Paint()
             ..color = _hexColor(s.colorHex)
             ..strokeWidth = s.width * scale * strokeMult
@@ -742,12 +829,15 @@ class _BattleMapProjectionPainter extends CustomPainter {
       }
     }
 
-    // 2.7. The viewer's own move this turn — dashed, under the tokens.
-    final trail = ownTrail;
-    if (trail != null && trail.length > 1) {
-      final pts = [for (final p in trail) Offset(dx + p.dx * scale, dy + p.dy * scale)];
+    // 2.7. The last move — dashed, under the tokens, like the DM's trail.
+    final trail = this.trail;
+    if (trail != null && trail.points.length > 1) {
+      final pts = [
+        for (final p in trail.points)
+          Offset(dx + p.dx * scale, dy + p.dy * scale),
+      ];
       final dashed = Path();
-      for (final metric in polygonPath(pts, closed: false).computeMetrics()) {
+      for (final metric in buildStrokePath(pts).computeMetrics()) {
         for (var d = 0.0; d < metric.length; d += 20) {
           dashed.addPath(metric.extractPath(d, d + 12), Offset.zero);
         }
@@ -755,20 +845,20 @@ class _BattleMapProjectionPainter extends CustomPainter {
       canvas.drawPath(
         dashed,
         Paint()
-          ..color = _ownTurnColor
+          ..color = trail.color
           ..strokeWidth = 4
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round,
       );
       final feet = gridPathFeet(
-        trail,
+        trail.points,
         gridSize: snapshot.gridSize.toDouble(),
         feetPerCell: snapshot.feetPerCell.toDouble(),
         rule: rule,
       );
       final meters = feet * 0.3; // 5e convention: 5 ft = 1.5 m
       final r = snapshot.tokenSize *
-          (snapshot.tokenSizeMultipliers[ownTokenId] ?? 1) *
+          (snapshot.tokenSizeMultipliers[trail.id] ?? 1) *
           scale /
           2;
       drawFeetLabel(
@@ -982,13 +1072,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
     for (final s in snapshot.strokes) {
       if (s.layer == 0) continue; // background already drawn; object+GM only
       if (s.points.length < 4) continue;
-      final path = Path()
-        ..moveTo(dx + s.points[0] * scale, dy + s.points[1] * scale);
-      for (var i = 2; i + 1 < s.points.length; i += 2) {
-        path.lineTo(dx + s.points[i] * scale, dy + s.points[i + 1] * scale);
-      }
       canvas.drawPath(
-        path,
+        _strokePath(s.points, scale, dx, dy),
         Paint()
           ..color = _hexColor(s.colorHex)
           ..strokeWidth = s.width * scale * strokeMult
@@ -1113,6 +1198,14 @@ class _BattleMapProjectionPainter extends CustomPainter {
 
   Color _hexColor(String hex) => hexToColor(hex);
 
+  /// A pen stroke's flat canvas points → the same smoothed curve the DM draws.
+  static Path _strokePath(
+          List<double> flat, double scale, double dx, double dy) =>
+      buildStrokePath([
+        for (var i = 0; i + 1 < flat.length; i += 2)
+          Offset(dx + flat[i] * scale, dy + flat[i + 1] * scale),
+      ]);
+
   /// 3-letter condition abbreviation, matching the DM view's `_ConditionStrip`.
   static String _abbrev(String name) {
     if (name.isEmpty) return '?';
@@ -1192,7 +1285,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
         old.tokenImages.length != tokenImages.length ||
         old.compact != compact ||
         old.ownTokenId != ownTokenId ||
-        old.ownTrail != ownTrail;
+        old.trail != trail;
   }
 }
 

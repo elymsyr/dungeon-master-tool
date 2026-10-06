@@ -12,6 +12,7 @@ import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../../domain/entities/projection/projection_state.dart';
 import '../../domain/entities/session.dart';
+import '../../presentation/screens/battle_map/battle_map_notifier.dart';
 import '../services/world_sync_service.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -98,9 +99,30 @@ final turnMoveSenderProvider = Provider<TurnMoveSender?>((ref) {
   );
 });
 
-/// One call in flight; positions arriving meanwhile collapse into the latest,
-/// so a drag never builds a queue — at most one write per round-trip, and no
-/// closer than [_minGap].
+/// What a `move_turn_token` call means to the DM (migration 107 `p_kind`).
+enum TurnMoveKind {
+  /// The drag goes on.
+  move,
+
+  /// A new drag starts here — the DM's undo stops at its start.
+  leg,
+
+  /// Take back the last drag.
+  undo,
+}
+
+class _TurnOp {
+  _TurnOp(this.grant, this.pos, this.via, this.kind);
+  final TurnGrant grant;
+  Offset pos;
+  List<Offset> via;
+  final TurnMoveKind kind;
+}
+
+/// One call in flight; moves arriving meanwhile collapse into the latest —
+/// their paths joined, so the DM still gets every point walked — so a drag
+/// never builds a queue: at most one write per round-trip, and no closer
+/// than [_minGap]. A new drag or an undo is never folded into another call.
 class TurnMoveSender {
   TurnMoveSender(this._rpc, {required this.onRejected});
 
@@ -113,40 +135,92 @@ class TurnMoveSender {
 
   static const _minGap = Duration(milliseconds: 100);
 
-  TurnGrant? _grant;
-  Offset? _next;
+  /// Server cap on `p_path` points (migration 107).
+  static const maxPathPoints = 400;
+
+  final List<_TurnOp> _queue = [];
   bool _busy = false;
 
-  void send(TurnGrant grant, Offset pos) {
-    _grant = grant;
-    _next = pos;
+  /// The server predates migration 107 — positions only.
+  bool _legacy = false;
+
+  /// [pos] is where the token is now; [via] the points walked since the last
+  /// call, in order.
+  void send(
+    TurnGrant grant,
+    Offset pos, {
+    List<Offset> via = const [],
+    bool newLeg = false,
+  }) {
+    final last = _queue.lastOrNull;
+    if (!newLeg &&
+        last != null &&
+        last.kind != TurnMoveKind.undo &&
+        identical(last.grant, grant)) {
+      last
+        ..pos = pos
+        ..via = _cap([...last.via, ...via]);
+    } else {
+      _queue.add(_TurnOp(grant, pos, _cap(via),
+          newLeg ? TurnMoveKind.leg : TurnMoveKind.move));
+    }
     if (!_busy) unawaited(_pump());
   }
+
+  /// Takes back the last drag; [target] is where it began.
+  void undo(TurnGrant grant, Offset target) {
+    _queue.add(_TurnOp(grant, target, const [], TurnMoveKind.undo));
+    if (!_busy) unawaited(_pump());
+  }
+
+  /// Every other point until it fits — the shape survives, the payload stays
+  /// under the server's cap.
+  static List<Offset> _cap(List<Offset> via) {
+    var out = via;
+    while (out.length > maxPathPoints) {
+      out = [for (var i = 0; i < out.length; i += 2) out[i]];
+    }
+    return out;
+  }
+
+  Map<String, dynamic> _params(_TurnOp op) => {
+        'p_world_id': op.grant.worldId,
+        'p_combatant_id': op.grant.combatantId,
+        'p_x': op.pos.dx,
+        'p_y': op.pos.dy,
+        if (!_legacy && op.via.isNotEmpty)
+          'p_path': [for (final p in op.via) ...[p.dx, p.dy]],
+        if (!_legacy && op.kind != TurnMoveKind.move) 'p_kind': op.kind.index,
+      };
 
   Future<void> _pump() async {
     _busy = true;
     try {
-      while (_next != null) {
-        final grant = _grant!;
-        final pos = _next!;
-        _next = null;
+      while (_queue.isNotEmpty) {
+        final op = _queue.removeAt(0);
         final sent = DateTime.now();
         try {
-          final ok = await _rpc({
-            'p_world_id': grant.worldId,
-            'p_combatant_id': grant.combatantId,
-            'p_x': pos.dx,
-            'p_y': pos.dy,
-          });
+          Object? ok;
+          try {
+            ok = await _rpc(_params(op));
+          } on PostgrestException catch (e) {
+            // PGRST202: no function with these params — migration 107 is not
+            // applied yet. Fall back to the position-only call.
+            if (e.code != 'PGRST202' || _legacy) rethrow;
+            _legacy = true;
+            ok = await _rpc(_params(op));
+          }
           if (ok == false) {
-            if (identical(_grant, grant)) _next = null;
-            onRejected(grant);
+            _queue.removeWhere((o) => identical(o.grant, op.grant));
+            onRejected(op.grant);
           }
         } catch (e) {
           debugPrint('TurnMoveSender: $e');
         }
         final wait = _minGap - DateTime.now().difference(sent);
-        if (_next != null && wait > Duration.zero) await Future.delayed(wait);
+        if (_queue.isNotEmpty && wait > Duration.zero) {
+          await Future.delayed(wait);
+        }
       }
     } finally {
       _busy = false;
@@ -233,7 +307,9 @@ TurnGrant? wantedTurnGrant({
 }
 
 /// An owner's move → the encounter. The server already checked who sent it;
-/// this only drops moves of a grant the DM has since replaced.
+/// this only drops moves of a grant the DM has since replaced. With the DM's
+/// battle map open the move goes through its notifier, so the trail gets
+/// every point the player walked and their undo takes back a whole drag.
 void _applyMove(Ref ref, TurnGrant? granted, WorldSyncEvent e) {
   if (granted == null || e.eventType != PostgresChangeEvent.update) return;
   final r = e.newRecord;
@@ -250,19 +326,52 @@ void _applyMove(Ref ref, TurnGrant? granted, WorldSyncEvent e) {
       .where((en) => en.id == granted.encounterId)
       .firstOrNull;
   if (enc == null) return;
-  var pos = Offset(x.toDouble(), y.toDouble());
+  final pos = Offset(x.toDouble(), y.toDouble());
+  final kindIx = r['kind'];
+  final kind = kindIx is int && kindIx >= 0 && kindIx < TurnMoveKind.values.length
+      ? TurnMoveKind.values[kindIx]
+      : TurnMoveKind.move;
+  final via = parseTurnPath(r['path']);
+
+  final map = battleMapProvider(enc.id);
+  if (ref.exists(map)) {
+    final n = ref.read(map.notifier);
+    if (kind == TurnMoveKind.undo) {
+      n.undoRemoteMove(granted.combatantId, pos);
+    } else {
+      n.applyRemoteMove(granted.combatantId, pos,
+          via: via, newLeg: kind == TurnMoveKind.leg);
+    }
+    return;
+  }
+
+  var to = pos;
   if (enc.gridSnap) {
     // Same rule as the DM's own drop (`BattleMapNotifier.snapTokenToGrid`).
     final gs = enc.gridSize.toDouble();
-    pos = Offset((pos.dx / gs).round() * gs, (pos.dy / gs).round() * gs);
+    to = Offset((to.dx / gs).round() * gs, (to.dy / gs).round() * gs);
   }
   ref.read(combatProvider.notifier).saveMapData(
     encounterId: enc.id,
     tokenPositions: {
       ...enc.tokenPositions,
-      granted.combatantId: {'x': pos.dx, 'y': pos.dy},
+      granted.combatantId: {'x': to.dx, 'y': to.dy},
     },
   );
+}
+
+/// `world_turn_control.path` (flat `[x0, y0, ...]`, migration 107) → points.
+/// Anything malformed is no path.
+@visibleForTesting
+List<Offset> parseTurnPath(Object? raw) {
+  if (raw is! List || raw.length.isOdd) return const [];
+  final out = <Offset>[];
+  for (var i = 0; i + 1 < raw.length; i += 2) {
+    final a = raw[i], b = raw[i + 1];
+    if (a is! num || b is! num) return const [];
+    out.add(Offset(a.toDouble(), b.toDouble()));
+  }
+  return out;
 }
 
 class _DmTurnControl {

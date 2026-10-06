@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/projection/battle_map_snapshot.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-06
 tags: [file]
 ---
 
@@ -16,12 +16,12 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- Constructor fields (all primitives): `mapPath?`, `fogDataBase64?`, `canvasWidth/Height` (def 2048), `gridSize` (50), `gridVisible`, `feetPerCell` (5), `diagonalRule` (index, 0=euclidean), `sceneVectorJson`, `showAllHp`, `hideTokenHud`, `tokenSize` (50), `tokenSizeMultipliers`, `tokens`, `turnIndex` (-1), `strokes`, `measurements`, `shapes`, `viewportNormalized?`.
+- Constructor fields (all primitives): `mapPath?`, `fogDataBase64?`, `canvasWidth/Height` (def 2048), `gridSize` (50), `gridVisible`, `feetPerCell` (5), `diagonalRule` (index, 0=euclidean), `sceneVectorJson`, `showAllHp`, `hideTokenHud`, `tokenSize` (50), `tokenSizeMultipliers`, `tokens`, `turnIndex` (-1), `strokes`, `measurements`, `shapes`, `trail?`, `viewportNormalized?`.
 - `fromJson(Map)`: tolerant — missing keys default; reads legacy `conditionNames` flat list too.
 
 **Outputs**
 - Public API: `copyWith` (with `clearViewport`/`clearFog` flags), `toJson` (omits defaults/empties to shrink payload), nested `toJson`/`fromJson` on each sub-class.
-- Sub-types: `TokenSnapshot`, `ConditionSnapshot`, `StrokeSnapshot`, `MeasurementSnapshot`, `ShapeSnapshot`, `NormalizedRect`.
+- Sub-types: `TokenSnapshot`, `ConditionSnapshot`, `StrokeSnapshot`, `MeasurementSnapshot`, `ShapeSnapshot`, `TrailSnapshot`, `NormalizedRect`.
 
 ## Dependencies & Links
 - Depends on: none (pure value object, no imports beyond Dart)
@@ -31,7 +31,8 @@ tags: [file]
 - Spec / reference: [[Combat-and-VTT]]
 
 ## Key Logic / Variables
-- `schemaVersion = 4` (emitted as `_v`). Version ladder: v1 mixed raw-path/AssetRef; v2 AssetRef-only (player resolver falls back for v1); v3 additive `sceneVectorJson`; v4 additive typed `shapes`. All additive → older clients tolerate missing keys.
+- `schemaVersion = 5` (emitted as `_v`). Version ladder: v1 mixed raw-path/AssetRef; v2 AssetRef-only (player resolver falls back for v1); v3 additive `sceneVectorJson`; v4 additive typed `shapes`; v5 additive `trail`. All additive → older clients tolerate missing keys.
+- `TrailSnapshot` (`i` id, `p` flat path ending at the token, `s` stops = path indexes where each drag began, `c` colour): the DM's token movement trail ([[grid_canvas]] `tokenMove`), pushed by `BattleMapNotifier._pushTrailToProjection` (50 ms throttle, held back while the DM is still dragging) through `ProjectionController.updateBattleMapTrail` as a `{'trail': …|null}` patch. A trail whose token is not in `tokens` (hidden/removed) is never sent and is cleared when the token disappears (`updateBattleMapSnapshot`). `tryParse` drops malformed trails and out-of-range stops. Player window `_mergePatch` handles `trail` (null → clear). Value equality (`==`) so an unchanged trail is not re-pushed.
 - `viewportNormalized` (`NormalizedRect`, 0..1 `left/top/w/h`): the canvas sub-rect the player should show. `null` = fit whole canvas. Player computes its own scale+offset (BoxFit.contain), so DM/player aspect ratios can differ and still mirror in proportion. [[projection_output_online]] clears it per-push so remote viewers pan freely.
 - `showAllHp`: reveals monster/NPC HP (bar + numeric); default only `isPlayer` tokens show HP. `hideTokenHud`: drops HP bar + condition badge (name stays).
 - `StrokeSnapshot`: flat `[x0,y0,...]` polyline (smaller JSON), colorHex, width — only committed *reveal* strokes (erase strokes not projected).

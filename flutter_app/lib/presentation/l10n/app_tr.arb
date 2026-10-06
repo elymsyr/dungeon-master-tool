@@ -2209,6 +2209,5 @@
   "diceLooksThemes": "Temalar",
   "diceLooksOthers": "Diğerleri",
   "bmMoveUndo": "Hareketi geri al",
-  "bmYourTurn": "Sıra sende",
-  "bmUndoToTurnStart": "Tur başındaki yerine dön"
+  "bmYourTurn": "Sıra sende"
 }

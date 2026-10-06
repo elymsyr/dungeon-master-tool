@@ -2209,6 +2209,5 @@
   "diceLooksThemes": "Themen",
   "diceLooksOthers": "Weitere",
   "bmMoveUndo": "Bewegung rückgängig",
-  "bmYourTurn": "Du bist dran",
-  "bmUndoToTurnStart": "Zurück zum Startpunkt des Zuges"
+  "bmYourTurn": "Du bist dran"
 }

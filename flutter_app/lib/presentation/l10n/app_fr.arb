@@ -2209,6 +2209,5 @@
   "diceLooksThemes": "Thèmes",
   "diceLooksOthers": "Autres",
   "bmMoveUndo": "Annuler le déplacement",
-  "bmYourTurn": "À toi de jouer",
-  "bmUndoToTurnStart": "Revenir à la position de début de tour"
+  "bmYourTurn": "À toi de jouer"
 }

@@ -10,6 +10,7 @@ import 'package:dungeon_master_tool/domain/entities/projection/projection_output
 import 'package:dungeon_master_tool/domain/entities/projection/projection_state.dart';
 import 'package:dungeon_master_tool/domain/entities/session.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 Character _char(String entityId, String? owner) => Character(
       id: 'ch-$entityId',
@@ -149,6 +150,95 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 150));
       expect(rejected, same(grant));
       expect(calls, hasLength(1));
+    });
+
+    test('collapsed moves keep every point walked; a new drag and an undo '
+        'go out on their own', () async {
+      final calls = <Map<String, dynamic>>[];
+      final pending = <Completer<Object?>>[];
+      final sender = TurnMoveSender((p) {
+        calls.add(p);
+        final c = Completer<Object?>();
+        pending.add(c);
+        return c.future;
+      }, onRejected: (_) {});
+
+      sender.send(grant, const Offset(1, 1), newLeg: true);
+      sender.send(grant, const Offset(2, 2), via: const [Offset(2, 2)]);
+      sender.send(grant, const Offset(3, 3), via: const [Offset(3, 3)]);
+      sender.send(grant, const Offset(9, 9), newLeg: true);
+      sender.undo(grant, const Offset(3, 3));
+      expect(calls, hasLength(1));
+      expect(calls.first['p_kind'], TurnMoveKind.leg.index);
+      expect(calls.first.containsKey('p_path'), isFalse);
+
+      Future<void> next() async {
+        pending.last.complete(true);
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+      }
+
+      await next();
+      expect(calls[1]['p_path'], [2.0, 2.0, 3.0, 3.0]);
+      expect(calls[1]['p_x'], 3);
+      expect(calls[1].containsKey('p_kind'), isFalse);
+      await next();
+      expect(calls[2]['p_kind'], TurnMoveKind.leg.index);
+      expect(calls[2]['p_x'], 9);
+      await next();
+      expect(calls[3]['p_kind'], TurnMoveKind.undo.index);
+      expect(calls[3]['p_x'], 3);
+      pending.last.complete(true);
+    });
+
+    test('a server without migration 107 gets position-only calls', () async {
+      final calls = <Map<String, dynamic>>[];
+      final sender = TurnMoveSender((p) async {
+        calls.add(p);
+        if (p.containsKey('p_path') || p.containsKey('p_kind')) {
+          throw const PostgrestException(message: 'no fn', code: 'PGRST202');
+        }
+        return true;
+      }, onRejected: (_) {});
+
+      sender.send(grant, const Offset(5, 5),
+          via: const [Offset(4, 4)], newLeg: true);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(calls, hasLength(2));
+      expect(calls.last.keys,
+          unorderedEquals(['p_world_id', 'p_combatant_id', 'p_x', 'p_y']));
+
+      sender.send(grant, const Offset(6, 6), via: const [Offset(6, 6)]);
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      expect(calls, hasLength(3));
+      expect(calls.last.containsKey('p_path'), isFalse);
+    });
+
+    test('a path longer than the server cap is thinned, not cut', () async {
+      final calls = <Map<String, dynamic>>[];
+      final sender = TurnMoveSender((p) async {
+        calls.add(p);
+        return true;
+      }, onRejected: (_) {});
+      final via = [
+        for (var i = 0; i < 1000; i++) Offset(i.toDouble(), 0),
+      ];
+      sender.send(grant, const Offset(999, 0), via: via);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final path = calls.single['p_path'] as List;
+      expect(path.length ~/ 2, lessThanOrEqualTo(TurnMoveSender.maxPathPoints));
+      expect(path.first, 0);
+      expect(path[path.length - 2], greaterThan(900));
+    });
+  });
+
+  group('parseTurnPath', () {
+    test('flat pairs → points; anything malformed → none', () {
+      expect(parseTurnPath([1, 2, 3.5, 4]),
+          const [Offset(1, 2), Offset(3.5, 4)]);
+      expect(parseTurnPath(null), isEmpty);
+      expect(parseTurnPath([1, 2, 3]), isEmpty);
+      expect(parseTurnPath([1, 'x']), isEmpty);
+      expect(parseTurnPath('[1,2]'), isEmpty);
     });
   });
 }

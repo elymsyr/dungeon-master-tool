@@ -3423,6 +3423,5 @@
   "diceLooksThemes": "Themes",
   "diceLooksOthers": "Others",
   "bmMoveUndo": "Undo move",
-  "bmYourTurn": "Your turn",
-  "bmUndoToTurnStart": "Back to where your turn started"
+  "bmYourTurn": "Your turn"
 }
