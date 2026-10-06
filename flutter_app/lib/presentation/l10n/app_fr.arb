@@ -509,6 +509,7 @@
     }
   },
   "sessionQuickLogHint": "Entrée rapide... (@ pour mentionner)",
+  "sessionEventLog": "Journal des événements",
   "sessionPlayerScreen": "Écran joueur",
   "sessionNoActiveEncounter": "Aucune rencontre active",
   "sessionConditions": "États",

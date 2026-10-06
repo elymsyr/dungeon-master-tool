@@ -551,6 +551,7 @@
     }
   },
   "sessionQuickLogHint": "Quick log entry... (@ to mention)",
+  "sessionEventLog": "Event Log",
   "sessionPlayerScreen": "Player Screen",
   "sessionNoActiveEncounter": "No active encounter",
   "sessionConditions": "Conditions",

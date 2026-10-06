@@ -509,6 +509,7 @@
     }
   },
   "sessionQuickLogHint": "Schneller Protokolleintrag... (@ zum Erwähnen)",
+  "sessionEventLog": "Ereignisprotokoll",
   "sessionPlayerScreen": "Spielerbildschirm",
   "sessionNoActiveEncounter": "Keine aktive Begegnung",
   "sessionConditions": "Zustände",
