@@ -3417,5 +3417,7 @@
   "diceThemeAuto": "Auto (by theme)",
   "diceLooksThemes": "Themes",
   "diceLooksOthers": "Others",
-  "bmMoveUndo": "Undo move"
+  "bmMoveUndo": "Undo move",
+  "bmYourTurn": "Your turn",
+  "bmUndoToTurnStart": "Back to where your turn started"
 }

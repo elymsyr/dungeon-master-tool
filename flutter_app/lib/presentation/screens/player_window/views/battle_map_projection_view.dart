@@ -6,12 +6,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/providers/turn_control_provider.dart';
 import '../../../../application/services/asset_ref_resolver.dart';
 import '../../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../../domain/value_objects/grid_distance.dart';
 import '../../../../domain/value_objects/map_shape.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/asset_ref_image.dart';
 import '../../battle_map/render/aoe_render.dart';
 
@@ -53,6 +55,14 @@ class _BattleMapProjectionViewState
   String? _lastFogHash;
   final Map<String, ui.Image> _tokenImageCache = {};
 
+  /// The viewer's token while they move it in their turn. Held after release
+  /// until the DM's broadcast catches up (or [_ownHold] runs out), so the
+  /// token doesn't jump back to a position the broadcast hasn't moved yet.
+  Offset? _ownPos;
+  int? _ownPointer;
+  Offset _grabDelta = Offset.zero;
+  Timer? _ownHold;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -70,10 +80,90 @@ class _BattleMapProjectionViewState
     _maybeReloadBackground();
     _maybeReloadFog();
     _preloadTokenImages();
+    _releaseOwnIfCaughtUp();
+  }
+
+  /// Drops the held position once the broadcast is within reach of it (the
+  /// DM may snap it to the grid — up to ~0.7 cell on a diagonal).
+  void _releaseOwnIfCaughtUp() {
+    final own = _ownPos;
+    final grant = ref.read(myTurnGrantProvider);
+    if (own == null || _ownPointer != null || grant == null) return;
+    final snap = widget.item.snapshot;
+    final t = snap.tokens.where((t) => t.id == grant.combatantId).firstOrNull;
+    if (t == null ||
+        (Offset(t.x, t.y) - own).distance <= snap.gridSize * 0.75) {
+      _ownPos = null;
+      _ownHold?.cancel();
+    }
+  }
+
+  void _holdOwn() {
+    _ownHold?.cancel();
+    _ownHold = Timer(const Duration(seconds: 2), () {
+      if (mounted && _ownPointer == null) setState(() => _ownPos = null);
+    });
+  }
+
+  /// The viewer's grant when it is their turn on this map, else null.
+  TurnGrant? _grantOn(BattleMapSnapshot snap) {
+    if (!widget.interactive) return null;
+    final g = ref.watch(myTurnGrantProvider);
+    if (g == null || g.encounterId != widget.item.encounterId) return null;
+    return snap.tokens.any((t) => t.id == g.combatantId) ? g : null;
+  }
+
+  void _ownDown(PointerDownEvent e, Size size, TurnGrant grant) {
+    if (_ownPointer != null) return;
+    final snap = widget.item.snapshot;
+    final tf = _canvasTransform(snap, size);
+    if (tf == null) return;
+    final t = snap.tokens.firstWhere((t) => t.id == grant.combatantId);
+    final at = _ownPos ?? Offset(t.x, t.y);
+    final center = at * tf.scale + Offset(tf.dx, tf.dy);
+    final radius = snap.tokenSize *
+        (snap.tokenSizeMultipliers[t.id] ?? 1) *
+        tf.scale /
+        2;
+    // At least a 48 px touch target.
+    if ((e.localPosition - center).distance > math.max(radius, 24)) return;
+    _ownHold?.cancel();
+    _grabDelta = at - (e.localPosition - Offset(tf.dx, tf.dy)) / tf.scale;
+    setState(() {
+      _ownPointer = e.pointer;
+      _ownPos = at;
+    });
+  }
+
+  void _ownMove(PointerMoveEvent e, Size size, TurnGrant grant) {
+    if (e.pointer != _ownPointer) return;
+    final snap = widget.item.snapshot;
+    final tf = _canvasTransform(snap, size);
+    if (tf == null) return;
+    final p = (e.localPosition - Offset(tf.dx, tf.dy)) / tf.scale + _grabDelta;
+    final pos = Offset(
+      p.dx.clamp(0, snap.canvasWidth.toDouble()),
+      p.dy.clamp(0, snap.canvasHeight.toDouble()),
+    );
+    setState(() => _ownPos = pos);
+    ref.read(turnMoveSenderProvider)?.send(grant, pos);
+  }
+
+  void _ownUp(PointerEvent e) {
+    if (e.pointer != _ownPointer) return;
+    setState(() => _ownPointer = null);
+    _holdOwn();
+  }
+
+  void _undoOwn(TurnGrant grant) {
+    setState(() => _ownPos = grant.origin);
+    _holdOwn();
+    ref.read(turnMoveSenderProvider)?.send(grant, grant.origin);
   }
 
   @override
   void dispose() {
+    _ownHold?.cancel();
     _bgImage?.dispose();
     _fogImage?.dispose();
     for (final img in _tokenImageCache.values) {
@@ -185,23 +275,71 @@ class _BattleMapProjectionViewState
     // canvas is too small to share. Threshold matches Flutter's compact
     // breakpoint.
     final isCompact = MediaQuery.of(context).size.width < 600;
+    // A new turn (or the end of one) starts from the broadcast position.
+    ref.listen(myTurnGrantProvider, (_, _) {
+      _ownHold?.cancel();
+      setState(() {
+        _ownPointer = null;
+        _ownPos = null;
+      });
+    });
+    final grant = _grantOn(snap);
+    final own = grant == null ? null : _ownPos;
+    final shown = own == null
+        ? snap
+        : snap.copyWith(tokens: [
+            for (final t in snap.tokens)
+              t.id == grant!.combatantId ? t.movedTo(own.dx, own.dy) : t,
+          ]);
+    final dragging = grant != null && _ownPointer != null;
     final canvas = LayoutBuilder(builder: (context, constraints) {
+      final size = Size(constraints.maxWidth, constraints.maxHeight);
       Widget c = CustomPaint(
-        size: Size(constraints.maxWidth, constraints.maxHeight),
+        size: size,
         painter: _BattleMapProjectionPainter(
-          snapshot: snap,
+          snapshot: shown,
           bgImage: _bgImage,
           fogImage: _fogImage,
           tokenImages: _tokenImageCache,
           compact: isCompact,
+          ownTokenId: grant?.combatantId,
         ),
       );
+      if (grant != null) {
+        // Raw pointer events stay out of the gesture arena, so this sees the
+        // touch before InteractiveViewer; pan/zoom is switched off while the
+        // token is held.
+        c = Listener(
+          onPointerDown: (e) => _ownDown(e, size, grant),
+          onPointerMove: (e) => _ownMove(e, size, grant),
+          onPointerUp: _ownUp,
+          onPointerCancel: _ownUp,
+          child: c,
+        );
+      }
       if (widget.interactive) {
         c = InteractiveViewer(
           minScale: 0.5,
           maxScale: 8,
           clipBehavior: Clip.hardEdge,
+          panEnabled: !dragging,
+          scaleEnabled: !dragging,
           child: c,
+        );
+      }
+      if (grant != null) {
+        c = Stack(
+          children: [
+            Positioned.fill(child: c),
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _OwnTurnBanner(onUndo: () => _undoOwn(grant)),
+              ),
+            ),
+          ],
         );
       }
       return c;
@@ -230,6 +368,91 @@ class _BattleMapProjectionViewState
   }
 }
 
+/// Canvas → widget transform the painter draws with: the focus rect (the
+/// DM's pushed viewport, else the whole canvas) fitted BoxFit.contain and
+/// centred. `screen = canvas * scale + (dx, dy)`. Null until the canvas
+/// dimensions are known.
+({double scale, double dx, double dy})? _canvasTransform(
+    BattleMapSnapshot snapshot, Size size) {
+  final canvasW = snapshot.canvasWidth.toDouble();
+  final canvasH = snapshot.canvasHeight.toDouble();
+  if (canvasW <= 0 || canvasH <= 0) return null;
+
+  // Determine the canvas-space focus rect to display. If the DM has pushed
+  // a normalized viewport (live mirror mode), we display exactly that
+  // sub-rect. Otherwise we fit the entire canvas.
+  final viewportN = snapshot.viewportNormalized;
+  final double focusLeft;
+  final double focusTop;
+  final double focusW;
+  final double focusH;
+  if (viewportN != null && viewportN.width > 0 && viewportN.height > 0) {
+    focusLeft = viewportN.left * canvasW;
+    focusTop = viewportN.top * canvasH;
+    focusW = viewportN.width * canvasW;
+    focusH = viewportN.height * canvasH;
+  } else {
+    focusLeft = 0;
+    focusTop = 0;
+    focusW = canvasW;
+    focusH = canvasH;
+  }
+
+  // BoxFit.contain: scale so the focus rect fits inside the player viewport,
+  // then center it. This is a uniform scale — same factor in x and y — so
+  // aspect mismatches between DM and player monitors leave black bars
+  // rather than distorting the map.
+  final scale = (size.width / focusW < size.height / focusH)
+      ? size.width / focusW
+      : size.height / focusH;
+
+  // Translation: maps canvas-space (cx, cy) → screen-space.
+  //   screen = (canvas - focusOrigin) * scale + screenOrigin
+  // where screenOrigin centers the focus rect inside `size`.
+  final dx = (size.width - focusW * scale) / 2 - focusLeft * scale;
+  final dy = (size.height - focusH * scale) / 2 - focusTop * scale;
+  return (scale: scale, dx: dx, dy: dy);
+}
+
+const _ownTurnColor = Color(0xFF4CAF50);
+
+/// "Your turn" pill over the map, with the back-to-turn-start button.
+class _OwnTurnBanner extends StatelessWidget {
+  final VoidCallback onUndo;
+
+  const _OwnTurnBanner({required this.onUndo});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    return Material(
+      color: _ownTurnColor,
+      elevation: 4,
+      shape: const StadiumBorder(),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.bmYourTurn,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.undo, color: Colors.white),
+              tooltip: l10n.bmUndoToTurnStart,
+              onPressed: onUndo,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Standalone painter — does NOT depend on the DM-side BattleMapPainter so
 /// the player isolate stays decoupled from gameplay state. Renders 4 layers:
 ///   1. background image (BoxFit.contain)
@@ -246,12 +469,16 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// viewports (mobile second-screen).
   final bool compact;
 
+  /// The viewer's token while it is their turn — drawn with a ring.
+  final String? ownTokenId;
+
   _BattleMapProjectionPainter({
     required this.snapshot,
     required this.bgImage,
     required this.fogImage,
     required this.tokenImages,
     this.compact = false,
+    this.ownTokenId,
   });
 
   @override
@@ -263,47 +490,12 @@ class _BattleMapProjectionPainter extends CustomPainter {
       Paint()..color = const Color(0xFF101010),
     );
 
-    // Compute the BoxFit.contain rect for the background.
     final canvasW = snapshot.canvasWidth.toDouble();
     final canvasH = snapshot.canvasHeight.toDouble();
-    if (canvasW <= 0 || canvasH <= 0) {
-      // Safety: if dims weren't measured yet, just leave the dark fill above.
-      return;
-    }
-
-    // Determine the canvas-space focus rect to display. If the DM has pushed
-    // a normalized viewport (live mirror mode), we display exactly that
-    // sub-rect. Otherwise we fit the entire canvas.
-    final viewportN = snapshot.viewportNormalized;
-    final double focusLeft;
-    final double focusTop;
-    final double focusW;
-    final double focusH;
-    if (viewportN != null && viewportN.width > 0 && viewportN.height > 0) {
-      focusLeft = viewportN.left * canvasW;
-      focusTop = viewportN.top * canvasH;
-      focusW = viewportN.width * canvasW;
-      focusH = viewportN.height * canvasH;
-    } else {
-      focusLeft = 0;
-      focusTop = 0;
-      focusW = canvasW;
-      focusH = canvasH;
-    }
-
-    // BoxFit.contain: scale so the focus rect fits inside the player viewport,
-    // then center it. This is a uniform scale — same factor in x and y — so
-    // aspect mismatches between DM and player monitors leave black bars
-    // rather than distorting the map.
-    final scale = (size.width / focusW < size.height / focusH)
-        ? size.width / focusW
-        : size.height / focusH;
-
-    // Translation: maps canvas-space (cx, cy) → screen-space.
-    //   screen = (canvas - focusOrigin) * scale + screenOrigin
-    // where screenOrigin centers the focus rect inside `size`.
-    final dx = (size.width - focusW * scale) / 2 - focusLeft * scale;
-    final dy = (size.height - focusH * scale) / 2 - focusTop * scale;
+    final tf = _canvasTransform(snapshot, size);
+    // Safety: if dims weren't measured yet, just leave the dark fill above.
+    if (tf == null) return;
+    final (:scale, :dx, :dy) = tf;
 
     // Whole-canvas dest rect (still drawn — fog/grid/tokens use the same
     // transform). Parts that fall outside `size` get clipped by the canvas.
@@ -546,6 +738,16 @@ class _BattleMapProjectionPainter extends CustomPainter {
         tokenRadius + borderPx * 0.5,
         Paint()..color = tokenColor,
       );
+      if (t.id == ownTokenId) {
+        canvas.drawCircle(
+          Offset(cx, cy),
+          tokenRadius + borderPx + 4 * scale,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3 * scale
+            ..color = _ownTurnColor,
+        );
+      }
 
       // Image clipped to circle, or fallback fill
       final img = t.imagePath != null ? tokenImages[t.imagePath!] : null;
@@ -927,7 +1129,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
         old.bgImage != bgImage ||
         old.fogImage != fogImage ||
         old.tokenImages.length != tokenImages.length ||
-        old.compact != compact;
+        old.compact != compact ||
+        old.ownTokenId != ownTokenId;
   }
 }
 

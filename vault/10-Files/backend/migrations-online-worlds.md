@@ -1,11 +1,11 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql, 093_world_card_meta.sql
+path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql, 093_world_card_meta.sql, 105_turn_control.sql
 layer: backend
 language: sql
 status: stable
-updated: 2026-09-23
+updated: 2026-10-06
 tags: [file]
 ---
 
@@ -39,6 +39,7 @@ tags: [file]
 - **051_world_members_replica_full** — `ALTER TABLE world_members REPLICA IDENTITY FULL`. Default identity only carries PK in UPDATE/DELETE CDC; PK is `(world_id,user_id)` so role-change/kick events reached the DM with truncated records. Metadata-only fix.
 - **052_entity_shares_replica_full** — `ALTER TABLE entity_shares REPLICA IDENTITY FULL`. The realtime subscription filters `entity_shares` by `world_id`, but `entity_shares` PK is `id` only → un-share DELETE `oldRecord` lacked `world_id` and was silently dropped (player never saw the un-share). Same class of bug as 051.
 - **093_world_card_meta** — `worlds.meta_json TEXT` (nullable). 077 kaldırdığı `state_json` ile birlikte dünya metadata'sı da gitmişti; katılan oyuncunun hub kartında açıklama ve banner yoktu. Taşınan şey `world_settings.settings_json`'daki `metadata` map'inin whitelist'i: `description`, `tags`, `cover_image_path` — sonuncusu DM'in yerel yolu değil, free-media'ya yüklenmiş bir `dmt-public://` ref'i. Yeni policy yok: yazan `Worlds: dm update`, okuyan `Worlds: members read` (ikisi de 026'dan). İstemci ucu [[world_meta_sync]].
+- **105_turn_control** — `world_turn_control` (PK `world_id`; `encounter_id`, `combatant_id`, `owner_id` → auth.users CASCADE, `origin_x/y`, `x/y`, `moved_at`, `granted_at`): online oyuncunun kendi turunda token oynatma izni. RLS: SELECT DM + sahip (üye), ALL yalnız DM ve `owner_id` dünyanın üyesi olmalı; oyuncunun yazma politikası yok. Oyuncu yalnız `move_turn_token` (DEFINER, `x/y/moved_at`'i, satır `auth.uid()`'nin ve combatant eşleşiyorsa). REPLICA IDENTITY FULL + realtime publication. `verify_105.sql`. İstemci [[turn_control_provider]].
 
 ## Notes
 - 094 ([[migrations-cloud-mirror]]) 026'nın aynasını satır bazlı olarak geri getirir: `world_entities` ve mind map tabloları yeniden kurulur, ama oyuncuya açılan policy'leri **yoktur** — okuma `get_shared_entities()` RPC'sinden geçer ve mind map sahipliği `map_id` konvansiyonu yerine `owner_id` kolonudur.

@@ -701,7 +701,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       'm': e.mapPath ?? '',
       'ts': e.tokenSize,
       'tm': e.tokenSizeMultipliers,
-      'tp': e.tokenPositions,
       'f': e.fogData?.length ?? 0,
       'a': e.annotationData?.length ?? 0,
       'ms': e.measurementsData ?? '',
@@ -715,6 +714,31 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void _stampFingerprint(Encounter e) {
     _appliedFingerprint = _fingerprintOf(e);
+    _appliedTp = e.tokenPositions;
+  }
+
+  /// Token positions of the last applied encounter. Positions are kept out of
+  /// the fingerprint: a player moving their own token sends ~8 updates/s, and
+  /// re-running [init] for each would re-decode every image. Only the tokens
+  /// that actually moved are applied, so a token the DM is dragging right now
+  /// is left alone.
+  Map<String, dynamic> _appliedTp = const {};
+
+  void _applyTokenDelta(Map<String, dynamic> tp) {
+    final moved = <String, Offset>{};
+    for (final e in tp.entries) {
+      final v = e.value;
+      if (v is! Map) continue;
+      final old = _appliedTp[e.key];
+      if (old is Map && old['x'] == v['x'] && old['y'] == v['y']) continue;
+      moved[e.key] = Offset(
+        (v['x'] as num?)?.toDouble() ?? 0,
+        (v['y'] as num?)?.toDouble() ?? 0,
+      );
+    }
+    _appliedTp = tp;
+    if (moved.isEmpty || !mounted) return;
+    state = state.copyWith(tokenPositions: {...state.tokenPositions, ...moved});
   }
 
   /// Re-hydrate notifier from a fresh [encounter] snapshot (CDC catch-up,
@@ -724,7 +748,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Future<void> syncFromEncounter(Encounter encounter) async {
     if (encounter.id != encounterId) return;
     final fp = _fingerprintOf(encounter);
-    if (fp == _appliedFingerprint) return;
+    if (fp == _appliedFingerprint) {
+      _applyTokenDelta(encounter.tokenPositions);
+      return;
+    }
     if (_ref
         .read(pendingWriteBufferProvider)
         .isPending('battlemap:$encounterId:save')) {

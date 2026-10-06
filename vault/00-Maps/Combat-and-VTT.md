@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: combat-vtt
-updated: 2026-06-22
+updated: 2026-10-06
 tags: [moc]
 ---
 
@@ -19,6 +19,7 @@ tags: [moc]
 - [[world_map_data_dao]] — save/load map grids.
 - [[map_pins_dao]] — pinned markers/labels.
 - [[grid_canvas]] — grid render + token placement widget.
+- [[turn_control_provider]] — online oyuncu kendi turunda kendi token'ını oynatır ("Sıra sende" + tur başına geri al). İzin `world_turn_control` (105), hareket `move_turn_token` RPC → DM → yayın.
 - [[dice_physics]] — 3D dice roller: bottom-right dice button on world + character screens, results decided before the throw.
 
 ## Data Flow

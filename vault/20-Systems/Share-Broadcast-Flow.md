@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-10-02
+updated: 2026-10-06
 tags: [system, sync, multiplayer]
 ---
 
@@ -19,7 +19,7 @@ Bu not, kaldırılan `Share-Broadcast-Flow`'un yerine geçer. Eski model dünyan
 
 Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pull_service]]) ya da `.dmtz`'nin işi; LAN Faz 6'da silindi. Yerel Drift kaynak-doğru.
 
-## Kanal — abone olunan beş tablo
+## Kanal — abone olunan altı tablo
 
 `WorldSyncService._mirrorTables` ([[world_sync_service]]) tek bir Supabase Realtime kanalı açar: `dmt:world:{worldId}`.
 
@@ -30,6 +30,7 @@ Cihazdan cihaza taşıma bulut aynasının ([[cloud_push_service]] / [[cloud_pul
 | `world_characters` | Oyuncunun karakter sayfası, claim/assign | Oyuncu ve DM |
 | `world_packages` | DM'in dünyaya paylaştığı paketler | DM — `world_packages_provider` |
 | `world_members` | Üyelik / rol | RPC'ler |
+| `world_turn_control` | Oyuncunun kendi turunda token oynatma izni (105). RLS: yalnız DM + sahip görür | DM izin yazar; oyuncu yalnız `move_turn_token` — [[turn_control_provider]] |
 
 (+ `worlds`, `id` filtresiyle — yalnızca dünya meta'sı.)
 

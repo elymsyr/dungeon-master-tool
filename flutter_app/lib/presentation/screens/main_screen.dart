@@ -14,6 +14,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
+import '../../application/providers/turn_control_provider.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../dialogs/screencast_display_picker.dart';
 import '../../application/providers/ui_state_provider.dart';
@@ -636,6 +637,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // emit'leri main shell'i rebuild ettirmez.
     ref.watch(projectionBattleMapSyncProvider.select((_) => 0));
     ref.watch(projectionEntitySyncProvider.select((_) => 0));
+    // Online oyuncunun kendi turunda token oynatma izni (DM tarafı).
+    ref.watch(dmTurnControlProvider.select((_) => 0));
 
     final editMode = ref.watch(editModeProvider);
 

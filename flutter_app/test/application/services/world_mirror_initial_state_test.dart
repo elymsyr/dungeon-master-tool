@@ -24,6 +24,7 @@ void main() {
     for (final (table, body) in [
       ('world_characters', <Object>[{'id': 'c1'}]),
       ('world_projection', <String, Object>{'world_id': 'w1'}),
+      ('world_turn_control', <String, Object>{'combatant_id': 'c2'}),
     ]) {
       cloud.routes['/rest/v1/$table'] = (_) async {
         peak = ++inFlight > peak ? inFlight : peak;
@@ -38,9 +39,10 @@ void main() {
 
   test('sorgular eşzamanlı, paylaşılan kartlar istenmiyor', () async {
     final s = await mirror.fetchInitialState('w1');
-    expect(peak, 2);
+    expect(peak, 3);
     expect(s.characters.single['id'], 'c1');
     expect(s.projection?['world_id'], 'w1');
+    expect(s.turnControl?['combatant_id'], 'c2');
     expect(cloud.requests.where((r) => r.contains('shared')), isEmpty);
   });
 }

@@ -21,6 +21,7 @@ import '../providers/world_characters_provider.dart';
 import '../providers/package_link_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/role_provider.dart' show currentWorldRoleProvider;
+import '../providers/turn_control_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
@@ -182,6 +183,7 @@ class WorldMirrorApplier {
     if (_disposed) return;
     final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
+    _applyTurnRow(worldId, snapshot.turnControl);
     if (snapshot.characters.isEmpty &&
         snapshot.projection == null) {
       _markInitialSyncSettled(worldId);
@@ -236,6 +238,8 @@ class WorldMirrorApplier {
           await _applyMembersEvent(e);
         case 'worlds':
           await _applyWorldsEvent(e);
+        case 'world_turn_control':
+          _applyTurnControlEvent(e);
       }
     } catch (err, st) {
       debugPrint('WorldMirrorApplier error: $err\n$st');
@@ -782,6 +786,34 @@ class WorldMirrorApplier {
     } catch (err) {
       debugPrint('_applyProjectionRow decode error: $err');
     }
+  }
+
+  // ── Oyuncunun tur izni (105) ────────────────────────────────────────
+
+  /// DM'de no-op: hareketleri `dmTurnControlProvider` kendisi dinliyor.
+  /// Oyuncu RLS yüzünden yalnız kendi satırını görür; DELETE (sıra geçti)
+  /// yalnız PK taşır — başka dünyanın silmesi diye world_id'ye bakılır.
+  void _applyTurnControlEvent(WorldSyncEvent e) {
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        final w = e.oldRecord['world_id'];
+        if (w == null || w == e.worldId) _applyTurnRow(e.worldId, null);
+      case PostgresChangeEvent.insert:
+        _applyTurnRow(e.worldId, e.newRecord);
+      default:
+        // UPDATE = oyuncunun kendi hareketi; izin aynı.
+        return;
+    }
+  }
+
+  void _applyTurnRow(String worldId, Map<String, dynamic>? row) {
+    if (!_isPlayerOf(worldId)) return;
+    final uid = ref.read(authProvider)?.uid;
+    final grant = row == null ? null : TurnGrant.fromRow(row);
+    ref.read(myTurnGrantProvider.notifier).state =
+        grant != null && grant.worldId == worldId && grant.ownerId == uid
+            ? grant
+            : null;
   }
 
   void _bumpRevision() {
