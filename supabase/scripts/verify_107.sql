@@ -12,7 +12,7 @@
 --   3. Geçersiz yol (tek sayı, NaN, aşırı uzun) ve kind reddedilir.
 --   4. anon çalıştıramaz; eski imza kalmadı.
 --
--- 108 imzayı değiştirdi (p_seq): 108 uygulanmışsa verify_108.sql çalıştır.
+-- 108 uygulandıysa p_seq kontrolleri için verify_108.sql.
 -- ============================================================================
 
 BEGIN;
@@ -82,9 +82,16 @@ BEGIN
 
   -- ══ 4 — anon / eski imza ═══════════════════════════════════════════════
   PERFORM set_config('role', 'postgres', true);
-  ASSERT NOT has_function_privilege('anon',
-    'public.move_turn_token(text,text,double precision,double precision,double precision[],smallint)',
-    'EXECUTE'), '4.1 anon move_turn_token çalıştırabiliyor';
+  -- İmza migration'la değişiyor (105 → 107 → 108): hangisi kuruluysa o.
+  ASSERT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+  ), '4.1 move_turn_token yok';
+  ASSERT NOT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+      AND has_function_privilege('anon', p.oid, 'EXECUTE')
+  ), '4.1 anon move_turn_token çalıştırabiliyor';
   ASSERT to_regprocedure(
     'public.move_turn_token(text,text,double precision,double precision)') IS NULL,
     '4.2 eski 4 parametreli imza duruyor';
