@@ -2,8 +2,7 @@
 -- verify_108.sql — oyuncu hareket yolu + sıra numarası (107/108) self-check. Hiçbir kalıcı
 -- değişiklik yapmaz.
 -- ============================================================================
--- 107'nin yerine geçer: 108 uygulandıktan sonra verify_107.sql 6 parametreli
--- imzayı bulamaz.
+-- verify_107.sql'in kapsadığı her şeyi ve p_seq'i kontrol eder.
 --
 -- Kullanım: Supabase Dashboard > SQL Editor > yapıştır > Run.
 -- Sonunda ROLLBACK var; başarılıysa "108 OK" notice'i döner, aksi halde ilk
@@ -94,9 +93,16 @@ BEGIN
 
   -- ══ 4 — anon / eski imza ═══════════════════════════════════════════════
   PERFORM set_config('role', 'postgres', true);
-  ASSERT NOT has_function_privilege('anon',
-    'public.move_turn_token(text,text,double precision,double precision,double precision[],smallint,bigint)',
-    'EXECUTE'), '4.1 anon move_turn_token çalıştırabiliyor';
+  -- İmza migration'la değişiyor (105 → 107 → 108): hangisi kuruluysa o.
+  ASSERT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+  ), '4.1 move_turn_token yok';
+  ASSERT NOT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+      AND has_function_privilege('anon', p.oid, 'EXECUTE')
+  ), '4.1 anon move_turn_token çalıştırabiliyor';
   ASSERT to_regprocedure(
     'public.move_turn_token(text,text,double precision,double precision)') IS NULL,
     '4.2 eski 4 parametreli imza duruyor';
