@@ -2216,5 +2216,6 @@
   "lblDiceTheme": "Zar teması",
   "diceThemeAuto": "Otomatik (temaya göre)",
   "diceLooksThemes": "Temalar",
-  "diceLooksOthers": "Diğerleri"
+  "diceLooksOthers": "Diğerleri",
+  "bmMoveUndo": "Hareketi geri al"
 }

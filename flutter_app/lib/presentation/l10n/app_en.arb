@@ -3416,5 +3416,6 @@
   "lblDiceTheme": "Dice theme",
   "diceThemeAuto": "Auto (by theme)",
   "diceLooksThemes": "Themes",
-  "diceLooksOthers": "Others"
+  "diceLooksOthers": "Others",
+  "bmMoveUndo": "Undo move"
 }
