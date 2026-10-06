@@ -509,6 +509,7 @@
     }
   },
   "sessionQuickLogHint": "Hızlı günlük girdisi... (bahsetmek için @)",
+  "sessionEventLog": "Olay Günlüğü",
   "sessionPlayerScreen": "Oyuncu Ekranı",
   "sessionNoActiveEncounter": "Aktif karşılaşma yok",
   "sessionConditions": "Durumlar",

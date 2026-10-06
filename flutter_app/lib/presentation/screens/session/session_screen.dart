@@ -43,7 +43,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // Left encounter panel; null = default: open on desktop/tablet, closed on
   // a phone, where it covers the map.
   bool? _encounterOpen;
-
+  // Phone only: the event log can be hidden from the combat bar.
+  bool _logVisible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +91,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
             ),
           // Event log, over everything.
-          if (!(phone && open))
+          if (!phone || (!open && _logVisible))
             Positioned(
               right: 12,
               bottom: max(barBottom + barHeight + 4, kAboveDiceFab),
@@ -301,6 +302,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 ),
               ),
       ),
+      if (compact)
+        IconButton(
+          onPressed: () => setState(() => _logVisible = !_logVisible),
+          icon: Icon(_logVisible ? Icons.speaker_notes : Icons.speaker_notes_off, size: 18),
+          tooltip: l10n.sessionEventLog,
+          style: compactIcon,
+        ),
       PopupMenuButton<String>(
         tooltip: l10n.sessionActions,
         icon: const Icon(Icons.more_vert, size: 18),
