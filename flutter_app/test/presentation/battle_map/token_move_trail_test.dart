@@ -98,4 +98,51 @@ void main() {
     expect(n.state.tokenPositions['b'], const Offset(50, 50));
     expect(n.tokenMove.value, isNull);
   });
+
+  test("a player's move follows every point they walked; their undo takes "
+      'back one drag', () async {
+    final container = ProviderContainer(
+        overrides: [combatProvider.overrideWith((_) => _NoSaveCombat())]);
+    addTearDown(container.dispose);
+    final sub = container.listen(battleMapProvider('e1'), (_, _) {});
+    addTearDown(sub.close);
+    final n = container.read(battleMapProvider('e1').notifier)
+      ..trailStyle = (_) => (radius: 25, color: Colors.green);
+    await n.syncFromEncounter(const Encounter(id: 'e1', tokenPositions: {
+      'b': {'x': 0.0, 'y': 0.0},
+    }));
+
+    // A quick circle-ish drag arriving as two calls.
+    n.applyRemoteMove('b', const Offset(40, 40),
+        via: const [Offset(30, 0), Offset(40, 20), Offset(40, 40)],
+        newLeg: true);
+    n.applyRemoteMove('b', const Offset(0, 40),
+        via: const [Offset(20, 45), Offset(0, 40)]);
+    expect(n.tokenMove.value!.points, const [
+      Offset(0, 0),
+      Offset(30, 0),
+      Offset(40, 20),
+      Offset(40, 40),
+      Offset(20, 45),
+      Offset(0, 40),
+      Offset(0, 40),
+    ]);
+    expect(n.state.tokenPositions['b'], const Offset(0, 40));
+
+    // Second drag.
+    n.applyRemoteMove('b', const Offset(0, 100),
+        via: const [Offset(0, 100)], newLeg: true);
+    expect(n.tokenMove.value!.stops, [0, 6]);
+
+    n.undoRemoteMove('b', const Offset(-1, -1));
+    expect(n.state.tokenPositions['b'], const Offset(0, 40));
+    expect(n.tokenMove.value!.stops, [0]);
+    n.undoRemoteMove('b', const Offset(-1, -1));
+    expect(n.state.tokenPositions['b'], Offset.zero);
+    expect(n.tokenMove.value, isNull);
+
+    // No trail left: the player's own idea of the target is used.
+    n.undoRemoteMove('b', const Offset(5, 5));
+    expect(n.state.tokenPositions['b'], const Offset(5, 5));
+  });
 }

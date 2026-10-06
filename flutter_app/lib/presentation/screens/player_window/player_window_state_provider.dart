@@ -89,6 +89,9 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
       sceneVectorJson: patch['sceneVectorJson'] as String?,
       fogDataBase64: patch['fogDataBase64'] as String?,
       clearFog: patch.containsKey('fogDataBase64') && patch['fogDataBase64'] == null,
+      trail: TrailSnapshot.tryParse(patch['trail']),
+      clearTrail: patch.containsKey('trail') &&
+          TrailSnapshot.tryParse(patch['trail']) == null,
       viewportNormalized: patch.containsKey('viewportNormalized') &&
               patch['viewportNormalized'] != null
           ? NormalizedRect.fromJson(

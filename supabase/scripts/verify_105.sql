@@ -13,6 +13,9 @@
 --   4. Geçersiz pozisyon (NaN, sonsuz, aşırı) reddedilir.
 --   5. Sıra geçince (DELETE) eski sahibin RPC'si FALSE.
 --   6. anon çalıştıramaz.
+--
+-- 107 imzayı değiştirdi (p_path, p_kind): 107 uygulanmışsa 6.1 eski imzayı
+-- bulamaz — onun yerine verify_107.sql çalıştır.
 -- ============================================================================
 
 BEGIN;

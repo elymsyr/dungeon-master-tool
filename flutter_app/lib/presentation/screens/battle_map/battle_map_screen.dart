@@ -16,6 +16,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
 import '../../widgets/battle_map/battle_map_toolbar.dart';
+import '../../utils/stroke_path.dart';
 import '../../widgets/battle_map/token_widget.dart';
 import 'battle_map_notifier.dart';
 import 'battle_map_painter.dart';
@@ -102,7 +103,24 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
             final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
             notifier.updateViewportSize(canvasSize);
 
+            // Drag tools (pen, fog, rulers, AoE, shapes, eraser) run on raw
+            // pointer events like the mind map pen: the stroke starts on the
+            // first sample instead of after the gesture arena's pan slop, and
+            // the scale gesture below stays live in every tool — a second
+            // finger cancels the one-finger drag and pans/zooms instead.
+            final dragTool = activeTool != BattleMapTool.navigate &&
+                activeTool != BattleMapTool.text;
+            // Pointer callbacks are off outside the drag tools, so pointers
+            // tracked before the switch would never see their up event.
+            if (!dragTool) _resetTool();
             final canvas = Listener(
+              onPointerDown:
+                  dragTool ? (e) => _toolDown(e, notifier, activeTool) : null,
+              onPointerMove:
+                  dragTool ? (e) => _toolMove(e, notifier, activeTool) : null,
+              onPointerUp:
+                  dragTool ? (e) => _toolUp(e, notifier, activeTool) : null,
+              onPointerCancel: dragTool ? (e) => _toolCancel(e, notifier) : null,
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
                   notifier.zoomAtPoint(event.localPosition, event.scrollDelta.dy);
@@ -120,28 +138,18 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 PointerDeviceKind.stylus,
                 PointerDeviceKind.invertedStylus,
               },
-              // Navigate tool: scale gesture handles pan + pinch-zoom, and a
-              // single-finger drag that starts on a text label moves it.
-              onScaleStart: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? (d) => _onNavScaleStart(d, notifier)
-                  : null,
-              onScaleUpdate: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? (d) => _onNavScaleUpdate(d, notifier)
-                  : null,
-              onScaleEnd: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? (_) => _onNavScaleEnd(notifier)
-                  : null,
-
-              // Drawing tools: pan gesture
-              onPanStart: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
-                  ? (details) => _handlePanStart(details.localPosition, notifier, activeTool)
-                  : null,
-              onPanUpdate: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
-                  ? (details) => _handlePanUpdate(details.localPosition, notifier, activeTool)
-                  : null,
-              onPanEnd: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
-                  ? (_) => _handlePanEnd(notifier, activeTool)
-                  : null,
+              // Pan + pinch-zoom in every tool. In navigate a single-finger
+              // drag that starts on a text label moves it; in a drag tool the
+              // pointer that is drawing owns the gesture until a second
+              // finger turns it into a pinch.
+              onScaleStart: _tokenDragActive
+                  ? null
+                  : (d) => _onNavScaleStart(d, notifier, activeTool),
+              onScaleUpdate: _tokenDragActive
+                  ? null
+                  : (d) => _onNavScaleUpdate(d, notifier),
+              onScaleEnd:
+                  _tokenDragActive ? null : (_) => _onNavScaleEnd(notifier),
 
               // Tap-driven tools: navigate (delete mark), text (place label
               // via dialog).
@@ -517,9 +525,12 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   String? _draggingLabelId;
   Offset _lastDragCanvas = Offset.zero;
 
-  void _onNavScaleStart(ScaleStartDetails d, BattleMapNotifier notifier) {
+  void _onNavScaleStart(
+      ScaleStartDetails d, BattleMapNotifier notifier, BattleMapTool tool) {
     final canvas = notifier.screenToCanvas(d.localFocalPoint);
-    final id = notifier.hitTextLabel(canvas);
+    final id = tool == BattleMapTool.navigate && d.pointerCount == 1
+        ? notifier.hitTextLabel(canvas)
+        : null;
     if (id != null) {
       _draggingLabelId = id;
       _lastDragCanvas = canvas;
@@ -529,6 +540,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 
   void _onNavScaleUpdate(ScaleUpdateDetails d, BattleMapNotifier notifier) {
+    // A live tool drag owns its pointer; pinch/pan resume once a second
+    // finger cancels it.
+    if (_toolPointer != null) return;
     if (_draggingLabelId != null) {
       final canvas = notifier.screenToCanvas(d.localFocalPoint);
       notifier.moveShapeBy(_draggingLabelId!, canvas - _lastDragCanvas);
@@ -545,6 +559,76 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       return;
     }
     notifier.onScaleEnd();
+  }
+
+  // -------------------------------------------------------------------------
+  // Raw pointer input for the drag tools (mirrors the mind map pen)
+  // -------------------------------------------------------------------------
+
+  int? _toolPointer;
+  PointerDeviceKind? _toolKind;
+  final _downPointers = <int>{};
+  // Once a stylus touches the canvas, fingers stop drawing (palm rejection)
+  // and only pan/zoom.
+  bool _stylusSeen = false;
+
+  void _resetTool() {
+    _downPointers.clear();
+    _toolPointer = null;
+    _toolKind = null;
+  }
+
+  void _toolDown(
+      PointerDownEvent e, BattleMapNotifier notifier, BattleMapTool tool) {
+    _downPointers.add(e.pointer);
+    if (e.kind == PointerDeviceKind.stylus ||
+        e.kind == PointerDeviceKind.invertedStylus) {
+      _stylusSeen = true;
+    }
+    if (_toolPointer != null) {
+      // Second finger on a finger drag → it's a pinch, drop the drag. A
+      // stylus drag ignores the palm.
+      if (_toolKind == PointerDeviceKind.touch) {
+        _toolPointer = null;
+        _toolKind = null;
+        unawaited(notifier.cancelToolDrag());
+      }
+      return;
+    }
+    if (_downPointers.length > 1 || _tokenDragActive) return;
+    final canDraw = switch (e.kind) {
+      PointerDeviceKind.stylus || PointerDeviceKind.invertedStylus => true,
+      PointerDeviceKind.touch => !_stylusSeen,
+      PointerDeviceKind.mouse => e.buttons == kPrimaryMouseButton,
+      _ => false,
+    };
+    if (!canDraw) return;
+    _toolPointer = e.pointer;
+    _toolKind = e.kind;
+    _handlePanStart(e.localPosition, notifier, tool);
+  }
+
+  void _toolMove(
+      PointerMoveEvent e, BattleMapNotifier notifier, BattleMapTool tool) {
+    if (e.pointer != _toolPointer) return;
+    _handlePanUpdate(e.localPosition, notifier, tool);
+  }
+
+  void _toolUp(
+      PointerUpEvent e, BattleMapNotifier notifier, BattleMapTool tool) {
+    _downPointers.remove(e.pointer);
+    if (e.pointer != _toolPointer) return;
+    _toolPointer = null;
+    _toolKind = null;
+    unawaited(_handlePanEnd(notifier, tool));
+  }
+
+  void _toolCancel(PointerCancelEvent e, BattleMapNotifier notifier) {
+    _downPointers.remove(e.pointer);
+    if (e.pointer != _toolPointer) return;
+    _toolPointer = null;
+    _toolKind = null;
+    unawaited(notifier.cancelToolDrag());
   }
 
   void _handlePanStart(Offset localPos, BattleMapNotifier notifier, BattleMapTool activeTool) {
@@ -870,8 +954,7 @@ class _MoveTrailPainter extends CustomPainter {
     final pts = [for (final p in m.points) notifier.canvasToScreen(p)];
     const dash = 12.0, gap = 8.0;
     final dashed = Path();
-    for (final metric
-        in polygonPath(pts, closed: false).computeMetrics()) {
+    for (final metric in buildStrokePath(pts).computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += dash + gap) {
         dashed.addPath(metric.extractPath(d, d + dash), Offset.zero);
       }
