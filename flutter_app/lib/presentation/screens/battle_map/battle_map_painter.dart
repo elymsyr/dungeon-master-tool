@@ -541,8 +541,12 @@ class BattleMapForegroundPainter extends CustomPainter {
     ];
     final liveCurrentPath = notifier.currentPath;
     final liveCurrentLayer = notifier.currentLayer;
+    // A live erase drag is not painted here: without an offscreen layer its
+    // BlendMode.clear punches through the map, leaving a trail until release.
+    // Crossed strokes/marks are already deleted live by eraseMarksAt.
     final showLiveStroke = liveCurrentPath != null &&
-        liveCurrentLayer != ShapeLayer.background;
+        liveCurrentLayer != ShapeLayer.background &&
+        !notifier.currentIsErase;
 
     if (fgStrokes.isNotEmpty || showLiveStroke) {
       final strokePaint = Paint()

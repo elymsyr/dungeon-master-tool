@@ -11,6 +11,7 @@ import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/mind_map.dart';
+import '../../widgets/pen_color_picker.dart';
 
 const _uuid = Uuid();
 
@@ -208,18 +209,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
 
   static const List<double> penWidths = [2, 4, 8];
 
-  static const List<Color> penColors = [
-    Color(0xFFEF5350),
-    Color(0xFFFFA726),
-    Color(0xFFFFEE58),
-    Color(0xFF66BB6A),
-    Color(0xFF42A5F5),
-    Color(0xFFAB47BC),
-    Color(0xFFEC407A),
-    Color(0xFF8D6E63),
-    Color(0xFFFFFFFF),
-    Color(0xFF212121),
-  ];
+  static const List<Color> penColors = kPenColors;
 
   // F7: per-node override notifier. Each node's Positioned listens only to
   // its own notifier so a single drag tick fires one builder, not N. The

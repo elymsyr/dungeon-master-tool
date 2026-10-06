@@ -24,6 +24,7 @@ import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
 import '../../widgets/battle_map/map_compose_dialog.dart';
+import '../../widgets/pen_color_picker.dart';
 
 // ---------------------------------------------------------------------------
 // Tool enum
@@ -358,6 +359,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Lightweight repaint signal for in-progress annotation strokes.
   final ValueNotifier<int> strokeTick = ValueNotifier<int>(0);
 
+  /// Color for new pen strokes, AoE templates and rect/line/text shapes.
+  final ValueNotifier<Color> drawColor = ValueNotifier<Color>(kPenColors.first);
+
   // Lightweight repaint signal for in-progress / committed vector shapes
   // (Phase 6). Both painters listen so a draft updates without a Riverpod
   // rebuild, exactly like `strokeTick`.
@@ -443,6 +447,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     viewTransform.dispose();
     strokeTick.dispose();
     shapeTick.dispose();
+    drawColor.dispose();
     super.dispose();
   }
 
@@ -1248,7 +1253,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       ..clear()
       ..add(pt);
     _currentIsErase = erase;
-    _currentColor = erase ? Colors.transparent : Colors.red;
+    _currentColor = erase ? Colors.transparent : drawColor.value;
     _currentWidth = erase ? 20.0 : 4.0;
     _currentLayer = state.activeLayer;
     // Force the painter to repaint immediately. Without this the live
@@ -1395,7 +1400,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         start: origin,
         end: origin,
         layer: state.activeLayer,
-        colorHex: defaultAoeColorHex(tool),
+        colorHex: isAoeTool(tool) ? _colorToHex(drawColor.value) : null,
       ),
     );
   }
@@ -1633,7 +1638,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       kind: kind,
       layer: state.activeLayer,
       points: [origin, origin],
-      colorHex: defaultShapeColorHex(state.activeLayer),
+      colorHex: _colorToHex(drawColor.value),
     );
     shapeTick.value++;
   }
@@ -1669,7 +1674,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       kind: ShapeKind.text,
       layer: state.activeLayer,
       points: [p],
-      colorHex: defaultShapeColorHex(state.activeLayer),
+      colorHex: _colorToHex(drawColor.value),
       text: trimmed,
       fontSize: fontSize ?? (state.gridSize * 0.4),
     ));

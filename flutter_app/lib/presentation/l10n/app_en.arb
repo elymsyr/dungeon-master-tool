@@ -2490,6 +2490,7 @@
   "bmNavigate": "Navigate",
   "bmErase": "Erase",
   "bmDraw": "Draw",
+  "bmDrawColor": "Draw color",
   "bmAddFog": "Add Fog",
   "bmEraseFog": "Erase Fog",
   "bmFillFog": "Fill Fog",
