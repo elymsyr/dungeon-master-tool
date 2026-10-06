@@ -76,6 +76,10 @@ class _BattleMapProjectionViewState
   /// True once the current drag has moved — it then has its stop.
   bool _legOpen = false;
 
+  /// Number of our last call to the DM (`TurnMoveSender`); null when nothing
+  /// is waiting for the DM's ack.
+  int? _sentSeq;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -96,16 +100,30 @@ class _BattleMapProjectionViewState
     _releaseOwnIfCaughtUp();
   }
 
-  /// Drops the held position once the broadcast is within reach of it (the
-  /// DM may snap it to the grid — up to ~0.7 cell on a diagonal).
+  /// Drops the held position once the DM has it. A DM that acknowledges
+  /// moves (`moveAck`, migration 108) says so exactly: everything up to our
+  /// last call is applied, so its state — its own undos and moves included —
+  /// is the truth from here. Without acks: once the broadcast is within reach
+  /// of our position (the DM may snap it to the grid — up to ~0.7 cell on a
+  /// diagonal).
   void _releaseOwnIfCaughtUp() {
     final own = _ownPos;
     final grant = ref.read(myTurnGrantProvider);
     if (own == null || _ownPointer != null || grant == null) return;
     final snap = widget.item.snapshot;
-    final t = snap.tokens.where((t) => t.id == grant.combatantId).firstOrNull;
-    if (t == null ||
-        (Offset(t.x, t.y) - own).distance <= snap.gridSize * 0.75) {
+    final bool caughtUp;
+    final ack = snap.moveAck;
+    if (ack != null) {
+      final sent = _sentSeq;
+      caughtUp = sent == null ||
+          (ack.id == grant.combatantId && ack.seq >= sent);
+    } else {
+      final t =
+          snap.tokens.where((t) => t.id == grant.combatantId).firstOrNull;
+      caughtUp = t == null ||
+          (Offset(t.x, t.y) - own).distance <= snap.gridSize * 0.75;
+    }
+    if (caughtUp) {
       _dropOwn();
       _ownHold?.cancel();
     }
@@ -116,11 +134,13 @@ class _BattleMapProjectionViewState
     _ownPos = null;
     _ownPath = const [];
     _ownStops = const [];
+    _sentSeq = null;
   }
 
+  /// Safety net when no ack comes (a lost call, an old DM app).
   void _holdOwn() {
     _ownHold?.cancel();
-    _ownHold = Timer(const Duration(seconds: 2), () {
+    _ownHold = Timer(const Duration(seconds: 4), () {
       if (mounted && _ownPointer == null) setState(_dropOwn);
     });
   }
@@ -210,9 +230,10 @@ class _BattleMapProjectionViewState
       _ownPath = [...path, ...via];
       _ownStops = stops;
     });
-    ref
+    final seq = ref
         .read(turnMoveSenderProvider)
         ?.send(grant, pos, via: via, newLeg: newLeg);
+    if (seq != null) _sentSeq = seq;
   }
 
   void _ownUp(PointerEvent e) {
@@ -220,8 +241,10 @@ class _BattleMapProjectionViewState
     setState(() {
       _ownPointer = null;
       _legOpen = false;
+      // The ack may already be in (a drag that stood still before release).
+      _releaseOwnIfCaughtUp();
     });
-    _holdOwn();
+    if (_ownPos != null) _holdOwn();
   }
 
   /// Takes back the last drag — the same step as the DM's undo button, which
@@ -245,7 +268,8 @@ class _BattleMapProjectionViewState
       _ownStops = stops.isEmpty ? const [] : stops.sublist(0, stops.length - 1);
     });
     _holdOwn();
-    ref.read(turnMoveSenderProvider)?.undo(grant, target);
+    final seq = ref.read(turnMoveSenderProvider)?.undo(grant, target);
+    if (seq != null) _sentSeq = seq;
   }
 
   @override

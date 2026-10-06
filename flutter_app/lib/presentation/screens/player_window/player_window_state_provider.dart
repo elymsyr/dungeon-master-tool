@@ -90,6 +90,7 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
       fogDataBase64: patch['fogDataBase64'] as String?,
       clearFog: patch.containsKey('fogDataBase64') && patch['fogDataBase64'] == null,
       trail: TrailSnapshot.tryParse(patch['trail']),
+      moveAck: MoveAck.tryParse(patch['moveAck']),
       clearTrail: patch.containsKey('trail') &&
           TrailSnapshot.tryParse(patch['trail']) == null,
       viewportNormalized: patch.containsKey('viewportNormalized') &&

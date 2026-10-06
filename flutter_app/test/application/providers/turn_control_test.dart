@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show Offset;
 
 import 'package:dungeon_master_tool/application/providers/turn_control_provider.dart';
 import 'package:dungeon_master_tool/domain/entities/character.dart';
@@ -190,27 +189,61 @@ void main() {
       pending.last.complete(true);
     });
 
-    test('a server without migration 107 gets position-only calls', () async {
+    test('an older server gets the params it knows: 107 without p_seq, '
+        '105 position only', () async {
+      Future<List<Map<String, dynamic>>> run(Set<String> known) async {
+        final calls = <Map<String, dynamic>>[];
+        final sender = TurnMoveSender((p) async {
+          calls.add(p);
+          if (p.keys.any((k) => k.startsWith('p_') && !known.contains(k))) {
+            throw const PostgrestException(message: 'no fn', code: 'PGRST202');
+          }
+          return true;
+        }, onRejected: (_) {});
+        sender.send(grant, const Offset(5, 5),
+            via: const [Offset(4, 4)], newLeg: true);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        sender.send(grant, const Offset(6, 6), via: const [Offset(6, 6)]);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        return calls;
+      }
+
+      const base = {'p_world_id', 'p_combatant_id', 'p_x', 'p_y'};
+      final v107 = await run({...base, 'p_path', 'p_kind'});
+      expect(v107, hasLength(3)); // one refused, then two
+      expect(v107[1].keys, unorderedEquals([...base, 'p_path', 'p_kind']));
+      expect(v107[2].keys, unorderedEquals([...base, 'p_path']));
+
+      final v105 = await run(base);
+      expect(v105, hasLength(4)); // two refused, then two
+      expect(v105[2].keys, unorderedEquals(base));
+      expect(v105[3].keys, unorderedEquals(base));
+    });
+
+    test('every call is numbered; a collapsed move carries the latest number',
+        () async {
       final calls = <Map<String, dynamic>>[];
-      final sender = TurnMoveSender((p) async {
+      final pending = <Completer<Object?>>[];
+      final sender = TurnMoveSender((p) {
         calls.add(p);
-        if (p.containsKey('p_path') || p.containsKey('p_kind')) {
-          throw const PostgrestException(message: 'no fn', code: 'PGRST202');
-        }
-        return true;
+        final c = Completer<Object?>();
+        pending.add(c);
+        return c.future;
       }, onRejected: (_) {});
 
-      sender.send(grant, const Offset(5, 5),
-          via: const [Offset(4, 4)], newLeg: true);
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(calls, hasLength(2));
-      expect(calls.last.keys,
-          unorderedEquals(['p_world_id', 'p_combatant_id', 'p_x', 'p_y']));
-
-      sender.send(grant, const Offset(6, 6), via: const [Offset(6, 6)]);
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      expect(calls, hasLength(3));
-      expect(calls.last.containsKey('p_path'), isFalse);
+      final s1 = sender.send(grant, const Offset(1, 1), newLeg: true);
+      sender.send(grant, const Offset(2, 2));
+      final s3 = sender.send(grant, const Offset(3, 3));
+      final s4 = sender.undo(grant, const Offset(1, 1));
+      expect([s1 < s3, s3 < s4], [true, true]);
+      expect(calls.single['p_seq'], s1);
+      pending.last.complete(true);
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(calls.last['p_seq'], s3);
+      pending.last.complete(true);
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(calls.last['p_seq'], s4);
+      pending.last.complete(true);
     });
 
     test('a path longer than the server cap is thinned, not cut', () async {

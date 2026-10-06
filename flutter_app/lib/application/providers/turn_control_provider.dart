@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../../domain/entities/projection/projection_state.dart';
@@ -112,17 +113,22 @@ enum TurnMoveKind {
 }
 
 class _TurnOp {
-  _TurnOp(this.grant, this.pos, this.via, this.kind);
+  _TurnOp(this.grant, this.pos, this.via, this.kind, this.seq);
   final TurnGrant grant;
   Offset pos;
   List<Offset> via;
   final TurnMoveKind kind;
+  int seq;
 }
 
 /// One call in flight; moves arriving meanwhile collapse into the latest —
 /// their paths joined, so the DM still gets every point walked — so a drag
 /// never builds a queue: at most one write per round-trip, and no closer
 /// than [_minGap]. A new drag or an undo is never folded into another call.
+///
+/// Every call carries an increasing `p_seq` (migration 108); the DM
+/// acknowledges the last one it applied in `BattleMapSnapshot.moveAck`, which
+/// tells the player when its optimistic state can give way to the DM's.
 class TurnMoveSender {
   TurnMoveSender(this._rpc, {required this.onRejected});
 
@@ -141,17 +147,24 @@ class TurnMoveSender {
   final List<_TurnOp> _queue = [];
   bool _busy = false;
 
-  /// The server predates migration 107 — positions only.
-  bool _legacy = false;
+  /// What the server takes: 2 = migration 108 (`p_seq`), 1 = 107 (`p_path`,
+  /// `p_kind`), 0 = 105 (position only). Lowered on a PGRST202.
+  int _level = 2;
+
+  /// Microseconds at start, so numbers keep growing across app restarts —
+  /// the DM's ack of an earlier session never covers a new move.
+  int _seq = DateTime.now().microsecondsSinceEpoch;
 
   /// [pos] is where the token is now; [via] the points walked since the last
-  /// call, in order.
-  void send(
+  /// call, in order. Returns the move's number — acknowledged once
+  /// `moveAck.seq` reaches it.
+  int send(
     TurnGrant grant,
     Offset pos, {
     List<Offset> via = const [],
     bool newLeg = false,
   }) {
+    final seq = ++_seq;
     final last = _queue.lastOrNull;
     if (!newLeg &&
         last != null &&
@@ -159,18 +172,23 @@ class TurnMoveSender {
         identical(last.grant, grant)) {
       last
         ..pos = pos
-        ..via = _cap([...last.via, ...via]);
+        ..via = _cap([...last.via, ...via])
+        ..seq = seq;
     } else {
       _queue.add(_TurnOp(grant, pos, _cap(via),
-          newLeg ? TurnMoveKind.leg : TurnMoveKind.move));
+          newLeg ? TurnMoveKind.leg : TurnMoveKind.move, seq));
     }
     if (!_busy) unawaited(_pump());
+    return seq;
   }
 
-  /// Takes back the last drag; [target] is where it began.
-  void undo(TurnGrant grant, Offset target) {
-    _queue.add(_TurnOp(grant, target, const [], TurnMoveKind.undo));
+  /// Takes back the last drag; [target] is where it began. Returns the
+  /// undo's number, like [send].
+  int undo(TurnGrant grant, Offset target) {
+    final seq = ++_seq;
+    _queue.add(_TurnOp(grant, target, const [], TurnMoveKind.undo, seq));
     if (!_busy) unawaited(_pump());
+    return seq;
   }
 
   /// Every other point until it fits — the shape survives, the payload stays
@@ -188,9 +206,11 @@ class TurnMoveSender {
         'p_combatant_id': op.grant.combatantId,
         'p_x': op.pos.dx,
         'p_y': op.pos.dy,
-        if (!_legacy && op.via.isNotEmpty)
+        if (_level >= 1 && op.via.isNotEmpty)
           'p_path': [for (final p in op.via) ...[p.dx, p.dy]],
-        if (!_legacy && op.kind != TurnMoveKind.move) 'p_kind': op.kind.index,
+        if (_level >= 1 && op.kind != TurnMoveKind.move)
+          'p_kind': op.kind.index,
+        if (_level >= 2) 'p_seq': op.seq,
       };
 
   Future<void> _pump() async {
@@ -201,14 +221,16 @@ class TurnMoveSender {
         final sent = DateTime.now();
         try {
           Object? ok;
-          try {
-            ok = await _rpc(_params(op));
-          } on PostgrestException catch (e) {
-            // PGRST202: no function with these params — migration 107 is not
-            // applied yet. Fall back to the position-only call.
-            if (e.code != 'PGRST202' || _legacy) rethrow;
-            _legacy = true;
-            ok = await _rpc(_params(op));
+          while (true) {
+            try {
+              ok = await _rpc(_params(op));
+              break;
+            } on PostgrestException catch (e) {
+              // PGRST202: no function with these params — the server lacks
+              // migration 108 (or 107). Step down and retry.
+              if (e.code != 'PGRST202' || _level == 0) rethrow;
+              _level--;
+            }
           }
           if (ok == false) {
             _queue.removeWhere((o) => identical(o.grant, op.grant));
@@ -332,15 +354,20 @@ void _applyMove(Ref ref, TurnGrant? granted, WorldSyncEvent e) {
       ? TurnMoveKind.values[kindIx]
       : TurnMoveKind.move;
   final via = parseTurnPath(r['path']);
+  final seqRaw = r['seq'];
+  final ack = seqRaw is num
+      ? MoveAck(id: granted.combatantId, seq: seqRaw.toInt())
+      : null;
 
   final map = battleMapProvider(enc.id);
   if (ref.exists(map)) {
+    // The notifier sends the ack with the trail it produces.
     final n = ref.read(map.notifier);
     if (kind == TurnMoveKind.undo) {
-      n.undoRemoteMove(granted.combatantId, pos);
+      n.undoRemoteMove(granted.combatantId, pos, ack: ack);
     } else {
       n.applyRemoteMove(granted.combatantId, pos,
-          via: via, newLeg: kind == TurnMoveKind.leg);
+          via: via, newLeg: kind == TurnMoveKind.leg, ack: ack);
     }
     return;
   }
@@ -358,6 +385,20 @@ void _applyMove(Ref ref, TurnGrant? granted, WorldSyncEvent e) {
       granted.combatantId: {'x': to.dx, 'y': to.dy},
     },
   );
+  // The position patch above is already out; the ack follows it.
+  if (ack != null) {
+    final proj = ref
+        .read(projectionControllerProvider)
+        .items
+        .whereType<BattleMapProjection>()
+        .where((p) => p.encounterId == enc.id)
+        .firstOrNull;
+    if (proj != null) {
+      ref
+          .read(projectionControllerProvider.notifier)
+          .updateBattleMapTrail(proj.id, null, ack: ack, keepTrail: true);
+    }
+  }
 }
 
 /// `world_turn_control.path` (flat `[x0, y0, ...]`, migration 107) → points.

@@ -48,4 +48,22 @@ void main() {
     n.applyBattleMapPatch('p', {'trail': null});
     expect(snap().trail, isNull);
   });
+
+  test('move ack survives JSON and patches; malformed is none', () {
+    const ack = MoveAck(id: 'c2', seq: 1759750000000123);
+    expect(
+        BattleMapSnapshot.fromJson(const BattleMapSnapshot(moveAck: ack).toJson())
+            .moveAck,
+        ack);
+    expect(MoveAck.tryParse({'i': 'c2'}), isNull);
+    expect(MoveAck.tryParse({'s': 3}), isNull);
+
+    final n = PlayerProjectionStateNotifier()
+      ..state = const ProjectionState(items: [
+        BattleMapProjection(id: 'p', label: 'm', encounterId: 'e'),
+      ]);
+    n.applyBattleMapPatch('p', {'moveAck': ack.toJson()});
+    n.applyBattleMapPatch('p', {'trail': null});
+    expect((n.state.items.single as BattleMapProjection).snapshot.moveAck, ack);
+  });
 }

@@ -1,18 +1,20 @@
 -- ============================================================================
--- verify_107.sql — oyuncu hareket yolu (107) self-check. Hiçbir kalıcı
+-- verify_108.sql — oyuncu hareket yolu + sıra numarası (107/108) self-check. Hiçbir kalıcı
 -- değişiklik yapmaz.
 -- ============================================================================
+-- 107'nin yerine geçer: 108 uygulandıktan sonra verify_107.sql 6 parametreli
+-- imzayı bulamaz.
+--
 -- Kullanım: Supabase Dashboard > SQL Editor > yapıştır > Run.
--- Sonunda ROLLBACK var; başarılıysa "107 OK" notice'i döner, aksi halde ilk
+-- Sonunda ROLLBACK var; başarılıysa "108 OK" notice'i döner, aksi halde ilk
 -- başarısız assertion exception olarak patlar.
 --
 -- Kapsam:
 --   1. Eski 4 parametreli çağrı çalışır (yol yok, kind 0).
 --   2. Yol + kind satıra yazılır.
 --   3. Geçersiz yol (tek sayı, NaN, aşırı uzun) ve kind reddedilir.
---   4. anon çalıştıramaz; eski imza kalmadı.
---
--- 108 imzayı değiştirdi (p_seq): 108 uygulanmışsa verify_108.sql çalıştır.
+--   4. anon çalıştıramaz; eski imzalar kalmadı.
+--   5. Sıra numarası yazılır, negatif reddedilir.
 -- ============================================================================
 
 BEGIN;
@@ -21,15 +23,15 @@ DO $$
 DECLARE
   v_dm    UUID := gen_random_uuid();
   v_pl    UUID := gen_random_uuid();
-  v_world TEXT := 'verify107-world';
+  v_world TEXT := 'verify108-world';
   v_row   public.world_turn_control%ROWTYPE;
   v_ok    BOOLEAN;
 BEGIN
   INSERT INTO auth.users (id, aud, role, email) VALUES
-    (v_dm, 'authenticated', 'authenticated', 'verify107-dm@example.invalid'),
-    (v_pl, 'authenticated', 'authenticated', 'verify107-pl@example.invalid');
+    (v_dm, 'authenticated', 'authenticated', 'verify108-dm@example.invalid'),
+    (v_pl, 'authenticated', 'authenticated', 'verify108-pl@example.invalid');
   INSERT INTO public.worlds (id, owner_id, world_name)
-    VALUES (v_world, v_dm, 'verify107');
+    VALUES (v_world, v_dm, 'verify108');
   INSERT INTO public.world_members (world_id, user_id, role) VALUES
     (v_world, v_dm, 'dm'),
     (v_world, v_pl, 'player')
@@ -80,16 +82,29 @@ BEGIN
   EXCEPTION WHEN invalid_parameter_value THEN v_ok := true; END;
   ASSERT v_ok, '3.4 geçersiz kind kabul edildi';
 
+  -- ══ 5 — Sıra numarası ═════════════════════════════════════════════════
+  ASSERT public.move_turn_token(v_world, 'c1', 12, 12, NULL, 0::smallint, 77),
+    '5.1 numaralı çağrı FALSE';
+  SELECT * INTO v_row FROM public.world_turn_control WHERE world_id = v_world;
+  ASSERT v_row.seq = 77, '5.2 sıra numarası yazılmadı';
+  v_ok := false;
+  BEGIN PERFORM public.move_turn_token(v_world, 'c1', 1, 1, NULL, 0::smallint, -1);
+  EXCEPTION WHEN invalid_parameter_value THEN v_ok := true; END;
+  ASSERT v_ok, '5.3 negatif sıra numarası kabul edildi';
+
   -- ══ 4 — anon / eski imza ═══════════════════════════════════════════════
   PERFORM set_config('role', 'postgres', true);
   ASSERT NOT has_function_privilege('anon',
-    'public.move_turn_token(text,text,double precision,double precision,double precision[],smallint)',
+    'public.move_turn_token(text,text,double precision,double precision,double precision[],smallint,bigint)',
     'EXECUTE'), '4.1 anon move_turn_token çalıştırabiliyor';
   ASSERT to_regprocedure(
     'public.move_turn_token(text,text,double precision,double precision)') IS NULL,
     '4.2 eski 4 parametreli imza duruyor';
+  ASSERT to_regprocedure(
+    'public.move_turn_token(text,text,double precision,double precision,double precision[],smallint)') IS NULL,
+    '4.3 107''nin 6 parametreli imzası duruyor';
 
-  RAISE NOTICE '107 OK';
+  RAISE NOTICE '108 OK';
 END $$;
 
 ROLLBACK;
