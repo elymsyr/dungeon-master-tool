@@ -1,5 +1,85 @@
 # Release Notes
 
+## Dungeon Master Tool v18.5.0 — One Table (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.5.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release turns the Session tab into one screen: the battle map fills it, and the encounter panel and event log sit on top. Online players' dice rolls now show up in the DM's event log. When a player moves their token on their turn, the dashed trail now appears on the DM's screen and the player's screen too. Players can view the world's settings without being able to change them. Your data is not changed, so this version installs over v18.4.0.
+
+---
+
+### Session
+
+#### The session is the battle map
+The Session tab no longer has the Notes / Battle Map / Player / Stats sub-tabs. The battle map takes the whole screen, and the encounter panel opens from the left. On a desktop or tablet it starts open; on a phone it starts closed so it does not cover the map. The combat buttons sit above the map. The event log sits in the bottom right corner like a game chat.
+
+- Drag a card from the sidebar onto the map: it joins the encounter, and its token is placed where you dropped it.
+- The player screen preview is now a window. Open it from the projection menu or from the **View** button on the snackbar.
+- On a phone, a button in the combat bar shows or hides the event log.
+
+#### Dice rolls in the event log
+Every dice roll now goes into the session's event log. The DM's own rolls go in directly. An online player's rolls reach the DM's log too. Ability checks and saving throws are labelled with the character's name, for example *Dexterity saving throw*.
+
+---
+
+### Online play
+
+#### Players see their turn's trail
+When a player moves their own token on their turn, the same dashed trail and `ft · m` distance label appear on the DM's screen and on the player's screen. **Back to where your turn started** removes the trail along with the move.
+
+#### World settings for players
+A player in an online world can now open the world's settings from the info button in the top bar. They can see the name, description, cover and packages, but cannot change anything. The marketplace panel is not shown to them.
+
+---
+
+### Smaller improvements
+
+- **Player screen** — the theme and language menus in the player's top bar are replaced by an **App settings** entry, which opens the same settings as the hub.
+- **Battle map on phones** — the mobile toolbar and its sheet take less space.
+- **l10n** — new keys for the dice log labels and the event log button, in English, Turkish, German and French; 13 unused session keys were removed.
+
+---
+
+### Deprecations & removals
+
+- **Session Notes tab** — removed together with the other session sub-tabs. Notes you already wrote are kept with the session, but they are no longer shown. Use the event log or a card for notes.
+- **Session Stats tab** — removed. You can still change HP and other stats from the encounter panel rows.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.4.0` → `18.5.0`.
+- **Online groups:** v18.5.0 works with v18.4.0. A player's dice rolls reach the DM's log only when the player is on v18.5.0.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Dice log** — the seventh subscribed table `world_dice_rolls`; a player writes through the `log_dice_roll` RPC and only the DM reads it (`dice_log.dart`).
+- **Session screen** — `session_screen.dart` is now map + overlays; the sub-tab and splitter state in `ui_state_provider.dart` is gone. `CombatState.sessionNotes` is still saved but has no editor.
+- **Remote trail** — `_applyTokenDelta` treats a token that lands somewhere other than its state position as a remote move and extends the trail.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.4.0 — Your Turn (Beta)
 
 **Release date:** October 2026
