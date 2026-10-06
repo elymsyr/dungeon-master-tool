@@ -40,7 +40,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   @override
   void initState() {
     super.initState();
-    _notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
+    _notifier = ref.read(battleMapProvider(widget.encounterId).notifier)
+      ..trailStyle = _trailStyle;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final encounter = ref.read(combatProvider).activeEncounter;
@@ -52,6 +53,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
   @override
   void dispose() {
+    _notifier.trailStyle = null;
     // Auto-save on screen dispose (tab switch / session close)
     unawaited(_notifier.save());
     super.dispose();
@@ -402,6 +404,21 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     if (slug == 'npc') return const Color(0xFFFFC107);
     if (slug == 'monster') return const Color(0xFFE53935);
     return Colors.white;
+  }
+
+  ({double radius, Color color})? _trailStyle(String id) {
+    final c = ref
+        .read(combatProvider)
+        .activeEncounter
+        ?.combatants
+        .where((c) => c.id == id)
+        .firstOrNull;
+    if (c == null) return null;
+    final s = ref.read(battleMapProvider(widget.encounterId));
+    return (
+      radius: s.tokenSize * _effectiveSizeMultiplier(id, c.entityId, s) / 2,
+      color: _trailColor(c.entityId),
+    );
   }
 
   Widget _buildMoveOverlay(BattleMapNotifier notifier) {

@@ -367,6 +367,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// starts over.
   final ValueNotifier<TokenMove?> tokenMove = ValueNotifier<TokenMove?>(null);
 
+  /// Trail radius and colour by combatant id — set by the screen, which knows
+  /// the entities. Lets a move that arrives from elsewhere (a player moving
+  /// their own token on their turn) leave a trail too.
+  ({double radius, Color color})? Function(String id)? trailStyle;
+
   // Lightweight repaint signal for in-progress / committed vector shapes
   // (Phase 6). Both painters listen so a draft updates without a Riverpod
   // rebuild, exactly like `strokeTick`.
@@ -738,6 +743,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     }
     _appliedTp = tp;
     if (moved.isEmpty || !mounted) return;
+    // Our own persisted drags echo back here already in place; only a token
+    // that lands somewhere new was moved by someone else.
+    for (final e in moved.entries) {
+      final was = state.tokenPositions[e.key];
+      if (was != null && was != e.value) _remoteTokenMove(e.key, was, e.value);
+    }
     state = state.copyWith(tokenPositions: {...state.tokenPositions, ...moved});
   }
 
@@ -1942,6 +1953,29 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     } else {
       tokenMove.value = m.copy(current: landed, dragging: false);
     }
+  }
+
+  /// A move from elsewhere has no drag to bracket it: it extends the trail as
+  /// one stretch, so undo takes the token back to where that stretch began.
+  void _remoteTokenMove(String id, Offset from, Offset to) {
+    var m = tokenMove.value;
+    if (m != null && m.id == id && m.dragging) return;
+    if (m == null || m.id != id) {
+      final style = trailStyle?.call(id);
+      if (style == null) return;
+      m = TokenMove(
+        id: id,
+        path: [from],
+        stops: const [0],
+        current: from,
+        radius: style.radius,
+        color: style.color,
+      );
+    }
+    final path = (to - m.path.last).distance >= state.gridSize / 2
+        ? [...m.path, to]
+        : m.path;
+    tokenMove.value = m.copy(path: path, current: to);
   }
 
   /// Puts the token back where its last drag started.
