@@ -695,12 +695,20 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     });
   }
 
+  /// The owner's latest applied move, sent with the next trail push — after
+  /// the position patch it acknowledges, never before.
+  MoveAck? _pendingAck;
+
   /// Sends the trail to the players. A drag in progress is held back — the
-  /// players' token only moves when it is dropped, so its trail goes with it.
+  /// players' token only moves when it is dropped, so its trail goes with it
+  /// (an ack still goes out).
   void _pushTrailToProjection() {
     if (!mounted) return;
     final m = tokenMove.value;
-    if (m != null && m.dragging) return;
+    final ack = _pendingAck;
+    _pendingAck = null;
+    final dragging = m != null && m.dragging;
+    if (dragging && ack == null) return;
     final proj = _ref
         .read(projectionControllerProvider)
         .items
@@ -708,13 +716,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         .where((p) => p.encounterId == encounterId)
         .firstOrNull;
     if (proj == null) return;
-    _ref
-        .read(projectionControllerProvider.notifier)
-        .updateBattleMapTrail(
-            proj.id,
-            m == null
-                ? null
-                : trailSnapshotOf(m, gridSize: state.gridSize.toDouble()));
+    _ref.read(projectionControllerProvider.notifier).updateBattleMapTrail(
+          proj.id,
+          m == null || dragging
+              ? null
+              : trailSnapshotOf(m, gridSize: state.gridSize.toDouble()),
+          ack: ack,
+          keepTrail: dragging,
+        );
   }
 
   static String _colorToHex(Color c) {
@@ -2068,11 +2077,15 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// their previous call, so the trail follows the real path instead of
   /// cutting corners between calls; [newLeg] marks the start of a drag — an
   /// undo stop, exactly like the DM's own drags.
+  ///
+  /// [ack] goes to the players with the resulting trail: the owner stops
+  /// showing its own guess once it sees it.
   void applyRemoteMove(
     String id,
     Offset to, {
     List<Offset> via = const [],
     bool newLeg = false,
+    MoveAck? ack,
   }) {
     if (!mounted) return;
     final at = state.gridSnap ? _snapToGrid(to) : to;
@@ -2080,20 +2093,28 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     if (from != null) _extendTrail(id, from, at, via: via, newLeg: newLeg);
     moveToken(id, at);
     persistTokenPositions();
+    _ack(ack);
+  }
+
+  void _ack(MoveAck? ack) {
+    if (ack == null) return;
+    _pendingAck = ack;
+    _scheduleTrailSync();
   }
 
   /// A player's undo: takes back their last drag — the same step the DM's
   /// undo button takes. Without a trail of that token, [fallback] (where the
   /// player thinks that drag began) is used.
-  void undoRemoteMove(String id, Offset fallback) {
+  void undoRemoteMove(String id, Offset fallback, {MoveAck? ack}) {
     if (!mounted) return;
     final m = tokenMove.value;
     if (m != null && m.id == id && !m.dragging) {
       undoTokenMove();
-      return;
+    } else {
+      moveToken(id, state.gridSnap ? _snapToGrid(fallback) : fallback);
+      persistTokenPositions();
     }
-    moveToken(id, state.gridSnap ? _snapToGrid(fallback) : fallback);
-    persistTokenPositions();
+    _ack(ack);
   }
 
   /// A move from elsewhere has no drag to bracket it: it extends the trail

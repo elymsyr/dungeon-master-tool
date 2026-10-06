@@ -69,6 +69,12 @@ class BattleMapSnapshot {
   /// distance). Null when nothing moved this turn or the token is hidden.
   final TrailSnapshot? trail;
 
+  /// The last move of a player's own token the DM has applied (migration
+  /// 108). The player shows its own optimistic position/trail only until its
+  /// latest move is acknowledged here; from then on the DM's state — undos
+  /// included — is what it sees.
+  final MoveAck? moveAck;
+
   /// What part of the canvas the player should display, expressed as a
   /// rect in **normalized** 0..1 canvas coordinates `(left, top, w, h)`.
   /// `null` means "fit the entire canvas to the player viewport".
@@ -98,6 +104,7 @@ class BattleMapSnapshot {
     this.measurements = const [],
     this.shapes = const [],
     this.trail,
+    this.moveAck,
     this.viewportNormalized,
   });
 
@@ -121,6 +128,7 @@ class BattleMapSnapshot {
     List<MeasurementSnapshot>? measurements,
     List<ShapeSnapshot>? shapes,
     TrailSnapshot? trail,
+    MoveAck? moveAck,
     NormalizedRect? viewportNormalized,
     bool clearViewport = false,
     bool clearFog = false,
@@ -146,6 +154,7 @@ class BattleMapSnapshot {
       measurements: measurements ?? this.measurements,
       shapes: shapes ?? this.shapes,
       trail: clearTrail ? null : (trail ?? this.trail),
+      moveAck: moveAck ?? this.moveAck,
       viewportNormalized: clearViewport
           ? null
           : (viewportNormalized ?? this.viewportNormalized),
@@ -160,8 +169,8 @@ class BattleMapSnapshot {
   ///   rows/clients omit it and `fromJson` defaults to ''.
   /// - v4: additive `shapes` (typed vector shapes — Phase 6). Tolerant —
   ///   older rows/clients omit it and `fromJson` defaults to `[]`.
-  /// - v5: additive `trail` (token movement trail). Tolerant — older
-  ///   clients ignore it, missing means no trail.
+  /// - v5: additive `trail` (token movement trail) and `moveAck`. Tolerant —
+  ///   older clients ignore them, missing means none.
   static const int schemaVersion = 5;
 
   Map<String, dynamic> toJson() => {
@@ -187,6 +196,7 @@ class BattleMapSnapshot {
           'measurements': measurements.map((m) => m.toJson()).toList(),
         if (shapes.isNotEmpty) 'shapes': shapes.map((s) => s.toJson()).toList(),
         if (trail != null) 'trail': trail!.toJson(),
+        if (moveAck != null) 'moveAck': moveAck!.toJson(),
         if (viewportNormalized != null)
           'viewportNormalized': viewportNormalized!.toJson(),
       };
@@ -231,12 +241,37 @@ class BattleMapSnapshot {
               .toList() ??
           const [],
       trail: TrailSnapshot.tryParse(json['trail']),
+      moveAck: MoveAck.tryParse(json['moveAck']),
       viewportNormalized: json['viewportNormalized'] != null
           ? NormalizedRect.fromJson(
               (json['viewportNormalized'] as Map).cast<String, dynamic>())
           : null,
     );
   }
+}
+
+/// "The DM has applied the owner's moves of token [id] up to [seq]."
+class MoveAck {
+  final String id;
+  final int seq;
+
+  const MoveAck({required this.id, required this.seq});
+
+  Map<String, dynamic> toJson() => {'i': id, 's': seq};
+
+  static MoveAck? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final id = json['i'], seq = json['s'];
+    if (id is! String || seq is! num) return null;
+    return MoveAck(id: id, seq: seq.toInt());
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is MoveAck && other.id == id && other.seq == seq;
+
+  @override
+  int get hashCode => Object.hash(id, seq);
 }
 
 /// A token's movement trail. [points] is a flat `[x0,y0,...]` canvas-space

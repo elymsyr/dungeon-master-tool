@@ -11,6 +11,8 @@
 --   2. Yol + kind satıra yazılır.
 --   3. Geçersiz yol (tek sayı, NaN, aşırı uzun) ve kind reddedilir.
 --   4. anon çalıştıramaz; eski imza kalmadı.
+--
+-- 108 imzayı değiştirdi (p_seq): 108 uygulanmışsa verify_108.sql çalıştır.
 -- ============================================================================
 
 BEGIN;
