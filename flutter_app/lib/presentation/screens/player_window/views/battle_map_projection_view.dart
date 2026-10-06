@@ -63,6 +63,10 @@ class _BattleMapProjectionViewState
   Offset _grabDelta = Offset.zero;
   Timer? _ownHold;
 
+  /// This turn's path, from the turn's start, sampled every half cell — drawn
+  /// dashed with the distance walked, like the DM's own trail.
+  List<Offset> _ownTrail = const [];
+
   @override
   bool get wantKeepAlive => true;
 
@@ -145,7 +149,13 @@ class _BattleMapProjectionViewState
       p.dx.clamp(0, snap.canvasWidth.toDouble()),
       p.dy.clamp(0, snap.canvasHeight.toDouble()),
     );
-    setState(() => _ownPos = pos);
+    final trail = _ownTrail.isEmpty ? [grant.origin] : _ownTrail;
+    setState(() {
+      _ownPos = pos;
+      _ownTrail = (pos - trail.last).distance >= snap.gridSize / 2
+          ? [...trail, pos]
+          : trail;
+    });
     ref.read(turnMoveSenderProvider)?.send(grant, pos);
   }
 
@@ -156,7 +166,10 @@ class _BattleMapProjectionViewState
   }
 
   void _undoOwn(TurnGrant grant) {
-    setState(() => _ownPos = grant.origin);
+    setState(() {
+      _ownPos = grant.origin;
+      _ownTrail = const [];
+    });
     _holdOwn();
     ref.read(turnMoveSenderProvider)?.send(grant, grant.origin);
   }
@@ -281,6 +294,7 @@ class _BattleMapProjectionViewState
       setState(() {
         _ownPointer = null;
         _ownPos = null;
+        _ownTrail = const [];
       });
     });
     final grant = _grantOn(snap);
@@ -292,6 +306,9 @@ class _BattleMapProjectionViewState
               t.id == grant!.combatantId ? t.movedTo(own.dx, own.dy) : t,
           ]);
     final dragging = grant != null && _ownPointer != null;
+    final ownToken = grant == null || _ownTrail.isEmpty
+        ? null
+        : shown.tokens.firstWhere((t) => t.id == grant.combatantId);
     final canvas = LayoutBuilder(builder: (context, constraints) {
       final size = Size(constraints.maxWidth, constraints.maxHeight);
       Widget c = CustomPaint(
@@ -303,6 +320,9 @@ class _BattleMapProjectionViewState
           tokenImages: _tokenImageCache,
           compact: isCompact,
           ownTokenId: grant?.combatantId,
+          ownTrail: ownToken == null
+              ? null
+              : [..._ownTrail, Offset(ownToken.x, ownToken.y)],
         ),
       );
       if (grant != null) {
@@ -472,6 +492,9 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// The viewer's token while it is their turn — drawn with a ring.
   final String? ownTokenId;
 
+  /// Canvas-space path the viewer's token walked this turn, ending at it.
+  final List<Offset>? ownTrail;
+
   _BattleMapProjectionPainter({
     required this.snapshot,
     required this.bgImage,
@@ -479,6 +502,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
     required this.tokenImages,
     this.compact = false,
     this.ownTokenId,
+    this.ownTrail,
   });
 
   @override
@@ -716,6 +740,43 @@ class _BattleMapProjectionPainter extends CustomPainter {
             }
         }
       }
+    }
+
+    // 2.7. The viewer's own move this turn — dashed, under the tokens.
+    final trail = ownTrail;
+    if (trail != null && trail.length > 1) {
+      final pts = [for (final p in trail) Offset(dx + p.dx * scale, dy + p.dy * scale)];
+      final dashed = Path();
+      for (final metric in polygonPath(pts, closed: false).computeMetrics()) {
+        for (var d = 0.0; d < metric.length; d += 20) {
+          dashed.addPath(metric.extractPath(d, d + 12), Offset.zero);
+        }
+      }
+      canvas.drawPath(
+        dashed,
+        Paint()
+          ..color = _ownTurnColor
+          ..strokeWidth = 4
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+      final feet = gridPathFeet(
+        trail,
+        gridSize: snapshot.gridSize.toDouble(),
+        feetPerCell: snapshot.feetPerCell.toDouble(),
+        rule: rule,
+      );
+      final meters = feet * 0.3; // 5e convention: 5 ft = 1.5 m
+      final r = snapshot.tokenSize *
+          (snapshot.tokenSizeMultipliers[ownTokenId] ?? 1) *
+          scale /
+          2;
+      drawFeetLabel(
+        pts.last + Offset(r + 6, -r),
+        '${feet.toStringAsFixed(0)} ft · '
+        '${meters.toStringAsFixed(meters % 1 == 0 ? 0 : 1)} m',
+        Colors.white,
+      );
     }
 
     // 3. Tokens — drawn BEFORE fog so the fog actually hides hidden tokens.
@@ -1130,7 +1191,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
         old.fogImage != fogImage ||
         old.tokenImages.length != tokenImages.length ||
         old.compact != compact ||
-        old.ownTokenId != ownTokenId;
+        old.ownTokenId != ownTokenId ||
+        old.ownTrail != ownTrail;
   }
 }
 

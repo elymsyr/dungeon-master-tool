@@ -65,7 +65,8 @@ void main() {
     addTearDown(container.dispose);
     final sub = container.listen(battleMapProvider('e1'), (_, _) {});
     addTearDown(sub.close);
-    final n = container.read(battleMapProvider('e1').notifier);
+    final n = container.read(battleMapProvider('e1').notifier)
+      ..trailStyle = (_) => (radius: 25, color: Colors.green);
 
     const enc = Encounter(id: 'e1', tokenPositions: {
       'a': {'x': 0.0, 'y': 0.0},
@@ -80,5 +81,21 @@ void main() {
     }));
     expect(n.state.tokenPositions['b'], const Offset(200, 50));
     expect(n.state.tokenPositions['a'], const Offset(10, 10));
+    // The player's move leaves a trail; undo takes it back to the start.
+    expect(n.tokenMove.value!.id, 'b');
+    expect(n.tokenMove.value!.points,
+        const [Offset(50, 50), Offset(200, 50), Offset(200, 50)]);
+
+    // The DM's own move echoing back is no remote move.
+    n.moveToken('a', const Offset(300, 300));
+    await n.syncFromEncounter(enc.copyWith(tokenPositions: {
+      'a': {'x': 300.0, 'y': 300.0},
+      'b': {'x': 200.0, 'y': 50.0},
+    }));
+    expect(n.tokenMove.value!.id, 'b');
+
+    n.undoTokenMove();
+    expect(n.state.tokenPositions['b'], const Offset(50, 50));
+    expect(n.tokenMove.value, isNull);
   });
 }

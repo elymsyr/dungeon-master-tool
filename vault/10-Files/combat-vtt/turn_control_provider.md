@@ -43,5 +43,5 @@ tags: [file]
 - **Güvenlik**: oyuncunun tabloya yazma politikası yok. Tek kapı `move_turn_token` (SECURITY DEFINER): `owner_id = auth.uid()` + combatant eşleşmesi + üyelik, pozisyon `BETWEEN -1e6 AND 1e6` (NaN/∞ reddedilir). anon EXECUTE yok. SELECT yalnız DM + sahip.
 
 ## Notes
-- Oyuncu UI (`battle_map_projection_view.dart`, yalnız `interactive`): "Sıra sende" bandı + geri al (origin'e RPC), kendi token'ında yeşil halka. Sürükleme `Listener` ile (gesture arena dışında), basılıyken `InteractiveViewer` pan/zoom kapalı. Bırakınca yerel pozisyon yayın ≤0.75 hücre yaklaşana ya da 2 sn dolana kadar tutulur. İzin değişince yerel durum sıfırlanır.
+- Oyuncu UI (`battle_map_projection_view.dart`, yalnız `interactive`): "Sıra sende" bandı + geri al (origin'e RPC), kendi token'ında yeşil halka. Sürükleme `Listener` ile (gesture arena dışında), basılıyken `InteractiveViewer` pan/zoom kapalı. Bırakınca yerel pozisyon yayın ≤0.75 hücre yaklaşana ya da 2 sn dolana kadar tutulur. Turun yolu (`_ownTrail`, origin'den yarım hücrede bir örneklenir) DM'deki gibi yeşil kesik iz + `ft · m` etiketiyle çizilir; geri al ve izin değişimi izi siler. İzin değişince yerel durum sıfırlanır.
 - Bilinen eski sorun (dokunulmadı): oyuncu painter'ının aktif tur vurgusu `turnIndex`'i token listesi indeksi sanıyor. Gizli token varsa kayıyor.
