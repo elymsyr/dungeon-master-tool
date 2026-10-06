@@ -1806,6 +1806,7 @@
   "bmNavigate": "Naviguer",
   "bmErase": "Effacer",
   "bmDraw": "Dessiner",
+  "bmDrawColor": "Couleur de dessin",
   "bmAddFog": "Ajouter du brouillard",
   "bmEraseFog": "Effacer le brouillard",
   "bmFillFog": "Remplir de brouillard",

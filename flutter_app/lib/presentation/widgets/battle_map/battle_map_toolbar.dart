@@ -10,6 +10,7 @@ import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
 import 'draw_tools_button.dart';
+import '../pen_color_picker.dart';
 import '../../l10n/app_localizations.dart';
 
 typedef _ToolbarState = ({
@@ -253,6 +254,7 @@ class BattleMapToolbar extends ConsumerWidget {
           DrawToolsButton(activeTool: mapState.activeTool, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: L10n.of(context)!.bmEraseTooltip, mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: L10n.of(context)!.bmDraw, mapState: mapState, notifier: notifier, palette: palette),
+          PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor),
           _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: L10n.of(context)!.bmAddFog, mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: L10n.of(context)!.bmEraseFog, mapState: mapState, notifier: notifier, palette: palette),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),

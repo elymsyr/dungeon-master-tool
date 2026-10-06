@@ -10,6 +10,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../dice/dice_fab.dart';
 import 'battlemap_picker_flow.dart';
 import 'draw_tools_button.dart';
+import '../pen_color_picker.dart';
 import '../../l10n/app_localizations.dart';
 
 typedef _ToolbarState = ({
@@ -313,6 +314,7 @@ class _ToolsTab extends StatelessWidget {
               DrawToolsButton(activeTool: tb.activeTool, notifier: notifier, palette: palette, compact: true),
               _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: L10n.of(context)!.bmErase, tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: L10n.of(context)!.bmDraw, tb: tb, notifier: notifier, palette: palette),
+              PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor),
               _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: L10n.of(context)!.bmAddFog, tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, label: L10n.of(context)!.bmEraseFog, tb: tb, notifier: notifier, palette: palette),
             ],

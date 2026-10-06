@@ -9,6 +9,7 @@ import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/dice/dice_fab.dart';
+import '../../widgets/pen_color_picker.dart';
 import 'mind_map_canvas.dart';
 import 'mind_map_notifier.dart';
 import '../../l10n/app_localizations.dart';
@@ -293,7 +294,7 @@ class _FloatingControls extends StatelessWidget {
                     onPressed: penColor == null || erasing
                         ? () => notifier.selectPen(notifier.lastPenColor)
                         : () => _showPenColors(context, penColor),
-                    child: penColor == null ? null : _Swatch(color: penColor),
+                    child: penColor == null ? null : PenSwatch(color: penColor),
                   ),
                 ),
                 const SizedBox(height: kFabGap),
@@ -368,42 +369,9 @@ class _FloatingControls extends StatelessWidget {
   }
 
   Future<void> _showPenColors(BuildContext context, Color current) async {
-    final picked = await showMenu<Object>(
-      context: context,
-      position: _leftOf(context),
-      color: palette.uiFloatingBg,
-      constraints: const BoxConstraints(minWidth: 48, maxWidth: 48),
-      items: [
-        for (final c in MindMapNotifier.penColors)
-          PopupMenuItem<Object>(
-            value: c,
-            height: 36,
-            padding: EdgeInsets.zero,
-            child: Center(child: _Swatch(color: c, selected: c == current)),
-          ),
-        PopupMenuItem<Object>(
-          value: 'custom',
-          height: 36,
-          padding: EdgeInsets.zero,
-          child: Center(
-            child: Tooltip(
-              message: L10n.of(context)!.mindMapCustomColor,
-              child: Icon(Icons.palette_outlined,
-                  size: 20, color: palette.uiFloatingText),
-            ),
-          ),
-        ),
-      ],
-    );
-    if (picked is Color) {
-      notifier.selectPen(picked);
-    } else if (picked == 'custom' && context.mounted) {
-      final custom = await showDialog<Color>(
-        context: context,
-        builder: (_) => _CustomColorDialog(initial: current, palette: palette),
-      );
-      if (custom != null) notifier.selectPen(custom);
-    }
+    final picked = await pickPenColor(context,
+        position: _leftOf(context), current: current, palette: palette);
+    if (picked != null) notifier.selectPen(picked);
   }
 
   void _showWorkspaceMenu(
@@ -474,103 +442,6 @@ class _WidthLine extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(width / 2),
       ),
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  final Color color;
-  final bool selected;
-  const _Swatch({required this.color, this.selected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      child: selected
-          ? Icon(Icons.check,
-              size: 14,
-              color: color.computeLuminance() > 0.5
-                  ? Colors.black
-                  : Colors.white)
-          : null,
-    );
-  }
-}
-
-/// Free color pick — HSV sliders over a live preview.
-class _CustomColorDialog extends StatefulWidget {
-  final Color initial;
-  final DmToolColors palette;
-  const _CustomColorDialog({required this.initial, required this.palette});
-
-  @override
-  State<_CustomColorDialog> createState() => _CustomColorDialogState();
-}
-
-class _CustomColorDialogState extends State<_CustomColorDialog> {
-  late HSVColor _hsv = HSVColor.fromColor(widget.initial);
-
-  Widget _slider(String label, double value, double max,
-      HSVColor Function(double) apply) {
-    final text = TextStyle(color: widget.palette.uiFloatingText, fontSize: 12);
-    return Row(
-      children: [
-        SizedBox(width: 72, child: Text(label, style: text)),
-        Expanded(
-          child: Slider(
-            value: value,
-            max: max,
-            activeColor: _hsv.toColor(),
-            onChanged: (v) => setState(() => _hsv = apply(v)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = L10n.of(context)!;
-    final palette = widget.palette;
-    return AlertDialog(
-      backgroundColor: palette.uiFloatingBg,
-      title: Text(l10n.mindMapCustomColor,
-          style: TextStyle(color: palette.uiFloatingText, fontSize: 14)),
-      content: SizedBox(
-        width: 300,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: _hsv.toColor(),
-                borderRadius: palette.cbr,
-                border: Border.all(color: palette.uiFloatingBorder),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _slider(l10n.colorHue, _hsv.hue, 360, _hsv.withHue),
-            _slider(l10n.colorSaturation, _hsv.saturation, 1,
-                _hsv.withSaturation),
-            _slider(l10n.colorBrightness, _hsv.value, 1, _hsv.withValue),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.btnCancel,
-              style: TextStyle(color: palette.uiFloatingText)),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _hsv.toColor()),
-          child: Text(l10n.btnSave),
-        ),
-      ],
     );
   }
 }
