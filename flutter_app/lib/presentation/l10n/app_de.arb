@@ -2216,5 +2216,6 @@
   "lblDiceTheme": "Würfeldesign",
   "diceThemeAuto": "Automatisch (nach Thema)",
   "diceLooksThemes": "Themen",
-  "diceLooksOthers": "Weitere"
+  "diceLooksOthers": "Weitere",
+  "bmMoveUndo": "Bewegung rückgängig"
 }

@@ -62,6 +62,33 @@ double gridDistanceFeet(
   }
 }
 
+/// Feet travelled along a token's movement [path] (canvas-space points).
+/// Diagonals are counted over the whole path, so under 5-10-5 every second
+/// diagonal costs double across segments, not per segment. A two-point path
+/// equals [gridDistanceFeet].
+double gridPathFeet(
+  List<Offset> path, {
+  required double gridSize,
+  required double feetPerCell,
+  required DiagonalRule rule,
+}) {
+  if (gridSize <= 0 || path.length < 2) return 0;
+  var cells = 0.0;
+  var diagonals = 0.0;
+  for (var i = 1; i < path.length; i++) {
+    final dx = (path[i].dx - path[i - 1].dx).abs() / gridSize;
+    final dy = (path[i].dy - path[i - 1].dy).abs() / gridSize;
+    if (rule == DiagonalRule.euclidean) {
+      cells += math.sqrt(dx * dx + dy * dy);
+    } else {
+      cells += math.max(dx, dy);
+      diagonals += math.min(dx, dy);
+    }
+  }
+  if (rule == DiagonalRule.fiveTenFive) cells += (diagonals / 2).floorToDouble();
+  return cells * feetPerCell;
+}
+
 // ---------------------------------------------------------------------------
 // AoE template geometry — pure functions on screen-space points so the DM
 // painter and the player painter build IDENTICAL vertices (each passes its

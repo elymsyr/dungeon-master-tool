@@ -10,6 +10,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/creature_size.dart';
+import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
@@ -79,6 +80,11 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         if (next == null || next.id != widget.encounterId) return;
         _notifier.syncFromEncounter(next);
       },
+    );
+    // New turn → movement is measured from scratch.
+    ref.listen(
+      combatProvider.select((s) => s.activeEncounter?.turnIndex),
+      (_, _) => _notifier.tokenMove.value = null,
     );
 
     final phone = isPhone(context);
@@ -169,8 +175,21 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                       );
                     }),
 
+                    // Movement trail — under the tokens.
+                    IgnorePointer(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          size: canvasSize,
+                          painter: _MoveTrailPainter(notifier),
+                        ),
+                      ),
+                    ),
+
                     // Token layer — Transform wrapper applies canvas→screen projection
                     _buildTokenLayer(palette, notifier),
+
+                    // Distance label — above the tokens.
+                    _buildMoveOverlay(notifier),
 
                     // Foreground vector shapes (object + GM layers + live draft),
                     // drawn ABOVE the tokens so object shapes sit over them
@@ -340,12 +359,26 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 hidden: encounter.hiddenTokenIds.contains(c.id),
                 palette: palette,
                 onDragStart: () => setState(() => _tokenDragActive = true),
+                onDragUpdate: (id, p) => notifier.dragTokenMove(
+                  id,
+                  p,
+                  from: pos,
+                  radius: mapState.tokenSize *
+                      _effectiveSizeMultiplier(c.id, c.entityId, mapState) /
+                      2,
+                  color: _trailColor(c.entityId),
+                ),
                 onDragEnd: (id, finalCanvasPos) {
                   setState(() => _tokenDragActive = false);
                   // Commit final position to notifier
                   notifier.moveToken(id, finalCanvasPos);
                   if (mapState.gridSnap) notifier.snapTokenToGrid(id);
                   notifier.persistTokenPositions();
+                  notifier.endTokenMove(
+                      id,
+                      ref
+                          .read(battleMapProvider(widget.encounterId))
+                          .tokenPositions[id]!);
                 },
                 onContextMenu: (id) => _showTokenMenu(id, mapState, notifier),
               );
@@ -354,6 +387,68 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         ),
       ),
       ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Token movement trail
+  // -------------------------------------------------------------------------
+
+  /// Fixed trail colour per kind: player green, NPC amber, monster red,
+  /// anything else white.
+  Color _trailColor(String? entityId) {
+    final slug = _entityFor(entityId)?.categorySlug;
+    if (kPlayerCategorySlugs.contains(slug)) return const Color(0xFF4CAF50);
+    if (slug == 'npc') return const Color(0xFFFFC107);
+    if (slug == 'monster') return const Color(0xFFE53935);
+    return Colors.white;
+  }
+
+  Widget _buildMoveOverlay(BattleMapNotifier notifier) {
+    return ListenableBuilder(
+      listenable:
+          Listenable.merge([notifier.tokenMove, notifier.viewTransform]),
+      builder: (context, _) {
+        final m = notifier.tokenMove.value;
+        if (m == null) return const SizedBox.shrink();
+        final s = ref.read(battleMapProvider(widget.encounterId));
+        final feet = gridPathFeet(
+          m.points,
+          gridSize: s.gridSize.toDouble(),
+          feetPerCell: s.feetPerCell.toDouble(),
+          rule: diagonalRuleFromInt(s.diagonalRule),
+        );
+        final meters = feet * 0.3; // 5e convention: 5 ft = 1.5 m
+        final center = notifier.canvasToScreen(m.current);
+        final r = m.radius * notifier.viewTransform.value.scale;
+        return Stack(
+          children: [
+            Positioned(
+              left: center.dx + r + 6,
+              top: center.dy - r,
+              child: IgnorePointer(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${feet.toStringAsFixed(0)} ft · '
+                    '${meters.toStringAsFixed(meters % 1 == 0 ? 0 : 1)} m',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -701,4 +796,40 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       ),
     );
   }
+}
+
+/// Screen-space dashed polyline of the token's movement trail.
+class _MoveTrailPainter extends CustomPainter {
+  final BattleMapNotifier notifier;
+
+  _MoveTrailPainter(this.notifier)
+      : super(
+            repaint: Listenable.merge(
+                [notifier.tokenMove, notifier.viewTransform]));
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final m = notifier.tokenMove.value;
+    if (m == null) return;
+    final pts = [for (final p in m.points) notifier.canvasToScreen(p)];
+    const dash = 12.0, gap = 8.0;
+    final dashed = Path();
+    for (final metric
+        in polygonPath(pts, closed: false).computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += dash + gap) {
+        dashed.addPath(metric.extractPath(d, d + dash), Offset.zero);
+      }
+    }
+    canvas.drawPath(
+      dashed,
+      Paint()
+        ..color = m.color
+        ..strokeWidth = 4
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MoveTrailPainter old) => false;
 }

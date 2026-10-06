@@ -2216,5 +2216,6 @@
   "lblDiceTheme": "Thème des dés",
   "diceThemeAuto": "Auto (selon le thème)",
   "diceLooksThemes": "Thèmes",
-  "diceLooksOthers": "Autres"
+  "diceLooksOthers": "Autres",
+  "bmMoveUndo": "Annuler le déplacement"
 }

@@ -33,6 +33,7 @@ class TokenWidget extends StatefulWidget {
   final bool hidden;
   final DmToolColors palette;
   final VoidCallback onDragStart;
+  final void Function(String id, Offset canvasPos) onDragUpdate;
   final void Function(String id, Offset finalCanvasPos) onDragEnd;
 
   /// Right-click / long-press → opens the token context menu (damage, heal,
@@ -52,6 +53,7 @@ class TokenWidget extends StatefulWidget {
     this.hidden = false,
     required this.palette,
     required this.onDragStart,
+    required this.onDragUpdate,
     required this.onDragEnd,
     required this.onContextMenu,
   });
@@ -117,6 +119,7 @@ class _TokenWidgetState extends State<TokenWidget> {
                 setState(() {
                   _dragCanvasPos = _dragCanvasPos! + canvasDelta;
                 });
+                widget.onDragUpdate(widget.combatant.id, _dragCanvasPos!);
               },
               onPointerUp: (_) {
                 final finalPos = _dragCanvasPos;
@@ -129,6 +132,8 @@ class _TokenWidgetState extends State<TokenWidget> {
               onPointerCancel: (_) {
                 _lastPointerPos = null;
                 _dragCanvasPos = null;
+                // Ends the drag back where it started (no move).
+                widget.onDragEnd(widget.combatant.id, widget.canvasPosition);
               },
               child: GestureDetector(
                 onSecondaryTap: () =>

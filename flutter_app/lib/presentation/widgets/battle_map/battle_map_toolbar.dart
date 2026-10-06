@@ -250,6 +250,13 @@ class BattleMapToolbar extends ConsumerWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: L10n.of(context)!.bmNavigate, mapState: mapState, notifier: notifier, palette: palette),
+          ValueListenableBuilder<TokenMove?>(
+            valueListenable: notifier.tokenMove,
+            builder: (context, move, _) => Opacity(
+              opacity: move == null ? 0.35 : 1,
+              child: _ToolbarButton(icon: Icons.undo, tooltip: L10n.of(context)!.bmMoveUndo, palette: palette, onPressed: move == null ? null : notifier.undoTokenMove),
+            ),
+          ),
           // All measure / AoE / shape tools merged into one picker button.
           DrawToolsButton(activeTool: mapState.activeTool, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: L10n.of(context)!.bmEraseTooltip, mapState: mapState, notifier: notifier, palette: palette),

@@ -65,6 +65,25 @@ class BattleMapMobileToolbar extends ConsumerWidget {
             palette: palette,
             onTap: () => notifier.setTool(BattleMapTool.navigate),
           ),
+          ValueListenableBuilder<TokenMove?>(
+            valueListenable: notifier.tokenMove,
+            builder: (context, move, _) => Tooltip(
+              message: L10n.of(context)!.bmMoveUndo,
+              child: InkWell(
+                onTap: move == null ? null : notifier.undoTokenMove,
+                borderRadius: palette.br,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(
+                    Icons.undo,
+                    size: 24,
+                    color: palette.tabText
+                        .withValues(alpha: move == null ? 0.35 : 1),
+                  ),
+                ),
+              ),
+            ),
+          ),
           _MiniToolButton(
             tool: BattleMapTool.draw,
             icon: Icons.edit_outlined,

@@ -362,6 +362,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// Color for new pen strokes, AoE templates and rect/line/text shapes.
   final ValueNotifier<Color> drawColor = ValueNotifier<Color>(kPenColors.first);
 
+  /// Movement trail of the last moved token (DM-only, not persisted).
+  /// Dragging the same token again continues it; another token or a new turn
+  /// starts over.
+  final ValueNotifier<TokenMove?> tokenMove = ValueNotifier<TokenMove?>(null);
+
   // Lightweight repaint signal for in-progress / committed vector shapes
   // (Phase 6). Both painters listen so a draft updates without a Riverpod
   // rebuild, exactly like `strokeTick`.
@@ -448,6 +453,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     strokeTick.dispose();
     shapeTick.dispose();
     drawColor.dispose();
+    tokenMove.dispose();
     super.dispose();
   }
 
@@ -1870,6 +1876,68 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     state = state.copyWith(tokenPositions: updated);
   }
 
+  /// Extends the trail while a token is dragged. [from] is where this drag
+  /// started; the first update of a drag opens a new trail, or — same token
+  /// as the current trail — continues it from where it landed.
+  void dragTokenMove(
+    String id,
+    Offset p, {
+    required Offset from,
+    required double radius,
+    required Color color,
+  }) {
+    var m = tokenMove.value;
+    if (m == null || m.id != id) {
+      m = TokenMove(
+        id: id,
+        path: [from],
+        stops: const [0],
+        current: from,
+        radius: radius,
+        color: color,
+      );
+    } else if (!m.dragging) {
+      m = m.copy(path: [...m.path, from], stops: [...m.stops, m.path.length]);
+    }
+    final path = (p - m.path.last).distance >= state.gridSize / 2
+        ? [...m.path, p]
+        : m.path;
+    tokenMove.value = m.copy(path: path, current: p, dragging: true);
+  }
+
+  /// Ends a drag at the token's committed position. A drag that landed where
+  /// it started (a tap) leaves no stop behind.
+  void endTokenMove(String id, Offset landed) {
+    final m = tokenMove.value;
+    if (m == null || m.id != id || !m.dragging) return;
+    if ((landed - m.path[m.stops.last]).distance < 1) {
+      _dropLastStop(m);
+    } else {
+      tokenMove.value = m.copy(current: landed, dragging: false);
+    }
+  }
+
+  /// Puts the token back where its last drag started.
+  void undoTokenMove() {
+    final m = tokenMove.value;
+    if (m == null) return;
+    moveToken(m.id, m.path[m.stops.last]);
+    persistTokenPositions();
+    _dropLastStop(m);
+  }
+
+  void _dropLastStop(TokenMove m) {
+    final k = m.stops.last;
+    tokenMove.value = m.stops.length == 1
+        ? null
+        : m.copy(
+            path: m.path.sublist(0, k + 1),
+            stops: m.stops.sublist(0, m.stops.length - 1),
+            current: m.path[k],
+            dragging: false,
+          );
+  }
+
   void snapTokenToGrid(String combatantId) {
     final pos = state.tokenPositions[combatantId];
     if (pos == null) return;
@@ -2179,3 +2247,43 @@ final battleMapProvider = StateNotifierProvider.autoDispose
     .family<BattleMapNotifier, BattleMapState, String>((ref, encounterId) {
   return BattleMapNotifier(encounterId, ref);
 });
+
+/// A token's movement trail. All positions are canvas-space.
+class TokenMove {
+  final String id;
+  final List<Offset> path; // freehand trail, sampled every half cell
+  final List<int> stops; // path index where each drag started — undo targets
+  final Offset current; // token's live position
+  final double radius;
+  final Color color;
+  final bool dragging;
+
+  const TokenMove({
+    required this.id,
+    required this.path,
+    required this.stops,
+    required this.current,
+    required this.radius,
+    required this.color,
+    this.dragging = false,
+  });
+
+  /// Trail as drawn and measured.
+  List<Offset> get points => [...path, current];
+
+  TokenMove copy({
+    List<Offset>? path,
+    List<int>? stops,
+    Offset? current,
+    bool? dragging,
+  }) =>
+      TokenMove(
+        id: id,
+        path: path ?? this.path,
+        stops: stops ?? this.stops,
+        current: current ?? this.current,
+        radius: radius,
+        color: color,
+        dragging: dragging ?? this.dragging,
+      );
+}
