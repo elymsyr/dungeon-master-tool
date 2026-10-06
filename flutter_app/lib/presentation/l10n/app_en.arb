@@ -2479,6 +2479,7 @@
   "bmErase": "Erase",
   "bmDraw": "Draw",
   "bmDrawColor": "Draw color",
+  "bmColor": "Color",
   "bmAddFog": "Add Fog",
   "bmEraseFog": "Erase Fog",
   "bmFillFog": "Fill Fog",

@@ -145,4 +145,26 @@ void main() {
     n.undoRemoteMove('b', const Offset(5, 5));
     expect(n.state.tokenPositions['b'], const Offset(5, 5));
   });
+
+  test('the broadcast trail is simplified per drag; stops stay exact', () {
+    // Drag 1: a straight line sampled 8 times, then drag 2: an L.
+    final m = TokenMove(
+      id: 'a',
+      path: [
+        for (var i = 0; i <= 8; i++) Offset(i * 12.5, 0), // 0..8
+        const Offset(100, 0), // 9: drag 2 starts here
+        const Offset(100, 50),
+        const Offset(100, 100),
+        const Offset(150, 100),
+      ],
+      stops: const [0, 9],
+      current: const Offset(160.04, 100),
+      radius: 25,
+      color: const Color(0xFF4CAF50),
+    );
+    final t = trailSnapshotOf(m, gridSize: 50);
+    expect(t.points, [0, 0, 100, 0, 100, 100, 150, 100, 160, 100]);
+    expect(t.stops, [0, 1]);
+    expect(t.colorHex, '#4caf50');
+  });
 }

@@ -708,17 +708,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         .where((p) => p.encounterId == encounterId)
         .firstOrNull;
     if (proj == null) return;
-    _ref.read(projectionControllerProvider.notifier).updateBattleMapTrail(
-          proj.id,
-          m == null
-              ? null
-              : TrailSnapshot(
-                  id: m.id,
-                  points: [for (final p in m.points) ...[p.dx, p.dy]],
-                  stops: m.stops,
-                  colorHex: _colorToHex(m.color),
-                ),
-        );
+    _ref
+        .read(projectionControllerProvider.notifier)
+        .updateBattleMapTrail(
+            proj.id,
+            m == null
+                ? null
+                : trailSnapshotOf(m, gridSize: state.gridSize.toDouble()));
   }
 
   static String _colorToHex(Color c) {
@@ -2103,7 +2099,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// A move from elsewhere has no drag to bracket it: it extends the trail
   /// from [from] to [to] through the points walked on the way ([via]). With
   /// no [via] (an older client, a position-only change) the trail goes
-  /// through [to] itself. A token the DM is dragging right now is left alone.
+  /// through [to] itself. While the DM is dragging a token the trail is left
+  /// alone.
   void _extendTrail(
     String id,
     Offset from,
@@ -2112,7 +2109,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     bool newLeg = false,
   }) {
     var m = tokenMove.value;
-    if (m != null && m.id == id && m.dragging) return;
+    // The DM is dragging a token right now — its trail is the one on screen.
+    if (m != null && m.dragging) return;
     if (m == null || m.id != id) {
       final style = trailStyle?.call(id);
       if (style == null) return;
@@ -2466,6 +2464,41 @@ final battleMapProvider = StateNotifierProvider.autoDispose
     .family<BattleMapNotifier, BattleMapState, String>((ref, encounterId) {
   return BattleMapNotifier(encounterId, ref);
 });
+
+/// [m] as sent to the players: each drag simplified on its own (RDP within
+/// 1/50 cell, so the stops — the undo targets — stay exact points),
+/// coordinates to 0.1 px. Every push re-sends the whole trail, so this keeps
+/// a long turn's payload small; nothing visible is lost.
+@visibleForTesting
+TrailSnapshot trailSnapshotOf(TokenMove m, {required double gridSize}) {
+  final eps = gridSize / 50;
+  final path = <Offset>[];
+  final stops = <int>[];
+  final ends = [...m.stops.skip(1), m.path.length - 1];
+  var start = 0;
+  for (final end in ends) {
+    final leg = simplifyStroke(m.path.sublist(start, end + 1), eps);
+    // Every leg starts at a stop; after the first, that stop is the joint
+    // already in [path].
+    if (path.isEmpty) {
+      stops.add(0);
+    } else {
+      stops.add(path.length - 1);
+      leg.removeAt(0);
+    }
+    path.addAll(leg);
+    start = end;
+  }
+  double r(double v) => (v * 10).roundToDouble() / 10;
+  return TrailSnapshot(
+    id: m.id,
+    points: [
+      for (final p in [...path, m.current]) ...[r(p.dx), r(p.dy)],
+    ],
+    stops: stops,
+    colorHex: BattleMapNotifier._colorToHex(m.color),
+  );
+}
 
 /// A token's movement trail. All positions are canvas-space.
 class TokenMove {

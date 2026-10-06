@@ -529,6 +529,9 @@ class _BattleMapProjectionViewState
 
 const _ownTurnColor = Color(0xFF4CAF50);
 
+/// Canvas-space curve per received stroke (strokes are immutable).
+final _strokePaths = Expando<Path>();
+
 /// "Your turn" pill over the map, with the undo-last-move button.
 class _OwnTurnBanner extends StatelessWidget {
   final VoidCallback onUndo;
@@ -691,16 +694,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
     void drawStrokesLayer(bool background) {
       for (final s in snapshot.strokes) {
         if ((s.layer == 0) != background) continue; // 0 = background
-        if (s.points.length < 4) continue;
-        canvas.drawPath(
-          _strokePath(s.points, scale, dx, dy),
-          Paint()
-            ..color = _hexColor(s.colorHex)
-            ..strokeWidth = s.width * scale * strokeMult
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round,
-        );
+        _drawStroke(canvas, s, scale, dx, dy, strokeMult);
       }
     }
 
@@ -1071,16 +1065,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
     // remain visible even where players are looking through fog.
     for (final s in snapshot.strokes) {
       if (s.layer == 0) continue; // background already drawn; object+GM only
-      if (s.points.length < 4) continue;
-      canvas.drawPath(
-        _strokePath(s.points, scale, dx, dy),
-        Paint()
-          ..color = _hexColor(s.colorHex)
-          ..strokeWidth = s.width * scale * strokeMult
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
+      _drawStroke(canvas, s, scale, dx, dy, strokeMult);
     }
 
     // 6. Object-layer measurements + AoE templates — also above fog.
@@ -1198,13 +1183,30 @@ class _BattleMapProjectionPainter extends CustomPainter {
 
   Color _hexColor(String hex) => hexToColor(hex);
 
-  /// A pen stroke's flat canvas points → the same smoothed curve the DM draws.
-  static Path _strokePath(
-          List<double> flat, double scale, double dx, double dy) =>
-      buildStrokePath([
-        for (var i = 0; i + 1 < flat.length; i += 2)
-          Offset(dx + flat[i] * scale, dy + flat[i + 1] * scale),
-      ]);
+  /// A pen stroke as the same smoothed curve the DM draws. The curve is
+  /// built once per stroke in canvas space and drawn through the canvas
+  /// transform, so token moves and zooms don't rebuild every stroke.
+  void _drawStroke(Canvas canvas, StrokeSnapshot s, double scale, double dx,
+      double dy, double strokeMult) {
+    if (s.points.length < 4) return;
+    final path = _strokePaths[s] ??= buildStrokePath([
+      for (var i = 0; i + 1 < s.points.length; i += 2)
+        Offset(s.points[i], s.points[i + 1]),
+    ]);
+    canvas.save();
+    canvas.translate(dx, dy);
+    canvas.scale(scale);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = _hexColor(s.colorHex)
+        ..strokeWidth = s.width * strokeMult
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+    canvas.restore();
+  }
 
   /// 3-letter condition abbreviation, matching the DM view's `_ConditionStrip`.
   static String _abbrev(String name) {

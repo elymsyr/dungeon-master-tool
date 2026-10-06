@@ -938,7 +938,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 }
 
-/// Screen-space dashed polyline of the token's movement trail.
+/// Screen-space dashed curve of the token's movement trail.
 class _MoveTrailPainter extends CustomPainter {
   final BattleMapNotifier notifier;
 
@@ -947,26 +947,46 @@ class _MoveTrailPainter extends CustomPainter {
             repaint: Listenable.merge(
                 [notifier.tokenMove, notifier.viewTransform]));
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final m = notifier.tokenMove.value;
-    if (m == null) return;
-    final pts = [for (final p in m.points) notifier.canvasToScreen(p)];
+  // Dashes are measured in screen px, so the dashed path depends on the
+  // trail and the zoom but not on the pan: built once per (trail, scale) at
+  // the origin and translated — a pan repaints without re-measuring it.
+  TokenMove? _cachedMove;
+  double _cachedScale = 0;
+  Path? _cachedDashes;
+
+  Path _dashes(TokenMove m, double scale) {
+    if (identical(m, _cachedMove) && scale == _cachedScale) {
+      return _cachedDashes!;
+    }
     const dash = 12.0, gap = 8.0;
     final dashed = Path();
-    for (final metric in buildStrokePath(pts).computeMetrics()) {
+    final curve = buildStrokePath([for (final p in m.points) p * scale]);
+    for (final metric in curve.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += dash + gap) {
         dashed.addPath(metric.extractPath(d, d + dash), Offset.zero);
       }
     }
+    _cachedMove = m;
+    _cachedScale = scale;
+    return _cachedDashes = dashed;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final m = notifier.tokenMove.value;
+    if (m == null) return;
+    final vt = notifier.viewTransform.value;
+    canvas.save();
+    canvas.translate(vt.panOffset.dx, vt.panOffset.dy);
     canvas.drawPath(
-      dashed,
+      _dashes(m, vt.scale),
       Paint()
         ..color = m.color
         ..strokeWidth = 4
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
+    canvas.restore();
   }
 
   @override
