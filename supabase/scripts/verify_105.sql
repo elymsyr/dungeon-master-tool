@@ -13,6 +13,9 @@
 --   4. Geçersiz pozisyon (NaN, sonsuz, aşırı) reddedilir.
 --   5. Sıra geçince (DELETE) eski sahibin RPC'si FALSE.
 --   6. anon çalıştıramaz.
+--
+-- 6.1 kurulu imza hangisiyse (105/107/108) onu kontrol eder; 107+ kuruluysa
+-- yeni parametreler için verify_108.sql.
 -- ============================================================================
 
 BEGIN;
@@ -110,9 +113,16 @@ BEGIN
 
   -- ══ 6 — anon ═══════════════════════════════════════════════════════════
   PERFORM set_config('role', 'postgres', true);
-  ASSERT NOT has_function_privilege('anon',
-    'public.move_turn_token(text,text,double precision,double precision)',
-    'EXECUTE'), '6.1 anon move_turn_token çalıştırabiliyor';
+  -- İmza migration'la değişiyor (105 → 107 → 108): hangisi kuruluysa o.
+  ASSERT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+  ), '6.1 move_turn_token yok';
+  ASSERT NOT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'move_turn_token'
+      AND has_function_privilege('anon', p.oid, 'EXECUTE')
+  ), '6.1 anon move_turn_token çalıştırabiliyor';
 
   RAISE NOTICE '105 OK';
 END $$;

@@ -65,6 +65,16 @@ class BattleMapSnapshot {
   /// send side, so this list never carries a DM-only shape.
   final List<ShapeSnapshot> shapes;
 
+  /// Movement trail of the last moved token (the DM's dashed path with its
+  /// distance). Null when nothing moved this turn or the token is hidden.
+  final TrailSnapshot? trail;
+
+  /// The last move of a player's own token the DM has applied (migration
+  /// 108). The player shows its own optimistic position/trail only until its
+  /// latest move is acknowledged here; from then on the DM's state — undos
+  /// included — is what it sees.
+  final MoveAck? moveAck;
+
   /// What part of the canvas the player should display, expressed as a
   /// rect in **normalized** 0..1 canvas coordinates `(left, top, w, h)`.
   /// `null` means "fit the entire canvas to the player viewport".
@@ -93,6 +103,8 @@ class BattleMapSnapshot {
     this.strokes = const [],
     this.measurements = const [],
     this.shapes = const [],
+    this.trail,
+    this.moveAck,
     this.viewportNormalized,
   });
 
@@ -115,9 +127,12 @@ class BattleMapSnapshot {
     List<StrokeSnapshot>? strokes,
     List<MeasurementSnapshot>? measurements,
     List<ShapeSnapshot>? shapes,
+    TrailSnapshot? trail,
+    MoveAck? moveAck,
     NormalizedRect? viewportNormalized,
     bool clearViewport = false,
     bool clearFog = false,
+    bool clearTrail = false,
   }) {
     return BattleMapSnapshot(
       mapPath: mapPath ?? this.mapPath,
@@ -138,6 +153,8 @@ class BattleMapSnapshot {
       strokes: strokes ?? this.strokes,
       measurements: measurements ?? this.measurements,
       shapes: shapes ?? this.shapes,
+      trail: clearTrail ? null : (trail ?? this.trail),
+      moveAck: moveAck ?? this.moveAck,
       viewportNormalized: clearViewport
           ? null
           : (viewportNormalized ?? this.viewportNormalized),
@@ -152,7 +169,9 @@ class BattleMapSnapshot {
   ///   rows/clients omit it and `fromJson` defaults to ''.
   /// - v4: additive `shapes` (typed vector shapes — Phase 6). Tolerant —
   ///   older rows/clients omit it and `fromJson` defaults to `[]`.
-  static const int schemaVersion = 4;
+  /// - v5: additive `trail` (token movement trail) and `moveAck`. Tolerant —
+  ///   older clients ignore them, missing means none.
+  static const int schemaVersion = 5;
 
   Map<String, dynamic> toJson() => {
         '_v': schemaVersion,
@@ -176,6 +195,8 @@ class BattleMapSnapshot {
         if (measurements.isNotEmpty)
           'measurements': measurements.map((m) => m.toJson()).toList(),
         if (shapes.isNotEmpty) 'shapes': shapes.map((s) => s.toJson()).toList(),
+        if (trail != null) 'trail': trail!.toJson(),
+        if (moveAck != null) 'moveAck': moveAck!.toJson(),
         if (viewportNormalized != null)
           'viewportNormalized': viewportNormalized!.toJson(),
       };
@@ -219,11 +240,100 @@ class BattleMapSnapshot {
                   ShapeSnapshot.fromJson((e as Map).cast<String, dynamic>()))
               .toList() ??
           const [],
+      trail: TrailSnapshot.tryParse(json['trail']),
+      moveAck: MoveAck.tryParse(json['moveAck']),
       viewportNormalized: json['viewportNormalized'] != null
           ? NormalizedRect.fromJson(
               (json['viewportNormalized'] as Map).cast<String, dynamic>())
           : null,
     );
+  }
+}
+
+/// "The DM has applied the owner's moves of token [id] up to [seq]."
+class MoveAck {
+  final String id;
+  final int seq;
+
+  const MoveAck({required this.id, required this.seq});
+
+  Map<String, dynamic> toJson() => {'i': id, 's': seq};
+
+  static MoveAck? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final id = json['i'], seq = json['s'];
+    if (id is! String || seq is! num) return null;
+    return MoveAck(id: id, seq: seq.toInt());
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is MoveAck && other.id == id && other.seq == seq;
+
+  @override
+  int get hashCode => Object.hash(id, seq);
+}
+
+/// A token's movement trail. [points] is a flat `[x0,y0,...]` canvas-space
+/// path ending at the token; [stops] are the point indexes where each move
+/// began — the undo targets, latest last.
+class TrailSnapshot {
+  final String id;
+  final List<double> points;
+  final List<int> stops;
+  final String colorHex;
+
+  const TrailSnapshot({
+    required this.id,
+    required this.points,
+    this.stops = const [],
+    this.colorHex = '#ffffff',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'i': id,
+        'p': points,
+        if (stops.isNotEmpty) 's': stops,
+        'c': colorHex,
+      };
+
+  /// Null for anything malformed — a bad trail is dropped, never fatal.
+  static TrailSnapshot? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final id = json['i'], p = json['p'], s = json['s'];
+    if (id is! String || p is! List || p.any((e) => e is! num)) return null;
+    final points = [for (final e in p) (e as num).toDouble()];
+    if (points.length < 4 || points.length.isOdd) return null;
+    final n = points.length ~/ 2;
+    return TrailSnapshot(
+      id: id,
+      points: points,
+      stops: [
+        if (s is List)
+          for (final e in s)
+            if (e is num && e >= 0 && e < n) e.toInt(),
+      ],
+      colorHex: json['c'] as String? ?? '#ffffff',
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is TrailSnapshot &&
+      other.id == id &&
+      other.colorHex == colorHex &&
+      _listEq(other.points, points) &&
+      _listEq(other.stops, stops);
+
+  @override
+  int get hashCode => Object.hash(id, colorHex, points.length, stops.length);
+
+  static bool _listEq<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }
 

@@ -1,5 +1,79 @@
 # Release Notes
 
+## Dungeon Master Tool v18.5.1 — Shared Trails (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v18.5.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release makes movement trails on the battle map the same for everyone at the table, and makes drawing on the battle map feel like drawing on the mind map. When the DM moves a token, players now see its trail too. A player's quick moves keep their real shape on every screen, and undo works the same way on both sides. Your data is not changed, so this version installs over v18.5.0.
+
+---
+
+### Battle map
+
+#### Everyone sees the same trail
+When the DM moves any token, the dashed trail and its `ft · m` distance label now appear on every player's screen, not only the DM's. When a player moves their own token on their turn, the trail follows the exact path they dragged. A circle drawn quickly stays a circle instead of turning into a triangle. A hidden token's trail is never shown to players.
+
+#### Undo stays in step
+A player's undo button now takes back their last drag, the same step as the DM's undo button, instead of jumping back to where the turn started. When either side undoes a move, both screens show the same result. A player's screen no longer keeps showing its own position after the DM has undone the move.
+
+#### Drawing like the mind map
+On the battle map, two fingers now pan and zoom in every tool, including the pen, fog, rulers, area templates and shapes. A second finger on the screen cancels the stroke you started and moves the map instead. A pen stroke starts exactly where you touch, and its line is smoothed like a mind map stroke. Players see the same smooth lines.
+
+- After you draw with a stylus, a finger only pans and zooms, so your palm does not draw.
+- A single tap no longer leaves an empty stroke or a zero-length ruler behind.
+
+---
+
+### Smaller improvements
+
+- **Battle map color button** — the color circle is smaller and has a **Color** label under it, on desktop and in the phone tool sheet.
+- **Trails** — trails are drawn as smooth curves and follow the drag more closely.
+- **Dice preview** — the dice preview in the settings loads faster.
+- **l10n** — new key for the color label in English, Turkish, German and French. The "Back to where your turn started" tooltip is replaced by "Undo move".
+
+---
+
+### Bug fixes
+
+- **Battle map, online** — trails of tokens the DM moved did not appear on players' screens. This is fixed.
+- **Battle map, online** — a player's quick moves showed up on the DM's screen as straight lines between a few corners. This is fixed.
+- **Battle map, online** — when the DM undid a player's move, the player could keep seeing their own position for a few seconds, and their next drag could continue from the wrong place. This is fixed.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.5.0` → `18.5.1`.
+- **Online groups:** the DM and the players should all update. Mixed versions still play together, but smooth player trails and the shared undo only work when everyone is on v18.5.1 and the server has been updated.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Trail broadcast** — `BattleMapSnapshot` v5 adds `trail` (per-drag RDP-simplified, stops kept exact) and `moveAck`; `ProjectionController.updateBattleMapTrail` patches both.
+- **Turn moves** — `move_turn_token` now takes the points walked (`p_path`), a step kind (`p_kind`: move / new drag / undo) and a sequence number (`p_seq`). The DM acks the last applied number in `moveAck`, and the player drops its optimistic state once acked. `TurnMoveSender` steps down to older server signatures on `PGRST202`.
+- **Pen input** — battle map drag tools use raw pointer events like the mind map pen; `buildStrokePath` / `simplifyStroke` moved to `presentation/utils/stroke_path.dart`.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.5.0 — One Table (Beta)
 
 **Release date:** October 2026

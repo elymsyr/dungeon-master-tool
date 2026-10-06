@@ -2479,6 +2479,7 @@
   "bmErase": "Erase",
   "bmDraw": "Draw",
   "bmDrawColor": "Draw color",
+  "bmColor": "Color",
   "bmAddFog": "Add Fog",
   "bmEraseFog": "Erase Fog",
   "bmFillFog": "Fill Fog",
@@ -3423,6 +3424,5 @@
   "diceLooksThemes": "Themes",
   "diceLooksOthers": "Others",
   "bmMoveUndo": "Undo move",
-  "bmYourTurn": "Your turn",
-  "bmUndoToTurnStart": "Back to where your turn started"
+  "bmYourTurn": "Your turn"
 }

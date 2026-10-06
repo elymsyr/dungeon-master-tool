@@ -63,16 +63,25 @@ Future<Color?> pickPenColor(
 }
 
 /// Toolbar button showing [color]'s swatch; tapping opens [pickPenColor]
-/// under the button and writes the choice back into [color].
+/// under the button and writes the choice back into [color]. With [label]
+/// the swatch gets a caption under it, like the labelled tool buttons.
 class PenColorButton extends StatelessWidget {
   final ValueNotifier<Color> color;
   final DmToolColors palette;
   final String tooltip;
+  final String? label;
+  final double swatchSize;
+
+  /// Fixed width, to line up with neighbouring labelled buttons.
+  final double? width;
 
   const PenColorButton({
     required this.color,
     required this.palette,
     required this.tooltip,
+    this.label,
+    this.swatchSize = 22,
+    this.width,
     super.key,
   });
 
@@ -98,11 +107,29 @@ class PenColorButton extends StatelessWidget {
       child: InkWell(
         onTap: () => _open(context),
         borderRadius: palette.br,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: ValueListenableBuilder<Color>(
-            valueListenable: color,
-            builder: (_, c, _) => PenSwatch(color: c),
+        child: Container(
+          width: width,
+          padding: label == null
+              ? const EdgeInsets.all(4)
+              : const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ValueListenableBuilder<Color>(
+                valueListenable: color,
+                builder: (_, c, _) => PenSwatch(color: c, size: swatchSize),
+              ),
+              if (label != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  label!,
+                  style: TextStyle(fontSize: 9, color: palette.tabText),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -113,13 +140,19 @@ class PenColorButton extends StatelessWidget {
 class PenSwatch extends StatelessWidget {
   final Color color;
   final bool selected;
-  const PenSwatch({required this.color, this.selected = false, super.key});
+  final double size;
+  const PenSwatch({
+    required this.color,
+    this.selected = false,
+    this.size = 22,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 22,
-      height: 22,
+      width: size,
+      height: size,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: selected
           ? Icon(Icons.check,

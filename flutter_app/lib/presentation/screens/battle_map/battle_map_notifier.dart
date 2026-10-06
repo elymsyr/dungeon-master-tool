@@ -24,6 +24,7 @@ import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
 import '../../widgets/battle_map/map_compose_dialog.dart';
+import '../../utils/stroke_path.dart';
 import '../../widgets/pen_color_picker.dart';
 
 // ---------------------------------------------------------------------------
@@ -362,9 +363,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// Color for new pen strokes, AoE templates and rect/line/text shapes.
   final ValueNotifier<Color> drawColor = ValueNotifier<Color>(kPenColors.first);
 
-  /// Movement trail of the last moved token (DM-only, not persisted).
-  /// Dragging the same token again continues it; another token or a new turn
-  /// starts over.
+  /// Movement trail of the last moved token (not persisted; broadcast to the
+  /// players as `BattleMapSnapshot.trail`). Dragging the same token again
+  /// continues it; another token or a new turn starts over.
   final ValueNotifier<TokenMove?> tokenMove = ValueNotifier<TokenMove?>(null);
 
   /// Trail radius and colour by combatant id — set by the screen, which knows
@@ -387,7 +388,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   // In-progress annotation stroke — mutable, NOT in state
   Path? _currentPath;
+  // Pen: low-pass filtered samples (see [_penFollow]); erase: raw samples.
   final List<Offset> _currentRawPoints = [];
+  // Raw pen position — the drawn line still ends exactly under the nib while
+  // the filtered points trail slightly behind.
+  Offset? _strokeTail;
   Color _currentColor = Colors.red;
   double _currentWidth = 4.0;
   bool _currentIsErase = false;
@@ -412,6 +417,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // /token-size/grid/fog updates. Slower than viewport (80ms) since they're
   // not driven by 60fps gestures.
   Timer? _projectionDrawingsThrottle;
+
+  // Projection trail sync — leading-edge throttle; a player's move arrives
+  // ~8×/s and each one extends the trail.
+  Timer? _projectionTrailThrottle;
 
   // Cached fog→base64 encoding so we don't re-encode the PNG on every
   // throttled push when the underlying image hasn't changed.
@@ -438,6 +447,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     }
     viewTransform.addListener(_scheduleProjectionSync);
     viewTransform.addListener(_persistView);
+    tokenMove.addListener(_scheduleTrailSync);
   }
 
   void _persistView() {
@@ -452,6 +462,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _viewMemory[encounterId] = viewTransform.value;
     _projectionSyncThrottle?.cancel();
     _projectionDrawingsThrottle?.cancel();
+    _projectionTrailThrottle?.cancel();
+    tokenMove.removeListener(_scheduleTrailSync);
     viewTransform.removeListener(_scheduleProjectionSync);
     viewTransform.removeListener(_persistView);
     viewTransform.dispose();
@@ -675,6 +687,45 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         );
   }
 
+  void _scheduleTrailSync() {
+    if (_projectionTrailThrottle != null) return;
+    _projectionTrailThrottle = Timer(const Duration(milliseconds: 50), () {
+      _projectionTrailThrottle = null;
+      _pushTrailToProjection();
+    });
+  }
+
+  /// The owner's latest applied move, sent with the next trail push — after
+  /// the position patch it acknowledges, never before.
+  MoveAck? _pendingAck;
+
+  /// Sends the trail to the players. A drag in progress is held back — the
+  /// players' token only moves when it is dropped, so its trail goes with it
+  /// (an ack still goes out).
+  void _pushTrailToProjection() {
+    if (!mounted) return;
+    final m = tokenMove.value;
+    final ack = _pendingAck;
+    _pendingAck = null;
+    final dragging = m != null && m.dragging;
+    if (dragging && ack == null) return;
+    final proj = _ref
+        .read(projectionControllerProvider)
+        .items
+        .whereType<BattleMapProjection>()
+        .where((p) => p.encounterId == encounterId)
+        .firstOrNull;
+    if (proj == null) return;
+    _ref.read(projectionControllerProvider.notifier).updateBattleMapTrail(
+          proj.id,
+          m == null || dragging
+              ? null
+              : trailSnapshotOf(m, gridSize: state.gridSize.toDouble()),
+          ack: ack,
+          keepTrail: dragging,
+        );
+  }
+
   static String _colorToHex(Color c) {
     final r = (c.r * 255).round() & 0xff;
     final g = (c.g * 255).round() & 0xff;
@@ -747,7 +798,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     // that lands somewhere new was moved by someone else.
     for (final e in moved.entries) {
       final was = state.tokenPositions[e.key];
-      if (was != null && was != e.value) _remoteTokenMove(e.key, was, e.value);
+      if (was != null && was != e.value) _extendTrail(e.key, was, e.value);
     }
     state = state.copyWith(tokenPositions: {...state.tokenPositions, ...moved});
   }
@@ -843,12 +894,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
             for (var i = 0; i + 1 < snap.points.length; i += 2) {
               pts.add(Offset(snap.points[i], snap.points[i + 1]));
             }
-            final path = Path()..moveTo(pts.first.dx, pts.first.dy);
-            for (final p in pts.skip(1)) {
-              path.lineTo(p.dx, p.dy);
-            }
             strokes.add(DrawStroke(
-              path: path,
+              path: buildStrokePath(pts),
               color: _colorFromHex(snap.colorHex),
               width: snap.width,
               rawPoints: pts,
@@ -1291,8 +1338,21 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Annotation
   // -------------------------------------------------------------------------
 
+  /// Share of the distance to a raw pen sample that a kept point covers —
+  /// the mind map pen's filter (`LiveStroke.follow`): sensor jitter never
+  /// reaches the line.
+  static const double _penFollow = 0.45;
+
+  /// Filtered pen points plus the raw end — what is drawn and saved.
+  List<Offset> get _penPoints {
+    final t = _strokeTail;
+    if (t == null || t == _currentRawPoints.last) return _currentRawPoints;
+    return [..._currentRawPoints, t];
+  }
+
   void startAnnotationStroke(Offset pt, {bool erase = false}) {
     _currentPath = Path()..moveTo(pt.dx, pt.dy);
+    _strokeTail = pt;
     _currentRawPoints
       ..clear()
       ..add(pt);
@@ -1309,18 +1369,40 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void continueAnnotationStroke(Offset pt) {
     if (_currentPath == null) return;
-    _currentPath!.lineTo(pt.dx, pt.dy);
-    _currentRawPoints.add(pt);
+    if (_currentIsErase) {
+      _currentPath!.lineTo(pt.dx, pt.dy);
+      _currentRawPoints.add(pt);
+    } else {
+      // Samples closer than 1.5 screen px only move the tail.
+      _strokeTail = pt;
+      final last = _currentRawPoints.last;
+      if ((pt - last).distance >= 1.5 / viewTransform.value.scale) {
+        _currentRawPoints.add(last + (pt - last) * _penFollow);
+      }
+      _currentPath = buildStrokePath(_penPoints);
+    }
     strokeTick.value++; // lightweight repaint — no Riverpod rebuild
   }
 
   void endAnnotationStroke() {
     if (_currentPath == null) return;
+    // Simplified (RDP) like the mind map pen: shape kept to a third of a
+    // screen px, the saved + broadcast stroke several times smaller.
+    final pts = _currentIsErase
+        ? List<Offset>.from(_currentRawPoints)
+        : simplifyStroke(_penPoints, 0.3 / viewTransform.value.scale);
+    if (pts.length < 2) {
+      // A tap: nothing drawn, nothing saved.
+      _currentPath = null;
+      _currentRawPoints.clear();
+      strokeTick.value++;
+      return;
+    }
     final stroke = DrawStroke(
-      path: _currentPath!,
+      path: _currentIsErase ? _currentPath! : buildStrokePath(pts),
       color: _currentColor,
       width: _currentWidth,
-      rawPoints: List<Offset>.from(_currentRawPoints),
+      rawPoints: pts,
       isErase: _currentIsErase,
       layer: _currentLayer,
     );
@@ -1419,6 +1501,31 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _debouncedAutoSave(); // persist the cleared state (else it survives reload)
   }
 
+  /// A second finger turned a one-finger tool drag into a pinch: drops what
+  /// that drag started. An erase keeps what it already erased.
+  Future<void> cancelToolDrag() async {
+    if (_currentPath != null && _currentIsErase) {
+      await commitEraseStroke();
+      return;
+    }
+    if (_currentPath != null) {
+      _currentPath = null;
+      _currentRawPoints.clear();
+      strokeTick.value++;
+    }
+    if (_shapeDraft != null) {
+      _shapeDraft = null;
+      shapeTick.value++;
+    }
+    if (!mounted) return;
+    if (state.fogDraftPoints.isNotEmpty) {
+      state = state.copyWith(fogDraftPoints: []);
+    }
+    if (state.activeMeasurement != null && !_awaitingSectorAngle) {
+      state = state.copyWith(clearActiveMeasurement: true);
+    }
+  }
+
   /// Expose in-progress path for painter
   Path? get currentPath => _currentPath;
   Color get currentColor => _currentColor;
@@ -1509,6 +1616,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           sweepDeg: kDefaultSectorSweepDeg,
         ),
       );
+      return;
+    }
+    // A tap (the pen starts on pointer-down now, not after a drag slop)
+    // leaves no zero-length mark.
+    if (!_awaitingSectorAngle && (m.end - m.start).distance < 1) {
+      state = state.copyWith(clearActiveMeasurement: true);
       return;
     }
     if (m.type == BattleMapTool.aoeSector) {
@@ -1914,6 +2027,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     state = state.copyWith(tokenPositions: updated);
   }
 
+  /// Trail samples are kept at least this far apart (canvas px): a quarter
+  /// cell, so a quick circle still comes out round.
+  double get _trailStep => state.gridSize / 4;
+
   /// Extends the trail while a token is dragged. [from] is where this drag
   /// started; the first update of a drag opens a new trail, or — same token
   /// as the current trail — continues it from where it landed.
@@ -1937,7 +2054,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     } else if (!m.dragging) {
       m = m.copy(path: [...m.path, from], stops: [...m.stops, m.path.length]);
     }
-    final path = (p - m.path.last).distance >= state.gridSize / 2
+    final path = (p - m.path.last).distance >= _trailStep
         ? [...m.path, p]
         : m.path;
     tokenMove.value = m.copy(path: path, current: p, dragging: true);
@@ -1955,11 +2072,66 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     }
   }
 
-  /// A move from elsewhere has no drag to bracket it: it extends the trail as
-  /// one stretch, so undo takes the token back to where that stretch began.
-  void _remoteTokenMove(String id, Offset from, Offset to) {
+  /// A player moving their own token on their turn (`move_turn_token`, see
+  /// `turn_control_provider.dart`). [via] is every point they walked since
+  /// their previous call, so the trail follows the real path instead of
+  /// cutting corners between calls; [newLeg] marks the start of a drag — an
+  /// undo stop, exactly like the DM's own drags.
+  ///
+  /// [ack] goes to the players with the resulting trail: the owner stops
+  /// showing its own guess once it sees it.
+  void applyRemoteMove(
+    String id,
+    Offset to, {
+    List<Offset> via = const [],
+    bool newLeg = false,
+    MoveAck? ack,
+  }) {
+    if (!mounted) return;
+    final at = state.gridSnap ? _snapToGrid(to) : to;
+    final from = state.tokenPositions[id];
+    if (from != null) _extendTrail(id, from, at, via: via, newLeg: newLeg);
+    moveToken(id, at);
+    persistTokenPositions();
+    _ack(ack);
+  }
+
+  void _ack(MoveAck? ack) {
+    if (ack == null) return;
+    _pendingAck = ack;
+    _scheduleTrailSync();
+  }
+
+  /// A player's undo: takes back their last drag — the same step the DM's
+  /// undo button takes. Without a trail of that token, [fallback] (where the
+  /// player thinks that drag began) is used.
+  void undoRemoteMove(String id, Offset fallback, {MoveAck? ack}) {
+    if (!mounted) return;
+    final m = tokenMove.value;
+    if (m != null && m.id == id && !m.dragging) {
+      undoTokenMove();
+    } else {
+      moveToken(id, state.gridSnap ? _snapToGrid(fallback) : fallback);
+      persistTokenPositions();
+    }
+    _ack(ack);
+  }
+
+  /// A move from elsewhere has no drag to bracket it: it extends the trail
+  /// from [from] to [to] through the points walked on the way ([via]). With
+  /// no [via] (an older client, a position-only change) the trail goes
+  /// through [to] itself. While the DM is dragging a token the trail is left
+  /// alone.
+  void _extendTrail(
+    String id,
+    Offset from,
+    Offset to, {
+    List<Offset> via = const [],
+    bool newLeg = false,
+  }) {
     var m = tokenMove.value;
-    if (m != null && m.id == id && m.dragging) return;
+    // The DM is dragging a token right now — its trail is the one on screen.
+    if (m != null && m.dragging) return;
     if (m == null || m.id != id) {
       final style = trailStyle?.call(id);
       if (style == null) return;
@@ -1971,10 +2143,15 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         radius: style.radius,
         color: style.color,
       );
+    } else if (newLeg) {
+      m = m.copy(path: [...m.path, from], stops: [...m.stops, m.path.length]);
     }
-    final path = (to - m.path.last).distance >= state.gridSize / 2
-        ? [...m.path, to]
-        : m.path;
+    final path = [...m.path];
+    // Via points, not the (grid-snapped) positions in between — those would
+    // turn a smooth drag into a staircase.
+    for (final p in via.isEmpty ? [to] : via) {
+      if ((p - path.last).distance >= _trailStep) path.add(p);
+    }
     tokenMove.value = m.copy(path: path, current: to);
   }
 
@@ -2308,6 +2485,41 @@ final battleMapProvider = StateNotifierProvider.autoDispose
     .family<BattleMapNotifier, BattleMapState, String>((ref, encounterId) {
   return BattleMapNotifier(encounterId, ref);
 });
+
+/// [m] as sent to the players: each drag simplified on its own (RDP within
+/// 1/50 cell, so the stops — the undo targets — stay exact points),
+/// coordinates to 0.1 px. Every push re-sends the whole trail, so this keeps
+/// a long turn's payload small; nothing visible is lost.
+@visibleForTesting
+TrailSnapshot trailSnapshotOf(TokenMove m, {required double gridSize}) {
+  final eps = gridSize / 50;
+  final path = <Offset>[];
+  final stops = <int>[];
+  final ends = [...m.stops.skip(1), m.path.length - 1];
+  var start = 0;
+  for (final end in ends) {
+    final leg = simplifyStroke(m.path.sublist(start, end + 1), eps);
+    // Every leg starts at a stop; after the first, that stop is the joint
+    // already in [path].
+    if (path.isEmpty) {
+      stops.add(0);
+    } else {
+      stops.add(path.length - 1);
+      leg.removeAt(0);
+    }
+    path.addAll(leg);
+    start = end;
+  }
+  double r(double v) => (v * 10).roundToDouble() / 10;
+  return TrailSnapshot(
+    id: m.id,
+    points: [
+      for (final p in [...path, m.current]) ...[r(p.dx), r(p.dy)],
+    ],
+    stops: stops,
+    colorHex: BattleMapNotifier._colorToHex(m.color),
+  );
+}
 
 /// A token's movement trail. All positions are canvas-space.
 class TokenMove {

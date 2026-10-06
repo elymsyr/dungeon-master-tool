@@ -1795,6 +1795,7 @@
   "bmErase": "Radieren",
   "bmDraw": "Zeichnen",
   "bmDrawColor": "Zeichenfarbe",
+  "bmColor": "Farbe",
   "bmAddFog": "Nebel hinzufügen",
   "bmEraseFog": "Nebel entfernen",
   "bmFillFog": "Mit Nebel füllen",
@@ -2209,6 +2210,5 @@
   "diceLooksThemes": "Themen",
   "diceLooksOthers": "Weitere",
   "bmMoveUndo": "Bewegung rückgängig",
-  "bmYourTurn": "Du bist dran",
-  "bmUndoToTurnStart": "Zurück zum Startpunkt des Zuges"
+  "bmYourTurn": "Du bist dran"
 }
