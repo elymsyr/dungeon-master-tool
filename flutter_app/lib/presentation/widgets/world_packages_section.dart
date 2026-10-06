@@ -12,7 +12,11 @@ import '../l10n/app_localizations.dart';
 /// Lives in the per-world settings dialog.
 class WorldPackagesSection extends ConsumerStatefulWidget {
   final String campaignId;
-  const WorldPackagesSection({super.key, required this.campaignId});
+
+  /// Yalnız liste — re-sync/kaldır butonları gizli (multiplayer oyuncu).
+  final bool readOnly;
+  const WorldPackagesSection(
+      {super.key, required this.campaignId, this.readOnly = false});
 
   @override
   ConsumerState<WorldPackagesSection> createState() =>
@@ -160,6 +164,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
                         ],
                       ),
                     ),
+                    if (!widget.readOnly) ...[
                     IconButton(
                       icon: const Icon(Icons.sync, size: 18),
                       tooltip: L10n.of(context)!.pkgResync,
@@ -170,6 +175,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
                       tooltip: L10n.of(context)!.removeFromWorld,
                       onPressed: () => _remove(row),
                     ),
+                    ],
                   ],
                 ),
               ),

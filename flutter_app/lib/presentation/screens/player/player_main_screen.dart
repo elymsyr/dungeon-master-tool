@@ -9,9 +9,7 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
-import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
-import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
 import '../../../application/services/pdf_library_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
@@ -20,7 +18,6 @@ import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/dice/dice_fab.dart';
 import '../../widgets/world_open_splash.dart';
@@ -30,6 +27,8 @@ import '../../widgets/pdf_sidebar.dart';
 import '../../widgets/save_sync_indicator.dart';
 import '../../widgets/soundpad_player_sidebar.dart';
 import '../database/database_screen.dart';
+import '../hub/settings_tab.dart';
+import '../hub/worlds_tab.dart';
 import '../mind_map/mind_map_screen.dart';
 import 'player_character_tab.dart';
 import 'player_second_screen_tab.dart';
@@ -99,6 +98,14 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     _rightSidebarWidthNotifier.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     super.dispose();
+  }
+
+  void _openWorldSettings() {
+    final worldId = ref.read(activeCampaignProvider);
+    if (worldId == null) return;
+    showWorldSettingsDialog(context, ref, worldId,
+        ref.read(activeWorldNameProvider).valueOrNull ?? worldId,
+        readOnly: true);
   }
 
   Future<void> _exitToHub() async {
@@ -242,19 +249,12 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                   switch (action) {
                     case 'packages':
                       ImportPackageDialog.show(context, viewOnly: true);
+                    case 'settings':
+                      _openWorldSettings();
+                    case 'app_settings':
+                      SettingsTab.show(context);
                     case 'bug':
                       BugReportDialog.show(context);
-                    default:
-                      if (action.startsWith('theme:')) {
-                        ref
-                            .read(themeProvider.notifier)
-                            .setTheme(action.substring(6));
-                      }
-                      if (action.startsWith('lang:')) {
-                        ref
-                            .read(localeProvider.notifier)
-                            .setLocale(action.substring(5));
-                      }
                   }
                 },
                 itemBuilder: (_) => [
@@ -267,31 +267,22 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                     ]),
                   ),
                   const PopupMenuDivider(),
-                  ...themeNames.map((name) => PopupMenuItem(
-                        value: 'theme:$name',
-                        child: Row(children: [
-                          Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: themePalettes[name]?.canvasBg,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: palette.sidebarDivider),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(name[0].toUpperCase() + name.substring(1)),
-                        ]),
-                      )),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                      value: 'lang:en', child: Text('English')),
-                  const PopupMenuItem(
-                      value: 'lang:tr', child: Text('Türkçe')),
-                  const PopupMenuItem(
-                      value: 'lang:de', child: Text('Deutsch')),
-                  const PopupMenuItem(
-                      value: 'lang:fr', child: Text('Français')),
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Row(children: [
+                      const Icon(Icons.info_outline, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l10n.tabSettings),
+                    ]),
+                  ),
+                  PopupMenuItem(
+                    value: 'app_settings',
+                    child: Row(children: [
+                      const Icon(Icons.settings_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l10n.appSettings),
+                    ]),
+                  ),
                   const PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'bug',
@@ -311,47 +302,17 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                 onPressed: () =>
                     ImportPackageDialog.show(context, viewOnly: true),
               ),
-              // Theme
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.palette, size: 20),
-                tooltip: l10n.lblTheme,
-                onSelected: (name) =>
-                    ref.read(themeProvider.notifier).setTheme(name),
-                itemBuilder: (_) => themeNames
-                    .map((name) => PopupMenuItem(
-                          value: name,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: themePalettes[name]?.canvasBg,
-                                  shape: BoxShape.circle,
-                                  border:
-                                      Border.all(color: palette.sidebarDivider),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(name[0].toUpperCase() +
-                                  name.substring(1)),
-                            ],
-                          ),
-                        ))
-                    .toList(),
+              // Dünya ayarları — oyuncu için yalnız görüntüleme.
+              IconButton(
+                icon: const Icon(Icons.info_outline, size: 20),
+                tooltip: l10n.tabSettings,
+                onPressed: _openWorldSettings,
               ),
-              // Language
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.language, size: 20),
-                tooltip: l10n.lblLanguage,
-                onSelected: (code) =>
-                    ref.read(localeProvider.notifier).setLocale(code),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'en', child: Text('English')),
-                  PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-                  PopupMenuItem(value: 'de', child: Text('Deutsch')),
-                  PopupMenuItem(value: 'fr', child: Text('Français')),
-                ],
+              // Uygulama ayarları — tema, zar teması, dil.
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, size: 20),
+                tooltip: l10n.appSettings,
+                onPressed: () => SettingsTab.show(context),
               ),
               // Bug report
               IconButton(

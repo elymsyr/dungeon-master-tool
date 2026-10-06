@@ -39,6 +39,10 @@ class MetadataEditorSection extends ConsumerStatefulWidget {
   /// (world/package id). Opsiyonel.
   final String? coverScopeId;
 
+  /// Yalnız görüntüleme — alanlar kilitli, kapak seçilemez/kaldırılamaz
+  /// (ör. multiplayer dünyada oyuncu).
+  final bool readOnly;
+
   const MetadataEditorSection({
     super.key,
     required this.name,
@@ -52,6 +56,7 @@ class MetadataEditorSection extends ConsumerStatefulWidget {
     this.showNameField = true,
     this.coverKind,
     this.coverScopeId,
+    this.readOnly = false,
   });
 
   @override
@@ -150,11 +155,14 @@ class _MetadataEditorSectionState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _coverPreview(palette),
-        const SizedBox(height: 12),
+        if (!widget.readOnly || widget.coverImagePath.isNotEmpty) ...[
+          _coverPreview(palette),
+          const SizedBox(height: 12),
+        ],
         if (widget.showNameField) ...[
           TextField(
             controller: _nameCtrl,
+            readOnly: widget.readOnly,
             decoration: _deco(labelText: L10n.of(context)!.sessionName),
             onChanged: widget.onNameChanged,
           ),
@@ -162,6 +170,7 @@ class _MetadataEditorSectionState
         ],
         TextField(
           controller: _descCtrl,
+          readOnly: widget.readOnly,
           minLines: 2,
           maxLines: 4,
           decoration: _deco(labelText: L10n.of(context)!.listingDescriptionLabel),
@@ -204,6 +213,7 @@ class _MetadataEditorSectionState
             return TextField(
               controller: controller,
               focusNode: focus,
+              readOnly: widget.readOnly,
               decoration: _deco(
                 labelText: L10n.of(context)!.listingTagsLabel,
                 hintText: L10n.of(context)!.tagsExampleHint,
@@ -260,7 +270,7 @@ class _MetadataEditorSectionState
             );
           },
         ),
-        if (globalTags.isEmpty)
+        if (globalTags.isEmpty && !widget.readOnly)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
@@ -282,7 +292,7 @@ class _MetadataEditorSectionState
     final hasImage = widget.coverImagePath.isNotEmpty;
 
     return InkWell(
-      onTap: _pickCover,
+      onTap: widget.readOnly ? null : _pickCover,
       borderRadius: palette.cbr,
       child: Container(
         height: 160,
@@ -303,6 +313,7 @@ class _MetadataEditorSectionState
                       fit: BoxFit.cover,
                     ),
                   ),
+                  if (!widget.readOnly)
                   Align(
                     alignment: Alignment.topRight,
                     child: Padding(
