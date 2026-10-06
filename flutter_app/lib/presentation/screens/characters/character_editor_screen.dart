@@ -2246,6 +2246,7 @@ class _CharacterEditorScreenState
     final tile = FieldWidgetFactory.create(
       schema: f,
       value: value,
+      entityName: character.entity.name,
       readOnly: _readOnly,
       onChanged: (v) {
         // Manual edit of the Feats relation field needs the same mechanical

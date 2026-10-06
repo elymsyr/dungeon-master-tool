@@ -218,6 +218,9 @@ class WorldSyncService {
     // DM battlemap'i online yayınlarken sıra o oyuncunun karakterinde.
     // RLS satırı yalnız DM'e ve sahibine gösterir.
     'world_turn_control',
+    // Oyuncunun zar atışı DM'in oturum günlüğüne (106). RLS satırı yalnız
+    // DM'e gösterir; oyuncuya hiçbir şey gelmez.
+    'world_dice_rolls',
   ];
 
   Future<void> dispose() async {

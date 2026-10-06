@@ -43,12 +43,6 @@ class UiState {
   /// Sidebar arama metni — filtrelerle aynı şekilde dünya başına kalıcı.
   final Map<String, String> dbSearchByWorld;
 
-  // Session
-  final double sessionMainSplitterRatio;
-  final double sessionRightSplitterRatio;
-  final int sessionBottomTab;
-  final int sessionMobileTab;
-
   // Right Sidebar (PDF / Soundpad)
   final RightSidebar rightSidebar;
   final double pdfSidebarWidth; // shared width for both PDF and Soundpad
@@ -108,10 +102,6 @@ class UiState {
     this.dbFilterShareModesByWorld = const {},
     this.dbSortModeByWorld = const {},
     this.dbSearchByWorld = const {},
-    this.sessionMainSplitterRatio = 0.35,
-    this.sessionRightSplitterRatio = 0.4,
-    this.sessionBottomTab = 0,
-    this.sessionMobileTab = 0,
     this.rightSidebar = RightSidebar.none,
     this.pdfSidebarWidth = 450,
     this.pdfOpenPaths = const [],
@@ -143,10 +133,6 @@ class UiState {
     Map<String, List<String>>? dbFilterShareModesByWorld,
     Map<String, String>? dbSortModeByWorld,
     Map<String, String>? dbSearchByWorld,
-    double? sessionMainSplitterRatio,
-    double? sessionRightSplitterRatio,
-    int? sessionBottomTab,
-    int? sessionMobileTab,
     RightSidebar? rightSidebar,
     double? pdfSidebarWidth,
     List<String>? pdfOpenPaths,
@@ -179,10 +165,6 @@ class UiState {
           dbFilterShareModesByWorld ?? this.dbFilterShareModesByWorld,
       dbSortModeByWorld: dbSortModeByWorld ?? this.dbSortModeByWorld,
       dbSearchByWorld: dbSearchByWorld ?? this.dbSearchByWorld,
-      sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
-      sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
-      sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
-      sessionMobileTab: sessionMobileTab ?? this.sessionMobileTab,
       rightSidebar: rightSidebar ?? this.rightSidebar,
       pdfSidebarWidth: pdfSidebarWidth ?? this.pdfSidebarWidth,
       pdfOpenPaths: pdfOpenPaths ?? this.pdfOpenPaths,
@@ -217,10 +199,6 @@ class UiState {
     'dbFilterShareModesByWorld': dbFilterShareModesByWorld,
     'dbSortModeByWorld': dbSortModeByWorld,
     'dbSearchByWorld': dbSearchByWorld,
-    'sessionMainSplitterRatio': sessionMainSplitterRatio,
-    'sessionRightSplitterRatio': sessionRightSplitterRatio,
-    'sessionBottomTab': sessionBottomTab,
-    'sessionMobileTab': sessionMobileTab,
     'rightSidebar': rightSidebar.name,
     'pdfSidebarWidth': pdfSidebarWidth,
     'pdfOpenPaths': pdfOpenPaths,
@@ -265,10 +243,6 @@ class UiState {
           _decodeListMap(json['dbFilterShareModesByWorld']),
       dbSortModeByWorld: _decodeStringMap(json['dbSortModeByWorld']),
       dbSearchByWorld: _decodeStringMap(json['dbSearchByWorld']),
-      sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
-      sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
-      sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
-      sessionMobileTab: json['sessionMobileTab'] as int? ?? 0,
       rightSidebar: rightSidebar,
       pdfSidebarWidth: (json['pdfSidebarWidth'] as num?)?.toDouble() ?? 450,
       pdfOpenPaths: (json['pdfOpenPaths'] as List?)?.cast<String>() ?? const [],
@@ -318,7 +292,7 @@ Map<String, int> _decodeIntMap(dynamic raw) {
 }
 
 /// Bir dünyaya ait "o an ne açık" görünümü: hangi sağ sidebar (PDF /
-/// Soundpad / karakterler), hangi PDF sekmeleri, hangi ana/session sekmesi.
+/// Soundpad / karakterler), hangi PDF sekmeleri, hangi ana sekme.
 ///
 /// [UiState] içinde bunlar tek bir global alan kümesi olarak duruyor (ekran
 /// bir seferde tek dünya gösteriyor); [WorldViewState] o kümenin dünya
@@ -329,8 +303,6 @@ class WorldViewState {
     this.rightSidebar = RightSidebar.none,
     this.pdfOpenPaths = const [],
     this.pdfActiveIndex = -1,
-    this.sessionBottomTab = 0,
-    this.sessionMobileTab = 0,
     this.charactersSidebarInlineId,
   });
 
@@ -338,8 +310,6 @@ class WorldViewState {
   final RightSidebar rightSidebar;
   final List<String> pdfOpenPaths;
   final int pdfActiveIndex;
-  final int sessionBottomTab;
-  final int sessionMobileTab;
   final String? charactersSidebarInlineId;
 
   factory WorldViewState.of(UiState s) => WorldViewState(
@@ -347,8 +317,6 @@ class WorldViewState {
         rightSidebar: s.rightSidebar,
         pdfOpenPaths: s.pdfOpenPaths,
         pdfActiveIndex: s.pdfActiveIndex,
-        sessionBottomTab: s.sessionBottomTab,
-        sessionMobileTab: s.sessionMobileTab,
         charactersSidebarInlineId: s.charactersSidebarInlineId,
       );
 
@@ -357,8 +325,6 @@ class WorldViewState {
         'rightSidebar': rightSidebar.name,
         'pdfOpenPaths': pdfOpenPaths,
         'pdfActiveIndex': pdfActiveIndex,
-        'sessionBottomTab': sessionBottomTab,
-        'sessionMobileTab': sessionMobileTab,
         'charactersSidebarInlineId': charactersSidebarInlineId,
       };
 
@@ -372,8 +338,6 @@ class WorldViewState {
             (j['pdfOpenPaths'] as List?)?.whereType<String>().toList() ??
                 const [],
         pdfActiveIndex: j['pdfActiveIndex'] as int? ?? -1,
-        sessionBottomTab: j['sessionBottomTab'] as int? ?? 0,
-        sessionMobileTab: j['sessionMobileTab'] as int? ?? 0,
         charactersSidebarInlineId: j['charactersSidebarInlineId'] as String?,
       );
 
@@ -383,8 +347,6 @@ class WorldViewState {
         rightSidebar: rightSidebar,
         pdfOpenPaths: pdfOpenPaths,
         pdfActiveIndex: pdfActiveIndex,
-        sessionBottomTab: sessionBottomTab,
-        sessionMobileTab: sessionMobileTab,
         charactersSidebarInlineId: charactersSidebarInlineId,
       );
 

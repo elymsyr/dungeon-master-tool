@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,7 @@ import '../../../application/providers/ui_state_provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'dice_log.dart';
 import 'dice_physics.dart';
 import 'dice_roll_view.dart';
 
@@ -59,24 +62,27 @@ class DiceFab extends ConsumerWidget {
     return StackFab(
       heroTag: 'dice_fab',
       tooltip: L10n.of(context)!.diceRollerTooltip,
-      onPressed: () => _open(context, look),
+      onPressed: () => _open(context, look, ref.read(diceLoggerProvider)),
       child: const Icon(Icons.casino),
     );
   }
 
-  void _open(BuildContext context, String look) {
+  void _open(BuildContext context, String look, DiceLogger logger) {
     final navigator = Navigator.of(context, rootNavigator: true);
     final box = context.findRenderObject()! as RenderBox;
     final anchor = box.localToGlobal(Offset.zero, ancestor: navigator.overlay!.context.findRenderObject()) & box.size;
     DiceKit.load(look).ignore(); // build the 3D dice while the menu is open
-    _pushDiceRoute(context, _DiceMenu(anchor: anchor, look: look));
+    _pushDiceRoute(context, _DiceMenu(anchor: anchor, look: look, logger: logger));
   }
 }
 
 /// Throws [counts] straight away (no menu), e.g. a d20 for a skill check;
 /// [modifier] is added to the dice total and [label] titles the result card.
-void rollDice(BuildContext context, WidgetRef ref, Map<String, int> counts, {int modifier = 0, String? label}) {
+/// The session log gets it as a [kind] roll of [character].
+void rollDice(BuildContext context, WidgetRef ref, Map<String, int> counts,
+    {int modifier = 0, String? label, DiceRollKind kind = DiceRollKind.roll, String? character}) {
   final look = resolveDiceLook(ref.read(uiStateProvider).diceTheme, ref.read(themeProvider));
+  final logger = ref.read(diceLoggerProvider);
   _pushDiceRoute(
     context,
     Builder(
@@ -86,6 +92,13 @@ void rollDice(BuildContext context, WidgetRef ref, Map<String, int> counts, {int
         modifier: modifier,
         label: label,
         onClose: () => Navigator.of(context).pop(),
+        onRolled: (roll) => unawaited(logger.log(
+          kind: kind,
+          label: label,
+          character: character,
+          total: roll.total + modifier,
+          detail: rollBreakdown(roll, modifier),
+        )),
       ),
     ),
   );
@@ -109,9 +122,10 @@ void _pushDiceRoute(BuildContext context, Widget child) {
 /// that sits exactly where the dice button was, the dice on the same 40+10
 /// pitch as the buttons they cover. Rolling swaps it for the dice.
 class _DiceMenu extends StatefulWidget {
-  const _DiceMenu({required this.anchor, required this.look});
+  const _DiceMenu({required this.anchor, required this.look, required this.logger});
   final Rect anchor;
   final String look;
+  final DiceLogger logger;
 
   @override
   State<_DiceMenu> createState() => _DiceMenuState();
@@ -134,7 +148,18 @@ class _DiceMenuState extends State<_DiceMenu> {
   @override
   Widget build(BuildContext context) {
     final thrown = _thrown;
-    if (thrown != null) return DiceRollView(counts: thrown, look: widget.look, onClose: _close);
+    if (thrown != null) {
+      return DiceRollView(
+        counts: thrown,
+        look: widget.look,
+        onClose: _close,
+        onRolled: (roll) => unawaited(widget.logger.log(
+          kind: DiceRollKind.roll,
+          total: roll.total,
+          detail: rollBreakdown(roll, 0),
+        )),
+      );
+    }
 
     final l10n = L10n.of(context)!;
     final size = MediaQuery.sizeOf(context);

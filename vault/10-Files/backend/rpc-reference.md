@@ -50,6 +50,7 @@ tags: [file]
 - `regenerate_world_invite`, `ensure_world_invite`, `publish_world(...)` (beta-gated, per-user 10-world cap), `share_package_to_world`, `unshare_world_package` (043/044/055).
 - `claim_character(p_character_id text)`, `release_character`, `assign_character`, `remove_from_world`, `delete_character` (026/034/036/038). 101: `remove_from_world` payload'daki `worldId`'yi de boşaltıyor.
 - `get_character_delta(p_since bigint, p_limit int) → jsonb` (101) — çağıranın karakterleri ve `character_tombstones`'u (`kind` deleted|gone), `get_world_delta` sözleşmesi; damga `character_revisions`. `authenticated`.
+- `log_dice_roll(p_world_id text, p_character text, p_kind text, p_label text, p_total int, p_detail text) → bool` (106) — oyuncunun zar atışını DM'in oturum günlüğüne gönderdiği tek kapı; satırın sahibi `auth.uid()`, üye değilse FALSE, geçersiz tür / uzun metin `22023`. `authenticated`. [[dice_log]]
 - `move_turn_token(p_world_id text, p_combatant_id text, p_x float8, p_y float8) → bool` (105) — oyuncunun kendi turunda token pozisyonu yazdığı tek kapı; `world_turn_control` satırı çağıranın değilse ya da sıra geçmişse `false`, NaN/∞/±1e6 dışı `22023`. `authenticated` (anon yok). İstemci: [[turn_control_provider]].
 - `unpublish_character(p_character_id text)` (101) — "yerele al": sahibin dünyasız satırını siler, tombstone `gone`; online dünyadaki karakterde `P0005`. `authenticated`.
 
