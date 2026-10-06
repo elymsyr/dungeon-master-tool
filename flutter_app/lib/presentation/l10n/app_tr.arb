@@ -1795,6 +1795,7 @@
   "bmErase": "Silgi",
   "bmDraw": "Çiz",
   "bmDrawColor": "Çizim rengi",
+  "bmColor": "Renk",
   "bmAddFog": "Sis Ekle",
   "bmEraseFog": "Sisi Sil",
   "bmFillFog": "Sisle Doldur",

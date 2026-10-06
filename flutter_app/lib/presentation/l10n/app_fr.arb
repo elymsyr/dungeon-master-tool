@@ -1795,6 +1795,7 @@
   "bmErase": "Effacer",
   "bmDraw": "Dessiner",
   "bmDrawColor": "Couleur de dessin",
+  "bmColor": "Couleur",
   "bmAddFog": "Ajouter du brouillard",
   "bmEraseFog": "Effacer le brouillard",
   "bmFillFog": "Remplir de brouillard",

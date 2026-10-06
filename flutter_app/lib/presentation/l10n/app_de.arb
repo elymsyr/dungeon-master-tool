@@ -1795,6 +1795,7 @@
   "bmErase": "Radieren",
   "bmDraw": "Zeichnen",
   "bmDrawColor": "Zeichenfarbe",
+  "bmColor": "Farbe",
   "bmAddFog": "Nebel hinzufügen",
   "bmEraseFog": "Nebel entfernen",
   "bmFillFog": "Mit Nebel füllen",
