@@ -214,6 +214,10 @@ class WorldSyncService {
     'world_packages',
     // Üyelik / rol.
     'world_members',
+    // Oyuncunun kendi turunda token oynatma izni (105). Paylaşım eylemi:
+    // DM battlemap'i online yayınlarken sıra o oyuncunun karakterinde.
+    // RLS satırı yalnız DM'e ve sahibine gösterir.
+    'world_turn_control',
   ];
 
   Future<void> dispose() async {

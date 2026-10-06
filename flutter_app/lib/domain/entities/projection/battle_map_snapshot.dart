@@ -432,6 +432,21 @@ class TokenSnapshot {
   /// Backwards-compat helper used by older call sites that only need names.
   List<String> get conditionNames => [for (final c in conditions) c.name];
 
+  /// Same token at another canvas position.
+  TokenSnapshot movedTo(double x, double y) => TokenSnapshot(
+        id: id,
+        name: name,
+        x: x,
+        y: y,
+        imagePath: imagePath,
+        colorHex: colorHex,
+        isPlayer: isPlayer,
+        hp: hp,
+        maxHp: maxHp,
+        init: init,
+        conditions: conditions,
+      );
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,

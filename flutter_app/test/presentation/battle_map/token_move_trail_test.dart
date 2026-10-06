@@ -1,5 +1,6 @@
 import 'package:dungeon_master_tool/application/providers/combat_provider.dart';
 import 'package:dungeon_master_tool/application/services/event_bus.dart';
+import 'package:dungeon_master_tool/domain/entities/session.dart';
 import 'package:dungeon_master_tool/presentation/screens/battle_map/battle_map_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,5 +56,29 @@ void main() {
     n.undoTokenMove();
     expect(n.state.tokenPositions['a'], Offset.zero);
     expect(n.tokenMove.value, isNull);
+  });
+
+  test('a position-only encounter change moves just the tokens that moved',
+      () async {
+    final container = ProviderContainer(
+        overrides: [combatProvider.overrideWith((_) => _NoSaveCombat())]);
+    addTearDown(container.dispose);
+    final sub = container.listen(battleMapProvider('e1'), (_, _) {});
+    addTearDown(sub.close);
+    final n = container.read(battleMapProvider('e1').notifier);
+
+    const enc = Encounter(id: 'e1', tokenPositions: {
+      'a': {'x': 0.0, 'y': 0.0},
+      'b': {'x': 50.0, 'y': 50.0},
+    });
+    await n.syncFromEncounter(enc);
+    // The DM is mid-drag on `a` while a player's move of `b` arrives.
+    n.moveToken('a', const Offset(10, 10));
+    await n.syncFromEncounter(enc.copyWith(tokenPositions: {
+      'a': {'x': 0.0, 'y': 0.0},
+      'b': {'x': 200.0, 'y': 50.0},
+    }));
+    expect(n.state.tokenPositions['b'], const Offset(200, 50));
+    expect(n.state.tokenPositions['a'], const Offset(10, 10));
   });
 }

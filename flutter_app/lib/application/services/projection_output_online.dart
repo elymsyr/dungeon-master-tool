@@ -50,6 +50,11 @@ class ProjectionOutputOnline extends ProjectionOutput {
   /// is a single JSON blob, so a patch must re-upload the whole state).
   ProjectionState? _last;
 
+  /// `state_json` of the last successful upsert. Viewport patches are
+  /// stripped before sending, so a DM panning at 30 Hz would otherwise
+  /// re-upload the same blob (fog included) on every flush.
+  String? _lastSent;
+
   final _externalCloseController = StreamController<void>.broadcast();
 
   @override
@@ -64,6 +69,7 @@ class ProjectionOutputOnline extends ProjectionOutput {
   @override
   Future<void> deactivate() async {
     _active = false;
+    _lastSent = null;
     _bmCoalesceTimer?.cancel();
     _bmCoalesceTimer = null;
     try {
@@ -89,11 +95,14 @@ class ProjectionOutputOnline extends ProjectionOutput {
   }
 
   Timer? _bmCoalesceTimer;
+  DateTime? _bmFlushAt;
 
   /// Tiered window: viewport / token-only patches fire fast (120ms), heavier
   /// patches (strokes / fog / measurements) coalesce at 500ms. Caller may
   /// send many small token-move patches per second; we still write at most
-  /// ~8 updates/sec to `world_projection`.
+  /// ~8 updates/sec to `world_projection`. A throttle, not a debounce: a
+  /// pending flush is never pushed back, so a steady stream (a player
+  /// dragging their token, the DM panning at 30 Hz) still goes out.
   static const Duration _fastBmDebounce = Duration(milliseconds: 120);
   static const Duration _slowBmDebounce = Duration(milliseconds: 500);
 
@@ -134,7 +143,13 @@ class ProjectionOutputOnline extends ProjectionOutput {
         patch.containsKey('shapes') ||
         patch.containsKey('fogDataBase64');
     final debounce = isHeavy ? _slowBmDebounce : _fastBmDebounce;
+    final flushAt = DateTime.now().add(debounce);
+    if ((_bmCoalesceTimer?.isActive ?? false) &&
+        !flushAt.isBefore(_bmFlushAt!)) {
+      return _active;
+    }
     _bmCoalesceTimer?.cancel();
+    _bmFlushAt = flushAt;
     _bmCoalesceTimer = Timer(debounce, () {
       final s = _last;
       if (s != null) _upsert(s);
@@ -171,12 +186,15 @@ class ProjectionOutputOnline extends ProjectionOutput {
         _stripNavState(state).toJson(),
         _publishMedia,
       );
+      final encoded = jsonEncode(json);
+      if (encoded == _lastSent) return _active;
       await client.from('world_projection').upsert({
         'world_id': worldId,
-        'state_json': jsonEncode(json),
+        'state_json': encoded,
         'updated_by': client.auth.currentUser?.id,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      _lastSent = encoded;
     } catch (e, st) {
       debugPrint('ProjectionOutputOnline._upsert failed: $e\n$st');
     }

@@ -154,6 +154,7 @@ class WorldMirrorService {
     ({
       List<Map<String, dynamic>> characters,
       Map<String, dynamic>? projection,
+      Map<String, dynamic>? turnControl,
     })
   >
   fetchInitialState(String worldId) async {
@@ -167,16 +168,24 @@ class WorldMirrorService {
             .select()
             .eq('world_id', worldId)
             .maybeSingle(),
+        // RLS: oyuncu yalnız kendi iznini görür (105).
+        client
+            .from('world_turn_control')
+            .select()
+            .eq('world_id', worldId)
+            .maybeSingle(),
       ]);
       return (
         characters: (res[0] as List).cast<Map<String, dynamic>>(),
         projection: res[1] as Map<String, dynamic>?,
+        turnControl: res[2] as Map<String, dynamic>?,
       );
     } catch (e) {
       _logMirrorError('fetchInitialState', e);
       return (
         characters: const <Map<String, dynamic>>[],
         projection: null,
+        turnControl: null,
       );
     }
   }
