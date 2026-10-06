@@ -371,7 +371,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                   palette: palette,
                                   layout: MetadataTileLayout.topBanner,
                                   onSettings: () =>
-                                      showWorldSettingsDialog(context, ref, info.id, info.name),
+                                      showWorldSettingsDialog(
+                                        context, ref, info.id, info.name,
+                                        readOnly: role == WorldRole.player,
+                                      ),
                                   topRightOverlay: isOnlineMember
                                       ? [
                                           _OnlineRoleBadge(
@@ -968,13 +971,15 @@ class _OnlineRoleBadge extends StatelessWidget {
 }
 
 /// Dünya ayarları (ad, açıklama, tag, kapak, online, paketler). Hub kartı
-/// ve dünya içindeki ayarlar butonu ortak kullanır.
+/// ve dünya içindeki ayarlar butonu ortak kullanır. [readOnly] —
+/// multiplayer dünyada oyuncu: yalnız görüntüler, kaydetmez.
 Future<void> showWorldSettingsDialog(
   BuildContext context,
   WidgetRef ref,
   String worldId,
-  String worldName,
-) async {
+  String worldName, {
+  bool readOnly = false,
+}) async {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
   // Açık dünya/paket/karakter ekranından çağrılabilir — bekleyen yazımlar
@@ -1046,6 +1051,7 @@ Future<void> showWorldSettingsDialog(
                   ),
                   coverKind: MediaKind.worldCover,
                   coverScopeId: worldId,
+                  readOnly: readOnly,
                 ),
                 const SizedBox(height: 12),
                 Divider(height: 1, color: palette.featureCardBorder),
@@ -1071,12 +1077,14 @@ Future<void> showWorldSettingsDialog(
                 SaveInfoSection(
                   localUpdatedAt: localUpdatedAt,
                 ),
-                const SizedBox(height: 12),
-                MarketplacePanel(
-                  itemType: 'world',
-                  localId: worldId,
-                  title: savedName,
-                ),
+                if (!readOnly) ...[
+                  const SizedBox(height: 12),
+                  MarketplacePanel(
+                    itemType: 'world',
+                    localId: worldId,
+                    title: savedName,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Divider(height: 1, color: palette.featureCardBorder),
                 const SizedBox(height: 12),
@@ -1087,7 +1095,7 @@ Future<void> showWorldSettingsDialog(
                 const SizedBox(height: 12),
                 Divider(height: 1, color: palette.featureCardBorder),
                 const SizedBox(height: 12),
-                WorldPackagesSection(campaignId: worldId),
+                WorldPackagesSection(campaignId: worldId, readOnly: readOnly),
               ],
             ),
           ),
@@ -1095,8 +1103,9 @@ Future<void> showWorldSettingsDialog(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.btnCancel),
+            child: Text(readOnly ? l10n.btnClose : l10n.btnCancel),
           ),
+          if (!readOnly)
           FilledButton(
             onPressed: () async {
               // Ad değiştiyse etiketi güncelle. Kimlik değişmiyor, yani
