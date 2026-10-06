@@ -111,8 +111,8 @@ void main() {
       expect(BattleMapSnapshot.fromJson(const {}).shapes, isEmpty);
     });
 
-    test('schemaVersion is 4 (shapes are additive)', () {
-      expect(BattleMapSnapshot.schemaVersion, 4);
+    test('schemaVersion is 5 (shapes and trail are additive)', () {
+      expect(BattleMapSnapshot.schemaVersion, 5);
     });
   });
 }
