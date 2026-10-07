@@ -156,7 +156,7 @@ Cantrip · Büyü Yapma · Silah Ustalığı · İlahi Düzen · Direnç · Bağ
 | Cantrip | Cantrip | R |
 | Spell Slot | Büyü Yuvası | R |
 | Spellcasting | Büyü Yapma | R |
-| Spellcasting Ability | Büyü Yapma Yeteneği | R |
+| Spellcasting Ability | Büyü Yapma Kabiliyeti | D11 |
 | Spellcasting Focus | Büyü Yapma Odağı | R |
 | Spell Save DC | Büyü Kurtarma DC'si | B~ |
 | Spell Attack | Büyü Saldırısı | R |

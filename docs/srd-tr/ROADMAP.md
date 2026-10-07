@@ -207,9 +207,10 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
     değişmez) · `test/presentation/srd_tr_entity_card_test.dart` (in-memory DB'de gerçek dünya +
     gerçek tablolar + gerçek `EntityCard`: TR okuma Türkçe, düzenleme İngilizce, kayıt İngilizce,
     okuma modu hiçbir şey yazmaz, EN'e dönünce İngilizce, SRD'nin kendi Poisoned kartı `Zehirlenme`).
-  - 4.8: `app_tr.arb`'de 32 dize D7 tablosuna çekildi (Öncelik, Kısa/Uzun Dinlenme, Yetkinlik
-    Katkısı, hüner, kabiliyet, yetenek, Büyülü eşya, Saldırı Katkısı). `spellsCastingSummary`
-    ("Büyü yeteneği") sözlük §3 `Spellcasting Ability` satırı netleşene kadar bekliyor.
+  - 4.8: `app_tr.arb`'de 33 dize D7 tablosuna çekildi (Öncelik, Kısa/Uzun Dinlenme, Yetkinlik
+    Katkısı, hüner, kabiliyet, yetenek, Büyülü eşya, Saldırı Katkısı). Sözlük §3
+    `Spellcasting Ability` → `Büyü Yapma Kabiliyeti` (D11; eskiden "Yeteneği") ve arayüzde
+    `spellsCastingSummary` aynı terime çekildi.
 
 ### Faz 5 — Toplu çeviri (dalgalar, küçükten büyüğe) *(~3–5 saat gerçek zaman)*
 
