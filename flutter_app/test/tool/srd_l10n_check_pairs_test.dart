@@ -49,6 +49,8 @@ void main() {
     expect(g.terms['Cloud Giant'], {'Bulut Devi'}); // ortak son kelime
     expect(g.terms['Hit Dice'], {'Can Zarı'}); // çok İngilizce → tek Türkçe
     expect(g.keep, containsAll(['Druid', 'gp', 'Abyssal Tiefling']));
+    // §4.26'daki ikinci liste; `ft.` gibi kısaltmalar noktasıyla kalır.
+    expect(g.keep, containsAll(['Mount Celestia', 'Outlands', 'ft.', 'lb.']));
   });
 
   test('doğru çeviriler temiz geçer', () {

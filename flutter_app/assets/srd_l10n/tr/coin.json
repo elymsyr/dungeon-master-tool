@@ -1,7 +1,7 @@
 {
-  "Copper": "",
-  "Silver": "",
-  "Electrum": "",
-  "Gold": "",
-  "Platinum": ""
+  "Copper": "Bakır",
+  "Silver": "Gümüş",
+  "Electrum": "Elektrum",
+  "Gold": "Altın",
+  "Platinum": "Platin"
 }

@@ -1,7 +1,7 @@
 {
-  "Walk": "",
-  "Burrow": "",
-  "Climb": "",
-  "Fly": "",
-  "Swim": ""
+  "Walk": "Yürüme",
+  "Burrow": "Kazma",
+  "Climb": "Tırmanma",
+  "Fly": "Uçma",
+  "Swim": "Yüzme"
 }

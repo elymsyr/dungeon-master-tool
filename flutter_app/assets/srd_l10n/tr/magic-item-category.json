@@ -1,11 +1,11 @@
 {
-  "Armor": "",
-  "Potions": "",
-  "Rings": "",
-  "Rods": "",
-  "Scrolls": "",
-  "Staffs": "",
-  "Wands": "",
-  "Weapons": "",
-  "Wondrous Items": ""
+  "Armor": "Zırh",
+  "Potions": "İksirler",
+  "Rings": "Yüzükler",
+  "Rods": "Bastonlar",
+  "Scrolls": "Tomarlar",
+  "Staffs": "Asalar",
+  "Wands": "Değnekler",
+  "Weapons": "Silahlar",
+  "Wondrous Items": "Harikulade Eşyalar"
 }

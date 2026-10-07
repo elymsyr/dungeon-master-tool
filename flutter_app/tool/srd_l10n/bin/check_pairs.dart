@@ -40,6 +40,7 @@ class Glossary {
 
 final _row = RegExp(r'^\|(.+)\|\s*$');
 final _paren = RegExp(r'\s*\([^)]*\)');
+final _keepIntro = RegExp(r'aynen kalır\W*(\([^)]*\))?\s*:', caseSensitive: false);
 
 /// §3'ten itibaren her `| İngilizce | Türkçe | … |` satırı bir terimdir.
 /// `A / B` hücreleri ayrılır; `Cloud / … / Storm Giant` gibi ortak son kelime
@@ -49,8 +50,10 @@ Glossary parseGlossary(String md) {
   final keep = <String>{};
   final lines = const LineSplitter().convert(md);
 
-  final k = lines.indexWhere((l) => l.contains('**Aynen kalır**'));
-  if (k >= 0) {
+  // §0'daki liste ve §4.26'daki dış düzlem adları gibi her
+  // "… aynen kalır: A · B · C" paragrafı (tablo satırları hariç).
+  for (var k = 0; k < lines.length; k++) {
+    if (lines[k].startsWith('|') || !_keepIntro.hasMatch(lines[k])) continue;
     final para = StringBuffer();
     for (var i = k; i < lines.length && lines[i].trim().isNotEmpty; i++) {
       para.write(' ${lines[i]}');

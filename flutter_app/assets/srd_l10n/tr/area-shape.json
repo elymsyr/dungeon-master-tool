@@ -1,8 +1,8 @@
 {
-  "Cone": "",
-  "Cube": "",
-  "Cylinder": "",
-  "Line": "",
-  "Sphere": "",
-  "Emanation": ""
+  "Cone": "Koni",
+  "Cube": "Küp",
+  "Cylinder": "Silindir",
+  "Line": "Hat",
+  "Sphere": "Küre",
+  "Emanation": "Yayılım"
 }

@@ -1,9 +1,9 @@
 {
-  "Instantaneous": "",
-  "Rounds": "",
-  "Minutes": "",
-  "Hours": "",
-  "Days": "",
-  "Special": "",
-  "Until Dispelled": ""
+  "Instantaneous": "Anlık",
+  "Rounds": "Raunt",
+  "Minutes": "Dakika",
+  "Hours": "Saat",
+  "Days": "Gün",
+  "Special": "Özel",
+  "Until Dispelled": "Defedilene Kadar"
 }

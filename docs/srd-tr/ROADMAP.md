@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot (kapı: kullanıcı uygulamada görür)
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ (383 / 6404)
 
 ---
 
@@ -152,10 +152,11 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
 - **2.2** Çıkarma aracı: `srdRawRowsBySlug()` + Tier-0 seed'leri + yerleşik şemayı gezip her scope
   için benzersiz görünen metinleri `assets/srd_l10n/tr/<scope>.json` iskeletine yazar (değerler `""`).
 - **2.3** Özet tablo: scope başına metin sayısı + kelime sayısı.
-- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/extract.dart` → 60 scope, 6433 metin, ~89.000 kelime.
+- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/extract.dart` → 60 scope, 6433 metin, ~89.000 kelime
+  (dalga 5.1'de `character-state` makine anahtarı olarak çıkarıldı → **59 scope, 6404 metin**).
   Çıkarılmayan makine değerleri (K10): relation/sayı/zar alanları, `tags`, `source`, `icon_name`,
   `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`,
-  `resource-pool` satır adları (`pool:…` — görünen ad `display_name`), snake_case enum değerleri
+  `resource-pool` (`pool:…` — görünen ad `display_name`) ve `character-state` (`state:…`) satır adları, snake_case enum değerleri
   (`mechanic_kind`, `effect_kind`). `proficiencyTable` satır adları ability/skill scope'undan,
   enum seçenekleri `_schema`'dan çevrilir. Faz 4 çalışma zamanı aynı kuralları uygular.
 - **Kapı:** G1 (kaynak değişmedi), sayılar kullanıcıya raporlanır.
@@ -227,6 +228,14 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 | 5.6 | `spell` (~341) | En büyük dosya |
 | 5.7 | `magic-item` (~286) | Rehberde yok |
 | 5.8 | `monster` (~248), `creature-action` (~528), `animal` (~97) | Rehberde yok |
+
+- **5.1 sonucu (2026-10-07):** 34 scope, 288 metin, hepsi sözlükten (§3–§6; sözlükte olmayan üç
+  `resource-pool` adı rehberden: `Hunter's Mark` → `Avcının İşareti`, `Superiority Dice` →
+  `Üstünlük Zarları`; `Focus Points` → `Odak Puanları`). `check_pairs` FAIL 0 · UYARI 0;
+  toplam 383 / 6404. `character-state` satır adları makine kimliği (`state:raging`, görünen metni
+  yok — sözlük §4) olduğu halde çıkarılmıştı: `extract.dart` `_machineNameSlugs`'a eklendi, dosya
+  silindi. `check_pairs` artık sözlükteki her "… aynen kalır: A · B" listesini okur (§4.26 dış
+  düzlem adları: 38 → 54).
 
 ### Faz 6 — Yüzeyleri genişletme *(~1 oturum)*
 - **6.1** Ad gösteren tüm noktaların envanteri (~160 çağrı): kenar listesi, `entity_link` çipleri,

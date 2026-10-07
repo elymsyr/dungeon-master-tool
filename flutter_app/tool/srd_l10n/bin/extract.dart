@@ -17,9 +17,10 @@ import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/services/content_translator.dart';
 
-/// Satır adları makine anahtarı olan kategoriler (`pool:rage_uses`);
-/// görünen ad `display_name` alanındadır.
-const _machineNameSlugs = {'resource-pool'};
+/// Satır adları makine anahtarı olan kategoriler (`pool:rage_uses`,
+/// `state:raging`); `resource-pool`'un görünen adı `display_name` alanındadır,
+/// `character-state`'in görünen metni yoktur.
+const _machineNameSlugs = {'resource-pool', 'character-state'};
 
 final _hasLetters = RegExp(r'[A-Za-z]{2,}');
 final _snakeKey = RegExp(r'^[a-z0-9_+/.\-]+$');

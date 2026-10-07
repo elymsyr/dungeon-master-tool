@@ -1,10 +1,10 @@
 {
-  "Cleave": "",
-  "Graze": "",
-  "Nick": "",
-  "Push": "",
-  "Sap": "",
-  "Slow": "",
-  "Topple": "",
-  "Vex": ""
+  "Cleave": "Yarma",
+  "Graze": "Sıyırma",
+  "Nick": "Çentik",
+  "Push": "İtme",
+  "Sap": "Zayıflatma",
+  "Slow": "Yavaşlatma",
+  "Topple": "Devirme",
+  "Vex": "Bezdirme"
 }

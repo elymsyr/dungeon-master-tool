@@ -1,9 +1,9 @@
 {
-  "Action": "",
-  "Bonus Action": "",
-  "Reaction": "",
-  "Minute": "",
-  "Hour": "",
-  "Ritual": "",
-  "Special": ""
+  "Action": "Eylem",
+  "Bonus Action": "Bonus Eylem",
+  "Reaction": "Reaksiyon",
+  "Minute": "Dakika",
+  "Hour": "Saat",
+  "Ritual": "Ritüel",
+  "Special": "Özel"
 }

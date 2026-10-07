@@ -1,12 +1,12 @@
 {
-  "Lawful Good": "",
-  "Neutral Good": "",
-  "Chaotic Good": "",
-  "Lawful Neutral": "",
-  "Neutral": "",
-  "Chaotic Neutral": "",
-  "Lawful Evil": "",
-  "Neutral Evil": "",
-  "Chaotic Evil": "",
-  "Unaligned": ""
+  "Lawful Good": "Kuralcı İyi",
+  "Neutral Good": "Tarafsız İyi",
+  "Chaotic Good": "Kaotik İyi",
+  "Lawful Neutral": "Kuralcı Tarafsız",
+  "Neutral": "Tarafsız",
+  "Chaotic Neutral": "Kaotik Tarafsız",
+  "Lawful Evil": "Kuralcı Kötü",
+  "Neutral Evil": "Tarafsız Kötü",
+  "Chaotic Evil": "Kaotik Kötü",
+  "Unaligned": "Yönelimsiz"
 }
