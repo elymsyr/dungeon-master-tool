@@ -1,7 +1,7 @@
 # SRD 5.2.1 Türkçe Sözlük
 
-> **Durum: TASLAK — kullanıcı onayı bekliyor (Faz 1 kapısı).**
-> Onaydan sonra bu dosya tek kaynaktır: çevirmen ajanlar buradan okur, `check_pairs` (Faz 3)
+> **Durum: ONAYLANDI (2026-10-07, Faz 1 kapısı).**
+> Bu dosya tek kaynaktır: çevirmen ajanlar buradan okur, `check_pairs` (Faz 3)
 > buradaki tabloları ayrıştırır (N10). Ayrı bir `glossary.json` tutulmaz.
 
 ## 0. Nasıl okunur

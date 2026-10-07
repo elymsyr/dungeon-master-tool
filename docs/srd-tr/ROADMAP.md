@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, kapı onayı bekliyor)
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (kapı onayı bekliyor)
 
 ---
 
@@ -165,6 +165,14 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
 - **3.2** Kapsam raporu: scope başına çevrilen / toplam.
 - **3.3** Aracın kendi testi: bilerek bozulmuş çiftler (sayı değişmiş, zar silinmiş, cümle eklenmiş)
   FAIL vermeli.
+- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/check_pairs.dart [--dir …] [--glossary …] [scope…]`
+  — FAIL/UYARI listesi + scope başına kapsam tablosu; FAIL varsa çıkış kodu 1. Sözlüğü
+  GLOSSARY.md'den okur (§3–§7 tabloları: 768 terim; "aynen kalır" + İngilizceyle aynı satırlar:
+  38). Değeri `""` olan çift denetlenmez. N8 yalnızca 5+ kelimelik metinlere uygulanır (adlar
+  dalga onayında topluca gösterilir). N10 Türkçe çekimi tolere eder (`Kurtarma Zarı` →
+  `kurtarma zarlarına`, `Yetkinlik` → `yetkinliğin`). Kendi testi
+  `test/tool/srd_l10n_check_pairs_test.dart`: gerçek SRD metinleri + sözlüğe uygun çeviriler temiz,
+  N1–N10'un her biri bozuk çiftini yakalıyor; son test G2 (paketteki çevirilerde FAIL 0).
 - **Kapı:** araç kasıtlı hataları yakalıyor.
 
 ### Faz 4 — Altyapı + pilot *(~1 oturum)*
