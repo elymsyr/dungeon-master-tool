@@ -7,7 +7,9 @@
 - Başlangıç noktası (base): `22b05a39` (main) — 2026-10-07
 - Branch: `feature/srd-tr` (main'deki başka yarım işlere dokunmadan)
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
-- Üslup kaynağı: `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
+- Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
+  `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 🔄
 
 ---
 
@@ -23,7 +25,7 @@ Bu kurallar pazarlığa açık değildir. Biri ihlal ediliyorsa iş durur, kulla
 | **K4** | Kural motoruna (`character_resolver.dart`, chargen, level-up, grant çözümü) dokunulmaz. | Çeviri işi mekanik değiştirmez. |
 | **K5** | Sayılar, zar ifadeleri (`1d8`, `2d6 + 3`), DC değerleri, bonuslar (`+5`), mesafeler, süreler, para (gp/sp/cp/ep/pp), ağırlık (lb) **birebir** aynı kalır. Birim dönüştürülmez: `30 feet` → `30 fit` (metre değil). | Sayısal içerik = içerik. |
 | **K6** | Markdown yapısı aynı kalır: kalın/italik işaretleri, satır sonları, madde işaretleri, tablo satırları aynı sayıda. | Biçim de içeriktir. |
-| **K7** | Terim önce **sözlükten** (`GLOSSARY.md`) gelir. Sözlükte yoksa rehberdeki karşılık önerilir; rehberde de yoksa yeni terim **önerilir ve kullanıcı onayı beklenir** — onaysız terim uydurulmaz. | Tutarlılık + rehber üslubu. |
+| **K7** | Terim önce **sözlükten** (`GLOSSARY.md`) gelir. Sözlükte yoksa öncelik sırası: **BG3 resmî Türkçesi > BG:EE Türkçe Terim Belgesi > rehber**; hiçbirinde yoksa yeni terim **önerilir ve kullanıcı onayı beklenir** — onaysız terim uydurulmaz. | Tutarlılık + Türk oyuncuların bildiği terimler (kullanıcı kararı D11). |
 | **K8** | Rehber **birebir kopyalanmaz.** Rehber 2014 kurallarının çevirisi, bizim paket 5.2.1 (2024). Rehber terim ve üslup kaynağıdır; metin daima bizim İngilizce kaynağımızdan çevrilir. | 2014 metni ≠ 5.2.1 metni; kopyalamak içeriği değiştirir (K1). |
 | **K9** | PDF repoda tutulur (kullanıcı kararı, 2026-10-07) ama **uygulamaya paketlenmez**: `pubspec.yaml`'a `assets/` kökü ya da PDF eklenmez. Metni scratchpad'e çıkarılır (`pdftotext -layout`). | 81 MB; build'e girerse uygulama boyutu patlar. |
 | **K10** | Slug, alan anahtarı (field key), id, ref zarfları İngilizce kalır. Çeviri tablosunun **anahtarı daima birebir İngilizce kaynak metindir.** | Kimlikler çevrilmez. |
@@ -62,7 +64,7 @@ Her `İngilizce → Türkçe` çifti için:
 | N4 | Birim sayıları: `foot/feet` ↔ `fit`, `mile` ↔ `mil`, `lb.` ↔ `lb.`, `gp/sp/cp/ep/pp` aynen | FAIL |
 | N5 | Markdown: `**`, `*`, `_`, satır sonu, `- ` madde, `\|` sayıları aynı | FAIL |
 | N6 | Boş değil; sözlükte "aynen kalır" listesinde değilse İngilizceyle aynı değil | FAIL |
-| N7 | Parantez sayısı aynı (sözlükte onaylanan "parantez içi İngilizce ad" istisnası hariç) | FAIL |
+| N7 | Parantez sayısı aynı | FAIL |
 | N8 | Uzunluk oranı TR/EN 0,7–1,6 dışında | UYARI → insan bakar |
 | N9 | Cümle sayısı farkı > 1 | UYARI → insan bakar |
 | N10 | Sözlük: EN'de geçen sözlük terimi TR'de onaylı karşılığıyla geçmiyor | UYARI → insan bakar |
@@ -110,12 +112,13 @@ gözünden geçer.
 
 | # | Karar | Seçenekler | Varsayılan önerim |
 |---|---|---|---|
-| D1 | Büyü adı (kart başlığı) | `Fireball` · `Alev Topu` · `Fireball (Alev Topu)` | Rehber stili: `Fireball (Alev Topu)` |
-| D2 | Metin içinde geçen büyü adı | rehberdeki gibi `fireball (alevtopu)` · sadece Türkçe · sadece İngilizce | D1 ile aynı stil |
-| D3 | Canavar adları | Özel adlar İngilizce (`Beholder`, `Mind Flayer`), cins adları Türkçe (`Kurt`, `Dev Örümcek`) | Rehberdeki kullanım |
-| D4 | Sınıf adları | Rehberdeki: Barbar, Ozan, Rahip, Druid, Savaşçı, Keşiş, Paladin, Kolcu, Düzenbaz, Sorcerer, Warlock, Büyücü | Rehber aynen |
-| D5 | 5.2.1'e özgü yeni terimler (Weapon Mastery, Species, Heroic Inspiration, Bloodied, Origin feat, …) | sözlük önerisi | Faz 1.2'de liste + onay |
+| D1 | Büyü adı (kart başlığı) | `Fireball` · `Alev Topu` · `Fireball (Alev Topu)` | ✅ `Alev Topu` — sadece Türkçe |
+| D2 | Metin içinde geçen büyü adı | rehberdeki gibi `fireball (alevtopu)` · sadece Türkçe · sadece İngilizce | ✅ D1 ile aynı — sadece Türkçe |
+| D3 | Canavar adları | Özel adlar İngilizce (`Beholder`, `Mind Flayer`), cins adları Türkçe (`Kurt`, `Dev Örümcek`) | ✅ BG3/BG:EE karşılığı (`Kemgöz`, `Zihin Yüzücü`); yoksa özel ad İngilizce, cins adı Türkçe |
+| D4 | Sınıf adları | Rehberdeki: Barbar, Ozan, Rahip, Druid, Savaşçı, Keşiş, Paladin, Kolcu, Düzenbaz, Sorcerer, Warlock, Büyücü | ✅ BG3/BG:EE: Barbar, Ozan, Ruhban, Druid, Dövüşçü, Keşiş, Paladin, Kolcu, Düzenbaz, Sihirbaz, Sehhar, Büyücü |
+| D5 | 5.2.1'e özgü yeni terimler (Weapon Mastery, Species, Heroic Inspiration, Bloodied, Origin feat, …) | sözlük önerisi | ✅ GLOSSARY'de onaylandı |
 | D6 | Türkçe adla arama | Faz 6 / hiç | Faz 6'da, ayrı onayla |
+| D7–D12 | Sözlük çıkarılırken ortaya çıkanlar: arayüz (`app_tr.arb`) ↔ sözlük terim çakışması, durum adı biçimi, `Ekstra Saldırı`, Staff/Wand, terim önceliği, kısaltmalar | bkz. [GLOSSARY.md §1](GLOSSARY.md) | ✅ |
 
 ---
 
@@ -136,9 +139,9 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
   birimler (`fit`, `mil`, `lb.`, `gp`).
 - **1.2** 2014 rehberinde karşılığı olmayan 5.2.1 terimleri listesi + öneri (D5).
 - **1.3** Üslup kuralları: "sen" dili (`kazanırsın`), sayı yazımı (`3. seviye`), ek kesme işareti
-  (`d20'ye`, `HP'sini`), kısaltmalar (HP, HD, AC, DC aynen), büyük/küçük harf.
+  (`d20'ye`), kısaltmalar (D12: DC, CR, XP aynen; HP, HD, AC açılır), büyük/küçük harf.
 - **1.4** D1–D4 kararları kapatılır.
-- **Çıktı:** `docs/srd-tr/GLOSSARY.md` (insan için) + `tool/srd_l10n/glossary.json` (N10 için).
+- **Çıktı:** `docs/srd-tr/GLOSSARY.md` — tek kaynak; `check_pairs` (N10) tablolarını doğrudan ayrıştırır.
 - **Kapı:** kullanıcı sözlüğü onaylar. Bundan sonra sözlük dışı terim = K7 süreci.
 
 ### Faz 2 — Çıkarma (salt okunur) *(~yarım oturum)*
@@ -173,6 +176,8 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
   - Düzenleme moduna geçince değerler İngilizce.
   - Kart kaydedilince DB'deki değer İngilizce (K3).
   - Mevcut resolver/chargen testleri değişmeden yeşil (K4).
+- **4.8** Arayüz hizalama (D7): `app_tr.arb`'deki çakışan terimler sözlüğe çekilir (GLOSSARY §1
+  tablosu) → `flutter gen-l10n`. Ayrı commit; `.arb` satır sonları korunur (K12).
 - **Kapı:** kullanıcı pilotu uygulamada görür, dil değiştirip geri alır.
 
 ### Faz 5 — Toplu çeviri (dalgalar, küçükten büyüğe) *(~3–5 saat gerçek zaman)*
