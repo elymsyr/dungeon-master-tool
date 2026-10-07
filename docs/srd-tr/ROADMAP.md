@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 🔄
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, kapı onayı bekliyor)
 
 ---
 
@@ -152,6 +152,12 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
 - **2.2** Çıkarma aracı: `srdRawRowsBySlug()` + Tier-0 seed'leri + yerleşik şemayı gezip her scope
   için benzersiz görünen metinleri `assets/srd_l10n/tr/<scope>.json` iskeletine yazar (değerler `""`).
 - **2.3** Özet tablo: scope başına metin sayısı + kelime sayısı.
+- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/extract.dart` → 61 scope, 6433 metin, ~89.000 kelime.
+  Çıkarılmayan makine değerleri (K10): relation/sayı/zar alanları, `tags`, `source`, `icon_name`,
+  `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`,
+  `resource-pool` satır adları (`pool:…` — görünen ad `display_name`), snake_case enum değerleri
+  (`mechanic_kind`, `effect_kind`). `proficiencyTable` satır adları ability/skill scope'undan,
+  enum seçenekleri `_schema`'dan çevrilir. Faz 4 çalışma zamanı aynı kuralları uygular.
 - **Kapı:** G1 (kaynak değişmedi), sayılar kullanıcıya raporlanır.
 
 ### Faz 3 — Doğrulama aracı (her çeviriden ÖNCE) *(~yarım oturum)*
