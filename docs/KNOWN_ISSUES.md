@@ -34,6 +34,13 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
   primary key to `{worldId, id}` — the latter is a schema change, so it rides with the next
   Drift version bump. Copying also leaves the new world's image paths pointing into the *source*
   world's media folder, so deleting the source orphans the copy's art.
+- **Closing a card right after typing loses the last edit** — card edits are saved after a
+  300 ms pause. If the card closes inside that window, `_EntityCardState.dispose` calls
+  `_flushPendingUpdate`, which uses `ref` after the widget is disposed. Riverpod throws
+  `Bad state: Cannot use "ref" after the widget was disposed`, so the edit is never saved
+  ([entity_card.dart:230](../flutter_app/lib/presentation/screens/database/entity_card.dart#L230)).
+  Fix: read the notifier into a field in `initState`/`didChangeDependencies` and use that in
+  `dispose`, or flush from `deactivate`.
 - **A player's mind map does not reach their second device** — the player's own mind map
   in a world stays on the device it was made on. Deferred to the next sync phase (5.5c in
   [online-sync-redesign.md](online-sync-redesign.md)).

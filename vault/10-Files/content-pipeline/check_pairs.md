@@ -38,6 +38,7 @@ tags: [file]
 ## Notes
 - 2026-10-07 dalga 5.2: `_schema` 597 metin, FAIL 0 · UYARI 6; 55 "aynen kalır" (`NPC`); N6 terim+sayı istisnası. 980 / 6404 çevrili.
 - 2026-10-07 dalga 5.3–5.5: ekipman (337), tür/geçmiş/sınıf/alt sınıf/nitelik (1101), hüner (749) — FAIL 0 · UYARI 65 (yanlış eşleşmeler); 56 "aynen kalır" (`GP`); N10 çoğul toleransı. 3167 / 6404 çevrili.
+- 2026-10-07 dalga 5.6: `spell` (960) — FAIL 0 · UYARI 41 (yanlış eşleşmeler); "aynen kalır"a `Alarm`, `Tsunami` (58). N4 tuzağı: `10 additional gallons` birim sayılmaz → TR'de de rakam birimin hemen önünde olmamalı (`10 ek galon`, `40,000 kare fit`). 4127 / 6404 çevrili.
 - 2026-10-07 dalga 5.1: 54 "aynen kalır" (§4.26 listesi eklendi); 383 / 6404 çevrili, FAIL 0 · UYARI 0.
 - 2026-10-07 ilk koşu: 768 sözlük terimi, 38 "aynen kalır"; 6433 çiftin 0'ı çevrili, FAIL 0.
 - Bilerek bozulmuş çiftlerin (sayı/işaret, zar, DC, birim, kalın, satır sonu, çevrilmemiş, parantez, kısaltılmış, cümle eklenmiş, yanlış terim) her biri testte kendi kuralına takılıyor.

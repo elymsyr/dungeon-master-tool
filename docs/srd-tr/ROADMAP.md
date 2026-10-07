@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ (3167 / 6404) — 5.6 sırada
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ · 5.6 ✅ (4127 / 6404) — 5.7 sırada
 
 ---
 
@@ -112,7 +112,7 @@ gözünden geçer.
 
 | # | Karar | Seçenekler | Varsayılan önerim |
 |---|---|---|---|
-| D1 | Büyü adı (kart başlığı) | `Fireball` · `Alev Topu` · `Fireball (Alev Topu)` | ✅ `Alev Topu` — sadece Türkçe |
+| D1 | Büyü adı (kart başlığı) | `Fireball` · `Alev Topu` · `Fireball (Alev Topu)` | ✅ `Ateştopu` — sadece Türkçe (340 ad: [BUYU-ADLARI.md](BUYU-ADLARI.md)) |
 | D2 | Metin içinde geçen büyü adı | rehberdeki gibi `fireball (alevtopu)` · sadece Türkçe · sadece İngilizce | ✅ D1 ile aynı — sadece Türkçe |
 | D3 | Canavar adları | Özel adlar İngilizce (`Beholder`, `Mind Flayer`), cins adları Türkçe (`Kurt`, `Dev Örümcek`) | ✅ BG3/BG:EE karşılığı (`Kemgöz`, `Zihin Yüzücü`); yoksa özel ad İngilizce, cins adı Türkçe |
 | D4 | Sınıf adları | Rehberdeki: Barbar, Ozan, Rahip, Druid, Savaşçı, Keşiş, Paladin, Kolcu, Düzenbaz, Sorcerer, Warlock, Büyücü | ✅ BG3/BG:EE: Barbar, Ozan, Ruhban, Druid, Dövüşçü, Keşiş, Paladin, Kolcu, Düzenbaz, Sihirbaz, Sehhar, Büyücü |
@@ -265,7 +265,7 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
   Artışı`, `Repeatable` → `Tekrarlanabilir`. `check_pairs` N10 artık sayıdan sonra tekil kullanılan
   çoğul terimi kabul eder (`3 Sihirbazlık Puanı` ✓ `Sihirbazlık Puanları`). Toplam FAIL 0 · UYARI 65
   (yanlış eşleşmeler: `Light` fiil/ışık, `bonus` = "ek", `reach` fiil) → **3167 / 6404**.
-- **5.3–5.5'te önerilen, onay bekleyen adlar** (sözlükte yok — K7): `Forge Wise` → `Demirhane
+- **5.3–5.5'te önerilen adlar** — ✅ kullanıcı onayladı (2026-10-07): `Forge Wise` → `Demirhane
   Bilgisi`, `Large Form` → `Büyük Biçim`, `Giant Ancestry` → `Dev Soyu`, `Elven Lineage` → `Elf Soyu`,
   `Fiendish Legacy` → `Zebani Mirası`, `Otherworldly Presence` → `Öteki Dünyalı Varoluş`, `Halfling
   Lucky` → `Buçukluk Şansı`; Goliath lütufları `Bulutun Gezintisi` / `Ateşin Yakışı` / `Ayazın Soğuğu`
@@ -273,8 +273,16 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
   `Sert` / `Topallatan` / `Sendeleten` / `Parçalayan Darbe`; `Divine Spark` → `İlahi Kıvılcım`, `Turn
   Undead` → `Hortlakları Kov`, `Divine Sense` → `İlahi Sezi`, `Elemental Fury` → `Elemental Hiddet`;
   Kurnaz Vuruş `Daze` / `Knock Out` / `Obscure` → `Şaşırtma` / `Bayıltma` / `Örtünme`, `Addle` →
-  `Afallatma`; lütuflar `Savaş Yiğitliği` / `Boyutlar Arası Yolculuk` / `Kader` / `Karşı Konulmaz
+  `Bocalatma` (5.6'da `Afallatma` Confusion'a gitti); lütuflar `Savaş Yiğitliği` / `Boyutlar Arası Yolculuk` / `Kader` / `Karşı Konulmaz
   Saldırı` / `Büyü Hatırlama` / `Gece Ruhu` / `Özgörü Lütfu`; `Crafter` → `Zanaatçı`.
+- **5.6 sonucu (2026-10-07):** `spell` 960 metin (340 ad + açıklama, materyal bileşen, tepki tetikleyici,
+  yüksek seviye metni). Adlar onaylı listeden ([BUYU-ADLARI.md](BUYU-ADLARI.md); D1 örneği `Ateştopu`ya
+  çekildi). Kalıplar: `Cantrip Upgrade` → `Cantrip Gelişimi`, `Using a Higher-Level Spell Slot` / `Higher-Level
+  Slot` → `Daha Yüksek Seviyeli Büyü Yuvası Kullanma` / `Daha Yüksek Seviyeli Yuva`, `per slot level above
+  N` → `N'in üstündeki her yuva seviyesi için`, `GM` → `DM` (arayüzle aynı). `Alarm`, `Tsunami` sözlükte
+  "aynen kalır"a eklendi. 5.4–5.5'teki 6 geçici büyü adı onaylı adlara çekildi (`Büyüyü Sapta`, `Küçük
+  Yanılsama`, `Düzlem Değiştir`, `Ruhani Muhafızlar`, `Ruhani Silah`, `Asit Küresi`). FAIL 0 · UYARI 41
+  (`Light` ışık/Hafif, `Touch` fiil/Temas gibi yanlış eşleşmeler) → **4127 / 6404**.
 
 ### Faz 6 — Yüzeyleri genişletme *(~1 oturum)*
 - **6.1** Ad gösteren tüm noktaların envanteri (~160 çağrı): kenar listesi, `entity_link` çipleri,
@@ -309,14 +317,41 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 
 ## 7. Sonraki dalgalara devreden adlar
 
-5.4–5.5 metinlerinde geçen ama kendi dalgası henüz gelmemiş adlar. **Geçicidir:** dalga 5.6 (büyü) ve
-5.8 (canavar) ad listesi onayında değişirse, bu metinlerde de aynı adla değiştirilir.
+Metinlerde geçen ama kendi dalgası henüz gelmemiş adlar. **Geçicidir:** dalga 5.8 (canavar) ad listesi
+onayında değişirse, bu metinlerde de aynı adla değiştirilir.
 
-- **Büyü adları** (BG:EE > rehber > öneri; `Fireball` BG:EE'de `Ateştopu` — D1 örneğindeki `Alev Topu`
-  5.6'da kesinleşir; `Hallow` → `Kutsal Kıl`, çünkü rehberin `Kutsa`sı BG:EE'de Bless):
-  Acid Arrow → Asit Oku · Acid Splash → Asit Sıçraması · Aid → Destek · Antimagic Field → Büyü Karşıtı Alan · Beacon of Hope → Umut Feneri · Bless → Kutsa · Blindness/Deafness → Körlük/Sağırlık · Blink → Yansön · Burning Hands → Yakan Eller · Chill Touch → Ürperten Dokunuş · Chromatic Orb → Alaca Küre · Cloudkill → Katliam Bulutu · Command → Komut · Commune → Konuş · Cone of Cold → Soğuk Konisi · Counterspell → Karşıbüyü · Creation → Yaratılış · Cure Wounds → Yaraları İyileştir · Dancing Lights → Dans Eden Işıklar · Darkness → Karanlık · Darkvision → Gece Görüşü · Detect Magic → Büyüyü Hisset · Detect Thoughts → Zihin Okuma · Disguise Self → Kılık Değiştir · Dispel Magic → Büyü Boz · Divination → Kehanet · Divine Smite → Kutsal Çarpma · Dragon's Breath → Ejderha Nefesi · Druidcraft → Druid Zanaatı · Eldritch Blast → Eldritch Patlaması · Faerie Fire → Peri Ateşi · False Life → Sahte Yaşam · Fear → Korku · Find Familiar → Evcil Çağır · Find Steed → Binek Bul · Fire Bolt → Alev Oku · Fire Shield → Ateş Kalkanı · Fireball → Ateştopu · Fly → Uç · Forbiddance → Yasaklama · Grease → Yağ · Guardian of Faith → İnanç Muhafızı · Gust of Wind → Kuvvetli Rüzgar · Hallow → Kutsal Kıl · Heal → Şifa · Hellish Rebuke → Cehennem Azarı · Hold Person → Kişi Sabitle · Hunter's Mark → Avcının İşareti · Insect Plague → Böcek Salgını · Invisibility → Görünmezlik · Knock → Tıklat · Lesser Restoration → Zayıf Onarma · Levitate → Havaya Yükselme · Light → Işık · Lightning Bolt → Yıldırım · Longstrider → Uzun Adım · Mage Armor → Büyücü Zırhı · Mage Hand → Büyücü Eli · Magic Missile → Büyü Okları · Mending → Tamir · Minor Illusion → Ufak İllüzyon · Misty Step → Sisli Adım · Pass without Trace → İz Bırakmadan Geç · Plane Shift → Boyut Değiştir · Poison Spray → Zehir Spreyi · Power Word Heal → Güç Sözcüğü Şifa · Power Word Kill → Güç Sözcüğü Öl · Power Word Stun → Güç Sözcüğü Sersemle · Prestidigitation → Hokkabazlık · Protection from Evil and Good → İyi ve Kötüden Korunma · Ray of Enfeeblement → Kuvvetten Düşürme Işını · Ray of Frost → Buz Işını · Ray of Sickness → Hastalık Işını · Resistance → Direnç · Sacred Flame → Kutsal Alev · Sanctuary → Mabet · Scorching Ray → Kavurucu Işın · Shield → Kalkan · Shocking Grasp → Şokkavra · Silent Image → Sessiz Görüntü · Sleet Storm → Dolu Fırtınası · Slow → Yavaşlat · Speak with Plants → Bitkilerle Konuş · Spider Climb → Örümcek Tırmanışı · Spirit Guardians → Ruhsal Muhafızlar · Spiritual Weapon → Ruhsal Silah · Stinking Cloud → Koku Bulutu · Summon Dragon → Ejderha Çağır · Symbol → Sembol · Telepathy → Telepati · Thaumaturgy → Mucize · Thunderwave → Gürleyen Dalga · Tree Stride → Ağaç Geçişi · Vitriolic Sphere → Yakıcı Küre · Wall of Fire → Ateş Duvarı · Water Breathing → Su Soluma · Web → Ağ · Melf's Acid Arrow → Melf'in Asit Oku · Armor of Agathys → Agathys'in Zırhı · Snilloc's Snowball Swarm → Snilloc'un Kartopu Sürüsü · Storm Sphere → Fırtına Küresi.
+**Karar (2026-10-07):** 5.8'de canavar kartları da aşağıdaki adlarla çevrilir (tutarlılık); kullanıcı
+listeyi sonra kontrol eder, değişen ad her metinde birlikte değiştirilir. `Slam` → `Çarpma` şimdilik kalır.
+
+- **Büyü adları:** 5.6'da kesinleşti — [BUYU-ADLARI.md](BUYU-ADLARI.md). SRD dışı, yalnızca `trait`
+  metinlerinde geçenler: Melf's Acid Arrow → Melf'in Asit Oku · Armor of Agathys → Agathys'in Zırhı ·
+  Snilloc's Snowball Swarm → Snilloc'un Kartopu Sürüsü · Storm Sphere → Fırtına Küresi.
 - **Canavar adları** (`trait` metinlerinde): BG:EE'den Kemgöz · Zihin Yüzücü · Liç · Kurtadam · Ağaç
   Perisi · Piksi · İblis · Hobgoblin · Sahte Ejderha · Quasit · Sprite; özel adlar aynen: aboleth · chuul
   · roper · nothic · otyugh · couatl · xorn · lamia · rakshasa · gargoyle; cins adları Türkçe: sfenks ·
   hidra · ölüm şövalyesi · ölüm köpeği · timsah · yarasa · dev porsuk · ateş böceği · ahtapot · cadı ·
   vampir · pas canavarı · kült fanatiği · İmp.
+- **Canavar adları** (`spell` metinlerinde): BG:EE'den Zombi · Gûl · Gast · Tarask · Ombra Yarması
+  (umber hulk) · Piksi · Sprite; öneri: İskelet · Mumya · Minotor · goristro iblisi · Wight (aynen) ·
+  `Draconic Spirit` → `Draconic Ruh` (değer bloğu adı); `Slam` → `Çarpma`.
+
+---
+
+## 8. Yan notlar (SRD dışı)
+
+- **`Database` sekmesinin adı** (`tabDatabase`; ayrıca `sessionAddFromDatabase`, `helpWorldsBody`):
+  kullanıcı dünya kurmaya uygun bir ad istiyor (2026-10-07). Arayüzde çakışma taraması yapıldı —
+  `Archive` / `Library` (`Kütüphane`) zaten başka yerde kullanılıyor, `Lore` Türkçede `Bilgi`/`İrfan`
+  ile çakışır. Adaylar (EN / TR):
+
+  | Ad | Not |
+  |---|---|
+  | **Codex / Kodeks** (önerim) | Dünya kurma araçlarında yerleşik; kısa; arayüzde hiç geçmiyor |
+  | Compendium / Derleme | D&D araçlarından tanıdık; Türkçesi zayıf |
+  | Encyclopedia / Ansiklopedi | Türkçede en doğal; EN uzun |
+  | World Book / Dünya Kitabı | Açık ama iki kelime, sekme için uzun |
+  | Almanac / Almanak | Fantastik tını; Türkçede az bilinir |
+
+  Karar kullanıcıda. Seçilince 4 dilde `tabDatabase` + iki ilişkili metin değişir; kod içi adlar
+  (`screens/database/`) değişmez.
+- **Kart kapatılırken son yazılanlar kaybolabiliyor** — `docs/KNOWN_ISSUES.md`'de.
