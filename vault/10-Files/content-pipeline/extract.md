@@ -26,6 +26,7 @@ tags: [file]
 ## Dependencies & Links
 - Kaynak: [[builtin_schema]] · [[srd_core_pack]] · [[srd-pack-content]]
 - Kardeşi: [[dump_srd]] (aynı paketi `.pkg.json`'a döker).
+- Çıktısını denetleyen: [[check_pairs]].
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables

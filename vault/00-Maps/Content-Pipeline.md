@@ -36,6 +36,7 @@ tags: [moc]
 - [[srd-pack-content]] — grouped: classes/subclasses/species/spells/monsters/feats/items.
 - [[builtin_schema]] — `builtin_dnd5e_v2_schema.dart` + `lookups.dart` (73 categories, Tier-0 seeds).
 - [[extract]] — SRD Türkçeleştirme çıkarma aracı (`tool/srd_l10n/`): şema + SRD paketindeki ekranda görünen metinleri scope başına `assets/srd_l10n/tr/<scope>.json` iskeletine yazar; mevcut çeviriyi korur. Plan: `docs/srd-tr/ROADMAP.md`.
+- [[check_pairs]] — SRD Türkçeleştirme çift denetimi (`tool/srd_l10n/`): her `İngilizce → Türkçe` çiftini N1–N10 (sayı, zar, DC, birim, markdown, parantez; uzunluk, cümle, sözlük uyarıları) ile denetler, kapsam raporu basar; FAIL varsa çıkış 1.
 - [[build_catalog]] · [[publish_catalog]] — first-party catalog build + R2 publish CLI. Both `package` entries (one gzipped JSON) and `world` entries (a gzipped blueprint envelope + one raw R2 object per media file, sharing `tool/catalog_publish/world_payload.dart`). The adventure PDF is referenced by publisher link, never hosted — see [[catalog-publish-ops]].
 
 ## Data Flow
