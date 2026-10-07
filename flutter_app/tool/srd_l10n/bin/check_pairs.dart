@@ -108,6 +108,18 @@ List<String> _expand(String cell) {
 
 // ---- N1–N10 ----------------------------------------------------------------
 
+/// Metin "aynen kalır" terimlerinden, sayılardan ve noktalamadan mı ibaret
+/// (`NPC`, `cp 0.01, sp 0.1, …`) — öyleyse İngilizceyle aynı olması doğru.
+bool _onlyKept(String en, Set<String> keep) {
+  if (keep.contains(en)) return true;
+  var rest = en;
+  for (final k in keep.toList()..sort((a, b) => b.length.compareTo(a.length))) {
+    rest = rest.replaceAll(
+        RegExp('(?<![A-Za-z])${RegExp.escape(k)}(?![A-Za-z])'), ' ');
+  }
+  return !RegExp(r'[A-Za-z]').hasMatch(rest);
+}
+
 final _num = RegExp(r'(?:(?<=^|[\s(\[])[+\-−])?\d+(?:[.,/]\d+)*');
 final _dice = RegExp(
     r'(?<![A-Za-z])(\d*)[dD](\d+)(?:\s*([+\-−])\s*(\d+)(?![dD\d]))?');
@@ -195,6 +207,10 @@ bool _hasTrTerm(String trLower, String term) {
         w = w.substring(0, w.length - m[0]!.length);
       }
     }
+    // Sayıdan sonra tekil (`Sihirbazlık Puanları` → `3 Sihirbazlık Puanı`).
+    if (i == words.length - 1 && w.length >= 5 && RegExp(r'l[ae]r$').hasMatch(w)) {
+      w = w.substring(0, w.length - 3);
+    }
     // İsim-fiil → fiil kökü (`Tırmanma` → `tırman`, `Büyü Yapma` → `büyü yap`).
     if (i == words.length - 1 && w.length >= 5 && RegExp(r'm[ae]$').hasMatch(w)) {
       stems.add(RegExp.escape(w.substring(0, w.length - 2)));
@@ -220,7 +236,7 @@ List<Finding> checkPair(String en, String tr, Glossary g) {
     fail('N6', 'çeviri sadece boşluk');
     return out;
   }
-  if (tr == en && !g.keep.contains(en)) {
+  if (tr == en && !_onlyKept(en, g.keep)) {
     fail('N6', 'İngilizceyle aynı (sözlükte "aynen kalır" değil)');
     return out;
   }

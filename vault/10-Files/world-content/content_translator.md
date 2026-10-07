@@ -37,5 +37,5 @@ tags: [file]
 - **Metin anahtarlı olmasının sonucu:** kullanıcı bir alanı düzenlerse metin tabloyla eşleşmez, yazdığı görünür; düzenlenmemiş alanlar çevrili kalır. SRD kartını düzenlemek kopya üretir (fork-on-edit) — kopya aynı İngilizce metni taşıdığı için çevrili görünür.
 
 ## Notes
-- 2026-10-07 pilot: `ability`, `skill`, `condition`, `damage-type` tam çevrili (95 metin, `check_pairs` FAIL 0 · UYARI 0). Dalga 5.1: kalan 34 Tier-0 scope (288 metin) — toplam 383 / 6404. Diğer scope'lar boş → İngilizce.
+- 2026-10-07 pilot: `ability`, `skill`, `condition`, `damage-type` tam çevrili (95 metin, `check_pairs` FAIL 0 · UYARI 0). Dalga 5.1: kalan 34 Tier-0 scope (288 metin) — toplam 383 / 6404. Dalga 5.2: `_schema` (597 metin — alan etiketleri, kategori/grup adları, enum seçenekleri) → 980 / 6404. Dalga 5.3–5.5: ekipman, tür/geçmiş/sınıf/alt sınıf/nitelik, hüner → 3167 / 6404. Diğer scope'lar (`spell`, `magic-item`, `monster`, `creature-action`, `animal`) boş → İngilizce.
 - Kenar listesindeki kart adları, ref çipleri, arama, projeksiyon penceresi henüz çevrilmiyor (ROADMAP Faz 6).

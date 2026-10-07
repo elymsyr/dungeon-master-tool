@@ -1,10 +1,10 @@
 {
-  "Camel": "",
-  "Elephant": "",
-  "Draft Horse": "",
-  "Riding Horse": "",
-  "Mastiff": "",
-  "Mule": "",
-  "Pony": "",
-  "Warhorse": ""
+  "Camel": "Deve",
+  "Elephant": "Fil",
+  "Draft Horse": "Yük Atı",
+  "Riding Horse": "Binek Atı",
+  "Mastiff": "Mastiff",
+  "Mule": "Katır",
+  "Pony": "Midilli",
+  "Warhorse": "Savaş Atı"
 }

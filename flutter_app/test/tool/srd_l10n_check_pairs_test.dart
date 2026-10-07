@@ -85,6 +85,9 @@ void main() {
     test('N6 çevrilmemiş ya da boşluk', () {
       expect(codes(ca, ca), ['FN6']);
       expect(codes(ca, '   '), ['FN6']);
+      // Yalnızca "aynen kalır" terimleri ve sayılar: aynı kalması doğru.
+      expect(codes('cp 0.01, gp 1.', 'cp 0.01, gp 1.'), isEmpty);
+      expect(codes('cp 0.01, coin', 'cp 0.01, coin'), ['FN6']);
     });
     test('N7 parantez silinmiş', () {
       expect(codes(ca, caTr.replaceFirst('(2d6 + 5)', '2d6 + 5')),
@@ -102,6 +105,10 @@ void main() {
       expect(codes(ca, caTr.replaceFirst('Ezici', 'Darbe')), ['WN10']);
       expect(codes(ft, ftTr.replaceFirst('Yetkinlik Katkını', 'Bonusunu')),
           ['WN10']);
+    });
+    test('N10 sayıdan sonra tekil çoğul terimi kabul eder', () {
+      expect(codes('Spend 3 Sorcery Points.', '3 Sihirbazlık Puanı harca.'),
+          isEmpty);
     });
   });
 

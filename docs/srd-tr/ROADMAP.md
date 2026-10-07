@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ (383 / 6404)
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ (3167 / 6404) — 5.6 sırada
 
 ---
 
@@ -236,6 +236,45 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
   yok — sözlük §4) olduğu halde çıkarılmıştı: `extract.dart` `_machineNameSlugs`'a eklendi, dosya
   silindi. `check_pairs` artık sözlükteki her "… aynen kalır: A · B" listesini okur (§4.26 dış
   düzlem adları: 38 → 54).
+- **5.2 sonucu (2026-10-07):** `_schema` 597 metin — kategori ve grup adları, alan etiketleri,
+  yardım metinleri, enum seçenekleri. Terimler sözlükten; arayüzde zaten Türkçesi olanlar
+  `app_tr.arb`'den (`Trinket` → `Biblo`, `Backstory` → `Geçmiş Hikâye`, `Personality Traits` →
+  `Kişilik Özellikleri`, `Combat Stats` → `Savaş İstatistikleri`). D12: `HP`/`AC` → `Can Puanı` /
+  `Zırh Sınıfı`; `STR`… → `KUV`…; `ASI` → `Kabiliyet Skoru Gelişimi`. Çakışmayı önlemek için:
+  `Status` → `Aşama` (`Durum` = Condition), `Kind` → `Çeşit` (`Tür` = Species), `Character State` →
+  `Karakter Hali`, `Caster Kind` → `Büyü Yapma Türü` (`Büyücü` = Wizard), `Lore` → `Bilgi`
+  (`İrfan` = Wisdom). Sözlükte olmayan öneriler: `Lair Action` → `İn Eylemi`, `Mythic Action` →
+  `Mitik Eylem`, `Hover` → `Süzülme`, `Faction` → `Hizip`, `Hireling` → `Kiralık Yardımcı`.
+  `check_pairs` FAIL 0 · UYARI 6 (4'ü yanlış eşleşme, `Kişilik Özellikleri` arayüzle aynı, biri
+  uzun Türkçe karşılık); toplam 980 / 6404. `NPC` sözlükte "aynen kalır"a eklendi; N6 artık
+  yalnızca "aynen kalır" terimleri ve sayılardan oluşan metni (`cp 0.01, sp 0.1, …`) kabul eder.
+- **5.3 sonucu (2026-10-07):** ekipman 8 scope, 337 metin. Adlar sözlük §7'den, macera tertibatı
+  rehberin "Macera Tertibatı" tablosundan; BG:EE'de olanlar oradan (`Quiver` → `Sadak`, `Robe` →
+  `Cübbe`, `Case` → `Kutu`, `Potion of Healing` → `İyileştirme İksiri`). Rehberden sapılanlar
+  (çakışma): `Pole` → `Sırık` (rehber `Sopa` = Club), `Spikes, Iron` → `Çiviler, Demir` (rehber
+  `Dikenler` ≈ Caltrops). Metindeki `DEX`/`STR` → `ÇEV`/`KUV`, `PB` → `Yetkinlik Katkısı` (D12 gibi
+  açılır). FAIL 0 · UYARI 9 (hepsi `Bright Light` içindeki `Light` gibi yanlış eşleşme).
+- **5.4 sonucu (2026-10-07):** `species`, `subspecies`, `background`, `class`, `subclass`, `trait` —
+  1101 metin. Özellik adları sözlük §6'dan; 2014 tür nitelikleri rehberin ad listesinden (`Trans`,
+  `Fey Soyu`, `Amansız Dayanıklılık`, `Cüce Sertliği`, `Taş Kurnazlığı`, `Güçlü Yapı`…). `trait`
+  canavar niteliklerini de içerir (aşağıdaki canavar adları). Background ekipman listelerindeki
+  `GP` sözlükte "aynen kalır"a eklendi. FAIL 0.
+- **5.5 sonucu (2026-10-07):** `feat` 749 metin. Hüner adları rehberden; uyarlananlar: `Skilled` →
+  `Yetenekli` (Skill = Yetenek), `Crossbow Expert` → `Kurmalı Yay Uzmanı` (Crossbow = Kurmalı Yay),
+  `Sentinel` → `Nöbetçi` (rehber `Bekçi` = Warden). `Ability Score Increase` → `Kabiliyet Skoru
+  Artışı`, `Repeatable` → `Tekrarlanabilir`. `check_pairs` N10 artık sayıdan sonra tekil kullanılan
+  çoğul terimi kabul eder (`3 Sihirbazlık Puanı` ✓ `Sihirbazlık Puanları`). Toplam FAIL 0 · UYARI 65
+  (yanlış eşleşmeler: `Light` fiil/ışık, `bonus` = "ek", `reach` fiil) → **3167 / 6404**.
+- **5.3–5.5'te önerilen, onay bekleyen adlar** (sözlükte yok — K7): `Forge Wise` → `Demirhane
+  Bilgisi`, `Large Form` → `Büyük Biçim`, `Giant Ancestry` → `Dev Soyu`, `Elven Lineage` → `Elf Soyu`,
+  `Fiendish Legacy` → `Zebani Mirası`, `Otherworldly Presence` → `Öteki Dünyalı Varoluş`, `Halfling
+  Lucky` → `Buçukluk Şansı`; Goliath lütufları `Bulutun Gezintisi` / `Ateşin Yakışı` / `Ayazın Soğuğu`
+  / `Tepenin Yuvarlayışı` / `Taşın Dayanıklılığı` / `Fırtınanın Gürlemesi`; Acımasız Vuruş etkileri
+  `Sert` / `Topallatan` / `Sendeleten` / `Parçalayan Darbe`; `Divine Spark` → `İlahi Kıvılcım`, `Turn
+  Undead` → `Hortlakları Kov`, `Divine Sense` → `İlahi Sezi`, `Elemental Fury` → `Elemental Hiddet`;
+  Kurnaz Vuruş `Daze` / `Knock Out` / `Obscure` → `Şaşırtma` / `Bayıltma` / `Örtünme`, `Addle` →
+  `Afallatma`; lütuflar `Savaş Yiğitliği` / `Boyutlar Arası Yolculuk` / `Kader` / `Karşı Konulmaz
+  Saldırı` / `Büyü Hatırlama` / `Gece Ruhu` / `Özgörü Lütfu`; `Crafter` → `Zanaatçı`.
 
 ### Faz 6 — Yüzeyleri genişletme *(~1 oturum)*
 - **6.1** Ad gösteren tüm noktaların envanteri (~160 çağrı): kenar listesi, `entity_link` çipleri,
@@ -265,3 +304,19 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 | Aynı İngilizce kelime farklı bağlamda farklı anlam | scope = kategori slug'ı |
 | İngilizce kaynak ileride değişir, çeviri eskir | metin-anahtarı + 7.1/7.2 testleri |
 | Sözlük dışı terim uydurulur | K7 + N10 + G7 |
+
+---
+
+## 7. Sonraki dalgalara devreden adlar
+
+5.4–5.5 metinlerinde geçen ama kendi dalgası henüz gelmemiş adlar. **Geçicidir:** dalga 5.6 (büyü) ve
+5.8 (canavar) ad listesi onayında değişirse, bu metinlerde de aynı adla değiştirilir.
+
+- **Büyü adları** (BG:EE > rehber > öneri; `Fireball` BG:EE'de `Ateştopu` — D1 örneğindeki `Alev Topu`
+  5.6'da kesinleşir; `Hallow` → `Kutsal Kıl`, çünkü rehberin `Kutsa`sı BG:EE'de Bless):
+  Acid Arrow → Asit Oku · Acid Splash → Asit Sıçraması · Aid → Destek · Antimagic Field → Büyü Karşıtı Alan · Beacon of Hope → Umut Feneri · Bless → Kutsa · Blindness/Deafness → Körlük/Sağırlık · Blink → Yansön · Burning Hands → Yakan Eller · Chill Touch → Ürperten Dokunuş · Chromatic Orb → Alaca Küre · Cloudkill → Katliam Bulutu · Command → Komut · Commune → Konuş · Cone of Cold → Soğuk Konisi · Counterspell → Karşıbüyü · Creation → Yaratılış · Cure Wounds → Yaraları İyileştir · Dancing Lights → Dans Eden Işıklar · Darkness → Karanlık · Darkvision → Gece Görüşü · Detect Magic → Büyüyü Hisset · Detect Thoughts → Zihin Okuma · Disguise Self → Kılık Değiştir · Dispel Magic → Büyü Boz · Divination → Kehanet · Divine Smite → Kutsal Çarpma · Dragon's Breath → Ejderha Nefesi · Druidcraft → Druid Zanaatı · Eldritch Blast → Eldritch Patlaması · Faerie Fire → Peri Ateşi · False Life → Sahte Yaşam · Fear → Korku · Find Familiar → Evcil Çağır · Find Steed → Binek Bul · Fire Bolt → Alev Oku · Fire Shield → Ateş Kalkanı · Fireball → Ateştopu · Fly → Uç · Forbiddance → Yasaklama · Grease → Yağ · Guardian of Faith → İnanç Muhafızı · Gust of Wind → Kuvvetli Rüzgar · Hallow → Kutsal Kıl · Heal → Şifa · Hellish Rebuke → Cehennem Azarı · Hold Person → Kişi Sabitle · Hunter's Mark → Avcının İşareti · Insect Plague → Böcek Salgını · Invisibility → Görünmezlik · Knock → Tıklat · Lesser Restoration → Zayıf Onarma · Levitate → Havaya Yükselme · Light → Işık · Lightning Bolt → Yıldırım · Longstrider → Uzun Adım · Mage Armor → Büyücü Zırhı · Mage Hand → Büyücü Eli · Magic Missile → Büyü Okları · Mending → Tamir · Minor Illusion → Ufak İllüzyon · Misty Step → Sisli Adım · Pass without Trace → İz Bırakmadan Geç · Plane Shift → Boyut Değiştir · Poison Spray → Zehir Spreyi · Power Word Heal → Güç Sözcüğü Şifa · Power Word Kill → Güç Sözcüğü Öl · Power Word Stun → Güç Sözcüğü Sersemle · Prestidigitation → Hokkabazlık · Protection from Evil and Good → İyi ve Kötüden Korunma · Ray of Enfeeblement → Kuvvetten Düşürme Işını · Ray of Frost → Buz Işını · Ray of Sickness → Hastalık Işını · Resistance → Direnç · Sacred Flame → Kutsal Alev · Sanctuary → Mabet · Scorching Ray → Kavurucu Işın · Shield → Kalkan · Shocking Grasp → Şokkavra · Silent Image → Sessiz Görüntü · Sleet Storm → Dolu Fırtınası · Slow → Yavaşlat · Speak with Plants → Bitkilerle Konuş · Spider Climb → Örümcek Tırmanışı · Spirit Guardians → Ruhsal Muhafızlar · Spiritual Weapon → Ruhsal Silah · Stinking Cloud → Koku Bulutu · Summon Dragon → Ejderha Çağır · Symbol → Sembol · Telepathy → Telepati · Thaumaturgy → Mucize · Thunderwave → Gürleyen Dalga · Tree Stride → Ağaç Geçişi · Vitriolic Sphere → Yakıcı Küre · Wall of Fire → Ateş Duvarı · Water Breathing → Su Soluma · Web → Ağ · Melf's Acid Arrow → Melf'in Asit Oku · Armor of Agathys → Agathys'in Zırhı · Snilloc's Snowball Swarm → Snilloc'un Kartopu Sürüsü · Storm Sphere → Fırtına Küresi.
+- **Canavar adları** (`trait` metinlerinde): BG:EE'den Kemgöz · Zihin Yüzücü · Liç · Kurtadam · Ağaç
+  Perisi · Piksi · İblis · Hobgoblin · Sahte Ejderha · Quasit · Sprite; özel adlar aynen: aboleth · chuul
+  · roper · nothic · otyugh · couatl · xorn · lamia · rakshasa · gargoyle; cins adları Türkçe: sfenks ·
+  hidra · ölüm şövalyesi · ölüm köpeği · timsah · yarasa · dev porsuk · ateş böceği · ahtapot · cadı ·
+  vampir · pas canavarı · kült fanatiği · İmp.
