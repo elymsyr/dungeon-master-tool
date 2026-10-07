@@ -396,7 +396,7 @@ void _applyMove(Ref ref, TurnGrant? granted, WorldSyncEvent e) {
     if (proj != null) {
       ref
           .read(projectionControllerProvider.notifier)
-          .updateBattleMapTrail(proj.id, null, ack: ack, keepTrail: true);
+          .updateBattleMapTrails(proj.id, null, ack: ack);
     }
   }
 }

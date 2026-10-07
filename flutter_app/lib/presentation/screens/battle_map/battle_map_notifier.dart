@@ -363,10 +363,26 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// Color for new pen strokes, AoE templates and rect/line/text shapes.
   final ValueNotifier<Color> drawColor = ValueNotifier<Color>(kPenColors.first);
 
-  /// Movement trail of the last moved token (not persisted; broadcast to the
-  /// players as `BattleMapSnapshot.trail`). Dragging the same token again
-  /// continues it; another token or a new turn starts over.
-  final ValueNotifier<TokenMove?> tokenMove = ValueNotifier<TokenMove?>(null);
+  /// Movement trails by token, least recently moved first (not persisted;
+  /// broadcast to the players as `BattleMapSnapshot.trails`). Moving a token
+  /// again continues its trail; the screen clears them all on a new round.
+  final ValueNotifier<Map<String, TokenMove>> tokenMoves =
+      ValueNotifier<Map<String, TokenMove>>(const {});
+
+  /// The most recently moved token's trail — what the undo button takes back.
+  TokenMove? get lastMove => tokenMoves.value.values.lastOrNull;
+
+  /// Drops every trail — the clear-trails button, Clear All, a new round.
+  void clearTokenMoves() => tokenMoves.value = const {};
+
+  /// Stores [m] as the most recent trail; null drops [id]'s trail.
+  void _setMove(String id, TokenMove? m) {
+    tokenMoves.value = {
+      for (final e in tokenMoves.value.entries)
+        if (e.key != id) e.key: e.value,
+      id: ?m,
+    };
+  }
 
   /// Trail radius and colour by combatant id — set by the screen, which knows
   /// the entities. Lets a move that arrives from elsewhere (a player moving
@@ -447,7 +463,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     }
     viewTransform.addListener(_scheduleProjectionSync);
     viewTransform.addListener(_persistView);
-    tokenMove.addListener(_scheduleTrailSync);
+    tokenMoves.addListener(_scheduleTrailSync);
   }
 
   void _persistView() {
@@ -463,14 +479,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _projectionSyncThrottle?.cancel();
     _projectionDrawingsThrottle?.cancel();
     _projectionTrailThrottle?.cancel();
-    tokenMove.removeListener(_scheduleTrailSync);
+    tokenMoves.removeListener(_scheduleTrailSync);
     viewTransform.removeListener(_scheduleProjectionSync);
     viewTransform.removeListener(_persistView);
     viewTransform.dispose();
     strokeTick.dispose();
     shapeTick.dispose();
     drawColor.dispose();
-    tokenMove.dispose();
+    tokenMoves.dispose();
     super.dispose();
   }
 
@@ -699,15 +715,15 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// the position patch it acknowledges, never before.
   MoveAck? _pendingAck;
 
-  /// Sends the trail to the players. A drag in progress is held back — the
-  /// players' token only moves when it is dropped, so its trail goes with it
-  /// (an ack still goes out).
+  /// Sends the trails to the players. Nothing changes while a drag is in
+  /// progress — the players' token only moves when it is dropped, so its
+  /// trail goes with it (an ack still goes out).
   void _pushTrailToProjection() {
     if (!mounted) return;
-    final m = tokenMove.value;
+    final moves = tokenMoves.value.values;
     final ack = _pendingAck;
     _pendingAck = null;
-    final dragging = m != null && m.dragging;
+    final dragging = moves.any((m) => m.dragging);
     if (dragging && ack == null) return;
     final proj = _ref
         .read(projectionControllerProvider)
@@ -716,13 +732,15 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         .where((p) => p.encounterId == encounterId)
         .firstOrNull;
     if (proj == null) return;
-    _ref.read(projectionControllerProvider.notifier).updateBattleMapTrail(
+    _ref.read(projectionControllerProvider.notifier).updateBattleMapTrails(
           proj.id,
-          m == null || dragging
+          dragging
               ? null
-              : trailSnapshotOf(m, gridSize: state.gridSize.toDouble()),
+              : [
+                  for (final m in moves)
+                    trailSnapshotOf(m, gridSize: state.gridSize.toDouble()),
+                ],
           ack: ack,
-          keepTrail: dragging,
         );
   }
 
@@ -1873,6 +1891,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       shapes: const [],
     );
     shapeTick.value++;
+    clearTokenMoves();
     await clearFog();
     _scheduleDrawingsSync();
     _debouncedAutoSave();
@@ -2032,8 +2051,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   double get _trailStep => state.gridSize / 4;
 
   /// Extends the trail while a token is dragged. [from] is where this drag
-  /// started; the first update of a drag opens a new trail, or — same token
-  /// as the current trail — continues it from where it landed.
+  /// started; the first update of a drag opens the token's trail, or
+  /// continues it from where it landed.
   void dragTokenMove(
     String id,
     Offset p, {
@@ -2041,8 +2060,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     required double radius,
     required Color color,
   }) {
-    var m = tokenMove.value;
-    if (m == null || m.id != id) {
+    var m = tokenMoves.value[id];
+    if (m == null) {
       m = TokenMove(
         id: id,
         path: [from],
@@ -2057,18 +2076,18 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     final path = (p - m.path.last).distance >= _trailStep
         ? [...m.path, p]
         : m.path;
-    tokenMove.value = m.copy(path: path, current: p, dragging: true);
+    _setMove(id, m.copy(path: path, current: p, dragging: true));
   }
 
   /// Ends a drag at the token's committed position. A drag that landed where
   /// it started (a tap) leaves no stop behind.
   void endTokenMove(String id, Offset landed) {
-    final m = tokenMove.value;
-    if (m == null || m.id != id || !m.dragging) return;
+    final m = tokenMoves.value[id];
+    if (m == null || !m.dragging) return;
     if ((landed - m.path[m.stops.last]).distance < 1) {
       _dropLastStop(m);
     } else {
-      tokenMove.value = m.copy(current: landed, dragging: false);
+      _setMove(id, m.copy(current: landed, dragging: false));
     }
   }
 
@@ -2107,9 +2126,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// player thinks that drag began) is used.
   void undoRemoteMove(String id, Offset fallback, {MoveAck? ack}) {
     if (!mounted) return;
-    final m = tokenMove.value;
-    if (m != null && m.id == id && !m.dragging) {
-      undoTokenMove();
+    final m = tokenMoves.value[id];
+    if (m != null && !m.dragging) {
+      undoTokenMove(id);
     } else {
       moveToken(id, state.gridSnap ? _snapToGrid(fallback) : fallback);
       persistTokenPositions();
@@ -2120,8 +2139,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   /// A move from elsewhere has no drag to bracket it: it extends the trail
   /// from [from] to [to] through the points walked on the way ([via]). With
   /// no [via] (an older client, a position-only change) the trail goes
-  /// through [to] itself. While the DM is dragging a token the trail is left
-  /// alone.
+  /// through [to] itself. While the DM is dragging that token its trail is
+  /// left alone.
   void _extendTrail(
     String id,
     Offset from,
@@ -2129,10 +2148,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     List<Offset> via = const [],
     bool newLeg = false,
   }) {
-    var m = tokenMove.value;
-    // The DM is dragging a token right now — its trail is the one on screen.
+    var m = tokenMoves.value[id];
+    // The DM is dragging it right now — that trail is the one on screen.
     if (m != null && m.dragging) return;
-    if (m == null || m.id != id) {
+    if (m == null) {
       final style = trailStyle?.call(id);
       if (style == null) return;
       m = TokenMove(
@@ -2152,12 +2171,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     for (final p in via.isEmpty ? [to] : via) {
       if ((p - path.last).distance >= _trailStep) path.add(p);
     }
-    tokenMove.value = m.copy(path: path, current: to);
+    _setMove(id, m.copy(path: path, current: to));
   }
 
-  /// Puts the token back where its last drag started.
-  void undoTokenMove() {
-    final m = tokenMove.value;
+  /// Puts a token back where its last drag started — [id], else the most
+  /// recently moved one.
+  void undoTokenMove([String? id]) {
+    final m = id == null ? lastMove : tokenMoves.value[id];
     if (m == null) return;
     moveToken(m.id, m.path[m.stops.last]);
     persistTokenPositions();
@@ -2166,14 +2186,17 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void _dropLastStop(TokenMove m) {
     final k = m.stops.last;
-    tokenMove.value = m.stops.length == 1
-        ? null
-        : m.copy(
-            path: m.path.sublist(0, k + 1),
-            stops: m.stops.sublist(0, m.stops.length - 1),
-            current: m.path[k],
-            dragging: false,
-          );
+    _setMove(
+      m.id,
+      m.stops.length == 1
+          ? null
+          : m.copy(
+              path: m.path.sublist(0, k + 1),
+              stops: m.stops.sublist(0, m.stops.length - 1),
+              current: m.path[k],
+              dragging: false,
+            ),
+    );
   }
 
   void snapTokenToGrid(String combatantId) {

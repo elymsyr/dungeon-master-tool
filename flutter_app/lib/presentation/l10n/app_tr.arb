@@ -1803,6 +1803,7 @@
   "bmClearDraw": "Çizimi Temizle",
   "bmClearMarks": "İşaretleri Temizle",
   "bmClearShapes": "Şekilleri Temizle",
+  "bmClearTrails": "İzleri Temizle",
   "bmShapeLayer": "Şekil katmanı:",
   "bmLayerBackground": "Arka plan",
   "bmLayerObject": "Nesne",

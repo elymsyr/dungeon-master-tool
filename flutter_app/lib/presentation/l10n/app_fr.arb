@@ -1803,6 +1803,7 @@
   "bmClearDraw": "Effacer le dessin",
   "bmClearMarks": "Effacer les marques",
   "bmClearShapes": "Effacer les formes",
+  "bmClearTrails": "Effacer les traces",
   "bmShapeLayer": "Calque de forme :",
   "bmLayerBackground": "Arrière-plan",
   "bmLayerObject": "Objet",

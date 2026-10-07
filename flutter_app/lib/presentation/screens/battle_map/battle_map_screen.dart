@@ -84,10 +84,14 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         _notifier.syncFromEncounter(next);
       },
     );
-    // New turn → movement is measured from scratch.
+    // Trails stay for the whole round: a new round, or combat starting or
+    // ending, measures every token's movement from scratch.
     ref.listen(
-      combatProvider.select((s) => s.activeEncounter?.turnIndex),
-      (_, _) => _notifier.tokenMove.value = null,
+      combatProvider.select((s) => (
+            round: s.activeEncounter?.round,
+            started: (s.activeEncounter?.turnIndex ?? -1) >= 0,
+          )),
+      (_, _) => _notifier.clearTokenMoves(),
     );
 
     final phone = isPhone(context);
@@ -471,48 +475,52 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   Widget _buildMoveOverlay(BattleMapNotifier notifier) {
     return ListenableBuilder(
       listenable:
-          Listenable.merge([notifier.tokenMove, notifier.viewTransform]),
+          Listenable.merge([notifier.tokenMoves, notifier.viewTransform]),
       builder: (context, _) {
-        final m = notifier.tokenMove.value;
-        if (m == null) return const SizedBox.shrink();
+        final moves = notifier.tokenMoves.value.values;
+        if (moves.isEmpty) return const SizedBox.shrink();
         final s = ref.read(battleMapProvider(widget.encounterId));
-        final feet = gridPathFeet(
-          m.points,
-          gridSize: s.gridSize.toDouble(),
-          feetPerCell: s.feetPerCell.toDouble(),
-          rule: diagonalRuleFromInt(s.diagonalRule),
-        );
-        final meters = feet * 0.3; // 5e convention: 5 ft = 1.5 m
-        final center = notifier.canvasToScreen(m.current);
-        final r = m.radius * notifier.viewTransform.value.scale;
         return Stack(
           children: [
-            Positioned(
-              left: center.dx + r + 6,
-              top: center.dy - r,
-              child: IgnorePointer(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '${feet.toStringAsFixed(0)} ft · '
-                    '${meters.toStringAsFixed(meters % 1 == 0 ? 0 : 1)} m',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            for (final m in moves) _moveLabel(notifier, s, m),
           ],
         );
       },
+    );
+  }
+
+  /// Distance [m]'s token has moved, next to the token.
+  Widget _moveLabel(BattleMapNotifier notifier, BattleMapState s, TokenMove m) {
+    final feet = gridPathFeet(
+      m.points,
+      gridSize: s.gridSize.toDouble(),
+      feetPerCell: s.feetPerCell.toDouble(),
+      rule: diagonalRuleFromInt(s.diagonalRule),
+    );
+    final meters = feet * 0.3; // 5e convention: 5 ft = 1.5 m
+    final center = notifier.canvasToScreen(m.current);
+    final r = m.radius * notifier.viewTransform.value.scale;
+    return Positioned(
+      left: center.dx + r + 6,
+      top: center.dy - r,
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            '${feet.toStringAsFixed(0)} ft · '
+            '${meters.toStringAsFixed(meters % 1 == 0 ? 0 : 1)} m',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -938,26 +946,24 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 }
 
-/// Screen-space dashed curve of the token's movement trail.
+/// Screen-space dashed curves of the tokens' movement trails.
 class _MoveTrailPainter extends CustomPainter {
   final BattleMapNotifier notifier;
 
   _MoveTrailPainter(this.notifier)
       : super(
             repaint: Listenable.merge(
-                [notifier.tokenMove, notifier.viewTransform]));
+                [notifier.tokenMoves, notifier.viewTransform]));
 
-  // Dashes are measured in screen px, so the dashed path depends on the
-  // trail and the zoom but not on the pan: built once per (trail, scale) at
-  // the origin and translated — a pan repaints without re-measuring it.
-  TokenMove? _cachedMove;
-  double _cachedScale = 0;
-  Path? _cachedDashes;
+  // Dashes are measured in screen px, so a dashed path depends on its trail
+  // and the zoom but not on the pan: built once per (trail, scale) at the
+  // origin and translated — a pan repaints without re-measuring it, and a
+  // drag re-measures only the trail being dragged.
+  final Map<String, (TokenMove, double, Path)> _cache = {};
 
   Path _dashes(TokenMove m, double scale) {
-    if (identical(m, _cachedMove) && scale == _cachedScale) {
-      return _cachedDashes!;
-    }
+    final hit = _cache[m.id];
+    if (hit != null && identical(hit.$1, m) && hit.$2 == scale) return hit.$3;
     const dash = 12.0, gap = 8.0;
     final dashed = Path();
     final curve = buildStrokePath([for (final p in m.points) p * scale]);
@@ -966,26 +972,25 @@ class _MoveTrailPainter extends CustomPainter {
         dashed.addPath(metric.extractPath(d, d + dash), Offset.zero);
       }
     }
-    _cachedMove = m;
-    _cachedScale = scale;
-    return _cachedDashes = dashed;
+    _cache[m.id] = (m, scale, dashed);
+    return dashed;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final m = notifier.tokenMove.value;
-    if (m == null) return;
+    final moves = notifier.tokenMoves.value;
+    _cache.removeWhere((id, _) => !moves.containsKey(id));
+    if (moves.isEmpty) return;
     final vt = notifier.viewTransform.value;
     canvas.save();
     canvas.translate(vt.panOffset.dx, vt.panOffset.dy);
-    canvas.drawPath(
-      _dashes(m, vt.scale),
-      Paint()
-        ..color = m.color
-        ..strokeWidth = 4
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
+    final paint = Paint()
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (final m in moves.values) {
+      canvas.drawPath(_dashes(m, vt.scale), paint..color = m.color);
+    }
     canvas.restore();
   }
 

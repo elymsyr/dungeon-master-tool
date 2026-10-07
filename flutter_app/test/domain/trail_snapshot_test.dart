@@ -12,12 +12,13 @@ void main() {
     colorHex: '#4caf50',
   );
 
-  test('trail survives the snapshot JSON round trip', () {
-    const snap = BattleMapSnapshot(trail: trail);
+  test('trails survive the snapshot JSON round trip', () {
+    const snap = BattleMapSnapshot(trails: [trail]);
     final back = BattleMapSnapshot.fromJson(snap.toJson());
-    expect(back.trail, trail);
-    expect(BattleMapSnapshot.fromJson(const BattleMapSnapshot().toJson()).trail,
-        isNull);
+    expect(back.trails, [trail]);
+    expect(
+        BattleMapSnapshot.fromJson(const BattleMapSnapshot().toJson()).trails,
+        isEmpty);
   });
 
   test('a malformed trail is dropped, bad stops filtered', () {
@@ -31,9 +32,11 @@ void main() {
       's': [0, 5, -1, 1],
     })!;
     expect(t.stops, [0, 1]);
+    expect(TrailSnapshot.parseList([trail.toJson(), 'x', null]), [trail]);
+    expect(TrailSnapshot.parseList('x'), isEmpty);
   });
 
-  test('player window patch sets and clears the trail', () {
+  test('player window patch sets and clears the trails', () {
     final n = PlayerProjectionStateNotifier()
       ..state = const ProjectionState(items: [
         BattleMapProjection(id: 'p', label: 'm', encounterId: 'e'),
@@ -41,12 +44,14 @@ void main() {
     BattleMapSnapshot snap() =>
         (n.state.items.single as BattleMapProjection).snapshot;
 
-    n.applyBattleMapPatch('p', {'trail': trail.toJson()});
-    expect(snap().trail, trail);
+    n.applyBattleMapPatch('p', {
+      'trails': [trail.toJson()],
+    });
+    expect(snap().trails, [trail]);
     n.applyBattleMapPatch('p', {'turnIndex': 2});
-    expect(snap().trail, trail);
-    n.applyBattleMapPatch('p', {'trail': null});
-    expect(snap().trail, isNull);
+    expect(snap().trails, [trail]);
+    n.applyBattleMapPatch('p', {'trails': []});
+    expect(snap().trails, isEmpty);
   });
 
   test('move ack survives JSON and patches; malformed is none', () {
@@ -63,7 +68,7 @@ void main() {
         BattleMapProjection(id: 'p', label: 'm', encounterId: 'e'),
       ]);
     n.applyBattleMapPatch('p', {'moveAck': ack.toJson()});
-    n.applyBattleMapPatch('p', {'trail': null});
+    n.applyBattleMapPatch('p', {'trails': []});
     expect((n.state.items.single as BattleMapProjection).snapshot.moveAck, ack);
   });
 }

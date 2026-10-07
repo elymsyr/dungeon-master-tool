@@ -1803,6 +1803,7 @@
   "bmClearDraw": "Zeichnung löschen",
   "bmClearMarks": "Markierungen löschen",
   "bmClearShapes": "Formen löschen",
+  "bmClearTrails": "Spuren löschen",
   "bmShapeLayer": "Formebene:",
   "bmLayerBackground": "Hintergrund",
   "bmLayerObject": "Objekt",

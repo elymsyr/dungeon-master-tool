@@ -149,8 +149,8 @@ class _BattleMapProjectionViewState
   /// before the token, like [_ownPath].
   (List<Offset>, List<int>) _broadcastTrail(
       BattleMapSnapshot snap, TurnGrant grant) {
-    final t = snap.trail;
-    if (t == null || t.id != grant.combatantId) return (const [], const []);
+    final t = snap.trails.where((t) => t.id == grant.combatantId).firstOrNull;
+    if (t == null) return (const [], const []);
     final pts = [
       for (var i = 0; i + 1 < t.points.length; i += 2)
         Offset(t.points[i], t.points[i + 1]),
@@ -404,30 +404,27 @@ class _BattleMapProjectionViewState
               t.id == grant!.combatantId ? t.movedTo(own.dx, own.dy) : t,
           ]);
     final dragging = grant != null && _ownPointer != null;
-    // Our own trail while we move, else the one the DM broadcasts (any
-    // token — the DM's moves and every player's turn).
-    final ({String id, List<Offset> points, Color color})? trail;
-    if (own != null) {
-      trail = _ownPath.isEmpty
-          ? null
-          : (
-              id: grant!.combatantId,
-              points: [..._ownPath, own],
-              color: _ownTurnColor,
-            );
-    } else if (snap.trail case final t?
-        when shown.tokens.any((tok) => tok.id == t.id)) {
-      trail = (
-        id: t.id,
-        points: [
-          for (var i = 0; i + 1 < t.points.length; i += 2)
-            Offset(t.points[i], t.points[i + 1]),
-        ],
-        color: hexToColor(t.colorHex),
-      );
-    } else {
-      trail = null;
-    }
+    // Every trail the DM broadcasts this round (the DM's moves and every
+    // player's turn) — ours replaced by our own while we move.
+    final trails = [
+      for (final t in snap.trails)
+        if ((own == null || t.id != grant!.combatantId) &&
+            shown.tokens.any((tok) => tok.id == t.id))
+          (
+            id: t.id,
+            points: [
+              for (var i = 0; i + 1 < t.points.length; i += 2)
+                Offset(t.points[i], t.points[i + 1]),
+            ],
+            color: hexToColor(t.colorHex),
+          ),
+      if (own != null && _ownPath.isNotEmpty)
+        (
+          id: grant!.combatantId,
+          points: [..._ownPath, own],
+          color: _ownTurnColor,
+        ),
+    ];
     final canvas = LayoutBuilder(builder: (context, constraints) {
       final size = Size(constraints.maxWidth, constraints.maxHeight);
       Widget c = CustomPaint(
@@ -439,7 +436,7 @@ class _BattleMapProjectionViewState
           tokenImages: _tokenImageCache,
           compact: isCompact,
           ownTokenId: grant?.combatantId,
-          trail: trail,
+          trails: trails,
         ),
       );
       if (grant != null) {
@@ -612,8 +609,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// The viewer's token while it is their turn — drawn with a ring.
   final String? ownTokenId;
 
-  /// Movement trail to draw: canvas-space path ending at token [id].
-  final ({String id, List<Offset> points, Color color})? trail;
+  /// Movement trails to draw: canvas-space paths ending at token [id].
+  final List<({String id, List<Offset> points, Color color})> trails;
 
   _BattleMapProjectionPainter({
     required this.snapshot,
@@ -622,7 +619,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
     required this.tokenImages,
     this.compact = false,
     this.ownTokenId,
-    this.trail,
+    this.trails = const [],
   });
 
   @override
@@ -727,19 +724,32 @@ class _BattleMapProjectionPainter extends CustomPainter {
     // Shared helpers for measurements (used by both bg and object sections).
     final rule = diagonalRuleFromInt(snapshot.diagonalRule);
 
-    void drawFeetLabel(Offset at, String text, Color color) {
+    /// [chip]: on a dark rounded box, like the DM's trail distance.
+    void drawFeetLabel(Offset at, String text, Color color,
+        {bool chip = false}) {
       final tp = TextPainter(
         text: TextSpan(
           text: text,
           style: TextStyle(
             color: color,
-            fontSize: compact ? 9 : 13,
+            fontSize: compact ? 9 : (chip ? 12 : 13),
             fontWeight: FontWeight.bold,
-            shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
+            shadows:
+                chip ? null : const [Shadow(color: Colors.black, blurRadius: 3)],
           ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
+      if (chip) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(at.dx, at.dy, tp.width + 12, tp.height + 4),
+            const Radius.circular(4),
+          ),
+          Paint()..color = Colors.black.withValues(alpha: 0.7),
+        );
+        at += const Offset(6, 2);
+      }
       tp.paint(canvas, at);
     }
 
@@ -847,9 +857,9 @@ class _BattleMapProjectionPainter extends CustomPainter {
       }
     }
 
-    // 2.7. The last move — dashed, under the tokens, like the DM's trail.
-    final trail = this.trail;
-    if (trail != null && trail.points.length > 1) {
+    // 2.7. This round's moves — dashed, under the tokens, like the DM's.
+    for (final trail in trails) {
+      if (trail.points.length < 2) continue;
       final pts = [
         for (final p in trail.points)
           Offset(dx + p.dx * scale, dy + p.dy * scale),
@@ -884,6 +894,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
         '${feet.toStringAsFixed(0)} ft · '
         '${meters.toStringAsFixed(meters % 1 == 0 ? 0 : 1)} m',
         Colors.white,
+        chip: true,
       );
     }
 
@@ -1311,7 +1322,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
         old.tokenImages.length != tokenImages.length ||
         old.compact != compact ||
         old.ownTokenId != ownTokenId ||
-        old.trail != trail;
+        old.trails != trails;
   }
 }
 
