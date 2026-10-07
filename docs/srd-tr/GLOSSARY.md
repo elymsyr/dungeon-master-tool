@@ -31,7 +31,8 @@ eşya adı vardır (`Bless` → `Kutsa`, `Beholder` → `Kemgöz`, `Bag of Holdi
 
 **Aynen kalır** (N6 istisnası — İngilizceyle aynı olması hata değildir): Arcana · Druid · Paladin ·
 Elf · Drow · Goliath · Tiefling · Fey · Elemental · Feywild · Shadowfell · dış düzlem özel adları ·
-Mastiff · Dart · Normal · Cantrip · Ki · DC · CR · XP · NPC · gp · GP · sp · cp · ep · pp · lb. · ft.
+Mastiff · Dart · Normal · Cantrip · Ki · DC · CR · XP · NPC · gp · GP · sp · cp · ep · pp · lb. · ft. ·
+Alarm · Tsunami
 
 ---
 
@@ -39,7 +40,7 @@ Mastiff · Dart · Normal · Cantrip · Ki · DC · CR · XP · NPC · gp · GP 
 
 | # | Karar | Durum |
 |---|---|---|
-| D1 | Büyü adı (kart başlığı) | ✅ **Sadece Türkçe**: `Fireball` → `Alev Topu`. Ad önce BG3/BG:EE'den, yoksa rehberden (`fireball (alev topu)`) alınır, o da yoksa öneri olur; ad listesi dalga 5.6 onayında topluca gösterilir. |
+| D1 | Büyü adı (kart başlığı) | ✅ **Sadece Türkçe**: `Fireball` → `Ateştopu` (BG:EE). Ad önce BG3/BG:EE'den, yoksa rehberden alınır, o da yoksa öneri olur; 340 adlık liste `BUYU-ADLARI.md` (onaylandı 2026-10-07). |
 | D2 | Metin içinde geçen büyü adı | ✅ D1 ile aynı — sadece Türkçe, kaynaktaki büyük harf korunur |
 | D3 | Canavar adları | ✅ BG3/BG:EE'deki karşılık (`Beholder` → `Kemgöz`, `Mind Flayer` → `Zihin Yüzücü`, `Bugbear` → `Öcügoblin`); orada yoksa özel adlar İngilizce, cins adları Türkçe |
 | D4 | Sınıf adları | ✅ §5.1 — BG3/BG:EE (Ruhban, Dövüşçü, Sihirbaz, Sehhar…) |
