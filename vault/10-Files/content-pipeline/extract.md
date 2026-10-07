@@ -26,14 +26,14 @@ tags: [file]
 ## Dependencies & Links
 - Kaynak: [[builtin_schema]] · [[srd_core_pack]] · [[srd-pack-content]]
 - Kardeşi: [[dump_srd]] (aynı paketi `.pkg.json`'a döker).
-- Çıktısını denetleyen: [[check_pairs]].
+- Çıktısını denetleyen: [[check_pairs]] · okuyan: [[content_translator]].
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
 - **Scope:** `_schema` = kategori adları, alan grubu adları, alan etiketleri, `placeholder`, `helpText`, `subFields` etiketleri, enum seçenekleri. Diğerleri = kategori slug'ı: satır adı, `description`, `text`/`textarea`/`markdown` alanları, `levelTextTable` değerleri, `classFeatures`/`subspeciesOptions` `name`+`description`, `equipmentChoiceGroups`/`playerChoices` `label`+`prompt`+`options[].label`.
-- **Makine değeri, çıkarılmaz (K10):** relation/sayı/zar alanları, `tags`, `_machineTextKeys` (`source`, `icon_name`, `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`), `resource-pool` satır adları (`pool:…`; görünen ad `display_name`), `_isProse`'tan geçmeyen değerler (snake_case anahtar, zar/sayı, harfsiz). `proficiencyTable` satır adları ayrıca çıkarılmaz — ability/skill scope'larında zaten var.
+- **Makine değeri, çıkarılmaz (K10):** relation/sayı/zar alanları, `tags`, `srdL10nMachineTextKeys` ([[content_translator]] ile ortak — çalışma zamanı da bunları çevirmez; `source`, `icon_name`, `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`), `resource-pool` satır adları (`pool:…`; görünen ad `display_name`), `_isProse`'tan geçmeyen değerler (snake_case anahtar, zar/sayı, harfsiz). `proficiencyTable` satır adları ayrıca çıkarılmaz — ability/skill scope'larında zaten var.
 - **Mevcut çeviri korunur:** yeniden koşunca var olan değer aynen kalır, yeni anahtar `""` alır, kaynakta artık olmayan anahtar silinmez, "bayat" sütununda sayılır. Sıra kaynak sırasıdır (ad, ardından açıklaması — çevirmene bağlam).
 
 ## Notes
-- 2026-10-07 ilk koşu: 61 scope, 6433 metin, ~89.000 kelime. En büyükleri `spell` (28k kelime), `magic-item` (17k), `creature-action` (12k), `feat` (11k).
+- 2026-10-07 ilk koşu: 60 scope, 6433 metin, ~89.000 kelime. En büyükleri `spell` (28k kelime), `magic-item` (17k), `creature-action` (12k), `feat` (11k).
 - Tier-0 `condition` satırları sadece ad taşır (kural metni seed'de yok) — dosyada 15 ad var.

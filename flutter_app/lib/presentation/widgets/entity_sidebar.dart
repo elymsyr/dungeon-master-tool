@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/builtin_package_provider.dart';
+import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/character_provider.dart'
     show kPlayerCategorySlugs;
 import '../../core/utils/screen_type.dart';
@@ -21,6 +22,7 @@ import '../../domain/entities/schema/builtin/lookups.dart'
     show dmAuthoredLookupSlugs, tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/services/content_translator.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
@@ -257,11 +259,19 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       return _ShareFilter.notShared;
     }
 
+    // SRD içerik çevirisi: kategori adı yalnızca görüntüde değişir, slug aynı.
+    final tx = ref.watch(contentTranslatorProvider);
+    EntityCategorySchema shown(EntityCategorySchema c) {
+      final n = tx.tr(ContentTranslator.schemaScope, c.name);
+      return n == c.name ? c : c.copyWith(name: n);
+    }
+
     final categories =
         widget.schema?.categories
             .where(
               (c) => !c.isArchived && !kPlayerCategorySlugs.contains(c.slug),
             )
+            .map(shown)
             .toList() ??
         [];
 
