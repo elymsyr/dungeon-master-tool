@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/screen_type.dart';
 import '../../../application/providers/builtin_package_provider.dart';
+import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/shared_entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
@@ -19,6 +20,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/services/content_translator.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -172,6 +174,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _tagsController;
   late TextEditingController _dmNotesController;
 
+  /// Okuma modunda açıklamanın gösterilen (çevrilmiş) hali. Kayıt yolu
+  /// ([_flushPendingUpdate]) yalnızca [_descController]'ı okur — çeviri
+  /// veriye sızmaz (srd-tr K3).
+  late TextEditingController _descViewController;
+
   /// Cached scoped theme — invalidated only when palette flag flips.
   ThemeData? _cachedCardTheme;
   ThemeData? _cachedBaseTheme;
@@ -181,6 +188,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   /// Entity is immutable (Freezed) ⇒ identity check suffices for staleness.
   Entity? _subtitleEntity;
   EntityCategorySchema? _subtitleCat;
+  ContentTranslator? _subtitleTx;
   String? _cachedSubtitle;
 
   /// Portrait gallery's currently-shown image index — surfaced by
@@ -202,6 +210,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _sourceController = TextEditingController();
     _tagsController = TextEditingController();
     _dmNotesController = TextEditingController();
+    _descViewController = TextEditingController();
   }
 
   Timer? _updateTimer;
@@ -251,6 +260,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _sourceController.dispose();
     _tagsController.dispose();
     _dmNotesController.dispose();
+    _descViewController.dispose();
     _nameFocus.dispose();
     _descFocus.dispose();
     _sourceFocus.dispose();
@@ -319,17 +329,27 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final tagsStr = entity.tags.join(', ');
     _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
+    // SRD içerik çevirisi (docs/srd-tr): okuma modunda ad + açıklama.
+    final tx = ref.watch(contentTranslatorProvider);
+    final scope = entity.categorySlug;
+    if (widget.readOnly) {
+      final d = tx.tr(scope, entity.description);
+      if (_descViewController.text != d) _descViewController.text = d;
+    }
+
     final String subtitle;
     if (cat == null) {
       subtitle = '';
     } else if (identical(_subtitleEntity, entity) &&
         identical(_subtitleCat, cat) &&
+        identical(_subtitleTx, tx) &&
         _cachedSubtitle != null) {
       subtitle = _cachedSubtitle!;
     } else {
       subtitle = _buildSubtitle(entity, cat);
       _subtitleEntity = entity;
       _subtitleCat = cat;
+      _subtitleTx = tx;
       _cachedSubtitle = subtitle;
     }
     final hasPortrait = entity.imagePath.isNotEmpty || entity.images.isNotEmpty;
@@ -388,7 +408,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     Expanded(
                       child: widget.readOnly
                           ? Text(
-                              entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                              entity.name.isEmpty
+                                  ? '(Unnamed)'
+                                  : tx.tr(scope, entity.name),
                               style: TextStyle(
                                 fontFamily: palette.useSerif ? 'Georgia' : null,
                                 fontSize: 30,
@@ -494,7 +516,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                 const SizedBox(height: 10),
                 // Description (bigger ink)
                 MarkdownTextArea(
-                  controller: _descController,
+                  controller:
+                      widget.readOnly ? _descViewController : _descController,
                   focusNode: _descFocus,
                   readOnly: widget.readOnly,
                   minLines: widget.readOnly ? null : 3,
@@ -752,7 +775,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       final repeatable = f['repeatable'] == true;
       return repeatable ? '$fcat Feat (Repeatable)' : '$fcat Feat';
     }
-    return cat.name;
+    return ref
+        .read(contentTranslatorProvider)
+        .tr(ContentTranslator.schemaScope, cat.name);
   }
 
   Widget _buildFieldWidget(
@@ -762,6 +787,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     bool compact = false,
   }) {
     final fieldValue = entity.fields[field.fieldKey];
+    // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
+    // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
+    final tx = ref.read(contentTranslatorProvider);
+    final shown = widget.readOnly
+        ? tx.value(entity.categorySlug, field, fieldValue)
+        : fieldValue;
 
     // Inline relation lists in multi-column groups — keep equip-tracked lists
     // (inventory/spells/etc.) in their full Card form regardless of compact.
@@ -772,10 +803,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         !field.hasEquip;
 
     return FieldWidgetFactory.create(
-      schema: field,
-      value: fieldValue,
+      schema: tx.field(field),
+      value: shown,
       readOnly: widget.readOnly,
-      onChanged: (v) => _updateField(field.fieldKey, v),
+      onChanged: identical(shown, fieldValue)
+          ? (v) => _updateField(field.fieldKey, v)
+          : (_) {},
       entities: ref.read(entityProvider),
       ref: ref,
       entityFields: entity.fields,
@@ -909,7 +942,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
       widgets.add(
         EntityCardCollapsibleGroupCard(
-          group: group,
+          group: group.copyWith(
+            name: ref
+                .read(contentTranslatorProvider)
+                .tr(ContentTranslator.schemaScope, group.name),
+          ),
           palette: palette,
           centered: centered,
           child: _buildGroupGrid(

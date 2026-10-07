@@ -168,9 +168,18 @@ RegExp _enTermRe(String term) => RegExp(
     '(?<![A-Za-z])${RegExp.escape(term)}(?:e?s)?(?![A-Za-z])',
     caseSensitive: !term.contains(' '));
 
+/// Sondaki ünsüzün yumuşamış hali (`Güç` → `gücü`, `Yetkinlik` → `yetkinliğin`).
+const _softened = {
+  'k': '[kğg]',
+  'ç': '[çc]',
+  't': '[td]',
+  'p': '[pb]',
+  'g': '[gğ]',
+};
+
 /// Türkçe terim çekimli de geçebilir (`Kurtarma Zarı` → `kurtarma zarlarına`,
-/// `Yetkinlik` → `yetkinliğin`): son kelimenin tamlama eki ve sondaki
-/// yumuşayan ünsüz atılır, kelimeler önek olarak aranır.
+/// `Yetkinlik` → `yetkinliğin`): son kelimenin tamlama eki atılır, sondaki
+/// ünsüzün yumuşamış hali de kabul edilir, kelimeler önek olarak aranır.
 // ponytail: önek araması bazı yanlış eşleşmelere göz yumar (N10 sadece UYARI).
 bool _hasTrTerm(String trLower, String term) {
   final words = _trLower(term).split(RegExp(r'\s+'));
@@ -183,10 +192,15 @@ bool _hasTrTerm(String trLower, String term) {
         w = w.substring(0, w.length - m[0]!.length);
       }
     }
-    if (w.length >= 4 && 'kçtpg'.contains(w[w.length - 1])) {
-      w = w.substring(0, w.length - 1);
+    // İsim-fiil → fiil kökü (`Tırmanma` → `tırman`, `Büyü Yapma` → `büyü yap`).
+    if (i == words.length - 1 && w.length >= 5 && RegExp(r'm[ae]$').hasMatch(w)) {
+      stems.add(RegExp.escape(w.substring(0, w.length - 2)));
+      continue;
     }
-    stems.add(RegExp.escape(w));
+    final soft = _softened[w[w.length - 1]];
+    stems.add(soft == null
+        ? RegExp.escape(w)
+        : '${RegExp.escape(w.substring(0, w.length - 1))}$soft');
   }
   return RegExp('(?<!\\p{L})${stems.join(r'\S*\s+')}', unicode: true)
       .hasMatch(trLower);

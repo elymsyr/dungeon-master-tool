@@ -56,6 +56,9 @@ void main() {
     expect(codes(sp, spTr), isEmpty);
     expect(codes(ft, ftTr), isEmpty);
     expect(codes('Druid', 'Druid'), isEmpty); // aynen kalır
+    expect(codes('Force of personality.', 'Kişilik gücü.'), isEmpty); // ç→c
+    expect(codes('Climb, jump, swim, grapple.', 'Tırman, zıpla, yüz, yakala.'),
+        isEmpty); // isim-fiil → fiil kökü
   });
 
   group('bozuk çiftler yakalanır', () {

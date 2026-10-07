@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (kapı onayı bekliyor)
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot (kapı: kullanıcı uygulamada görür)
 
 ---
 
@@ -152,7 +152,7 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
 - **2.2** Çıkarma aracı: `srdRawRowsBySlug()` + Tier-0 seed'leri + yerleşik şemayı gezip her scope
   için benzersiz görünen metinleri `assets/srd_l10n/tr/<scope>.json` iskeletine yazar (değerler `""`).
 - **2.3** Özet tablo: scope başına metin sayısı + kelime sayısı.
-- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/extract.dart` → 61 scope, 6433 metin, ~89.000 kelime.
+- **Sonuç (2026-10-07):** `tool/srd_l10n/bin/extract.dart` → 60 scope, 6433 metin, ~89.000 kelime.
   Çıkarılmayan makine değerleri (K10): relation/sayı/zar alanları, `tags`, `source`, `icon_name`,
   `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`,
   `resource-pool` satır adları (`pool:…` — görünen ad `display_name`), snake_case enum değerleri
@@ -193,6 +193,23 @@ Her faz bir öncekinin kapısından geçmeden başlamaz. Fazın sonundaki **Kap�
 - **4.8** Arayüz hizalama (D7): `app_tr.arb`'deki çakışan terimler sözlüğe çekilir (GLOSSARY §1
   tablosu) → `flutter gen-l10n`. Ayrı commit; `.arb` satır sonları korunur (K12).
 - **Kapı:** kullanıcı pilotu uygulamada görür, dil değiştirip geri alır.
+- **Sonuç (2026-10-07):**
+  - `lib/domain/services/content_translator.dart` (`tr` / `field` / `value`; makine anahtarları
+    listesi çıkarma aracıyla ortak) + `lib/application/providers/content_translator_provider.dart`
+    (`localeProvider`'ı izler, `assets/srd_l10n/<dil>/`'i `AssetManifest` ile yükler; pubspec'e
+    yalnızca `assets/srd_l10n/tr/` eklendi — K9).
+  - Bağlantı: `entity_card.dart` (okuma modunda ad, açıklama, alan değerleri; her modda alan
+    etiketleri, grup adları, kategori alt başlığı; açıklama ayrı görüntü denetleyicisinde, çevrilmiş
+    değer `onChanged`'e ulaşmaz) · `entity_sidebar.dart` (kategori adları). 4.5'in yapılandırılmış
+    listeleri `value` üzerinden aynı yoldan geçer — widget'lara dokunulmadı.
+  - Pilot: `ability`, `skill`, `condition`, `damage-type` — 95/95, `check_pairs` FAIL 0 · UYARI 0.
+  - Testler: `test/domain/services/content_translator_test.dart` (eksik/boş → İngilizce, girdi
+    değişmez) · `test/presentation/srd_tr_entity_card_test.dart` (in-memory DB'de gerçek dünya +
+    gerçek tablolar + gerçek `EntityCard`: TR okuma Türkçe, düzenleme İngilizce, kayıt İngilizce,
+    okuma modu hiçbir şey yazmaz, EN'e dönünce İngilizce, SRD'nin kendi Poisoned kartı `Zehirlenme`).
+  - 4.8: `app_tr.arb`'de 32 dize D7 tablosuna çekildi (Öncelik, Kısa/Uzun Dinlenme, Yetkinlik
+    Katkısı, hüner, kabiliyet, yetenek, Büyülü eşya, Saldırı Katkısı). `spellsCastingSummary`
+    ("Büyü yeteneği") sözlük §3 `Spellcasting Ability` satırı netleşene kadar bekliyor.
 
 ### Faz 5 — Toplu çeviri (dalgalar, küçükten büyüğe) *(~3–5 saat gerçek zaman)*
 

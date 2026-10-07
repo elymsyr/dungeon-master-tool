@@ -15,16 +15,7 @@ import 'dart:io';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
-
-/// Ekranda görünse de kimlik/anahtar olan metin alanları (K10).
-const _machineTextKeys = {
-  'source', // "SRD 5.2.1" — aynen kalır
-  'icon_name',
-  'color',
-  'legacy_subspecies_key',
-  'weapon_mastery_filter',
-  'granted_tool_variant_group',
-};
+import 'package:dungeon_master_tool/domain/services/content_translator.dart';
 
 /// Satır adları makine anahtarı olan kategoriler (`pool:rage_uses`);
 /// görünen ad `display_name` alanındadır.
@@ -86,7 +77,7 @@ void main(List<String> args) {
     if (!_machineNameSlugs.contains(slug)) add(slug, name);
     add(slug, description);
     for (final f in fieldsBySlug[slug] ?? const <FieldSchema>[]) {
-      if (_machineTextKeys.contains(f.fieldKey)) continue;
+      if (srdL10nMachineTextKeys.contains(f.fieldKey)) continue;
       final v = fields[f.fieldKey];
       switch (f.fieldType) {
         case FieldType.text:
