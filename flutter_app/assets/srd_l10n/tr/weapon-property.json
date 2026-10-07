@@ -1,13 +1,13 @@
 {
-  "Ammunition": "",
-  "Finesse": "",
-  "Heavy": "",
-  "Light": "",
-  "Loading": "",
-  "Range": "",
-  "Reach": "",
-  "Thrown": "",
-  "Two-Handed": "",
-  "Versatile": "",
-  "Improvised": ""
+  "Ammunition": "Cephane",
+  "Finesse": "Beceri",
+  "Heavy": "Ağır",
+  "Light": "Hafif",
+  "Loading": "Kurmalı",
+  "Range": "Menzil",
+  "Reach": "Erişim",
+  "Thrown": "Fırlatma",
+  "Two-Handed": "Çift El",
+  "Versatile": "Değişken",
+  "Improvised": "Doğaçlama"
 }

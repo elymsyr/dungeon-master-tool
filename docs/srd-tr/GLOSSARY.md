@@ -602,7 +602,7 @@ Cantrip · Büyü Yapma · Silah Ustalığı · İlahi Düzen · Direnç · Bağ
 
 Dış düzlemlerin özel adları aynen kalır: Mount Celestia · Bytopia · Elysium · Beastlands ·
 Arborea · Ysgard · Limbo · Pandemonium · Abyss · Carceri · Hades · Gehenna · Acheron · Mechanus ·
-Arcadia · Outlands · Feywild · Shadowfell.
+Arcadia · Outlands · Feywild · Shadowfell
 
 | İngilizce | Türkçe | Kaynak |
 |---|---|---|

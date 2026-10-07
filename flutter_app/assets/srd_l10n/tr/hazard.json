@@ -1,7 +1,7 @@
 {
-  "Burning": "",
-  "Dehydration": "",
-  "Falling": "",
-  "Malnutrition": "",
-  "Suffocation": ""
+  "Burning": "Yanma",
+  "Dehydration": "Susuzluk",
+  "Falling": "Düşme",
+  "Malnutrition": "Açlık",
+  "Suffocation": "Boğulma"
 }

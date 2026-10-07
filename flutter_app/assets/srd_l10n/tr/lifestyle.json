@@ -1,9 +1,9 @@
 {
-  "Wretched": "",
-  "Squalid": "",
-  "Poor": "",
-  "Modest": "",
-  "Comfortable": "",
-  "Wealthy": "",
-  "Aristocratic": ""
+  "Wretched": "Acınası",
+  "Squalid": "Sefil",
+  "Poor": "Fakir",
+  "Modest": "Mütevazı",
+  "Comfortable": "Konforlu",
+  "Wealthy": "Zengin",
+  "Aristocratic": "Aristokrat"
 }
