@@ -65,9 +65,10 @@ class BattleMapSnapshot {
   /// send side, so this list never carries a DM-only shape.
   final List<ShapeSnapshot> shapes;
 
-  /// Movement trail of the last moved token (the DM's dashed path with its
-  /// distance). Null when nothing moved this turn or the token is hidden.
-  final TrailSnapshot? trail;
+  /// Movement trails of every token moved this round (the DM's dashed paths
+  /// with their distances), least recent first. Hidden tokens' trails are
+  /// left out.
+  final List<TrailSnapshot> trails;
 
   /// The last move of a player's own token the DM has applied (migration
   /// 108). The player shows its own optimistic position/trail only until its
@@ -103,7 +104,7 @@ class BattleMapSnapshot {
     this.strokes = const [],
     this.measurements = const [],
     this.shapes = const [],
-    this.trail,
+    this.trails = const [],
     this.moveAck,
     this.viewportNormalized,
   });
@@ -127,12 +128,11 @@ class BattleMapSnapshot {
     List<StrokeSnapshot>? strokes,
     List<MeasurementSnapshot>? measurements,
     List<ShapeSnapshot>? shapes,
-    TrailSnapshot? trail,
+    List<TrailSnapshot>? trails,
     MoveAck? moveAck,
     NormalizedRect? viewportNormalized,
     bool clearViewport = false,
     bool clearFog = false,
-    bool clearTrail = false,
   }) {
     return BattleMapSnapshot(
       mapPath: mapPath ?? this.mapPath,
@@ -153,7 +153,7 @@ class BattleMapSnapshot {
       strokes: strokes ?? this.strokes,
       measurements: measurements ?? this.measurements,
       shapes: shapes ?? this.shapes,
-      trail: clearTrail ? null : (trail ?? this.trail),
+      trails: trails ?? this.trails,
       moveAck: moveAck ?? this.moveAck,
       viewportNormalized: clearViewport
           ? null
@@ -171,7 +171,9 @@ class BattleMapSnapshot {
   ///   older rows/clients omit it and `fromJson` defaults to `[]`.
   /// - v5: additive `trail` (token movement trail) and `moveAck`. Tolerant —
   ///   older clients ignore them, missing means none.
-  static const int schemaVersion = 5;
+  /// - v6: `trails` (every token moved this round) replaces `trail`. A v5
+  ///   client shows no trails.
+  static const int schemaVersion = 6;
 
   Map<String, dynamic> toJson() => {
         '_v': schemaVersion,
@@ -195,7 +197,8 @@ class BattleMapSnapshot {
         if (measurements.isNotEmpty)
           'measurements': measurements.map((m) => m.toJson()).toList(),
         if (shapes.isNotEmpty) 'shapes': shapes.map((s) => s.toJson()).toList(),
-        if (trail != null) 'trail': trail!.toJson(),
+        if (trails.isNotEmpty)
+          'trails': [for (final t in trails) t.toJson()],
         if (moveAck != null) 'moveAck': moveAck!.toJson(),
         if (viewportNormalized != null)
           'viewportNormalized': viewportNormalized!.toJson(),
@@ -240,7 +243,7 @@ class BattleMapSnapshot {
                   ShapeSnapshot.fromJson((e as Map).cast<String, dynamic>()))
               .toList() ??
           const [],
-      trail: TrailSnapshot.tryParse(json['trail']),
+      trails: TrailSnapshot.parseList(json['trails']),
       moveAck: MoveAck.tryParse(json['moveAck']),
       viewportNormalized: json['viewportNormalized'] != null
           ? NormalizedRect.fromJson(
@@ -296,6 +299,12 @@ class TrailSnapshot {
         if (stops.isNotEmpty) 's': stops,
         'c': colorHex,
       };
+
+  /// Every well-formed trail in [json]; the rest are dropped.
+  static List<TrailSnapshot> parseList(Object? json) => [
+        if (json is List)
+          for (final e in json) ?tryParse(e),
+      ];
 
   /// Null for anything malformed — a bad trail is dropped, never fatal.
   static TrailSnapshot? tryParse(Object? json) {

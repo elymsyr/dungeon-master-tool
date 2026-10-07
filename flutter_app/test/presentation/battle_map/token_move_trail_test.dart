@@ -52,8 +52,8 @@ void main() {
 
     drag(const Offset(0, 0), const Offset(100, 0));
     drag(const Offset(100, 0), const Offset(100, 100));
-    expect(n.tokenMove.value!.stops, [0, 2]);
-    expect(n.tokenMove.value!.points.last, const Offset(100, 100));
+    expect(n.lastMove!.stops, [0, 2]);
+    expect(n.lastMove!.points.last, const Offset(100, 100));
 
     // A tap (no movement) on the same token leaves no stop.
     n.dragTokenMove(
@@ -64,14 +64,45 @@ void main() {
       color: Colors.red,
     );
     n.endTokenMove('a', const Offset(100, 100));
-    expect(n.tokenMove.value!.stops, [0, 2]);
+    expect(n.lastMove!.stops, [0, 2]);
 
     n.undoTokenMove();
     expect(n.state.tokenPositions['a'], const Offset(100, 0));
-    expect(n.tokenMove.value!.stops, [0]);
+    expect(n.lastMove!.stops, [0]);
     n.undoTokenMove();
     expect(n.state.tokenPositions['a'], Offset.zero);
-    expect(n.tokenMove.value, isNull);
+    expect(n.lastMove, isNull);
+  });
+
+  test('every moved token keeps its trail; undo takes back the most recent',
+      () {
+    final container = ProviderContainer(
+      overrides: [combatProvider.overrideWith((_) => _NoSaveCombat())],
+    );
+    addTearDown(container.dispose);
+    final sub = container.listen(battleMapProvider('e1'), (_, _) {});
+    addTearDown(sub.close);
+    final n = container.read(battleMapProvider('e1').notifier);
+
+    void drag(String id, Offset from, Offset to) {
+      n.dragTokenMove(id, to, from: from, radius: 25, color: Colors.red);
+      n.moveToken(id, to);
+      n.endTokenMove(id, to);
+    }
+
+    drag('a', Offset.zero, const Offset(100, 0));
+    drag('b', const Offset(0, 50), const Offset(100, 50));
+    drag('a', const Offset(100, 0), const Offset(200, 0));
+    expect(n.tokenMoves.value.keys, ['b', 'a']);
+    expect(n.tokenMoves.value['a']!.stops, [0, 2]);
+
+    n.undoTokenMove();
+    n.undoTokenMove();
+    expect(n.state.tokenPositions['a'], Offset.zero);
+    expect(n.tokenMoves.value.keys, ['b']);
+    n.undoTokenMove();
+    expect(n.state.tokenPositions['b'], const Offset(0, 50));
+    expect(n.tokenMoves.value, isEmpty);
   });
 
   test(
@@ -107,8 +138,8 @@ void main() {
       expect(n.state.tokenPositions['b'], const Offset(200, 50));
       expect(n.state.tokenPositions['a'], const Offset(10, 10));
       // The player's move leaves a trail; undo takes it back to the start.
-      expect(n.tokenMove.value!.id, 'b');
-      expect(n.tokenMove.value!.points, const [
+      expect(n.lastMove!.id, 'b');
+      expect(n.lastMove!.points, const [
         Offset(50, 50),
         Offset(200, 50),
         Offset(200, 50),
@@ -124,11 +155,11 @@ void main() {
           },
         ),
       );
-      expect(n.tokenMove.value!.id, 'b');
+      expect(n.lastMove!.id, 'b');
 
       n.undoTokenMove();
       expect(n.state.tokenPositions['b'], const Offset(50, 50));
-      expect(n.tokenMove.value, isNull);
+      expect(n.lastMove, isNull);
     },
   );
 
@@ -163,7 +194,7 @@ void main() {
       const Offset(0, 40),
       via: const [Offset(20, 45), Offset(0, 40)],
     );
-    expect(n.tokenMove.value!.points, const [
+    expect(n.lastMove!.points, const [
       Offset(0, 0),
       Offset(30, 0),
       Offset(40, 20),
@@ -181,14 +212,14 @@ void main() {
       via: const [Offset(0, 100)],
       newLeg: true,
     );
-    expect(n.tokenMove.value!.stops, [0, 6]);
+    expect(n.lastMove!.stops, [0, 6]);
 
     n.undoRemoteMove('b', const Offset(-1, -1));
     expect(n.state.tokenPositions['b'], const Offset(0, 40));
-    expect(n.tokenMove.value!.stops, [0]);
+    expect(n.lastMove!.stops, [0]);
     n.undoRemoteMove('b', const Offset(-1, -1));
     expect(n.state.tokenPositions['b'], Offset.zero);
-    expect(n.tokenMove.value, isNull);
+    expect(n.lastMove, isNull);
 
     // No trail left: the player's own idea of the target is used.
     n.undoRemoteMove('b', const Offset(5, 5));
@@ -260,7 +291,7 @@ void main() {
       ack: const MoveAck(id: 'b', seq: 7),
     );
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    expect(snap().trail!.id, 'b');
+    expect(snap().trails.single.id, 'b');
     expect(snap().moveAck, const MoveAck(id: 'b', seq: 7));
 
     // The DM grabs another token; the owner's next move is still acked and
@@ -272,10 +303,10 @@ void main() {
       radius: 25,
       color: Colors.red,
     );
-    final before = snap().trail;
+    final before = snap().trails;
     n.undoRemoteMove('b', Offset.zero, ack: const MoveAck(id: 'b', seq: 8));
     await Future<void>.delayed(const Duration(milliseconds: 100));
     expect(snap().moveAck!.seq, 8);
-    expect(snap().trail, before);
+    expect(snap().trails, before);
   });
 }

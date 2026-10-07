@@ -75,6 +75,10 @@ class PenColorButton extends StatelessWidget {
   /// Fixed width, to line up with neighbouring labelled buttons.
   final double? width;
 
+  /// Square the swatch is centred in — the neighbouring buttons' icon size,
+  /// so the captions line up too.
+  final double? slot;
+
   const PenColorButton({
     required this.color,
     required this.palette,
@@ -82,6 +86,7 @@ class PenColorButton extends StatelessWidget {
     this.label,
     this.swatchSize = 22,
     this.width,
+    this.slot,
     super.key,
   });
 
@@ -102,6 +107,10 @@ class PenColorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final swatch = ValueListenableBuilder<Color>(
+      valueListenable: color,
+      builder: (_, c, _) => PenSwatch(color: c, size: swatchSize),
+    );
     return Tooltip(
       message: tooltip,
       child: InkWell(
@@ -115,10 +124,10 @@ class PenColorButton extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ValueListenableBuilder<Color>(
-                valueListenable: color,
-                builder: (_, c, _) => PenSwatch(color: c, size: swatchSize),
-              ),
+              if (slot == null)
+                swatch
+              else
+                SizedBox.square(dimension: slot, child: Center(child: swatch)),
               if (label != null) ...[
                 const SizedBox(height: 2),
                 Text(

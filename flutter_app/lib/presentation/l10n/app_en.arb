@@ -2487,6 +2487,7 @@
   "bmClearDraw": "Clear Draw",
   "bmClearMarks": "Clear Marks",
   "bmClearShapes": "Clear Shapes",
+  "bmClearTrails": "Clear Trails",
   "bmShapeLayer": "Shape layer:",
   "bmLayerBackground": "Background",
   "bmLayerObject": "Object",

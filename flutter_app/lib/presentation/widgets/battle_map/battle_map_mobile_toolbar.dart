@@ -68,12 +68,12 @@ class BattleMapMobileToolbar extends ConsumerWidget {
             palette: palette,
             onTap: () => notifier.setTool(BattleMapTool.navigate),
           ),
-          ValueListenableBuilder<TokenMove?>(
-            valueListenable: notifier.tokenMove,
-            builder: (context, move, _) => Tooltip(
+          ValueListenableBuilder<Map<String, TokenMove>>(
+            valueListenable: notifier.tokenMoves,
+            builder: (context, moves, _) => Tooltip(
               message: L10n.of(context)!.bmMoveUndo,
               child: InkWell(
-                onTap: move == null ? null : notifier.undoTokenMove,
+                onTap: moves.isEmpty ? null : notifier.undoTokenMove,
                 borderRadius: palette.br,
                 child: Padding(
                   padding: const EdgeInsets.all(10),
@@ -81,7 +81,7 @@ class BattleMapMobileToolbar extends ConsumerWidget {
                     Icons.undo,
                     size: 24,
                     color: palette.tabText
-                        .withValues(alpha: move == null ? 0.35 : 1),
+                        .withValues(alpha: moves.isEmpty ? 0.35 : 1),
                   ),
                 ),
               ),
@@ -340,13 +340,14 @@ class _ToolsTab extends StatelessWidget {
           Wrap(
             spacing: 6,
             runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: L10n.of(context)!.bmNavigate, tb: tb, notifier: notifier, palette: palette),
               // All measure / AoE / shape tools merged into one picker button.
               DrawToolsButton(activeTool: tb.activeTool, notifier: notifier, palette: palette, compact: true),
               _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: L10n.of(context)!.bmErase, tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: L10n.of(context)!.bmDraw, tb: tb, notifier: notifier, palette: palette),
-              PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor, label: L10n.of(context)!.bmColor, swatchSize: 16, width: 56),
+              PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor, label: L10n.of(context)!.bmColor, swatchSize: 16, width: 56, slot: 18),
               _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: L10n.of(context)!.bmAddFog, tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, label: L10n.of(context)!.bmEraseFog, tb: tb, notifier: notifier, palette: palette),
             ],
@@ -365,6 +366,7 @@ class _ToolsTab extends StatelessWidget {
               _SheetActionButton(icon: Icons.cleaning_services_outlined, label: L10n.of(context)!.bmClearDraw, palette: palette, onTap: () => notifier.clearAnnotation(layer: tb.activeLayer)),
               _SheetActionButton(icon: Icons.straighten_outlined, label: L10n.of(context)!.bmClearMarks, palette: palette, onTap: () => notifier.clearMeasurements(layer: tb.activeLayer)),
               _SheetActionButton(icon: Icons.format_shapes_outlined, label: L10n.of(context)!.bmClearShapes, palette: palette, onTap: () => notifier.clearShapes(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.route_outlined, label: L10n.of(context)!.bmClearTrails, palette: palette, onTap: notifier.clearTokenMoves),
               _SheetActionButton(icon: Icons.delete_sweep_outlined, label: L10n.of(context)!.sessionClearAll, palette: palette, onTap: () async { await notifier.clearAll(); }),
             ],
           ),

@@ -250,18 +250,18 @@ class BattleMapToolbar extends ConsumerWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: L10n.of(context)!.bmNavigate, mapState: mapState, notifier: notifier, palette: palette),
-          ValueListenableBuilder<TokenMove?>(
-            valueListenable: notifier.tokenMove,
-            builder: (context, move, _) => Opacity(
-              opacity: move == null ? 0.35 : 1,
-              child: _ToolbarButton(icon: Icons.undo, tooltip: L10n.of(context)!.bmMoveUndo, palette: palette, onPressed: move == null ? null : notifier.undoTokenMove),
+          ValueListenableBuilder<Map<String, TokenMove>>(
+            valueListenable: notifier.tokenMoves,
+            builder: (context, moves, _) => Opacity(
+              opacity: moves.isEmpty ? 0.35 : 1,
+              child: _ToolbarButton(icon: Icons.undo, tooltip: L10n.of(context)!.bmMoveUndo, palette: palette, onPressed: moves.isEmpty ? null : notifier.undoTokenMove),
             ),
           ),
           // All measure / AoE / shape tools merged into one picker button.
           DrawToolsButton(activeTool: mapState.activeTool, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: L10n.of(context)!.bmEraseTooltip, mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: L10n.of(context)!.bmDraw, mapState: mapState, notifier: notifier, palette: palette),
-          PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor, label: L10n.of(context)!.bmColor, swatchSize: 14),
+          PenColorButton(color: notifier.drawColor, palette: palette, tooltip: L10n.of(context)!.bmDrawColor, swatchSize: 18),
           _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: L10n.of(context)!.bmAddFog, mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: L10n.of(context)!.bmEraseFog, mapState: mapState, notifier: notifier, palette: palette),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
@@ -271,6 +271,7 @@ class BattleMapToolbar extends ConsumerWidget {
           _ToolbarButton(icon: Icons.cleaning_services_outlined, tooltip: L10n.of(context)!.bmClearDrawing, palette: palette, onPressed: () => notifier.clearAnnotation(layer: mapState.activeLayer)),
           _ToolbarButton(icon: Icons.straighten_outlined, tooltip: L10n.of(context)!.bmClearMarks, palette: palette, onPressed: () => notifier.clearMeasurements(layer: mapState.activeLayer)),
           _ToolbarButton(icon: Icons.format_shapes_outlined, tooltip: L10n.of(context)!.bmClearShapes, palette: palette, onPressed: () => notifier.clearShapes(layer: mapState.activeLayer)),
+          _ToolbarButton(icon: Icons.route_outlined, tooltip: L10n.of(context)!.bmClearTrails, palette: palette, onPressed: notifier.clearTokenMoves),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
           _ToolbarButton(icon: Icons.delete_sweep_outlined, tooltip: L10n.of(context)!.sessionClearAll, palette: palette, onPressed: () async { await notifier.clearAll(); }),
         ],

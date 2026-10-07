@@ -388,9 +388,9 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       tokenSizeMultipliers: snapshot.tokenSizeMultipliers,
       // A trail goes with its token: hidden (left out of the snapshot) or
       // removed, its path must not stay on the players' screens.
-      clearTrail: _trailGone(cur.trail, snapshot.tokens),
+      trails: _visibleTrails(cur.trails, snapshot.tokens),
     );
-    final dropTrail = cur.trail != null && merged.trail == null;
+    final dropTrail = merged.trails.length != cur.trails.length;
 
     // Local state update — no full push.
     final replacement = current.copyWith(snapshot: merged);
@@ -410,22 +410,24 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       'showAllHp': snapshot.showAllHp,
       'hideTokenHud': snapshot.hideTokenHud,
       'tokenSizeMultipliers': snapshot.tokenSizeMultipliers,
-      if (dropTrail) 'trail': null,
+      if (dropTrail) 'trails': [for (final t in merged.trails) t.toJson()],
     });
   }
 
-  static bool _trailGone(TrailSnapshot? trail, List<TokenSnapshot> tokens) =>
-      trail != null && !tokens.any((t) => t.id == trail.id);
+  static List<TrailSnapshot> _visibleTrails(
+          List<TrailSnapshot> trails, List<TokenSnapshot> tokens) =>
+      [
+        for (final t in trails)
+          if (tokens.any((tok) => tok.id == t.id)) t,
+      ];
 
-  /// Sets (or with null clears) the token movement trail players see, and
-  /// with [ack] acknowledges the owner's moves applied so far. A trail on a
-  /// token the players can't see is never sent. [keepTrail] sends only the
-  /// ack.
-  void updateBattleMapTrail(
+  /// Sets the token movement trails players see (null keeps them as they
+  /// are), and with [ack] acknowledges the owner's moves applied so far. A
+  /// trail on a token the players can't see is never sent.
+  void updateBattleMapTrails(
     String itemId,
-    TrailSnapshot? trail, {
+    List<TrailSnapshot>? trails, {
     MoveAck? ack,
-    bool keepTrail = false,
   }) {
     final current = state.items
         .whereType<BattleMapProjection>()
@@ -434,23 +436,19 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     if (current == null) return;
     final cur = current.snapshot;
     final next =
-        keepTrail ? cur.trail : (_trailGone(trail, cur.tokens) ? null : trail);
-    final trailChanged = next != cur.trail;
+        trails == null ? cur.trails : _visibleTrails(trails, cur.tokens);
+    final trailChanged = !listEquals(next, cur.trails);
     final ackChanged = ack != null && ack != cur.moveAck;
     if (!trailChanged && !ackChanged) return;
     final replacement = current.copyWith(
-      snapshot: cur.copyWith(
-        trail: next,
-        clearTrail: next == null,
-        moveAck: ack,
-      ),
+      snapshot: cur.copyWith(trails: next, moveAck: ack),
     );
     state = state.copyWith(items: [
       for (final it in state.items)
         if (it.id == replacement.id) replacement else it,
     ]);
     _pushBattleMapPatch(itemId, {
-      if (trailChanged) 'trail': next?.toJson(),
+      if (trailChanged) 'trails': [for (final t in next) t.toJson()],
       if (ackChanged) 'moveAck': ack.toJson(),
     });
   }

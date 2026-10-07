@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/projection/battle_map_snapshot.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-10-06
+updated: 2026-10-07
 tags: [file]
 ---
 
@@ -16,7 +16,7 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- Constructor fields (all primitives): `mapPath?`, `fogDataBase64?`, `canvasWidth/Height` (def 2048), `gridSize` (50), `gridVisible`, `feetPerCell` (5), `diagonalRule` (index, 0=euclidean), `sceneVectorJson`, `showAllHp`, `hideTokenHud`, `tokenSize` (50), `tokenSizeMultipliers`, `tokens`, `turnIndex` (-1), `strokes`, `measurements`, `shapes`, `trail?`, `viewportNormalized?`.
+- Constructor fields (all primitives): `mapPath?`, `fogDataBase64?`, `canvasWidth/Height` (def 2048), `gridSize` (50), `gridVisible`, `feetPerCell` (5), `diagonalRule` (index, 0=euclidean), `sceneVectorJson`, `showAllHp`, `hideTokenHud`, `tokenSize` (50), `tokenSizeMultipliers`, `tokens`, `turnIndex` (-1), `strokes`, `measurements`, `shapes`, `trails`, `moveAck?`, `viewportNormalized?`.
 - `fromJson(Map)`: tolerant — missing keys default; reads legacy `conditionNames` flat list too.
 
 **Outputs**
@@ -31,9 +31,9 @@ tags: [file]
 - Spec / reference: [[Combat-and-VTT]]
 
 ## Key Logic / Variables
-- `schemaVersion = 5` (emitted as `_v`). Version ladder: v1 mixed raw-path/AssetRef; v2 AssetRef-only (player resolver falls back for v1); v3 additive `sceneVectorJson`; v4 additive typed `shapes`; v5 additive `trail`. All additive → older clients tolerate missing keys.
-- `TrailSnapshot` (`i` id, `p` flat path ending at the token, `s` stops = path indexes where each drag began, `c` colour): the DM's token movement trail ([[grid_canvas]] `tokenMove`), pushed by `BattleMapNotifier._pushTrailToProjection` (50 ms throttle, held back while the DM is still dragging; per-drag RDP + 0.1 px rounding via `trailSnapshotOf`, stops kept exact) through `ProjectionController.updateBattleMapTrail` as a `{'trail': …|null}` patch. A trail whose token is not in `tokens` (hidden/removed) is never sent and is cleared when the token disappears (`updateBattleMapSnapshot`). `tryParse` drops malformed trails and out-of-range stops. Player window `_mergePatch` handles `trail` (null → clear). Value equality (`==`) so an unchanged trail is not re-pushed.
-- `MoveAck` (`moveAck`: `i` combatant id, `s` seq): the last owner move (migration 108 `p_seq`) the DM applied, sent in the same `updateBattleMapTrail` patch as the trail it produced (`keepTrail: true` = ack only, e.g. while the DM is dragging). The owning player keeps its optimistic position/trail until this reaches its last call's number, then shows the DM's state.
+- `schemaVersion = 6` (emitted as `_v`). Version ladder: v1 mixed raw-path/AssetRef; v2 AssetRef-only (player resolver falls back for v1); v3 additive `sceneVectorJson`; v4 additive typed `shapes`; v5 additive `trail`; v6 `trails` (list) replaces `trail` — a v5 client shows no trails, a v6 client ignores a v5 DM's `trail`. Otherwise additive → older clients tolerate missing keys.
+- `TrailSnapshot` (`i` id, `p` flat path ending at the token, `s` stops = path indexes where each drag began, `c` colour): one token's movement trail; `trails` holds every token moved this round ([[grid_canvas]] `tokenMoves`), least recent first. Pushed by `BattleMapNotifier._pushTrailToProjection` (50 ms throttle, held back while the DM is still dragging any token; per-drag RDP + 0.1 px rounding via `trailSnapshotOf`, stops kept exact) through `ProjectionController.updateBattleMapTrails` as a `{'trails': [...]}` patch — every push re-sends all of them. Trails whose token is not in `tokens` (hidden/removed) are never sent and are dropped when the token disappears (`updateBattleMapSnapshot`). `tryParse`/`parseList` drop malformed trails and out-of-range stops. Player window `_mergePatch` replaces `trails` wholesale. Value equality (`==`) so unchanged trails are not re-pushed.
+- `MoveAck` (`moveAck`: `i` combatant id, `s` seq): the last owner move (migration 108 `p_seq`) the DM applied, sent in the same `updateBattleMapTrails` patch as the trail it produced (`trails: null` = ack only, e.g. while the DM is dragging). The owning player keeps its optimistic position/trail until this reaches its last call's number, then shows the DM's state.
 - `viewportNormalized` (`NormalizedRect`, 0..1 `left/top/w/h`): the canvas sub-rect the player should show. `null` = fit whole canvas. Player computes its own scale+offset (BoxFit.contain), so DM/player aspect ratios can differ and still mirror in proportion. [[projection_output_online]] clears it per-push so remote viewers pan freely.
 - `showAllHp`: reveals monster/NPC HP (bar + numeric); default only `isPlayer` tokens show HP. `hideTokenHud`: drops HP bar + condition badge (name stays).
 - `StrokeSnapshot`: flat `[x0,y0,...]` polyline (smaller JSON), colorHex, width — only committed *reveal* strokes (erase strokes not projected).
