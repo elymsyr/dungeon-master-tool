@@ -1,10 +1,10 @@
 {
-  "Arrows": "",
-  "Quiver": "",
-  "Bolts": "",
-  "Case": "",
-  "Bullets, Firearm": "",
-  "Pouch": "",
-  "Bullets, Sling": "",
-  "Needles": ""
+  "Arrows": "Oklar",
+  "Quiver": "Sadak",
+  "Bolts": "Kısa Oklar",
+  "Case": "Kutu",
+  "Bullets, Firearm": "Mermi, Ateşli Silah",
+  "Pouch": "Kese",
+  "Bullets, Sling": "Misket",
+  "Needles": "Dart Borusu Dartı"
 }

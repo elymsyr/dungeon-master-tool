@@ -1,14 +1,14 @@
 {
-  "Carriage": "",
-  "Cart": "",
-  "Chariot": "",
-  "Sled": "",
-  "Wagon": "",
-  "Galley": "",
-  "Keelboat": "",
-  "Longship": "",
-  "Rowboat": "",
-  "Sailing Ship": "",
-  "Warship": "",
-  "Airship": ""
+  "Carriage": "Yolcu Vagonu",
+  "Cart": "Araba",
+  "Chariot": "Savaş Arabası",
+  "Sled": "Kızak",
+  "Wagon": "Vagon",
+  "Galley": "Kalyon",
+  "Keelboat": "Altı Düz Mavna",
+  "Longship": "Viking Yelkenlisi",
+  "Rowboat": "Sandal",
+  "Sailing Ship": "Yelkenli",
+  "Warship": "Savaş Gemisi",
+  "Airship": "Hava Gemisi"
 }

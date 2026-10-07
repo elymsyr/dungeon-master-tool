@@ -31,7 +31,7 @@ eşya adı vardır (`Bless` → `Kutsa`, `Beholder` → `Kemgöz`, `Bag of Holdi
 
 **Aynen kalır** (N6 istisnası — İngilizceyle aynı olması hata değildir): Arcana · Druid · Paladin ·
 Elf · Drow · Goliath · Tiefling · Fey · Elemental · Feywild · Shadowfell · dış düzlem özel adları ·
-Mastiff · Dart · Normal · Cantrip · Ki · DC · CR · XP · gp · sp · cp · ep · pp · lb. · ft.
+Mastiff · Dart · Normal · Cantrip · Ki · DC · CR · XP · NPC · gp · GP · sp · cp · ep · pp · lb. · ft.
 
 ---
 
