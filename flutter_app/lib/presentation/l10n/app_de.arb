@@ -16,6 +16,7 @@
   "lblSettings": "Einstellungen",
   "lblTheme": "Thema",
   "lblLanguage": "Sprache",
+  "lblSrdLanguage": "SRD-Inhaltssprache",
   "tabDatabase": "Datenbank",
   "tabSession": "Sitzung",
   "tabMindMap": "Mindmap",

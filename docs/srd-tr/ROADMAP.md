@@ -307,7 +307,8 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 - **6.3** Çevrimiçi oyuncu kendi dilinde görür (çeviri istemci tarafında olduğu için otomatik) — test.
 - **6.4** (D6 onaylanırsa) Türkçe adla arama.
 - **Faz 6 sonucu (2026-10-08):** Kural: **her cihaz SRD'yi kendi dilinde görür.** Dil
-  `contentLanguageProvider` = cihazın arayüz dili; DM'den çıkan her şey İngilizce kalır, çeviri
+  `contentLanguageProvider` = cihazın SRD dili ayarı (Ayarlar → SRD İçerik Dili, arayüz dilinden
+  bağımsız; 2026-10-08); DM'den çıkan her şey İngilizce kalır, çeviri
   alıcıda yapılır.
   - 6.1: tek giriş `presentation/widgets/srd_text.dart` (`srdText`, `srdName`, `srdRefName`,
     `srdDescription`, `srdCombatantName`, `srdConditionName`). Bağlanan yüzeyler: kenar listesi kart

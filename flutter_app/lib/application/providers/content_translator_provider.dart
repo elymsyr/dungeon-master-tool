@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/services/content_translator.dart';
-import 'locale_provider.dart';
+import 'ui_state_provider.dart';
 
 /// `assets/srd_l10n/<dil>/<scope>.json` tablolarını yükler (docs/srd-tr
 /// ROADMAP §3). Tablosu olmayan dil → [ContentTranslator.identity].
@@ -29,13 +29,14 @@ final _contentTablesProvider =
       : ContentTranslator(tables);
 });
 
-/// İçerik çevirisinin dili: bu cihazın arayüz dili. Her cihaz SRD'yi kendi
-/// dilinde görür — çevrimiçi oyuncu DM'in dilini değil kendininkini.
+/// İçerik çevirisinin dili: bu cihazın ayarlardaki SRD dili (arayüz dilinden
+/// bağımsız). Her cihaz SRD'yi kendi seçtiği dilde görür — çevrimiçi oyuncu
+/// DM'in dilini değil kendininkini.
 /// Ayrı motorda çalışan yerel projeksiyon pencereleri (ikinci pencere, ekran
 /// yansıtma) bunu DM'in IPC ile gönderdiği dille override eder; onlar DM'in
 /// kendi ekranıdır.
 final contentLanguageProvider =
-    Provider<String>((ref) => ref.watch(localeProvider).languageCode);
+    Provider<String>((ref) => ref.watch(uiStateProvider.select((s) => s.srdLanguage)));
 
 /// Seçili dilin içerik çevirmeni. Yüklenene kadar (ve hata olursa)
 /// kimlik — ekran İngilizce görünür, hiçbir şey bozulmaz.
