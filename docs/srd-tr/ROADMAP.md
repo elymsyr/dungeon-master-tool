@@ -416,6 +416,6 @@ listeyi sonra kontrol eder, değişen ad her metinde birlikte değiştirilir. `S
   | World Book / Dünya Kitabı | Açık ama iki kelime, sekme için uzun |
   | Almanac / Almanak | Fantastik tını; Türkçede az bilinir |
 
-  Karar kullanıcıda. Seçilince 4 dilde `tabDatabase` + iki ilişkili metin değişir; kod içi adlar
-  (`screens/database/`) değişmez.
-- **Kart kapatılırken son yazılanlar kaybolabiliyor** — `docs/KNOWN_ISSUES.md`'de.
+  ✅ Karar (2026-10-08): **Codex / Kodeks** (DE `Kodex`). 4 dilde `tabDatabase`,
+  `sessionAddFromDatabase`, `helpWorldsBody` değişti; kod içi adlar (`screens/database/`) aynı.
+- **Kart kapatılırken son yazılanlar kaybolabiliyor** — ✅ düzeltildi (2026-10-08): `entity_card.dart` bekleyen düzenlemeyi `deactivate`'te yazar.
