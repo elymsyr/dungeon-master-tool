@@ -139,6 +139,7 @@ class _CharacterEditorScreenState
   final List<Character> _redoStack = [];
   Character? _undoBaseline;
   Timer? _undoIdleTimer;
+  Timer? _textRebuildTimer;
 
   // Captured at initState — Riverpod marks `ref` disposed before
   // `state.dispose()` runs during unmount, so we cannot `ref.read(...)` in
@@ -165,6 +166,7 @@ class _CharacterEditorScreenState
   @override
   void dispose() {
     _undoIdleTimer?.cancel();
+    _textRebuildTimer?.cancel();
     // Dispose sırasında bekleyen debounced write varsa hemen fire et —
     // kullanıcı back tuşunu atlatarak (router pop, app close) çıkarsa
     // son edit'in kaybolmasını önle.
@@ -195,7 +197,12 @@ class _CharacterEditorScreenState
   /// Central mutation entry point — records undo baseline, updates state,
   /// schedules autosave. All edits (name, desc, tags, portrait, fields)
   /// should go through this.
-  void _mutate(Character next) {
+  ///
+  /// [deferRebuild]: serbest metin alanları (ad, açıklama, DM notu) için.
+  /// TextField kendi metnini zaten gösteriyor; tüm satır listesini her
+  /// harfte yeniden kurmak yerine `_working` hemen güncellenir (autosave +
+  /// undo onu okur), rebuild yazma 300 ms durunca tek sefer yapılır.
+  void _mutate(Character next, {bool deferRebuild = false}) {
     // Phase 0 — time keystroke → committed frame (no-op in release).
     final probe = PerfProbe.instance.start();
     if (probe != null) {
@@ -204,7 +211,26 @@ class _CharacterEditorScreenState
       );
     }
     final prev = _working;
-    setState(() => _working = next);
+    // Ertelenmiş metin varken gelen normal edit, build anında yakalanmış
+    // (metni henüz görmemiş) bir kopyadan türemiş olabilir — metni koru.
+    if (!deferRebuild && (_textRebuildTimer?.isActive ?? false) && prev != null) {
+      next = next.copyWith(
+        entity: next.entity.copyWith(
+          name: prev.entity.name,
+          description: prev.entity.description,
+          dmNotes: prev.entity.dmNotes,
+        ),
+      );
+    }
+    _textRebuildTimer?.cancel();
+    if (deferRebuild) {
+      _working = next;
+      _textRebuildTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) setState(() {});
+      });
+    } else {
+      setState(() => _working = next);
+    }
     _undoBaseline ??= prev;
     _undoIdleTimer?.cancel();
     _undoIdleTimer = Timer(const Duration(milliseconds: 400), () {
@@ -730,7 +756,7 @@ class _CharacterEditorScreenState
         final c = _working;
         if (c == null) return;
         _mutate(c.copyWith(
-            entity: c.entity.copyWith(dmNotes: v)));
+            entity: c.entity.copyWith(dmNotes: v)), deferRebuild: true);
       },
     ),
     ];
@@ -902,7 +928,11 @@ class _CharacterEditorScreenState
                     contentPadding: EdgeInsets.zero,
                   ),
                   onChanged: (v) {
-                    _mutate(c.copyWith(entity: c.entity.copyWith(name: v)));
+                    // `c` build anındaki kopya; ertelenmiş rebuild'de
+                    // eskimiş olabilir — güncel `_working`'den türet.
+                    final cur = _working ?? c;
+                    _mutate(cur.copyWith(entity: cur.entity.copyWith(name: v)),
+                        deferRebuild: true);
                   },
                 ),
               const SizedBox(height: 2),
@@ -943,7 +973,8 @@ class _CharacterEditorScreenState
                   final cur = _working;
                   if (cur == null) return;
                   _mutate(cur.copyWith(
-                      entity: cur.entity.copyWith(description: v)));
+                      entity: cur.entity.copyWith(description: v)),
+                      deferRebuild: true);
                 },
               ),
               const SizedBox(height: 10),
