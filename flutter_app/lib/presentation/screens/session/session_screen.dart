@@ -45,6 +45,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // Left encounter panel; null = default: open on desktop/tablet, closed on
   // a phone, where it covers the map.
   bool? _encounterOpen;
+  // Desktop/tablet: width of the encounter panel, dragged from its right edge.
+  double _panelWidth = 380;
   // Phone only: the event log can be hidden from the combat bar.
   bool _logVisible = true;
 
@@ -65,7 +67,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
 
     return LayoutBuilder(builder: (context, constraints) {
-      final panelWidth = phone ? min(constraints.maxWidth * 0.8, 320.0) : 380.0;
+      final panelWidth = phone
+          ? min(constraints.maxWidth * 0.8, 320.0)
+          : _panelWidth.clamp(280.0, max(280.0, constraints.maxWidth * 0.6)).toDouble();
       final mapLeft = open && !phone ? panelWidth : 0.0;
       // Buttons sit straight on the map, clear of the phone map bar and the
       // dice button; the log sits above them and the dice button on the right.
@@ -92,6 +96,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ));
                   return _buildEncounterPanel(palette, encounters, enc, phone: phone);
                 }),
+              ),
+            ),
+          if (open && !phone)
+            Positioned(
+              left: panelWidth - 4,
+              top: 0,
+              bottom: 0,
+              width: 8,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeColumn,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragUpdate: (d) => setState(() => _panelWidth = panelWidth + d.delta.dx),
+                ),
               ),
             ),
           // Event log, over everything.
