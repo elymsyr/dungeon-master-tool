@@ -295,15 +295,21 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         _ref.invalidate(worldMembersProvider(worldId));
         _ref.invalidate(worldActiveInviteCodeProvider(worldId));
         // F6: kritik medya pre-warm (portre + aktif encounter + cover).
-        // Fire-and-forget; başarısızlık UI'ı bloklamaz.
-        unawaited(
-          _ref.read(preWarmOrchestratorProvider).warmWorld(worldId).catchError(
-            (Object e, StackTrace s) {
+        // Fire-and-forget; başarısızlık UI'ı bloklamaz. Yalnız online
+        // dünyada: offline dünyanın medyası çoğunlukla cihazda (bulut ref'i
+        // varsa `AssetRefImage` ilk gösterimde indirir); warm orada settings
+        // + karakter JSON'unu boşuna ikinci kez çözerdi.
+        if (_ref.read(onlineWorldIdsProvider).contains(worldId)) {
+          unawaited(
+            _ref
+                .read(preWarmOrchestratorProvider)
+                .warmWorld(worldId)
+                .catchError((Object e, StackTrace s) {
               debugPrint('preWarm error: $e');
               return 0;
-            },
-          ),
-        );
+            }),
+          );
+        }
         // Online + auth ready → cloud full snapshot'ı AWAIT et. Loading
         // flag bu süre boyunca true kalır → hub UI spinner gösterir, world
         // ekranı stale state ile açılmaz.

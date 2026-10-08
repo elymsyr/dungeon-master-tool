@@ -110,6 +110,22 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   List<_EntitySummary> _shown = const [];
   Map<String, String> _enNames = const {};
 
+  /// Arama metni, [summaries] ile aynı sırada: katlanmış ad, İngilizce ad,
+  /// kaynak ve etiketler. Liste değişince bir kez kurulur; her sorguda 7 K
+  /// satırı yeniden küçük harfe çevirmek yerine tek `contains`.
+  List<_EntitySummary>? _haySrc;
+  List<String> _hay = const [];
+
+  List<String> _haystack(List<_EntitySummary> summaries) {
+    if (identical(summaries, _haySrc)) return _hay;
+    _haySrc = summaries;
+    return _hay = [
+      for (final e in summaries)
+        searchFold(
+            [e.name, _enNames[e.id] ?? '', e.source, ...e.tags].join('\n')),
+    ];
+  }
+
   List<_EntitySummary> _translated(
       List<_EntitySummary> src, ContentTranslator tx) {
     if (identical(src, _shownSrc) && identical(tx, _shownTx)) return _shown;
@@ -394,11 +410,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       if (query.isEmpty) {
         m.addAll(filtered);
       } else {
-        bool hits(_EntitySummary e) =>
-            searchFold(e.name).contains(query) ||
-            (_enNames[e.id]?.toLowerCase().contains(query) ?? false) ||
-            e.source.toLowerCase().contains(query) ||
-            e.tags.any((t) => t.toLowerCase().contains(query));
+        final hay = _haystack(summaries);
         bool isInFilter(_EntitySummary e) {
           if (_selectedSlugs.isNotEmpty &&
               !_selectedSlugs.contains(e.categorySlug)) {
@@ -415,8 +427,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           return true;
         }
 
-        for (final e in summaries) {
-          if (!hits(e)) continue;
+        for (var i = 0; i < summaries.length; i++) {
+          if (!hay[i].contains(query)) continue;
+          final e = summaries[i];
           (isInFilter(e) ? m : o).add(e);
         }
       }

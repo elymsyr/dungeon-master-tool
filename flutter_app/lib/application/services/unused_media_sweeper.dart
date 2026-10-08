@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
 import 'local_media_localizer.dart';
+import 'mention_text.dart';
 
 /// Dünyanın `media/` ve `files/` klasörlerinde **hiçbir yerden referans
 /// verilmeyen** dosyaları siler.
@@ -118,6 +119,10 @@ class UnusedMediaSweeper {
         final trimmed = piece.trim();
         if (trimmed.isEmpty || !p.isAbsolute(trimmed)) continue;
         out.add(p.canonicalize(trimmed));
+      }
+      // Markdown alanına gömülü resimler (`![](dmt-img:…)`) kodlanmış durur.
+      for (final ref in markdownImageRefs(node)) {
+        if (p.isAbsolute(ref)) out.add(p.canonicalize(ref));
       }
       return;
     }

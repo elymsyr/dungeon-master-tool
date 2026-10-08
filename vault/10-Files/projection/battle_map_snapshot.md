@@ -12,7 +12,7 @@ tags: [file]
 # `battle_map_snapshot.dart`
 
 > [!abstract] Primary Purpose
-> JSON-clean, IPC/CDC-transportable snapshot of a battle map's player-visible state. Deliberately excludes `ui.Image`/`Path` objects — only file paths, base64 fog bitmap, and primitive token/stroke/shape/measurement data. The DM rebuilds it whenever combat/battle-map state changes (via [[battle_map_snapshot_builder]]); the player decodes it once per push and renders.
+> JSON-clean, IPC/CDC-transportable snapshot of a battle map's player-visible state. Deliberately excludes `ui.Image`/`Path` objects — only file paths, base64 fog bitmap, and primitive token/stroke/shape/measurement data. The DM rebuilds it whenever combat/battle-map state changes (via [[battle_map_snapshot_builder]]); the player decodes it once per push and renders. `BattleMapProjectionView` re-decodes the fog only when the base64 string changes (it used to compare lengths and missed same-size edits) and bakes its feather once into a quarter-canvas-resolution image (`blurFog`), instead of blurring the full fog image in every paint.
 
 ## Inputs / Outputs
 **Inputs**

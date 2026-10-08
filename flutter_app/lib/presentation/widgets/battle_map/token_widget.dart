@@ -41,6 +41,11 @@ class TokenWidget extends StatefulWidget {
   /// hide, resize).
   final void Function(String id) onContextMenu;
 
+  /// Where canvas (0,0) sits inside the token layer's box — the box is
+  /// centred on the origin so tokens dragged off the map's top/left (negative
+  /// coordinates) stay inside it and remain hit-testable.
+  final double canvasOrigin;
+
   const TokenWidget({
     super.key,
     required this.combatant,
@@ -57,6 +62,7 @@ class TokenWidget extends StatefulWidget {
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onContextMenu,
+    this.canvasOrigin = 0,
   });
 
   @override
@@ -82,8 +88,8 @@ class _TokenWidgetState extends State<TokenWidget> {
     // The Positioned box is exactly the circle's bounding square; the HUD
     // (name/HP/conditions) overflows it via a non-clipping Stack.
     return Positioned(
-      left: canvasPos.dx - size / 2,
-      top: canvasPos.dy - size / 2,
+      left: widget.canvasOrigin + canvasPos.dx - size / 2,
+      top: widget.canvasOrigin + canvasPos.dy - size / 2,
       width: size,
       height: size,
       child: Stack(

@@ -20,6 +20,7 @@ import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'perf/image_cache_size.dart';
 
 /// Dünya online'a alındıktan sonra: DM'in **paylaşıma işaretlediği**
 /// kartları oyunculara açar, sonra ne gidip ne gitmediğini bir kez anlatır.
@@ -431,7 +432,8 @@ class MemberRow extends StatelessWidget {
             radius: 12,
             backgroundColor: palette.featureCardAccent.withValues(alpha: 0.2),
             backgroundImage: (member.avatarUrl?.isNotEmpty == true)
-                ? NetworkImage(member.avatarUrl!)
+                ? ResizeImage.resizeIfNeeded(cachePxFromLogical(context, 24),
+                    null, NetworkImage(member.avatarUrl!))
                 : null,
             child: (member.avatarUrl?.isEmpty ?? true)
                 ? Icon(Icons.person, size: 12, color: palette.tabActiveText)
@@ -590,7 +592,8 @@ class _MemberChip extends StatelessWidget {
               backgroundColor:
                   palette.featureCardAccent.withValues(alpha: 0.25),
               backgroundImage: (member.avatarUrl?.isNotEmpty == true)
-                  ? NetworkImage(member.avatarUrl!)
+                  ? ResizeImage.resizeIfNeeded(cachePxFromLogical(context, 20),
+                      null, NetworkImage(member.avatarUrl!))
                   : null,
               child: (member.avatarUrl?.isEmpty ?? true)
                   ? Text(

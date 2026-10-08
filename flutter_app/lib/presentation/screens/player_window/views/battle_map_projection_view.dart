@@ -28,7 +28,8 @@ import '../../../../domain/services/content_translator.dart';
 /// - `AutomaticKeepAliveClientMixin` keeps the decoded background image
 ///   alive across tab switches.
 /// - Background and fog are decoded only when their source paths/data
-///   change (memoized via `_lastMapPath` / `_lastFogHash`).
+///   change (memoized via `_lastMapPath` / `_lastFog`); the fog's feather
+///   is baked once per change (`blurFog`).
 /// - Token rendering is a single CustomPaint pass — no per-token widgets.
 class BattleMapProjectionView extends ConsumerStatefulWidget {
   final BattleMapProjection item;
@@ -49,13 +50,51 @@ class BattleMapProjectionView extends ConsumerStatefulWidget {
       _BattleMapProjectionViewState();
 }
 
+/// Fog feather in canvas units.
+const double _fogSigma = 12;
+
+/// Ring around the canvas the baked fog extends into, in canvas units: the
+/// blur fades to transparent at the image edge, and that fade must land
+/// outside the canvas or the map peeks through full-cover fog.
+const double _fogPad = _fogSigma * 3;
+
+/// Bakes the fog's feather once per fog change. Blurring a map-sized image
+/// in every paint (each token move, trail tick, resize) was the player
+/// phone's heaviest frame. The result covers the canvas plus [_fogPad] on
+/// every side, and since it is blurred it can be stored at a fraction of the
+/// resolution.
+@visibleForTesting
+ui.Image blurFog(ui.Image fog, Size canvas) {
+  final src = Rect.fromLTWH(0, 0, fog.width.toDouble(), fog.height.toDouble());
+  if (canvas.isEmpty) canvas = src.size;
+  // Output px per canvas unit: the feather keeps 3 px of blur, which
+  // upscales smooth. ponytail: raise the 3 if edges look stepped on big
+  // displays.
+  const sigma = 3.0, unit = sigma / _fogSigma, pad = _fogPad * unit;
+  final inner = const Offset(pad, pad) & canvas * unit;
+  final full = inner.inflate(pad); // starts at (0, 0)
+  final recorder = ui.PictureRecorder();
+  final paint = Paint()..filterQuality = FilterQuality.medium;
+  // Stretched copy under the pad ring carries the edge cells outwards; the
+  // exact copy replaces it over the canvas so the fog stays aligned.
+  Canvas(recorder)
+    ..saveLayer(full,
+        Paint()..imageFilter = ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma))
+    ..drawImageRect(fog, src, full, paint)
+    ..drawImageRect(fog, src, inner, paint..blendMode = BlendMode.src)
+    ..restore();
+  return recorder
+      .endRecording()
+      .toImageSync(full.width.ceil(), full.height.ceil());
+}
+
 class _BattleMapProjectionViewState
     extends ConsumerState<BattleMapProjectionView>
     with AutomaticKeepAliveClientMixin {
   ui.Image? _bgImage;
   ui.Image? _fogImage;
   String? _lastMapPath;
-  String? _lastFogHash;
+  String? _lastFog;
   final Map<String, ui.Image> _tokenImageCache = {};
 
   /// The viewer's token while they move it in their turn. Held after release
@@ -323,25 +362,33 @@ class _BattleMapProjectionViewState
   }
 
   Future<void> _maybeReloadFog() async {
-    final fogB64 = widget.item.snapshot.fogDataBase64;
-    final hash = fogB64?.length.toString();
-    if (hash == _lastFogHash) return;
-    _lastFogHash = hash;
+    final snap = widget.item.snapshot;
+    final fogB64 = snap.fogDataBase64;
+    // The whole string, not its length: a fog edit that compresses to the
+    // same size used to be skipped.
+    if (fogB64 == _lastFog) return;
+    _lastFog = fogB64;
     if (fogB64 == null || fogB64.isEmpty) {
-      setState(() => _fogImage = null);
+      setState(() {
+        _fogImage?.dispose();
+        _fogImage = null;
+      });
       return;
     }
     try {
-      final bytes = base64Decode(fogB64);
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      if (!mounted) {
-        frame.image.dispose();
+      final codec = await ui.instantiateImageCodec(base64Decode(fogB64));
+      final raw = (await codec.getNextFrame()).image;
+      final blurred = blurFog(raw,
+          Size(snap.canvasWidth.toDouble(), snap.canvasHeight.toDouble()));
+      raw.dispose();
+      // A newer fog arrived while this one decoded.
+      if (!mounted || _lastFog != fogB64) {
+        blurred.dispose();
         return;
       }
       setState(() {
         _fogImage?.dispose();
-        _fogImage = frame.image;
+        _fogImage = blurred;
       });
     } catch (_) {
       if (mounted) setState(() => _fogImage = null);
@@ -1071,8 +1118,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
 
     // 4. Fog — drawn after tokens so hidden tokens actually disappear
     // behind the dark mask. The fog image's alpha channel encodes
-    // hidden=opaque, revealed=transparent. Blur is applied as a Paint
-    // imageFilter for soft, feathered edges.
+    // hidden=opaque, revealed=transparent.
     if (fogImage != null) {
       final src = Rect.fromLTWH(
         0,
@@ -1080,33 +1126,17 @@ class _BattleMapProjectionPainter extends CustomPainter {
         fogImage!.width.toDouble(),
         fogImage!.height.toDouble(),
       );
-      final sigma = (12 * scale).clamp(4.0, 32.0);
-      // Pad fog dst by ~3σ outside destRect, then clip strictly to destRect.
-      // Blur feathers alpha→0 at the dst rect edge — without padding, that
-      // feather would land on top of the bg image's edge and the bg would
-      // peek through full-cover fog. With padding + tight clip, the feather
-      // is in the cropped-out ring; what remains in destRect is opaque.
-      final fogPad = sigma * 3;
-      final fogDest = Rect.fromLTRB(
-        destRect.left - fogPad,
-        destRect.top - fogPad,
-        destRect.right + fogPad,
-        destRect.bottom + fogPad,
-      );
+      // Already feathered (blurFog) and padded by _fogPad; the clip drops
+      // the fading ring outside the canvas.
       canvas.save();
       canvas.clipRect(destRect);
       canvas.drawImageRect(
         fogImage!,
         src,
-        fogDest,
+        destRect.inflate(_fogPad * scale),
         Paint()
           ..isAntiAlias = true
           ..filterQuality = FilterQuality.medium
-          ..imageFilter = ui.ImageFilter.blur(
-            sigmaX: sigma,
-            sigmaY: sigma,
-            tileMode: TileMode.clamp,
-          )
           ..colorFilter = const ColorFilter.mode(
             Color(0xFF000000),
             BlendMode.srcIn,

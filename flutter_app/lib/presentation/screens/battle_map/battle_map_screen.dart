@@ -12,6 +12,7 @@ import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
+import '../../dialogs/add_condition_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -368,7 +369,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
     // Canvas extent must be large enough so inverse-transformed screen
     // coordinates stay within the Stack's layout bounds for hit-testing.
-    const canvasExtent = 10000.0;
+    // Centred on canvas (0,0) so tokens left/above the map stay hittable.
+    const canvasExtent = 20000.0;
+    const canvasOrigin = canvasExtent / 2;
 
     return ValueListenableBuilder<ViewTransform>(
       valueListenable: notifier.viewTransform,
@@ -382,7 +385,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
           child: Transform(
             transform: Matrix4.identity()
               ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
-              ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+              ..scaleByDouble(vt.scale, vt.scale, 1, 1)
+              ..translateByDouble(-canvasOrigin, -canvasOrigin, 0, 1),
             child: child,
           ),
         );
@@ -435,6 +439,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                           .tokenPositions[id]!);
                 },
                 onContextMenu: (id) => _showTokenMenu(id, mapState, notifier),
+                canvasOrigin: canvasOrigin,
               );
             }),
           ],
@@ -778,7 +783,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Token context menu (damage / heal / hide / resize)
+  // Token context menu (damage / heal / hide / resize / condition / remove)
   // -------------------------------------------------------------------------
 
   void _showTokenMenu(
@@ -878,6 +883,33 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                         },
                         icon: const Icon(Icons.aspect_ratio),
                         label: Text(L10n.of(context)!.bmResize),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          showAddConditionDialog(context, ref, id);
+                        },
+                        icon: const Icon(Icons.healing),
+                        label: Text(L10n.of(context)!.sessionAddConditionTitle),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          // Undoable via the combat tracker's undo stack.
+                          ref.read(combatProvider.notifier).deleteCombatant(id);
+                        },
+                        icon: const Icon(Icons.person_remove),
+                        label: Text(L10n.of(context)!.btnRemove),
                       ),
                     ),
                   ],
