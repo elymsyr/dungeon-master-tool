@@ -369,7 +369,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
     // Canvas extent must be large enough so inverse-transformed screen
     // coordinates stay within the Stack's layout bounds for hit-testing.
-    const canvasExtent = 10000.0;
+    // Centred on canvas (0,0) so tokens left/above the map stay hittable.
+    const canvasExtent = 20000.0;
+    const canvasOrigin = canvasExtent / 2;
 
     return ValueListenableBuilder<ViewTransform>(
       valueListenable: notifier.viewTransform,
@@ -383,7 +385,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
           child: Transform(
             transform: Matrix4.identity()
               ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
-              ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+              ..scaleByDouble(vt.scale, vt.scale, 1, 1)
+              ..translateByDouble(-canvasOrigin, -canvasOrigin, 0, 1),
             child: child,
           ),
         );
@@ -436,6 +439,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                           .tokenPositions[id]!);
                 },
                 onContextMenu: (id) => _showTokenMenu(id, mapState, notifier),
+                canvasOrigin: canvasOrigin,
               );
             }),
           ],
