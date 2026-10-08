@@ -6,8 +6,10 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -33,6 +35,14 @@ import 'presentation/screens/player_window/screencast_main.dart'
 final ValueNotifier<int> playerWindowClosedSignal = ValueNotifier<int>(0);
 
 void main(List<String> args) async {
+  // Every font the app uses ships in assets/fonts/ (tool/fonts/bundle_fonts.py):
+  // no download, the right face offline, no text reflow when it lands.
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+        const ['google_fonts'], await rootBundle.loadString('assets/fonts/OFL.txt'));
+  });
+
   // Player sub-window entrypoint — desktop_multi_window launches us with
   // ['multi_window', <windowId>, <argument>]. The sub-isolate needs neither
   // SoLoud nor AppPaths nor uiState — it is a pure rendering slave driven

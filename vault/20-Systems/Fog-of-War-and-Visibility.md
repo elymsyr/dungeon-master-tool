@@ -1,7 +1,7 @@
 ---
 type: system
 domain: projection
-updated: 2026-06-09
+updated: 2026-10-08
 tags: [system]
 ---
 
@@ -26,6 +26,7 @@ tags: [system]
 ## Key Constants / Invariants
 - Filtering happens **before** transport — the player window/screencast/online stream only ever receives the filtered snapshot.
 - Hidden flag is end-to-end (DM + player) per the VTT upgrade.
+- The player view feathers the fog once per fog change (`blurFog` in `battle_map_projection_view.dart`), never per frame.
 
 ## Related
 - MoCs: [[Projection-Second-Screen]], [[Combat-and-VTT]]
