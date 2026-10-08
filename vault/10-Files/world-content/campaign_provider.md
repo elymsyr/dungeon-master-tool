@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/campaign_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-24
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -38,7 +38,7 @@ tags: [file]
 ## Key Logic / Variables
 - **`ActiveCampaignNotifier.state` dünya İD'sidir** (Faz 2.5; eskiden addı). Görünen ad `activeWorldNameProvider`'dan okunur — başlık/menü oradan besleniyor. `ui_state` dünya görünümleri, `dbRecentEntitiesProvider` ve marketplace `localId` de artık bu id'yi anahtar alıyor. **İstisna:** paket ekranı bu provider'ı kendi ProviderScope'unda paket ADIYLA override ediyor; orada değer "açık içeriğin anahtarı" demek ve adapter repo onu paket adı olarak okuyor.
 - `_data` (the full world blob) mutating in-place does NOT fire Riverpod listeners. Mutating `_data` in-place does NOT fire Riverpod listeners, so it bumps `campaignRevisionProvider` (monotonic int) to make `worldSchemaProvider`/`entityProvider` re-read without a full notifier-recreation cascade.
-- **Open is two-phase**: `beginLoad(worldId)` synchronously flips `state` + clears `_data` + sets `activeCampaignLoadingProvider=true` (optimistic, same frame as tap; downstream falls back to default schema/empty entities). `completeLoad()` flushes the prior world's `pendingWriteBufferProvider`, loads new `_data`, bumps revision, then for ONLINE worlds AWAITs `_awaitCloudHydrate` with an **8s timeout** (prevents Device-B opening on stale local snapshot) then bumps revision again. Pre-warms critical media fire-and-forget.
+- **Open is two-phase**: `beginLoad(worldId)` synchronously flips `state` + clears `_data` + sets `activeCampaignLoadingProvider=true` (optimistic, same frame as tap; downstream falls back to default schema/empty entities). `completeLoad()` flushes the prior world's `pendingWriteBufferProvider`, loads new `_data`, bumps revision, then for ONLINE worlds AWAITs `_awaitCloudHydrate` with an **8s timeout** (prevents Device-B opening on stale local snapshot) then bumps revision again. Pre-warms critical media fire-and-forget — online worlds only (an offline world's media is mostly local and any cloud ref still downloads on first render via `AssetRefImage`; warming there only re-decoded settings + character JSON).
 - **`sweepUnusedMedia()`** — dünyanın `media/` + `files/` klasöründeki referanssız dosyaları siler ([[unused_media_sweeper]]). `completeLoad` sonunda fire-and-forget, kapanışta `main_screen._exitToHub` içinde pending flush'tan **sonra** await'li. Seçilen her dosya artık dünya klasörüne kopyalandığı ([[local_media_localizer]]) ama kaldırma yolları yalnız bulut nesnesini sildiği için gerekli.
 - **`saveSettingsPatchLocalOnly` → `touchWorld: false`** — viewport pan/zoom `worlds.updated_at`'i bump etmez; etseydi birleştirmede (o zaman LAN, şimdi `.dmtz`) hiç içerik düzenlemeyen cihaz LWW'yi kazanıp karşı tarafın işini ezerdi.
 - **`_settingsTopKeyBlocklist`** (also `WorldRepositoryImpl._typedTopKeys`): `world_id, world_name, created_at, entities, sessions, world_schema, template_id, template_hash, template_original_hash` — everything else rides in `world_settings.settings_json`.
