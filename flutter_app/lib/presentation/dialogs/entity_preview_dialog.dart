@@ -11,6 +11,8 @@ import '../theme/dm_tool_colors.dart';
 import '../widgets/asset_ref_image.dart';
 import '../widgets/expandable_markdown.dart';
 import '../widgets/field_widgets/field_widget_factory.dart';
+import '../../application/providers/content_translator_provider.dart';
+import '../../domain/services/content_translator.dart';
 
 /// Read-only "quick look" at an entity, shown from a long-press on any ref
 /// link (see `entity_link.dart`). Lets the character sheet and the creation
@@ -74,6 +76,11 @@ class _PreviewBody extends StatelessWidget {
     // çizilmez. Bu dialog ref link'ten açılıyor, yani oyuncunun eline geçen
     // ikinci render yolu — filtreyi burada da uygulamak zorunlu.
     final isPlayer = ref.watch(isPlayerViewProvider);
+    // SRD içerik çevirisi — kartın okuma moduyla aynı, yalnızca görüntü.
+    final tx = ref.watch(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
+    final slug = entity.categorySlug;
+    final name = tx.tr(slug, entity.name);
+    final description = tx.tr(slug, entity.description);
     final fields = [
       for (final f in fieldsVisibleToRole(
         category?.fields ?? const [],
@@ -112,7 +119,7 @@ class _PreviewBody extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           Text(
-            entity.name.isEmpty ? '(Unnamed)' : entity.name,
+            name.isEmpty ? '(Unnamed)' : name,
             style: TextStyle(
               fontFamily: palette.useSerif ? 'Georgia' : null,
               fontSize: 24,
@@ -123,7 +130,7 @@ class _PreviewBody extends StatelessWidget {
           ),
           if (category != null)
             Text(
-              category!.name,
+              tx.tr(ContentTranslator.schemaScope, category!.name),
               style: TextStyle(
                 fontSize: 14,
                 fontStyle: FontStyle.italic,
@@ -131,9 +138,9 @@ class _PreviewBody extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 8),
-          if (entity.description.trim().isNotEmpty) ...[
+          if (description.trim().isNotEmpty) ...[
             ExpandableMarkdown(
-              data: entity.description,
+              data: description,
               collapsedMaxLines: 6,
               collapsedTextStyle: TextStyle(fontSize: 15, color: palette.srdInk),
             ),
@@ -141,8 +148,8 @@ class _PreviewBody extends StatelessWidget {
           ],
           for (final f in fields)
             FieldWidgetFactory.create(
-              schema: f,
-              value: entity.fields[f.fieldKey],
+              schema: tx.field(f),
+              value: tx.value(slug, f, entity.fields[f.fieldKey]),
               readOnly: true,
               onChanged: (_) {},
               entities: entities,

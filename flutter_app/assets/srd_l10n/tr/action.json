@@ -1,0 +1,18 @@
+{
+  "Action": "Eylem",
+  "Bonus Action": "Bonus Eylem",
+  "Reaction": "Reaksiyon",
+  "Free Action": "Serbest Eylem",
+  "Magic Action": "Büyü Eylemi",
+  "Attack Action": "Saldırı Eylemi",
+  "Dash": "Depar",
+  "Dodge": "Kaçınma",
+  "Disengage": "Ayrılma",
+  "Help": "Yardım",
+  "Hide": "Gizlenme",
+  "Ready": "Hazırla",
+  "Search": "Arama",
+  "Influence": "Etkileme",
+  "Study": "Araştırma",
+  "Utilize": "Nesne Kullanma"
+}

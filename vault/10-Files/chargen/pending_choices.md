@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/pending_choices.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-28
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 - Supabase / CDC / events / triggers: none.
 
 **Outputs**
-- Public API: `PendingChoiceKind` (14 kinds), `PendingChoice` (+ `toMap`/`fromMap`), `readPendingChoices`, `encodePendingChoices`, `newPendingChoice`, `seedFeatChoicePendings`, `seedFeatFollowOns`, `pendingChoicesFromPlan`, `pendingChoiceLabel`, `pendingChoiceFieldHints`.
+- Public API: `PendingChoiceKind` (14 kinds), `PendingChoice` (+ `toMap`/`fromMap`), `readPendingChoices`, `encodePendingChoices`, `newPendingChoice`, `seedFeatChoicePendings`, `seedFeatFollowOns`, `pendingChoicesFromPlan`, `pendingChoiceFieldHints`. The human label moved to the presentation layer (2026-10-08): `pendingChoiceLabel(context, p)` in `presentation/widgets/pending_choices_badge.dart` — L10n pattern + SRD-translated class/feat/feature name ([[content_translator]]).
 
 ## Dependencies & Links
 - Depends on: [[level_up_planner]] (`LevelUpPlan`), `entity.dart`, `dart:math`.
@@ -36,7 +36,7 @@ tags: [file]
 - `pendingChoicesFromPlan`: maps `LevelUpPlan` flags → choices — subclass (only when `!hasSubclass`), asiOrFeat, fightingStyle, divineOrder, one `featureOption` per `featureOptionPicks` name, cantrips (`cantripsKnownDelta`), spells (`preparedSpellsDelta` + `maxSpellLevelAtNewLevel`), weaponMastery (`weaponMasteryCountDelta`).
 - `seedFeatChoicePendings`: scans each feat's **`player_choices`** rows (`{group_id, label, prompt, pick_kind, pick, options?, list_group_id?, spell_level?}` — `FieldType.playerChoices`), emits one `featChoice` per under-filled group (remaining = `pick - alreadyPicked` from comma-joined `existingFeatChoices[<featId>:<groupId>]`); `pick_kind == 'ability'` skipped (handled by featAsi, and the resolver dialog has no ability picker).
 - `seedFeatFollowOns`: for one feat emits skillProficiency (`bonus_skill_pick_count`), expertise (`bonus_expertise_pick_count`), featAsi (`asi_amount > 0`, sourced to the feat), plus the feat's `player_choices` pendings. Shared by editor level-up + manual feat-edit paths so they never drift.
-- `pendingChoiceLabel`: human label per kind (`"$classLabel L$level · ..."`). `pendingChoiceFieldHints`: which schema field tiles light the `!` badge per kind (e.g. asiOrFeat → `{stat_block, feats}`, spells/cantrips → `{spells_known}`, subclass → `{subclass_refs}`, weaponMastery → `{weapon_masteries}`).
+- `pendingChoiceFieldHints`: which schema field tiles light the `!` badge per kind (e.g. asiOrFeat → `{stat_block, feats}`, spells/cantrips → `{spells_known}`, subclass → `{subclass_refs}`, weaponMastery → `{weapon_masteries}`).
 
 ## Notes
 - The wizard maps results to `.toMap()` into seeded `pending_choices`; the editor merges `PendingChoice`s as follow-ons.

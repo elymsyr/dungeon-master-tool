@@ -10,6 +10,9 @@ import '../../domain/services/entity_search.dart';
 import '../theme/dm_tool_colors.dart';
 import 'entity_preview_dialog.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/srd_text.dart';
+import '../../application/providers/content_translator_provider.dart';
+import '../../domain/services/content_translator.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
 /// [allowedTypes]: sadece bu kategorideki entity'ler gösterilir (null=tümü).
@@ -89,8 +92,15 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   late final Set<String> _suggested = widget.contextFields == null
       ? const {}
       : suggestedEntityIds(_baseList, widget.contextFields!, _previewEntities);
-  late final EntityRanking _ranking =
-      EntityRanking(_baseList, suggested: _suggested);
+  late final EntityRanking _ranking = EntityRanking(_baseList,
+      suggested: _suggested,
+      shownNames: {
+        for (final e in _baseList)
+          if (_shown(e) != e.name) e.id: searchFold(_shown(e)),
+      });
+
+  /// SRD içerik çevirisi: satırın gösterilen adı (arama iki dilde eşleşir).
+  String _shown(Entity e) => srdName(context, e);
   late final List<Entity> _suggestedList = [
     for (final e in _baseList)
       if (_suggested.contains(e.id)) e,
@@ -120,7 +130,8 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
           dedupe: true);
     }
     consider(widget.extraEntities, dedupe: true);
-    out.sort((a, b) => a.name.compareTo(b.name));
+    final shown = {for (final e in out) e.id: srdName(context, e)};
+    out.sort((a, b) => shown[a.id]!.compareTo(shown[b.id]!));
     return List<Entity>.unmodifiable(out);
   }
 
@@ -230,7 +241,7 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
                                   width: 8, height: 8,
                                   decoration: BoxDecoration(color: palette.tabText, shape: BoxShape.circle),
                                 ),
-                          title: Text(entity.name, style: const TextStyle(fontSize: 13)),
+                          title: Text(srdName(context, entity), style: const TextStyle(fontSize: 13)),
                           subtitle: Text(
                             entity.source.isEmpty
                                 ? entity.categorySlug
@@ -286,16 +297,20 @@ class EntityNameText extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // F2: scoped to the one entity's name. Avoids full-map watch — the
     // text only rebuilds when this specific entity's name flips.
-    final name = ref.watch(entityProvider.select((m) => m[entityId]?.name));
-    // Fallback: char-sheet relation fields may reference bundled SRD rows
-    // (e.g. picked Longsword) that never land in entityProvider. Resolve
-    // those via the in-memory SRD map instead of rendering a raw UUID.
-    final resolved = name ??
-        ref.watch(
-          builtinSrdEntitiesProvider.select((m) => m[entityId]?.name),
-        );
+    (String, String, bool)? key(Map<String, Entity> m) {
+      final e = m[entityId];
+      return e == null ? null : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
+    }
+
+    final hit = ref.watch(entityProvider.select(key)) ??
+        // Fallback: char-sheet relation fields may reference bundled SRD rows
+        // (e.g. picked Longsword) that never land in entityProvider. Resolve
+        // those via the in-memory SRD map instead of rendering a raw UUID.
+        ref.watch(builtinSrdEntitiesProvider.select(key));
+    // SRD içerik çevirisi — yalnızca görüntü.
+    final tx = ref.watch(contentTranslatorProvider);
     return Text(
-      resolved ?? entityId,
+      hit == null ? entityId : tx.forCard(hit.$3).tr(hit.$1, hit.$2),
       style: style,
       overflow: TextOverflow.ellipsis,
     );

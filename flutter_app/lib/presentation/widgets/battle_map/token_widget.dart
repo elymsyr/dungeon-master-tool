@@ -6,6 +6,7 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
+import '../srd_text.dart';
 
 /// Battle map token — canvas-space positioning.
 ///
@@ -169,7 +170,7 @@ class _TokenWidgetState extends State<TokenWidget> {
             right: -size * 0.5,
             top: size + hudGap,
             child: _TokenLabel(
-              name: widget.combatant.name,
+              name: srdCombatantName(context, widget.combatant),
               hp: widget.combatant.hp,
               maxHp: widget.combatant.maxHp,
               tokenSize: size,
@@ -202,7 +203,7 @@ class _TokenWidgetState extends State<TokenWidget> {
   }
 
   Widget _buildInitials(double size) {
-    final name = widget.combatant.name;
+    final name = srdCombatantName(context, widget.combatant);
     final initials = name.isNotEmpty
         ? name
               .split(' ')
@@ -337,7 +338,9 @@ class _ConditionStrip extends StatelessWidget {
       spacing: (tokenSize * 0.04).clamp(1.0, 4.0),
       runSpacing: (tokenSize * 0.04).clamp(1.0, 4.0),
       children: [
-        for (final c in shown) _chip(_abbrev(c.name), c.duration, fontSize),
+        for (final c in shown)
+          _chip(_abbrev(srdConditionName(context, c.name)), c.duration,
+              fontSize),
         if (overflow > 0) _chip('+$overflow', null, fontSize),
       ],
     );

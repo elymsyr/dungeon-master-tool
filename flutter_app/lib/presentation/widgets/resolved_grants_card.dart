@@ -5,6 +5,7 @@ import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 import '../screens/database/entity_card.dart';
 import '../l10n/app_localizations.dart';
+import 'srd_text.dart';
 
 /// Read-only summary of grants computed by [CharacterResolver] but not always
 /// mirrored on the PC entity's raw ref fields — senses, damage resistances /
@@ -57,9 +58,9 @@ class ResolvedGrantsCard extends StatelessWidget {
   static final _uuidRe = RegExp(
       r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
 
-  String _nameOf(String id) {
+  String _nameOf(BuildContext context, String id) {
     final e = entities[id];
-    if (e != null) return e.name;
+    if (e != null) return srdName(context, e);
     // Unresolved entity ref (e.g. official-package content that hasn't loaded
     // yet) — don't leak a raw UUID onto the sheet. Synthetic ids (`pool:…`,
     // etc.) aren't UUIDs, so they still pass through for prettifying.
@@ -69,15 +70,17 @@ class ResolvedGrantsCard extends StatelessWidget {
 
   /// Optional range suffix for sense chips (`Darkvision 120 ft`). Returns the
   /// raw name when no override is present so other chip kinds stay untouched.
-  String _nameWithRange(String id) {
-    final name = _nameOf(id);
+  String _nameWithRange(BuildContext context, String id) {
+    final name = _nameOf(context, id);
     final r = effective.senseRanges[id];
     if (r == null || r <= 0) return name;
     return '$name $r ft';
   }
 
-  String _chipLabel(String id, {bool withRange = false}) {
-    final name = withRange ? _nameWithRange(id) : _nameOf(id);
+  String _chipLabel(BuildContext context, String id,
+      {bool withRange = false}) {
+    final name =
+        withRange ? _nameWithRange(context, id) : _nameOf(context, id);
     final sources = effective.grantSources[id];
     if (sources == null || sources.isEmpty) return name;
     return '$name — ${sources.join(', ')}';
@@ -121,11 +124,13 @@ class ResolvedGrantsCard extends StatelessWidget {
                   width: 0.5,
                 ),
               ),
-              child: Text(
-                _chipLabel(id, withRange: withRange),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: palette.srdInk,
+              child: Builder(
+                builder: (context) => Text(
+                  _chipLabel(context, id, withRange: withRange),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette.srdInk,
+                  ),
                 ),
               ),
             ),

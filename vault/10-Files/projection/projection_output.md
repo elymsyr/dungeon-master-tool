@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/projection_output.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -39,4 +39,5 @@ tags: [file]
 - `onExternalClose` fires when the surface is closed *externally* (native window X, Miracast/cast disconnect). The controller listens to flip its own state. The online impl never fires it (no local surface).
 
 ## Notes
+- `contentLanguage` (SRD içerik çevirisi, Faz 6): `ProjectionController` her çıkışa DM'in `contentLanguageProvider` değerini verir, değişince yerel çıkışlara tam durumu yeniden basar. Pencere ve yansıtma bunu tam durumla gönderir (ayrı motor, DM'in kendi ekranı); çevrimiçi çıkış göndermez — oyuncular kendi dillerini kullanır.
 - Multiple outputs can be active simultaneously (fan-out): see `ProjectionState.outputModes` as a `Set`.

@@ -8,6 +8,7 @@ import '../../domain/entities/session.dart';
 import '../theme/dm_tool_colors.dart';
 import 'perf/image_cache_size.dart';
 import '../l10n/app_localizations.dart';
+import 'srd_text.dart';
 
 class ConditionBadge extends ConsumerWidget {
   final CombatCondition condition;
@@ -47,9 +48,11 @@ class ConditionBadge extends ConsumerWidget {
     }
 
     const size = 28.0;
+    // SRD içerik çevirisi — yalnızca görüntü; kaldırma/güncelleme İngilizce adla.
+    final shown = srdConditionName(context, condition.name);
 
     return Tooltip(
-      message: _buildTooltipMessage(),
+      message: _buildTooltipMessage(shown),
       child: GestureDetector(
         onTap: () => _showConditionMenu(context),
         child: SizedBox(
@@ -80,9 +83,7 @@ class ConditionBadge extends ConsumerWidget {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    condition.name.length > 3
-                        ? condition.name.substring(0, 3)
-                        : condition.name,
+                    shown.length > 3 ? shown.substring(0, 3) : shown,
                     style: TextStyle(
                       fontSize: 9,
                       color: palette.conditionText,
@@ -119,8 +120,8 @@ class ConditionBadge extends ConsumerWidget {
     );
   }
 
-  String _buildTooltipMessage() {
-    final parts = <String>[condition.name];
+  String _buildTooltipMessage(String shown) {
+    final parts = <String>[shown];
     if (condition.duration != null) {
       final durStr = condition.initialDuration != null && condition.initialDuration! > 0
           ? '${condition.duration}/${condition.initialDuration}'

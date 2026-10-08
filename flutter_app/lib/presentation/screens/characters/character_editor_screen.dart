@@ -67,6 +67,9 @@ import '../../widgets/save_sync_indicator.dart' show CharacterOnlineRow;
 import '../../widgets/section_jump_pad.dart';
 
 import '../database/entity_card.dart';
+import '../../widgets/srd_text.dart';
+import '../../../domain/services/content_translator.dart';
+import '../../../application/providers/content_translator_provider.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
@@ -300,6 +303,8 @@ class _CharacterEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    // İlişki adları SRD çevirisiyle gösterilir; tablo yüklenince yeniden çiz.
+    ref.watch(contentTranslatorProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // Cross-device freshness: when the cloud-pull (initState) replaces the
     // local Character with a newer payload, adopt it into `_working` so the
@@ -1089,7 +1094,7 @@ class _CharacterEditorScreenState
         children.add(_classResourcesTracker(palette, character));
       }
       widgets.add(EntityCardCollapsibleGroupCard(
-        group: g,
+        group: g.copyWith(name: srdText(context, ContentTranslator.schemaScope, g.name)),
         palette: palette,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2072,7 +2077,7 @@ class _CharacterEditorScreenState
       if (resolveEntityRef(e.fields['parent_species_ref'], entities) != raceId) {
         continue;
       }
-      choices.add((value: e.id, label: e.name));
+      choices.add((value: e.id, label: srdName(context, e)));
       seenNames.add(e.name);
     }
     final raw = species.fields['subspecies_options'];
@@ -2081,7 +2086,7 @@ class _CharacterEditorScreenState
         if (r is! Map) continue;
         final n = r['name'];
         if (n is String && n.isNotEmpty && !seenNames.contains(n)) {
-          choices.add((value: n, label: n));
+          choices.add((value: n, label: srdText(context, 'species', n)));
           seenNames.add(n);
         }
       }
@@ -2244,7 +2249,8 @@ class _CharacterEditorScreenState
     }
 
     final tile = FieldWidgetFactory.create(
-      schema: f,
+      // SRD içerik çevirisi: yalnızca etiket; değer düzenlenebilir, İngilizce.
+      schema: ref.read(contentTranslatorProvider).field(f),
       value: value,
       entityName: character.entity.name,
       readOnly: _readOnly,
@@ -3308,10 +3314,10 @@ class _PendingBadgeRow extends StatelessWidget {
                     final key =
                         '${p.kind}|${p.level}|${p.featureName ?? ''}';
                     final total = groupCount[key] ?? 1;
-                    if (total <= 1) return pendingChoiceLabel(p);
+                    if (total <= 1) return pendingChoiceLabel(context, p);
                     final idx = (groupOrdinal[key] ?? 0) + 1;
                     groupOrdinal[key] = idx;
-                    return '${pendingChoiceLabel(p)} ($idx/$total)';
+                    return '${pendingChoiceLabel(context, p)} ($idx/$total)';
                   }(),
                   onTap: () => onResolve(p),
                   onLongPress: () => onDiscard(p),
@@ -3422,7 +3428,7 @@ class _LevelUpClassPicker extends StatelessWidget {
     final rows = <Widget>[];
     classLevels.forEach((classId, level) {
       final entity = entities[classId];
-      final label = entity?.name ?? classId;
+      final label = entity != null ? srdName(context, entity) : classId;
       rows.add(ListTile(
         dense: true,
         title: Text(label),
@@ -3486,7 +3492,7 @@ class _LevelUpClassPicker extends StatelessWidget {
         .where((e) => e.categorySlug == 'class')
         .where((e) => !classLevels.containsKey(e.id))
         .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+      ..sort((a, b) => srdName(context, a).compareTo(srdName(context, b)));
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context)!.charNoOtherClasses)),
@@ -3510,7 +3516,8 @@ class _LevelUpClassPicker extends StatelessWidget {
                   final ok = await showDialog<bool>(
                     context: ctx,
                     builder: (warn) => AlertDialog(
-                      title: Text(L10n.of(context)!.charPrereqNotMet(cls.name)),
+                      title: Text(L10n.of(context)!
+                          .charPrereqNotMet(srdName(context, cls))),
                       content: Text(
                         L10n.of(context)!.charPrereqProceed(check.reason),
                       ),
@@ -3531,10 +3538,12 @@ class _LevelUpClassPicker extends StatelessWidget {
                 if (!ctx.mounted) return;
                 Navigator.of(ctx).pop(
                   _LevelUpPick(
-                      classId: cls.id, classLabel: cls.name, isNew: true),
+                      classId: cls.id,
+                      classLabel: srdName(context, cls),
+                      isNew: true),
                 );
               },
-              child: Text(cls.name),
+              child: Text(srdName(context, cls)),
             ),
         ],
       ),
@@ -3873,19 +3882,25 @@ class _StatChipsHeader extends ConsumerWidget {
     // [fallback] = yumuşak ref zarfındaki ham ad; id çözülemezse çip onu
     // gösteriyor (paketlenmiş dünyadan gelen PC'lerde species/class id'ye
     // çözülmemiş olabiliyor).
+    // SRD içerik çevirisi: çipler bu cihazın dilinde (yalnızca görüntü).
+    final tx = ref.watch(contentTranslatorProvider);
     String resolve(String? id, [String? fallback]) {
       if (id == null) return fallback ?? '—';
-      if (useCampaign) {
-        final name =
-            ref.watch(entityProvider.select((m) => m[id]?.name));
-        if (name != null && name.isNotEmpty) return name;
+      (String, String, bool)? key(Map<String, Entity> m) {
+        final e = m[id];
+        return e == null || e.name.isEmpty
+            ? null
+            : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
       }
-      final builtinName = ref.watch(
-        builtinSrdEntitiesProvider.select((m) => m[id]?.name),
-      );
-      if (builtinName != null && builtinName.isNotEmpty) return builtinName;
-      final pkgName = pkgEntities[id]?.name;
-      if (pkgName != null && pkgName.isNotEmpty) return pkgName;
+
+      if (useCampaign) {
+        final hit = ref.watch(entityProvider.select(key));
+        if (hit != null) return tx.forCard(hit.$3).tr(hit.$1, hit.$2);
+      }
+      final builtin = ref.watch(builtinSrdEntitiesProvider.select(key));
+      if (builtin != null) return tx.forCard(builtin.$3).tr(builtin.$1, builtin.$2);
+      final pkg = key(pkgEntities);
+      if (pkg != null) return tx.forCard(pkg.$3).tr(pkg.$1, pkg.$2);
       return fallback ?? '—';
     }
 
@@ -3903,8 +3918,10 @@ class _StatChipsHeader extends ConsumerWidget {
         lines: characterStatLinesWithNames(
           l10n: L10n.of(context)!,
           character,
-          raceName: resolve(ids.raceId, ids.raceName),
-          className: resolve(ids.classId, ids.className),
+          raceName: resolve(ids.raceId,
+              ids.raceName == null ? null : tx.tr('species', ids.raceName!)),
+          className: resolve(ids.classId,
+              ids.className == null ? null : tx.tr('class', ids.className!)),
           subspeciesName: () {
             final raw = character.entity.fields['subspecies_id'];
             if (raw is! String || raw.isEmpty) return '';
@@ -3976,7 +3993,7 @@ class _UpgradesPanel extends StatelessWidget {
               children: [
                 for (final p in all)
                   ActionChip(
-                    label: Text(pendingChoiceLabel(p)),
+                    label: Text(pendingChoiceLabel(context, p)),
                     avatar: const Icon(Icons.priority_high,
                         size: 14, color: Colors.orange),
                     onPressed: () => onResolve(p),

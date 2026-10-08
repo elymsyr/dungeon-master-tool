@@ -10,6 +10,11 @@ import '../../domain/entities/projection/projection_state.dart';
 /// active, keeping content management (add/remove/reorder items) decoupled
 /// from the delivery mechanism.
 abstract class ProjectionOutput {
+  /// DM'in içerik dili (SRD çevirisi). Ayrı motorda çalışan yerel çıkışlar
+  /// (pencere, yansıtma) tam durumla birlikte gönderir; çevrimiçi çıkış
+  /// göndermez — her oyuncu kendi dilini kullanır.
+  String contentLanguage = 'en';
+
   /// Whether this output is currently active (window open, cast connected).
   bool get isActive;
 

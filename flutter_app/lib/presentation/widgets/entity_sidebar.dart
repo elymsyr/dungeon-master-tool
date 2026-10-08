@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/builtin_package_provider.dart';
+import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/character_provider.dart'
     show kPlayerCategorySlugs;
 import '../../core/utils/screen_type.dart';
@@ -21,8 +22,10 @@ import '../../domain/entities/schema/builtin/lookups.dart'
     show dmAuthoredLookupSlugs, tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/services/content_translator.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import '../../domain/services/entity_search.dart';
 
 /// Sol sidebar — entity listesi, arama, kategori filtresi.
 /// Python ui/widgets/entity_sidebar.py karşılığı.
@@ -99,6 +102,41 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   int? _filterSig;
   List<_EntitySummary>? _matchedCache;
   List<_EntitySummary>? _othersCache;
+
+  /// SRD içerik çevirisi: adı çevrilmiş özet listesi (yalnızca görüntü) ve
+  /// çevrilen satırların İngilizce adı — arama iki dilde de eşleşsin diye.
+  List<_EntitySummary>? _shownSrc;
+  ContentTranslator? _shownTx;
+  List<_EntitySummary> _shown = const [];
+  Map<String, String> _enNames = const {};
+
+  List<_EntitySummary> _translated(
+      List<_EntitySummary> src, ContentTranslator tx) {
+    if (identical(src, _shownSrc) && identical(tx, _shownTx)) return _shown;
+    final en = <String, String>{};
+    final out = <_EntitySummary>[];
+    for (final e in src) {
+      final n = isSrdCard(e.linked, e.source) ? tx.tr(e.categorySlug, e.name) : e.name;
+      if (n == e.name) {
+        out.add(e);
+        continue;
+      }
+      en[e.id] = e.name;
+      out.add((
+        id: e.id,
+        name: n,
+        categorySlug: e.categorySlug,
+        source: e.source,
+        tags: e.tags,
+        packageId: e.packageId,
+        linked: e.linked,
+      ));
+    }
+    _shownSrc = src;
+    _shownTx = tx;
+    _enNames = en;
+    return _shown = tx.isIdentity ? src : out;
+  }
 
   @override
   void initState() {
@@ -224,7 +262,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     // Memoized at provider boundary — same list reference until the
     // visible entity map identity changes. Avoids 7K-entity allocation
     // per keyboard viewInsets relayout.
-    final summaries = ref.watch(entitySummaryListProvider);
+    final summaries = _translated(ref.watch(entitySummaryListProvider),
+        ref.watch(contentTranslatorProvider));
     final pinned =
         widget.pinning ? ref.watch(pinnedEntityIdsProvider) : const <String>{};
 
@@ -257,11 +296,19 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       return _ShareFilter.notShared;
     }
 
+    // SRD içerik çevirisi: kategori adı yalnızca görüntüde değişir, slug aynı.
+    final tx = ref.watch(contentTranslatorProvider);
+    EntityCategorySchema shown(EntityCategorySchema c) {
+      final n = tx.tr(ContentTranslator.schemaScope, c.name);
+      return n == c.name ? c : c.copyWith(name: n);
+    }
+
     final categories =
         widget.schema?.categories
             .where(
               (c) => !c.isArchived && !kPlayerCategorySlugs.contains(c.slug),
             )
+            .map(shown)
             .toList() ??
         [];
 
@@ -341,14 +388,15 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       //   query non-empty:
       //     matched = entities in filter AND match query
       //     others  = entities matching query but OUTSIDE the filter.
-      final query = _searchQuery.trim().toLowerCase();
+      final query = searchFold(_searchQuery.trim());
       final m = <_EntitySummary>[];
       final o = <_EntitySummary>[];
       if (query.isEmpty) {
         m.addAll(filtered);
       } else {
         bool hits(_EntitySummary e) =>
-            e.name.toLowerCase().contains(query) ||
+            searchFold(e.name).contains(query) ||
+            (_enNames[e.id]?.toLowerCase().contains(query) ?? false) ||
             e.source.toLowerCase().contains(query) ||
             e.tags.any((t) => t.toLowerCase().contains(query));
         bool isInFilter(_EntitySummary e) {

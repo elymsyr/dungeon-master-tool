@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/screen_type.dart';
 import '../../../application/providers/builtin_package_provider.dart';
+import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/shared_entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
@@ -19,6 +20,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/services/content_translator.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -172,6 +174,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _tagsController;
   late TextEditingController _dmNotesController;
 
+  /// Okuma modunda açıklamanın gösterilen (çevrilmiş) hali. Kayıt yolu
+  /// (açıklamanın `onChanged`'i) yalnızca [_descController]'ı okur — çeviri
+  /// veriye sızmaz (srd-tr K3).
+  late TextEditingController _descViewController;
+
   /// Cached scoped theme — invalidated only when palette flag flips.
   ThemeData? _cachedCardTheme;
   ThemeData? _cachedBaseTheme;
@@ -181,6 +188,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   /// Entity is immutable (Freezed) ⇒ identity check suffices for staleness.
   Entity? _subtitleEntity;
   EntityCategorySchema? _subtitleCat;
+  ContentTranslator? _subtitleTx;
   String? _cachedSubtitle;
 
   /// Portrait gallery's currently-shown image index — surfaced by
@@ -202,55 +210,56 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _sourceController = TextEditingController();
     _tagsController = TextEditingController();
     _dmNotesController = TextEditingController();
+    _descViewController = TextEditingController();
   }
 
   Timer? _updateTimer;
+  Entity Function()? _pendingBuild;
 
   /// Debounced provider update — avoids rebuilding the entire widget tree
   /// on every keystroke. The TextEditingController holds the current value
   /// so the UI stays responsive while the provider update is delayed.
   void _debouncedProviderUpdate(Entity Function() entityBuilder) {
     _updateTimer?.cancel();
+    _pendingBuild = entityBuilder;
     _updateTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      ref.read(entityProvider.notifier).update(entityBuilder());
+      final entity = _takePendingUpdate();
+      if (entity != null) ref.read(entityProvider.notifier).update(entity);
     });
   }
 
-  /// Flush pending debounced update immediately (e.g. on dispose).
-  void _flushPendingUpdate() {
-    if (_updateTimer?.isActive ?? false) {
-      _updateTimer!.cancel();
-      // Re-read current entity and sync from controllers
-      final entity = ref.read(entityProvider)[widget.entityId];
-      if (entity == null) return;
-      ref
-          .read(entityProvider.notifier)
-          .update(
-            entity.copyWith(
-              name: _nameController.text,
-              description: _descController.text,
-              source: _sourceController.text,
-              dmNotes: _dmNotesController.text,
-              tags: _tagsController.text
-                  .split(',')
-                  .map((t) => t.trim())
-                  .where((t) => t.isNotEmpty)
-                  .toList(),
-            ),
-          );
+  /// Cancels the debounce and builds the pending edit — name/description
+  /// fields and schema fields (`_updateField`) alike.
+  Entity? _takePendingUpdate() {
+    _updateTimer?.cancel();
+    final build = _pendingBuild;
+    _pendingBuild = null;
+    return build?.call();
+  }
+
+  /// Flushes a pending edit when the card closes. Not in [dispose]: Riverpod
+  /// forbids `ref` there, which used to drop the last edit. The write itself
+  /// waits for a microtask — the tree is mid-build during deactivate.
+  @override
+  void deactivate() {
+    final entity = _takePendingUpdate();
+    if (entity != null) {
+      final notifier = ref.read(entityProvider.notifier);
+      scheduleMicrotask(() => notifier.update(entity));
     }
+    super.deactivate();
   }
 
   @override
   void dispose() {
-    _flushPendingUpdate();
     _updateTimer?.cancel();
     _nameController.dispose();
     _descController.dispose();
     _sourceController.dispose();
     _tagsController.dispose();
     _dmNotesController.dispose();
+    _descViewController.dispose();
     _nameFocus.dispose();
     _descFocus.dispose();
     _sourceFocus.dispose();
@@ -319,17 +328,27 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final tagsStr = entity.tags.join(', ');
     _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
+    // SRD içerik çevirisi (docs/srd-tr): okuma modunda ad + açıklama.
+    final tx = ref.watch(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
+    final scope = entity.categorySlug;
+    if (widget.readOnly) {
+      final d = tx.tr(scope, entity.description);
+      if (_descViewController.text != d) _descViewController.text = d;
+    }
+
     final String subtitle;
     if (cat == null) {
       subtitle = '';
     } else if (identical(_subtitleEntity, entity) &&
         identical(_subtitleCat, cat) &&
+        identical(_subtitleTx, tx) &&
         _cachedSubtitle != null) {
       subtitle = _cachedSubtitle!;
     } else {
       subtitle = _buildSubtitle(entity, cat);
       _subtitleEntity = entity;
       _subtitleCat = cat;
+      _subtitleTx = tx;
       _cachedSubtitle = subtitle;
     }
     final hasPortrait = entity.imagePath.isNotEmpty || entity.images.isNotEmpty;
@@ -388,7 +407,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     Expanded(
                       child: widget.readOnly
                           ? Text(
-                              entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                              entity.name.isEmpty
+                                  ? '(Unnamed)'
+                                  : tx.tr(scope, entity.name),
                               style: TextStyle(
                                 fontFamily: palette.useSerif ? 'Georgia' : null,
                                 fontSize: 30,
@@ -494,7 +515,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                 const SizedBox(height: 10),
                 // Description (bigger ink)
                 MarkdownTextArea(
-                  controller: _descController,
+                  controller:
+                      widget.readOnly ? _descViewController : _descController,
                   focusNode: _descFocus,
                   readOnly: widget.readOnly,
                   minLines: widget.readOnly ? null : 3,
@@ -752,7 +774,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       final repeatable = f['repeatable'] == true;
       return repeatable ? '$fcat Feat (Repeatable)' : '$fcat Feat';
     }
-    return cat.name;
+    return ref
+        .read(contentTranslatorProvider)
+        .tr(ContentTranslator.schemaScope, cat.name);
   }
 
   Widget _buildFieldWidget(
@@ -762,6 +786,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     bool compact = false,
   }) {
     final fieldValue = entity.fields[field.fieldKey];
+    // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
+    // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
+    final tx = ref.read(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
+    final shown = widget.readOnly
+        ? tx.value(entity.categorySlug, field, fieldValue)
+        : fieldValue;
 
     // Inline relation lists in multi-column groups — keep equip-tracked lists
     // (inventory/spells/etc.) in their full Card form regardless of compact.
@@ -772,10 +802,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         !field.hasEquip;
 
     return FieldWidgetFactory.create(
-      schema: field,
-      value: fieldValue,
+      schema: tx.field(field),
+      value: shown,
       readOnly: widget.readOnly,
-      onChanged: (v) => _updateField(field.fieldKey, v),
+      onChanged: identical(shown, fieldValue)
+          ? (v) => _updateField(field.fieldKey, v)
+          : (_) {},
       entities: ref.read(entityProvider),
       ref: ref,
       entityFields: entity.fields,
@@ -909,7 +941,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
       widgets.add(
         EntityCardCollapsibleGroupCard(
-          group: group,
+          group: group.copyWith(
+            name: ref
+                .read(contentTranslatorProvider)
+                .tr(ContentTranslator.schemaScope, group.name),
+          ),
           palette: palette,
           centered: centered,
           child: _buildGroupGrid(
@@ -955,7 +991,7 @@ class EntityCardSectionHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final upper = palette.cardHeadingUppercase;
-    final display = upper ? title.toUpperCase() : title;
+    final display = upper ? _headingUpper(context, title) : title;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1400,6 +1436,12 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
 }
 
 /// Collapsible group — SRD heading + red rule, no boxed chrome. Optional centered content.
+/// Dart'ın `toUpperCase`'i dilden bağımsızdır: Türkçede "i" → "İ" olmalı.
+String _headingUpper(BuildContext context, String s) =>
+    Localizations.localeOf(context).languageCode == 'tr'
+        ? s.replaceAll('i', 'İ').toUpperCase()
+        : s.toUpperCase();
+
 class EntityCardCollapsibleGroupCard extends StatefulWidget {
   final FieldGroup group;
   final DmToolColors palette;
@@ -1434,7 +1476,8 @@ class EntityCardCollapsibleGroupCardState
     final hasName = widget.group.name.isNotEmpty;
     final palette = widget.palette;
     final upper = palette.cardHeadingUppercase;
-    final display = upper ? widget.group.name.toUpperCase() : widget.group.name;
+    final display =
+        upper ? _headingUpper(context, widget.group.name) : widget.group.name;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

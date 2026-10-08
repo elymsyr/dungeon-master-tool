@@ -41,12 +41,17 @@ class ProjectionIpc {
   /// Returns `true` on success. On any error (e.g. the player window has
   /// been closed externally), returns `false` so the caller can clear its
   /// stale `windowId` instead of crashing.
-  static Future<bool> pushFull(int windowId, ProjectionState state) async {
+  static Future<bool> pushFull(int windowId, ProjectionState state,
+      {String? lang}) async {
     try {
       await DesktopMultiWindow.invokeMethod(
         windowId,
         ProjectionIpcMethods.apply,
-        jsonEncode({'type': 'full', 'payload': state.toJson()}),
+        jsonEncode({
+          'type': 'full',
+          'payload': state.toJson(),
+          if (lang != null) 'lang': lang,
+        }),
       );
       return true;
     } catch (_) {
@@ -119,10 +124,11 @@ class ProjectionIpc {
 
   /// Decode an `apply` payload received by the sub-window. Returns a
   /// `(type, data)` pair where type is `'full'` or `'patch'`.
-  static (String, Map<String, dynamic>) decodeApply(dynamic raw) {
+  /// (type, payload, DM'in içerik dili — yalnızca tam durumda, yoksa null).
+  static (String, Map<String, dynamic>, String?) decodeApply(dynamic raw) {
     final json = jsonDecode(raw as String) as Map<String, dynamic>;
     final type = json['type'] as String;
     final payload = (json['payload'] as Map).cast<String, dynamic>();
-    return (type, payload);
+    return (type, payload, json['lang'] as String?);
   }
 }

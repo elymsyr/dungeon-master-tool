@@ -374,47 +374,6 @@ List<PendingChoice> pendingChoicesFromPlan({
   return out;
 }
 
-String pendingChoiceLabel(PendingChoice p) {
-  final cls = p.classLabel ?? (p.classId ?? '');
-  final prefix = cls.isEmpty ? 'L${p.level}' : '$cls L${p.level}';
-  switch (p.kind) {
-    case PendingChoiceKind.asiOrFeat:
-      return '$prefix · Ability Score Improvement or Feat';
-    case PendingChoiceKind.fightingStyle:
-      return '$prefix · Fighting Style';
-    case PendingChoiceKind.cantrips:
-      return '$prefix · Pick ${p.count} cantrip${p.count == 1 ? '' : 's'}';
-    case PendingChoiceKind.spells:
-      final max = p.maxSpellLevel > 0 ? ' (up to L${p.maxSpellLevel})' : '';
-      return '$prefix · Pick ${p.count} spell${p.count == 1 ? '' : 's'}$max';
-    case PendingChoiceKind.subclass:
-      return '$prefix · Choose a subclass';
-    case PendingChoiceKind.weaponMastery:
-      return '$prefix · Pick ${p.count} weapon master${p.count == 1 ? 'y' : 'ies'}';
-    case PendingChoiceKind.skillProficiency:
-      return '$prefix · Pick ${p.count} skill proficienc${p.count == 1 ? 'y' : 'ies'}';
-    case PendingChoiceKind.toolProficiency:
-      return '$prefix · Pick ${p.count} tool proficienc${p.count == 1 ? 'y' : 'ies'}';
-    case PendingChoiceKind.languages:
-      return '$prefix · Pick ${p.count} language${p.count == 1 ? '' : 's'}';
-    case PendingChoiceKind.featChoice:
-      // classLabel holds the feat name at finalize; featureName the group_id.
-      final feat = p.classLabel ?? 'Feat';
-      final group = p.featureName ?? 'choice';
-      final suffix = p.count > 1 ? ' (pick ${p.count})' : '';
-      return 'L${p.level} · $feat: $group$suffix';
-    case PendingChoiceKind.expertise:
-      return '$prefix · Pick ${p.count} skill expertise';
-    case PendingChoiceKind.featAsi:
-      return '$prefix · Feat ASI · pick ability';
-    case PendingChoiceKind.divineOrder:
-      return '$prefix · Divine Order';
-    case PendingChoiceKind.featureOption:
-      final name = p.featureName ?? 'Feature option';
-      return '$prefix · $name';
-  }
-}
-
 /// Schema field keys whose editor tile should display the `!` resolve badge
 /// for this pending kind. asiOrFeat lights up both the ability-scores tile
 /// (ASI path) and the feats tile (Feat path) so the player can resolve it

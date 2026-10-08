@@ -17,6 +17,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../../utils/stroke_path.dart';
 import '../../../widgets/asset_ref_image.dart';
 import '../../battle_map/render/aoe_render.dart';
+import '../../../../application/providers/content_translator_provider.dart';
+import '../../../../domain/services/content_translator.dart';
 
 /// Player-window view of a battle map. Receives a [BattleMapSnapshot] over
 /// IPC, decodes the background and fog images on demand, and renders them
@@ -378,10 +380,27 @@ class _BattleMapProjectionViewState
     }
   }
 
+  // SRD içerik çevirisi: token ve durum adları bu cihazın dilinde çizilir —
+  // DM adları İngilizce gönderir, her oyuncu kendi diliyle görür. Aynı girdiye
+  // aynı nesne döner ki painter boşuna yeniden çizmesin.
+  BattleMapSnapshot? _locSrc;
+  ContentTranslator? _locTx;
+  BattleMapSnapshot? _loc;
+
+  BattleMapSnapshot _localized(BattleMapSnapshot s, ContentTranslator tx) {
+    if (tx.isIdentity) return s;
+    if (identical(s, _locSrc) && identical(tx, _locTx)) return _loc!;
+    _locSrc = s;
+    _locTx = tx;
+    return _loc = s.copyWith(
+        tokens: [for (final t in s.tokens) t.localized(tx.tr)]);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final snap = widget.item.snapshot;
+    final snap = _localized(
+        widget.item.snapshot, ref.watch(contentTranslatorProvider));
     // Drop initiative side panel on narrow viewports (mobile) — the map
     // canvas is too small to share. Threshold matches Flutter's compact
     // breakpoint.
