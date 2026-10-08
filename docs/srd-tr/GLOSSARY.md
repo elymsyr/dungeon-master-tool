@@ -1109,3 +1109,10 @@ Macera tertibatı (107 satır) dalga 5.3'te rehberin "Macera Tertibatı" tablosu
 | Pan Flute | Pan Flütü | R |
 | Shawm | Kaval | R |
 | Viol | Viola | R |
+
+---
+
+## 8. Aynen kalan varlık adları
+
+Canavar ve hayvan adlarından (dalga 5.8; tam liste [CANAVAR-ADLARI.md](CANAVAR-ADLARI.md)) bunlar aynen kalır:
+Tyrannosaurus Rex · Triceratops · Allosaurus · Pteranodon · Plesiosaurus · Stirge · Quipper · Ankylosaurus · Archelon · Aboleth · Ogre · kobold · elf · Balor · Wight · Basilisk · Ettin · Treant · Chuul · Otyugh · Roper · Nothic · Gargoyle · Couatl · sahuagin · Merrow · Erinyes · Quasit · Dretch · Vrock · Hezrou · Glabrezu · Nalfeshnee · Marilith · Incubus · Succubus · Magmin · Salamander · Behir · Bulette · Drider · Gorgon · Grick · Grimlock · Kraken · Lamia · Medusa · Oni · Pegasus · Rakshasa · Remorhaz · Roc · Solar · Planetar · Deva · Sprite · Worg · Xorn · Banshee

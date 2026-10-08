@@ -36,11 +36,9 @@ bool _isProse(String s) {
   return true;
 }
 
-void main(List<String> args) {
-  final outDir = args.length >= 2 && args[0] == '--out'
-      ? args[1]
-      : 'assets/srd_l10n/tr';
-
+/// Kaynaktaki çevrilecek metinler: scope → sıralı benzersiz İngilizce metin.
+/// Faz 7 testleri (`test/tool/srd_l10n_coverage_test.dart`) de bunu okur.
+Map<String, List<String>> collectSrdTexts() {
   final build = generateBuiltinDnd5eV2Schema();
   final scopes = <String, List<String>>{}; // scope → sıralı benzersiz metin
   final seen = <String, Set<String>>{};
@@ -135,6 +133,15 @@ void main(List<String> args) {
         m['description'] as String?, (m['attributes'] as Map?) ?? const {});
   }
 
+  return scopes;
+}
+
+void main(List<String> args) {
+  final outDir = args.length >= 2 && args[0] == '--out'
+      ? args[1]
+      : 'assets/srd_l10n/tr';
+
+  final scopes = collectSrdTexts();
   Directory(outDir).createSync(recursive: true);
   const enc = JsonEncoder.withIndent('  ');
   final names = scopes.keys.toList()..sort();

@@ -34,6 +34,7 @@ import '../quota_snackbar.dart';
 import 'entity_link.dart';
 import 'structured_list_field_widgets.dart';
 import '../../l10n/app_localizations.dart';
+import '../srd_text.dart';
 
 /// Resolve a relation field value to an entity UUID. Handles three formats
 /// stored in `fields`:
@@ -1396,8 +1397,9 @@ class _RelationFieldWidget extends StatelessWidget {
     final linkedEntity = (linkedId.isNotEmpty && entities != null)
         ? entities![linkedId]
         : null;
-    final linkedName =
-        linkedEntity?.name ?? (linkedId.isNotEmpty ? linkedId : '');
+    final linkedName = linkedEntity != null
+        ? srdName(context, linkedEntity)
+        : linkedId;
     final subtitle = linkedEntity == null
         ? null
         : _relationSubtitle(linkedEntity);
@@ -1564,7 +1566,7 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                   child: Column(
                     children: [
                       Text(
-                        key,
+                        srdText(context, 'ability', key),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -2569,7 +2571,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
 
   String _resolveEntityName(String id) {
     if (id.isEmpty) return '';
-    return entities?[id]?.name ?? id;
+    final e = widget.entities?[id];
+    return e != null ? srdName(context, e) : id;
   }
 
   /// Değeri [{id, equipped}] formatına parse et.
@@ -2646,14 +2649,17 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
         .toList();
   }
 
-  String _name(String id) => entities?[id]?.name ?? id;
+  String _name(BuildContext context, String id) {
+    final e = entities?[id];
+    return e != null ? srdName(context, e) : id;
+  }
   String? _subtitle(String id) {
     final e = entities?[id];
     return e == null ? null : _relationSubtitle(e);
   }
 
-  Widget _chipLabel(String id) {
-    final name = _name(id);
+  Widget _chipLabel(BuildContext context, String id) {
+    final name = _name(context, id);
     final sub = _subtitle(id);
     if (sub == null) {
       return Text(
@@ -2725,7 +2731,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
                         Theme.of(context).extension<DmToolColors>()?.chr ??
                         BorderRadius.circular(6),
                   ),
-                  child: _chipLabel(id),
+                  child: _chipLabel(context, id),
                 ),
               ),
           ],
@@ -2743,7 +2749,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
         children: [
           for (final id in ids)
             InputChip(
-              label: _chipLabel(id),
+              label: _chipLabel(context, id),
               onPressed: ref == null || entities?[id] == null
                   ? null
                   : () => _navigateToEntity(ref!, id, panelId),
@@ -4348,6 +4354,8 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
     final rows = _rows;
     final pb = _proficiencyBonus(ref);
     final outline = Theme.of(context).colorScheme.outline;
+    // save_bonuses / saving_throws: the rest are skills.
+    final isSave = schema.fieldKey.startsWith('sav');
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -4366,7 +4374,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                 ),
                 if (entityFields != null)
                   Text(
-                    'PB +$pb',
+                    '${L10n.of(context)!.statPb} +$pb',
                     style: TextStyle(fontSize: 11, color: outline),
                   ),
               ],
@@ -4444,8 +4452,7 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                       : () => rollDice(context, ref, const {'d20': 1},
                           modifier: total,
                           label: name,
-                          // save_bonuses / saving_throws: the rest are skills.
-                          kind: schema.fieldKey.startsWith('sav')
+                          kind: isSave
                               ? DiceRollKind.save
                               : DiceRollKind.skill,
                           character: entityName),
@@ -4470,12 +4477,16 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                         ),
                         Expanded(
                           flex: 4,
-                          child: Text(name, style: const TextStyle(fontSize: 12)),
+                          // SRD içerik çevirisi — yalnızca görüntü; zar
+                          // günlüğü ve kayıt İngilizce adla.
+                          child: Text(
+                              srdText(context, isSave ? 'ability' : 'skill', name),
+                              style: const TextStyle(fontSize: 12)),
                         ),
                         SizedBox(
                           width: 34,
                           child: Text(
-                            ability,
+                            srdText(context, 'ability', ability),
                             style: TextStyle(fontSize: 10, color: outline),
                           ),
                         ),

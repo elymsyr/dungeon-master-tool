@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/entity_snapshot_builder.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-23
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -36,6 +36,7 @@ tags: [file]
 - `FieldType.relation`: `extractRelationIds(raw)` → map each id to `entities[id]?.name`, drop unresolvable, join with `, ` (never shows a raw id).
 - `text`/`textarea`/`markdown`: passed through `stripMentions(_stringify(raw))`.
 - `groupLabel`: resolved from `cat.fieldGroups` by `field.groupId`.
+- **SRD içerik çevirisi (Faz 6):** metin İngilizce kalır; her satıra `parts` = `(kapsam, İngilizce)` listesi eklenir — ilişki: `(ilişkili kartın categorySlug'ı, adı)`, metin: `(kartın categorySlug'ı, metin)`, enum: `('_schema', değer)`. Alıcı (`EntitySnapshot.localized`) kendi dilinde birleştirir; böylece çevrimiçi her oyuncu DM'in değil kendi dilini görür. Parçasız (eski) satır aynen gösterilir.
 - Image paths: `[imagePath, ...images]` with `imageRemap[path] ?? path` applied to each (content-ref swap without entity mutation).
 - `_stringify`: recursive — String passthrough, num/bool `.toString()`, List join `, `, Map → `k: v` pairs joined `, `.
 - Output `EntitySnapshot`: id, name, categorySlug, categoryName (`cat?.name ?? slug`), categoryColorHex (`cat?.color ?? '#888888'`), description (mentions stripped), source, tags, imagePaths, fields.

@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../widgets/pending_choices_badge.dart';
+import '../../widgets/srd_text.dart';
+import '../../../domain/entities/schema/builtin/lookups.dart';
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/pending_choices.dart';
@@ -408,16 +411,17 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
 
   Widget _casterBlock(Color hint) {
     final plan = widget.plan;
+    final l = L10n.of(context)!;
     final lines = <String>[];
     if (plan.cantripsKnownAtNewLevel != null) {
-      lines.add('Cantrips known: ${plan.cantripsKnownAtNewLevel}');
+      lines.add(l.levelUpCantripsKnown(plan.cantripsKnownAtNewLevel!));
     }
     if (plan.preparedSpellsAtNewLevel != null) {
-      lines.add('Prepared spells: ${plan.preparedSpellsAtNewLevel}');
+      lines.add(l.levelUpPreparedSpells(plan.preparedSpellsAtNewLevel!));
     }
     if (plan.maxSpellLevelAtNewLevel != null &&
         plan.maxSpellLevelAtNewLevel! > 0) {
-      lines.add('Max spell level: ${plan.maxSpellLevelAtNewLevel}');
+      lines.add(l.levelUpMaxSpellLevel(plan.maxSpellLevelAtNewLevel!));
     }
     final newSlots = plan.newSpellSlots;
     final prevSlots = plan.prevSpellSlots;
@@ -426,15 +430,16 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       final cells = keys.map((k) {
         final prev = prevSlots?[k] ?? 0;
         final now = newSlots[k]!;
-        return prev == now ? 'L$k:$now' : 'L$k:$prev→$now';
+        final lv = l.pcLevel(k);
+        return prev == now ? '$lv:$now' : '$lv:$prev→$now';
       }).join('  ');
-      lines.add('Slots — $cells');
+      lines.add(l.levelUpSlots(cells));
       final delta = plan.spellSlotsDelta;
       if (delta.isNotEmpty) {
         final gain = (delta.keys.toList()..sort())
-            .map((k) => '+${delta[k]} at L$k')
+            .map((k) => l.levelUpSlotGain(delta[k]!, l.pcLevel(k)))
             .join(', ');
-        lines.add('New: $gain');
+        lines.add(l.levelUpNewSlots(gain));
       }
     }
     if (lines.isEmpty) return const SizedBox.shrink();
@@ -480,7 +485,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
             ),
             for (final p in existing)
               Text(
-                '• ${pendingChoiceLabel(p)}',
+                '• ${pendingChoiceLabel(context, p)}',
                 style: TextStyle(fontSize: 12, color: hint),
               ),
             if (_pending.isNotEmpty) const SizedBox(height: 4),
@@ -492,7 +497,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
             ),
             for (final p in _pending)
               Text(
-                '• ${pendingChoiceLabel(p)}',
+                '• ${pendingChoiceLabel(context, p)}',
                 style: const TextStyle(fontSize: 12),
               ),
           ],
@@ -513,7 +518,8 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       final prev = prevPools[k] ?? 0;
       final now = newPools[k] ?? 0;
       if (prev == now && prev == 0) continue;
-      final label = _prettyPoolName(k);
+      final label = srdText(context, 'resource-pool',
+          kResourcePoolLabels[k] ?? _prettyPoolName(k));
       rows.add(prev == now ? '$label: $now' : '$label: $prev → $now');
     }
     if (rows.isEmpty) return const SizedBox.shrink();

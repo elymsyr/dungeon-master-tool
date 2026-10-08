@@ -11,6 +11,7 @@ import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/services/content_translator.dart';
 import '../../domain/services/entity_ref.dart';
 import '../theme/dm_tool_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -110,20 +111,28 @@ List<CharacterStatLine> characterStatLines(
   int? effectiveAc,
   String? ownerLabel,
   L10n? l10n,
+  ContentTranslator tx = ContentTranslator.identity,
 }) {
   final ids = characterRaceClassIds(character, entities);
   final rid = ids.raceId;
   final cid = ids.classId;
-  final raceName =
-      (rid == null ? null : entities[rid]?.name) ?? ids.raceName ?? '—';
-  final className =
-      (cid == null ? null : entities[cid]?.name) ?? ids.className ?? '—';
+  // SRD içerik çevirisi: bu cihazın dilinde, yalnızca görüntü.
+  String? shown(String? id) => switch (id == null ? null : entities[id]) {
+        final e? => tx.tr(e.categorySlug, e.name),
+        _ => null,
+      };
+  final raceName = shown(rid) ??
+      (ids.raceName == null ? null : tx.tr('species', ids.raceName!)) ??
+      '—';
+  final className = shown(cid) ??
+      (ids.className == null ? null : tx.tr('class', ids.className!)) ??
+      '—';
   // `subspecies_id` holds the subspecies entity id (new model) or, for legacy
   // saves, the option name. Resolve the entity name; fall back to the raw value
   // only when it's a readable name, never a bare id.
   final subRaw = character.entity.fields['subspecies_id'];
   final subspeciesName = subRaw is String && subRaw.isNotEmpty
-      ? (entities[subRaw]?.name ?? (_looksLikeId(subRaw) ? '' : subRaw))
+      ? (shown(subRaw) ?? (_looksLikeId(subRaw) ? '' : subRaw))
       : '';
   return characterStatLinesWithNames(
     character,
@@ -206,7 +215,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
   return [
     CharacterStatLine(
       icon: Icons.favorite,
-      label: 'HP',
+      label: t.statHp,
       value: maxHp > 0 ? '$hp / $maxHp' : '$hp',
     ),
     CharacterStatLine(
@@ -232,7 +241,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
     ),
     CharacterStatLine(
       icon: Icons.security,
-      label: 'AC',
+      label: t.statAc,
       value: acDisplay,
     ),
     CharacterStatLine(

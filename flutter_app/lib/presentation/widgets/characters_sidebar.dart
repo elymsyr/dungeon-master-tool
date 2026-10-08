@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
@@ -429,6 +430,7 @@ class _OfflineCharacterRowState
             infoChips: CharacterStatChips(
               lines: characterStatLines(
                 l10n: L10n.of(context)!,
+                tx: ref.watch(contentTranslatorProvider),
                 c,
                 entities,
                 ownerLabel: resolveCharacterOwnerLabel(ref, c),

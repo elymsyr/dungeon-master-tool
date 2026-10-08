@@ -13,6 +13,7 @@ import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/expandable_section.dart';
 import '../../../../widgets/source_badge.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/srd_text.dart';
 
 /// Subclass picker. Always shown when the chosen class has at least one
 /// subclass entity referencing it via `parent_class_ref`. Selection is
@@ -149,7 +150,7 @@ class _SubclassRow extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                entity.name,
+                srdName(context, entity),
                 style: locked
                     ? TextStyle(color: Theme.of(context).disabledColor)
                     : null,

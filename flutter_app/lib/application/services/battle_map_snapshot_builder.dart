@@ -107,6 +107,9 @@ class BattleMapSnapshotBuilder {
       tokens.add(TokenSnapshot(
         id: c.id,
         name: c.name,
+        nameScope: entity != null && entity.name == c.name
+            ? entity.categorySlug
+            : null,
         x: x,
         y: y,
         imagePath: imagePath,

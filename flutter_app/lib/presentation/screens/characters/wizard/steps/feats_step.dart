@@ -14,6 +14,7 @@ import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
 import 'skill_mod_helper.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/srd_text.dart';
 
 /// Wizard step that surfaces per-feat sub-choices.
 ///
@@ -174,7 +175,7 @@ class _GrantedFeatCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    feat.name,
+                    srdName(context, feat),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -352,7 +353,7 @@ class _FeatCard extends StatelessWidget {
                   entity: feat,
                   entities: entities,
                   child: Text(
-                    feat.name,
+                    srdName(context, feat),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

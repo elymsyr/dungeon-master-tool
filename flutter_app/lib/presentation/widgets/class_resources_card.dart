@@ -4,6 +4,7 @@ import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 import '../l10n/app_localizations.dart';
+import 'srd_text.dart';
 
 /// Sınıf/altsınıf/feat kaynaklı sayılabilir kaynaklar — Rage uses, Bardic
 /// Inspiration, Channel Divinity, Focus Points, Sorcery Points…  Karakter
@@ -99,7 +100,8 @@ class ClassResourcesTracker extends StatelessWidget {
     // The row *name* stays the machine key — `pool:sorcery_points` below keys
     // the Font of Magic affordance off it. Only the label is humanised.
     final rawName = pool?.name ?? id;
-    final name = displayName(pool, id);
+    // SRD içerik çevirisi — yalnızca görüntü.
+    final name = srdText(context, 'resource-pool', displayName(pool, id));
     final cur = (poolRemaining[id] ?? max).clamp(0, max);
     final sources = [
       ...?effective.grantSources[id],

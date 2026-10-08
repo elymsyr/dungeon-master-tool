@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/projection_ipc.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -23,7 +23,7 @@ tags: [file]
 - Triggers: none.
 
 **Outputs**
-- Public API (static): `pushFull(windowId, state)→Future<bool>`, `pushPatch(windowId, Map)→Future<bool>`, `pushBattleMapPatch(windowId, itemId, Map)→Future<bool>`, `requestClose(windowId)`, decoders `decodeApply(raw)→(String type, Map)`, `decodeBattleMapPatch(raw)→(String itemId, Map)`.
+- Public API (static): `pushFull(windowId, state)→Future<bool>`, `pushPatch(windowId, Map)→Future<bool>`, `pushBattleMapPatch(windowId, itemId, Map)→Future<bool>`, `requestClose(windowId)`, decoders `decodeApply(raw)→(String type, Map, String? lang)` (`pushFull(..., {lang})` — DM'in SRD içerik dili, yalnızca tam durumda; alt pencere `projectionContentLanguageProvider`'a yazar), `decodeBattleMapPatch(raw)→(String itemId, Map)`.
 - Writes / Supabase / events: none.
 
 ## Dependencies & Links

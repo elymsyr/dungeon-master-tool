@@ -11,6 +11,7 @@ import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import 'skill_mod_helper.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/srd_text.dart';
 
 /// Wizard step that asks the player to spend the proficiency / language
 /// "choice slots" their class and background grant, and to lock in the L1
@@ -515,11 +516,11 @@ class _OrderChoiceSection extends StatelessWidget {
               // ignore: deprecated_member_use
               onChanged: onPick,
               dense: true,
-              title: Text(f.name),
+              title: Text(srdName(context, f)),
               subtitle: f.description.isEmpty
                   ? null
                   : Text(
-                      f.description,
+                      srdDescription(context, f),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -571,7 +572,7 @@ class _SingleChoiceSection extends StatelessWidget {
               // ignore: deprecated_member_use
               onChanged: onPick,
               dense: true,
-              title: Text(e.name),
+              title: Text(srdName(context, e)),
             ),
         ],
       ),
@@ -597,7 +598,10 @@ class _GrantedSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = ids
-        .map((id) => (id: id, name: entities[id]?.name ?? id))
+        .map((id) => (
+              id: id,
+              name: entities[id] != null ? srdName(context, entities[id]!) : id
+            ))
         .toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -746,7 +750,9 @@ class _PickerSection extends StatelessWidget {
               children: [
                 for (final id in sortedOptions)
                   _OptionChip(
-                    label: entities[id]?.name ?? id,
+                    label: entities[id] != null
+                        ? srdName(context, entities[id]!)
+                        : id,
                     suffix: suffixForId?.call(id) ?? '',
                     selected: pickedSet.contains(id),
                     disabled: disabledIds.contains(id) ||

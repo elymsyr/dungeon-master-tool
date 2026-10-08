@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/entity_search.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-10-05
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -28,6 +28,7 @@ tags: [file]
 - **Context.** Only `class` / `subclass` / `species` / `subspecies` / `background` cards the fields point at (bare id, `{id, equipped}` row, or envelope via `resolveEntityRef`). Languages/skills/alignment are excluded on purpose — "Common" would make everything relevant. A row fits when a `refIds` value is one of those cards **or a same-slug-and-name twin from another source** (the card's Wizard is campaign, the spell's `class_refs` is SRD), or a context name appears as a **whole word** (plural `s` allowed) in name/meta/text — "Human" ≠ "Humanoid", "Elf" ≠ "itself".
 - **`EntityRanking`** — the picker's per-dialog wrapper: a repeated query (rebuild after ticking a row) returns the cached hits; typing on inside the last word (`new.startsWith(old)`, no space added) ranks the previous hits, since every hit for "fire" was a hit for "fir". A space, backspace or edit ranks the whole pool. Test pins it to `rankEntities` keystroke by keystroke.
 - **Cost** (AOT, Ryzen 5 3550H, 2026-10-05; SRD = 2352 rows, 0.65 M chars of doc text): docs 22 ms once per session (inventory pool ~500 rows ≈ 5 ms); suggestions 2 ms inventory / 9.5 ms whole SRD per open; a keystroke ≤ 3.4 ms inventory, 2–11 ms whole SRD (world-map pin picker has no type filter), and typing a word on is ~4× cheaper via `EntityRanking` ("fireball" 8 keystrokes: 31 → 7 ms total). Mobile: low-end Android ≈ 2.5×, oldest A53-class ≈ 6× slower → whole-SRD keystroke ≤ ~65 ms worst, under the dialog's 150 ms debounce; inventory ≤ ~20 ms. Before the dedupe: 35 ms docs, 17 ms worst keystroke. Bundled SRD tags cost 0.2 ms of `buildSrdCorePack` (~100 ms).
+- **SRD içerik çevirisi (Faz 6, D6):** `rankEntities(..., shownNames)` / `EntityRanking(shownNames:)` — id → gösterilen ad (`searchFold`'lanmış, yalnızca İngilizceden farklı olanlar). Ad katmanı iki adla da eşleşir, eşitlikte gösterilen ada göre sıralar. `searchFold` = `'İ'`→`i` + `toLowerCase` (Dart `'İ'.toLowerCase()` = `i̇`). Kenar listesi araması da aynı katlamayı kullanır.
 - One hop only: Wizard → its `armor_training_refs` → armor is deliberately not followed (saving throws would pull in every INT-save spell).
 
 ## Dependencies & Links

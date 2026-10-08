@@ -8,6 +8,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../expandable_markdown.dart';
 import 'entity_link.dart';
 import '../../l10n/app_localizations.dart';
+import '../srd_text.dart';
 
 /// Typed structured-list editors for the structured list FieldTypes:
 ///   - classFeatures
@@ -364,8 +365,10 @@ class _MiniRelationField extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = value;
     final String? label0 = switch (v) {
-      String s when s.isNotEmpty => entities?[s]?.name ?? s,
-      Map m => (m['name'] ?? m['slug'] ?? m['_lookup'])?.toString(),
+      String s when s.isNotEmpty =>
+        entities?[s] != null ? srdName(context, entities![s]!) : s,
+      Map m => srdRefName(context, m) ??
+          (m['slug'] ?? m['_lookup'])?.toString(),
       _ => null,
     };
     final hasValue = label0 != null && label0.isNotEmpty;
@@ -502,7 +505,9 @@ class _MiniRelationListField extends StatelessWidget {
                 ref: ref,
                 child: Chip(
                   label: Text(
-                    entities?[id]?.name ?? id,
+                    entities?[id] != null
+                        ? srdName(context, entities![id]!)
+                        : id,
                     style: TextStyle(
                       fontSize: 11,
                       decoration: entities?[id] != null
@@ -1408,7 +1413,7 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
                 ),
                 if (row['pool_ref'] is Map)
                   _badge(
-                    (row['pool_ref'] as Map)['name']?.toString() ?? 'pool',
+                    srdRefName(context, row['pool_ref'] as Map) ?? 'pool',
                     Colors.teal,
                   ),
                 _miniEnum(
@@ -1636,7 +1641,7 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
           ),
           if (row['spell_ref'] is Map)
             _badge(
-              (row['spell_ref'] as Map)['name']?.toString() ?? 'spell',
+              srdRefName(context, row['spell_ref'] as Map) ?? 'spell',
               Colors.indigo,
             ),
           _miniInt(
@@ -2200,7 +2205,9 @@ class _RelationListChips extends StatelessWidget {
                     ref: ref,
                     child: Chip(
                       label: Text(
-                        entities?[values[i]]?.name ?? values[i],
+                        entities?[values[i]] != null
+                            ? srdName(context, entities![values[i]]!)
+                            : values[i],
                         style: TextStyle(
                           fontSize: 11,
                           decoration: entityLinkTarget(values[i], entities) !=

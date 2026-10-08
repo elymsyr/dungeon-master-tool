@@ -534,6 +534,11 @@ class TokenSnapshot {
   /// means an indefinite/passive condition.
   final List<ConditionSnapshot> conditions;
 
+  /// [name]'in SRD içerik çevirisi kapsamı (kartın kategori slug'ı) — ad
+  /// hâlâ kaynak kartın adıysa dolu, DM'in verdiği adda null. Ad İngilizce
+  /// gider; her alıcı kendi dilinde çevirir (docs/srd-tr ROADMAP Faz 6).
+  final String? nameScope;
+
   const TokenSnapshot({
     required this.id,
     required this.name,
@@ -546,6 +551,7 @@ class TokenSnapshot {
     this.maxHp = 0,
     this.init = 0,
     this.conditions = const [],
+    this.nameScope,
   });
 
   /// Backwards-compat helper used by older call sites that only need names.
@@ -564,6 +570,33 @@ class TokenSnapshot {
         maxHp: maxHp,
         init: init,
         conditions: conditions,
+        nameScope: nameScope,
+      );
+
+  /// Adı ve durum adları [tr] (scope, İngilizce → gösterilecek) ile çevrilmiş
+  /// kopya — alıcı tarafta, yalnızca görüntü için. Durumların kapsamı
+  /// `condition` kategorisidir.
+  TokenSnapshot localized(String Function(String scope, String en) tr) =>
+      TokenSnapshot(
+        id: id,
+        name: nameScope == null ? name : tr(nameScope!, name),
+        x: x,
+        y: y,
+        imagePath: imagePath,
+        colorHex: colorHex,
+        isPlayer: isPlayer,
+        hp: hp,
+        maxHp: maxHp,
+        init: init,
+        conditions: [
+          for (final c in conditions)
+            ConditionSnapshot(
+              name: tr('condition', c.name),
+              turns: c.turns,
+              imagePath: c.imagePath,
+            ),
+        ],
+        nameScope: nameScope,
       );
 
   Map<String, dynamic> toJson() => {
@@ -578,6 +611,7 @@ class TokenSnapshot {
         'maxHp': maxHp,
         'init': init,
         'conditions': conditions.map((c) => c.toJson()).toList(),
+        if (nameScope != null) 'nameScope': nameScope,
       };
 
   factory TokenSnapshot.fromJson(Map<String, dynamic> json) => TokenSnapshot(
@@ -591,6 +625,7 @@ class TokenSnapshot {
         hp: (json['hp'] as num?)?.toInt() ?? 0,
         maxHp: (json['maxHp'] as num?)?.toInt() ?? 0,
         init: (json['init'] as num?)?.toInt() ?? 0,
+        nameScope: json['nameScope'] as String?,
         conditions: (json['conditions'] as List?)
                 ?.map((e) =>
                     ConditionSnapshot.fromJson((e as Map).cast<String, dynamic>()))
