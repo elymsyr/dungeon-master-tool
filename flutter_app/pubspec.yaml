@@ -102,6 +102,9 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
+    # Palette + dice fonts, subsetted (`tool/fonts/bundle_fonts.py`).
+    # google_fonts loads them from here; runtime fetching is off (main.dart).
+    - assets/fonts/
     # BB-1: the Open5e import packs (~32MB) are EXCLUDED from production builds.
     # Their only consumer is the admin "Install bundled asset packs" toggle,
     # which is hidden unless the packs are present (see assetsPackInstaller
