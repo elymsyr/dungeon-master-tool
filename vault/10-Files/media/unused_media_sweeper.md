@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/unused_media_sweeper.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -39,6 +39,7 @@ tags: [file]
   3. **`graceWindow = 10 dk`** — bu süre içinde değiştirilmiş dosyalar atlanır. `.dmtz` import dosyayı payload'dan önce yazabiliyor; bekleyen debounce yazımı da henüz diske inmemiş olabilir.
 - **Sıralama invariantı:** çağırmadan önce `PendingWriteBuffer.flush()` çalışmalı. Kapanış kancası flush'tan sonra, açılış kancası `completeLoad`'un kendi flush'ından sonra.
 - Yol karşılaştırması `p.canonicalize` ile (Windows'ta büyük/küçük harf duyarsız).
+- **Markdown'a gömülü resimler:** `@resim` ile eklenen `![alt](dmt-img:<percent-encoded ref>)` yolu string'in tamamı olmadığından düz taramada görünmez; `mention_text.dart` → `markdownImageRefs` ile çözülüp referans sayılır. Aksi hâlde cihazdan yalnız markdown'a yüklenen dosya silinirdi.
 - Best-effort: hiçbir hata dünya açılışını/kapanışını bozmaz, `debugPrint` ile yutulur.
 
 ## Notes

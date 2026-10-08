@@ -13,6 +13,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:dungeon_master_tool/application/services/local_media_localizer.dart';
+import 'package:dungeon_master_tool/application/services/mention_text.dart';
 import 'package:dungeon_master_tool/application/services/unused_media_sweeper.dart';
 import 'package:dungeon_master_tool/core/config/app_paths.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
@@ -109,6 +110,25 @@ void main() {
     expect(await File(node).exists(), isTrue);
     expect(await File(portrait).exists(), isTrue);
     expect(await File(attachment).exists(), isTrue);
+    expect(await File(orphan).exists(), isFalse);
+  });
+
+  test('markdown alanına gömülü resim referans sayılır', () async {
+    final embedded = await media('harita (eski) 1.png');
+    final orphan = await media('sahipsiz.png');
+    final md = 'Giriş\n\n${markdownImage(embedded, 'Harita')} sonu';
+
+    expect(markdownImageRefs(md), [embedded]);
+    expect(stripMentions(md), 'Giriş\n\n sonu');
+
+    final removed = await sweep({
+      'entities': {
+        'e1': {'description': md},
+      },
+    });
+
+    expect(removed, 1);
+    expect(await File(embedded).exists(), isTrue);
     expect(await File(orphan).exists(), isFalse);
   });
 

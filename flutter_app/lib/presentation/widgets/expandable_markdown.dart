@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../theme/markdown_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../application/services/mention_text.dart';
+import 'markdown_text_area.dart';
 
 /// A description block that collapses to a short plain-text preview and, on
 /// "Show more", expands into a **fixed-height scrollable box at the same font
@@ -80,6 +82,8 @@ class _ExpandableMarkdownState extends State<ExpandableMarkdown> {
                 child: MarkdownBody(
                   data: data,
                   styleSheet: _flattenedSheet(context, base),
+                  imageBuilder: (uri, title, alt) => MarkdownEmbeddedImage(
+                      uri: uri, width: markdownImageWidth(title)),
                   onTapLink: (text, href, title) async {
                     if (href == null) return;
                     final uri = Uri.tryParse(href);
