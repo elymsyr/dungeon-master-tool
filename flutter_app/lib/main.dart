@@ -13,6 +13,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'application/providers/ui_state_provider.dart';
+import 'application/services/builtin_srd_entities.dart';
 import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
@@ -174,6 +175,10 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       // Supabase init so the first RPC carries the real installed build.
       final appVersionLoad = initAppVersion();
 
+      // The hub builds CharactersTab on its first frame, and that tab reads the
+      // bundled SRD map; build it on another core while the splash is up.
+      final srdPrewarm = prewarmBuiltinSrdEntities();
+
       // SoLoud is lazy: only soundpad_engine.dart touches it, and that fires
       // when the user opens the soundpad — well after first paint. Pushing it
       // off the critical path saves up to 3s of cold-start when the audio
@@ -194,6 +199,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         appVersionLoad.then((_) => _initSupabase()),
         _initWindowManager(),
         uiStateLoad,
+        srdPrewarm,
       ]);
 
       if (!mounted) return;
