@@ -33,6 +33,7 @@ import '../../../theme/dm_tool_colors.dart';
 import '../../../dialogs/entity_preview_dialog.dart';
 import '../../../widgets/expandable_markdown.dart';
 import '../../../widgets/source_badge.dart';
+import '../../../widgets/stepper_scroll.dart';
 import '../../../widgets/perf/image_cache_size.dart';
 import '../../../../application/character_creation/caster_progression.dart';
 import '../../../../application/character_creation/level_up_planner.dart';
@@ -75,6 +76,21 @@ class _CharacterCreationWizardScreenState
   /// "user picked built-in". Both `_pickActiveWorldIfAny` and the commit
   /// fallback would then silently rebind the character to the active world.
   bool _userPickedWorld = false;
+
+  final _stepperScroll = StepperScroll(_stepCount);
+
+  @override
+  void dispose() {
+    _stepperScroll.dispose();
+    super.dispose();
+  }
+
+  /// Adım değişikliklerinin tek girişi: yeni adımın başlığı en üste kayar.
+  void _goToStep(int to) {
+    final from = _currentStep;
+    setState(() => _currentStep = to);
+    _stepperScroll.reveal(from, to);
+  }
 
   @override
   void initState() {
@@ -176,211 +192,228 @@ class _CharacterCreationWizardScreenState
           return campaignsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text(L10n.of(context)!.wizardWorldLoadError('$e'))),
-            data: (worlds) => Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Stepper(
-                  type: StepperType.vertical,
-                  currentStep: _currentStep,
-                  onStepTapped: (i) {
-                    final firstError = _firstErrorBefore(i, draft);
-                    if (firstError != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(firstError)),
+            data: (worlds) => SingleChildScrollView(
+              controller: _stepperScroll.controller,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: Stepper(
+                    type: StepperType.vertical,
+                    // Kaydırma dıştaki SingleChildScrollView'da (bkz. StepperScroll).
+                    physics: const NeverScrollableScrollPhysics(),
+                    currentStep: _currentStep,
+                    onStepTapped: (i) {
+                      final firstError = _firstErrorBefore(i, draft);
+                      if (firstError != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(firstError)),
+                        );
+                        return;
+                      }
+                      _goToStep(i);
+                    },
+                    onStepContinue: () {
+                      final err = _validateStep(_currentStep, draft);
+                      if (err != null) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(err)));
+                        return;
+                      }
+                      if (_currentStep == _stepCount - 1) {
+                        _commit(draft, playerTemplates);
+                      } else {
+                        _goToStep(_currentStep + 1);
+                      }
+                    },
+                    onStepCancel: () {
+                      if (_currentStep == 0) {
+                        context.pop();
+                      } else {
+                        _goToStep(_currentStep - 1);
+                      }
+                    },
+                    controlsBuilder: (ctx, details) {
+                      final isLast = _currentStep == _stepCount - 1;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          children: [
+                            FilledButton(
+                              onPressed:
+                                  _committing ? null : details.onStepContinue,
+                              child: _committing && isLast
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : Text(isLast ? L10n.of(context)!.btnCreate : L10n.of(context)!.btnContinue),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed:
+                                  _committing ? null : details.onStepCancel,
+                              child: Text(_currentStep == 0 ? L10n.of(context)!.btnCancel : L10n.of(context)!.btnBack),
+                            ),
+                          ],
+                        ),
                       );
-                      return;
-                    }
-                    setState(() => _currentStep = i);
-                  },
-                  onStepContinue: () {
-                    final err = _validateStep(_currentStep, draft);
-                    if (err != null) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(err)));
-                      return;
-                    }
-                    if (_currentStep == _stepCount - 1) {
-                      _commit(draft, playerTemplates);
-                    } else {
-                      setState(() => _currentStep += 1);
-                    }
-                  },
-                  onStepCancel: () {
-                    if (_currentStep == 0) {
-                      context.pop();
-                    } else {
-                      setState(() => _currentStep -= 1);
-                    }
-                  },
-                  controlsBuilder: (ctx, details) {
-                    final isLast = _currentStep == _stepCount - 1;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: [
-                          FilledButton(
-                            onPressed:
-                                _committing ? null : details.onStepContinue,
-                            child: _committing && isLast
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : Text(isLast ? L10n.of(context)!.btnCreate : L10n.of(context)!.btnContinue),
+                    },
+                    steps: [
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepIdentity),
+                        isActive: _currentStep >= 0,
+                        state: _stateFor(0, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[0],
+                          active: _currentStep == 0,
+                          child: _IdentityStep(
+                            draft: draft,
+                            notifier: notifier,
+                            worlds: worlds,
+                            templates: playerTemplates,
+                            alignments: _alignments,
+                            activatingWorld: _activatingWorld,
+                            onWorldPicked: _activateWorld,
+                            onUserPickedWorld: () {
+                              if (!_userPickedWorld) {
+                                setState(() => _userPickedWorld = true);
+                              }
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed:
-                                _committing ? null : details.onStepCancel,
-                            child: Text(_currentStep == 0 ? L10n.of(context)!.btnCancel : L10n.of(context)!.btnBack),
+                        ),
+                      ),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepSpecies),
+                        isActive: _currentStep >= 1,
+                        state: _stateFor(1, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[1],
+                          active: _currentStep == 1,
+                          child: _RaceStep(draft: draft, notifier: notifier),
+                        ),
+                      ),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepClass),
+                        isActive: _currentStep >= 2,
+                        state: _stateFor(2, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[2],
+                          active: _currentStep == 2,
+                          child: _EntityPickStep(
+                            title: L10n.of(context)!.wizardStepClass,
+                            slugs: const ['class'],
+                            selectedId: draft.classId,
+                            onChanged: notifier.setClass,
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                  steps: [
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepIdentity),
-                      isActive: _currentStep >= 0,
-                      state: _stateFor(0, draft),
-                      content: _StepBody(
-                        active: _currentStep == 0,
-                        child: _IdentityStep(
-                          draft: draft,
-                          notifier: notifier,
-                          worlds: worlds,
-                          templates: playerTemplates,
-                          alignments: _alignments,
-                          activatingWorld: _activatingWorld,
-                          onWorldPicked: _activateWorld,
-                          onUserPickedWorld: () {
-                            if (!_userPickedWorld) {
-                              setState(() => _userPickedWorld = true);
-                            }
-                          },
                         ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepSpecies),
-                      isActive: _currentStep >= 1,
-                      state: _stateFor(1, draft),
-                      content: _StepBody(
-                        active: _currentStep == 1,
-                        child: _RaceStep(draft: draft, notifier: notifier),
-                      ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepClass),
-                      isActive: _currentStep >= 2,
-                      state: _stateFor(2, draft),
-                      content: _StepBody(
-                        active: _currentStep == 2,
-                        child: _EntityPickStep(
-                          title: L10n.of(context)!.wizardStepClass,
-                          slugs: const ['class'],
-                          selectedId: draft.classId,
-                          onChanged: notifier.setClass,
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepSubclass),
+                        isActive: _currentStep >= 3,
+                        state: _stateFor(3, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[3],
+                          active: _currentStep == 3,
+                          child:
+                              SubclassStep(draft: draft, notifier: notifier),
                         ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepSubclass),
-                      isActive: _currentStep >= 3,
-                      state: _stateFor(3, draft),
-                      content: _StepBody(
-                        active: _currentStep == 3,
-                        child:
-                            SubclassStep(draft: draft, notifier: notifier),
-                      ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepBackground),
-                      isActive: _currentStep >= 4,
-                      state: _stateFor(4, draft),
-                      content: _StepBody(
-                        active: _currentStep == 4,
-                        child: _EntityPickStep(
-                          title: L10n.of(context)!.wizardStepBackground,
-                          slugs: const ['background'],
-                          selectedId: draft.backgroundId,
-                          onChanged: notifier.setBackground,
-                          optional: true,
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepBackground),
+                        isActive: _currentStep >= 4,
+                        state: _stateFor(4, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[4],
+                          active: _currentStep == 4,
+                          child: _EntityPickStep(
+                            title: L10n.of(context)!.wizardStepBackground,
+                            slugs: const ['background'],
+                            selectedId: draft.backgroundId,
+                            onChanged: notifier.setBackground,
+                            optional: true,
+                          ),
                         ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepAbilities),
-                      isActive: _currentStep >= 5,
-                      state: _stateFor(5, draft),
-                      content: _StepBody(
-                        active: _currentStep == 5,
-                        child:
-                            _AbilitiesStep(draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepAbilities),
+                        isActive: _currentStep >= 5,
+                        state: _stateFor(5, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[5],
+                          active: _currentStep == 5,
+                          child:
+                              _AbilitiesStep(draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepFeats),
-                      isActive: _currentStep >= 6,
-                      state: _stateFor(6, draft),
-                      content: _StepBody(
-                        active: _currentStep == 6,
-                        child: FeatsStep(draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepFeats),
+                        isActive: _currentStep >= 6,
+                        state: _stateFor(6, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[6],
+                          active: _currentStep == 6,
+                          child: FeatsStep(draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepProficiencies),
-                      isActive: _currentStep >= 7,
-                      state: _stateFor(7, draft),
-                      content: _StepBody(
-                        active: _currentStep == 7,
-                        child: ProficienciesStep(
-                            draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepProficiencies),
+                        isActive: _currentStep >= 7,
+                        state: _stateFor(7, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[7],
+                          active: _currentStep == 7,
+                          child: ProficienciesStep(
+                              draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepSpells),
-                      isActive: _currentStep >= 8,
-                      state: _stateFor(8, draft),
-                      content: _StepBody(
-                        active: _currentStep == 8,
-                        child:
-                            SpellsStep(draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepSpells),
+                        isActive: _currentStep >= 8,
+                        state: _stateFor(8, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[8],
+                          active: _currentStep == 8,
+                          child:
+                              SpellsStep(draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepEquipment),
-                      isActive: _currentStep >= 9,
-                      state: _stateFor(9, draft),
-                      content: _StepBody(
-                        active: _currentStep == 9,
-                        child:
-                            EquipmentStep(draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepEquipment),
+                        isActive: _currentStep >= 9,
+                        state: _stateFor(9, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[9],
+                          active: _currentStep == 9,
+                          child:
+                              EquipmentStep(draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepPersonality),
-                      isActive: _currentStep >= 10,
-                      state: _stateFor(10, draft),
-                      content: _StepBody(
-                        active: _currentStep == 10,
-                        child: PersonalityStep(
-                            draft: draft, notifier: notifier),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepPersonality),
+                        isActive: _currentStep >= 10,
+                        state: _stateFor(10, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[10],
+                          active: _currentStep == 10,
+                          child: PersonalityStep(
+                              draft: draft, notifier: notifier),
+                        ),
                       ),
-                    ),
-                    Step(
-                      title: Text(L10n.of(context)!.wizardStepReview),
-                      isActive: _currentStep >= 11,
-                      state: _stateFor(11, draft),
-                      content: _StepBody(
-                        active: _currentStep == 11,
-                        child: _ReviewStep(draft: draft),
+                      Step(
+                        title: Text(L10n.of(context)!.wizardStepReview),
+                        isActive: _currentStep >= 11,
+                        state: _stateFor(11, draft),
+                        content: _StepBody(
+                          key: _stepperScroll.bodyKeys[11],
+                          active: _currentStep == 11,
+                          child: _ReviewStep(draft: draft),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -2845,7 +2878,7 @@ class _ReviewStep extends ConsumerWidget {
 class _StepBody extends StatelessWidget {
   final bool active;
   final Widget child;
-  const _StepBody({required this.active, required this.child});
+  const _StepBody({super.key, required this.active, required this.child});
 
   @override
   Widget build(BuildContext context) {
