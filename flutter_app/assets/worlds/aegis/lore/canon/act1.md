@@ -539,9 +539,9 @@ düşündüğüdür.
 
 | Aşama | Puan | Belirtiler | Mekanik etki |
 |---|---|---|---|
-| **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince siyah damarlar, sürekli metalik tat | CON temelli **yetenek kontrollerinde** dezavantaj. Büyülerde görsel "bozulmalar" başlar, mekanik engel yok |
+| **1 — Kuluçka** | 1–2 | Hafif öksürük, eklemlerde ince, morumsu siyah damarlar, sürekli metalik tat | CON temelli **yetenek kontrollerinde** dezavantaj. Büyülerde görsel "bozulmalar" başlar, mekanik engel yok |
 | **2 — Sistemik Yayılma** | 3–4 | Yüksek ateş, yaraların geç iyileşmesi, tenin grileşmesi | Hız **−10 ft** · uzun dinlenmede harcanan Can Zarlarının şifası **yarıya** düşer · 3.+ seviye büyüde **Yozlaşma Kontrolü** zorunlu ([`mekanikler.md` §6](mekanikler.md)) |
-| **3 — Ağır Bozulma** | 5–6 | Göz ve kulaklardan siyah sıvı, nefes darlığı, halüsinasyon (tanrıların fısıltıları) | **TÜM** yetenek kontrollerinde dezavantaj |
+| **3 — Ağır Bozulma** | 5–6 | Göz ve kulaklardan morumsu siyah sıvı, nefes darlığı, halüsinasyon (tanrıların fısıltıları) | **TÜM** yetenek kontrollerinde dezavantaj |
 | **4 — Morfolojik Çözülme** | 7–8 | Derinin sertleşip pul pul olması, irade dışı kasılmalar, konuşma bozukluğu | **TÜM** kurtarma zarlarında dezavantaj · her büyü (seviyesiz) bir **yozlaşma tablosu** tetikler ⚠️ · sürekli **3. seviye Exhaustion** etkisindeymiş gibi |
 | **5 — Tam Çöküş / Dönüşüm** | 9+ | Bilinç kapanır | Karakter ölür ya da **Dönüşmüş** olur |
 
@@ -1073,14 +1073,22 @@ elymsyr gemiden perdenin sonuna kadarki kartları istedi (A12). Kartlar:
 
 **Kanon eşiği.** Dönüşmüş taşıyan ve onları davulla yöneten bir gemi, hastalığın **kullanıldığını** gösterir; §4.5'in *Act 1 yalnız gizlemeyi kanıtlar* cümlesi bu gemide gevşedi. Hastalığın **birinin eseri** olduğu yine kanıtlanmaz.
 
-**Adlar ve hikaye bağları (KARAR, 2026-10-05, A13).** elymsyr türetmeleri onayladı ve adları istedi: gemi **Kara Yelken**, kaptan **Mordha** (ork kadın), çavuş **Hulda** (cüce kadın). Kart adları (*Borda Borda* · *Davul Sesi* · *Karantina Gecesi* · *Kaçakçı Güvertesi*) onaylandı. İki tayfa da kadın erkek karışık; *Dürüst Terazi*'de insan, cüce, yarı-elf, yarı-ork, halfling ve gnome var. Yeni iki kart:
+**Adlar ve hikaye bağları (KARAR, 2026-10-05, A13).** elymsyr türetmeleri onayladı ve adları istedi: gemi **Kara Yelken**, kaptan **Mordha** (ork kadın), çavuş **Hulda** (cüce kadın). Kart adları (*Borda Borda* · *Davul Sesi* · *Karantina Gecesi* · *Kaçakçı Güvertesi*) onaylandı. İki tayfa da kadın erkek karışık; *Dürüst Terazi*'de insan, cüce, yarı-elf, yarı-ork, halfling ve gnome var. Yeni kart:
 
-- **`trinket/Kader'in Ad Tahtası`.** Kara Yelken'in küpeştesinde, ganimetlerin arasında. *Kader*'in dönüş yolunda bu suda bu gemiyle karşılaştığını kanıtlar; kaptanının ve tayfasının nerede olduğunu, kimin adına taşıdığını kanıtlamaz.
 - **`lore/Kara Donanma — Bilinen Hali`.** Rıhtımlarda anlatılan kadarı; kimin donanması olduğu yazılı değil.
 
 Bağlar: kamarada **karakterleri bekleyen bir kağıt** (yasal yoldan geldilerse geçiş adları — İğne, imzacı odası ve Orvan bilir; kaçak yoldan geldilerse eşkal — Kadife gibi biri görmüş olur), **kimin yazdığı yazılmadı**; alt bölmeden çıkanlarda **Arcana DC 13** ile üç yabancıdaki bir yere bağlı izin aynısı; `quest/Nereden Geldiler`'de Kara Yelken hastalığın kanıtı olarak, kayıpların nedeni olarak değil.
 
-**Dönüşmüş Orklar** (elymsyr, 2026-10-05): bedenleri bozulmuş — eğri omurga, kaymış yüz, şişmiş ya da uzamış uzuvlar — ve çatlaklarından, gözlerinden, ağızlarından koyu mor, siyaha çalan bir sıvı sızar. **Hiçbiri ötekine benzemez.** İnsan Dönüşmüş'ün betimi (§4.2) değişmedi.
+**Dönüşmüş Orklar** (elymsyr, 2026-10-05): bedenleri bozulmuş — eğri omurga, kaymış yüz, şişmiş ya da uzamış uzuvlar — ve çatlaklarından, gözlerinden, ağızlarından morumsu siyah bir sıvı sızar. **Hiçbiri ötekine benzemez.**
+
+**Ad tahtası çıkarıldı (KARAR, 2026-10-08, A14).** `trinket/Kader'in Ad Tahtası` ve Kara Yelken'in *Ganimetler* bölümü kaldırıldı. *Kader*'in bu suyla bağı artık hiçbir kartta kanıtlanmaz; gemi üçlüyü getirdi ve bir daha yanaşmadı (§7.5), o kadar.
+
+**Orklar ve Dönüşmüş'ün görünüşü (KARAR, 2026-10-08, A14).**
+
+- **Orklar canavar değil**, öteki ırklar gibi bir halk. Hepsi iri ve kaslı savaşçı değildir: uzun ve sıska, kısa ve tıknaz, göbekli, kambur — her yapıdan olur. Ten kül grisinden toprak kahvesine, yeşile çalan griden soluk sarıya değişir. Yüzde kalın ve çıkık kaş kemiği, geniş burun, dudağın üstüne taşan alt dişler. Kara Yelken'in tayfasının zırhı tek elden çıkmamış: deri üstüne perçinlenmiş paslı demir, başka zırhlardan sökülmüş plakalar.
+- **Dönüşmüş'ün teni solar** — soluk tenden soluk yeşile, oradan morumsu griye uzanan bir kuşakta. Beden **yer yer bozulur** (düşen omuz, kayan yüz, kasılıp kalan el, sertleşip çatlayan deri). Dönüşmüş, hastalıktan önce kim idiyse onun bedenini taşır.
+- **Hiçbir belirti her Dönüşmüş'te aynı değildir** (elymsyr, 2026-10-08): birinde belirgin olan ötekinde hiç olmayabilir — solgunluk baştan sona ya da yer yer, bozulma çok ya da hiç, sıvı taze, kurumuş ya da görünmez. `monster/Dönüşmüş Ork` kartında bir **görünüş havuzu** var: önce ork (boy, yüz, kaş, göz, burun, ağız, kulak, saç, eski izler), sonra hastalık (ten, deri, bozulma, sıvı, gözler), sonra üstünde kalan; hiçbiri zorunlu değil.
+- **Hastalığın rengi morumsu siyahtır**, her aşamada ve her bedende — görünüp görünmemesi değişir, rengi değişmez: Aşama 1'in damarları, Aşama 3'ün göz ve kulaklardan sızan sıvısı, Dönüşmüş'ün çatlaklarından akan sıvı. Siyaha yakın, ışıkta mora çalar.
 
 **Bilerek yazılmayanlar:** kayıplarla bağ · diğer üç gemi · Caelynn/Holg rotası · Dönüşmüş'lerin hastayı tanıyıp tanımadığı · çare sözünü veren · kamaradaki kağıdı yazan · abluka.
 
@@ -1272,7 +1280,8 @@ konsey limanı biliyor, tehdit işlemez · üçlü **Gizli Liman**'dan geldiler.
     Dönüşmüş'ler alt bölmede. *Dürüst Terazi* ticaret yolundan sapıp ilk üçünden kurtulur,
     en küçüğüyle karşılaşır; Maren bunu yolda anlatır (`scene/Maren'in Rotası`).
 45. **Perdenin son savaşı yazıldı** (§7.8): `location/Kara Yelken`, davulla yönetilen Dönüşmüş'ler, `encounter/Borda Borda` ve çevresindeki üç sahne.
-46. **Adlar ve hikaye bağları** (§7.8, A13): Kara Yelken · Mordha (ork kadın) · Hulda (cüce kadın); `trinket/Kader'in Ad Tahtası` ve `lore/Kara Donanma — Bilinen Hali`; kamaradaki kağıt ve Arcana DC 13 izi.
+46. **Adlar ve hikaye bağları** (§7.8, A13): Kara Yelken · Mordha (ork kadın) · Hulda (cüce kadın); `lore/Kara Donanma — Bilinen Hali`; kamaradaki kağıt ve Arcana DC 13 izi. *(Ad tahtası 2026-10-08'de çıkarıldı, 47.)*
+47. **Ad tahtası çıkarıldı; orklar ve Dönüşmüş'ün görünüşü** (§7.8, A14): orklar her yapıdan bir halk; Dönüşmüş'ün teni soluk yeşil–morumsu gri kuşağında, beden yer yer bozuk; hastalığın sıvısı ve damarları her yerde morumsu siyah. İyi yazı = Meclis'teki bir koltuğun karşı-imzası.
 
 **Açık:**
 

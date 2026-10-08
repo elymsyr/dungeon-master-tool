@@ -6,7 +6,7 @@
   "author": "elymsyr",
   "license": "all-rights-reserved",
   "attribution": "Copyright © 2026 elymsyr. Tüm hakları saklıdır.",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "Aegis evreninin birinci kıtası Meridia'da geçen özgün bir DnD 5e dünyası. Bir orman köyünün kenarındaki kulübede başlar; Gizli Liman'dan Lucid Triton'daki Lonca Meclisi'ne, Elymsyr'in gümrüğünden Votumar şatosuna ve Radenhall'ın rünlü taşlarına uzanır. Türkçe.",
   "files": {
     "cover_image": "media/Aegis-Banner.webp",
@@ -87,7 +87,6 @@
         "media/Artwork/Iraz.webp",
         "media/Artwork/Isırık.webp",
         "media/Artwork/Kabuk-Vuruşu.webp",
-        "media/Artwork/Kaderin-Ad-Tahtası.webp",
         "media/Artwork/Kadife.webp",
         "media/Artwork/Kalem-Binası.webp",
         "media/Artwork/Kalfa-Başı-Adrik-Ferrun.webp",

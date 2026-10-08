@@ -30,7 +30,7 @@ Perdenin son savaşı denizde, Kara Donanma'nın en küçük gemisiyle. Kararlar
 kanonu `lore/canon/act1.md` §7.7–7.8'de. **Kartlar yazıldı (0.21.0–0.22.0)**, adları ve görselleriyle:
 `location/Kara Yelken` · `location/Dürüst Terazi` (ikisi de battlemap'li) · `npc/Ork Kaptan — Mordha` ·
 `npc/Terazi Çavuşu — Hulda` · `encounter/Borda Borda` · üç sahne · beş `monster` · altı `creature-action` · `trait/Düşmeyen` ·
-`trinket/Kader'in Ad Tahtası` · `lore/Kara Donanma — Bilinen Hali`. Aşağıda kalanlar.
+`lore/Kara Donanma — Bilinen Hali`. Aşağıda kalanlar.
 
 ### Açık sorular
 
