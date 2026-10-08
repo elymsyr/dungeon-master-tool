@@ -1,5 +1,111 @@
 # Release Notes
 
+## Dungeon Master Tool v19.0.0 — In Your Language (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v19.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release brings the whole SRD 5.2.1 into Turkish. Spells, monsters, magic items, classes, species, feats and rules can now be shown in Turkish, with a new setting that is separate from the app language. Movement trails on the battle map now stay for the whole round. Your data is not changed: cards are still stored in English, so this version installs over v18.5.1.
+
+---
+
+### Highlights
+
+- **SRD content in Turkish** — all 6,404 texts of the SRD 5.2.1 pack can be shown in Turkish.
+- **A separate SRD language setting** — choose the language of SRD content in **Settings → SRD Content Language**, apart from the app language.
+- **Trails for the whole round** — every token moved this round keeps its trail and distance until the next round, for the DM and every player.
+
+---
+
+### SRD content in Turkish
+
+#### The whole SRD, in your language
+Set **Settings → SRD Content Language** to **Türkçe** and every SRD card shows in Turkish: names, descriptions, field labels, monster actions and spell text. Terms follow the official Turkish Baldur's Gate 3 and Baldur's Gate: Enhanced Edition translations, so they match what Turkish players already know. Your data is not changed: cards are still stored in English, and switching back to English shows English at once.
+
+#### A setting of its own
+The SRD content language is separate from the app language and defaults to English. You can use the app in Turkish and keep SRD content in English, or the other way round.
+
+#### Every player sees their own language
+Each device shows SRD content in its own SRD language. If the DM reads SRD in Turkish and a player reads it in English, the player sees the shared cards and the battle map in English, and the DM sees them in Turkish. The DM's second window and screencast follow the DM's language.
+
+#### Where it shows
+Card lists and cards, the card picker and preview, the character sheet (ability scores, saving throws, skills, class resources, header chips), the character builder, level-up choices, the combat tracker and battle map tokens, conditions, the mind map, and everything projected to players.
+
+- Search finds a card by its English or its Turkish name ("Fireball" and "Ateştopu" both work).
+- Only original SRD cards are translated. A homebrew copy of an SRD card, a card from another pack, or a name you typed yourself (a renamed monster like "Goblin 2") stays as you wrote it.
+
+---
+
+### Battle map
+
+#### Trails for the whole round
+Every token moved this round, by the DM or by a player, keeps its dashed trail and its distance until the next round starts, or until combat starts or ends. The DM and every player see the same trails. Undo takes back the last drag of the token that was moved most recently.
+
+- A new **Clear Trails** button removes all trails, on desktop and on phones. **Clear All** also clears the trails.
+
+---
+
+### Smaller improvements
+
+- **Codex** — the **Database** tab is now called **Codex** (Kodeks in Turkish, Kodex in German).
+- **Character builder** — the help text now says "character builder" instead of "wizard", so it is not confused with the Wizard class.
+- **Level-up choices** — "Pick 2 spells", "Choose a subclass" and the other level-up labels, plus the spell summary in the level-up window, are now translated.
+- **Character list** — the HP and AC chips are labeled in your language.
+- **Turkish headings** — upper-case headings now write "İ" correctly in Turkish ("KABİLİYET", not "KABILIYET").
+- **Turkish terms** — the Turkish app text now uses the same terms as the SRD translation (for example Öncelik, Kısa/Uzun Dinlenme, Yetkinlik Katkısı).
+- **Battle map, player** — the player's `ft · m` label sits on a dark box like the DM's.
+- **Battle map color button** — on phones it lines up with the other tool buttons. On desktop it has no caption, like the buttons next to it.
+- **Settings** — Settings opens faster: the dice theme list no longer draws a 3D d20.
+- **l10n** — new keys for the SRD content language setting, Clear Trails, level-up choice labels, the level-up spell summary and the HP / AC / proficiency bonus labels in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Cards** — closing a card right after typing could lose the last edit, including a change to a schema field. This is fixed.
+
+---
+
+### Deprecations & removals
+
+- **Dice preview in Settings** — the 3D d20 above the dice theme list is gone. Pick a theme and roll to see it.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `18.5.1` → `19.0.0`.
+- **SRD in Turkish:** SRD content stays in English until you pick **Türkçe** in **Settings → SRD Content Language**. Each device keeps its own choice.
+- **Online groups:** the DM and the players should all update. A player on an older version does not see the round's trails.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Map pin labels and the combat log are not translated**: a map pin keeps the name it had when it was placed, and combat log lines stay in English.
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Display-only translation** — tables live in `assets/srd_l10n/<lang>/<scope>.json` (English text → translation); `ContentTranslator` applies them at render time, only to cards where `isSrdCard` holds. Data, refs and the rules engine never see a translation. The language is `UiState.srdLanguage`.
+- **Projection** — payloads stay English and carry scopes (`EntitySnapshot.parts` / `srd`, `TokenSnapshot.nameScope`); each receiver translates. `BattleMapSnapshot` v6 replaces `trail` with `trails` (one per token moved this round).
+- **CI guard** — `test/tool/srd_l10n_coverage_test.dart` fails on any SRD text without a translation and on any table key no longer in the source; `tool/srd_l10n/bin/check_pairs.dart` validates every pair. After changing SRD text, run `dart run tool/srd_l10n/bin/extract.dart` and translate the new keys.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v18.5.1 — Shared Trails (Beta)
 
 **Release date:** October 2026

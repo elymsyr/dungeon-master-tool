@@ -6,7 +6,7 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 6 October 2026 (v18.5.1) — no changes; *3D dice roller is slow on phones* added in v18.1.0. The
+**Last reviewed:** 8 October 2026 (v19.0.0) — *Map pin labels and the combat log are not translated* added; *3D dice roller is slow on phones* added in v18.1.0. The
 v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `flutter analyze`
 0 errors / 0 warnings, worker `npm run typecheck` clean.
 
@@ -60,6 +60,10 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
     the non-opaque dice route is re-rasterized every frame (Impeller has no raster cache).
   - Still open: a direct roll from the proficiency table without opening the menu first pays the
     `DiceKit` build and shader warm-up at throw time, so that first throw can stall briefly.
+- **Map pin labels and the combat log are not translated** — with the SRD content language
+  set to Turkish, a map pin keeps the name it had when it was placed (the label is written into
+  the data and the DM edits it), and combat log lines stay in English. Left out on purpose in
+  the SRD-TR work ([docs/srd-tr/ROADMAP.md](srd-tr/ROADMAP.md) Faz 6).
 - **Banning is not possible** — a DM cannot hide SRD content from players ("there is no
   Fireball in this world"); sharing marks only add, they do not take away.
 
