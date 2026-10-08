@@ -175,7 +175,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _dmNotesController;
 
   /// Okuma modunda açıklamanın gösterilen (çevrilmiş) hali. Kayıt yolu
-  /// ([_flushPendingUpdate]) yalnızca [_descController]'ı okur — çeviri
+  /// (açıklamanın `onChanged`'i) yalnızca [_descController]'ı okur — çeviri
   /// veriye sızmaz (srd-tr K3).
   late TextEditingController _descViewController;
 
@@ -214,46 +214,45 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   Timer? _updateTimer;
+  Entity Function()? _pendingBuild;
 
   /// Debounced provider update — avoids rebuilding the entire widget tree
   /// on every keystroke. The TextEditingController holds the current value
   /// so the UI stays responsive while the provider update is delayed.
   void _debouncedProviderUpdate(Entity Function() entityBuilder) {
     _updateTimer?.cancel();
+    _pendingBuild = entityBuilder;
     _updateTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      ref.read(entityProvider.notifier).update(entityBuilder());
+      final entity = _takePendingUpdate();
+      if (entity != null) ref.read(entityProvider.notifier).update(entity);
     });
   }
 
-  /// Flush pending debounced update immediately (e.g. on dispose).
-  void _flushPendingUpdate() {
-    if (_updateTimer?.isActive ?? false) {
-      _updateTimer!.cancel();
-      // Re-read current entity and sync from controllers
-      final entity = ref.read(entityProvider)[widget.entityId];
-      if (entity == null) return;
-      ref
-          .read(entityProvider.notifier)
-          .update(
-            entity.copyWith(
-              name: _nameController.text,
-              description: _descController.text,
-              source: _sourceController.text,
-              dmNotes: _dmNotesController.text,
-              tags: _tagsController.text
-                  .split(',')
-                  .map((t) => t.trim())
-                  .where((t) => t.isNotEmpty)
-                  .toList(),
-            ),
-          );
+  /// Cancels the debounce and builds the pending edit — name/description
+  /// fields and schema fields (`_updateField`) alike.
+  Entity? _takePendingUpdate() {
+    _updateTimer?.cancel();
+    final build = _pendingBuild;
+    _pendingBuild = null;
+    return build?.call();
+  }
+
+  /// Flushes a pending edit when the card closes. Not in [dispose]: Riverpod
+  /// forbids `ref` there, which used to drop the last edit. The write itself
+  /// waits for a microtask — the tree is mid-build during deactivate.
+  @override
+  void deactivate() {
+    final entity = _takePendingUpdate();
+    if (entity != null) {
+      final notifier = ref.read(entityProvider.notifier);
+      scheduleMicrotask(() => notifier.update(entity));
     }
+    super.deactivate();
   }
 
   @override
   void dispose() {
-    _flushPendingUpdate();
     _updateTimer?.cancel();
     _nameController.dispose();
     _descController.dispose();
