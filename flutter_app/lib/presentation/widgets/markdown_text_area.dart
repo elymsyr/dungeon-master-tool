@@ -754,7 +754,10 @@ class MarkdownEmbeddedImage extends StatelessWidget {
       );
     } else if (uri.isScheme('http') || uri.isScheme('https')) {
       image = Image.network(raw,
-          fit: BoxFit.contain, errorBuilder: (_, _, _) => broken);
+          fit: BoxFit.contain,
+          cacheWidth:
+              cachePxFromLogical(context, MediaQuery.sizeOf(context).width),
+          errorBuilder: (_, _, _) => broken);
     } else {
       return const SizedBox.shrink();
     }
