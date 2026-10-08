@@ -13,6 +13,7 @@ import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/srd_text.dart';
 
 /// Wizard step that lets spellcasting classes pick their starting
 /// cantrips and prepared/known spells. Hidden (renders an empty notice)
@@ -357,7 +358,7 @@ class _SpellRow extends StatelessWidget {
                         ),
                       Flexible(
                         child: Text(
-                          entity.name,
+                          srdName(context, entity),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

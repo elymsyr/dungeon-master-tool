@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/content_translator_provider.dart';
+
 import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/projection/projection_state.dart';
@@ -107,3 +109,15 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
 final playerProjectionStateProvider =
     StateNotifierProvider<PlayerProjectionStateNotifier, ProjectionState>(
         (ref) => PlayerProjectionStateNotifier());
+
+/// DM'in içerik dili (SRD çevirisi) — yalnızca ayrı motorda çalışan yerel
+/// projeksiyon pencerelerinde; tam durumla birlikte gelir. Bu motorların
+/// kökü `contentLanguageProvider`'ı bununla override eder
+/// ([projectionLanguageOverrides]).
+final projectionContentLanguageProvider = StateProvider<String>((_) => 'en');
+
+/// Yerel projeksiyon motorlarının `ProviderScope` override'ları.
+final projectionLanguageOverrides = [
+  contentLanguageProvider
+      .overrideWith((ref) => ref.watch(projectionContentLanguageProvider)),
+];

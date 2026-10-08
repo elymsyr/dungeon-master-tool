@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/projection/projection_state.dart';
 import 'player_window_root.dart';
 import 'player_window_state_provider.dart';
+import '../../../application/services/projection_output_screencast.dart';
 
 /// Screencast entry point — runs inside the dedicated FlutterEngine that the
 /// native Presentation / UIWindow hosts on the external display.
@@ -16,8 +17,9 @@ void screencastMain() {
   debugPrint('SCREENCAST: screencastMain() entry point started');
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    const ProviderScope(
-      child: _ScreencastApp(),
+    ProviderScope(
+      overrides: projectionLanguageOverrides,
+      child: const _ScreencastApp(),
     ),
   );
 }
@@ -67,6 +69,10 @@ class _ScreencastAppState extends ConsumerState<_ScreencastApp> {
               notifier.applyPatch(payload);
               debugPrint('SCREENCAST: patch applied');
             } else {
+              if (map[screencastLangKey] case final String lang) {
+                ref.read(projectionContentLanguageProvider.notifier).state =
+                    lang;
+              }
               final state = ProjectionState.fromJson(map);
               notifier.applyFull(state);
               debugPrint(

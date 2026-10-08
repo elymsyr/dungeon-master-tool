@@ -28,6 +28,8 @@ import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../battle_map/battle_map_screen.dart';
+import '../../widgets/srd_text.dart';
+import '../../../application/providers/content_translator_provider.dart';
 
 /// Session tab: the battle map fills it. The encounter (combatant list)
 /// opens from the left, its controls sit in a bottom bar that is always on
@@ -48,6 +50,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Savaşçı/durum adları SRD çevirisiyle gösterilir; tablo yüklenince yeniden çiz.
+    ref.watch(contentTranslatorProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final phone = getScreenType(context) == ScreenType.phone;
     final open = _encounterOpen ?? !phone;
@@ -893,7 +897,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final conditionEntities = entities.values
         .where((e) => conditionSlugs.contains(e.categorySlug))
         .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+      ..sort((a, b) => srdName(context, a).compareTo(srdName(context, b)));
 
     final l10n = L10n.of(context)!;
     showDialog(
@@ -925,7 +929,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                                   radius: 10,
                                 )
                               : null,
-                          label: Text(e.name, style: const TextStyle(fontSize: 10)),
+                          label: Text(srdName(context, e), style: const TextStyle(fontSize: 10)),
                           visualDensity: VisualDensity.compact,
                           onPressed: () {
                             Navigator.pop(ctx);
@@ -1090,7 +1094,7 @@ class _MobileCombatCard extends StatelessWidget {
               // Name
               Expanded(
                 child: Text(
-                  combatant.name,
+                  srdCombatantName(context, combatant),
                   style: TextStyle(fontSize: 14, fontWeight: isActive ? FontWeight.bold : FontWeight.w500, color: palette.tabActiveText),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1232,7 +1236,7 @@ class _CombatantRow extends ConsumerWidget {
           Expanded(
             flex: 2,
             child: Text(
-              c.name,
+              srdCombatantName(context, c),
               style: TextStyle(
                 fontSize: 13,
                 color: palette.tabActiveText,

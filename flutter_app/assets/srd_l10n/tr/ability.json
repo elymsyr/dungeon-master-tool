@@ -1,0 +1,20 @@
+{
+  "Strength": "Kuvvet",
+  "STR": "KUV",
+  "Physical power applied directly.": "Doğrudan uygulanan fiziksel güç.",
+  "Dexterity": "Çeviklik",
+  "DEX": "ÇEV",
+  "Agility, reflexes, and balance.": "Atiklik, refleksler ve denge.",
+  "Constitution": "Dayanıklılık",
+  "CON": "DAY",
+  "Health, stamina, and vital force.": "Sağlık, kondisyon ve yaşam gücü.",
+  "Intelligence": "Zeka",
+  "INT": "ZEK",
+  "Reasoning and memory.": "Akıl yürütme ve hafıza.",
+  "Wisdom": "İrfan",
+  "WIS": "İRF",
+  "Perception and insight.": "Algı ve sezgi.",
+  "Charisma": "Karizma",
+  "CHA": "KAR",
+  "Force of personality.": "Kişilik gücü."
+}

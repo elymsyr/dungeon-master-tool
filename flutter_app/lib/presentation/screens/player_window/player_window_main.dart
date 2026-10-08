@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/config/supabase_config.dart';
 import 'player_window_app.dart';
+import 'player_window_state_provider.dart';
 
 /// Sub-isolate entrypoint for the player sub-window.
 ///
@@ -43,6 +44,7 @@ void playerWindowMain(List<String> args) async {
   }
   runApp(
     ProviderScope(
+      overrides: projectionLanguageOverrides,
       child: PlayerWindowApp(windowId: windowId),
     ),
   );

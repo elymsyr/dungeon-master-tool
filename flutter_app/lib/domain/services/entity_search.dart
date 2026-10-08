@@ -58,7 +58,7 @@ class EntitySearchDoc {
 
     walk(e.fields, 0);
     return EntitySearchDoc._(
-      e.name.toLowerCase(),
+      searchFold(e.name),
       '${e.tags.join(' ')} ${e.categorySlug.replaceAll('-', ' ')}'
           .toLowerCase(),
       text.toString().toLowerCase(),
@@ -66,6 +66,11 @@ class EntitySearchDoc {
     );
   }
 }
+
+/// Arama için küçük harfe indirme. Dart `'İ'.toLowerCase()` → `i̇` (i + nokta
+/// birleştiricisi) verir; Türkçe ad "İksir" "iksir" aramasıyla eşleşsin diye
+/// önce düz `i` yapılır.
+String searchFold(String s) => s.replaceAll('İ', 'i').toLowerCase();
 
 bool _isWordChar(int c) =>
     (c >= 0x61 && c <= 0x7a) || (c >= 0x30 && c <= 0x39) || c > 0x7f;
@@ -97,12 +102,17 @@ bool _hasWord(String hay, String w) {
 /// the start of a word in its tags/category/text. More matched tokens first;
 /// then the per-token best tier (name word-start 4 > name 3 > tag/category 2
 /// > text 1) summed, +2 for [suggested]; then name.
+///
+/// [shownNames]: id → ekranda gösterilen ad, [searchFold] edilmiş (SRD içerik
+/// çevirisi; yalnızca İngilizce addan farklı olanlar). Ad katmanı iki adla da
+/// eşleşir, eşitlikte gösterilen ada göre sıralanır.
 List<Entity> rankEntities(
   List<Entity> pool,
   String query, {
   Set<String> suggested = const {},
+  Map<String, String> shownNames = const {},
 }) {
-  final tokens = query.toLowerCase().split(' ')
+  final tokens = searchFold(query).split(' ')
     ..removeWhere((t) => t.isEmpty);
   if (tokens.isEmpty) return pool;
   final hits = <(Entity, int)>[];
@@ -110,7 +120,9 @@ List<Entity> rankEntities(
     final d = EntitySearchDoc.of(e);
     var matched = 0, score = 0;
     for (final t in tokens) {
-      final inName = _hit(d.name, t);
+      final shown = shownNames[e.id];
+      final hn = _hit(d.name, t), hs = shown == null ? 0 : _hit(shown, t);
+      final inName = hn > hs ? hn : hs;
       final tier = inName > 0
           ? inName + 2
           : _hit(d.meta, t) == 2
@@ -129,7 +141,10 @@ List<Entity> rankEntities(
   }
   hits.sort((a, b) {
     final c = b.$2.compareTo(a.$2);
-    return c != 0 ? c : a.$1.name.compareTo(b.$1.name);
+    return c != 0
+        ? c
+        : (shownNames[a.$1.id] ?? EntitySearchDoc.of(a.$1).name)
+            .compareTo(shownNames[b.$1.id] ?? EntitySearchDoc.of(b.$1).name);
   });
   return [for (final h in hits) h.$1];
 }
@@ -139,22 +154,25 @@ List<Entity> rankEntities(
 /// the previous hits instead of the whole pool; a repeated query (a rebuild
 /// after ticking a row) is free.
 class EntityRanking {
-  EntityRanking(this.pool, {this.suggested = const {}});
+  EntityRanking(this.pool,
+      {this.suggested = const {}, this.shownNames = const {}});
 
   final List<Entity> pool;
   final Set<String> suggested;
+  final Map<String, String> shownNames;
   String _query = '';
   List<Entity> _hits = const [];
 
   List<Entity> rank(String query) {
-    final q = query.toLowerCase();
+    final q = searchFold(query);
     if (q.trim().isEmpty) return pool;
     if (q == _query) return _hits;
     final narrow = _query.trim().isNotEmpty &&
         !_query.endsWith(' ') &&
         q.startsWith(_query) &&
         !q.substring(_query.length).contains(' ');
-    _hits = rankEntities(narrow ? _hits : pool, q, suggested: suggested);
+    _hits = rankEntities(narrow ? _hits : pool, q,
+        suggested: suggested, shownNames: shownNames);
     _query = q;
     return _hits;
   }

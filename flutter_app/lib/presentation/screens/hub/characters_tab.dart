@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
@@ -285,6 +286,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       final infoChips = CharacterStatChips(
                         lines: characterStatLines(
                           l10n: L10n.of(context)!,
+                          tx: ref.watch(contentTranslatorProvider),
                           c,
                           entitiesFor(c),
                           ownerLabel: resolveCharacterOwnerLabel(ref, c),

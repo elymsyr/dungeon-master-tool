@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: world-content
-updated: 2026-08-15
+updated: 2026-10-07
 tags: [moc]
 ---
 
@@ -36,6 +36,7 @@ tags: [moc]
 - [[entity_link]] — the single "open this entity" entry point every ref renderer taps through, and the test for whether a ref is openable at all (audit U3).
 - [[entity_search]] — `+` picker ranking (name/tag/text tiers) and class/species-aware **Suggested** rows.
 - [[entity_preview_dialog]] — read-only quick-look card opened by long-pressing a ref link; renders off a plain `Entity` so the creation wizard's bundled/package rows work too.
+- [[content_translator]] — SRD içerik çevirisi (TR): kartlar, karakter sayfası, oluşturucu, savaş, projeksiyon — her cihaz ayarlardaki kendi SRD dilinde görür; veri İngilizce kalır. Eksik/bayat çeviri CI'da kırmızı (`docs/srd-tr/ROADMAP.md`).
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.

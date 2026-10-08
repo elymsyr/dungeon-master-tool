@@ -119,11 +119,9 @@ void _paintBody(Canvas c, Size size, DiceLook look, bool glow) {
   }
 }
 
-// [scale] shrinks the image, not the layout: UVs are shares of the atlas, so
-// the same mesh reads a smaller atlas just as well.
-Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false, double scale = 1}) {
+Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false}) {
   final rec = ui.PictureRecorder();
-  final canvas = Canvas(rec)..scale(scale);
+  final canvas = Canvas(rec);
   final w = _cols * _cell, h = _rows(s) * _cell;
   final body = glow ? Colors.black : look.body.withValues(alpha: look.opacity);
   final ink = glow ? look.accent : look.ink;
@@ -179,14 +177,14 @@ Future<ui.Image> _numberAtlas(DieShape s, DiceLook look, {bool glow = false, dou
       text(s.label(f.number), _atlasPoint(s, i, spot), 1.3 * r * px, 1.7 * r * px);
     }
   }
-  return rec.endRecording().toImage((w * scale).round(), (h * scale).round());
+  return rec.endRecording().toImage(w, h);
 }
 
 // `data` averages mips as plain bytes. The default (`color`) does it in linear
 // light: millions of pow() calls on the UI isolate, a multi-second freeze on a
 // phone, for a two-colour atlas.
-Future<Texture2D> _atlasTexture(DieShape s, DiceLook look, {bool glow = false, double scale = 1}) async {
-  final image = await _numberAtlas(s, look, glow: glow, scale: scale);
+Future<Texture2D> _atlasTexture(DieShape s, DiceLook look, {bool glow = false}) async {
+  final image = await _numberAtlas(s, look, glow: glow);
   try {
     return await Texture2D.fromImage(image, content: TextureContent.data);
   } finally {
@@ -440,23 +438,7 @@ class DiceKit {
     return (_kit = (look, _build(diceLooks[look] ?? diceLooks['dark']!, dieShapes.values))).$2;
   }
 
-  // The picker's previews, kept per look (tapping back is instant) but only
-  // the last few: each holds its atlases on the GPU.
-  static final _previews = <String, Future<DiceKit>>{};
-
-  /// Just a d20 on a half-size atlas, no floor or warm-up: what [DicePreview]
-  /// shows. A sixteenth of the work of [load], and it leaves the roller's kit
-  /// alone.
-  static Future<DiceKit> preview(String look) {
-    final kit = _kit;
-    if (kit != null && kit.$1 == look) return kit.$2; // the roller's has a d20 too
-    final p = _previews.remove(look) ?? _build(diceLooks[look] ?? diceLooks['dark']!, [dieShapes['d20']!], preview: true);
-    _previews[look] = p; // most recent last
-    if (_previews.length > 6) _previews.remove(_previews.keys.first);
-    return p;
-  }
-
-  static Future<DiceKit> _build(DiceLook look, Iterable<DieShape> shapes, {bool preview = false}) async {
+  static Future<DiceKit> _build(DiceLook look, Iterable<DieShape> shapes) async {
     try {
       // Ask for the font before anything else: pendingFonts() waits on every
       // font google_fonts is loading, and the picker's chips start a dozen
@@ -471,10 +453,9 @@ class DiceKit {
       await Scene.initializeStaticResources();
       await font;
       final looks = <String, (MeshGeometry, PhysicallyBasedMaterial)>{}, backs = {...looks};
-      final scale = preview ? 0.5 : 1.0;
       // All shapes at once: their atlases rasterize side by side.
       await Future.wait([for (final s in shapes) () async {
-        final tex = await _atlasTexture(s, look, scale: scale);
+        final tex = await _atlasTexture(s, look);
         final mat = PhysicallyBasedMaterial(baseColorTexture: tex)
           ..roughnessFactor = look.roughness
           ..metallicFactor = look.metallic
@@ -482,7 +463,7 @@ class DiceKit {
           ..clearcoatRoughness = 0.08;
         if (look.glow) {
           mat
-            ..emissiveTexture = await _atlasTexture(s, look, glow: true, scale: scale)
+            ..emissiveTexture = await _atlasTexture(s, look, glow: true)
             ..emissiveFactor = vm.Vector4(1, 1, 1, 1)
             ..emissiveStrength = 1.6;
         }
@@ -524,8 +505,6 @@ class DiceKit {
       // Seen from straight above, metal mirrors the environment's even
       // ceiling and reads as flat paint; tilted, it catches the horizon.
       if (look.metallic > 0) scene.environmentTransform = vm.Matrix3.rotationX(1.1);
-      // The preview lights its own scene from this one and needs no more.
-      if (preview) return DiceKit._(scene, looks, backs, null, core, look.core);
       if (!_phone) {
         scene.add(Node(
           mesh: Mesh(PlaneGeometry(width: 200, depth: 200), ShadowCatcherMaterial(shadowIntensity: 0.6, aoStrength: 0)),
@@ -622,92 +601,6 @@ Node _dieNode(DiceKit kit, DieShape shape, vm.Quaternion rest) {
 }
 
 // --- widget -------------------------------------------------------------------
-
-/// A d20 in [look] seen straight down onto its 20, centred: the dice look
-/// picker's preview ([DiceKit.preview]). Shows nothing where Flutter GPU is
-/// not available.
-class DicePreview extends StatefulWidget {
-  const DicePreview({super.key, required this.look, this.size = 120});
-  final String look;
-  final double size;
-
-  @override
-  State<DicePreview> createState() => _DicePreviewState();
-}
-
-class _DicePreviewState extends State<DicePreview> {
-  // Straight above, close enough that the die fills ~85% of the view; screen
-  // up is -Z, as in the roller.
-  static final _camera = PerspectiveCamera(
-    position: vm.Vector3(0, 3.3, 0),
-    target: vm.Vector3.zero(),
-    up: vm.Vector3(0, 0, -1),
-    fovRadiansY: _fov,
-    fovNear: 1,
-    fovFar: 6,
-  );
-  // A scene per look of its own (not the kit's, which the roller fills), and
-  // a new one each time, so the view repaints with its fixed camera.
-  Scene? _scene;
-  Future<void>? _building;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void didUpdateWidget(DicePreview old) {
-    super.didUpdateWidget(old);
-    if (old.look != widget.look) _load();
-  }
-
-  Future<void> _load() async {
-    final look = widget.look;
-    // Tapping through the chips: one kit build at a time, and once it is done
-    // only the look still selected is built, not every one tapped past. The
-    // first starts synchronously, so it asks for its font before the chips
-    // below ask for theirs (see DiceKit._build).
-    if (_building != null) await _building;
-    if (!mounted || look != widget.look) return;
-    final build = DiceKit.preview(look);
-    _building = build.then((_) {}, onError: (_) {});
-    final DiceKit kit;
-    try {
-      kit = await build;
-    } catch (_) {
-      return;
-    }
-    if (!mounted || look != widget.look) return;
-    final d20 = dieShapes['d20']!, f = d20.faces.firstWhere((f) => f.number == 20);
-    // The 20's normal to world up, the top of its number to screen up (-Z).
-    final rest = vm.Quaternion.fromRotation(
-      vm.Matrix3.columns(vm.Vector3(0, 1, 0), vm.Vector3(0, 0, -1), vm.Vector3(-1, 0, 0))
-          .multiplied(vm.Matrix3.columns(f.normal, f.up, f.normal.cross(f.up)).transposed()),
-    );
-    setState(() => _scene = Scene()
-      ..directionalLight = DirectionalLight(direction: vm.Vector3(-0.6, -1.0, -0.5), intensity: 2.2)
-      ..environmentTransform = kit.scene.environmentTransform.clone()
-      ..add(_dieNode(kit, d20, rest)..rotation = rest));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scene = _scene;
-    return SizedBox.square(
-      dimension: widget.size,
-      child: scene == null
-          ? null
-          : SceneView(
-              scene,
-              camera: _camera,
-              autoTick: false,
-              pixelRatio: math.min(_maxPixelRatio, MediaQuery.devicePixelRatioOf(context)),
-            ),
-    );
-  }
-}
 
 // Top level, so the isolate message carries only the record, not a closure scope.
 DiceRoll _throwInBackground((Map<String, int>, double, double) a) =>

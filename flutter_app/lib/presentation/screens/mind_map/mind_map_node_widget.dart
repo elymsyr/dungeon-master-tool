@@ -16,6 +16,8 @@ import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projectable.dart';
 import 'mind_map_notifier.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/srd_text.dart';
+import '../../../domain/services/content_translator.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
 ///
@@ -736,7 +738,9 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    catSchema?.name ?? entity.categorySlug,
+                    catSchema != null
+                        ? srdText(context, ContentTranslator.schemaScope, catSchema.name)
+                        : entity.categorySlug,
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
@@ -747,7 +751,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                 const SizedBox(height: 4),
                 // Name
                 Text(
-                  entity.name,
+                  srdName(context, entity),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,

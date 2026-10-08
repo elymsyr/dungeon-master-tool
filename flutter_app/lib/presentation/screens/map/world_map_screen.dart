@@ -28,6 +28,8 @@ import 'widgets/map_breadcrumb_bar.dart';
 import 'widgets/pin_edit_dialog.dart';
 import 'world_map_notifier.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/srd_text.dart';
+import '../../../domain/services/content_translator.dart';
 
 /// World Map tab root — toolbar + pannable/zoomable image canvas with pins
 /// and timeline support.
@@ -1277,7 +1279,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   /// Build entityId → name map for display in dialogs.
   Map<String, String> _entityNameMap(List<String> entityIds) {
     final entities = ref.read(entityProvider);
-    return {for (final eid in entityIds) eid: entities[eid]?.name ?? eid};
+    return {
+      for (final eid in entityIds)
+        eid: entities[eid] != null ? srdName(context, entities[eid]!) : eid,
+    };
   }
 
   /// Picks the best map image ref for a location entity given the active era.
@@ -2433,7 +2438,9 @@ class _PinCategoryDropdown extends StatelessWidget {
         final visible = !hiddenPinTypes.contains(type);
         // Resolve category name and color from schema.
         final cat = schema.categories.where((c) => c.slug == type).firstOrNull;
-        final label = cat?.name ?? type[0].toUpperCase() + type.substring(1);
+        final label = cat != null
+            ? srdText(context, ContentTranslator.schemaScope, cat.name)
+            : type[0].toUpperCase() + type.substring(1);
         final color = cat != null && cat.color.isNotEmpty
             ? _parseHexColor(cat.color)
             : _pinColor(type, palette);

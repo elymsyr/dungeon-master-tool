@@ -12,6 +12,8 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/srd_text.dart';
+import '../../../application/providers/content_translator_provider.dart';
 
 /// Son açılan kartların id'leri, en yeni başta, en fazla 50 tane. Kart
 /// kapansa da listede kalır — mobil geçmiş FAB'i bunu gösterir. Oturumluk;
@@ -499,6 +501,8 @@ class _TabBar extends ConsumerWidget {
     // Live entity map — keeps tab titles fresh when entities arrive async
     // (mobile race) or get renamed without forcing a tab list rebuild.
     final entities = ref.watch(visibleEntityProvider);
+    // Sekme adları SRD çevirisiyle gösterilir; tablo yüklenince yeniden çiz.
+    ref.watch(contentTranslatorProvider);
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -513,7 +517,8 @@ class _TabBar extends ConsumerWidget {
           final isActive = i == activeIndex;
           final catColor = tab.categoryColor;
           final liveEntity = entities[tab.entityId];
-          final title = liveEntity?.name ?? tab.title;
+          final title =
+              liveEntity != null ? srdName(context, liveEntity) : tab.title;
 
           return GestureDetector(
             key: ValueKey(tab.entityId),

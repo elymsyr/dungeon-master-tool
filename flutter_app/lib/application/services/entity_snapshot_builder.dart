@@ -4,6 +4,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/value_objects/relation_value.dart';
+import '../../domain/services/content_translator.dart';
 import 'mention_text.dart';
 
 /// Builds a serializable [EntitySnapshot] from a live [Entity] + the world
@@ -32,6 +33,7 @@ class EntitySnapshotBuilder {
 
     // Build the field rows in order, skipping hidden fields
     final fieldRows = <EntityFieldSnapshot>[];
+    final srd = isSrdCard(entity.linked, entity.source);
     if (cat != null) {
       // Group lookup
       final groupLabels = <String, String>{
@@ -54,18 +56,31 @@ class EntitySnapshotBuilder {
         final raw = entity.fields[field.fieldKey];
         if (raw == null) continue;
 
+        // SRD içerik çevirisi: metin İngilizce gider; çevrilebilir parçalar
+        // kapsamlarıyla yanında — her alıcı kendi dilinde birleştirir.
         final String str;
+        List<(String, String)>? parts;
         if (ft == FieldType.relation) {
           // Resolve relation ids to entity names; drop unresolvable ids.
-          str = extractRelationIds(raw)
-              .map((id) => entities[id]?.name)
-              .whereType<String>()
-              .where((n) => n.isNotEmpty)
-              .join(', ');
+          // SRD olmayan kartın adı çevrilmez: boş kapsam hiçbir tabloya uymaz.
+          parts = [
+            for (final id in extractRelationIds(raw))
+              if (entities[id] case final e? when e.name.isNotEmpty)
+                (isSrdCard(e.linked, e.source) ? e.categorySlug : '', e.name),
+          ];
+          str = parts.map((p) => p.$2).join(', ');
         } else if (ft == FieldType.text ||
             ft == FieldType.textarea ||
             ft == FieldType.markdown) {
           str = stripMentions(_stringify(raw));
+          if (srd) parts = [(entity.categorySlug, str)];
+        } else if (ft == FieldType.enum_ &&
+            (raw is String || (raw is List && raw.every((x) => x is String)))) {
+          str = _stringify(raw);
+          parts = [
+            for (final x in raw is List ? raw : [raw])
+              if ((x as String).isNotEmpty) (ContentTranslator.schemaScope, x),
+          ];
         } else {
           str = _stringify(raw);
         }
@@ -74,6 +89,7 @@ class EntitySnapshotBuilder {
         fieldRows.add(EntityFieldSnapshot(
           label: field.label,
           value: str,
+          parts: parts,
           groupLabel: field.groupId != null ? groupLabels[field.groupId] : null,
         ));
       }
@@ -98,6 +114,7 @@ class EntitySnapshotBuilder {
       tags: entity.tags,
       imagePaths: imagePaths,
       fields: fieldRows,
+      srd: srd,
     );
   }
 

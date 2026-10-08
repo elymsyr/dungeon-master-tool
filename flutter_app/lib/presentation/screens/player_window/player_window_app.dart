@@ -78,8 +78,12 @@ class _PlayerWindowAppState extends ConsumerState<PlayerWindowApp>
   Future<dynamic> _handleMethod(MethodCall call, int fromWindowId) async {
     switch (call.method) {
       case ProjectionIpcMethods.apply:
-        final (type, payload) = ProjectionIpc.decodeApply(call.arguments);
+        final (type, payload, lang) =
+            ProjectionIpc.decodeApply(call.arguments);
         final notifier = ref.read(playerProjectionStateProvider.notifier);
+        if (lang != null) {
+          ref.read(projectionContentLanguageProvider.notifier).state = lang;
+        }
         if (type == 'full') {
           notifier.applyFull(ProjectionState.fromJson(payload));
         } else {

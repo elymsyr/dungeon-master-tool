@@ -14,6 +14,10 @@ import 'screencast_platform.dart';
 /// Unlike [ProjectionOutputWindow], no IPC is needed on mobile — the
 /// presentation Flutter engine communicates with this class via platform
 /// channels, and state is pushed as JSON.
+/// Tam durum haritasında DM'in içerik dilinin anahtarı (bkz.
+/// [ProjectionOutput.contentLanguage]); `ProjectionState.fromJson` yok sayar.
+const screencastLangKey = '_contentLang';
+
 class ProjectionOutputScreencast extends ProjectionOutput {
   final ScreencastPlatform _platform;
   bool _active = false;
@@ -61,7 +65,8 @@ class ProjectionOutputScreencast extends ProjectionOutput {
   @override
   Future<bool> pushFull(ProjectionState state) async {
     if (!_active) return false;
-    final ok = await _platform.pushState(state.toJson());
+    final ok = await _platform
+        .pushState({...state.toJson(), screencastLangKey: contentLanguage});
     if (!ok) _markDead();
     return ok;
   }

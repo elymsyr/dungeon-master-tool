@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/projection/battle_map_snapshot.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-10-07
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -39,7 +39,7 @@ tags: [file]
 - `StrokeSnapshot`: flat `[x0,y0,...]` polyline (smaller JSON), colorHex, width — only committed *reveal* strokes (erase strokes not projected).
 - `MeasurementSnapshot`: type `ruler`/`circle`/`cone`/`line`/`aoeCircle`/`square`/`sector`, two canvas-space endpoints, optional `colorHex`, optional `sweepDeg` (sector only). Commit-time only.
 - `ShapeSnapshot`: stable enum indexes `kind`/`layer` (ShapeKind/ShapeLayer), flat points, colorHex (`#ffca28`), strokeWidth, filled, text/fontSize (text kind). GM-layer filtered out *before* projection in the builder.
-- `TokenSnapshot`: id, name, x, y, imagePath?, colorHex (`#888888`), isPlayer, hp/maxHp/init, `conditions` (with `conditionNames` legacy getter).
+- `TokenSnapshot`: id, name, x, y, imagePath?, colorHex (`#888888`), isPlayer, hp/maxHp/init, `conditions` (with `conditionNames` legacy getter), `nameScope?` (SRD içerik çevirisi: ad hâlâ kaynak kartın adıysa kartın categorySlug'ı, DM'in verdiği adda null). `localized(tr)` alıcı tarafta adı ve durum adlarını (`condition` kapsamı) çevirir — DM İngilizce gönderir, her oyuncu kendi dilinde görür; projeksiyon görünümü bunu girişte bir kez yapar.
 - `ConditionSnapshot`: name, turns? (null = indefinite), imagePath? (condition entity art).
 
 ## Notes
