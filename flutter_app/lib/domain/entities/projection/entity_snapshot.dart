@@ -16,6 +16,10 @@ class EntitySnapshot {
   final List<String> imagePaths;
   final List<EntityFieldSnapshot> fields;
 
+  /// Ad ve açıklama çevrilebilir mi ([isSrdCard]) — homebrew ve başka
+  /// kaynaklı paket kartında hayır. Eski gönderenlerde yok → true.
+  final bool srd;
+
   const EntitySnapshot({
     required this.id,
     required this.name,
@@ -27,6 +31,7 @@ class EntitySnapshot {
     this.tags = const [],
     this.imagePaths = const [],
     this.fields = const [],
+    this.srd = true,
   });
 
   /// SRD içerik çevirisiyle gösterilecek kopya — alıcı tarafta, yalnızca
@@ -36,11 +41,11 @@ class EntitySnapshot {
     String s(String x) => tr(ContentTranslator.schemaScope, x);
     return EntitySnapshot(
       id: id,
-      name: tr(categorySlug, name),
+      name: srd ? tr(categorySlug, name) : name,
       categorySlug: categorySlug,
       categoryName: s(categoryName),
       categoryColorHex: categoryColorHex,
-      description: tr(categorySlug, description),
+      description: srd ? tr(categorySlug, description) : description,
       source: source,
       tags: tags,
       imagePaths: imagePaths,
@@ -55,6 +60,7 @@ class EntitySnapshot {
             parts: f.parts,
           ),
       ],
+      srd: srd,
     );
   }
 
@@ -69,6 +75,7 @@ class EntitySnapshot {
         'tags': tags,
         'imagePaths': imagePaths,
         'fields': fields.map((f) => f.toJson()).toList(),
+        if (!srd) 'srd': false,
       };
 
   factory EntitySnapshot.fromJson(Map<String, dynamic> json) => EntitySnapshot(
@@ -87,6 +94,7 @@ class EntitySnapshot {
                     ))
                 .toList() ??
             const [],
+        srd: json['srd'] as bool? ?? true,
       );
 }
 

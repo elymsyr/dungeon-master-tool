@@ -5,6 +5,7 @@ import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/session.dart';
+import '../../domain/services/content_translator.dart';
 
 /// SRD içerik çevirisi (docs/srd-tr/ROADMAP.md Faz 6): ekranda gösterilecek
 /// metin. Veri, ref çözümü, arama anahtarı ve kayıt hep İngilizce adla
@@ -26,8 +27,11 @@ String srdText(BuildContext context, String scope, String en) {
 }
 
 /// [e] kartının gösterilecek adı.
+/// SRD olmayan kart ([isSrdCard]) çevrilmez.
 String srdName(BuildContext context, Entity e) =>
-    srdText(context, e.categorySlug, e.name);
+    isSrdCard(e.linked, e.source)
+        ? srdText(context, e.categorySlug, e.name)
+        : e.name;
 
 /// Ref zarfının (`{slug, name}`, `{_lookup, name}`, `{_ref, name}`)
 /// gösterilecek adı; zarfın slug'ı kategori kapsamıdır. Ad yoksa null.
@@ -58,4 +62,6 @@ String srdConditionName(BuildContext context, String name) =>
 
 /// [e] kartının gösterilecek açıklaması.
 String srdDescription(BuildContext context, Entity e) =>
-    srdText(context, e.categorySlug, e.description);
+    isSrdCard(e.linked, e.source)
+        ? srdText(context, e.categorySlug, e.description)
+        : e.description;

@@ -7,6 +7,7 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../../domain/services/content_translator.dart';
 import '../../domain/value_objects/creature_size.dart';
 import '../../domain/value_objects/map_shape.dart';
 import '../providers/character_provider.dart' show kPlayerCategorySlugs;
@@ -107,7 +108,9 @@ class BattleMapSnapshotBuilder {
       tokens.add(TokenSnapshot(
         id: c.id,
         name: c.name,
-        nameScope: entity != null && entity.name == c.name
+        nameScope: entity != null &&
+                isSrdCard(entity.linked, entity.source) &&
+                entity.name == c.name
             ? entity.categorySlug
             : null,
         x: x,

@@ -116,12 +116,14 @@ void main() {
       ],
     );
     const scimitar =
-        Entity(id: 'w1', name: 'Scimitar', categorySlug: 'weapon');
+        Entity(id: 'w1', name: 'Scimitar', categorySlug: 'weapon', linked: true, source: 'SRD 5.2.1');
     const goblin = Entity(
       id: 'g',
       name: 'Goblin Warrior',
       categorySlug: 'monster',
       fields: {'size': 'Medium', 'weapon': 'w1', 'lore': 'Sneaky.'},
+      linked: true,
+      source: 'SRD 5.2.1',
     );
     final snap = EntitySnapshotBuilder.build(
         entity: goblin, schema: schema, entities: {'w1': scimitar});
@@ -130,6 +132,26 @@ void main() {
     expect(byLabel['weapon']!.value, 'Scimitar');
     expect(byLabel['weapon']!.parts, [('weapon', 'Scimitar')]);
     expect(byLabel['lore']!.parts, [('monster', 'Sneaky.')]);
+
+    // Başka kaynaklı paket kartı da çevrilmez.
+    expect(
+        EntitySnapshotBuilder.build(
+                entity: goblin.copyWith(source: 'Creature Codex'),
+                schema: schema)
+            .srd,
+        isFalse);
+
+    // Düzenlenmiş kart homebrew'dur: adı, açıklaması, metni çevrilmez.
+    final hb = EntitySnapshotBuilder.build(
+        entity: goblin.copyWith(linked: false),
+        schema: schema,
+        entities: {'w1': scimitar.copyWith(linked: false)});
+    final hbRows = {for (final r in hb.fields) r.label: r};
+    expect(hb.srd, isFalse);
+    expect(hbRows['size']!.parts, [(ContentTranslator.schemaScope, 'Medium')]);
+    expect(hbRows['weapon']!.parts, [('', 'Scimitar')]);
+    expect(hbRows['lore']!.parts, isNull);
+    expect(EntitySnapshot.fromJson(hb.toJson()).srd, isFalse);
   });
 
   group('TokenSnapshot', () {
@@ -322,7 +344,14 @@ void main() {
       );
       final lines = characterStatLines(
         c,
-        {'cl': const Entity(id: 'cl', name: 'Wizard', categorySlug: 'class')},
+        {
+          'cl': const Entity(
+              id: 'cl',
+              name: 'Wizard',
+              categorySlug: 'class',
+              linked: true,
+              source: 'SRD 5.2.1')
+        },
         tx: sheetTr,
         l10n: lookupL10n(const Locale('tr')),
       );
