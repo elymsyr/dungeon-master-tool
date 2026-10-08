@@ -118,7 +118,7 @@ List<CharacterStatLine> characterStatLines(
   final cid = ids.classId;
   // SRD içerik çevirisi: bu cihazın dilinde, yalnızca görüntü.
   String? shown(String? id) => switch (id == null ? null : entities[id]) {
-        final e? => tx.tr(e.categorySlug, e.name),
+        final e? => tx.forCard(isSrdCard(e.linked, e.source)).tr(e.categorySlug, e.name),
         _ => null,
       };
   final raceName = shown(rid) ??

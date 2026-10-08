@@ -12,6 +12,7 @@ import 'entity_preview_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/srd_text.dart';
 import '../../application/providers/content_translator_provider.dart';
+import '../../domain/services/content_translator.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
 /// [allowedTypes]: sadece bu kategorideki entity'ler gösterilir (null=tümü).
@@ -296,9 +297,9 @@ class EntityNameText extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // F2: scoped to the one entity's name. Avoids full-map watch — the
     // text only rebuilds when this specific entity's name flips.
-    (String, String)? key(Map<String, Entity> m) {
+    (String, String, bool)? key(Map<String, Entity> m) {
       final e = m[entityId];
-      return e == null ? null : (e.categorySlug, e.name);
+      return e == null ? null : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
     }
 
     final hit = ref.watch(entityProvider.select(key)) ??
@@ -309,7 +310,7 @@ class EntityNameText extends ConsumerWidget {
     // SRD içerik çevirisi — yalnızca görüntü.
     final tx = ref.watch(contentTranslatorProvider);
     return Text(
-      hit == null ? entityId : tx.tr(hit.$1, hit.$2),
+      hit == null ? entityId : tx.forCard(hit.$3).tr(hit.$1, hit.$2),
       style: style,
       overflow: TextOverflow.ellipsis,
     );

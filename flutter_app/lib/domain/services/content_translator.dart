@@ -1,3 +1,4 @@
+import '../entities/schema/builtin/srd_core/srd_core_pack.dart' show srdSourceTag;
 import '../entities/schema/field_schema.dart';
 
 /// Ekranda görünse de kimlik/anahtar olan metin alanları — çevrilmez
@@ -11,6 +12,12 @@ const srdL10nMachineTextKeys = {
   'weapon_mastery_filter',
   'granted_tool_variant_group',
 };
+
+/// Kart asıl SRD içeriği mi — çeviri tabloları yalnızca bunlar için.
+/// Düzenlenip forklanan kart (homebrew, `linked == false`) ve başka
+/// kaynaklı paket kartları (Open5e, marketplace…) yazıldığı gibi kalır.
+bool isSrdCard(bool linked, String source) =>
+    linked && source == srdSourceTag;
 
 /// SRD içerik çevirisi (docs/srd-tr/ROADMAP.md §3, Yaklaşım A): ekrana
 /// basılan İngilizce metni seçili dildeki karşılığıyla değiştirir. Anahtar
@@ -30,6 +37,19 @@ class ContentTranslator {
   final Map<String, Map<String, String>> _tables;
 
   bool get isIdentity => _tables.isEmpty;
+
+  static final _schemaOnly = Expando<ContentTranslator>();
+
+  /// Bir kartın içeriğini çevirecek çevirmen ([srd] = [isSrdCard]). SRD
+  /// olmayan kartın adı, açıklaması ve metin alanları SRD dilinden bağımsız,
+  /// yazıldığı gibi kalır; şema sözcükleri (etiketler, enum değerleri,
+  /// kategori adları) yine çevrilir.
+  ContentTranslator forCard(bool srd) {
+    if (srd || isIdentity) return this;
+    return _schemaOnly[this] ??= ContentTranslator({
+      if (_tables[schemaScope] case final s?) schemaScope: s,
+    });
+  }
 
   /// [scope]'taki çeviri; yoksa ya da boşsa [en] aynen.
   String tr(String scope, String en) {

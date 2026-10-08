@@ -118,4 +118,14 @@ void main() {
         {'2': '+1d6 hasar.', '3': 'Other.'});
     expect(table['2'], '+1d6 damage.');
   });
+
+  test('forCard: homebrew kartın içeriği çevrilmez, şema sözcükleri çevrilir', () {
+    expect(identical(tx.forCard(true), tx), isTrue);
+    final hb = tx.forCard(false);
+    expect(identical(tx.forCard(false), hb), isTrue);
+    expect(hb.tr('class', 'Rage'), 'Rage');
+    expect(hb.value('class', field(FieldType.text), 'Rage'), 'Rage');
+    expect(hb.value('class', field(FieldType.enum_), 'Standard'), 'Standart');
+    expect(hb.field(field(FieldType.text)).label, 'Özet');
+  });
 }

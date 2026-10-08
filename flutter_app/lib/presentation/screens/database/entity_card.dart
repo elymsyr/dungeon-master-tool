@@ -329,7 +329,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
     // SRD içerik çevirisi (docs/srd-tr): okuma modunda ad + açıklama.
-    final tx = ref.watch(contentTranslatorProvider);
+    final tx = ref.watch(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
     final scope = entity.categorySlug;
     if (widget.readOnly) {
       final d = tx.tr(scope, entity.description);
@@ -788,7 +788,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final fieldValue = entity.fields[field.fieldKey];
     // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
     // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
-    final tx = ref.read(contentTranslatorProvider);
+    final tx = ref.read(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
     final shown = widget.readOnly
         ? tx.value(entity.categorySlug, field, fieldValue)
         : fieldValue;

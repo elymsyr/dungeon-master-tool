@@ -33,6 +33,7 @@ class EntitySnapshotBuilder {
 
     // Build the field rows in order, skipping hidden fields
     final fieldRows = <EntityFieldSnapshot>[];
+    final srd = isSrdCard(entity.linked, entity.source);
     if (cat != null) {
       // Group lookup
       final groupLabels = <String, String>{
@@ -61,17 +62,18 @@ class EntitySnapshotBuilder {
         List<(String, String)>? parts;
         if (ft == FieldType.relation) {
           // Resolve relation ids to entity names; drop unresolvable ids.
+          // SRD olmayan kartın adı çevrilmez: boş kapsam hiçbir tabloya uymaz.
           parts = [
             for (final id in extractRelationIds(raw))
               if (entities[id] case final e? when e.name.isNotEmpty)
-                (e.categorySlug, e.name),
+                (isSrdCard(e.linked, e.source) ? e.categorySlug : '', e.name),
           ];
           str = parts.map((p) => p.$2).join(', ');
         } else if (ft == FieldType.text ||
             ft == FieldType.textarea ||
             ft == FieldType.markdown) {
           str = stripMentions(_stringify(raw));
-          parts = [(entity.categorySlug, str)];
+          if (srd) parts = [(entity.categorySlug, str)];
         } else if (ft == FieldType.enum_ &&
             (raw is String || (raw is List && raw.every((x) => x is String)))) {
           str = _stringify(raw);
@@ -112,6 +114,7 @@ class EntitySnapshotBuilder {
       tags: entity.tags,
       imagePaths: imagePaths,
       fields: fieldRows,
+      srd: srd,
     );
   }
 

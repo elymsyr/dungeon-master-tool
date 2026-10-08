@@ -3886,19 +3886,21 @@ class _StatChipsHeader extends ConsumerWidget {
     final tx = ref.watch(contentTranslatorProvider);
     String resolve(String? id, [String? fallback]) {
       if (id == null) return fallback ?? '—';
-      (String, String)? key(Map<String, Entity> m) {
+      (String, String, bool)? key(Map<String, Entity> m) {
         final e = m[id];
-        return e == null || e.name.isEmpty ? null : (e.categorySlug, e.name);
+        return e == null || e.name.isEmpty
+            ? null
+            : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
       }
 
       if (useCampaign) {
         final hit = ref.watch(entityProvider.select(key));
-        if (hit != null) return tx.tr(hit.$1, hit.$2);
+        if (hit != null) return tx.forCard(hit.$3).tr(hit.$1, hit.$2);
       }
       final builtin = ref.watch(builtinSrdEntitiesProvider.select(key));
-      if (builtin != null) return tx.tr(builtin.$1, builtin.$2);
+      if (builtin != null) return tx.forCard(builtin.$3).tr(builtin.$1, builtin.$2);
       final pkg = key(pkgEntities);
-      if (pkg != null) return tx.tr(pkg.$1, pkg.$2);
+      if (pkg != null) return tx.forCard(pkg.$3).tr(pkg.$1, pkg.$2);
       return fallback ?? '—';
     }
 
