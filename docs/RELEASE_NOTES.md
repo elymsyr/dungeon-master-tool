@@ -1,5 +1,86 @@
 # Release Notes
 
+## Dungeon Master Tool v19.1.0 — Pictures in Your Notes (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v19.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release lets you put images inside any text field, between the lines you write. The battle map token menu can now add conditions and remove a token, and the encounter panel can be resized. Worlds open faster, and the app's fonts now come with the app instead of being downloaded. Your data is not changed, so this version installs over v19.0.0.
+
+---
+
+### Notes and descriptions
+
+#### Images inside your text
+Type `@image` in any text field (`@resim` in Turkish, `@bild` in German) and pick **Add image**. You can take an image from any card that has one (its portrait, header or other image fields) or upload one from your device. The image sits on its own line, between the paragraphs around it.
+
+- In edit mode each image has a width slider under it and a delete button in its top right corner.
+- An image you embed this way counts as in use, so cleaning up unused media does not delete it.
+- When you project a card, images inside its description are left out.
+
+---
+
+### Session and battle map
+
+#### More actions on a token
+Right-click a token (long-press on a phone) to add a condition to it or to remove it from the encounter. The condition picker is the same one the encounter panel uses, and a removal can be undone.
+
+#### A resizable encounter panel
+Drag the edge of the encounter panel to make it wider or narrower.
+
+---
+
+### Smaller improvements
+
+- **Character builder** — moving to the next or previous step, or tapping a step's title, now scrolls the new step to the top in one smooth move instead of jumping into empty space.
+- **Faster world opening** — opening a world takes much less time, and the SRD content is prepared during the splash screen.
+- **Fonts** — the app's fonts now ship with the app and work offline from the first launch. Their licence is on the licence page.
+- **Player screen** — the fog of war is drawn once per change instead of on every frame, so the player's map is smoother.
+- **Smoother typing** — the character editor no longer redraws the whole sheet on every key press, and searching the card sidebar is faster.
+- **Images** — images from the web in text fields and player avatars use less memory.
+- **Offline worlds** — a world that is not online no longer prepares online media when it opens.
+- **l10n** — new keys for adding images to text fields, in English, Turkish, German and French.
+
+---
+
+### Bug fixes
+
+- **Battle map** — a token dragged to the left of or above the map could not be clicked or dragged back. This is fixed.
+- **Player screen** — a fog of war change could fail to reach the player's screen when it did not change the size of the fog data. This is fixed.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `19.0.0` → `19.1.0`.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Map pin labels and the combat log are not translated**: a map pin keeps the name it had when it was placed, and combat log lines stay in English.
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Copying a world empties the original**: after a copy, the cards move to the copy and the source world is left empty. Until this is fixed, export the world to `.dmtz` instead of copying it.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Markdown images** — stored as `![alt](dmt-img:<encoded ref>)` with an optional width percentage in the title (`"50%"`); the unused-media sweeper counts these refs.
+- **Fonts** — theme and dice fonts are subsetted into `assets/fonts/` by `tool/fonts/bundle_fonts.py`; `GoogleFonts.config.allowRuntimeFetching` is off.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v19.0.0 — In Your Language (Beta)
 
 **Release date:** October 2026
