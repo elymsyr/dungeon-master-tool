@@ -87,7 +87,7 @@ class ProjectionOutputWindow extends ProjectionOutput {
   Future<bool> pushFull(ProjectionState state) async {
     final id = _windowId;
     if (id == null) return false;
-    final ok = await ProjectionIpc.pushFull(id, state);
+    final ok = await ProjectionIpc.pushFull(id, state, lang: contentLanguage);
     if (!ok) _markDead();
     return ok;
   }

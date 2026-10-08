@@ -44,6 +44,8 @@ import 'steps/proficiencies_step.dart';
 import 'steps/spells_step.dart';
 import 'steps/subclass_step.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../widgets/srd_text.dart';
+import '../../../../application/providers/content_translator_provider.dart';
 
 /// Multi-step D&D 5e character creation wizard. Authors a [CharacterDraft]
 /// across six steps then commits via `characterListProvider.create`,
@@ -2172,10 +2174,17 @@ class _RaceStep extends ConsumerWidget {
                 // ignore: deprecated_member_use
                 onChanged: notifier.setSubspecies,
                 dense: true,
-                title: Text(c.title),
+                // SRD içerik çevirisi: kart satırı kendi kategorisinde,
+                // eski `subspecies_options` satırı `species` kapsamında.
+                title: Text(srdText(
+                    context, entities[c.id]?.categorySlug ?? 'species', c.title)),
                 subtitle: c.description.isEmpty
                     ? null
-                    : ExpandableMarkdown(data: c.description),
+                    : ExpandableMarkdown(
+                        data: srdText(
+                            context,
+                            entities[c.id]?.categorySlug ?? 'species',
+                            c.description)),
               ),
             ),
         ],
@@ -2254,10 +2263,14 @@ class _EntityPickStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final entities = ref.watch(wizardEntitiesProvider);
+    // SRD içerik çevirisi — liste gösterilen ada göre sıralanır.
+    ref.watch(contentTranslatorProvider);
     final candidates = entities.values
         .where((e) => slugs.contains(e.categorySlug))
         .toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      ..sort((a, b) => srdName(context, a)
+          .toLowerCase()
+          .compareTo(srdName(context, b).toLowerCase()));
 
     if (candidates.isEmpty) {
       final slugLabel = slugs.join(' / ');
@@ -2297,14 +2310,14 @@ class _EntityPickStep extends ConsumerWidget {
                 dense: true,
                 title: Row(
                   children: [
-                    Flexible(child: Text(e.name)),
+                    Flexible(child: Text(srdName(context, e))),
                     const SizedBox(width: 6),
                     Flexible(child: SourceBadge(e.source)),
                   ],
                 ),
                 subtitle: e.description.isEmpty
                     ? null
-                    : ExpandableMarkdown(data: e.description),
+                    : ExpandableMarkdown(data: srdDescription(context, e)),
               ),
             )),
       ],

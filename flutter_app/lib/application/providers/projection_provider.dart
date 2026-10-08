@@ -23,6 +23,7 @@ import 'combat_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
 import 'projection_output_provider.dart';
+import 'content_translator_provider.dart';
 
 const _projectionUuid = Uuid();
 
@@ -97,6 +98,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       output.dispose();
       return false;
     }
+    output.contentLanguage = _ref.read(contentLanguageProvider);
 
     _outputs[mode] = output;
     _closeSubs[mode] = output.onExternalClose.listen((_) {
@@ -611,6 +613,18 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     _emitEvent();
   }
 
+  /// DM'in içerik dili değişti: yerel çıkışlar yeni dille tam durumu yeniden
+  /// alır (çevrimiçi çıkış dili kullanmaz).
+  void setContentLanguage(String lang) {
+    for (final entry in _outputs.entries.toList()) {
+      if (entry.value.contentLanguage == lang) continue;
+      entry.value.contentLanguage = lang;
+      entry.value.pushFull(state).then((ok) {
+        if (!ok) _markOutputClosed(entry.key);
+      });
+    }
+  }
+
   void _pushPatch(Map<String, dynamic> patch) {
     for (final entry in _outputs.entries.toList()) {
       entry.value.pushPatch(patch).then((ok) {
@@ -644,7 +658,10 @@ class ProjectionController extends StateNotifier<ProjectionState> {
 
 final projectionControllerProvider =
     StateNotifierProvider<ProjectionController, ProjectionState>((ref) {
-  return ProjectionController(ref);
+  final controller = ProjectionController(ref);
+  ref.listen<String>(contentLanguageProvider,
+      (_, lang) => controller.setContentLanguage(lang));
+  return controller;
 });
 
 /// Auto-installed sync — whenever any entity in the entity provider

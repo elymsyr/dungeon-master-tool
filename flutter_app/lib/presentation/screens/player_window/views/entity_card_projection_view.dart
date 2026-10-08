@@ -5,6 +5,8 @@ import '../../../../domain/entities/projection/entity_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../widgets/asset_ref_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../application/providers/content_translator_provider.dart';
 
 const _parchment = Color(0xFFF5EFE0);
 const _ink = Color(0xFF1B1B1B);
@@ -14,17 +16,18 @@ const _subtitle = Color(0xFF5A4A3A);
 /// Player-window view of an entity card. Renders from a serializable
 /// [EntitySnapshot]. SRD source-book look: serif red title, italic subtitle,
 /// red rule, parchment background.
-class EntityCardProjectionView extends StatefulWidget {
+class EntityCardProjectionView extends ConsumerStatefulWidget {
   final EntityCardProjection item;
 
   const EntityCardProjectionView({required this.item, super.key});
 
   @override
-  State<EntityCardProjectionView> createState() =>
+  ConsumerState<EntityCardProjectionView> createState() =>
       _EntityCardProjectionViewState();
 }
 
-class _EntityCardProjectionViewState extends State<EntityCardProjectionView>
+class _EntityCardProjectionViewState
+    extends ConsumerState<EntityCardProjectionView>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
@@ -32,7 +35,9 @@ class _EntityCardProjectionViewState extends State<EntityCardProjectionView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final snap = widget.item.snapshot;
+    // SRD içerik çevirisi: DM İngilizce gönderir, bu cihazın dilinde çizilir.
+    final snap = widget.item.snapshot
+        .localized(ref.watch(contentTranslatorProvider).tr);
     return RepaintBoundary(
       child: Container(
         color: _parchment,

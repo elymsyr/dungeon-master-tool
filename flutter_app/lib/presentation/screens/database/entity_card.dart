@@ -992,7 +992,7 @@ class EntityCardSectionHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final upper = palette.cardHeadingUppercase;
-    final display = upper ? title.toUpperCase() : title;
+    final display = upper ? _headingUpper(context, title) : title;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1437,6 +1437,12 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
 }
 
 /// Collapsible group — SRD heading + red rule, no boxed chrome. Optional centered content.
+/// Dart'ın `toUpperCase`'i dilden bağımsızdır: Türkçede "i" → "İ" olmalı.
+String _headingUpper(BuildContext context, String s) =>
+    Localizations.localeOf(context).languageCode == 'tr'
+        ? s.replaceAll('i', 'İ').toUpperCase()
+        : s.toUpperCase();
+
 class EntityCardCollapsibleGroupCard extends StatefulWidget {
   final FieldGroup group;
   final DmToolColors palette;
@@ -1471,7 +1477,8 @@ class EntityCardCollapsibleGroupCardState
     final hasName = widget.group.name.isNotEmpty;
     final palette = widget.palette;
     final upper = palette.cardHeadingUppercase;
-    final display = upper ? widget.group.name.toUpperCase() : widget.group.name;
+    final display =
+        upper ? _headingUpper(context, widget.group.name) : widget.group.name;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

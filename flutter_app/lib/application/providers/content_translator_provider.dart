@@ -29,10 +29,18 @@ final _contentTablesProvider =
       : ContentTranslator(tables);
 });
 
+/// İçerik çevirisinin dili: bu cihazın arayüz dili. Her cihaz SRD'yi kendi
+/// dilinde görür — çevrimiçi oyuncu DM'in dilini değil kendininkini.
+/// Ayrı motorda çalışan yerel projeksiyon pencereleri (ikinci pencere, ekran
+/// yansıtma) bunu DM'in IPC ile gönderdiği dille override eder; onlar DM'in
+/// kendi ekranıdır.
+final contentLanguageProvider =
+    Provider<String>((ref) => ref.watch(localeProvider).languageCode);
+
 /// Seçili dilin içerik çevirmeni. Yüklenene kadar (ve hata olursa)
 /// kimlik — ekran İngilizce görünür, hiçbir şey bozulmaz.
 final contentTranslatorProvider = Provider<ContentTranslator>((ref) {
-  final lang = ref.watch(localeProvider).languageCode;
+  final lang = ref.watch(contentLanguageProvider);
   return ref.watch(_contentTablesProvider(lang)).valueOrNull ??
       ContentTranslator.identity;
 });

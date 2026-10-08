@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ · 5.6 ✅ · 5.7 ✅ (4727 / 6404; eşya adları onaylandı 2026-10-08) — 5.8 sırada
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ · 5.6 ✅ · 5.7 ✅ · 5.8 ✅ (6404 / 6404; canavar adları onay bekliyor) · Faz 6 ✅ (2026-10-08) · Faz 7 ✅ (2026-10-08) — commit / PR kullanıcı onayında
 
 ---
 
@@ -288,7 +288,16 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
   doldurur, değişen ad her yerde birlikte değişir. Kalıplar: `charges` → `kullanım` (sözlük), `N daily at
   dawn` → `Her gün şafakta N`, `command word` → `emir sözcüğü`, `modifier` → `katkı` (5.5–5.6 ile aynı).
   İyileştirme iksirleri Büyük / Yüksek / Üstün (sözlükte `Supreme Healing` = `Üstün İyileştirme`).
-  FAIL 0 · UYARI 36 → **4727 / 6404**.
+  FAIL 0 · UYARI 36 → **4727 / 6404**. Eşya adları onaylandı (2026-10-08, ⚠ kararlarında öneri).
+- **5.8 sonucu (2026-10-08):** `monster` 506 + `animal` 194 + `creature-action` 977 metin. Adlar
+  [CANAVAR-ADLARI.md](CANAVAR-ADLARI.md)'de — **onay bekliyor** (kullanıcı sonra kontrol edecek); §7'de
+  metinlere girmiş adların hepsi korundu (tarama: önceki scope'larda geçen her canavar adı yeni adla aynı).
+  Kalıplı 211 saldırı satırı şablonla çevrildi (`*Yakın Dövüş Saldırı Zarı:* +4, erişim 5 ft. *Vuruş:* 5
+  (1d6 + 2) Kesici hasar.`); sıfat hasar türleri `Delici hasar`, isim olanlar `Ateş hasarı` (önceki
+  dalgaların çoğunluğu). `HP` → `Can Puanı` (D12), `Con save` → `DAY kurtarma zarı`, `(Recharge 5–6)` →
+  `(Yenilenme 5–6)`, `escape DC 13` → `kaçış DC'si 13`. Çevrilmeyen özel adlar sözlüğe "aynen kalır"
+  listesi olarak eklendi (GLOSSARY §8, 59 ad). FAIL 0 · UYARI 179 (bu dalgada 40, hepsi yanlış eşleşme) →
+  **6404 / 6404**.
 
 ### Faz 6 — Yüzeyleri genişletme *(~1 oturum)*
 - **6.1** Ad gösteren tüm noktaların envanteri (~160 çağrı): kenar listesi, `entity_link` çipleri,
@@ -297,6 +306,27 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 - **6.2** Projeksiyon alt penceresi (ayrı süreç) — çeviri tablosunun orada da yüklenmesi.
 - **6.3** Çevrimiçi oyuncu kendi dilinde görür (çeviri istemci tarafında olduğu için otomatik) — test.
 - **6.4** (D6 onaylanırsa) Türkçe adla arama.
+- **Faz 6 sonucu (2026-10-08):** Kural: **her cihaz SRD'yi kendi dilinde görür.** Dil
+  `contentLanguageProvider` = cihazın arayüz dili; DM'den çıkan her şey İngilizce kalır, çeviri
+  alıcıda yapılır.
+  - 6.1: tek giriş `presentation/widgets/srd_text.dart` (`srdText`, `srdName`, `srdRefName`,
+    `srdDescription`, `srdCombatantName`, `srdConditionName`). Bağlanan yüzeyler: kenar listesi kart
+    adları, ilişki alanı/çipleri, önizleme diyaloğu, kart seçici, açık kart sekmeleri, savaş takibi,
+    token ve durum rozetleri, karakter sayfası, karakter oluşturucu adımları, bekleyen seçim diyaloğu,
+    zihin haritası, harita pin filtresi. Ad eşleştiren mantık (ref çözümü, beceri satırları) İngilizce
+    adla kalır; savaşçı adı kartın adıysa çevrilir, DM'in verdiği ad ("Goblin 2") aynen.
+    Bilerek dışarıda: harita pin etiketleri (veriye yazılır, DM düzenler) ve savaş günlüğü (sabit
+    İngilizce arayüz metni — arayüz yerelleştirmesinin işi).
+  - 6.2: projeksiyon anlık görüntüleri İngilizce gider + çevrilebilir parçalar (`EntitySnapshot`
+    satırlarında `parts`, `TokenSnapshot.nameScope`); alıcı görünümler `localized()` ile çevirir.
+    Ayrı motordaki ikinci pencere ve ekran yansıtma DM'in dilini tam durumla alır (IPC `lang`,
+    yansıtmada `_contentLang`) — onlar DM'in kendi ekranı. Eski gönderenle uyumlu (alan yoksa aynen).
+  - 6.3: çevrimiçi oyuncu aynı görünümü kendi uygulamasında, kendi dil ayarıyla çizer; DM'in dili ona
+    hiç gitmez. Test: aynı İngilizce yayın Türkçe cihazda Türkçe, İngilizce cihazda İngilizce.
+  - 6.4 (D6 — öneri olarak uygulandı): kenar listesi ve kart seçici hem İngilizce hem gösterilen adla
+    arar; `searchFold` Türkçe `İ` → `i` (Dart `'İ'.toLowerCase()` = `i̇`).
+  - Test: `test/presentation/srd_tr_surfaces_test.dart` (10); tam paket 1655 geçti, 1 bilinen hata
+    (`bundled_pack_resolve_test`, önceden de kırmızı).
 
 ### Faz 7 — Kapanış *(~yarım oturum)*
 - **7.1** Kapsam testi CI'da: çevirisi eksik metin = kırmızı.
@@ -305,6 +335,25 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
 - **7.3** Vault: yeni dosya notları, `World-and-Content` MoC, `_Architecture-Overview.md`,
   `Vault-Changelog.md`.
 - **7.4** Son G1–G7 turu + release notu. PR kullanıcı isterse.
+- **Faz 7 sonucu (2026-10-08):**
+  - Önce kullanıcının bulduğu eksikler kapandı (karakter sayfası):
+    - Alan etiketleri ve grup adları çevriliyor.
+    - Kabiliyet bloğu kısaltmaları (`STR` → `KUV`) ve kurtarma / yetenek satırları çevriliyor; zar
+      günlüğü ve kayıt İngilizce adla.
+    - Karakter sekmesi liste çiplerinde tür ve sınıf adı çevriliyor; HP / AC etiketleri L10n'den.
+    - Sınıf kaynakları kartı ve seviye atlama havuz satırları çevriliyor.
+    - Bekleyen seçim etiketleri ("Pick 2 spells") ve seviye atlama büyü özeti sabit İngilizceydi →
+      4 dilde L10n anahtarı. Sınıf, hüner ve özellik adı SRD tablosundan.
+    - Türkçe büyük harfli başlıklar `İ` ile.
+  - 7.1 + 7.2: `test/tool/srd_l10n_coverage_test.dart`. Kaynak kümesi `extract.dart`'ın
+    `collectSrdTexts()`'i (CLI çıktısı değişmedi: 6404 / 6404, bayat 0). Bilerek bozulan tabloyla
+    iki test de kırmızı oldu. CI'daki tam `flutter test` koşusu bunları içerir.
+  - 7.3: vault notları `content_translator`, `extract`, `pending_choices`; `World-and-Content`,
+    `_Architecture-Overview`, `Vault-Changelog`.
+  - 7.4: G1 boş · G2 FAIL 0 · G3 N10 uyarıları (179) bilgi olarak duruyor · G4 analiz temiz, tam paket
+    1660 geçti, 1 bilinen hata (`bundled_pack_resolve_test`) · G5 kayıt testleri yeşil · G6/G7 yeni
+    SRD çevirisi yok; L10n Türkçeleri sözlük terimleriyle, kısaltma uydurulmadı (D12). Sürüm notu
+    taslağı: [RELEASE-NOTE.md](RELEASE-NOTE.md) — sürüm yükseltilince `RELEASE_NOTES.md`'ye taşınır.
 
 ---
 

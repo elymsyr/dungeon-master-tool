@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import '../../widgets/pending_choices_badge.dart';
 import '../../theme/markdown_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -8,6 +9,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/srd_text.dart';
 
 /// Payload the editor mutates onto the character when the player resolves
 /// one pending choice. Only the fields relevant to the resolved kind are
@@ -806,7 +808,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     final palette = Theme.of(context).extension<DmToolColors>();
     final hint = palette?.sidebarLabelSecondary ?? Theme.of(context).hintColor;
     return AlertDialog(
-      title: Text(pendingChoiceLabel(widget.choice)),
+      title: Text(pendingChoiceLabel(context, widget.choice)),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: SingleChildScrollView(
@@ -893,8 +895,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
               children: [
                 for (final e in _eligibleTools)
                   _descOption(
-                    name: e.name,
-                    description: e.description,
+                    name: srdName(context, e),
+                    description: srdDescription(context, e),
                     selected: _pickedTools.contains(e.id),
                     onTap: () {
                       setState(() {
@@ -940,8 +942,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
               children: [
                 for (final e in _eligibleLanguages)
                   _descOption(
-                    name: e.name,
-                    description: e.description,
+                    name: srdName(context, e),
+                    description: srdDescription(context, e),
                     selected: _pickedLanguages.contains(e.id),
                     onTap: () {
                       setState(() {
@@ -1055,7 +1057,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         for (final row in raw) {
           if (row is! Map) continue;
           final id = row['id']?.toString() ?? '';
-          final label = row['label']?.toString() ?? id;
+          // Seçenek etiketleri hüner kartının alanında (SRD çevirisi `feat`).
+          final label = srdText(context, 'feat', row['label']?.toString() ?? id);
           if (id.isEmpty) continue;
           out.add(_FeatChoiceOption(id: id, label: label));
         }
@@ -1071,7 +1074,9 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           final cat = widget.entities[catRef];
           if (cat?.name != catName) continue;
           out.add(_FeatChoiceOption(
-              id: e.id, label: e.name, description: e.description));
+              id: e.id,
+              label: srdName(context, e),
+              description: srdDescription(context, e)));
         }
         out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
         return out;
@@ -1082,8 +1087,9 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           if (slug != 'skill' && slug != 'tool') continue;
           out.add(_FeatChoiceOption(
               id: e.id,
-              label: '${slug == 'skill' ? '[Skill] ' : '[Tool] '}${e.name}',
-              description: e.description));
+              label:
+                  '${slug == 'skill' ? '[Skill] ' : '[Tool] '}${srdName(context, e)}',
+              description: srdDescription(context, e)));
         }
         out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
         return out;
@@ -1126,7 +1132,9 @@ class _ResolverDialogState extends State<_ResolverDialog> {
               e.tags.any((t) => t.toLowerCase() == listValue.toLowerCase());
           if (!byRef && !byTag) continue;
           out.add(_FeatChoiceOption(
-              id: e.id, label: e.name, description: e.description));
+              id: e.id,
+              label: srdName(context, e),
+              description: srdDescription(context, e)));
         }
         out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
         return out;
@@ -1256,8 +1264,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
               children: [
                 for (final e in _eligibleExpertise)
                   _descOption(
-                    name: e.name,
-                    description: e.description,
+                    name: srdName(context, e),
+                    description: srdDescription(context, e),
                     selected: _pickedExpertise.contains(e.id),
                     onTap: () {
                       setState(() {
@@ -1303,8 +1311,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
               children: [
                 for (final e in _eligibleSkills)
                   _descOption(
-                    name: e.name,
-                    description: e.description,
+                    name: srdName(context, e),
+                    description: srdDescription(context, e),
                     selected: _pickedSkills.contains(e.id),
                     onTap: () {
                       setState(() {
@@ -1341,8 +1349,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           children: [
             for (final e in _eligibleSubclasses)
               _descOption(
-                name: e.name,
-                description: e.description,
+                name: srdName(context, e),
+                description: srdDescription(context, e),
                 selected: _pickedSubclassId == e.id,
                 onTap: () => setState(() => _pickedSubclassId = e.id),
                 hint: hint,
@@ -1379,7 +1387,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
                 for (final e in _eligibleWeapons)
                   _descOption(
                     name: _weaponMasteryLabel(e),
-                    description: e.description,
+                    description: srdDescription(context, e),
                     selected: _pickedWeaponMasteries.contains(e.id),
                     onTap: () {
                       setState(() {
@@ -1405,10 +1413,11 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     String? masteryId;
     if (mastery is String) masteryId = mastery;
     if (mastery is Map) masteryId = mastery['id']?.toString();
-    if (masteryId == null || masteryId.isEmpty) return weapon.name;
+    final name = srdName(context, weapon);
+    if (masteryId == null || masteryId.isEmpty) return name;
     final m = widget.entities[masteryId];
-    if (m == null) return weapon.name;
-    return '${weapon.name} · ${m.name}';
+    if (m == null) return name;
+    return '$name · ${srdName(context, m)}';
   }
 
   // ───────── ASI / Feat body ─────────────────────────────────────────────
@@ -1544,8 +1553,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           children: [
             for (final e in feats)
               _descOption(
-                name: e.name,
-                description: e.description,
+                name: srdName(context, e),
+                description: srdDescription(context, e),
                 selected: read() == e.id,
                 onTap: () => setState(() => write(e.id)),
                 hint: hint,
@@ -1563,8 +1572,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (spells.isEmpty) {
       return Text(
         cantripOnly
-            ? 'No eligible cantrips in this campaign.'
-            : 'No eligible spells in this campaign.',
+            ? L10n.of(context)!.pcNoCantrips
+            : L10n.of(context)!.pcNoSpells,
         style: TextStyle(fontSize: 11, color: hint),
       );
     }
@@ -1586,9 +1595,9 @@ class _ResolverDialogState extends State<_ResolverDialog> {
                 for (final e in spells)
                   _descOption(
                     name: cantripOnly
-                        ? e.name
-                        : 'L${e.fields['level']} · ${e.name}',
-                    description: e.description,
+                        ? srdName(context, e)
+                        : 'L${e.fields['level']} · ${srdName(context, e)}',
+                    description: srdDescription(context, e),
                     selected: _pickedSpells.contains(e.id),
                     onTap: () {
                       setState(() {

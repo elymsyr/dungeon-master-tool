@@ -21,6 +21,7 @@ import '../../widgets/battle_map/token_widget.dart';
 import 'battle_map_notifier.dart';
 import 'battle_map_painter.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/srd_text.dart';
 
 /// Battle map tab content — Python ui/windows/battle_map_window.py karşılığı.
 /// Session screen'deki "Battle Map" bottom tab'ına gömülür.
@@ -814,7 +815,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
           }
 
           return AlertDialog(
-            title: Text(c.name, overflow: TextOverflow.ellipsis),
+            title: Text(srdCombatantName(context, c),
+                overflow: TextOverflow.ellipsis),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,

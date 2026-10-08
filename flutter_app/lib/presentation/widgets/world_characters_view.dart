@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
@@ -726,6 +727,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
                   : CharacterStatChips(
                       lines: characterStatLines(
                         l10n: L10n.of(context)!,
+                        tx: ref.watch(contentTranslatorProvider),
                         character,
                         entities,
                         // Owner'ı kanonik kolondan çöz — payload_json'a gömülü
