@@ -5,7 +5,7 @@ path: flutter_app/pubspec.yaml
 layer: core
 language: yaml
 status: stable
-updated: 2026-10-02
+updated: 2026-10-08
 tags: [file]
 ---
 
@@ -33,7 +33,7 @@ tags: [file]
 **Key runtime deps (with their role):**
 - State / models: `flutter_riverpod` (hand-written providers — no Riverpod codegen), `freezed_annotation`, `json_annotation`.
 - Storage / DB: `drift` + `sqlite3_flutter_libs` (Drift = the Supabase Postgres mirror, see [[drift_database]]), `msgpack_dart`, `shared_preferences`, `path_provider`, `path`.
-- Routing: `go_router`. Fonts: `google_fonts`.
+- Routing: `go_router`. Fonts: `google_fonts`, served from `assets/fonts/` (subsetted by `tool/fonts/bundle_fonts.py`; `main()` turns `allowRuntimeFetching` off and registers `assets/fonts/OFL.txt`).
 - Desktop multi-window (projection second screen): `window_manager`, `desktop_multi_window`, `screen_retriever` (see [[Multi-Window-IPC]]).
 - Audio: `flutter_soloud` (gapless game-audio engine; needs `libasound2-dev` on Linux CI — see [[Audio-SoLoud]]). `yaml` parses soundpad theme configs.
 - Online: `supabase_flutter` (auth + Postgres + storage), `connectivity_plus` (SyncEngine wake-on-online), `package_info_plus` (runtime app version → admin heartbeat).

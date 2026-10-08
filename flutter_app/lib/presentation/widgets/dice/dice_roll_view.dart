@@ -338,7 +338,8 @@ class DiceLook {
 }
 
 /// What a look's numbers are drawn in; the picker labels its chip in it too.
-/// One weight only: each weight of a Google font is a download of its own.
+/// One weight only: each family/weight is a file in assets/fonts/, added by
+/// tool/fonts/bundle_fonts.py (digits only).
 TextStyle diceFont(DiceLook look) => look.font == null
     ? const TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w800)
     : GoogleFonts.getFont(look.font!, fontWeight: FontWeight.w800).copyWith(fontFamilyFallback: const ['serif']);
@@ -443,8 +444,8 @@ class DiceKit {
       // Ask for the font before anything else: pendingFonts() waits on every
       // font google_fonts is loading, and the picker's chips start a dozen
       // more as soon as they build. The atlas bakes the numbers in, so the
-      // font must be in first; offline and never fetched, google_fonts logs it
-      // and the numbers fall back to serif.
+      // font must be in first (it loads from assets/fonts/; a missing file
+      // is logged and the numbers fall back to serif).
       diceFont(look);
       final font = GoogleFonts.pendingFonts();
       // Touch the GPU once first: without Flutter GPU this throws right here,
