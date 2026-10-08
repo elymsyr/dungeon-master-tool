@@ -58,6 +58,8 @@ class UiState {
   /// Zar teması: bir tema adı ya da 'auto' (aktif temayı izler).
   final String diceTheme;
   final String localeCode;
+  /// SRD içeriğinin dili — arayüz dilinden bağımsız (assets/srd_l10n).
+  final String srdLanguage;
 
   // Volume
   final double volume;
@@ -110,6 +112,7 @@ class UiState {
     this.themeName = 'dark',
     this.diceTheme = 'auto',
     this.localeCode = 'en',
+    this.srdLanguage = 'en',
     this.volume = 1.0,
     this.autoLocalSave = true,
     this.welcomeSeen = false,
@@ -141,6 +144,7 @@ class UiState {
     String? themeName,
     String? diceTheme,
     String? localeCode,
+    String? srdLanguage,
     double? volume,
     bool? autoLocalSave,
     bool? welcomeSeen,
@@ -175,6 +179,7 @@ class UiState {
       themeName: themeName ?? this.themeName,
       diceTheme: diceTheme ?? this.diceTheme,
       localeCode: localeCode ?? this.localeCode,
+      srdLanguage: srdLanguage ?? this.srdLanguage,
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
@@ -207,6 +212,7 @@ class UiState {
     'themeName': themeName,
     'diceTheme': diceTheme,
     'localeCode': localeCode,
+    'srdLanguage': srdLanguage,
     'volume': volume,
     'autoLocalSave': autoLocalSave,
     'welcomeSeen': welcomeSeen,
@@ -251,6 +257,7 @@ class UiState {
       themeName: json['themeName'] as String? ?? 'dark',
       diceTheme: json['diceTheme'] as String? ?? 'auto',
       localeCode: json['localeCode'] as String? ?? 'en',
+      srdLanguage: json['srdLanguage'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,

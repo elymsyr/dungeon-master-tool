@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
@@ -141,7 +142,6 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: DicePreview(look: resolveDiceLook(diceTheme, currentTheme))),
                     _diceLookList(l10n.diceLooksThemes, ['auto', ...themeNames.where(diceLooks.containsKey)], diceTheme, currentTheme, palette, l10n, phone),
                     const SizedBox(height: 12),
                     _diceLookList(l10n.diceLooksOthers, [...diceLooks.keys.where((k) => !themeNames.contains(k))], diceTheme, currentTheme, palette, l10n, phone),
@@ -185,6 +185,36 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   }).toList(),
                 ),
               ),
+              const SizedBox(height: 32),
+
+              // --- SRD LANGUAGE --- (arayüz dilinden bağımsız; tablosu olan diller)
+              Text(l10n.lblSrdLanguage, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              Builder(builder: (context) {
+                final srdLang = ref.watch(contentLanguageProvider);
+                void set(String code) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(srdLanguage: code));
+                return RadioGroup<String>(
+                  groupValue: srdLang,
+                  onChanged: (v) {
+                    if (v != null) set(v);
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const {'en': 'English', 'tr': 'Türkçe'}.entries.map((e) {
+                      return ListTile(
+                        leading: Radio<String>(value: e.key),
+                        title: Text(e.value, style: TextStyle(
+                          fontSize: 14,
+                          color: palette.tabActiveText,
+                          fontWeight: srdLang == e.key ? FontWeight.w600 : FontWeight.normal,
+                        )),
+                        onTap: () => set(e.key),
+                        dense: true,
+                      );
+                    }).toList(),
+                  ),
+                );
+              }),
               const SizedBox(height: 32),
 
               // Uygulama ayarları penceresi yalnız tema/zar/dil gösterir.

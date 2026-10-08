@@ -1,5 +1,7 @@
 import 'package:dungeon_master_tool/application/character_creation/pending_choices.dart';
 import 'package:dungeon_master_tool/application/providers/content_translator_provider.dart';
+import 'package:dungeon_master_tool/application/providers/locale_provider.dart';
+import 'package:dungeon_master_tool/application/providers/ui_state_provider.dart';
 import 'package:dungeon_master_tool/application/services/entity_snapshot_builder.dart';
 import 'package:dungeon_master_tool/application/services/projection_ipc.dart';
 import 'package:dungeon_master_tool/domain/entities/character.dart';
@@ -203,10 +205,15 @@ void main() {
       expect(find.text('Goblin Warrior'), findsOneWidget);
     });
 
-    test('ana uygulamada dil arayüz dilidir', () {
+    test('ana uygulamada dil ayarlardaki SRD dilidir, arayüz dili değil', () {
       final c = ProviderContainer();
       addTearDown(c.dispose);
       expect(c.read(contentLanguageProvider), 'en');
+      c.read(localeProvider.notifier).setLocale('tr');
+      expect(c.read(contentLanguageProvider), 'en');
+      c.read(uiStateProvider.notifier)
+          .update((s) => s.copyWith(srdLanguage: 'tr'));
+      expect(c.read(contentLanguageProvider), 'tr');
     });
 
     test('yerel projeksiyon penceresi DM\'in IPC ile gelen dilini kullanır',

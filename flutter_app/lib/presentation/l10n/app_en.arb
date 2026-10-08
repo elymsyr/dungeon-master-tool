@@ -16,6 +16,7 @@
   "lblSettings": "Settings",
   "lblTheme": "Theme",
   "lblLanguage": "Language",
+  "lblSrdLanguage": "SRD Content Language",
   "tabDatabase": "Database",
   "tabSession": "Session",
   "tabMindMap": "Mind Map",
