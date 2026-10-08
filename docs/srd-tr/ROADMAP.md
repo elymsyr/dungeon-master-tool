@@ -9,7 +9,7 @@
 - Seçilen mimari: **Yaklaşım A — görüntülemede çeviri** (aşağıda)
 - Terim kaynağı: **BG3 > BG:EE Türkçe Terim Belgesi > rehber** (K7, D11). Üslup kaynağı:
   `flutter_app/assets/dnd_5e_tr_rehber.pdf` (repoda, uygulamaya paketlenmez — bkz. K9)
-- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ · 5.6 ✅ (4127 / 6404) — 5.7 sırada
+- **Durum:** Faz 0 ✅ (`0902879f`) · Faz 1 ✅ sözlük onaylandı ([GLOSSARY.md](GLOSSARY.md), 2026-10-07) · Faz 2 ✅ çıkarma (6433 metin, `17138714`) · Faz 3 ✅ `check_pairs` (`a5cf390c`) · Faz 4 ✅ altyapı + pilot · Faz 5 ⏳ dalga 5.1 ✅ · 5.2 ✅ · 5.3 ✅ · 5.4 ✅ · 5.5 ✅ · 5.6 ✅ · 5.7 ✅ (4727 / 6404; eşya adları onaylandı 2026-10-08) — 5.8 sırada
 
 ---
 
@@ -283,6 +283,12 @@ Her dalga: paralel ajanlar (ajan başına ≤ ~150 metin, aynı sözlük + kural
   "aynen kalır"a eklendi. 5.4–5.5'teki 6 geçici büyü adı onaylı adlara çekildi (`Büyüyü Sapta`, `Küçük
   Yanılsama`, `Düzlem Değiştir`, `Ruhani Muhafızlar`, `Ruhani Silah`, `Asit Küresi`). FAIL 0 · UYARI 41
   (`Light` ışık/Hafif, `Touch` fiil/Temas gibi yanlış eşleşmeler) → **4127 / 6404**.
+- **5.7 sonucu (2026-10-07):** `magic-item` 600 metin (286 ad + açıklama, uyumlanma koşulu, kullanım
+  yenileme). Adlar [ESYA-ADLARI.md](ESYA-ADLARI.md)'de — **onay bekliyor**; metinler adları bu listeden
+  doldurur, değişen ad her yerde birlikte değişir. Kalıplar: `charges` → `kullanım` (sözlük), `N daily at
+  dawn` → `Her gün şafakta N`, `command word` → `emir sözcüğü`, `modifier` → `katkı` (5.5–5.6 ile aynı).
+  İyileştirme iksirleri Büyük / Yüksek / Üstün (sözlükte `Supreme Healing` = `Üstün İyileştirme`).
+  FAIL 0 · UYARI 36 → **4727 / 6404**.
 
 ### Faz 6 — Yüzeyleri genişletme *(~1 oturum)*
 - **6.1** Ad gösteren tüm noktaların envanteri (~160 çağrı): kenar listesi, `entity_link` çipleri,
@@ -325,7 +331,8 @@ listeyi sonra kontrol eder, değişen ad her metinde birlikte değiştirilir. `S
 
 - **Büyü adları:** 5.6'da kesinleşti — [BUYU-ADLARI.md](BUYU-ADLARI.md). SRD dışı, yalnızca `trait`
   metinlerinde geçenler: Melf's Acid Arrow → Melf'in Asit Oku · Armor of Agathys → Agathys'in Zırhı ·
-  Snilloc's Snowball Swarm → Snilloc'un Kartopu Sürüsü · Storm Sphere → Fırtına Küresi.
+  Snilloc's Snowball Swarm → Snilloc'un Kartopu Sürüsü · Storm Sphere → Fırtına Küresi. `magic-item`
+  metinlerinde: Pyrotechnics → Piroteknik · Branding Smite → Damgalayan Çarpma · Crown of Madness → Delilik Tacı.
 - **Canavar adları** (`trait` metinlerinde): BG:EE'den Kemgöz · Zihin Yüzücü · Liç · Kurtadam · Ağaç
   Perisi · Piksi · İblis · Hobgoblin · Sahte Ejderha · Quasit · Sprite; özel adlar aynen: aboleth · chuul
   · roper · nothic · otyugh · couatl · xorn · lamia · rakshasa · gargoyle; cins adları Türkçe: sfenks ·
@@ -334,6 +341,13 @@ listeyi sonra kontrol eder, değişen ad her metinde birlikte değiştirilir. `S
 - **Canavar adları** (`spell` metinlerinde): BG:EE'den Zombi · Gûl · Gast · Tarask · Ombra Yarması
   (umber hulk) · Piksi · Sprite; öneri: İskelet · Mumya · Minotor · goristro iblisi · Wight (aynen) ·
   `Draconic Spirit` → `Draconic Ruh` (değer bloğu adı); `Slam` → `Çarpma`.
+- **Canavar / hayvan adları** (`magic-item` metinlerinde): BG:EE'den İfrit · Cin · Griffin · Suretçalan
+  (doppelganger) · Kara Ayı · Treant · Hava / Su / Ateş / Toprak Elementali · Leş Golem; BG:EE kalıbından
+  Dehşet Kurdu (dire wolf; BG: Dread Wolf = Dehşet Kurt); değer blokları Başıbozuk (Berserker) · Kıdemli
+  (Veteran) · Şampiyon · Şövalye; cins adları Türkçe: Gelincik · Dev Sıçan · Porsuk · Yaban Domuzu · Panter
+  · Dev Porsuk · Dev Geyik · Sıçan · Baykuş · Mastiff · Keçi · Dev Keçi · Dev Yaban Domuzu · Aslan · Boz Ayı
+  · Çakal · Maymun · Babun · Baltagaga (axe beak) · Dev Gelincik · Dev Sırtlan · Kaplan · Dev Boğucu Yılan ·
+  Sıçan Sürüsü · Roc (aynen).
 
 ---
 
