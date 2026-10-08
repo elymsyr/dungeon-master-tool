@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
@@ -87,12 +88,26 @@ List<String> _toStringList(dynamic v) {
   return const [];
 }
 
+Map<String, Entity>? _prewarmed;
+
+/// Builds the map in a background isolate during the splash. Hub's
+/// IndexedStack builds CharactersTab on its first frame; building the map
+/// there froze the UI isolate for ~0.5 s. On failure the provider falls back
+/// to the synchronous build.
+Future<void> prewarmBuiltinSrdEntities() async {
+  try {
+    _prewarmed ??= await compute((_) => buildBuiltinSrdEntities(), null);
+  } catch (e) {
+    debugPrint('builtin SRD prewarm failed: $e');
+  }
+}
+
 /// Provider that exposes the bundled SRD entities. Constructed once per
 /// app lifetime — `buildBuiltinSrdEntities` mints stable v5 UUIDs so the
 /// map is referentially equivalent across rebuilds for downstream
 /// consumers (Riverpod will not invalidate gratuitously).
 final builtinSrdEntitiesProvider = Provider<Map<String, Entity>>((ref) {
-  return buildBuiltinSrdEntities();
+  return _prewarmed ?? buildBuiltinSrdEntities();
 });
 
 /// Combined entity-source helper used by wizard + editor. Merges the

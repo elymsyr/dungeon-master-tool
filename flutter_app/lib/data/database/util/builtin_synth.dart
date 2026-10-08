@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/package_import_service.dart';
@@ -37,6 +38,11 @@ class BuiltinSynthResult {
   });
 }
 
+/// Last built-in pack read. Its rows change only when `SrdCorePackageBootstrap`
+/// reseeds, which re-stamps the package's `updatedAt`; re-reading ~2700 rows
+/// cost ~40 ms of UI-isolate time on every world open and reload.
+({String id, DateTime? stamp, List<PackageEntity> rows})? _packCache;
+
 /// Synthesises built-in entity entries for [worldId] without touching
 /// `world_entities`. Refs inside each pack entity's `fields_json` are
 /// remapped from pack-internal ids to the per-world synth ids so the
@@ -52,11 +58,13 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
 }) async {
   final installed = await db.installedPackagesDao.getByWorld(worldId);
   String? builtinPkgId;
+  DateTime? builtinStamp;
   for (final row in installed) {
     final pkg = await db.packagesDao.getById(row.packageId);
     if (pkg == null) continue;
     if (pkg.name == srdCorePackageName) {
       builtinPkgId = pkg.id;
+      builtinStamp = pkg.updatedAt;
       break;
     }
   }
@@ -64,29 +72,60 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
     return const BuiltinSynthResult(entries: {}, builtinPackageId: null);
   }
 
-  final packRows = await db.packagesDao.getEntities(builtinPkgId);
+  var cache = _packCache;
+  if (cache == null ||
+      cache.id != builtinPkgId ||
+      cache.stamp != builtinStamp) {
+    cache = _packCache = (
+      id: builtinPkgId,
+      stamp: builtinStamp,
+      rows: await db.packagesDao.getEntities(builtinPkgId),
+    );
+  }
+  final packRows = cache.rows;
   if (packRows.isEmpty) {
     return BuiltinSynthResult(entries: const {}, builtinPackageId: builtinPkgId);
   }
+
+  // Minting ~2700 v5 ids (SHA-1) plus the JSON decode and ref remap froze the
+  // UI isolate for a few hundred ms on every world open; run it off-thread.
+  final out = await compute(_synthEntries, (
+    worldId: worldId,
+    packageId: builtinPkgId,
+    rows: packRows,
+    skip: existingPackageEntityIds,
+  ));
+  return BuiltinSynthResult(entries: out, builtinPackageId: builtinPkgId);
+}
+
+Map<String, dynamic> _synthEntries(
+  ({
+    String worldId,
+    String packageId,
+    List<PackageEntity> rows,
+    Set<String> skip,
+  }) args,
+) {
+  final (:worldId, :packageId, :rows, :skip) = args;
+
+  // Pack id → synth id remap for cross-entity refs inside Tier-1 attrs.
+  final packToSynth = <String, String>{
+    for (final r in rows) r.id: synthBuiltinEntityId(worldId, r.id),
+  };
 
   // Tier-0 lookup map: slug → name → synth id. Drives `_lookup` resolution
   // in Tier-1 attrs (mirrors what `srd_core_bootstrap._seedTier0` builds
   // at world-create time, just deterministic instead of v4 random).
   final tier0Index = <String, Map<String, String>>{};
-  for (final r in packRows) {
+  for (final r in rows) {
     tier0Index
         .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] =
-        synthBuiltinEntityId(worldId, r.id);
+        packToSynth[r.id]!;
   }
 
-  // Pack id → synth id remap for cross-entity refs inside Tier-1 attrs.
-  final packToSynth = <String, String>{
-    for (final r in packRows) r.id: synthBuiltinEntityId(worldId, r.id),
-  };
-
   final out = <String, dynamic>{};
-  for (final r in packRows) {
-    if (existingPackageEntityIds.contains(r.id)) continue;
+  for (final r in rows) {
+    if (skip.contains(r.id)) continue;
     final synthId = packToSynth[r.id]!;
     final rawFields = _decodeMap(r.fieldsJson);
     final resolved = PackageImportService.resolveLookupPlaceholder(
@@ -111,7 +150,7 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
       'attributes': remapped is Map<String, dynamic>
           ? migrateRuleEffects(remapped)
           : <String, dynamic>{},
-      'package_id': builtinPkgId,
+      'package_id': packageId,
       'package_entity_id': r.id,
       'linked': true,
       // `_synth: true` lets the repo save path skip writing pristine
@@ -121,8 +160,7 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
       synthFlagKey: true,
     };
   }
-
-  return BuiltinSynthResult(entries: out, builtinPackageId: builtinPkgId);
+  return out;
 }
 
 /// Builds a `slug → name → entityId` index of Tier-0 lookup rows for
