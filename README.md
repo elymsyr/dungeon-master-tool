@@ -15,15 +15,13 @@
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/version-v19.1.0-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
-  <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
+  <img src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square&logo=flutter" />
 </p>
 
 <p align="center">
   <b>Platforms:</b> Android · iOS · Windows · Linux · macOS &nbsp;|&nbsp;
   <b>Languages:</b> EN · TR · DE · FR
 </p>
-
-<h3 align="center">Download</h3>
 
 <p align="center">
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/Android-APK-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
@@ -41,88 +39,57 @@
 
 ---
 
-<p align="center">
-  Fully <b>offline-first</b> — build worlds, run sessions and play together without an account, on Android, iOS, Windows, Linux &amp; macOS.
-</p>
-
-<p align="center">
-  🗺️ <b>Worldbuilding</b> with time-aware maps &nbsp;·&nbsp; ⚔️ <b>Battle Maps</b> &amp; combat tracker &nbsp;·&nbsp; 🎲 <b>Character wizard</b> &nbsp;·&nbsp; 📦 19 one-tap content packs
-</p>
-
-<p align="center">
-  📡 <b>Local Sync (LAN)</b> — move worlds, packages &amp; characters between your own devices over Wi-Fi, without the cloud.<br>
-  🖥️ <b>Second Screen</b> — project the session onto a TV, a projector, or every connected player's app.
-</p>
+Everything core works **without an account**. You need one only to play online, publish to the marketplace, or download other users' content.
 
 ## Worldbuilding 🗺️
 
-Build a setting offline, then bring it to the table.
+- **Codex** — Schema-driven cards for NPCs, monsters, spells, items, locations and more. Every reference is a tappable link; pin cards to the top, preview any card with a long press, and search by name, tag, category or text.
+- **Images in text** — Type `@image` in any text field to place a picture between your paragraphs. Card art ships for 1,247 SRD cards and thousands of pack cards.
+- **Mind Map** — Infinite canvas with linked nodes, workspaces, freehand drawing and undo/redo.
+- **World Map** — Pins, grid and scale, drawing, fog of war, and nested maps you can walk into (districts, dungeons, taverns).
+- **Era Timeline** — Each era keeps its own pins, timeline and background.
+- **Templates & Packages** — Built-in D&D 5e template, custom templates, packages that link to other packages.
+- **Sharing marks** — You choose card by card what players see; secrets, tactics and DM notes never leave your device.
 
-- **Mind Map** — Infinite canvas with Bezier links, workspaces, undo/redo.
-- **World Map** — Image base with linked pins, grid + scale, freehand drawing, fog of war.
-- **Nested Maps** — Walk into any pin for its own map (districts, dungeons, taverns), as deep as you like.
-- **Era Timeline** — Time-aware maps: each era keeps its own pins, timeline and background; timeline pins link to entities, sessions and events.
-- **Entities** — Schema-driven cards with 16 field widget types; every reference on a card is a tappable link.
-- **Templates & Packages** — Built-in D&D 5e schema, custom templates, import/export, package links, update notifications.
+## Running the Session ⚔️
 
-## Dungeon Mastering ⚔️
+- **Battle Map** — The session screen *is* the map: encounter panel and event log sit on top. Layers, fog of war, AoE templates, 5e diagonal rules, creature-sized tokens, shapes and text, a DM-only layer, hidden tokens, movement trails for the round, and two maps joined into one.
+- **Combat Tracker** — Initiative, HP (with hit-dice rolls), conditions, turn order and an event log; right-click a token to add a condition or remove it.
+- **3D Dice** — Dice roll across the screen with named styles; skills and saving throws roll from the character sheet with one tap.
+- **Soundpad** — Layered ambience with gapless loops, fades and ready-made soundpacks.
+- **PDF Library** — PDFs kept inside the world, opened in tabs, shareable with players.
+- **Second Screen** — Pop out a window, cast to a TV or projector, or project into every player's app.
 
-- **Combat Tracker** — Initiative, HP, conditions, turn management, event log.
-- **Battle Map (VTT)** — 6-layer canvas with draw tools, persistent rulers, fog of war, creature-sized tokens, 5e diagonal rules, AoE templates, reusable location maps.
-- **Sessions & Campaigns** — Notes, timeline tracking, encounters, state saved between sessions.
-- **Soundpad** — Layered audio with gapless loops, fades and ready-made soundpacks.
-- **PDF Library** — PDFs copied into the world, up to 10 tabs (50 MB each), shareable with players.
-- **Dice Roller** — d4 through d100.
-- **Second Screen** — Pop out a window, cast to a nearby device, or project into every player's app with per-player controls and a late-joiner manifest.
+## Characters 🎲
 
-## Players 🎲
+- **Character Builder** — Species, class, subclass, background, ability scores, skills, starting equipment and feats from the SRD and any installed pack.
+- **Level-Up** — Automatic HP, proficiency bonus and hit dice; ASIs, feats, subclass and spell picks wait as pending choices.
+- **Full 5e rules** — Multiclass prerequisites and spell slots, class resources (Rage, Bardic Inspiration, sorcery points…), weapon mastery.
+- **Sheet** — Jump to any section; import a character from another world.
 
-- **Character Creation Wizard** — SRD-driven: species, class, subclass, background, ability scores, skills, equipment, traits; Open5e packs feed in.
-- **Level-Up Planner** — Auto HP/PB/hit dice; ASI, feats, subclass and spell picks queue as pending choices.
-- **Multiclass & Spell Slots** — Full SRD prereq checks and multiclass slot math; editable slot grid.
-- **Weapon Mastery** — Slots granted per class/subclass, taking the max across feats.
-- **Online Play** — Join a DM's world, claim a character, see live updates, drop marks on the projected map.
+## Playing Online 🌐
 
-## Online & Offline
+- **Online worlds** — Put a world, package or character online and it stays the same on every device you sign in on. A multiplayer world's pictures live in the cloud, so players see them even when the DM is offline.
+- **Players** — Join with a revocable invite code, claim a character, move your own token on your turn, and send dice rolls to the DM's log. Shared cards update when the DM edits them.
+- **`.dmtz` files** — Export a world, package or character to one file and import it anywhere, no account or network needed.
 
-Everything core works **fully offline** — no account needed to start. An account is required only for playing online, publishing to the marketplace, or downloading other users' content.
+## Content 📦
 
-- **Local Sync (LAN)** — Move worlds, packages and characters between your own devices over Wi-Fi; QR or IP+PIN pairing, nothing goes online.
-- **Share a World** — Publish a world, players join with a revocable invite code.
-- **Roles & Ownership** — Player/DM roles with row-level security; claim or release world characters.
-- **Media Safety** — Images are copied into the world folder, so they keep working offline; portraits/covers sync free of quota.
-
-### Marketplace
-
-Publish worlds, templates, packages and characters as versioned, immutable snapshots with previews, browse/download by filter, and official first-party content. **19 bundled packs** install with one tap — Monstrous Menagerie, Tome of Beasts (3 editions), Creature Codex, Black Flag SRD, Tome of Heroes, Vault of Magic, Deep Magic, Adventurer's Guide, and more, spanning thousands of monsters, spells, items and full chargen data.
-
-### Social & Community
-
-Public profiles, follow system, activity feed, realtime DMs and group chats, user discovery, game listings with applications.
+- **SRD 5.2.1** — Built in and available offline; optional when you create a world. SRD text can be shown in **Turkish**, with its own language setting.
+- **19 one-tap packs** — Tome of Beasts (1–3, 2023), Creature Codex, Monstrous Menagerie, Black Flag SRD, Deep Magic, Tome of Heroes, Vault of Magic, Tal'Dorei and more.
+- **Ready-made worlds** — *99 Devils of Uzrah's Palace* (Shadowdark), *Army of the Damned*, *The Cold Bounty*, and our own Turkish campaign *Aegis Act 1*.
+- **Marketplace** — Publish worlds, templates, packages and characters as versioned snapshots with content previews, an official filter and an 18+ rating.
+- **Social** — Profiles, follows, activity feed, direct and group chats, game listings with applications.
 
 ---
 
 ## Screenshots
 
 <p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><img src="media/char.png" alt="Character" width="400"/></td>
-      <td align="center"><img src="media/db.png" alt="Database" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/map.png" alt="Map" width="400"/></td>
-      <td align="center"><img src="media/settings.png" alt="Pack" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/social.png" alt="Social" width="400"/></td>
-      <td align="center"><img src="media/session.png" alt="Session" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/marketplace.png" alt="World" width="400"/></td>
-      <td align="center"><img src="media/pack.png" alt="Settings" width="400"/></td>
-    </tr>
-  </table>
+  <img src="media/char.png" alt="Character sheet" width="400"/> <img src="media/db.png" alt="Codex" width="400"/>
+  <img src="media/map.png" alt="Map" width="400"/> <img src="media/session.png" alt="Session" width="400"/>
+  <img src="media/marketplace.png" alt="Marketplace" width="400"/> <img src="media/pack.png" alt="Package" width="400"/>
+  <img src="media/social.png" alt="Social" width="400"/> <img src="media/settings.png" alt="Settings" width="400"/>
 </p>
 
 ---
@@ -135,8 +102,6 @@ Public profiles, follow system, activity feed, realtime DMs and group chats, use
 - **macOS** — Extract `DungeonMasterTool-MacOS.zip`, drag the app into Applications, and run `sudo xattr -rd com.apple.quarantine /Applications/dungeon_master_tool.app`.
 - **iOS** — Builds are unsigned; sideload `DungeonMasterTool-iOS.ipa` via Xcode or AltStore.
 
----
-
 ## Development
 
 ```bash
@@ -146,9 +111,7 @@ dart run build_runner build --delete-conflicting-outputs
 flutter run
 ```
 
-See [flutter_app/README.md](flutter_app/README.md) for full developer docs and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
----
+See [flutter_app/README.md](flutter_app/README.md) for developer docs and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines. Release history: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md).
 
 ## License & Contact
 
