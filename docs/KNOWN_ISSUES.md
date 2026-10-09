@@ -19,21 +19,11 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
   Low risk: the signature is still verified against Supabase's JWKS and a token without
   `sub` is refused, so forging one needs Supabase's signing key. The fix is one line —
   `if (payload.iss !== expectedIss)`. (September 2026 audit §6.)
-- **Copying a world empties the original** (data loss) — `WorldRepositoryImpl.copy`
-  ([world_repository_impl.dart:372](../flutter_app/lib/data/repositories/world_repository_impl.dart#L372))
-  reuses the source payload verbatim, so every entity keeps its **source id**. `world_entities`
-  has a global primary key (`{id}`, not `{worldId, id}`) and `worldEntitiesDao.upsertAll` runs
-  `insertAllOnConflictUpdate`, so each row is *updated in place* with the new `world_id` instead
-  of being inserted alongside the old one. Verified: a source world with one card ends the copy
-  with **0 cards**, the copy with 1.
-  The same trap applies to **any** path that writes a world payload carrying another world's
-  entity ids — notably downloading a marketplace world you already own locally. It is also why
-  the "duplicate instead of merge" option was cut from `.dmtz` import
-  ([online-sync-redesign.md](online-sync-redesign.md) §4.6).
-  Fix: remap entity ids (and every intra-world reference to them) while copying, or widen the
-  primary key to `{worldId, id}` — the latter is a schema change, so it rides with the next
-  Drift version bump. Copying also leaves the new world's image paths pointing into the *source*
-  world's media folder, so deleting the source orphans the copy's art.
+- **Copying a package leaves its mentions pointing at the source package** — package copy
+  gives every card a fresh id but only rewrites ids that are a whole string value
+  (`PackageRepositoryImpl._remapRefs`); a mention inside text (`@[Name](entity:<id>)`) keeps the
+  source package's id and is a broken link in the copy. `remapIdsJson` (`core/utils/deep_copy.dart`)
+  already handles mentions; switching package copy to it is a one-line change.
 - **A player's mind map does not reach their second device** — the player's own mind map
   in a world stays on the device it was made on. Deferred to the next sync phase (5.5c in
   [online-sync-redesign.md](online-sync-redesign.md)).
@@ -69,6 +59,46 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
 
 ## Resolved
 
+- **Downloading the same marketplace package twice emptied the first download** — fixed 9
+  October 2026. The payload carries the publisher's `package_id` and card ids; `packages` and
+  `package_entities` are keyed by `id` alone, so the second download took over the first
+  package's row (renamed it) and moved its cards. `PackageRepositoryImpl.save` now gives a new
+  package a fresh id when the payload's id belongs to another package, and gives fresh ids to
+  cards owned by another package, rewriting in-package refs and mentions (`_claimEntityIds`).
+  This also covers installing a catalog package as a copy. Regression test:
+  `test/data/repositories/package_save_ids_test.dart`.
+- **Card edits sometimes lost; an edited SRD/package card's source went back to the original**
+  — fixed 9 October 2026. Two causes in the card's 300 ms save delay: (1) a second edit inside
+  the window replaced the first instead of adding to it (`EntityCard._debouncedProviderUpdate`
+  now composes the edits); (2) an edit that reached the original id just after the
+  `Homebrew` copy was forked was written over the copy as "original + this edit", dropping the
+  copy's first edit and its `Homebrew` source (`EntityNotifier._rebaseOnFork` now carries only
+  what changed). Regression test: `test/application/providers/entity_fork_edit_test.dart`.
+- **Copying a world emptied the original** (data loss, cards and sessions) — fixed 9 October
+  2026: `WorldRepositoryImpl.copy` gives every card and session a fresh id and rewrites every
+  in-world reference to it, mentions in text included (built-in SRD forks move to the copy's own
+  synth id). It copies the source world's whole folder (images, PDFs, attachments, images
+  embedded in markdown) and points the copy's paths at it, and copies the package links.
+  Regression test: `test/data/repositories/world_copy_test.dart`.
+- **A world payload carrying another world's ids moved rows** — fixed 9 October 2026.
+  `world_entities` and `world_sessions` have a global primary key (`{id}`), and the upsert used
+  to *move* a row whose id belonged to another world. Two layers now:
+  - the four upsert methods of `WorldEntitiesDao` / `WorldSessionsDao` only update a conflicting
+    row of the **same** world; another world's row stays where it is;
+  - every path that opens a new world from content that came from somewhere else first calls
+    `CampaignRepository.claimIds`, which gives fresh ids to cards and sessions already held by
+    another world and rewrites the references. That covers copying, marketplace download (the
+    same listing twice, or your own world) and official catalog download (the same world twice
+    — its card ids are deterministic).
+  Widening the primary key to `{worldId, id}` is no longer planned: the cloud tables are keyed
+  by `id` alone too, so ids have to stay unique across worlds anyway. A new path that writes
+  foreign ids without `claimIds` loses those rows in the new world instead of taking them from
+  the old one.
+- **Markdown images in a `.dmtz` world broke on a device with another data root** — fixed
+  9 October 2026: the import's path rewrite (`ContentCodec.rewriteRoots`, now
+  `LocalMediaLocalizer.rebase`) only matched whole string values, and an image embedded in
+  markdown (`![](dmt-img:<encoded path>)`) is part of a longer, percent-encoded string. It is
+  decoded, rewritten and re-encoded now.
 - **The 12 September 2026 audit (60 failing tests)** — fixed 14 September 2026:
   - Guest promotion dropped a guest package that shared a name with an account package
     (data loss). The built-in SRD is now mapped onto the account's copy by name; any other
