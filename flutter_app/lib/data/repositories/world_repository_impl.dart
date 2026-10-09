@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../application/services/local_media_localizer.dart';
 import '../../application/services/srd_core_bootstrap.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../database/util/builtin_synth.dart';
@@ -407,8 +408,16 @@ class WorldRepositoryImpl implements CampaignRepository {
     final srcData = await _loadFromDb(sourceId);
     final newId = _uuid.v4();
 
-    srcData['world_id'] = newId;
-    srcData['world_name'] = destinationName;
+    // Kartların ve oturumların hepsi kaynakta duruyor, yani hepsi yenilenir.
+    var data = (await claimIds(newId, srcData)).data;
+    data['world_name'] = destinationName;
+
+    // Dosyalar kopyanın klasörüne — kaynağın klasörünü gösterirlerse kaynak
+    // silinince ya da süpürge temizleyince kopyada kırılırlar. Önce dünya
+    // klasörünün tamamı (resim, PDF, ek, markdown resmi), sonra klasör
+    // dışındaki ham resim yolları.
+    data = await LocalMediaLocalizer.copyWorldFiles(data, sourceId, newId);
+    await LocalMediaLocalizer.localizeWorldPayload(data, newId);
 
     await _db.worldsDao.upsert(WorldsCompanion.insert(
       id: newId,
@@ -417,8 +426,59 @@ class WorldRepositoryImpl implements CampaignRepository {
       templateHash: Value(src.templateHash),
       templateOriginalHash: Value(src.templateOriginalHash),
     ));
-    await _saveToDb(newId, destinationName, srcData);
+    await _saveToDb(newId, destinationName, data);
+    for (final link in await _db.installedPackagesDao.getByWorld(sourceId)) {
+      await _db.installedPackagesDao
+          .upsert(link.toCompanion(false).copyWith(worldId: Value(newId)));
+    }
     return newId;
+  }
+
+  @override
+  Future<({Map<String, dynamic> data, Map<String, String> ids})> claimIds(
+    String worldId,
+    Map<String, dynamic> data,
+  ) async {
+    final entityOwners = await _db.worldEntitiesDao.ownersOutside(worldId);
+    final sessionOwners = await _db.worldSessionsDao.ownersOutside(worldId);
+    final fromWorld = data['world_id'];
+    final ids = <String, String>{
+      if (fromWorld is String && fromWorld != worldId) fromWorld: worldId,
+    };
+    // Yerleşik SRD kartı (synth ya da synth id'sinde fork) dünya başına v5
+    // id taşır; yeni dünyanın sentezi aynı kartı kendi id'siyle üretir.
+    final synthFrom = fromWorld is String &&
+        fromWorld != worldId &&
+        Uuid.isValidUUID(fromString: fromWorld) &&
+        Uuid.isValidUUID(fromString: worldId);
+    final entities = data['entities'] as Map<String, dynamic>? ?? const {};
+    for (final e in entities.entries) {
+      final packageEntityId = (e.value as Map)['package_entity_id'];
+      if (synthFrom &&
+          packageEntityId is String &&
+          e.key == synthBuiltinEntityId(fromWorld, packageEntityId)) {
+        ids[e.key] = synthBuiltinEntityId(worldId, packageEntityId);
+      } else if (entityOwners.containsKey(e.key)) {
+        ids[e.key] = _uuid.v4();
+      }
+    }
+    for (final s in data['sessions'] as List? ?? const []) {
+      if (s is Map && sessionOwners.containsKey(s['id'])) {
+        ids[s['id'] as String] = _uuid.v4();
+      }
+    }
+    if (ids.isEmpty) return (data: data, ids: ids);
+    // Synth satırlar zaten yazılmıyor; ağacı taramadan önce at.
+    final remapped = remapIdsJson({
+      ...data,
+      // Anahtar yoksa ekleme — `entities`'siz payload metadata-only save.
+      if (data.containsKey('entities'))
+        'entities': {
+          for (final e in entities.entries)
+            if ((e.value as Map)[synthFlagKey] != true) e.key: e.value,
+        },
+    }, ids) as Map<String, dynamic>;
+    return (data: remapped, ids: ids);
   }
 
   /// World etiketini değiştir — tek UPDATE.

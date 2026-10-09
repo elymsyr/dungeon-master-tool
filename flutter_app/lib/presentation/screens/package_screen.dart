@@ -254,6 +254,13 @@ class _PackageAsCampaignRepo implements CampaignRepository {
       destinationName;
 
   @override
+  Future<({Map<String, dynamic> data, Map<String, String> ids})> claimIds(
+    String worldId,
+    Map<String, dynamic> data,
+  ) async =>
+      (data: data, ids: const <String, String>{});
+
+  @override
   Future<void> renameWorld(String worldId, String newName) async {}
 }
 

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/bundled_worlds_installer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-17
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -50,6 +50,8 @@ Five things are load-bearing and each fixes a way content used to vanish:
 Existing worlds are merged (`{...previous, ...converted}`) because `_saveToDb` is full-replace on `entities`; the merge drops any `type == 'player-character'` row an older install left behind, so a reinstall heals the old shape.
 
 The world id comes from `load()['world_id']` for an existing world and from the map `save()` writes back for a new one — `save` only stamps `world_id` on the create branch. Characters are **insert-only** (`exists(id)` short-circuits): ids are deterministic uuidv5 from the blueprint, so a second install must not overwrite a PC the DM has levelled up.
+
+Card ids are deterministic too, so a second catalog download (`asCopy`, a new world) carries the first install's card ids. Before `save` the payload goes through `CampaignRepository.claimIds` (2026-10-09): ids already held by **another** world get fresh ones and the PCs get the same mapping (`remapIdsJson`, mentions included). Before that, the second download moved every card out of the first world. A name-matched reinstall writes into the same world, so nothing collides and the ids stay as they are.
 
 `uninstallAll()` drops the world's characters itself — `WorldRepositoryImpl._purgeWorld` deliberately leaves `world_characters` alone (a character normally outlives its world), but these are install artifacts and would otherwise linger pointing at a dead world id.
 

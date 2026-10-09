@@ -5,7 +5,7 @@ path: flutter_app/lib/data/repositories/world_repository_impl.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-10-08
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -24,7 +24,7 @@ tags: [file]
 - Built-in bootstrap: `SrdCorePackageBootstrap`, `SrdCoreBootstrap`, `generateBuiltinDnd5eV2Schema()`, `synthesizeWorldBuiltins`.
 
 **Outputs**
-- Public API: implements `CampaignRepository` — `listWorlds` (`(id, name)` çiftleri; eski `getAvailable` isim listesi kalktı), `load`, `create`, `save`, `saveEntity`, `deleteEntity`, `saveSettingsPatch`, `saveMapData`, `saveSessions`/`saveSession`/`deleteSession`, `delete`, `purge`, `restoreFromTrash`, `permanentlyDelete`, `copy`, `renameWorld`, `installedPackages`. **Hepsi `worldId` ile anahtarlı.**
+- Public API: implements `CampaignRepository` — `listWorlds` (`(id, name)` çiftleri; eski `getAvailable` isim listesi kalktı), `load`, `create`, `save`, `saveEntity`, `deleteEntity`, `saveSettingsPatch`, `saveMapData`, `saveSessions`/`saveSession`/`deleteSession`, `delete`, `purge`, `restoreFromTrash`, `permanentlyDelete`, `copy`, `claimIds`, `renameWorld`, `installedPackages`. **Hepsi `worldId` ile anahtarlı.**
 - Writes (Drift): `worlds`, `world_settings`, `world_entities`, `world_map_data`, `world_sessions`, `trash_items` (+ cascade deletes across membership/share/pin/package-link tables on purge).
 
 ## Dependencies & Links
@@ -46,7 +46,8 @@ tags: [file]
 - **`saveSessions`** strips typed columns (id/name/is_active/sort_order) from the inner blob and writes them to dedicated `world_sessions` columns.
 - **`_purgeWorld`** (cascade): captures package links first, deletes entities/settings/map_data/sessions/installed-packages, then drops any materialized package whose only home was this world (skips `srdCorePackageName`; survives if `countWorldsForPackage > 0`), then clears shares/members/invites/world-packages/map-pins/timeline-pins, finally the `worlds` row.
 - **`renameWorld` tek UPDATE.** Eskiden medya klasörünü de taşıyordu ama gövdedeki **mutlak** yolları olduğu gibi bırakıyordu — yani yeniden adlandırılan her dünyanın resimleri kırılıyordu. Klasör artık `worldDir(worldId)` ile anahtarlı, taşınacak bir şey yok.
-- **`copy` VERİ KAYBETTİRİYOR — kullanmadan önce `docs/KNOWN_ISSUES.md`'e bak.** Kaynak payload'u olduğu gibi yeniden yazıyor, yani entity'ler **kaynak id'lerini** koruyor. `world_entities` birincil anahtarı global (`{id}`, `{worldId, id}` değil) ve `upsertAll` `insertAllOnConflictUpdate` kullanıyor: satırlar eklenmiyor, var olan satırın `world_id`'si kopyanınkiyle **güncelleniyor**. Sonuç: kopya dolu, kaynak boş. Doğrulandı (1 kart → kaynak 0 / kopya 1). Çözüm entity id'lerini (ve dünya içi referanslarını) yeniden haritalamak ya da PK'yı genişletmek.
+- **`copy` her satıra yeni id verir** (2026-10-09). Kaynak id'leriyle yazmak kaynağı boşaltıyordu: `world_entities` / `world_sessions` PK'sı yalnız `{id}`, upsert satırı kopyaya *taşıyordu*. Şimdi `copy` = `claimIds(newId, kaynak)` + `LocalMediaLocalizer.copyWorldFiles` (kaynağın klasörünün tamamı — resim, PDF, ek, markdown resmi — kopyalanır, yollar çevrilir) + `localizeWorldPayload` (klasör dışındaki ham resimler) + `installed_packages` bağlantıları. Test: `test/data/repositories/world_copy_test.dart`.
+- **`claimIds(worldId, data)`** (2026-10-09) — başka yerden gelen içerikle yeni dünya açan her yol `save`'den önce çağırır (copy, marketplace indirme, katalog kurulumu). [[world_entities_dao]] / `WorldSessionsDao`'nun `ownersOutside(worldId)` sorgusuyla **başka dünyada duran** kart ve oturum id'lerini bulur, onlara v4 verir; payload'ın kendi `world_id`'si bu dünyanınkine, yerleşik SRD id'leri (synth ya da synth id'sindeki fork, `synthBuiltinEntityId(world_id, packageEntityId)`) bu dünyanın synth id'sine geçer. Hepsi `remapIdsJson` (`core/utils/deep_copy.dart`) ile ağacın tamamında çevrilir — location_id, attribute ref'leri, oturum/combat, `map_data`, mind map ve metindeki `@[Ad](entity:<id>)` bahsetmeleri. Synth satırlar atılır; `entities` anahtarı yoksa eklenmez (metadata-only save korunur). Çakışma yoksa payload aynen döner — isimle eşleşen yeniden kurulum kendi id'lerini korur. Dönüşteki `ids` (eski → yeni) katalog kurulumunda PC'lere de uygulanır.
 - `_builtinCategoryJsonCache` caches the generated built-in category JSON (generator is deterministic except timestamps).
 
 ## Notes
