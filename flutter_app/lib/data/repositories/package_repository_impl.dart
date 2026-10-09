@@ -68,11 +68,20 @@ class PackageRepositoryImpl implements PackageRepository {
     }
     final existing = await _findByName(packageName);
     if (existing != null) {
+      await _claimEntityIds(existing.id, data);
       await _saveToDb(existing.id, packageName, data);
       return;
     }
-    final packageId = data['package_id'] as String? ?? _uuid.v4();
+    // Payload'ın `package_id`'si başka bir paketinse (aynı ilanı ikinci kez
+    // indirmek, katalogdan kopya kurmak) yeni paket o satırı devralırdı.
+    var packageId = data['package_id'] as String?;
+    if (packageId != null &&
+        await _db.packagesDao.getById(packageId) != null) {
+      packageId = null;
+    }
+    packageId ??= _uuid.v4();
     data['package_id'] = packageId;
+    await _claimEntityIds(packageId, data);
     await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: packageId,
       name: packageName,
@@ -351,6 +360,27 @@ class PackageRepositoryImpl implements PackageRepository {
   }
 
   // --- Internal helpers ---
+
+  /// [data]'daki kartlardan başka bir pakette duran id'lere yenisini verir
+  /// ve paket içindeki her ref'i (bahsetmeler dahil) yenisine çevirir —
+  /// [data] yerinde değişir. Çakışma yoksa dokunmaz.
+  Future<void> _claimEntityIds(
+    String packageId,
+    Map<String, dynamic> data,
+  ) async {
+    final entities = data['entities'];
+    if (entities is! Map || entities.isEmpty) return;
+    final taken = await _db.packagesDao.entityIdsOwnedElsewhere(
+      packageId,
+      entities.keys.cast<String>(),
+    );
+    if (taken.isEmpty) return;
+    final ids = {for (final id in taken) id: _uuid.v4()};
+    final remapped = remapIdsJson(data, ids) as Map<String, dynamic>;
+    data
+      ..clear()
+      ..addAll(remapped);
+  }
 
   /// Walk an entity's attribute map and rewrite any UUID string value that
   /// matches a key in [oldToNewId] to the corresponding new ID. This keeps
