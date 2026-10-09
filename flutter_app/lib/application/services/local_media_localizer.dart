@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../../core/config/app_paths.dart';
 import '../../data/services/asset_importer.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'mention_text.dart';
 
 /// Ham dosya yollarını **veri kökünün içine** alan yerel taşıyıcı.
 ///
@@ -157,6 +158,65 @@ class LocalMediaLocalizer {
     String packageName,
   ) =>
       _walk(payload, packageDir(packageName));
+
+  /// [fromWorldId]'nin klasörünü olduğu gibi [toWorldId]'ninkine kopyalar ve
+  /// [payload]'daki yolları yeni klasöre çevirir. Dünya kopyalama için:
+  /// `.dmtz` de klasörün tamamını taşıyor, kopya da aynısını alır — resimler,
+  /// PDF'ler, ekler, markdown'a gömülü resimler. Referanssız kalanı kopyanın
+  /// kendi süpürgesi ([UnusedMediaSweeper]) temizler.
+  static Future<Map<String, dynamic>> copyWorldFiles(
+    Map<String, dynamic> payload,
+    String fromWorldId,
+    String toWorldId,
+  ) async {
+    final from = worldDir(fromWorldId);
+    final to = worldDir(toWorldId);
+    final src = Directory(from);
+    if (await src.exists()) {
+      await for (final e in src.list(recursive: true, followLinks: false)) {
+        if (e is! File) continue;
+        final target = File(p.join(to, p.relative(e.path, from: from)));
+        await target.parent.create(recursive: true);
+        await e.copy(target.path);
+      }
+    }
+    return rebase(payload, from, to) as Map<String, dynamic>;
+  }
+
+  /// Ağaçtaki bütün string'lerde [fromBase] altını gösteren yolları [toBase]
+  /// altına taşır — düz yollar ve markdown'a gömülü `dmt-img:` resimleri.
+  /// Alan adı bilmez, bu yüzden yeni bir medya alanı eklendiğinde burada
+  /// bakım gerekmez. Bulut ref'lerine (`dmt-asset://`, `dmt-public://`)
+  /// dokunmaz; onlar zaten cihazdan bağımsız. `.dmtz` import'u gönderenin
+  /// veri kökünü bununla kendi köküne çevirir.
+  static Object? rebase(Object? node, String fromBase, String toBase) {
+    if (fromBase.isEmpty || fromBase == toBase) return node;
+    if (node is String) {
+      return _rebasePath(node, fromBase, toBase) ??
+          mapMarkdownImageRefs(
+              node, (ref) => _rebasePath(ref, fromBase, toBase));
+    }
+    if (node is List) {
+      return [for (final v in node) rebase(v, fromBase, toBase)];
+    }
+    if (node is Map) {
+      return <String, dynamic>{
+        for (final e in node.entries)
+          '${e.key}': rebase(e.value, fromBase, toBase),
+      };
+    }
+    return node;
+  }
+
+  /// Windows `\` ve POSIX `/` ayırıcılarını normalize ederek prefix takası.
+  static String? _rebasePath(String value, String fromBase, String toBase) {
+    final v = value.replaceAll('\\', '/');
+    final from = fromBase.replaceAll('\\', '/');
+    if (!v.startsWith('$from/')) return null;
+    final rel = v.substring(from.length + 1);
+    if (rel.isEmpty) return null;
+    return p.joinAll([toBase, ...rel.split('/')]);
+  }
 
   static Future<bool> _walk(Object? node, String ownerDir) async {
     if (node is Map) {

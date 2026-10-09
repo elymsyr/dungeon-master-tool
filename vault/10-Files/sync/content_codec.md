@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_codec.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -23,7 +23,7 @@ tags: [file]
 - Dosya sistemi: `AppPaths.worldsDir / packagesDir / charactersDir`.
 
 **Outputs**
-- Public API: `buildManifest()`, `loadItem(ref)`, `applyItem(item)`, `openMedia`, `resolveMedia`, `hasMedia`, `writeMedia`, `fileSha256`, `rewriteRoots`, `userBase`.
+- Public API: `buildManifest()`, `loadItem(ref)`, `applyItem(item)`, `openMedia`, `resolveMedia`, `hasMedia`, `writeMedia`, `fileSha256`, `userBase`.
 - Writes: `campaignRepository.save`, `packageRepository.save`, `characterRepository.save`, `worldsDao.setUpdatedAt`, `packagesDao.setUpdatedAt`; medya dosyaları.
 - Invalidations: `campaignInfoListProvider`, `campaignMetadataProvider(worldId)`, `packageListProvider`, `characterListProvider.refresh()`.
 
@@ -39,8 +39,8 @@ tags: [file]
 - `buildManifest()` built-in SRD paketini atlar (`srdCorePackageName`); world/paket `updatedAt` Drift kolonundan, karakter `WorldCharacterRow.updatedAt`'ten.
 - **id-anahtarlı apply** — repository'ler ada göre arıyor (`_findByName`), aktarımın kimliği id. `getById` ile yerel ad bulunur; id yoksa ama aynı adda başka kayıt varsa `Ad (2)` ile ayrıştırılır.
 - **Restamp:** `repository.save` her yazımda `DateTime.now()` basar; `setUpdatedAt(id, ref.updatedAt)` olmasa çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi. Karakterlerde gerekmez — `updatedAt` payload'ın içinde taşınır.
-- `rewriteRoots(node, fromBase, toBase)` recursive, **alan adı bilmez**: gönderenin kökü altındaki her string yeniden yazılır, `dmt-asset://` / `dmt-public://` ref'lerine dokunulmaz. `\` ve `/` normalize edilir (Windows ↔ POSIX).
-- `_worldExtras / _applyWorldExtras` — blob'da olmayan dünya parçaları: `installed_packages` bağlantıları ve `ui_view` (açık kartlar, filtreler, açık PDF sekmeleri, sağ sidebar, session sekmesi). `extras` da `rewriteRoots`'tan geçer. Apply tarafında da yalnız ekleme/güncelleme — peer'da olmayan paket bağlantısı yerelde kalır.
+- Kök yeniden yazımı `LocalMediaLocalizer.rebase(node, fromBase, toBase)` ([[local_media_localizer]]; 2026-10-09'a kadar burada `rewriteRoots`'tu, dünya kopyalama da kullansın diye taşındı): recursive, **alan adı bilmez**, gönderenin kökü altındaki her string — markdown'a gömülü `dmt-img:` resimleri dahil — yeniden yazılır, `dmt-asset://` / `dmt-public://` ref'lerine dokunulmaz. `\` ve `/` normalize edilir (Windows ↔ POSIX).
+- `_worldExtras / _applyWorldExtras` — blob'da olmayan dünya parçaları: `installed_packages` bağlantıları ve `ui_view` (açık kartlar, filtreler, açık PDF sekmeleri, sağ sidebar, session sekmesi). `extras` da `rebase`'ten geçer. Apply tarafında da yalnız ekleme/güncelleme — peer'da olmayan paket bağlantısı yerelde kalır.
 - `buildManifest()` world satırına `viewUpdatedAt` ekler (`UiState.viewTouchedByWorld[worldId]` — Faz 2.5'ten beri anahtar id) — içerik değişmeden sadece görünüm değiştiğinde de eşleme tetiklensin diye. Alıcı bunu world satırının içerik `updatedAt`'ine yazmaz, UI state'e stamp'ler.
 - Uygulanan dünya **açık dünyaysa** `activeCampaignProvider.reload()` çağrılır — `_data` bayat kalırsa bir sonraki otomatik kayıt senkronize edilen içeriği geri eziyordu (cloud restore'un "açık dünyanın içine geri yükle" yolunun aynısı).
 - `resolveMedia` `p.isWithin` ile veri kökü dışına çıkan yolu **null** döndürür — yol geçişi savunması.

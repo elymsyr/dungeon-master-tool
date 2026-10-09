@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/local_media_localizer.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -24,7 +24,7 @@ tags: [file]
 - Triggers: her medya seçimi (bkz. *Used by*) ve `ContentCodec.loadItem` onarım geçişi.
 
 **Outputs**
-- Public API: `localize(path, {ownerDir, subDir, imagesOnly})`, `localizeAll(...)`, `localizeCharacterImage(path, {characterId})`, `localizeWorldPayload(payload, worldId)`, `localizePackagePayload(payload, packageName)`, `worldDir(worldId)`, `packageDir(name)`, sabitler `mediaSubDir = 'media'` / `filesSubDir = 'files'`.
+- Public API: `localize(path, {ownerDir, subDir, imagesOnly})`, `localizeAll(...)`, `localizeCharacterImage(path, {characterId})`, `localizeWorldPayload(payload, worldId)`, `localizePackagePayload(payload, packageName)`, `copyWorldFiles(payload, fromWorldId, toWorldId)`, `rebase(node, fromBase, toBase)`, `worldDir(worldId)`, `packageDir(name)`, sabitler `mediaSubDir = 'media'` / `filesSubDir = 'files'`.
 - Writes: `{ownerDir}/{subDir}/` altına dosya kopyası; payload varyantları ağacı **yerinde** günceller ve değişiklik olduysa `true` döner (çağıran kaydeder).
 
 ## Dependencies & Links
@@ -42,6 +42,8 @@ tags: [file]
 - **Idempotent:** `AssetImporter` aynı ad + aynı boyut için yeniden kopyalamaz, kaynak zaten hedef klasördeyse aynen döner. Her seçimde ve her eşlemede güvenle çağrılabilir; payload geçişi ikinci çalıştırmada `false` döner.
 - **Orijinal silinmez** — kullanıcının kendi dosyasına dokunulmuyor.
 - **Kopyanın ömrü:** kaldırma yolları yerel kopyayı silmez; sahipsiz kalanları dünya açılış/kapanışında [[unused_media_sweeper]] temizler.
+- **`rebase`** (2026-10-09, eski `ContentCodec.rewriteRoots`): ağaçtaki her string'de `fromBase/` önekini `toBase`'e çevirir, alan adı bilmez; `\` ve `/` normalize edilir, bulut ref'lerine dokunulmaz. Markdown'a gömülü resimler (`![](dmt-img:<encoded>)`) `mention_text.dart`'ın `mapMarkdownImageRefs`'i ile decode → çevir → encode edilir — eskiden düz string karşılaştırması onları görmüyordu ve `.dmtz` başka veri köklü cihaza gidince markdown resimleri kırılıyordu. Kullananlar: [[content_codec]] import'u ve dünya kopyalama.
+- **`copyWorldFiles`** (2026-10-09): dünya kopyalama için kaynağın `worldDir`'ini olduğu gibi kopyanınkine kopyalar ve payload'ı `rebase` eder. `.dmtz` gibi klasörün tamamı gider (PDF kütüphanesi dahil); referanssız kalanı kopyanın süpürgesi temizler.
 
 ## Notes
 - Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem `cache/content/{sha}.bin` içinde duruyor; disk ve `.dmtz` boyutu bir miktar yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.
