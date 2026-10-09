@@ -12,6 +12,10 @@
 </p>
 
 <p align="center">
+  <img src="media/session.webp" alt="Session: battle map, combat tracker and 3D dice" width="100%"/>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/version-v19.1.0-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
@@ -43,28 +47,26 @@ Everything core works **without an account**. You need one only to play online, 
 
 ## Worldbuilding 🗺️
 
+- **Era Timeline** — Split your world's history into eras on a timeline bar and move between them. Each era keeps its own map, pins, nested location maps and day-by-day timeline pins linked to cards and sessions — the same city before the war and after it.
+- **Templates & Packages** — Every world is built on a template (the D&D 5e template is built in) and pulls content from packages: bundles of cards you install into any world, link to other packages, or share on the marketplace. *Custom templates are coming.*
 - **Codex** — Schema-driven cards for NPCs, monsters, spells, items, locations and more. Every reference is a tappable link; pin cards to the top, preview any card with a long press, and search by name, tag, category or text.
-- **Images in text** — Type `@image` in any text field to place a picture between your paragraphs. Card art ships for 1,247 SRD cards and thousands of pack cards.
-- **Mind Map** — Infinite canvas with linked nodes, workspaces, freehand drawing and undo/redo.
 - **World Map** — Pins, grid and scale, drawing, fog of war, and nested maps you can walk into (districts, dungeons, taverns).
-- **Era Timeline** — Each era keeps its own pins, timeline and background.
-- **Templates & Packages** — Built-in D&D 5e template, custom templates, packages that link to other packages.
-- **Sharing marks** — You choose card by card what players see; secrets, tactics and DM notes never leave your device.
+- **Mind Map** — Infinite canvas with linked nodes, workspaces, freehand drawing and undo/redo.
 
 ## Running the Session ⚔️
 
+- **Second Screen** — Give the table its own view: pop out a window onto a second monitor, cast to a TV or projector, or project into every connected player's app. Battle maps, images, cards and PDFs go out the way you choose; fog of war and hidden tokens stay hidden.
 - **Battle Map** — The session screen *is* the map: encounter panel and event log sit on top. Layers, fog of war, AoE templates, 5e diagonal rules, creature-sized tokens, shapes and text, a DM-only layer, hidden tokens, movement trails for the round, and two maps joined into one.
 - **Combat Tracker** — Initiative, HP (with hit-dice rolls), conditions, turn order and an event log; right-click a token to add a condition or remove it.
 - **3D Dice** — Dice roll across the screen with named styles; skills and saving throws roll from the character sheet with one tap.
 - **Soundpad** — Layered ambience with gapless loops, fades and ready-made soundpacks.
 - **PDF Library** — PDFs kept inside the world, opened in tabs, shareable with players.
-- **Second Screen** — Pop out a window, cast to a TV or projector, or project into every player's app.
 
 ## Characters 🎲
 
+- **Full 5e rules** — Species, class, subclass, background and feats fold into one sheet: senses, resistances, proficiencies, traits and always-prepared spells, each showing where it came from. Multiclass prerequisites and spell slots, class resources (Rage, Bardic Inspiration, sorcery points…), weapon mastery, short and long rests.
 - **Character Builder** — Species, class, subclass, background, ability scores, skills, starting equipment and feats from the SRD and any installed pack.
 - **Level-Up** — Automatic HP, proficiency bonus and hit dice; ASIs, feats, subclass and spell picks wait as pending choices.
-- **Full 5e rules** — Multiclass prerequisites and spell slots, class resources (Rage, Bardic Inspiration, sorcery points…), weapon mastery.
 - **Sheet** — Jump to any section; import a character from another world.
 
 ## Playing Online 🌐
@@ -86,10 +88,13 @@ Everything core works **without an account**. You need one only to play online, 
 ## Screenshots
 
 <p align="center">
-  <img src="media/char.png" alt="Character sheet" width="400"/> <img src="media/db.png" alt="Codex" width="400"/>
-  <img src="media/map.png" alt="Map" width="400"/> <img src="media/session.png" alt="Session" width="400"/>
-  <img src="media/marketplace.png" alt="Marketplace" width="400"/> <img src="media/pack.png" alt="Package" width="400"/>
-  <img src="media/social.png" alt="Social" width="400"/> <img src="media/settings.png" alt="Settings" width="400"/>
+  <img src="media/worlds.webp" alt="Worlds" width="100%"/>
+</p>
+
+<p align="center">
+  <img src="media/map.webp" alt="World map" width="400"/> <img src="media/character.webp" alt="Character sheet" width="400"/>
+  <img src="media/packages.webp" alt="Packages" width="400"/> <img src="media/marketplace.webp" alt="Marketplace" width="400"/>
+  <img src="media/characters.webp" alt="Characters" width="400"/>
 </p>
 
 ---
