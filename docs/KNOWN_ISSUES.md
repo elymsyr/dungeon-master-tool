@@ -6,7 +6,7 @@ in [RELEASE_NOTES.md](RELEASE_NOTES.md) is filled in from here at release time (
 items that are still open on the release date; do not edit past releases afterwards).
 Anything fixed in an earlier release lives in that release's notes, not here.
 
-**Last reviewed:** 8 October 2026 (v19.1.0, no changes; v19.0.0: *Map pin labels and the combat log are not translated* added; *3D dice roller is slow on phones* added in v18.1.0). The
+**Last reviewed:** 9 October 2026 (v19.1.1: *Copying a world empties the original* resolved, *Copying a package leaves its mentions pointing at the source package* added; v19.1.0, no changes; v19.0.0: *Map pin labels and the combat log are not translated* added; *3D dice roller is slow on phones* added in v18.1.0). The
 v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `flutter analyze`
 0 errors / 0 warnings, worker `npm run typecheck` clean.
 
