@@ -33,10 +33,24 @@ final RegExp _imageRe =
 
 /// [ref] için eklenecek markdown parçası; [width] yüzde (null = varsayılan).
 String markdownImage(String ref, String alt, {int? width}) {
-  final enc =
-      Uri.encodeComponent(ref).replaceAll('(', '%28').replaceAll(')', '%29');
   final title = width == null ? '' : ' "$width%"';
-  return '![${alt.replaceAll(RegExp(r'[\[\]]'), '')}]($markdownImageScheme$enc$title)';
+  return '![${alt.replaceAll(RegExp(r'[\[\]]'), '')}]($markdownImageScheme${_encodeImageRef(ref)}$title)';
+}
+
+String _encodeImageRef(String ref) =>
+    Uri.encodeComponent(ref).replaceAll('(', '%28').replaceAll(')', '%29');
+
+/// [text]'teki her gömülü resmin ref'ini [map]'in döndürdüğüyle değiştirir;
+/// null dönen ref'e ve resmin geri kalanına (alt, genişlik) dokunulmaz.
+String mapMarkdownImageRefs(String text, String? Function(String ref) map) {
+  if (!text.contains(markdownImageScheme)) return text;
+  return text.replaceAllMapped(_imageRe, (m) {
+    final ref = decodeMarkdownImageRef(m[2]!);
+    final next = ref == null ? null : map(ref);
+    if (next == null) return m[0]!;
+    return m[0]!.replaceFirst('$markdownImageScheme${m[2]}',
+        '$markdownImageScheme${_encodeImageRef(next)}');
+  });
 }
 
 /// `dmt-img:` sonrasındaki kodlanmış kısmı ref'e çevirir; bozuksa null.

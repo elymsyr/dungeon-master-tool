@@ -452,11 +452,14 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         }
         // İndirilen dünya YENİ bir kimlik alır — payload yayıncının
         // `world_id`'sini taşıyor ve kendi dünyasını indiren biri onu
-        // kendi kopyasının üstüne yazardı.
+        // kendi kopyasının üstüne yazardı. Kartlar da: aynı ilanı ikinci kez
+        // indirmek ya da kendi dünyanı indirmek aynı kart id'lerini getirir.
         final worldId = newId();
-        payload['world_id'] = worldId;
-        payload['world_name'] = name;
-        await _ref.read(campaignRepositoryProvider).save(worldId, payload);
+        final repo = _ref.read(campaignRepositoryProvider);
+        final data = (await repo.claimIds(worldId, payload)).data;
+        data['world_id'] = worldId;
+        data['world_name'] = name;
+        await repo.save(worldId, data);
         return worldId;
       case 'package':
         final name = await _uniquePackageName(title);

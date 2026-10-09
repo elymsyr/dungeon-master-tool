@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_paths.dart';
+import '../../core/utils/deep_copy.dart';
 import '../../core/utils/unique_name.dart';
 import '../../data/repositories/character_repository.dart';
 import '../../data/services/first_party_catalog_service.dart';
@@ -499,9 +500,20 @@ class BundledWorldsInstaller {
     }
 
     worldId ??= const Uuid().v4();
-    worldData['world_name'] = worldName;
-    await _repo.save(worldId, worldData);
-    await _installCharacters(worldId, result.characters, build, report,
+    // Blueprint id'leri deterministik: aynı dünyayı ikinci kez indirmek aynı
+    // kart id'lerini getirir. Başka bir dünyada duranlar yenilenir; isimle
+    // eşleşen yeniden kurulumda id'ler bu dünyanın kendisi, dokunulmaz.
+    final claimed = await _repo.claimIds(worldId, worldData);
+    claimed.data['world_name'] = worldName;
+    await _repo.save(worldId, claimed.data);
+    // PC'ler de bu kartlara ref veriyor (bahsetme, `_ref`).
+    final characters = claimed.ids.isEmpty
+        ? result.characters
+        : [
+            for (final c in result.characters)
+              remapIdsJson(c, claimed.ids) as Map<String, dynamic>,
+          ];
+    await _installCharacters(worldId, characters, build, report,
         worldName: worldName, freshIds: asCopy);
     report.installed.add(worldName);
   }

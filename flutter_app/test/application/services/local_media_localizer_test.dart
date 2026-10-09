@@ -10,6 +10,7 @@
 import 'dart:io';
 
 import 'package:dungeon_master_tool/application/services/local_media_localizer.dart';
+import 'package:dungeon_master_tool/application/services/mention_text.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/core/config/app_paths.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -215,5 +216,26 @@ void main() {
     expect(pairs, contains((r'C:\\old\\root', r'C:\\new\\root')));
     // POSIX kökte üç yazım aynı — tekrar eklenmemeli.
     expect(pathSpellings('/a/b', '/c/d'), hasLength(1));
+  });
+
+  // `.dmtz` import'u ve dünya kopyalama: markdown'a gömülü resmin ref'i
+  // percent-encode durduğu için düz prefix karşılaştırması onu görmüyordu.
+  test('rebase markdown\'a gömülü resimleri de çevirir', () {
+    final from = p.join(tmp.path, 'eski');
+    final to = p.join(tmp.path, 'yeni');
+    String img(String root) =>
+        p.join(root, 'worlds', 'w', 'media', 'harita (1).png');
+
+    final out = LocalMediaLocalizer.rebase({
+      'image_path': img(from),
+      'description':
+          'önce\n${markdownImage(img(from), 'harita', width: 50)}\nsonra',
+      'cloud': 'dmt-asset://x',
+    }, from, to) as Map<String, dynamic>;
+
+    expect(out['image_path'], img(to));
+    expect(out['description'],
+        'önce\n${markdownImage(img(to), 'harita', width: 50)}\nsonra');
+    expect(out['cloud'], 'dmt-asset://x');
   });
 }

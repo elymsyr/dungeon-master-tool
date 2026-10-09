@@ -227,10 +227,12 @@ class ContentCodec {
   /// çevrilir.
   Future<void> applyItem(ContentItemPayload item) async {
     await _flushPending();
-    final payload = rewriteRoots(item.payload, item.dataRoot, userBase)
-        as Map<String, dynamic>;
-    final extras = rewriteRoots(item.extras, item.dataRoot, userBase)
-        as Map<String, dynamic>;
+    final payload =
+        LocalMediaLocalizer.rebase(item.payload, item.dataRoot, userBase)
+            as Map<String, dynamic>;
+    final extras =
+        LocalMediaLocalizer.rebase(item.extras, item.dataRoot, userBase)
+            as Map<String, dynamic>;
 
     switch (item.ref.type) {
       case ContentItemType.world:
@@ -499,8 +501,8 @@ class ContentCodec {
   /// Bunlar dünya klasöründe durmuyor: bir resim yüklendiği anda R2/Storage'a
   /// gidiyor ve yerelde yalnız içerik-adresli önbellekte
   /// (`cache/content/{sha}.bin`) kalıyor. Ref'in kendisi cihazdan bağımsız
-  /// olduğu için [rewriteRoots] ona dokunmuyordu — ama baytlar taşınmayınca
-  /// karşı cihaz resmi ancak internete çıkıp indirebiliyordu. Blob'ları da
+  /// olduğu için [LocalMediaLocalizer.rebase] ona dokunmuyordu — ama baytlar
+  /// taşınmayınca karşı cihaz resmi ancak internete çıkıp indirebiliyordu. Blob'ları da
   /// taşıyınca resim karşı tarafta çevrimdışı açılıyor.
   ///
   /// Blob içerik-adresli olduğu için dosyayı yeniden hash'lemeye gerek yok:
@@ -579,37 +581,6 @@ class ContentCodec {
     if (file == null || !await file.exists()) return false;
     if ((await file.stat()).size != entry.size) return false;
     return await fileSha256(file) == entry.sha256;
-  }
-
-  // ── Yol yeniden yazımı ────────────────────────────────────────────────
-
-  /// Payload içindeki bütün string'lerde gönderenin veri kökünü alıcınınkiyle
-  /// değiştirir. Alan adı bilmez — bu yüzden yeni bir medya alanı eklendiğinde
-  /// burada bakım gerekmez. Bulut ref'lerine (`dmt-asset://`, `dmt-public://`)
-  /// dokunmaz; onlar zaten cihazdan bağımsız.
-  static Object? rewriteRoots(Object? node, String fromBase, String toBase) {
-    if (fromBase.isEmpty || fromBase == toBase) return node;
-    if (node is String) return _rewritePath(node, fromBase, toBase) ?? node;
-    if (node is List) {
-      return [for (final v in node) rewriteRoots(v, fromBase, toBase)];
-    }
-    if (node is Map) {
-      return <String, dynamic>{
-        for (final e in node.entries)
-          '${e.key}': rewriteRoots(e.value, fromBase, toBase),
-      };
-    }
-    return node;
-  }
-
-  /// Windows `\` ve POSIX `/` ayırıcılarını normalize ederek prefix takası.
-  static String? _rewritePath(String value, String fromBase, String toBase) {
-    final v = value.replaceAll('\\', '/');
-    final from = fromBase.replaceAll('\\', '/');
-    if (!v.startsWith('$from/')) return null;
-    final rel = v.substring(from.length + 1);
-    if (rel.isEmpty) return null;
-    return p.joinAll([toBase, ...rel.split('/')]);
   }
 }
 

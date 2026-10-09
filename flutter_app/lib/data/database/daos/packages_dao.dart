@@ -165,6 +165,19 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  /// [ids] içinden [packageId] dışındaki bir pakete ait olanlar. Satırın
+  /// anahtarı yalnız `id`: bunlar bu pakete yazılırsa öbür paketten taşınır.
+  Future<Set<String>> entityIdsOwnedElsewhere(
+    String packageId,
+    Iterable<String> ids,
+  ) async {
+    final q = selectOnly(packageEntities)
+      ..addColumns([packageEntities.id])
+      ..where(packageEntities.id.isIn(ids) &
+          packageEntities.packageId.equals(packageId).not());
+    return {for (final r in await q.get()) r.read(packageEntities.id)!};
+  }
+
   Future<int> deleteEntity(String id) async {
     final row = await (select(packageEntities)..where((t) => t.id.equals(id)))
         .getSingleOrNull();

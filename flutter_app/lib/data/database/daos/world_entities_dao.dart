@@ -34,15 +34,42 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
 
   /// Damga şart: companion `updated_at` taşımazsa ON CONFLICT onu eski
   /// haliyle bırakır ve düzenleme push taramasına hiç düşmez.
-  Future<void> upsert(WorldEntitiesCompanion row) => into(worldEntities)
-      .insertOnConflictUpdate(row.copyWith(updatedAt: stampedNow(row.updatedAt)));
+  Future<void> upsert(WorldEntitiesCompanion row) {
+    row = row.copyWith(updatedAt: stampedNow(row.updatedAt));
+    return into(worldEntities).insert(row, onConflict: _sameWorld(row));
+  }
 
   Future<void> upsertAll(List<WorldEntitiesCompanion> rows) async {
     await batch((b) {
-      b.insertAllOnConflictUpdate(worldEntities, [
-        for (final r in rows) r.copyWith(updatedAt: stampedNow(r.updatedAt)),
-      ]);
+      for (var r in rows) {
+        r = r.copyWith(updatedAt: stampedNow(r.updatedAt));
+        b.insert(worldEntities, r, onConflict: _sameWorld(r));
+      }
     });
+  }
+
+  /// Çakışan satır yalnız **kendi dünyasındaysa** güncellenir. Birincil
+  /// anahtar `{id}` olduğu için başka dünyanın id'sini taşıyan bir yazım
+  /// satırı o dünyadan bu dünyaya *taşıyordu* — dünya kopyalama kaynağı
+  /// böyle boşaltıyordu. Artık o satır yerinde kalır; yeni dünyaya içerik
+  /// kopyalayan yol id'leri önce yenilemeli (`CampaignRepository.claimIds`).
+  static DoUpdate<$WorldEntitiesTable, WorldEntity> _sameWorld(
+    WorldEntitiesCompanion row,
+  ) =>
+      DoUpdate((_) => row,
+          where: row.worldId.present
+              ? (old) => old.worldId.equals(row.worldId.value)
+              : null);
+
+  /// [worldId] dışındaki dünyalardaki kart id'leri → sahip dünya.
+  Future<Map<String, String>> ownersOutside(String worldId) async {
+    final q = selectOnly(worldEntities)
+      ..addColumns([worldEntities.id, worldEntities.worldId])
+      ..where(worldEntities.worldId.equals(worldId).not());
+    return {
+      for (final r in await q.get())
+        r.read(worldEntities.id)!: r.read(worldEntities.worldId)!,
+    };
   }
 
   Future<int> deleteById(String id) async {
