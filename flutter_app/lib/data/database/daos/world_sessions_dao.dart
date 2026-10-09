@@ -29,12 +29,34 @@ class WorldSessionsDao extends DatabaseAccessor<AppDatabase>
           .get();
 
   Future<void> upsert(WorldSessionsCompanion row) =>
-      into(worldSessions).insertOnConflictUpdate(row);
+      into(worldSessions).insert(row, onConflict: _sameWorld(row));
 
   Future<void> upsertAll(List<WorldSessionsCompanion> rows) async {
     await batch((b) {
-      b.insertAllOnConflictUpdate(worldSessions, rows);
+      for (final r in rows) {
+        b.insert(worldSessions, r, onConflict: _sameWorld(r));
+      }
     });
+  }
+
+  /// Başka dünyanın satırı taşınmaz — bkz. `WorldEntitiesDao._sameWorld`.
+  static DoUpdate<$WorldSessionsTable, WorldSession> _sameWorld(
+    WorldSessionsCompanion row,
+  ) =>
+      DoUpdate((_) => row,
+          where: row.worldId.present
+              ? (old) => old.worldId.equals(row.worldId.value)
+              : null);
+
+  /// [worldId] dışındaki dünyalardaki oturum id'leri → sahip dünya.
+  Future<Map<String, String>> ownersOutside(String worldId) async {
+    final q = selectOnly(worldSessions)
+      ..addColumns([worldSessions.id, worldSessions.worldId])
+      ..where(worldSessions.worldId.equals(worldId).not());
+    return {
+      for (final r in await q.get())
+        r.read(worldSessions.id)!: r.read(worldSessions.worldId)!,
+    };
   }
 
   Future<int> deleteById(String id) async {

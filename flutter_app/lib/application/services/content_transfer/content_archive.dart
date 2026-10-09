@@ -2,7 +2,7 @@
 /// karakter tek bir zip'e girer, başka bir kurulumda geri açılır.
 ///
 /// Taşınan şey [ContentItemPayload]. Manifest export eden makinenin veri
-/// kökünü yazıyor, import [ContentCodec.rewriteRoots] ile onu kendi köküne
+/// kökünü yazıyor, import [LocalMediaLocalizer.rebase] ile onu kendi köküne
 /// çeviriyor.
 ///
 /// Zip düzeni:

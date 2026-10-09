@@ -112,6 +112,20 @@ abstract class CampaignRepository {
     required String destinationName,
   });
 
+  /// [data]'yı [worldId]'ye yazmaya hazırlar: kartlardan ve oturumlardan
+  /// **başka bir dünyada** zaten duran id'ler yenilenir, payload'ın kendi
+  /// `world_id`'si ve yerleşik SRD id'leri bu dünyanınkine geçer, dünya
+  /// içindeki her ref (bahsetmeler dahil) yenisini gösterir.
+  ///
+  /// Başka yerden gelen içerikle yeni dünya açan her yol (kopyalama,
+  /// marketplace, katalog) [save]'den önce çağırmalı: kart ve oturum id'leri
+  /// bütün dünyalarda tek, başka dünyanın id'siyle yazılan satır yazılmaz.
+  /// Çakışma yoksa [data] aynen döner. `ids`: eski id → yeni id.
+  Future<({Map<String, dynamic> data, Map<String, String> ids})> claimIds(
+    String worldId,
+    Map<String, dynamic> data,
+  );
+
   /// World'ün etiketini değiştir. Hiçbir anahtar değişmediği için tek
   /// UPDATE: medya klasörü id ile anahtarlı, taşınmıyor.
   Future<void> renameWorld(String worldId, String newName);

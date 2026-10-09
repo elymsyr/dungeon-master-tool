@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_archive.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -38,7 +38,7 @@ media/<yol>     baytlar; manifest.data_root'a göreli
 - System flow: [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
-- **Yol taşınabilirliği için yeni kod yok.** Manifest export eden makinenin `dataRoot`'unu yazıyor, import `ContentCodec.rewriteRoots` ile kendi köküne çeviriyor.
+- **Yol taşınabilirliği için yeni kod yok.** Manifest export eden makinenin `dataRoot`'unu yazıyor, import `LocalMediaLocalizer.rebase` ile kendi köküne çeviriyor.
 - Export medyayı **diskten akıtır** (`ZipFileEncoder.addFile`), belleğe almaz. Manifest yalnız gerçekten pakete giren dosyaları listeler; kaybolmuş bir dosya import tarafında "eksik" sayılmasın.
 - `manifest.format` bilinmiyorsa **sessiz kabul yok** — `unsupportedFormat` atar. `kContentArchiveFormat = 1`.
 - Import her medya için: veri kökü dışıysa atla (yol geçişi savunması) → aynı içerik zaten varsa atla → yazıp **sha doğrula**, tutmazsa dosyayı sil ve atlananlara say.

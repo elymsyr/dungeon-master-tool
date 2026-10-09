@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/daos/packages_dao.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-09-24
+updated: 2026-10-09
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 **Outputs**
 - Packages: `getById`, `getByName`, `getAll`, `watchAll` (desc `updatedAt`, distinct), `upsertPackage`, `deletePackage`, `updateCloudPush(id, pushedAt, pushedHash)`.
 - Schemas: `getSchemas`, `firstSchemaNameByPackage()`, `upsertSchema`, `deleteSchemasByPackage`.
-- Entities: `getEntities`, `countEntities(id)`, `countEntitiesByPackage()`, `watchEntities`, `upsertEntity` / `upsertEntities` (batch), `deleteEntity`, `deleteEntitiesByPackage`.
+- Entities: `getEntities`, `countEntities(id)`, `countEntitiesByPackage()`, `watchEntities`, `upsertEntity` / `upsertEntities` (batch), `entityIdsOwnedElsewhere(packageId, ids)`, `deleteEntity`, `deleteEntitiesByPackage`.
 - Writes (Drift): `packages`, `package_schemas`, `package_entities`.
 
 ## Dependencies & Links
@@ -36,7 +36,7 @@ tags: [file]
 - **DB-2 perf projections**: `firstSchemaNameByPackage()` uses `selectOnly` projecting only `packageId + name` (skips the big categories/encounter JSON just to label a pack); `countEntitiesByPackage()` is one grouped `COUNT(id)` query instead of materializing rows to call `.length` (packages with zero entities are absent from the map).
 - **`countEntities(id)`** (CS-1) — single-package count via `selectOnly` + `id.count()`; used by the SRD/bundled bootstrap freshness gate instead of `getEntities(id).isNotEmpty`.
 - `updateCloudPush` records `lastCloudPushAt`/`lastPushedHash` for package cloud-sync watermarking (mirrors `worlds`).
-- All upserts are `insertOnConflictUpdate`; batch entity upsert uses Drift `batch(...)`.
+- All upserts are `insertOnConflictUpdate`; batch entity upsert uses Drift `batch(...)`. Tabloların anahtarı yalnız `id`: başka paketin id'siyle yazılan satır o paketten **taşınır**. `entityIdsOwnedElsewhere` bunu yazmadan önce yakalamak için — `PackageRepositoryImpl.save` (`_claimEntityIds`) çakışan kartlara yeni id veriyor (2026-10-09; aynı marketplace paketini iki kez indirmek ilkini boşaltıyordu).
 
 ## Notes
 - Local catalog only. Personal (per-user cloud) packages live in [[personal_packages_dao]].
