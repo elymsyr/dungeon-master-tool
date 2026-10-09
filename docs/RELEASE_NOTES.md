@@ -1,5 +1,55 @@
 # Release Notes
 
+## Dungeon Master Tool v19.1.1 — Copies That Keep the Original (Beta)
+
+**Release date:** October 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/beta-v19.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This is a bug-fix release. Copying a world no longer empties the original, and downloading the same world or package twice no longer empties the first download. Card edits made in quick succession are no longer lost. Your data is not changed, so this version installs over v19.1.0.
+
+---
+
+### Bug fixes
+
+- **Copying a world** — copying a world moved its cards and sessions to the copy and left the original empty. This is fixed. The copy now also takes the world's images, PDFs, attachments and package links, and links inside text point to the copy's own cards.
+- **Downloading a world twice** — downloading the same world from **Marketplace** or **Marketplace → Official** a second time emptied the first download. This is fixed: each download is its own world.
+- **Downloading a package twice** — downloading the same package a second time renamed the first one and moved its cards to the new one. This is fixed. Installing an official package as a copy is covered too.
+- **Lost card edits** — a second edit made right after the first (typing a name, then the description) could replace the first edit. This is fixed: both are kept.
+- **Editing SRD and package cards** — the first edit of an SRD or package card makes your own Homebrew copy. An edit made at that moment could overwrite the copy's first edit and set its source back to the original. This is fixed.
+- **Images in an imported world** — images inside text could break when a `.dmtz` world was imported on another device. This is fixed.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `19.1.0` → `19.1.1`.
+
+---
+
+### Known issues
+
+The full, continuously updated list lives in [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Open at the time of this release:
+
+- **Map pin labels and the combat log are not translated**: a map pin keeps the name it had when it was placed, and combat log lines stay in English.
+- **The 3D dice can be slow on some phones**: the dice use a lighter look on phones, but this has not been checked on a real device yet. The first roll from the character sheet, without opening the dice menu first, can pause briefly.
+- **The asset server accepts a sign-in token that names no issuer**: it rejects a token from the wrong issuer but lets one with no issuer through. The risk is low, because the token's signature is still checked and forging one needs the sign-in provider's signing key.
+- **Links inside a copied package point to the original**: in a copy of a package, a link to another card written inside text still opens the card in the source package.
+- **A player's mind map does not reach their second device**: a player's own mind map in a world stays on the device where it was made.
+- **Battle map display toggles are inconsistent**: helpers such as *Show all HP* and *Clean tokens* each behave in their own way. They will be moved to a single standard.
+- **Banning is not possible**: you cannot hide SRD content from players ("there is no Fireball in this world"). Sharing marks only add content. They cannot take it away.
+
+---
+
+### For developers
+
+- **Ids across worlds** — `world_entities` and `world_sessions` stay keyed by `id` alone; any path that opens a world from foreign content must call `CampaignRepository.claimIds` first, or the new world loses those rows.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v19.1.0 — Pictures in Your Notes (Beta)
 
 **Release date:** October 2026

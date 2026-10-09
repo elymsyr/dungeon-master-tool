@@ -1,8 +1,9 @@
 # Dungeon Master Tool
 
 <p align="center">
-  <b>A portable, offline-first DM tool.</b><br>
-  <i>Build worlds, run sessions, play together — all in one app.</i>
+  <b>A portable, offline-first DM and Worldbuilng tool.</b><br>
+  <i>Build worlds, run sessions, share with others, play together — all in one app.</i>
+  <br><i>Not a VTT app.</i>
 </p>
 
 <p align="center">
@@ -17,7 +18,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v19.1.0-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v19.1.1-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square&logo=flutter" />
 </p>
