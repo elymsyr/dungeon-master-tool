@@ -214,14 +214,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   Timer? _updateTimer;
-  Entity Function()? _pendingBuild;
+  Entity Function(Entity)? _pendingBuild;
 
   /// Debounced provider update — avoids rebuilding the entire widget tree
   /// on every keystroke. The TextEditingController holds the current value
   /// so the UI stays responsive while the provider update is delayed.
-  void _debouncedProviderUpdate(Entity Function() entityBuilder) {
+  ///
+  /// Edits made inside one window compose: each applies on top of the
+  /// previous one, so editing two fields within 300 ms keeps both.
+  void _debouncedProviderUpdate(Entity Function(Entity) edit) {
     _updateTimer?.cancel();
-    _pendingBuild = entityBuilder;
+    final prev = _pendingBuild;
+    _pendingBuild = prev == null ? edit : (e) => edit(prev(e));
     _updateTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       final entity = _takePendingUpdate();
@@ -235,7 +239,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _updateTimer?.cancel();
     final build = _pendingBuild;
     _pendingBuild = null;
-    return build?.call();
+    final entity = ref.read(entityProvider)[widget.entityId];
+    return build == null || entity == null ? null : build(entity);
   }
 
   /// Flushes a pending edit when the card closes. Not in [dispose]: Riverpod
@@ -281,9 +286,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   void _updateField(String fieldKey, dynamic value) {
-    _debouncedProviderUpdate(() {
-      final entity = ref.read(entityProvider)[widget.entityId];
-      if (entity == null) return entity!; // won't happen — guarded by caller
+    _debouncedProviderUpdate((entity) {
       final newFields = Map<String, dynamic>.from(entity.fields);
       newFields[fieldKey] = value;
       return entity.copyWith(fields: newFields);
@@ -441,9 +444,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                                 contentPadding: EdgeInsets.zero,
                               ),
                               onChanged: (v) => _debouncedProviderUpdate(
-                                () => ref
-                                    .read(entityProvider)[widget.entityId]!
-                                    .copyWith(name: v),
+                                (e) => e.copyWith(name: v),
                               ),
                             ),
                     ),
@@ -537,9 +538,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     ),
                   ),
                   onChanged: (v) => _debouncedProviderUpdate(
-                    () => ref
-                        .read(entityProvider)[widget.entityId]!
-                        .copyWith(description: v),
+                    (e) => e.copyWith(description: v),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -554,9 +553,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                   palette: palette,
                   linked: entity.linked,
                   onSourceChanged: (v) => _debouncedProviderUpdate(
-                    () => ref
-                        .read(entityProvider)[widget.entityId]!
-                        .copyWith(source: v),
+                    (e) => e.copyWith(source: v),
                   ),
                   onTagsChanged: (v) {
                     final tags = v
@@ -565,9 +562,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         .where((t) => t.isNotEmpty)
                         .toList();
                     _debouncedProviderUpdate(
-                      () => ref
-                          .read(entityProvider)[widget.entityId]!
-                          .copyWith(tags: tags),
+                      (e) => e.copyWith(tags: tags),
                     );
           },
         ),
@@ -627,8 +622,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
             hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
           ),
           onChanged: (v) => _debouncedProviderUpdate(
-            () =>
-                ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+            (e) => e.copyWith(dmNotes: v),
           ),
         ),
       ],

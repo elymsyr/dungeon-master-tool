@@ -553,14 +553,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
     // Bu built-in az önce forklandıysa, gecikmeli edit'i (eski kartın
     // dispose-flush'ı vb.) yeni kopya daha üretmek yerine kopyaya yönlendir.
+    // Edit orijinalin üstüne kurulu: kopyanın yerine konursa kopyadaki ilk
+    // düzenleme ve 'Homebrew' kaynağı kaybolurdu — yalnızca farkı taşı.
     final redirectId = _recentForks[entity.id];
-    if (redirectId != null && state.containsKey(redirectId)) {
-      update(entity.copyWith(
-        id: redirectId,
-        linked: false,
-        packageId: null,
-        packageEntityId: null,
-      ));
+    final fork = redirectId == null ? null : state[redirectId];
+    if (fork != null) {
+      update(_rebaseOnFork(state[entity.id] ?? fork, entity, fork));
       return;
     }
 
@@ -611,6 +609,35 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       {'entity_id': entity.id, 'changed_fields': const <String>[]},
       campaignId: _campaignId,
     ));
+  }
+
+  /// [edited]'in [orig]'den farklı olduğu yüzeyleri [fork]'a uygular;
+  /// kalanı (önceki düzenlemeler, kaynak) [fork]'ta olduğu gibi kalır.
+  Entity _rebaseOnFork(Entity orig, Entity edited, Entity fork) {
+    T pick<T>(T o, T e, T f) => o == e ? f : e;
+    List<String> pickList(List<String> o, List<String> e, List<String> f) =>
+        _listEquals(o, e) ? f : e;
+    final fields = Map<String, dynamic>.from(fork.fields);
+    for (final k in {...orig.fields.keys, ...edited.fields.keys}) {
+      if (_kFieldEquality.equals(orig.fields[k], edited.fields[k])) continue;
+      if (edited.fields.containsKey(k)) {
+        fields[k] = edited.fields[k];
+      } else {
+        fields.remove(k);
+      }
+    }
+    return fork.copyWith(
+      name: pick(orig.name, edited.name, fork.name),
+      source: pick(orig.source, edited.source, fork.source),
+      description: pick(orig.description, edited.description, fork.description),
+      imagePath: pick(orig.imagePath, edited.imagePath, fork.imagePath),
+      dmNotes: pick(orig.dmNotes, edited.dmNotes, fork.dmNotes),
+      locationId: pick(orig.locationId, edited.locationId, fork.locationId),
+      images: pickList(orig.images, edited.images, fork.images),
+      tags: pickList(orig.tags, edited.tags, fork.tags),
+      pdfs: pickList(orig.pdfs, edited.pdfs, fork.pdfs),
+      fields: fields,
+    );
   }
 
   /// Diff'lenmiş alanlara göre debounce penceresi seç. En geniş window
