@@ -3,7 +3,6 @@
 <p align="center">
   <b>A portable, offline-first DM and Worldbuilng tool.</b><br>
   <i>Build worlds, run sessions, share with others, play together — all in one app.</i>
-  <br><i>Not a VTT app.</i>
 </p>
 
 <p align="center">
