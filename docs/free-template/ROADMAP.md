@@ -9,13 +9,13 @@
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
 - **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1
   kapandı (2026-10-11, arayüz kullanıcıyla gözden geçirildi; E listesi tek tek yapılmadı). Faz 2
-  uygulandı, elle kontrol bekliyor.
+  kapandı (2026-10-11, kullanıcı onayladı).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
 | 0 | Güvenlik ağı | S | ✅ (R turu yok) |
 | 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
-| 2 | Template editörü: kategoriler ve düzen | L | 🧪 elle kontrol |
+| 2 | Template editörü: kategoriler ve düzen | L | ✅ |
 | 3 | Free dünya ve template güncellemesi | M | ⏳ |
 | 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
 | 5 | Paketler | M | ⏳ |
@@ -489,7 +489,7 @@ testi: telefonda ve desktop'ta açılıyor, taşma yok.
 **Çıkış kriteri:** kullanıcı SRD kopyasının alanlarını ve düzenini değiştirebilir; telefonda ve
 desktop'ta rahat; değişiklikler kalıcı.
 
-**Faz 2 sonucu** (2026-10-11, Windows; elle kontrol bekliyor):
+**Faz 2 sonucu** (2026-10-11, Windows; kapandı):
 
 - **Yapılanlar:**
   - Templates sekmesinde kendi şablonu seçiliyken ilk buton **Düzenle**; çift tık da açar. Yol
