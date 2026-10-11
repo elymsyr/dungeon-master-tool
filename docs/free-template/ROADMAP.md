@@ -9,13 +9,13 @@
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
 - **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1
   kapandı (2026-10-11, arayüz kullanıcıyla gözden geçirildi; E listesi tek tek yapılmadı). Faz 2
-  sürüyor.
+  uygulandı, elle kontrol bekliyor.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
 | 0 | Güvenlik ağı | S | ✅ (R turu yok) |
 | 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
-| 2 | Template editörü: kategoriler ve düzen | L | 🚧 |
+| 2 | Template editörü: kategoriler ve düzen | L | 🧪 elle kontrol |
 | 3 | Free dünya ve template güncellemesi | M | ⏳ |
 | 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
 | 5 | Paketler | M | ⏳ |
@@ -483,9 +483,84 @@ testi: telefonda ve desktop'ta açılıyor, taşma yok.
 | E2.11 | Aynı işleri telefon görünümünde (dar pencere) tekrarla: ekle, ayarla, sırala. | Ekranlar tek işe odaklı, taşma yok, alttan açılan sayfalar çalışıyor. |
 | E2.12 | Android'de basılı tutup sürükleyerek alan ve kategori sırala. | Tek elle rahat. |
 | E2.13 | R turu (özellikle R8). | Yerleşik template hâlâ salt okunur. |
+| E2.14 | Editörü koyu, açık ve köşesi keskin bir temada (Grim) aç. | Kutular, checkbox'lar ve seçiciler uygulamanın geri kalanıyla aynı görünür. |
+| E2.15 | Bir kategoride "Dünya haritası"nı işaretle, yanındaki simgeyi değiştir; serbest renk seç; Tier'ı değiştir. | Simge yalnız harita işaretliyken görünür; renk ve Tier kaydedilir. |
 
 **Çıkış kriteri:** kullanıcı SRD kopyasının alanlarını ve düzenini değiştirebilir; telefonda ve
 desktop'ta rahat; değişiklikler kalıcı.
+
+**Faz 2 sonucu** (2026-10-11, Windows; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - Templates sekmesinde kendi şablonu seçiliyken ilk buton **Düzenle**; çift tık da açar. Yol
+    (`/template/edit`) free şablonu editöre, yerleşiği değişmeyen inceleyiciye gönderir (R8).
+  - [template_edit.dart](../../flutter_app/lib/domain/services/template_edit.dart): saf işlemler.
+    Alan ekle / taşı / sil, grup ekle / sil / sırala / alanlarını taşı, kategori ekle / sil /
+    sırala, anahtar üretimi (`keyFromLabel`: Türkçe harfler katlanır, çakışmada `_2`), DESIGN
+    §6.6 uyum tablosu (`typeChangeOf`) ve uyumsuz değişimde yeni anahtarlı yeni alan.
+  - Editör (`lib/presentation/screens/templates/`): genişlik ≥ 1000 px'te üç panel (şablon ·
+    kategori düzeni · ayarlar) + altta palet şeridi; daha darda şablon sayfası → kategori sayfası
+    → alttan açılan ayar sayfası, "+ Alan ekle" alttan tarz listesi açar.
+  - Sol: Bilgiler, oyuncu kartı (sabit, silinmez), kategoriler (ekle; tutamaçla ya da basılı
+    tutarak sırala). Orta: "Özellikler" kutusu + gruplar kendi kolonlarında (telefonda tek kolon,
+    V22); grup başlıktaki tutamaçla, alan kendi tutamacıyla anında ya da kutucuğa basılı tutarak
+    sürüklenir; paletten sürüklenen tarz bırakıldığı yere eklenir, tıklanan tarz seçili gruba.
+  - Ayarlar: kategori (ad, ikon, renk, filtre alanları, dünya haritası / zihin haritası /
+    projeksiyon), grup (ad, kolon 1–4, kapalı başlasın, alanları taşı, sil), alan (etiket, salt
+    okunur anahtar, tarz + liste, yardım metni, varsayılan, zorunlu, görünürlük, genişlik, grup;
+    tarza özel: yer tutucu ve en fazla uzunluk, en az / en çok, seçenekler, hedef kategoriler,
+    izinli uzantılar). Şablon bilgileri: ad, açıklama, sürüm.
+  - Eski SRD tipleri "SRD tipi" rozetiyle görünür; yalnız etiket, görünürlük, genişlik, grup ve
+    sil (§6).
+  - Yeni alan eklerken önce etiket sorulur: anahtar etiketten bir kez üretilir (V3).
+  - Sürüklemenin alternatifi: alan, grup ve kategori ayarlarında **Yukarı / Aşağı taşı**
+    butonları (WCAG 2.2 "dragging movements"; klavyeyle de çalışır). Alan tutamacı ve renk
+    daireleri 44 px dokunma alanında.
+  - Silmeler (alan, grup, kategori) onay sorar; grup silinince alanları "Özellikler"e geçer.
+  - Otomatik kayıt: son değişiklikten 600 ms sonra ve editör kapanırken; üst çubukta
+    Kaydedildi / Kaydediliyor / Kaydedilemedi (dokununca tekrar dener).
+  - **Önizle:** seçili kategorinin boş örnek kartı, kartın kendi parçalarıyla (grup başlığı,
+    kolon kuralı, `FieldWidgetFactory`); yazılanlar saklanmaz.
+  - **Arayüz turu (kullanıcı geri bildirimi, 2026-10-11):** editör uygulamanın kendi kalıplarına
+    geçirildi: `featureCardBg` / `featureCardBorder` kutular ve temanın yarıçapı (`palette.br`),
+    switch yerine küçük checkbox satırları, segmented button yerine `PillTabBar` tarzı pill
+    seçici, kenar çubuğu gibi renk noktalı kategori satırları, eski editördeki gibi palet
+    butonları. Kategori ikonu seçimi kaldırıldı; ikon yalnız dünya haritasının iğnesi için
+    kullanıldığından "Dünya haritası" işaretliyken checkbox'ın yanında seçilir (haritanın
+    çözdüğü adla, `mapIconFromName`). Renge serbest renk (zihin haritasının HSV diyaloğu,
+    `showCustomColorDialog`) eklendi. Kategoriye **Tier** (codex kenar çubuğu grubu) eklendi:
+    `EntityCategorySchema.tier` (null olabilir, K2); boşken yerleşik slug listeleri karar verir
+    (`builtinTier`), SRD kopyası her kategoriye bu değeri yazar. Kenar çubuğu bunu Faz 3'te
+    kullanır.
+- **Roadmap'ten sapmalar:**
+  - `entity_card.dart`'taki "free'de yerleşik sabitler kapalı" kapısı **eklenmedi**: free şablonlu
+    kart ekranı Faz 3'te geliyor; şimdi kapıyı çağıracak yer yok. Önizleme kendi çizimini
+    kullanıyor ve grup ortalamıyor. Kapı Faz 3 madde 4'e taşındı.
+  - Ayrı bir "editör ekranı" yerine dar pencerede de aynı ekran telefon akışına geçiyor; tablet
+    genişliği (600–1000) telefon akışını kullanıyor.
+  - "Telefonda kolon sayısı" (V22'nin isteğe bağlı kısmı) eklenmedi.
+  - Kategori ikonu seçimi genel ayardan çıktı, dünya haritası satırına taşındı; kategoriye Tier
+    eklendi (arayüz turu).
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 yeşil · G4 32 info (temel çizgiyle aynı) · G5
+  `template_edit_test` (12), `free_template_editor_test` (19: telefon / orta / desktop × en / tr,
+  büyük yazı, alan ekle + yeniden adlandır + anahtar sabit + kayıt, grup / kolon / genişlik /
+  taşıma, tutamaçla gruba sürükleme, yukarı / aşağı taşı, uyumsuz tarz değişimi, oyuncu kartı silinmez, grup silme,
+  önizleme, SRD kopyasının 75 kategorisinin hepsi hatasız önizleniyor, telefonda ayar sayfası ve
+  silince kapanması, tarz listesinden ekleme, kapanırken kayıt), `templates_tab_layout_test` (10;
+  inceleyici testleri artık yerleşik şablonu açıyor) yeşil · G6 1742 geçti (Faz 1'deki 1712 + 30
+  yeni); kırmızılar temel çizgideki 3 testle aynı. Arayüz turundan sonra yeniden: G1 boş · G4 32
+  info · G5 `free_template_editor_test` 20 (+ Tier ve harita simgesi), `free_template_test` + SRD
+  kopyasında Tier · G6 1745 geçti (+ yukarı / aşağı, Tier testleri); kırmızılar yine aynı 3 test.
+- **Elle kontrol:** E2.1–E2.15. E2.12 (Android'de basılı tutup sürükleme) gerçek cihaz ister.
+- **Bilinen sınırlar:**
+  - Ondalık sayı alanı kartta bugünkü yazı kutusuyla çizilir (alan widget'larında ayrı ondalık
+    widget'ı yok).
+  - Uyumsuz değişimde emekliye ayrılan anahtar hatırlanmıyor; sonra aynı etiketle eklenen alan
+    eski anahtarı (ve kartlardaki eski tipteki gizli veriyi) geri alabilir. Dünyalar free şablon
+    kullanmaya başlayınca (Faz 3) ele alınmalı.
+  - Harita simgesi listesi harita iğnelerinin ikonları; SRD'nin listede olmayan bir ikonu seçili
+    değilse listede işaretli görünmez (editör ve harita aynı ikonu çizer, kaydedilen ad değişmez).
+  - Geri al yok; silmeler onayla korunuyor.
 
 ---
 
@@ -503,8 +578,10 @@ template değişikliği dünyaya banner ile gitsin.
 2. **SRD soyu (V28, B5):** SRD soyundaki kopyalarda "SRD içeriğini ekle" çıkar; SRD paketi ve
    Tier-0 içerik kurulur. `_overlayMissingBuiltinCategories` free'de çalışmaz (silinen
    kategoriler geri gelmesin).
-3. **Kenar çubuğu:** free'de Tier gruplaması yerine template sırasıyla düz liste.
-4. **Kart ekranı:** free'de yerleşik sabitler devre dışı (Faz 2'de eklenen kapı). Silinen alan
+3. **Kenar çubuğu:** free'de Tier grupları kategorinin kendi `tier`'ından gelir (boşsa
+   `builtinTier(slug)`); grup içinde template sırası. Tier editörde seçilir (Faz 2 arayüz turu).
+4. **Kart ekranı:** free'de yerleşik sabitler devre dışı (kapı burada eklenir; Faz 2'nin önizlemesi
+   kendi çizimini kullanıyor, bkz. Faz 2 sonucu). Silinen alan
    gösterilmez. **Kartı kaydetmek şemada olmayan anahtarları silmemeli** (D17); bu doğrulanır,
    siliyorsa free yolda düzeltilir. Silinen kategorinin kartları görünmez (V5).
 5. **Template güncellemesi (B1, B2):** dünya açılınca, free template'li dünyalar için template'in
@@ -587,6 +664,13 @@ bağımsızlaşır), V8 (bir kategoriye bir kez).
 [field_widget_factory.dart](../../flutter_app/lib/presentation/widgets/field_widgets/field_widget_factory.dart)
 / [structured_list_field_widgets.dart](../../flutter_app/lib/presentation/widgets/field_widgets/structured_list_field_widgets.dart),
 editör, dönüştürücü, yeni okuyucular.
+
+**Faz başında karar gereken kullanıcı isteği (2026-10-11):** Stat tablosunun etiketleri (STR, WIS…)
+editörde yazılarak belirlenir (madde 2 zaten böyle). Ek istek: aynı karttaki Skill / Saving throw
+tablosunun stat kolonu, karttaki stat tablosunun etiketlerini kendiliğinden alsın ve kullanıcı
+satır başına değiştirebilsin; toplam da stat değiştiricisinden gelsin. Etiketlerin otomatik
+gelmesi İ4 ile uyumlu; toplamın hesaplanması İ3'e ("hesaplanan kolon yok") ve D12'ye aykırı,
+DESIGN §20'de sonraya bırakılmıştı. Faz 4 başında kullanıcıyla karar verilir.
 
 **Kapsam dışı:** Kaynak, Seviye tablosu, Kaynak verme; karakter kağıdı.
 

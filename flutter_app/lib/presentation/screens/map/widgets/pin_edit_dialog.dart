@@ -5,7 +5,7 @@ import '../../../theme/dm_tool_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Curated icon set the user can choose from when overriding a pin's icon.
-/// Mirrors `_iconFromName` in world_map_screen.dart — only public material
+/// Mirrors `mapIconFromName` in world_map_screen.dart — only public material
 /// names appear here so the override persists across rebuilds.
 const List<(String, IconData)> kPinIconChoices = [
   ('location_on', Icons.location_on),

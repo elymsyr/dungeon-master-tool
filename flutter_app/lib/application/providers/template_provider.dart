@@ -76,21 +76,27 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
     required List<String> tags,
     required String coverImagePath,
   }) async {
-    final current = await future;
-    final t = current.firstWhere((t) => t.schemaId == id);
-    final saved = t.copyWith(
-      name: name,
-      description: description,
-      metadata: {
-        ...t.metadata,
-        'tags': tags,
-        'cover_image_path': coverImagePath,
-      },
-      updatedAt: _now(),
+    final t = (await future).firstWhere((t) => t.schemaId == id);
+    await save(
+      t.copyWith(
+        name: name,
+        description: description,
+        metadata: {
+          ...t.metadata,
+          'tags': tags,
+          'cover_image_path': coverImagePath,
+        },
+      ),
     );
-    await _dao.upsert(id, jsonEncode(saved.toJson()));
+  }
+
+  /// Stores an edited template (the editor's autosave, V26).
+  Future<void> save(WorldSchema t) async {
+    final current = await future;
+    final saved = t.copyWith(updatedAt: _now());
+    await _dao.upsert(saved.schemaId, jsonEncode(saved.toJson()));
     state = AsyncData([
-      for (final x in current) x.schemaId == id ? saved : x,
+      for (final x in current) x.schemaId == saved.schemaId ? saved : x,
     ]);
   }
 

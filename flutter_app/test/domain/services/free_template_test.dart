@@ -57,6 +57,16 @@ void main() {
       expect(srd.encounterConfig, builtin.encounterConfig);
     });
 
+    test('keeps the codex tier the sidebar gives each slug', () {
+      final tier = {for (final c in srd.categories) c.slug: c.tier};
+      expect(tier['skill'], 0);
+      expect(tier['condition'], 2); // DM-authored lookup
+      expect(tier['class'], 1);
+      expect(tier['npc'], 2);
+      expect(srd.categories.every((c) => c.tier == builtinTier(c.slug)),
+          isTrue);
+    });
+
     test('survives a JSON round trip', () {
       final back = WorldSchema.fromJson(
           jsonDecode(jsonEncode(srd.toJson())) as Map<String, dynamic>);

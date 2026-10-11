@@ -17,9 +17,9 @@ import '../../widgets/metadata_list_tile.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Templates library, laid out like the Worlds tab: tap selects, double tap
-/// opens; View · Copy · Transfer · Delete act on the selection
-/// (docs/free-template/ROADMAP.md, Faz 1). The built-in template can only be
-/// viewed and copied. Editing arrives in Faz 2.
+/// opens; View/Edit · Copy · Transfer · Delete act on the selection
+/// (docs/free-template/ROADMAP.md, Faz 1–2). The built-in template can only
+/// be viewed and copied; own templates open in the editor.
 class TemplatesTab extends ConsumerStatefulWidget {
   const TemplatesTab({super.key});
 
@@ -116,8 +116,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 _HintCard(palette: palette, text: l10n.templateMineEmpty),
               const SizedBox(height: 12),
 
-              // View + Copy + Transfer + Delete, as on the Worlds tab. The
-              // first button becomes "Edit" for own templates in Faz 2.
+              // View/Edit + Copy + Transfer + Delete, as on the Worlds tab.
               Row(
                 children: [
                   Expanded(
@@ -125,8 +124,11 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       onPressed: selected == null
                           ? null
                           : () => _view(context, selected),
-                      icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: Text(l10n.btnView),
+                      icon: Icon(
+                        own ? Icons.edit_outlined : Icons.visibility_outlined,
+                        size: 18,
+                      ),
+                      label: Text(own ? l10n.btnEdit : l10n.btnView),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -165,6 +167,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     );
   }
 
+  /// Built-in: the read-only inspector; own: the editor (the route picks).
   void _view(BuildContext context, WorldSchema schema) {
     context.push('/template/edit', extra: schema);
   }

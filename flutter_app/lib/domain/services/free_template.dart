@@ -1,4 +1,7 @@
 import '../entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import '../entities/schema/builtin/content.dart' show tier1Slugs;
+import '../entities/schema/builtin/lookups.dart'
+    show dmAuthoredLookupSlugs, tier0Slugs;
 import '../entities/schema/entity_category_schema.dart';
 import '../entities/schema/field_schema.dart';
 import '../entities/schema/world_schema.dart';
@@ -11,6 +14,16 @@ bool isFreeTemplate(WorldSchema schema) => schema.freeRootId != null;
 /// True when [schema] descends from the built-in SRD template.
 bool isSrdLineage(WorldSchema schema) =>
     schema.freeRootId == builtinDnd5eV2SchemaId;
+
+/// The codex sidebar group the built-in slug lists give [slug] (0 lookups,
+/// 1 content, 2 DM; anything else is 2). Same rule as the sidebar's
+/// `_tierFor`; a free category's own `tier` wins over it.
+int builtinTier(String slug) {
+  if (tier0Slugs.contains(slug) && !dmAuthoredLookupSlugs.contains(slug)) {
+    return 0;
+  }
+  return tier1Slugs.contains(slug) ? 1 : 2;
+}
 
 /// SRD types that have no place in a free template yet (ROADMAP §6). Later
 /// phases convert more types instead of dropping them.
@@ -41,6 +54,7 @@ WorldSchema copyAsFreeTemplate(
           isPlayerCard: fromBuiltin
               ? (c.slug == 'player-character' ? true : null)
               : c.isPlayerCard,
+          tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
           fields: [
             for (final f in c.fields)
               if (!_droppedOnCopy.contains(f.fieldType)) f,

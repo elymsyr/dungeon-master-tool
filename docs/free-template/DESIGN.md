@@ -1189,7 +1189,7 @@ engellediği özetleniyor.
 | Paket şeması | Kayıtlı şema yok sayılıyor, her paket yerleşik template ile açılıyor | Paket kendi template'iyle açılır. |
 | Uyumluluk kontrolü | Alan etiketleri karşılaştırılıyor ([template_compatibility_service.dart](../../flutter_app/lib/application/services/template_compatibility_service.dart)) | Anahtarlar karşılaştırılır. |
 | Sabit slug ve anahtarlar | `player-character` (5 dosya), `combat_stats` (~9 dosya), `location` / `battlemaps`, `npc` / `monster` iz rengi, `condition` slug'ı | Free yolda template ayarlarından okunur (§10, §14). |
-| Kenar çubuğu | Kategoriler yerleşik slug listelerine göre Tier 0/1/2 gruplanıyor | Template sırasıyla düz liste. |
+| Kenar çubuğu | Kategoriler yerleşik slug listelerine göre Tier 0/1/2 gruplanıyor | Tier kategorinin kendi ayarından gelir (editörde seçilir); grup içinde template sırası. |
 | Kart ekranı | Bazı grup adları ortalama için koda sabit yazılı (`_shouldCenterGroup`) | Free yolda kullanılmaz ya da grup ayarı olur. |
 | Kural motoru | Resolver, sihirbaz, seviye atlama planlayıcısı, bekleyen seçimler, "çözülen grant'ler" kartı, sınıf kaynak takipçisi | Free yolda çağrılmaz. |
 | Alan tipi | `FieldType` 30 değer, D&D'ye özel olanlar dahil | Yeni tarzlar (Tablo, Kaynak, Seviye tablosu, Kaynak verme) eklenir; eskiler yerleşik template için kalır. |

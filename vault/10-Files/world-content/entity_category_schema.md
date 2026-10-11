@@ -29,11 +29,12 @@ tags: [file]
 - Spec / reference:
 
 ## Key Logic / Variables
-- Fields: `categoryId`/`schemaId` (required), `name`, `slug`, `icon`, `color` (default `'#808080'`), `isBuiltin`, `isArchived`, `orderIndex`, `fields` (`List<FieldSchema>`), `allowedInSections` (`'encounter'|'mindmap'|'worldmap'|'projection'`), `filterFieldKeys` (sidebar filter fields), `fieldGroups` (`List<FieldGroup>` — visual grouping + grid layout), `isPlayerCard?`, `createdAt`/`updatedAt` (required).
+- Fields: `categoryId`/`schemaId` (required), `name`, `slug`, `icon`, `color` (default `'#808080'`), `isBuiltin`, `isArchived`, `orderIndex`, `fields` (`List<FieldSchema>`), `allowedInSections` (`'encounter'|'mindmap'|'worldmap'|'projection'`), `filterFieldKeys` (sidebar filter fields), `fieldGroups` (`List<FieldGroup>` — visual grouping + grid layout), `isPlayerCard?`, `tier?`, `createdAt`/`updatedAt` (required).
 - `slug` is the stable category key matched against `Entity.categorySlug`; `name` is the human label that [[package_import_service]] matches packages on.
 - `isBuiltin` flags the built-in v2 categories overlaid by [[world_repository_impl]] `_overlayMissingBuiltinCategories`; `isArchived` hides without deletion.
 
 - **`isPlayerCard`** (free template work, 2026-10-11): `true` on a free template's player card category, null everywhere else; `@JsonKey(includeIfNull: false)` keeps it out of the built-in JSON. Set by [[free_template]].
+- **`tier`** (free template Faz 2 UI pass, 2026-10-11): the codex sidebar group a free template gives the category (0 lookups, 1 content, 2 DM); null → `builtinTier(slug)` from [[free_template]]. `includeIfNull: false`, so the built-in JSON is unchanged. Chosen in [[free_template_editor]]; the sidebar starts reading it in Faz 3.
 
 ## Notes
 - 35-line model.

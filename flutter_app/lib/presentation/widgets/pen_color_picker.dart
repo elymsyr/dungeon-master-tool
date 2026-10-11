@@ -54,12 +54,21 @@ Future<Color?> pickPenColor(
   );
   if (picked is Color) return picked;
   if (picked == 'custom' && context.mounted) {
-    return showDialog<Color>(
-      context: context,
-      builder: (_) => _CustomColorDialog(initial: current, palette: palette),
-    );
+    return showCustomColorDialog(context, initial: current);
   }
   return null;
+}
+
+/// Free color pick (HSV sliders); null when cancelled.
+Future<Color?> showCustomColorDialog(
+  BuildContext context, {
+  required Color initial,
+}) {
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  return showDialog<Color>(
+    context: context,
+    builder: (_) => _CustomColorDialog(initial: initial, palette: palette),
+  );
 }
 
 /// Toolbar button showing [color]'s swatch; tapping opens [pickPenColor]
