@@ -450,6 +450,7 @@ const List<String> _v12Indexes = <String>[
 /// - `migration_progress` (F11): raw-path migrator resume state.
 /// - `sync_tombstones` (Faz 4): buluta bildirilecek silmeler.
 /// - `cloud_scopes` (Faz 5g): kendi satırı olmayan bulut kapsamının damgaları.
+/// - `user_templates` (free template Faz 1): kullanıcının template'leri.
 const List<String> _sideTablesDDL = <String>[
   // asset_refs
   'CREATE TABLE IF NOT EXISTS asset_refs ('
@@ -518,6 +519,14 @@ const List<String> _sideTablesDDL = <String>[
       'scope TEXT PRIMARY KEY, '
       'last_push_at INTEGER, '
       'cloud_revision INTEGER NOT NULL DEFAULT 0'
+      ')',
+
+  // user_templates — free template deposu (docs/free-template, Faz 1).
+  // Satır = bir `WorldSchema` JSON'u. Yerel; hiçbir senkron yoluna girmez.
+  'CREATE TABLE IF NOT EXISTS user_templates ('
+      'id TEXT PRIMARY KEY, '
+      'schema_json TEXT NOT NULL, '
+      'created_at INTEGER NOT NULL'
       ')',
 ];
 

@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/world_schema.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -29,9 +29,11 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- Fields: `schemaId` (required), `name` (default `'D&D 5e (Default)'`), `version` (`'1.0.0'`), `baseSystem?`, `description`, `categories` (`List<EntityCategorySchema>`), `encounterLayouts`, `encounterConfig`, `metadata`, `createdAt`/`updatedAt` (required), `originalHash?`.
+- Fields: `schemaId` (required), `name` (default `'D&D 5e (Default)'`), `version` (`'1.0.0'`), `baseSystem?`, `description`, `categories` (`List<EntityCategorySchema>`), `encounterLayouts`, `encounterConfig`, `metadata`, `createdAt`/`updatedAt` (required), `originalHash?`, `freeRootId?`.
 - **`originalHash`** is the lineage marker: content hash frozen at the template's first creation and NEVER updated by later edits (edits update the "current" hash via `computeWorldSchemaContentHash`). Computed from canonical JSON of gameplay-affecting fields only, so two installs that generate the SAME built-in template share the same `originalHash` (global, not per-install). Nullable for legacy templates; lazily backfilled on next save.
 - Template-drift detection (see [[campaign_provider]] `applyTemplateUpdate`): compares the world's stored `template_hash` (current) and `template_original_hash` (lineage) against a candidate template.
+
+- **`freeRootId`** (free template work, 2026-10-11): non-null only on free templates — the lineage root (built-in id for SRD copies, own id for empty ones). `@JsonKey(includeIfNull: false)`, so the built-in JSON is unchanged; read only through [[free_template]] `isFreeTemplate`. Guarded by `test/domain/entities/schema/builtin_schema_frozen_test.dart`.
 
 ## Notes
 - Hashing helper lives in `world_schema_hash.dart` (not in this allow-list — referenced as plain `computeWorldSchemaContentHash`).

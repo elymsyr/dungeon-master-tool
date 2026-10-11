@@ -7,13 +7,15 @@
 - **Tasarım:** [DESIGN.md](DESIGN.md) (kararlar D1–D31, varsayımlar V1–V28). Bu doküman *ne
   zaman ve hangi sırayla* sorusunu cevaplar; *ne ve neden* DESIGN.md'dedir.
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
-- **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1 sürüyor.
+- **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1
+  kapandı (2026-10-11, arayüz kullanıcıyla gözden geçirildi; E listesi tek tek yapılmadı). Faz 2
+  sürüyor.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
 | 0 | Güvenlik ağı | S | ✅ (R turu yok) |
-| 1 | Template deposu ve Templates sekmesi | M | 🚧 |
-| 2 | Template editörü: kategoriler ve düzen | L | ⏳ |
+| 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
+| 2 | Template editörü: kategoriler ve düzen | L | 🚧 |
 | 3 | Free dünya ve template güncellemesi | M | ⏳ |
 | 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
 | 5 | Paketler | M | ⏳ |
@@ -338,10 +340,79 @@ filtreleri (sihirbazın ve paket oluşturmanın listesinde free yok).
 | E1.6 | Uygulamayı kapat ve aç. | Template'ler, adları ve sıraları duruyor. |
 | E1.7 | Yeni dünya, yeni karakter ve yeni paket diyaloglarını aç. | Üçünde de free template **görünmüyor**. |
 | E1.8 | Telefon görünümünde Templates sekmesi. | Butonlar sığıyor, taşma yok. |
+| E1.8b | Kendi şablonunu seç → **Aktar → Dışa aktar**; sonra sil ve **Aktar → İçe aktar** ile geri al. | Ad, açıklama, etiket ve kapakla geri gelir. Yerleşik seçiliyken Sil ve Dışa aktar kapalı. |
 | E1.9 | R turu. | Faz 0 referansıyla aynı. |
 
 **Çıkış kriteri:** SRD kopyalanır, kopya kalıcıdır; yerleşik akışların hiçbirinde free template
 görünmez.
+
+**Faz 1 sonucu** (2026-10-11, Windows; kapandı):
+
+- **Yapılanlar:**
+  - `WorldSchema.freeRootId` (free ise soy kökü; ayrı bir "free mi" bayrağı yok, kök doluysa
+    free) ve `EntityCategorySchema.isPlayerCard`. İkisi de nullable, `includeIfNull: false`;
+    koruma hash'i değişmedi.
+  - [free_template.dart](../../flutter_app/lib/domain/services/free_template.dart): `isFreeTemplate`
+    (tek kapı), `isSrdLineage`, `copyAsFreeTemplate` (yerleşik ya da free kaynak), `emptyFreeTemplate`.
+    Kategori ve alan kimlikleri korunur (şema içinde geçerli); `originalHash` kopyada dondurulur.
+  - `user_templates` yan tablosu + [user_templates_dao.dart](../../flutter_app/lib/data/database/daos/user_templates_dao.dart).
+  - [template_provider.dart](../../flutter_app/lib/application/providers/template_provider.dart):
+    `userTemplatesProvider` (kopyala, boş oluştur, bilgileri kaydet, sil).
+  - Templates sekmesi (kullanıcı geri bildirimiyle, 2026-10-11) Worlds sekmesinin düzeninde:
+    bütün şablonlar aynı banner kartıyla (`MetadataListTile`); karta tıklamak seçer, çift tık
+    açar (Görüntüle); en altta **Görüntüle · Kopyala · Aktar · Sil** seçili şablona uygulanır.
+    Yerleşik şablon seçiliyken Sil ve Dışa aktar kapalı. Rozet yok; yalnız yerleşik kartta
+    adın yanında çerçevesiz bir kilit ikonu. Faz 2'de kendi şablonlarında ilk buton "Düzenle" olur. Sağ üstteki **+** boş şablon oluşturur.
+    Kendi şablonlarında ⚙ → Worlds'teki gibi ayarlar (`MetadataEditorSection`): ad, açıklama,
+    etiketler, kapak; en altta **Şablonu sil**. SRD soyundaki şablonlar kapak seçilmediyse SRD
+    bannerını kullanır. Kopyalama ve boş oluşturma ad sorar; silme onay sorar.
+  - **Aktar (`.dmtz`):** free template dışa / içe aktarılır (`ContentItemType.template`).
+    Kapak `LocalMediaLocalizer.templateDir(id)`'ye kopyalanır ve dosyaya girer; içe aktarmada
+    aynı kimlikli şablon dosyadaki haliyle değişir. Yerleşik şablon aktarılmaz.
+  - Açıklama `WorldSchema.description`'da; etiketler ve kapak `metadata['tags']` /
+    `metadata['cover_image_path']`'te (dünya ve paketlerle aynı anahtarlar; etiketler global
+    etiket önerilerine de girer). **Faz 3 için not:** `metadata` içerik hash'ine giriyor; değişiklik
+    kontrolü bu iki anahtarı hariç tutmalı, yoksa kapak değişince dünyaya "şablon güncellendi"
+    sorulur.
+  - İnceleyici: telefonda kategori listesi → kategori sayfası (geri tuşu ve "Kategoriler" listeye
+    döner); desktop'ta iki panel. Desktop'taki seçili kategori vurgusu eskiden hiç görünmüyordu
+    (liste `ColoredBox` içindeydi), düzeltildi.
+- **Roadmap'ten sapmalar:**
+  - Madde 6: `allTemplatesProvider`'a free template **eklenmedi**; yerleşik akışlar için yalnız
+    yerleşik template'i döndürmeye devam ediyor. Free template'ler ayrı `userTemplatesProvider`'da.
+    Böylece sihirbaz, dünya, paket ve karakter ekranlarına filtre eklemek gerekmedi (K3); her
+    akış kendi fazında yeni sağlayıcıyı kullanmaya başlar (dünya Faz 3, paket Faz 5, karakter Faz 6).
+  - Madde 2: ayrı bir repository sınıfı yok; DAO'yu doğrudan sağlayıcıdaki notifier kullanıyor
+    (bu repoda `character_repository` gibi arayüzsüz örnekler var).
+  - DESIGN §20 "`.dmtz` ile tek başına template" sonraya bırakılmıştı; kullanıcı Templates
+    sekmesinde de Aktar istediği için Faz 1'e alındı. Yalnız yerel dosya; senkron, paylaşım ve
+    marketplace yolu yok (K6 korunuyor).
+  - Madde 3: kopyadaki `isBuiltin` bayrakları olduğu gibi kaldı; şema düzeyindeki bu bayrağı
+    okuyan kod yok (uygulamadaki `isBuiltin` okumaları paket ve kartlarla ilgili).
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 60/60 · G4 32 info, 0 uyarı (temel çizgiyle aynı) ·
+  G5 `free_template_test` (6), `user_templates_provider_test` (2, dosyalı DB kapatılıp açılıyor),
+  `templates_tab_layout_test` (10: telefon/desktop × en/tr, büyük yazı, seç → kopyala → ayarlarda
+  ad değiştir → sil akışı, ayarlardan sil, boş liste, inceleyici akışı), `template_archive_test`
+  (iki ayrı veri kökü arasında `.dmtz` gidiş-dönüşü, kapak dahil; yerleşik dışa aktarılamaz) yeşil · G6 1712 geçti; kırmızılar temel çizgideki 3 testle aynı
+  (tam çalıştırma sırasında yakalanan diyalog hatası düzeltildikten sonra
+  `templates_tab_layout_test` ayrıca yeniden çalıştırıldı, yeşil).
+- **Testin yakaladığı hata:** ad diyaloğunun `TextEditingController`'ı diyalog kapanırken dispose
+  ediliyordu ("used after being disposed"). Controller diyalog widget'ının kendi `State`'ine
+  taşındı. Aynı kalıp [packages_tab.dart](../../flutter_app/lib/presentation/screens/hub/packages_tab.dart)
+  paket kopyalama diyaloğunda da var; yerleşik akış olduğu için bu işte dokunulmadı.
+- **G6 Windows'ta:** bütün dosyaları tek tek vermek "command line is too long" hatası verir;
+  klasörler + `test/presentation` dosyaları verilir:
+
+  ```powershell
+  $pres = Get-ChildItem test/presentation -Recurse -Filter *_test.dart | ? { $_.Name -ne 'entity_card_flush_test.dart' } | % { (Resolve-Path -Relative $_.FullName) -replace '^\.\\','' }
+  flutter test (@('test/application','test/core','test/data','test/database','test/domain','test/tool','test/local_media_localizer_dir_safe_test.dart','test/widget_test.dart') + $pres)
+  ```
+- **Elle kontrol yapılmadı:** E1.1–E1.9 tek tek işaretlenmedi. Kullanıcı Templates sekmesini
+  açıp üç turda geri bildirim verdi (kart düzeni, alt buton satırı, rozetler) ve "devam"
+  dedi. R turu referansı olmadığı için E1.9 da yok.
+- **Bilinen sınırlar:** düzenleme Faz 2'de; free template'le dünya Faz 3'te. Boş template'in
+  oyuncu kartı alansız başlar (sabit alanlar Faz 6). Aynı adlı iki template'e izin veriliyor
+  (kimlikleri ayrı).
 
 ---
 

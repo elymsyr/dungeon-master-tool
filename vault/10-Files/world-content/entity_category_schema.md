@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/entity_category_schema.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -29,9 +29,11 @@ tags: [file]
 - Spec / reference:
 
 ## Key Logic / Variables
-- Fields: `categoryId`/`schemaId` (required), `name`, `slug`, `icon`, `color` (default `'#808080'`), `isBuiltin`, `isArchived`, `orderIndex`, `fields` (`List<FieldSchema>`), `allowedInSections` (`'encounter'|'mindmap'|'worldmap'|'projection'`), `filterFieldKeys` (sidebar filter fields), `fieldGroups` (`List<FieldGroup>` — visual grouping + grid layout), `createdAt`/`updatedAt` (required).
+- Fields: `categoryId`/`schemaId` (required), `name`, `slug`, `icon`, `color` (default `'#808080'`), `isBuiltin`, `isArchived`, `orderIndex`, `fields` (`List<FieldSchema>`), `allowedInSections` (`'encounter'|'mindmap'|'worldmap'|'projection'`), `filterFieldKeys` (sidebar filter fields), `fieldGroups` (`List<FieldGroup>` — visual grouping + grid layout), `isPlayerCard?`, `createdAt`/`updatedAt` (required).
 - `slug` is the stable category key matched against `Entity.categorySlug`; `name` is the human label that [[package_import_service]] matches packages on.
 - `isBuiltin` flags the built-in v2 categories overlaid by [[world_repository_impl]] `_overlayMissingBuiltinCategories`; `isArchived` hides without deletion.
+
+- **`isPlayerCard`** (free template work, 2026-10-11): `true` on a free template's player card category, null everywhere else; `@JsonKey(includeIfNull: false)` keeps it out of the built-in JSON. Set by [[free_template]].
 
 ## Notes
 - 35-line model.

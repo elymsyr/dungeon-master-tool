@@ -10,6 +10,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../application/providers/template_provider.dart';
 import '../../application/services/content_transfer/content_archive.dart';
 import '../../application/services/content_transfer/content_codec.dart';
 import '../../application/services/content_transfer/content_item.dart';
@@ -167,6 +168,8 @@ class ContentArchiveMenu extends ConsumerWidget {
           ref.invalidate(packageListProvider);
         case ContentItemType.character:
           ref.invalidate(characterListProvider);
+        case ContentItemType.template:
+          ref.invalidate(userTemplatesProvider);
       }
       messenger.showSnackBar(SnackBar(
         content: Text(result.mediaSkipped == 0

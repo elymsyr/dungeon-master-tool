@@ -2309,7 +2309,7 @@
     }
   },
   "templateFieldRequired": "required",
-  "templatesSubtitle": "Read-only schema reference. Open a template to inspect its categories and fields.",
+  "templatesSubtitle": "The built-in template is read-only. Copy it, or start from an empty one, to build your own.",
   "templatesEmpty": "No templates available.",
   "templateSummary": "{categories} categories · {fields} fields",
   "@templateSummary": {
@@ -3475,5 +3475,59 @@
   "diceLooksThemes": "Themes",
   "diceLooksOthers": "Others",
   "bmMoveUndo": "Undo move",
-  "bmYourTurn": "Your turn"
+  "bmYourTurn": "Your turn",
+  "templateBadgeBuiltin": "Built-in",
+  "templateMine": "Your templates",
+  "templateMineEmpty": "No templates of your own yet. Copy the built-in template or create an empty one.",
+  "templateNewEmpty": "New empty template",
+  "templateNewEmptyHint": "Starts with the player character category only.",
+  "templateDefaultName": "New template",
+  "templatePlayerCardName": "Player Character",
+  "templateCopyName": "{name} (copy)",
+  "@templateCopyName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templateActionCopy": "Copy",
+  "templateCopyTitle": "Copy template",
+  "templateNameLabel": "Template name",
+  "templateDeleteAction": "Delete template",
+  "templateDeleteTitle": "Delete template?",
+  "templateDeleteBody": "\"{name}\" will be deleted. Worlds and packages built with it keep their own copy and keep working.",
+  "@templateDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templateCreated": "Created \"{name}\"",
+  "@templateCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templateDeleted": "Deleted \"{name}\"",
+  "@templateDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templateActionFailed": "Something went wrong: {error}",
+  "@templateActionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "templateLineageSrd": "Based on D&D 5e (SRD 5.2.1)",
+  "templateCategoriesBack": "Categories"
 }

@@ -9,13 +9,17 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/app_database.dart';
+import '../../../data/database/daos/user_templates_dao.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_template.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/world_section_stamps.dart';
 import '../../providers/campaign_provider.dart';
 import '../../providers/character_provider.dart';
 import '../../providers/package_provider.dart';
+import '../../providers/template_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../content_store.dart';
 import '../local_media_localizer.dart';
@@ -104,6 +108,16 @@ class ContentCodec {
       ));
     }
 
+    for (final json in await UserTemplatesDao(_db).allJson()) {
+      final t = WorldSchema.fromJson(jsonDecode(json) as Map<String, dynamic>);
+      out.add(ContentItemRef(
+        type: ContentItemType.template,
+        id: t.schemaId,
+        name: t.name,
+        updatedAt: DateTime.tryParse(t.updatedAt) ?? DateTime.now(),
+      ));
+    }
+
     return out;
   }
 
@@ -143,6 +157,13 @@ class ContentCodec {
         final row = await _db.worldCharactersDao.getById(ref.id);
         if (row == null) return null;
         payload = jsonDecode(row.payloadJson) as Map<String, dynamic>;
+      case ContentItemType.template:
+        final json = (await UserTemplatesDao(_db).allJson())
+            .map((j) => jsonDecode(j) as Map<String, dynamic>)
+            .where((t) => t['schemaId'] == ref.id)
+            .firstOrNull;
+        if (json == null) return null;
+        payload = json;
     }
 
     return ContentItemPayload(
@@ -241,7 +262,21 @@ class ContentCodec {
         await _applyPackage(item.ref, payload);
       case ContentItemType.character:
         await _applyCharacter(item.ref, payload);
+      case ContentItemType.template:
+        await _applyTemplate(payload);
     }
+  }
+
+  /// Aynı id'li template varsa dosyadaki haliyle değiştirilir. Yalnız free
+  /// template kabul edilir — yerleşik template taşınmaz.
+  Future<void> _applyTemplate(Map<String, dynamic> payload) async {
+    final schema = WorldSchema.fromJson(payload);
+    if (!isFreeTemplate(schema)) {
+      throw const FormatException('not a free template');
+    }
+    await UserTemplatesDao(_db)
+        .upsert(schema.schemaId, jsonEncode(schema.toJson()));
+    _ref.invalidate(userTemplatesProvider);
   }
 
   Future<void> _applyWorld(
@@ -489,6 +524,11 @@ class ContentCodec {
           Directory(AppPaths.charactersDir),
           entries,
           nameFilter: (f) => p.basename(f).startsWith('${ref.id}_'),
+        );
+      case ContentItemType.template:
+        await _collectDir(
+          Directory(LocalMediaLocalizer.templateDir(ref.id)),
+          entries,
         );
     }
     await _collectContentBlobs(payloadTrees, entries);

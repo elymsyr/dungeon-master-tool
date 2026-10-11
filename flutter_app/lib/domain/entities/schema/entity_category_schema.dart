@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'field_group.dart';
@@ -26,6 +28,9 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     @Default([]) List<String> filterFieldKeys,
     /// Alan grupları — field'ları görsel olarak gruplar, grid layout destekler
     @Default([]) List<FieldGroup> fieldGroups,
+    /// Free templates only: the player card category the character sheet is
+    /// drawn from (docs/free-template/DESIGN.md §10.1). Null elsewhere.
+    @JsonKey(includeIfNull: false) bool? isPlayerCard,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

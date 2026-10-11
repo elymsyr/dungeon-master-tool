@@ -9,14 +9,15 @@ library;
 
 /// Senkronize edilebilir içerik türleri.
 ///
-/// Template yok: `allTemplatesProvider` yalnız built-in şemayı döndürüyor,
-/// kullanıcının taşıyabileceği bir template kaydı bulunmuyor.
-enum ContentItemType { world, package, character }
+/// `template`: kullanıcının free template'i (`user_templates`); yerleşik
+/// template koddan üretildiği için taşınmaz.
+enum ContentItemType { world, package, character, template }
 
 ContentItemType? contentItemTypeFromWire(String s) => switch (s) {
       'world' => ContentItemType.world,
       'package' => ContentItemType.package,
       'character' => ContentItemType.character,
+      'template' => ContentItemType.template,
       _ => null,
     };
 
