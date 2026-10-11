@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'encounter_config.dart';
@@ -33,6 +35,11 @@ abstract class WorldSchema with _$WorldSchema {
     /// not per-install. Nullable for legacy templates persisted before
     /// this field landed; lazily backfilled on next save.
     String? originalHash,
+    /// Set only on free templates (docs/free-template/DESIGN.md §6.2): the
+    /// schemaId this lineage started from — the built-in id for SRD copies,
+    /// the template's own id when it was created empty. Copies keep it.
+    /// Read through `isFreeTemplate`.
+    @JsonKey(includeIfNull: false) String? freeRootId,
   }) = _WorldSchema;
 
   factory WorldSchema.fromJson(Map<String, dynamic> json) =>

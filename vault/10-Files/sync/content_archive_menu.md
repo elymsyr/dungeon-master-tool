@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/widgets/content_archive_menu.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -34,6 +34,7 @@ tags: [file]
 - Domain map: [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
+- `ContentItemType.template` importu `userTemplatesProvider`'ı tazeler (Templates sekmesi, 2026-10-11).
 - **Görünüm temadan gelir, widget'ta sabit değer yoktur.** Tetikleyici `CompactableButton` (`widgets/compactable_button.dart`) — geniş ekranda gerçek bir `OutlinedButton.icon`, 480 dp altında etiketi düşüp `Tooltip`'e inen simge düğmesi (satırdaki "Kopyala"/"Sil" ile aynı davranış; dört etiket mobilde yan yana sığmıyordu). Her iki hâlde de `OutlinedButton` — yanındaki "Kopyala" ile aynı widget türü, dolayısıyla yükseklik, kenarlık, zemin, köşe yarıçapı, dolgu ve hover/press renkleri `outlinedButtonTheme`'den okunur ve her temada kendiliğinden doğrudur.
   - İlk sürüm çıplak bir `PopupMenuButton`'dı. Onun tetikleyicisi içeride bir `IconButton`: kenarlıksız, zeminsiz, 48×48 — komşusu 137×48 iken satırda sırıtıyordu.
   - Menü `MenuAnchor` ile **değil** `showMenu` ile açılıyor: uygulamanın öbür dokuz menüsü `PopupMenuButton` ve tema `popupMenuTheme` tanımlıyor; `MenuAnchor` o yüzeyi almaz, tek başına farklı görünürdü. Konum hesabı `PopupMenuButton`'ın kendi içinde yaptığının aynısı.

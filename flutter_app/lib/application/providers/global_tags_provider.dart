@@ -23,16 +23,16 @@ final globalTagsProvider = Provider<Set<String>>((ref) {
     }
   }
 
-  final templates = ref.watch(allTemplatesProvider).valueOrNull;
-  if (templates != null) {
-    for (final t in templates) {
-      final rawTags = t.metadata['tags'];
-      if (rawTags is List) {
-        out.addAll(rawTags
-            .whereType<String>()
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty));
-      }
+  for (final t in [
+    ...?ref.watch(allTemplatesProvider).valueOrNull,
+    ...?ref.watch(userTemplatesProvider).valueOrNull,
+  ]) {
+    final rawTags = t.metadata['tags'];
+    if (rawTags is List) {
+      out.addAll(rawTags
+          .whereType<String>()
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty));
     }
   }
 

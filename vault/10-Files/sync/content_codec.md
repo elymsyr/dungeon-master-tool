@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_codec.dart
 layer: application
 language: dart
 status: active
-updated: 2026-10-09
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -34,6 +34,7 @@ tags: [file]
 - System flow: [[Sync-and-Realtime]] (`.dmtz`)
 
 ## Key Logic / Variables
+- **Template** (2026-10-11): manifest `user_templates` satırlarını (`updatedAt` = şemanın ISO `updatedAt`'i) listeler; payload = şema JSON'u; medya = `LocalMediaLocalizer.templateDir(id)` (kapak). `_applyTemplate` yalnız `isFreeTemplate` şemayı kabul eder, aynı id'yi dosyadaki haliyle değiştirir ve `userTemplatesProvider`'ı tazeler. Bkz. [[free_template]], [[template_provider]].
 - **Rename klasörü `LocalMediaLocalizer.worldDir` ile bulur** — ham ad Windows'ta yasak karakter taşıyan dünyalarda medya klasörüne denk gelmiyordu.
 - `userBase = dirname(AppPaths.worldsDir)` — `{dataRoot}` ya da `{dataRoot}/users/{uid}`. Medya yolları buna relatif taşınır, böylece iki cihazın profil klasörleri farklı olsa da eşleşir.
 - `buildManifest()` built-in SRD paketini atlar (`srdCorePackageName`); world/paket `updatedAt` Drift kolonundan, karakter `WorldCharacterRow.updatedAt`'ten.

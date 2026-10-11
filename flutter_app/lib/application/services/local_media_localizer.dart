@@ -48,6 +48,11 @@ class LocalMediaLocalizer {
   static String packageDir(String packageName) =>
       p.join(AppPaths.packagesDir, dirSafe(packageName));
 
+  /// Free template'in kendi klasörü (kapak resmi) — id ile anahtarlı,
+  /// dünyalar ve paketlerle aynı kullanıcı kökünde.
+  static String templateDir(String templateId) =>
+      p.join(p.dirname(AppPaths.worldsDir), 'templates', dirSafe(templateId));
+
   /// Ad → klasör adı. Windows'ta `\ / : * ? " < > |`, kontrol karakterleri,
   /// sondaki nokta/boşluk ve `CON`/`NUL`/`COM1`… aygıt adları yol adında
   /// yasak; sanitize edilmezse `Directory.exists` bile ERROR_INVALID_NAME

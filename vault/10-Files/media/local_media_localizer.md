@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/local_media_localizer.dart
 layer: application
 language: dart
 status: active
-updated: 2026-10-09
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -34,6 +34,7 @@ tags: [file]
 - System flow: [[content_codec]], [[Media-Storage-Tiers]]
 
 ## Key Logic / Variables
+- **`templateDir(id)`** (2026-10-11): `{userBase}/templates/{id}` — free template kapağı buraya kopyalanır (Templates ayarlar diyaloğu), `.dmtz` buradan taşır; template silinince klasör en-iyi-çaba silinir. [[UnusedMediaSweeper]] buraya bakmaz.
 - **`dirSafe` Windows'ta tek kapı.** Yasak karakter sınıfı (`\ / : * ? " < > |`), kontrol karakterleri, sondaki nokta/boşluk, boş ad ve MS-DOS aygıt adları (`CON`, `NUL`, `COM1`…, uzantılıları dahil) `_` ile karşılanır. Linux/Android bunları kabul ettiği için hata yalnız Windows'ta çıkıyordu: `Aegis — Meridia: Birinci Perde` gibi bir başlıkta `Directory.exists` bile `ERROR_INVALID_NAME (123)` fırlatıyor. Temiz adlarda birim fonksiyon — var olan klasörler yerinde kalır. `packageDir` hâlâ ada bakıyor, dolayısıyla paketlerde bu kapı duruyor; `worldDir`'e gelen uuid zaten temiz olduğu için orada birim fonksiyon.
 - **Kural: seçilen her dosya kopyalanır.** Bulut yüklemesi başarılı olsun ya da olmasın; yükleme de kopyadan yapılır. Eskiden kopya yalnız yükleme atlandığında/başarısız olduğunda alınıyordu, bu da ham yolun sızabildiği bir sürü yol bırakıyordu.
 - **`_isLocalizable` süzgeci** (hepsi geçmeli): boş değil, `AssetRef.isLocal` (şema'lı ref değil), `imagesOnly` ise `png|jpe?g|webp|gif|bmp` uzantısı, mutlak yol, `ownerDir` altında **değil**, `AppPaths.cacheDir` altında **değil**, dosya diskte var.

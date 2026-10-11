@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_item.dart
 layer: application
 language: dart
 status: active
-updated: 2026-09-24
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -19,7 +19,7 @@ tags: [file]
 **Outputs** — `toJson()` map'leri; `ContentItemType` ↔ wire string çevirisi.
 
 Tipler:
-- `ContentItemType { world, package, character }` + `contentItemTypeFromWire/ToWire`.
+- `ContentItemType { world, package, character, template }` (`template` = free template, 2026-10-11) + `contentItemTypeFromWire/ToWire`.
 - `ContentItemRef` — kimlik satırı: `type, id, name, updatedAt, viewUpdatedAt?, renamedAt?`. `updatedAt` **milisaniyeye yuvarlanır** (JSON round-trip'te mikrosaniye farkı iki tarafın aynı içeriği farklı sanmasına yol açıyordu). `effectiveUpdatedAt` = içerik ve görünümün yenisi; LWW karşılaştırması bunu kullanır.
 - `ContentMediaEntry` — `path` (veri köküne göreli, POSIX ayırıcı) + `sha256` + `size`.
 - `ContentItemPayload` — `ref` + `payload` (repository blob'u) + `dataRoot` (**gönderenin** kökü) + `media` + `extras`.
@@ -31,6 +31,7 @@ Tipler:
 - System flow: [[Sync-and-Realtime]] (`.dmtz`)
 
 ## Key Logic / Variables
+- **`template`** (2026-10-11): kullanıcının free template'i ([[user_templates_dao]]). Yerleşik template taşınmaz.
 - `extras` yalnız dünya için dolu: `installed_packages`, `ui_view`, `section_stamps`. Blob cloud-backup kontratı olduğu için genişletilmedi, bunlar yanına ayrı bölüm olarak takıldı. `dataRoot` yeniden yazımı payload ile aynı şekilde `extras`'a da uygulanır.
 - `dataRoot` alıcı tarafta prefix takasının girdisi — `ContentCodec.rewriteRoots(payload, item.dataRoot, userBase)`.
 
