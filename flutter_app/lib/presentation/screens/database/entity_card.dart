@@ -21,6 +21,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/content_translator.dart';
+import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -708,6 +709,13 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   /// e.g. spell → "Level 2 Evocation (Wizard)", monster → "Large Aberration, Lawful Evil",
   /// magic item → "Wondrous Item, Rare (Requires Attunement)".
   String _buildSubtitle(Entity entity, EntityCategorySchema cat) {
+    // Free template: no built-in slug/key subtitles — a field the user
+    // deleted must not resurface here (D17). Just the category name.
+    if (isFreeTemplate(ref.read(worldSchemaProvider))) {
+      return ref
+          .read(contentTranslatorProvider)
+          .tr(ContentTranslator.schemaScope, cat.name);
+    }
     final f = entity.fields;
     final slug = entity.categorySlug.toLowerCase();
     String relName(String key) {
@@ -887,6 +895,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   ) {
     final cache = _getSchemaCache(cat);
     final readOnly = widget.readOnly;
+    final free = isFreeTemplate(ref.read(worldSchemaProvider));
     final fullUngrouped = cache.ungrouped;
     final grouped = cache.grouped;
     final sortedGroups = cache.sortedGroups;
@@ -929,7 +938,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
 
-      final centered = _shouldCenterGroup(group.name);
+      // Built-in group names only; a free template's groups are the user's.
+      final centered = !free && _shouldCenterGroup(group.name);
       // Cache row-split only when rendering the unfiltered list (edit mode).
       final useCache = identical(groupFields, fullGroupFields);
 

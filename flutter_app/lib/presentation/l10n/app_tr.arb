@@ -2378,5 +2378,7 @@
   "tplTier0": "Tier 0 — Başvuru",
   "tplTier1": "Tier 1 — İçerik",
   "tplTier2": "Tier 2 — DM",
-  "tplMapIcon": "Harita simgesi"
+  "tplMapIcon": "Harita simgesi",
+  "freeWorldNoMultiplayer": "Kendi şablonunu kullanan dünyalar henüz çok oyunculuya açılamaz: oyuncular senin şablonun yerine yerleşik kağıdı görürdü.",
+  "freeWorldNoCharacters": "Kendi şablonunu kullanan dünyalarda karakter henüz yok."
 }

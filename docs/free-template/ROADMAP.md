@@ -9,14 +9,14 @@
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
 - **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1
   kapandı (2026-10-11, arayüz kullanıcıyla gözden geçirildi; E listesi tek tek yapılmadı). Faz 2
-  kapandı (2026-10-11, kullanıcı onayladı).
+  kapandı (2026-10-11, kullanıcı onayladı). Faz 3 kapandı (2026-10-11, kullanıcı onayladı).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
 | 0 | Güvenlik ağı | S | ✅ (R turu yok) |
 | 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
 | 2 | Template editörü: kategoriler ve düzen | L | ✅ |
-| 3 | Free dünya ve template güncellemesi | M | ⏳ |
+| 3 | Free dünya ve template güncellemesi | M | ✅ |
 | 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
 | 5 | Paketler | M | ⏳ |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | ⏳ |
@@ -631,6 +631,59 @@ Encounter bu fazda kopyanın bugünkü `encounterConfig`'iyle olduğu gibi çal�
 **Çıkış kriteri:** DESIGN §19 Faz 1'in çıkış kriterinin dünya kısmı: kullanıcı SRD'yi kopyalar,
 düzenler, bu template'le dünya kurar; SRD kartları kopyada doğru görünür; yerleşik dünyalar
 değişmeden çalışır.
+
+**Faz 3 sonucu** (2026-10-11, Windows; kapandı):
+
+- **Yapılanlar:**
+  - Dünya oluşturma diyaloğu kendi şablonlarını da listeler. SRD soyundaki şablonda "SRD içeriğini
+    ekle" çıkar; açıksa SRD paketi bağlanır, açılıştaki kendini onarma da bağı korur
+    ([world_repository_impl.dart](../../flutter_app/lib/data/repositories/world_repository_impl.dart):
+    `isSrdLineage`, açılışta şemadaki `freeRootId`). Boş şablonda çıkmaz.
+    `_overlayMissingBuiltinCategories` yalnız yerleşik kimlikte çalıştığı için free dünyada zaten
+    çalışmıyordu; testle sabitlendi.
+  - Kenar çubuğu: free'de Tier kategorinin `tier`'ından (boşsa `builtinTier`); filtre ve "yeni
+    kart" diyaloglarında grup içinde şablon sırası (yerleşikte alfabetik kalır).
+  - Kart ekranı: free'de `_shouldCenterGroup` ve slug'a bağlı alt başlık (büyü seviyesi, canavar
+    boyutu…) kapalı; alt başlık kategori adı. Alt başlık, silinen bir alanın verisini
+    gösterebilirdi (D17). Kart kaydı şemada olmayan anahtarları silmiyor: `_updateField` kartın
+    bütün alanlarını kopyalıyor, depo `attributes`'ı olduğu gibi yazıyor (testle sabitlendi).
+  - Silinen kategorinin kartları (V5) `visibleEntityProvider`'da süzülüyor
+    (`withoutDeletedCategories`); veri silinmiyor, kategori geri eklenince kartlar görünür.
+  - **Bulgu:** `worldSchemaProvider` her açılışta dört eski yerleşik yamayı uyguluyor.
+    `_migrateWorldmapAllowedSections` editörde "Dünya haritası" kapatılan kategoriyi geri açardı,
+    `_migrateLocationMapFields` Location'dan silinen harita alanlarını geri eklerdi. Free şemada
+    dördü de atlanıyor.
+  - Şablon güncellemesi:
+    [template_update_dialog.dart](../../flutter_app/lib/presentation/dialogs/template_update_dialog.dart)
+    dünya yüklemesi bitince main screen'den çalışır. Hub artık yükleme bitmeden `/main`'e geçtiği
+    için eski "hub'da yükle, sonra sor" akışı çalışmazdı. Karşılaştırma dünyanın kendi kopyasıyla,
+    içerikten yapılır (`freeTemplateContentHash`: etiket ve kapak hariç, Faz 1 notu). Güncelle /
+    Yoksay / "Bu dünya için bir daha gösterme" mevcut `applyTemplateUpdate` /
+    `dismissTemplateUpdate` / `muteTemplateUpdates` ile. Worlds sekmesindeki ölü diyalog silindi.
+  - Free dünyada kapalı: karakter ekleme (dünya içindeki "+" pasif, ipucunda nedeni yazıyor;
+    sihirbazın dünya listesinde free dünya yok, açık dünya free ise kendiliğinden seçilmiyor), çok
+    oyunculu (iki giriş de `turnMultiplayerOn`'dan geçiyor, orada nedeni yazan bildirim çıkar),
+    kural ayarları (düğme gizli), dünya ayarlarındaki marketplace paneli (K6).
+  - `.dmtz`: kod değişikliği gerekmedi. Dünya gövdesi şemayı taşıyor; şablonun olmadığı başka bir
+    veri kökünde aynı şema ve SRD kartlarıyla açılıyor, güncelleme sorulmuyor (testle).
+- **Roadmap'ten sapmalar:**
+  - Madde 6: "yeni karakter" ile birlikte "mevcut karakteri içe aktar" da kapandı (aynı "+"
+    menüsü): yerleşik kağıtlı bir karakter free dünyaya bağlanmasın. Marketplace paneli de kapandı
+    (K6 gereği; maddede yazmıyordu).
+  - Madde 5: diyalogda değişiklik listesi yok. `computeWorldSchemaDiff` İngilizce sabit metin
+    üretiyor ve alanları etiketle eşleştiriyor (K7).
+  - Madde 5: diyalog hub'da değil main screen'de (yükleme akışı değişmiş).
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 yeşil · G4 32 info (temel çizgiyle aynı) · G5
+  `free_template_test` 14 (+ güncelleme kontrolü 5, V5 süzgeci 1), `world_free_template_test` 5
+  (SRD soyu, SRD kapalı, boş şablon, silinen kategori geri gelmez, şemada olmayan anahtar kalır),
+  `template_archive_test` 2 (+ free dünya `.dmtz` gidiş-dönüşü) yeşil · G6 1757 geçti (Faz 2'deki 1745 + 12 yeni);
+  kırmızılar temel çizgideki 3 testle aynı.
+- **Elle kontrol:** E3.1–E3.12.
+- **Bilinen sınırlar:**
+  - Karakter ekleme yalnız ipucuyla açıklanıyor (telefonda uzun basınca görünür); çok oyunculu
+    düğmesi görünür kalıyor, basınca nedenini söylüyor.
+  - Kenar çubuğunun "kategoriye göre sırala" modu slug'a göre, şablon sırasına göre değil.
+  - Açık bir dünyanın şablonu düzenlenirse soru dünya bir sonraki açılışında gelir.
 
 ---
 

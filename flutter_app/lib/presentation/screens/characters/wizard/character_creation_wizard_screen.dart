@@ -15,6 +15,8 @@ import '../../../../application/character_creation/weapon_mastery_resolver.dart'
 import '../../../../application/character_creation/wizard_options.dart';
 import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
+import '../../../../application/providers/entity_provider.dart'
+    show worldSchemaProvider;
 import '../../../../application/providers/package_provider.dart';
 import '../../../../application/providers/role_provider.dart';
 import '../../../../application/providers/rule_config_provider.dart';
@@ -24,6 +26,7 @@ import '../../../../application/services/srd_core_package_bootstrap.dart'
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
 import '../../../../domain/services/entity_ref.dart';
+import '../../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../../domain/entities/schema/dnd5e_constants.dart'
     show kDnd5eSkills, kDnd5eSavingThrows;
 import '../../../../domain/entities/schema/entity_category_schema.dart';
@@ -116,6 +119,8 @@ class _CharacterCreationWizardScreenState
     if (draft.worldId.isNotEmpty) return;
     final activeWorld = ref.read(activeCampaignProvider);
     if (activeWorld == null || activeWorld.isEmpty) return;
+    // A free template world takes no wizard character.
+    if (isFreeTemplate(ref.read(worldSchemaProvider))) return;
     ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
   }
 
@@ -272,7 +277,12 @@ class _CharacterCreationWizardScreenState
                           child: _IdentityStep(
                             draft: draft,
                             notifier: notifier,
-                            worlds: worlds,
+                            // Free template worlds take no wizard
+                            // character (docs/free-template, Faz 3).
+                            worlds: [
+                              for (final w in worlds)
+                                if (!w.isFree) w,
+                            ],
                             templates: playerTemplates,
                             alignments: _alignments,
                             activatingWorld: _activatingWorld,

@@ -30,6 +30,8 @@ import '../../core/utils/screen_type.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
+import '../dialogs/template_update_dialog.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 import 'hub/settings_tab.dart';
 import 'hub/worlds_tab.dart';
 import '../l10n/app_localizations.dart';
@@ -508,6 +510,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Free template update check once the world finished loading. Listened
+    // before the splash return below: the splash build must hold it too.
+    ref.listen<bool>(activeCampaignLoadingProvider, (prev, next) {
+      if (prev == true && !next) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(offerTemplateUpdate(context, ref));
+        });
+      }
+    });
+
     // Cross-device hydrate gate: completeLoad awaits cloud applyInitialState
     // before flipping this flag. Without the splash here, battlemap / mindmap
     // / map tabs mount against stale local snapshot and the post-hydrate
@@ -645,6 +657,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
     ref.watch(dmDiceLogProvider.select((_) => 0));
 
     final editMode = ref.watch(editModeProvider);
+    // Rule settings tune the built-in rules engine; a free template has none.
+    final showRules =
+        editMode && !isFreeTemplate(ref.watch(worldSchemaProvider));
 
     // "View" on the projected snackbar → player view window.
     ref.listen<bool?>(projectionPanelNavigationProvider, (_, value) {
@@ -835,7 +850,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     ),
                 PopupMenuItem(value: 'player_view', child: Row(children: [const Icon(Icons.tv, size: 18), const SizedBox(width: 8), Text(l10n.sessionPlayerScreen)])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
-                if (editMode)
+                if (showRules)
                   PopupMenuItem(value: 'rules', child: Row(children: [const Icon(Icons.tune, size: 18), const SizedBox(width: 8), Text(L10n.of(context)!.ruleSettingsTitle)])),
                 const PopupMenuDivider(),
                 PopupMenuItem(value: 'settings', child: Row(children: [const Icon(Icons.info_outline, size: 18), const SizedBox(width: 8), Text(l10n.tabSettings)])),
@@ -853,7 +868,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               onPressed: () => ImportPackageDialog.show(context),
             ),
             // Rule Settings (template-level numeric rules) — edit mode only.
-            if (editMode)
+            if (showRules)
               IconButton(
                 icon: const Icon(Icons.tune, size: 20),
                 tooltip: L10n.of(context)!.ruleSettingsTitle,

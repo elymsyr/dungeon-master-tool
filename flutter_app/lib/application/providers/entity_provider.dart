@@ -15,6 +15,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_group.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../domain/value_objects/media_kind.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/reference_indexer.dart';
@@ -64,23 +65,28 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
         Map<String, dynamic>.from(rawSource),
       );
       var dirty = false;
-      final migrated = _migrateStaleEnumRelations(schema);
+      // Free templates skip the legacy built-in patches: they would undo the
+      // user's own edits (e.g. tick "World map" back on a category).
+      final free = isFreeTemplate(schema);
+      final migrated = free ? null : _migrateStaleEnumRelations(schema);
       if (migrated != null) {
         schema = migrated;
         dirty = true;
       }
-      final mapPatched = _migrateLocationMapFields(schema);
+      final mapPatched = free ? null : _migrateLocationMapFields(schema);
       if (mapPatched != null) {
         schema = mapPatched;
         dirty = true;
       }
-      final worldmapPatched = _migrateWorldmapAllowedSections(schema);
+      final worldmapPatched =
+          free ? null : _migrateWorldmapAllowedSections(schema);
       if (worldmapPatched != null) {
         schema = worldmapPatched;
         dirty = true;
       }
-      final appliedDropped =
-          migrateDropAppliedCondition(schema, data?['entities']);
+      final appliedDropped = free
+          ? null
+          : migrateDropAppliedCondition(schema, data?['entities']);
       if (appliedDropped != null) {
         schema = appliedDropped;
         dirty = true;

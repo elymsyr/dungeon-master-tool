@@ -2378,5 +2378,7 @@
   "tplTier0": "Tier 0 — Nachschlagen",
   "tplTier1": "Tier 1 — Inhalte",
   "tplTier2": "Tier 2 — DM",
-  "tplMapIcon": "Kartensymbol"
+  "tplMapIcon": "Kartensymbol",
+  "freeWorldNoMultiplayer": "Welten mit eigener Vorlage können noch nicht in den Mehrspielermodus: Spieler sähen statt deiner Vorlage den eingebauten Bogen.",
+  "freeWorldNoCharacters": "In Welten mit eigener Vorlage gibt es noch keine Charaktere."
 }

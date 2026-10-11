@@ -28,6 +28,7 @@ tags: [moc]
 - [[world_schema]] · [[entity_category_schema]] · [[field_schema]] — schema model (73 categories, Tier-0/Tier-1).
 - [[template_provider]] · [[user_templates_dao]] · [[free_template]] — template library: built-in list for the built-in flows, the user's free templates (side table) and the SRD / free copy converter (`docs/free-template/`).
 - [[free_template_editor]] · [[template_edit]] — the free template editor (three panels on desktop, nested pages on phone, autosave, preview) and its pure edit functions.
+- [[template_update_dialog]] — free world opens: "template updated" check and its Update / Ignore / never dialog.
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
 - [[first_party_catalog_provider]] — official catalog **install** side: `requires` closure, banner, `installedFrom: 'official'`. Install-only — no upgrade path for an already-installed pack.
 - [[bundled_packs_bootstrap]] — first-boot SRD install.

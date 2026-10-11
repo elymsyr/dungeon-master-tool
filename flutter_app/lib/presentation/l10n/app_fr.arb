@@ -2378,5 +2378,7 @@
   "tplTier0": "Tier 0 — Références",
   "tplTier1": "Tier 1 — Contenu",
   "tplTier2": "Tier 2 — MJ",
-  "tplMapIcon": "Icône sur la carte"
+  "tplMapIcon": "Icône sur la carte",
+  "freeWorldNoMultiplayer": "Les mondes avec votre propre modèle ne peuvent pas encore passer en multijoueur : les joueurs verraient la fiche intégrée au lieu de la vôtre.",
+  "freeWorldNoCharacters": "Les personnages ne sont pas encore disponibles dans les mondes avec votre propre modèle."
 }

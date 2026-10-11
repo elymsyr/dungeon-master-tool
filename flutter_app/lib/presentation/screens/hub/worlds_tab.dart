@@ -25,6 +25,7 @@ import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart'
     show builtinDnd5eV2SchemaId;
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_template.dart' show isSrdLineage;
 import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -478,7 +479,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   Future<void> _openCreateWorldDialog() async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final templatesAsync = await ref.read(allTemplatesProvider.future);
+    final templatesAsync = [
+      ...await ref.read(allTemplatesProvider.future),
+      ...await ref.read(userTemplatesProvider.future),
+    ];
     if (!mounted) return;
     if (templatesAsync.isEmpty) {
       await showDialog<void>(
@@ -569,7 +573,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     await _createCampaign();
                   },
                 ),
-                if (_selectedTemplate!.schemaId == builtinDnd5eV2SchemaId)
+                if (_selectedTemplate!.schemaId == builtinDnd5eV2SchemaId ||
+                    isSrdLineage(_selectedTemplate!))
                   CheckboxListTile(
                     value: _includeSrd,
                     onChanged: (v) =>
@@ -824,87 +829,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     }
   }
 
-  // ignore: unused_element
-  Future<String?> _showPreOpenTemplateDialogDead(dynamic prompt) {
-    bool doNotShowAgain = false;
-    final l10n = L10n.of(context)!;
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.templateDriftTitle),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.templateDriftBody(prompt.templateName)),
-                if (prompt.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.templateDriftChanges,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  ...prompt.diffSummary.map(
-                    (line) => Padding(
-                      padding: const EdgeInsets.only(left: 8, bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('\u2022 ', style: TextStyle(fontSize: 13)),
-                          Expanded(
-                            child: Text(
-                              line,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Checkbox(
-                        value: doNotShowAgain,
-                        onChanged: (v) =>
-                            setDialogState(() => doNotShowAgain = v ?? false),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        l10n.templateDriftDoNotShowAgain,
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(ctx, doNotShowAgain ? 'mute' : 'ignore'),
-              child: Text(l10n.templateDriftIgnore),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, 'update'),
-              child: Text(l10n.templateDriftUpdate),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _createCampaign() async {
     final l10n = L10n.of(context)!;
     final name = _nameController.text.trim();
@@ -1077,7 +1001,8 @@ Future<void> showWorldSettingsDialog(
                 SaveInfoSection(
                   localUpdatedAt: localUpdatedAt,
                 ),
-                if (!readOnly) ...[
+                // K6: a free template never goes to the marketplace.
+                if (!readOnly && schemaMap?['freeRootId'] == null) ...[
                   const SizedBox(height: 12),
                   MarketplacePanel(
                     itemType: 'world',
