@@ -22,6 +22,9 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/services/entity_ref.dart';
+import '../../../domain/services/free_field_styles.dart'
+    show structuredListAsMarkdown;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/map/world_map_notifier.dart';
@@ -32,6 +35,7 @@ import '../dice/dice_log.dart';
 import '../markdown_text_area.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
+import 'free_style_field_widgets.dart';
 import 'structured_list_field_widgets.dart';
 import '../../l10n/app_localizations.dart';
 import '../srd_text.dart';
@@ -153,6 +157,10 @@ class FieldWidgetFactory {
     /// (untrained penalty, STR speed cut, Stealth disadvantage).
     List<String> combatStatsArmorNotes = const [],
 
+    /// The card's category fields: a free template's skill table finds the
+    /// stat table it reads here (`FieldType.skillTable`).
+    List<FieldSchema> categoryFields = const [],
+
     /// Multi-field patch callback. Used by side-effect widgets (e.g.
     /// `extra_hp` adjusts its own value AND combat_stats.{hp,max_hp}
     /// atomically). Editor merges the patch into the entity fields.
@@ -256,7 +264,16 @@ class FieldWidgetFactory {
       ),
       FieldType.markdown => _MarkdownFieldWidget(
         schema: schema,
-        value: value,
+        // An SRD copy shows the SRD's structured lists (starting equipment,
+        // player choices) as text; the card data itself stays (DESIGN §16.3).
+        value: value is List
+            ? structuredListAsMarkdown(value, (r) {
+                final id = resolveEntityRef(r, entities ?? const {});
+                return id != null
+                    ? entities![id]!.name
+                    : (r is Map ? '${r['name'] ?? ''}' : '${r ?? ''}');
+              })
+            : value,
         readOnly: readOnly,
         onChanged: onChanged,
         entities: entities,
@@ -465,6 +482,30 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entities: entities,
         ref: ref,
+      ),
+      FieldType.statTable => StatTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.table => TableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.skillTable => SkillTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        ref: ref,
+        entityFields: entityFields,
+        entityName: entityName,
+        categoryFields: categoryFields,
       ),
       _ => _TextFieldWidget(
         schema: schema,
@@ -4460,14 +4501,14 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(
                       children: [
-                        _ProfDot(
+                        ProficiencyDot(
                           active: proficient,
                           tooltip: L10n.of(context)!.lblProficient,
                           onTap: readOnly
                               ? null
                               : () => _updateRow(i, {'proficient': !proficient}),
                         ),
-                        _ProfDot(
+                        ProficiencyDot(
                           active: expertise,
                           doubled: true,
                           tooltip: L10n.of(context)!.lblExpertise,
@@ -4538,13 +4579,14 @@ class _ProficiencyTableFieldWidget extends ConsumerWidget {
   }
 }
 
-class _ProfDot extends StatelessWidget {
+class ProficiencyDot extends StatelessWidget {
   final bool active;
   final bool doubled;
   final String tooltip;
   final VoidCallback? onTap;
 
-  const _ProfDot({
+  const ProficiencyDot({
+    super.key,
     required this.active,
     required this.tooltip,
     this.doubled = false,

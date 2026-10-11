@@ -156,6 +156,7 @@ class _PreviewBody extends StatelessWidget {
               ref: ref,
               entityFields: entity.fields,
               entityName: entity.name,
+              categoryFields: category?.fields ?? const [],
             ),
         ],
       ),

@@ -70,8 +70,8 @@ tarafından uygulanır.
 |---|---|---|
 | **İ1** | **Template = oyun sistemi.** | Kategoriler, alanlar, düzen, oyuncu kartı, encounter ayarları ve karakter oluşturma rehberi template'e aittir. |
 | **İ2** | **Otomasyon yok; kural okunur.** | Bir kart karaktere kendiliğinden etki etmez. "Darkvision verir" yazıyorsa oyuncu okur ve kendisi ekler. |
-| **İ3** | **Sadece dört istisna var.** | (a) Seviye tablosu kart verir ve kaynak maksimumu belirler (§11, §12). (b) Stat tablosu değiştiriciyi hesaplar (§8.2). (c) Dinlenme butonları kaynakları doldurur ya da boşaltır (§12). (d) Karakter oluşturma rehberi ilgili alana kaydırır (§13). Bunun dışında hesaplanan değer yoktur. |
-| **İ4** | **Her şey temel tarzlardan kurulur.** | "Skill tablosu" ile "saving throw tablosu" aynı tarzdır (Tablo), sadece içerikleri farklıdır. Sisteme özel alan tipi yoktur. |
+| **İ3** | **Sadece beş istisna var.** | (a) Seviye tablosu kart verir ve kaynak maksimumu belirler (§11, §12). (b) Stat tablosu değiştiriciyi hesaplar (§8.2). (c) Dinlenme butonları kaynakları doldurur ya da boşaltır (§12). (d) Karakter oluşturma rehberi ilgili alana kaydırır (§13). (e) Yetenek tablosu satırın toplamını hesaplar: stat değiştiricisi, işaretler ve Ek (§8.1, D32). Bunun dışında hesaplanan değer yoktur. |
+| **İ4** | **Her şey temel tarzlardan kurulur.** | "Skill tablosu" ile "saving throw tablosu" aynı tarzdır (Yetenek tablosu, D32), sadece içerikleri farklıdır. Sisteme özel alan tipi yoktur. |
 | **İ5** | **Mevcut sistem bozulmaz.** | En önemli kural. Yerleşik SRD template'i, ona bağlı dünyalar, karakterler, paketler ve kural motoru bugün nasıl çalışıyorsa öyle çalışmaya devam eder (§17). |
 | **İ6** | **Mobil ve desktop'ta kolay.** | Editör, karakter kağıdı ve rehber telefonda tek elle, desktop'ta geniş ekranla rahat kullanılır. |
 | **İ7** | **Serbestlik önce gelir.** | Bir şeyi kısıtlamak ile kullanıcıya bırakmak arasında seçim varsa, kullanıcıya bırakılır. |
@@ -118,6 +118,8 @@ listeli.
 | **D29** | Encounter kolonu bir alan anahtarına karşılık gelir. Aynı alanı birden fazla kategoriye koymanın yolu hazır içeriktir. |
 | **D30** | Seviye tablosu olmayan kaynakta maksimumu oyuncu girer. |
 | **D31** | Seviye atlama rehberi ve DM'in bir oyuncunun kaynağını elle düzenlemesi sonraya kalır. |
+| **D32** | *(2026-10-11, Faz 4; 4a elle kontrolünde kullanıcı revize etti)* Skill ve saving throw için ayrı bir birleşik tarz vardır: **Yetenek tablosu** (§8.1). SRD'deki tablo gibi görünür ve çalışır: Yetkin / Uzman işaretleri, ad, stat, Ek, Toplam; satıra dokununca d20 + toplam atılır. Statları kategorideki stat tablosundan okur; template satır başına varsayılan statı yazar, kart satır satır değiştirebilir. Toplam = stat değiştiricisi + işaret başına seçilen sayı alanı (D&D'de Proficiency Bonus) + Ek. Genel **Tablo** hesap yapmaz: stat ve toplam kolonu yoktur. |
+| **D33** | *(2026-10-11, Faz 4b)* Bağlı alan hazır içerikten etiketi, tarzı ve ayarlarını alır; anahtarı kendisinindir. Hazır içerikten eklenen alan hazır içeriğin anahtarıyla başlar (V8). SRD kopyasında ya da "hazır içerik olarak kaydet" ile bağlanan alan kendi anahtarını korur; canavarın `skill_bonuses`'ı ile oyuncunun `skills`'i aynı hazır içeriğe bağlıdır ve SRD kartları olduğu gibi okunur. Hazır içeriğin tarzı oluşturulurken seçilir, sonra değişmez. |
 
 ---
 
@@ -438,32 +440,25 @@ Her basit tarz "liste" olarak da kullanılabilir (§7.3).
 |---|---|---|
 | **Tablo** | Kolonları kullanıcı tanımlı satırlar | §8.1 |
 | **Stat tablosu** | Etiketli değerler ve değiştiricileri | §8.2 |
+| **Yetenek tablosu** | Skill / saving throw satırları: işaretler, stat ve toplam | §8.1 |
 | **Kaynak** | Mevcut/maks sayaç ve dinlenme davranışı | §8.3 |
 | **Seviye tablosu** | Seviyeye göre düz yazı ve verilen kartlar | §8.4 |
 | **Kaynak verme** | Kartın karaktere eklediği kaynaklar | §8.5 |
 
 ### 8.1 Tablo
 
-Tablo, kolonlarını template sahibinin tanımladığı satırlardan oluşur. Skills, saving throws,
-duyular, büyü etkileri gibi bütün "satır listesi" alanları bu tarzdan kurulur (D3).
+Tablo, kolonlarını template sahibinin tanımladığı satırlardan oluşur. Duyular, büyü etkileri,
+seviyeye göre değerler gibi "satır listesi" alanları bu tarzdan kurulur (D3). Skill ve saving
+throw için ayrı bir tarz vardır: Yetenek tablosu (aşağıda, D32).
 
 **Kolon türleri:** yazı, sayı, onay kutusu, seçim, zar, kart bağlantısı.
 
 **Satır modu:**
 
-- **Sabit satırlar:** Satırları template belirler, kart sadece değerleri doldurur. Skill tablosu
-  böyledir: 18 skill'in adı ve bağlı olduğu stat template'te yazılıdır. Bu hücreler kartta salt
-  okunurdur. Oyuncu sadece "Yetkin", "Uzman", "Ek" ve "Toplam" kolonlarını doldurur.
+- **Sabit satırlar:** Satırları template belirler, kart sadece değerleri doldurur. "Şablondan"
+  işaretli kolonlar kartta salt okunurdur.
 - **Serbest satırlar:** Satırları kart ekler ve siler. Örneğin duyular: Darkvision 60, Blindsight
   10.
-
-**Örnek: Skill tablosu (sabit satırlar)**
-
-| Skill *(template)* | Stat *(template)* | Yetkin | Uzman | Ek | Toplam |
-|---|---|---|---|---|---|
-| Acrobatics | DEX | ☐ | ☐ | 0 | +2 |
-| Athletics | STR | ☑ | ☐ | 0 | +5 |
-| Stealth | DEX | ☑ | ☑ | 0 | +6 |
 
 **Örnek: Duyular (serbest satırlar)**
 
@@ -471,8 +466,27 @@ duyular, büyü etkileri gibi bütün "satır listesi" alanları bu tarzdan kuru
 |---|---|
 | Darkvision | 60 |
 
-> **Hesaplanan kolon yok (İ3).** "Toplam"ı oyuncu yazar. Tablo içinde hesaplama (stat
-> değiştiricisi + yeterlilik bonusu gibi) ileride değerlendirilecek (D12, §20).
+Tabloda hesap yoktur (D32); kolonlar yalnız değer tutar.
+
+**Yetenek tablosu (D32).** Skill ve saving throw tabloları SRD'deki gibi görünen ve çalışan
+ayrı bir tarzdır.
+
+| Ayar | Açıklama | D&D 5e |
+|---|---|---|
+| Satırlar | Ad ve varsayılan stat. Template yazar; kart adı değiştiremez, statı satır başına değiştirebilir. | 18 skill, 6 save |
+| Statların kaynağı | Kategorideki stat tablosu (varsayılan: ilki). Değiştirici o tablonun temel değeri ve adımıyla hesaplanır. | Ability Scores |
+| Bir işaret şunu ekler | Kartın bir sayı alanı. Yetkin bir kez, Uzman bir kez daha ekler. | Proficiency Bonus |
+
+**Örnek: kartta** (PB +2)
+
+| Yetkin | Uzman | Skill | Stat | Ek | Toplam |
+|---|---|---|---|---|---|
+| ○ | ○ | Acrobatics | DEX | | +2 |
+| ● | ○ | Athletics | STR | | +5 |
+| ● | ● | Stealth | DEX | | +6 |
+
+> **Toplam (İ3-e)** = stat değiştiricisi + işaret başına seçilen sayı alanı + Ek. Kartta o stat
+> için değer yoksa "—". Satıra dokununca d20 + toplam atılır. Başka formül yoktur (§20).
 
 ### 8.2 Stat tablosu
 
@@ -588,7 +602,7 @@ flowchart LR
 | **Bağı kopar** | Kategorideki alan bağımsız bir kopyaya dönüşür ve o andan sonra ayrı düzenlenir. |
 | **Kopyala** | Hazır içerikten yeni, bağımsız bir hazır içerik üretir (D21). |
 | **Silme** | Bağlı alanlar silinmez, bağımsız kopyalara dönüşür. Veri kaybı olmaz. *(V7)* |
-| **Anahtarlar** | Bağlı alanın anahtarı hazır içerikten gelir. Bu yüzden aynı hazır içerik bir kategoriye bir kez eklenebilir. *(V8)* |
+| **Anahtarlar** | Hazır içerikten eklenen alanın anahtarı hazır içerikten gelir. Bu yüzden aynı hazır içerik bir kategoriye bir kez eklenebilir. *(V8)* SRD kopyasında bağlanan alanlar SRD anahtarlarını korur (D33). |
 | **Nereye ait?** | Template'e. Template kopyalanınca hazır içerikleri de gelir. Template'ler arası ortak kütüphane sonraya kalır (§20). |
 
 **Encounter için önemli bir kullanım:** Aynı hazır içerik (örneğin "Savaş değerleri") hem canavara
@@ -1067,10 +1081,10 @@ içeriğini ve düzenini istediği gibi değiştirir.
 
 | SRD tipi | Nerede | Kopyada |
 |---|---|---|
-| `statBlock` | Canavar, Hayvan, NPC, Oyuncu › `stat_block` | **Stat tablosu** (STR–CHA, temel 10, adım 2, değiştirici açık) |
+| `statBlock` | Canavar, Hayvan, NPC, Oyuncu › `stat_block` | **Stat tablosu** (STR–CHA, temel 10, adım 2, değiştirici açık), Stat tablosu hazır içeriğine bağlı |
 | `statBlock` | Tür, Alt tür, Feat, Büyülü eşya, Trait › `ability_bonuses` | **Stat tablosu**, değiştirici kapalı |
 | `combatStats` | Oyuncu, NPC › `combat_stats` | Savaş grubunda **ayrı alanlara** bölünür: HP (Kaynak), AC (Tam sayı), Hız (Yazı), İnisiyatif (Tam sayı); NPC'de ayrıca CR, XP. *(V23)* |
-| `proficiencyTable` | Canavar, Hayvan, NPC, Oyuncu › skills / saves | **Tablo**, Skill ve Saving throw hazır içeriklerine bağlı |
+| `proficiencyTable` | Canavar, Hayvan, NPC, Oyuncu › skills / saves | **Yetenek tablosu**, Skill ve Saving throw hazır içeriklerine bağlı (alanlar SRD anahtarını korur, D33) |
 | `classFeatures` | Sınıf, Alt sınıf › `features` | **Seviye tablosu** (§16.3) |
 | `spellsAtLevel` | Tür, Alt tür, Feat, Büyülü eşya, Trait | **Seviye tablosu**: "N. seviyede büyü kartı ver → Büyüler". Günlük kullanım varsa ayrıca **Kaynak verme** satırı. Bu kategoriler beraber modda seviye tablolu olur. *(V24)* |
 | `resourcePoolGrants` | Tür, Alt tür, Feat, Trait | **Kaynak verme** (§16.3) |
@@ -1137,7 +1151,7 @@ Yerleşik template'te kural motorunun yaptığı ama SRD kopyasında oyuncunun o
 | AC | Zırh, kalkan ve DEX'ten hesaplanır | Oyuncu yazar |
 | Maks HP | Sınıf ve CON'dan hesaplanır | Oyuncu yazar (rehber anlatır) |
 | Yeterlilik bonusu | Seviyeden hesaplanır | Oyuncu yazar |
-| Skill ve save toplamları | Hesaplanır | Oyuncu yazar |
+| Skill ve save toplamları | Hesaplanır | Hesaplanır (Yetenek tablosu, D32); yeterlilik bonusunu oyuncu yazar |
 | Pasif algı, büyü DC'si, büyü atak bonusu | Hesaplanır | Oyuncu yazar |
 | Trait ve feat etkileri (duyu, direnç, yeterlilik…) | Karaktere eklenir | Oyuncu okur ve ekler |
 | Alt sınıf, Fighting Style, "N tane seç" | Sihirbaz ve bekleyen seçimler sorar | Oyuncu okur ve listesine ekler |
@@ -1219,7 +1233,7 @@ olur. Sıralama öneridir.
 | Template paylaşımı (marketplace, `.dmtz` ile tek başına template) | Önce offline. |
 | Seviye atlama rehberi | D31 |
 | DM'in bir oyuncunun kaynağını ya da maksimumunu elle düzenlemesi | D31 |
-| Tabloda ve kaynaklarda hesaplanan değerler (formüller) | D12, D27 |
+| Tabloda ve kaynaklarda hesaplanan değerler (formüller; Yetenek tablosunun toplamı dışında, D32) | D12, D27 |
 | Template'ler arası ortak hazır içerik kütüphanesi | §9 |
 | Dünyanın içinden template düzenleme | §6.3 |
 | Markdown ve bağlantı geliştirmeleri (kural metinlerinde kartlara daha zengin bağlantı, önizleme) | İlk istekte "belki" olarak geçti; kapsamı ayrıca konuşulacak. |
@@ -1239,9 +1253,9 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V3 | Alan anahtarı etiketten üretilir ve bir daha değişmez. Eşleştirmeler anahtarla yapılır. | §6.6, §7.3 |
 | V4 | Uyumsuz tip değişikliği = eski alan silinir (veri gizli kalır) + yeni anahtarla yeni alan. | §6.6 |
 | V5 | Silinen kategorinin kartları dünyada silinmez, görünmez olur. | §6.6 |
-| V6 | Hazır içerik tek alan ya da alan grubu olabilir. | §9 |
-| V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. | §9 |
-| V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. | §9 |
+| V6 | Hazır içerik tek alan ya da alan grubu olabilir. *(2026-10-11: Faz 4'te yalnız tek alan; grup hazır içeriği ilk gerektiği Faz 6'da.)* | §9 |
+| V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. *(onaylı, 2026-10-11)* | §9 |
+| V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. *(onaylı, 2026-10-11; anahtar istisnası D33)* | §9 |
 | V9 | Bir kategoride en fazla bir seviye tablosu olur. | §8.4 |
 | V10 | Verilen kartın hedefi: satırda seçilen liste; yoksa o kategoriyi hedefleyen ilk liste; o da yoksa uyarı. | §11.6 |
 | V11 | Verilen kartlar ayrı bir kategoriye düşse bile ana seviyeyi izler ve seviye atlamada seçilmez. | §11.3 |

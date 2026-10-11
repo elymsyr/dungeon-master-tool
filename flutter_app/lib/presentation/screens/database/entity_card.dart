@@ -816,6 +816,16 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       entityName: entity.name,
       compact: useCompact,
       panelId: widget.panelId,
+      // A free template's skill table reads its stat table from the category.
+      categoryFields: field.fieldType == FieldType.skillTable
+          ? ref
+                    .read(worldSchemaProvider)
+                    .categories
+                    .where((c) => c.slug == entity.categorySlug)
+                    .firstOrNull
+                    ?.fields ??
+                const []
+          : const [],
     );
   }
 

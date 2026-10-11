@@ -3,10 +3,13 @@ import '../entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../entities/schema/builtin/content.dart' show tier1Slugs;
 import '../entities/schema/builtin/lookups.dart'
     show dmAuthoredLookupSlugs, tier0Slugs;
+import '../entities/schema/dnd5e_constants.dart' show kDnd5eAbilities;
 import '../entities/schema/entity_category_schema.dart';
 import '../entities/schema/field_schema.dart';
 import '../entities/schema/world_schema.dart';
 import '../entities/schema/world_schema_hash.dart';
+import 'free_field_styles.dart';
+import 'template_edit.dart' show syncPresets;
 
 /// The one gate between the built-in and the free code paths
 /// (docs/free-template/ROADMAP.md K3).
@@ -26,9 +29,162 @@ int builtinTier(String slug) {
   return tier1Slugs.contains(slug) ? 1 : 2;
 }
 
-/// SRD types that have no place in a free template yet (ROADMAP §6). Later
-/// phases convert more types instead of dropping them.
-const _droppedOnCopy = {FieldType.crCalculator};
+/// [f] as an SRD copy holds it (ROADMAP §6): null when it is dropped, a
+/// free style for the types converted so far, else unchanged (a kept SRD
+/// type, converted in a later phase). Card data is not touched; the free
+/// styles read the SRD shapes as they are (`free_field_styles.dart`).
+FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
+  FieldSchema table(List<TableColumn> columns) => f.copyWith(
+    fieldType: FieldType.table,
+    styleConfig: TableSpec(columns: columns).toConfig(),
+  );
+  const level = TableColumn(
+    key: 'level',
+    label: 'Level',
+    type: TableColumnType.number,
+  );
+  return switch (f.fieldType) {
+    FieldType.crCalculator => null,
+    FieldType.statBlock => f.copyWith(
+      fieldType: FieldType.statTable,
+      styleConfig: StatTableSpec(
+        stats: [for (final a in kDnd5eAbilities) (key: a, label: a)],
+        // Species / feat bonuses are plain values (DESIGN §16.2).
+        showModifier: f.fieldKey != 'ability_bonuses',
+      ).toConfig(),
+    ),
+    FieldType.proficiencyTable => f.copyWith(
+      fieldType: FieldType.skillTable,
+      defaultValue: null,
+      styleConfig: _skillSpec(f, cat).toConfig(),
+    ),
+    // The player card's class levels leave in Faz 6 (ROADMAP §6).
+    FieldType.levelTable when f.fieldKey != 'class_levels' => table(const [
+      level,
+      TableColumn(key: 'value', label: 'Value', type: TableColumnType.number),
+    ]),
+    FieldType.levelTextTable => table(const [
+      level,
+      TableColumn(key: 'value', label: 'Text'),
+    ]),
+    FieldType.rangedSenseList => table(const [
+      TableColumn(
+        key: 'sense_ref',
+        label: 'Sense',
+        type: TableColumnType.relation,
+        targets: ['sense'],
+      ),
+      TableColumn(
+        key: 'range_ft',
+        label: 'Range (ft)',
+        type: TableColumnType.number,
+      ),
+    ]),
+    FieldType.spellEffectList => table(const [
+      TableColumn(
+        key: 'kind',
+        label: 'Kind',
+        type: TableColumnType.choice,
+        options: ['damage', 'heal', 'condition', 'buff', 'debuff'],
+      ),
+      TableColumn(key: 'dice', label: 'Dice', type: TableColumnType.dice),
+      TableColumn(
+        key: 'type_ref',
+        label: 'Damage Type',
+        type: TableColumnType.relation,
+        targets: ['damage-type'],
+      ),
+      TableColumn(
+        key: 'save_ability_ref',
+        label: 'Save',
+        type: TableColumnType.relation,
+        targets: ['ability'],
+      ),
+      TableColumn(
+        key: 'save_effect',
+        label: 'Save Effect',
+        type: TableColumnType.choice,
+        options: ['none', 'half', 'negate', 'partial'],
+      ),
+    ]),
+    FieldType.equipmentChoiceGroups ||
+    FieldType.playerChoices ||
+    FieldType.subspeciesOptions => f.copyWith(
+      fieldType: FieldType.markdown,
+      defaultValue: null,
+    ),
+    _ => f,
+  };
+}
+
+/// An SRD skill / save table as a Skill table: the template holds the
+/// names and their default stat, read from the category's stat table; a
+/// mark adds the card's proficiency bonus (D32).
+SkillTableSpec _skillSpec(FieldSchema f, EntityCategorySchema cat) =>
+    SkillTableSpec(
+      rows: [
+        for (final r in storedTableRows(f.defaultValue))
+          {tableRowId: r['name'], 'name': r['name'], 'ability': r['ability']},
+      ],
+      stat: cat.fields
+          .where((x) => x.fieldType == FieldType.statBlock)
+          .firstOrNull
+          ?.fieldKey,
+      bonus: cat.fields.any((x) => x.fieldKey == 'proficiency_bonus')
+          ? 'proficiency_bonus'
+          : null,
+    );
+
+/// The SRD copy's presets (DESIGN §16.1): skills, saving throws and ability
+/// scores, each built from the first such field (the player card's first)
+/// and bound to every such field. The fields keep their SRD keys (a
+/// monster's `skill_bonuses`), so SRD cards read as they are.
+WorldSchema _withSrdPresets(WorldSchema schema, String now) {
+  String? kindOf(FieldSchema f) => switch (f.fieldType) {
+    FieldType.skillTable => f.fieldKey.startsWith('sav') ? 'saves' : 'skills',
+    FieldType.statTable when f.fieldKey == 'stat_block' => 'stats',
+    _ => null,
+  };
+  final presets = <String, FieldSchema>{};
+  for (final c in [
+    ...schema.categories.where((c) => c.isPlayerCard == true),
+    ...schema.categories.where((c) => c.isPlayerCard != true),
+  ]) {
+    for (final f in c.fields) {
+      final kind = kindOf(f);
+      if (kind == null) continue;
+      presets.putIfAbsent(
+        kind,
+        () => f.copyWith(
+          fieldId: '${schema.schemaId}-preset-$kind',
+          categoryId: '',
+          groupId: null,
+          orderIndex: 0,
+          gridColumnSpan: 1,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+  return syncPresets(
+    schema.copyWith(
+      presets: [...presets.values],
+      categories: [
+        for (final c in schema.categories)
+          c.copyWith(
+            fields: [
+              for (final f in c.fields)
+                switch (kindOf(f)) {
+                  final kind? => f.copyWith(presetId: presets[kind]!.fieldId),
+                  null => f,
+                },
+            ],
+          ),
+      ],
+    ),
+  );
+}
 
 /// [source] copied as a new free template [id] named [name]. Works for the
 /// built-in template (SRD copy, DESIGN §16) and for a free one (the lineage
@@ -56,14 +212,16 @@ WorldSchema copyAsFreeTemplate(
               ? (c.slug == 'player-character' ? true : null)
               : c.isPlayerCard,
           tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
-          fields: [
-            for (final f in c.fields)
-              if (!_droppedOnCopy.contains(f.fieldType)) f,
-          ],
+          fields: fromBuiltin
+              ? [
+                  for (final f in c.fields) ?_srdCopyField(f, c),
+                ]
+              : c.fields,
         ),
     ],
   );
-  return copy.copyWith(originalHash: computeWorldSchemaContentHash(copy));
+  final out = fromBuiltin ? _withSrdPresets(copy, now) : copy;
+  return out.copyWith(originalHash: computeWorldSchemaContentHash(out));
 }
 
 /// Content hash for the free template update check (ROADMAP Faz 3): the usual

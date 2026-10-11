@@ -3680,5 +3680,80 @@
   "tplTier2": "Tier 2 — DM",
   "tplMapIcon": "Map icon",
   "freeWorldNoMultiplayer": "Worlds with your own template can't go multiplayer yet: players would get the built-in sheet instead of yours.",
-  "freeWorldNoCharacters": "Characters aren't available yet in worlds with your own template."
+  "freeWorldNoCharacters": "Characters aren't available yet in worlds with your own template.",
+  "tplStyleTable": "Table",
+  "tplStyleTableHint": "Rows under columns you define: skills, senses",
+  "tplStyleStatTable": "Stat table",
+  "tplStyleStatTableHint": "Scores and their modifiers",
+  "tplStats": "Stats",
+  "tplStatLabel": "Label",
+  "tplAddStat": "Add stat",
+  "tplStatBase": "Base value",
+  "tplStatBaseHint": "The modifier is 0 at this value",
+  "tplStatStep": "Step",
+  "tplStatStepHint": "Points per ±1",
+  "tplShowModifier": "Show modifier",
+  "tplShowModifierHint": "Off: values only, e.g. a species' bonuses",
+  "tplRows": "Rows",
+  "tplRowsFree": "Free",
+  "tplRowsFixed": "Fixed",
+  "tplRowsHint": "Fixed: the template writes the rows, cards fill them in. Free: each card adds its own rows.",
+  "tplTableColumns": "Columns",
+  "tplAddColumn": "Add column",
+  "tplColumnLabel": "Column label",
+  "tplColumnType": "Column type",
+  "tplDeleteColumn": "Delete column",
+  "tplColNumber": "Number",
+  "tplColLocked": "From the template",
+  "tplColLockedHint": "Cards cannot change it",
+  "tplTemplateRows": "Template rows",
+  "tplAddRow": "Add row",
+  "tplStyleSkillTable": "Skill table",
+  "tplStyleSkillTableHint": "Skills or saving throws: marks, a stat and the total",
+  "tplSkillStats": "Stats from",
+  "tplSkillStatsFirst": "The category's first stat table",
+  "tplSkillBonus": "A mark adds",
+  "tplSkillBonusHint": "Proficient adds it once, expertise once more",
+  "tplSkillBonusNone": "Nothing",
+  "tplSkillRowStat": "Stat",
+  "tplPresets": "Presets",
+  "tplPresetHint": "Set up once, add to many categories",
+  "tplAddPreset": "New preset",
+  "tplPreset": "Preset",
+  "tplPresetFormHint": "Every field added from it takes these settings. Card values stay each card's own.",
+  "tplPresetUsedIn": "Used in",
+  "tplPresetUnused": "Not in any category yet. Add it from the palette.",
+  "tplCopyPreset": "Copy preset",
+  "tplDeletePreset": "Delete preset",
+  "tplDeletePresetBody": "\"{name}\" will be deleted. The fields bound to it ({count}) stay as independent copies.",
+  "@tplDeletePresetBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tplBoundTo": "Preset: {name}",
+  "@tplBoundTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tplBoundHint": "Its settings come from the preset; edit them under Presets. Card values stay each card's own.",
+  "tplUnlink": "Break link",
+  "tplSaveAsPreset": "Save as preset",
+  "tplSaveAsPresetHint": "Makes a preset from this field and binds the field to it",
+  "tplPresetAlreadyIn": "This category already has \"{name}\" or a field with its key.",
+  "@tplPresetAlreadyIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

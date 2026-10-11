@@ -4,12 +4,16 @@
 > çalışan ve **uygulama açılarak elle kontrol edilen** küçük fazlarla, bugün çalışan hiçbir şeyi
 > bozmadan uygulamak.
 
-- **Tasarım:** [DESIGN.md](DESIGN.md) (kararlar D1–D31, varsayımlar V1–V28). Bu doküman *ne
+- **Tasarım:** [DESIGN.md](DESIGN.md) (kararlar D1–D33, varsayımlar V1–V28). Bu doküman *ne
   zaman ve hangi sırayla* sorusunu cevaplar; *ne ve neden* DESIGN.md'dedir.
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
 - **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1
   kapandı (2026-10-11, arayüz kullanıcıyla gözden geçirildi; E listesi tek tek yapılmadı). Faz 2
-  kapandı (2026-10-11, kullanıcı onayladı). Faz 3 kapandı (2026-10-11, kullanıcı onayladı).
+  kapandı (2026-10-11, kullanıcı onayladı). Faz 3 kapandı (2026-10-11, kullanıcı onayladı). Faz 4
+  ikiye bölündü (kullanıcı kararı). Faz 4a'nın elle kontrolünde kullanıcı skill / save için ayrı
+  bir tarz istedi (D32 revize); düzeltme ve Faz 4b uygulandı, otomatik kapı yeşil; ikisi birlikte
+  elle kontrol bekliyor (2026-10-11). Kullanıcı kararıyla (2026-10-12) elle kontrol sonraya
+  ertelendi ve iş commit'lendi; bekleyen kontroller Faz 4b sonucundaki listede.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -17,7 +21,8 @@
 | 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
 | 2 | Template editörü: kategoriler ve düzen | L | ✅ |
 | 3 | Free dünya ve template güncellemesi | M | ✅ |
-| 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
+| 4a | Tablo, Stat tablosu, SRD dönüşümü v2 | M | 🔄 elle kontrol ertelendi |
+| 4b | Hazır içerikler | M | 🔄 elle kontrol ertelendi |
 | 5 | Paketler | M | ⏳ |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | ⏳ |
 | 7 | Seviye sistemi | L | ⏳ |
@@ -202,7 +207,7 @@ rozeti olur.
 | `crCalculator` | Kaldırılır | 1 |
 | Yazı, sayı, zar, görsel, kart bağlantısı, etiket, tarih, dosya | Aynen kalır | 1 |
 | `statBlock` | Stat tablosu (değiştirici açık / kapalı) | 4 |
-| `proficiencyTable` | Tablo, Skill / Saving throw hazır içeriğine bağlı | 4 |
+| `proficiencyTable` | Yetenek tablosu, Skill / Saving throw hazır içeriğine bağlı | 4 |
 | `levelTable`, `levelTextTable` | Tablo (Seviye · Değer / Seviye · Yazı) | 4 |
 | `rangedSenseList`, `spellEffectList` | Tablo, serbest satırlar | 4 |
 | `equipmentChoiceGroups`, `playerChoices`, `subspeciesOptions` | Markdown (SRD verisi okunurken metne çevrilir) | 4 |
@@ -718,12 +723,21 @@ bağımsızlaşır), V8 (bir kategoriye bir kez).
 / [structured_list_field_widgets.dart](../../flutter_app/lib/presentation/widgets/field_widgets/structured_list_field_widgets.dart),
 editör, dönüştürücü, yeni okuyucular.
 
-**Faz başında karar gereken kullanıcı isteği (2026-10-11):** Stat tablosunun etiketleri (STR, WIS…)
-editörde yazılarak belirlenir (madde 2 zaten böyle). Ek istek: aynı karttaki Skill / Saving throw
-tablosunun stat kolonu, karttaki stat tablosunun etiketlerini kendiliğinden alsın ve kullanıcı
-satır başına değiştirebilsin; toplam da stat değiştiricisinden gelsin. Etiketlerin otomatik
-gelmesi İ4 ile uyumlu; toplamın hesaplanması İ3'e ("hesaplanan kolon yok") ve D12'ye aykırı,
-DESIGN §20'de sonraya bırakılmıştı. Faz 4 başında kullanıcıyla karar verilir.
+**Faz başı kararları (2026-10-11, kullanıcı):**
+
+- **Toplam hesaplanır (DESIGN D32, İ3-e).** Skill / Saving throw tablosunun stat kolonu karttaki
+  stat tablosunun etiketlerini alır; template satır başına varsayılanı yazar, kart satır satır
+  değiştirebilir. Toplam = stat değiştiricisi + toplama eklenen sayılar + işaretli kutu başına
+  karttaki seçilen sayı alanı (SRD'de Proficiency Bonus). E4.2'deki "stat salt okunur" bu yüzden
+  "stat varsayılan, kartta değiştirilebilir" olur.
+  - *Revize (2026-10-11, 4a elle kontrolü, kullanıcı):* skill / save ayrı bir tarz olur
+    (**Yetenek tablosu**), kategorideki stat tablosunu okur, SRD'deki gibi görünür ve çalışır. Genel
+    Tablo'dan stat ve toplam kolonları çıkar; tablo toplamla ilgili değildir.
+- **Faz ikiye bölünür.** 4a: Tablo, Stat tablosu, editör ayarları, SRD kopyası v2 ve SRD
+  okuyucuları (madde 1, 2, 4, 5). 4b: hazır içerikler (madde 3); SRD'nin Skill / Save / Stat
+  alanları 4b'de hazır içeriğe bağlanır. E4.6 ve E4.7 4b'nin; geri kalan E maddeleri 4a'nın.
+- **V6 daraltıldı:** Faz 4'te hazır içerik yalnız tek alan; grup hazır içeriği ilk gerektiği
+  Faz 6'da (`combat_stats` bölünürken). V7 ve V8 onaylı.
 
 **Kapsam dışı:** Kaynak, Seviye tablosu, Kaynak verme; karakter kağıdı.
 
@@ -737,7 +751,7 @@ testler); dönüştürücü v2.
 | # | Kontrol | Beklenen |
 |---|---|---|
 | E4.1 | SRD'yi **yeniden kopyala** (§6), adını "SRD kopyam 2" yap, onunla dünya kur. | — |
-| E4.2 | Editörde Oyuncu kartı → Skills. | Tablo; 18 satır; skill adı ve stat salt okunur; bağlı olduğu hazır içerik görünür. |
+| E4.2 | Editörde Oyuncu kartı → Skills. | Yetenek tablosu; "Hazır içerik: Skills" ve "Bağı kopar" görünür; 18 satır hazır içerikte (Hazır içerikler › Skills) düzenlenir. Kartta skill adı salt okunur, stat varsayılan ama değiştirilebilir. |
 | E4.3 | Goblin kartı. | Skills, saving throw ve duyular SRD verisiyle dolu; statlar ve değiştiricileri doğru. |
 | E4.4 | Bir NPC kartında Stat tablosuna 7, 9, 10, 15 gir. | −2, −1, 0, +2. |
 | E4.5 | Editörde stat tablosunu temel 0, adım 3 yap; aynı kartta 7 ve 20'ye bak. | +2 ve +6. |
@@ -751,6 +765,135 @@ testler); dönüştürücü v2.
 
 **Çıkış kriteri:** SRD kopyasındaki bütün tablo ve stat alanları yeni tarzlarla çalışır; hazır
 içerik bağı doğru.
+
+**Faz 4a sonucu** (2026-10-11, Windows; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - İki yeni tarz: `FieldType.table` (Tablo) ve `FieldType.statTable` (Stat tablosu). Ayarları
+    `FieldSchema.styleConfig`'te (null olabilir, `includeIfNull: false`; K2, koruma hash'i aynı).
+    Değer şekilleri enum değerlerinin belge yorumunda.
+  - [free_field_styles.dart](../../flutter_app/lib/domain/services/free_field_styles.dart) (saf):
+    değiştirici ⌊(değer − temel) ÷ adım⌋, aşağı yuvarlanır; kolon türleri yazı, sayı, onay, seçim,
+    zar, kart bağlantısı, **stat**, **toplam**; sabit satırlar şablondan gelir, kart yalnız şablondan
+    farklı hücreleri saklar (şablon varsayılanı sonradan değişirse dokunulmamış kartlara ulaşır);
+    şablondan silinen satırın kart verisi gizli kalır, satır geri gelince döner (D17). Toplam
+    D32'deki gibi; kartta skor yoksa "—".
+  - SRD okuyucuları: kart verisi değişmeden okunur. Proficiency tablosunun `{rows: [...]}` şekli
+    satır adıyla (kilitli hücre) eşleşir; seviye tablolarının `{seviye: değer}` haritası
+    Seviye · Değer satırları olur; duyu ve büyü etkisi satırları olduğu gibi (kolon anahtarları
+    SRD'nin satır anahtarları). Başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri
+    markdown olarak gösterilir (kart düzenlenirse metin olarak kaydedilir).
+  - SRD kopyası v2 ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    §6'daki Faz 4 satırları. `stat_block` → Stat tablosu (STR–CHA, temel 10, adım 2),
+    `ability_bonuses` → değiştiricisiz; skill / save → sabit satırlı Tablo (Skill/Save kilitli,
+    Ability = stat kolonu, Proficient / Expertise / Misc toplama eklenir, Total kategorinin
+    `proficiency_bonus`'unu ekler); seviye tabloları (`class_levels` hariç, Faz 6), duyular, büyü
+    etkileri → serbest satırlı Tablo; üç yapılı liste → Markdown.
+  - Kart: [free_style_field_widgets.dart](../../flutter_app/lib/presentation/widgets/field_widgets/free_style_field_widgets.dart).
+    Stat tablosu sarılarak dizilir; tablo sığarsa yazı / bağlantı kolonları genişler, sığmazsa
+    (telefon) yana kayar. Serbest satırlarda + ve satır sil. `FieldWidgetFactory` iki tarzı ve
+    markdown okuyucusunu çağırır; kart, önizleme ve kart önizleme diyaloğu kategorinin alanlarını
+    verir (`categoryFields`).
+  - Editör: iki tarz palette ve telefonun tarz sayfasında. Stat tablosu ayarları: etiketler
+    (ekle, yeniden adlandır, yukarı / aşağı, sil; anahtar ilk etiketten bir kez), temel, adım,
+    değiştiriciyi göster, canlı örnek satırı (`9 → −1 · 10 → +0 · 12 → +1`). Tablo ayarları:
+    serbest / sabit satır, kolon kutuları (etiket, tür, seçenekler, hedefler, stat kaynağı,
+    toplamın bonus alanı, toplama eklenir, şablondan), şablon satırları editörü.
+- **Roadmap'ten sapmalar:**
+  - Faz 4a / 4b bölünmesi ve D32 (faz başı kararları).
+  - `spellEffectList`'in `condition_refs` ve `scaling_dice` kolonu yok (DESIGN §16.2'deki beş
+    kolon); SRD'de bu alanda veri yok, kartta saklı kalır.
+  - Tablo hücresine dokununca zar atılmıyor (yerleşik tablo atıyor).
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 yeşil · G4 32 info (temel çizgiyle aynı) · G5
+  `free_field_styles_test` 15 (DESIGN §8.2'nin iki satırı birebir; gerçek SRD Goblin Warrior,
+  Bard, Fireball, Fighter satırları), `free_field_styles_widget_test` 8 (kart telefon / desktop,
+  skor değişince toplam, E4.4, serbest satır ekle / sil, başlangıç ekipmanı; editörde E4.5, sabit
+  satırlı tablo, telefonda SRD Skills), `free_template_test` (SRD kopyası v2: yalnız tarz
+  değişir), `template_edit_test` 13, `free_template_editor_test` 20 · G6 1781 geçti (Faz 3'teki 1757 +
+  24 yeni); kırmızılar temel çizgideki 3 testle aynı.
+- **Tam çalıştırmanın yakaladığı:** Faz 3'ün `template_archive_test` "free dünya şablonsuz taşınır"
+  testi zamanlamaya bağlı düşüyordu: dünya içe aktarılırken UI durumunun gecikmeli kaydı
+  SharedPreferences'a gidiyor, testte mock yoktu. `setUp`'a `setMockInitialValues` eklendi.
+- **Elle kontrol (4a):** E4.1, E4.2 ("bağlı olduğu hazır içerik" hariç; stat kartta
+  değiştirilebilir), E4.3, E4.4, E4.5, E4.8, E4.9, E4.10, E4.11, E4.12. E4.6 ve E4.7 4b'de.
+- **Bilinen sınırlar:**
+  - TR okuma modunda genel tablo hücreleri ve markdown'a çevrilen SRD listeleri İngilizce;
+    etiketler şablon verisi olduğu için editörde değiştirilebilir (DESIGN §16.5). (Yetenek
+    tablosunda SRD skill adları çevrilir; 4a düzeltmesi.)
+  - Faz 1–3'te alınmış SRD kopyaları eski tipleriyle kalır (§6 notu); E4.1 "yeniden kopyala".
+  - Tablonun şablon satırları editöründe kart bağlantısı hücresi yok (bağlantılar kartın).
+  - Kolon silinince kartlardaki o kolonun verisi gizli kalır; kolon silme onay sormuyor.
+
+**Faz 4a elle kontrol bulgusu ve düzeltmesi** (2026-10-11, kullanıcı):
+
+- **Bulgu:** skill / save tablosu genel Tablo'nun stat ve toplam kolonlarıyla kurulmuştu; kullanıcı
+  bunun ayrı, özel bir tablo olmasını, kategorideki stat tablosunu kullanmasını, SRD template'teki
+  gibi görünüp çalışmasını; genel Tablo'nun ise toplamla ilgisi olmamasını istedi (D32 revize).
+- **Düzeltme:**
+  - Yeni tarz **Yetenek tablosu** (`FieldType.skillTable`): ayarları satırlar (ad, varsayılan stat),
+    statların kaynağı (kategorinin stat tablosu; varsayılan ilki), "bir işaret şunu ekler" (sayı alanı).
+    Kartta yerleşik SRD tablosunun görünüşü: Yetkin / Uzman noktaları (aynı `ProficiencyDot`), ad,
+    stat (dokununca başka stat seçilir), Ek, Toplam, başlıkta bonus alanı; satıra dokununca d20 +
+    toplam atılır ve oturum günlüğüne yazılır. SRD skill adları uygulama dilinde gösterilir.
+  - Genel Tablo'dan `stat` / `total` kolon türleri ve "toplama eklenir" / bonus ayarları çıktı.
+  - SRD kopyası: skill / save alanları Yetenek tablosu olur. Şablonda adı değiştirilen SRD satırı kart
+    verisini kimliğiyle (SRD adı) bulmaya devam eder.
+
+**Faz 4b sonucu** (2026-10-11, Windows; commit'lendi, 4a düzeltmesiyle birlikte elle kontrol **ertelendi** — kullanıcı
+sonra yapacak, 2026-10-12):
+
+- **Yapılanlar:**
+  - Model: `WorldSchema.presets` (hazır içerikler, her biri bir `FieldSchema`) ve
+    `FieldSchema.presetId` (bağlı alan). İkisi de null olabilir, `includeIfNull: false` (K2).
+  - Saf fonksiyonlar ([template_edit.dart](../../flutter_app/lib/domain/services/template_edit.dart)):
+    oluştur, bağlı ekle (kategoriye bir kez, aynı anahtarlı alanın üstüne değil — V8), hazır içerik
+    değişince bütün bağlıları güncelle (etiket, tarz, ayarlar; kart değerleri bağlı değil), bağı kopar,
+    kopyala (D21), sil (bağlılar bağımsız kopya olur — V7), "hazır içerik olarak kaydet".
+  - Editör: sol panelde **Hazır içerikler** bölümü (+, liste, kaç kategoride kullanıldığı). Hazır
+    içerik formu: etiket, anahtar, tarza özel ayarlar, kullanıldığı kategoriler, Kopyala, Sil (onay
+    sorar). Palet şeridinde tarzlardan sonra hazır içerikler (tıkla ya da sürükle → bağlı alan);
+    telefonun "+ Ekle" sayfasında "Hazır içerikler" başlığı. Bağlı alanın formunda "Hazır içerik:
+    Skills" kutusu ve **Bağı kopar**; yapısı orada değil hazır içerikte düzenlenir. Bağlı alan tuvalde
+    yer imi işaretiyle görünür. Bağsız alanlarda **Hazır içerik olarak kaydet**.
+  - SRD kopyası: Skills, Saving Throws ve Ability Scores hazır içerikleri gelir; oyuncu, NPC,
+    canavar ve hayvanın skill / save / `stat_block` alanları bunlara bağlıdır (`ability_bonuses`
+    değil).
+- **Roadmap'ten sapmalar:**
+  - D33: bağlı alanın anahtarı kendisinindir. SRD'de canavar `skill_bonuses`, oyuncu `skills`
+    anahtarını kullanıyor; anahtar hazır içerikten gelseydi SRD kartlarının verisi okunmazdı. Hazır
+    içerikten yeni eklenen alan hazır içeriğin anahtarını alır (V8 aynen).
+  - Hazır içeriğin tarzı oluşturulurken seçilir, sonra değişmez (anahtar ve kart verisi uyumu).
+  - Telefonun "+ Ekle" sayfasında sekme yerine iki başlık (DESIGN §7.6).
+  - Bağlı alanın formunda "hazır içeriği düzenle" düğmesi yok; hazır içerik sol panelden açılır.
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 yeşil · G4 32 info (temel çizgiyle aynı) · G5
+  `free_field_styles_test` 16 (yeniden adlandırılan SRD satırı, skill toplamları),
+  `template_edit_test` 18 (+5 hazır içerik: değişiklik bütün bağlılara gider ve kart işaretleri
+  durur — E4.6, bağı kopar, sil — V7, kategoriye bir kez — V8, hazır içerik olarak kaydet /
+  kopyala), `free_template_test` 15 (SRD hazır içerikleri ve bağları),
+  `free_field_styles_widget_test` 12 (skill satırında işaret ve stat değişimi; editörde E4.6,
+  E4.7, yeni hazır içerik + V8 uyarısı; telefonda SRD Skills'in hazır içerik kutusu),
+  `free_template_editor_test`, `templates_tab_layout_test`, `template_archive_test`,
+  `world_free_template_test` yeşil · G6 1792 geçti (4a'daki 1781 + 11 yeni); kırmızılar temel
+  çizgideki 3 testle aynı.
+- **Elle kontrol (4a düzeltmesi + 4b):** önce **SRD'yi yeniden kopyala** (E4.1; eski kopyalarda
+  skill / save genel tablo olarak kalır).
+  - E4.2 (yeni beklenen), E4.3 (Goblin: skill toplamları SRD tablosu gibi; satıra dokununca zar),
+    E4.6, E4.7.
+  - E4b.1: Kartta bir skill satırında Yetkin noktasına dokun → toplam PB kadar artar; stat
+    harfine dokunup başka stat seç → toplam ona göre değişir.
+  - E4b.2: Boş template'te Hazır içerikler › + → Yetenek tablosu → "Skills"; satır ekle; paletten
+    oyuncu kartına ekle; aynı kategoriye ikinci kez eklemeye çalış → uyarı.
+  - E4b.3: Bir hazır içeriği Kopyala, sonra Sil → bağlı alanlar kalır, "Hazır içerik" kutusu
+    kaybolur.
+  - E4b.4: Genel Tablo ayarlarında kolon türleri: yazı, sayı, onay, seçim, zar, kart bağlantısı (stat
+    ve toplam yok).
+  - R turu (E4.12).
+- **Bilinen sınırlar:**
+  - Grup hazır içeriği yok (V6 daraltıldı, Faz 6).
+  - Yetenek tablosunda statların kaynağı / bonus alanı hazır içerikte, onu kullanan kategorilerin
+    alanlarından seçilir; bir kategoride o anahtarda alan yoksa toplam "—", başlıkta bonus görünmez.
+  - Kaydetme tuşu yok, değişiklik bütün bağlı alanlara hemen gider; dünyalar banner'la günceller
+    (Faz 3).
 
 ---
 

@@ -5,14 +5,20 @@ import '../../../domain/services/template_edit.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
-/// What is being dragged onto the layout: an existing field or a palette
-/// style (a new field).
+/// What is being dragged onto the layout (or picked to add): an existing
+/// field, a palette style (a new field) or a preset (a new bound field).
 class TemplateDrag {
-  const TemplateDrag.field(String this.fieldId) : type = null;
-  const TemplateDrag.style(FieldType this.type) : fieldId = null;
+  const TemplateDrag.field(String this.fieldId) : type = null, presetId = null;
+  const TemplateDrag.style(FieldType this.type)
+    : fieldId = null,
+      presetId = null;
+  const TemplateDrag.preset(String this.presetId)
+    : fieldId = null,
+      type = null;
 
   final String? fieldId;
   final FieldType? type;
+  final String? presetId;
 }
 
 String styleLabel(L10n l10n, FieldType t) => switch (t) {
@@ -30,6 +36,9 @@ String styleLabel(L10n l10n, FieldType t) => switch (t) {
   FieldType.imagePerEra => l10n.tplStyleImagePerEra,
   FieldType.file => l10n.tplStyleFile,
   FieldType.relation => l10n.tplStyleRelation,
+  FieldType.table => l10n.tplStyleTable,
+  FieldType.statTable => l10n.tplStyleStatTable,
+  FieldType.skillTable => l10n.tplStyleSkillTable,
   // Kept SRD types show their code name next to the "SRD type" badge.
   _ => t.name,
 };
@@ -49,6 +58,9 @@ String styleHint(L10n l10n, FieldType t) => switch (t) {
   FieldType.imagePerEra => l10n.tplStyleImagePerEraHint,
   FieldType.file => l10n.tplStyleFileHint,
   FieldType.relation => l10n.tplStyleRelationHint,
+  FieldType.table => l10n.tplStyleTableHint,
+  FieldType.statTable => l10n.tplStyleStatTableHint,
+  FieldType.skillTable => l10n.tplStyleSkillTableHint,
   _ => l10n.tplLegacyHint,
 };
 
@@ -67,20 +79,82 @@ IconData styleIcon(FieldType t) => switch (t) {
   FieldType.imagePerEra => Icons.collections_outlined,
   FieldType.file => Icons.attach_file,
   FieldType.relation => Icons.link,
+  FieldType.table => Icons.table_chart_outlined,
+  FieldType.statTable => Icons.leaderboard_outlined,
+  FieldType.skillTable => Icons.checklist,
   _ => Icons.extension_outlined,
 };
 
-/// Desktop palette strip under the three panels (DESIGN §7.5): click adds to
-/// the selected group, drag drops anywhere on the layout.
+/// Desktop palette strip under the three panels (DESIGN §7.5): styles, then
+/// the template's presets. Click adds to the selected group, drag drops
+/// anywhere on the layout.
 class TemplatePaletteStrip extends StatelessWidget {
-  const TemplatePaletteStrip({super.key, required this.onAdd});
+  const TemplatePaletteStrip({
+    super.key,
+    required this.onAdd,
+    this.presets = const [],
+  });
 
-  final ValueChanged<FieldType> onAdd;
+  final ValueChanged<TemplateDrag> onAdd;
+  final List<FieldSchema> presets;
 
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    Widget item(TemplateDrag d, IconData icon, String label, String tip) {
+      Widget button({VoidCallback? onTap}) => _PaletteButton(
+        icon: icon,
+        label: label,
+        palette: palette,
+        onTap: onTap,
+      );
+      return Center(
+        child: Tooltip(
+          message: tip,
+          // Vertical affinity: a sideways drag still scrolls the strip on
+          // touch screens.
+          child: Draggable<TemplateDrag>(
+            data: d,
+            affinity: Axis.vertical,
+            feedback: Material(color: Colors.transparent, child: button()),
+            child: button(onTap: () => onAdd(d)),
+          ),
+        ),
+      );
+    }
+
+    final items = [
+      for (final t in paletteFieldTypes)
+        item(
+          TemplateDrag.style(t),
+          styleIcon(t),
+          styleLabel(l10n, t),
+          styleHint(l10n, t),
+        ),
+      if (presets.isNotEmpty)
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              l10n.tplPresets.toUpperCase(),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+        ),
+      for (final p in presets)
+        item(
+          TemplateDrag.preset(p.fieldId),
+          Icons.bookmark_outline,
+          p.label,
+          '${styleLabel(l10n, p.fieldType)} · ${l10n.tplPresetHint}',
+        ),
+    ];
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -108,33 +182,9 @@ class TemplatePaletteStrip extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 16),
-              itemCount: simpleFieldTypes.length,
+              itemCount: items.length,
               separatorBuilder: (_, _) => const SizedBox(width: 6),
-              itemBuilder: (context, i) {
-                final t = simpleFieldTypes[i];
-                Widget button({VoidCallback? onTap}) => _PaletteButton(
-                  icon: styleIcon(t),
-                  label: styleLabel(l10n, t),
-                  palette: palette,
-                  onTap: onTap,
-                );
-                return Center(
-                  child: Tooltip(
-                    message: styleHint(l10n, t),
-                    // Vertical affinity: a sideways drag still scrolls the
-                    // strip on touch screens.
-                    child: Draggable<TemplateDrag>(
-                      data: TemplateDrag.style(t),
-                      affinity: Axis.vertical,
-                      feedback: Material(
-                        color: Colors.transparent,
-                        child: button(),
-                      ),
-                      child: button(onTap: () => onAdd(t)),
-                    ),
-                  ),
-                );
-              },
+              itemBuilder: (context, i) => items[i],
             ),
           ),
         ],
@@ -303,11 +353,44 @@ class TemplatePill extends StatelessWidget {
   }
 }
 
-/// Phone "+ Add" sheet (DESIGN §7.6): one tap picks a style.
-Future<FieldType?> showStylePickerSheet(BuildContext context) {
+/// The "+ Add" sheet (DESIGN §7.6): one tap picks a style, or one of
+/// [presets] (listed under their own heading).
+Future<TemplateDrag?> showStylePickerSheet(
+  BuildContext context, {
+  List<FieldSchema> presets = const [],
+}) {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
-  return showModalBottomSheet<FieldType>(
+  Widget heading(String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: palette.tabActiveText,
+      ),
+    ),
+  );
+  Widget tile(TemplateDrag d, IconData icon, String title, String hint) =>
+      Builder(
+        builder: (context) => ListTile(
+          leading: Icon(icon, size: 20, color: palette.tabText),
+          title: Text(
+            title,
+            style: TextStyle(fontSize: 13, color: palette.tabActiveText),
+          ),
+          subtitle: Text(
+            hint,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          onTap: () => Navigator.pop(context, d),
+        ),
+      );
+  return showModalBottomSheet<TemplateDrag>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
@@ -319,32 +402,23 @@ Future<FieldType?> showStylePickerSheet(BuildContext context) {
       builder: (context, scroll) => ListView(
         controller: scroll,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(
-              l10n.tplAddField,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: palette.tabActiveText,
+          if (presets.isNotEmpty) ...[
+            heading(l10n.tplPresets),
+            for (final p in presets)
+              tile(
+                TemplateDrag.preset(p.fieldId),
+                Icons.bookmark_outline,
+                p.label,
+                '${styleLabel(l10n, p.fieldType)} · ${l10n.tplPresetHint}',
               ),
-            ),
-          ),
-          for (final t in simpleFieldTypes)
-            ListTile(
-              leading: Icon(styleIcon(t), size: 20, color: palette.tabText),
-              title: Text(
-                styleLabel(l10n, t),
-                style: TextStyle(fontSize: 13, color: palette.tabActiveText),
-              ),
-              subtitle: Text(
-                styleHint(l10n, t),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: palette.sidebarLabelSecondary,
-                ),
-              ),
-              onTap: () => Navigator.pop(context, t),
+          ],
+          heading(l10n.tplAddField),
+          for (final t in paletteFieldTypes)
+            tile(
+              TemplateDrag.style(t),
+              styleIcon(t),
+              styleLabel(l10n, t),
+              styleHint(l10n, t),
             ),
         ],
       ),

@@ -18,6 +18,7 @@ import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../support/test_database.dart';
 
@@ -28,6 +29,9 @@ void main() {
   late String zipPath;
 
   setUp(() async {
+    // Importing a world saves UI state (debounced); with no mock the save
+    // fails whenever its timer fires inside a test.
+    SharedPreferences.setMockInitialValues({});
     tmp = await Directory.systemTemp.createTemp('dmtz_template_test');
     zipPath = p.join(tmp.path, 'out', 'template.dmtz');
     await Directory(p.dirname(zipPath)).create(recursive: true);

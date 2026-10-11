@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'encounter_config.dart';
 import 'encounter_layout.dart';
 import 'entity_category_schema.dart';
+import 'field_schema.dart';
 
 part 'world_schema.freezed.dart';
 part 'world_schema.g.dart';
@@ -40,6 +41,10 @@ abstract class WorldSchema with _$WorldSchema {
     /// the template's own id when it was created empty. Copies keep it.
     /// Read through `isFreeTemplate`.
     @JsonKey(includeIfNull: false) String? freeRootId,
+    /// Free templates only: presets (DESIGN §9) — fields set up once and
+    /// added to many categories; a bound field names its preset in
+    /// `FieldSchema.presetId`. Read through `template_edit.dart`.
+    @JsonKey(includeIfNull: false) List<FieldSchema>? presets,
   }) = _WorldSchema;
 
   factory WorldSchema.fromJson(Map<String, dynamic> json) =>

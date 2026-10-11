@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/template_edit.dart'
+    show presetUses, presetsOf;
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../database/database_screen.dart' show parseHexColor;
@@ -118,6 +120,7 @@ class _FreeTemplateEditorScreenState
                     compact: false,
                     onInfo: _c.selectInfo,
                     onCategory: _c.openCategory,
+                    onPreset: _c.selectPreset,
                   ),
                 ),
                 const VerticalDivider(width: 1),
@@ -132,8 +135,9 @@ class _FreeTemplateEditorScreenState
           ),
           if (cat != null && !_c.preview) ...[
             TemplatePaletteStrip(
-              onAdd: (t) =>
-                  addFieldWithLabel(context, _c, t, groupId: _c.targetGroupId),
+              presets: presetsOf(_c.schema),
+              onAdd: (d) =>
+                  addFromPalette(context, _c, d, groupId: _c.targetGroupId),
             ),
           ],
         ],
@@ -171,6 +175,20 @@ class _FreeTemplateEditorScreenState
             context,
             alive: () => _c.category != null,
             builder: (_) => _PhoneCategoryPage(controller: _c),
+          );
+        },
+        onPreset: (id) {
+          _c.selectPreset(id);
+          _push(
+            context,
+            alive: () => _c.preset != null,
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(_c.preset!.label),
+                actions: [_SaveStatus(controller: _c, compact: true)],
+              ),
+              body: TemplatePresetForm(controller: _c),
+            ),
           );
         },
       ),
@@ -323,14 +341,12 @@ class _PhoneCategoryPage extends StatelessWidget {
           ? null
           : FloatingActionButton.extended(
               onPressed: () async {
-                final t = await showStylePickerSheet(context);
-                if (t != null && context.mounted) {
-                  await addFieldWithLabel(
-                    context,
-                    c,
-                    t,
-                    groupId: c.targetGroupId,
-                  );
+                final d = await showStylePickerSheet(
+                  context,
+                  presets: presetsOf(c.schema),
+                );
+                if (d != null && context.mounted) {
+                  await addFromPalette(context, c, d, groupId: c.targetGroupId);
                 }
               },
               icon: const Icon(Icons.add),
@@ -401,20 +417,22 @@ class _CategoryBar extends StatelessWidget {
   }
 }
 
-/// Template details, the player card, then the other categories in sidebar
-/// order (drag to reorder).
+/// Template details, the player card, the presets (DESIGN §9), then the
+/// other categories in sidebar order (drag to reorder).
 class _TemplateNav extends StatelessWidget {
   const _TemplateNav({
     required this.controller,
     required this.compact,
     required this.onInfo,
     required this.onCategory,
+    required this.onPreset,
   });
 
   final TemplateEditController controller;
   final bool compact;
   final VoidCallback onInfo;
   final ValueChanged<String> onCategory;
+  final ValueChanged<String> onPreset;
 
   @override
   Widget build(BuildContext context) {
@@ -446,6 +464,48 @@ class _TemplateNav extends StatelessWidget {
           ),
           for (final pc in players)
             _CategoryTile(nav: this, category: pc, tag: l10n.tplPlayerCard),
+          _NavLabel(
+            text: l10n.tplPresets,
+            action: IconButton(
+              tooltip: l10n.tplAddPreset,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.add, size: 18),
+              onPressed: () async {
+                if (await addPresetWithLabel(context, c) && compact) {
+                  onPreset(c.presetId!);
+                }
+              },
+            ),
+          ),
+          if (presetsOf(c.schema).isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: Text(
+                l10n.tplPresetHint,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
+            ),
+          for (final p in presetsOf(c.schema))
+            _NavRow(
+              key: ValueKey('nav-preset-${p.fieldId}'),
+              nav: this,
+              selected:
+                  !compact &&
+                  c.panel == TemplatePanel.preset &&
+                  c.presetId == p.fieldId,
+              leading: Icon(
+                Icons.bookmark_outline,
+                size: 16,
+                color: palette.tabText,
+              ),
+              title: p.label,
+              count: '${presetUses(c.schema, p.fieldId).length}',
+              countTooltip: l10n.tplPresetUsedIn,
+              onTap: () => onPreset(p.fieldId),
+            ),
           _NavLabel(
             text: l10n.tplCategories,
             action: IconButton(
@@ -503,6 +563,7 @@ class _CategoryTile extends StatelessWidget {
       selected:
           !nav.compact &&
           c.panel != TemplatePanel.info &&
+          c.panel != TemplatePanel.preset &&
           c.categoryId == category.categoryId,
       // The pinned player card shows what it is where the others have
       // their drag handle.
@@ -546,6 +607,7 @@ class _CategoryTile extends StatelessWidget {
 /// the right; the selected row tinted.
 class _NavRow extends StatelessWidget {
   const _NavRow({
+    super.key,
     required this.nav,
     required this.selected,
     required this.leading,
