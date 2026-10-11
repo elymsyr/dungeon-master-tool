@@ -21,13 +21,13 @@ tags: [file]
 
 **Outputs**
 - `allTemplatesProvider` (`FutureProvider<List<WorldSchema>>`) — `[generateBuiltinDnd5eV2Schema().schema]`. Consumers: character wizard, character editor, world creation, package creation, global tags. `customTemplatesProvider` is an alias.
-- `userTemplatesProvider` (`AsyncNotifierProvider<UserTemplatesNotifier, List<WorldSchema>>`) — `copy(source, name)`, `createEmpty(name, playerCardName:)`, `saveInfo(id, name:, description:, tags:, coverImagePath:)` (settings dialog; tags and cover in `metadata` like worlds/packages), `delete(id)`. Consumer: the hub Templates tab.
+- `userTemplatesProvider` (`AsyncNotifierProvider<UserTemplatesNotifier, List<WorldSchema>>`) — `copy(source, name)`, `createEmpty(name, playerCardName:)`, `saveInfo(id, name:, description:, tags:, coverImagePath:)` (settings dialog; tags and cover in `metadata` like worlds/packages), `save(template)` (the editor's autosave; stamps `updatedAt`), `delete(id)`. Consumers: the hub Templates tab, [[free_template_editor]].
 
 ## Dependencies & Links
 - Depends on: [[user_templates_dao]], [[free_template]], [[builtin_schema]]
-- Used by: `templates_tab.dart`, `template_editor.dart` (inspector), wizard / world / package dialogs (built-in list only)
+- Used by: `templates_tab.dart`, [[free_template_editor]], `template_editor.dart` (inspector), wizard / world / package dialogs (built-in list only)
 - Domain map: [[World-and-Content]]
-- Spec / reference: `docs/free-template/ROADMAP.md` B3, Faz 1
+- Spec / reference: `docs/free-template/ROADMAP.md` B3, Faz 1, Faz 2
 
 ## Key Logic / Variables
 - Free templates reach a built-in flow only when that flow opts into `userTemplatesProvider` in its own phase (worlds Faz 3, packages Faz 5, characters Faz 6). Test: `user_templates_provider_test.dart` "built-in flows never see free templates".

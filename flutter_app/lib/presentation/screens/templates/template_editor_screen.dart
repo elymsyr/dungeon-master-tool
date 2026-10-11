@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_template.dart';
 import '../hub/template_editor.dart';
+import 'free_template_editor.dart';
 
-/// Read-only template inspector screen. Wraps [TemplateEditor] with a
-/// scaffold + close button. Templates are no longer editable; this screen
-/// is reachable from Templates tab → "View".
+/// Templates tab → View / Edit. A free template opens in the editor; the
+/// built-in one in the read-only inspector ([TemplateEditor]), unchanged
+/// (docs/free-template/ROADMAP.md R8).
 class TemplateEditorScreen extends ConsumerWidget {
   final WorldSchema initial;
 
@@ -14,6 +16,9 @@ class TemplateEditorScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isFreeTemplate(initial)) {
+      return FreeTemplateEditorScreen(initial: initial);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(initial.name),

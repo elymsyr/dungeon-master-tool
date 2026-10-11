@@ -1884,7 +1884,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
       alignment: Alignment.center,
       child: hasIcon
           ? Icon(
-              _iconFromName(iconOverride),
+              mapIconFromName(iconOverride),
               size: size * 0.6,
               color: Colors.white,
             )
@@ -2525,7 +2525,7 @@ Color _pinColor(String pinType, DmToolColors palette) {
 /// Map builtin EntityCategorySchema.icon string (Material icon name) → IconData.
 /// Covers every builtin category icon plus a few extras for hand-picked pin
 /// types. Unknown names fall back to a generic location pin.
-IconData _iconFromName(String name) {
+IconData mapIconFromName(String name) {
   return switch (name) {
     // Builtin EntityCategorySchema icons
     'workspaces' => Icons.workspaces,
@@ -2601,7 +2601,7 @@ IconData _iconFromName(String name) {
 IconData _pinIcon(MapPin pin, WidgetRef ref) {
   final override = pin.style['icon'];
   if (override is String && override.isNotEmpty) {
-    return _iconFromName(override);
+    return mapIconFromName(override);
   }
   final entityId = pin.entityId;
   if (entityId != null) {
@@ -2612,7 +2612,7 @@ IconData _pinIcon(MapPin pin, WidgetRef ref) {
           .where((c) => c.slug == entity.categorySlug)
           .firstOrNull;
       if (cat != null && cat.icon.isNotEmpty) {
-        return _iconFromName(cat.icon);
+        return mapIconFromName(cat.icon);
       }
     }
   }
@@ -2620,7 +2620,7 @@ IconData _pinIcon(MapPin pin, WidgetRef ref) {
   final schema = ref.read(worldSchemaProvider);
   final cat = schema.categories.where((c) => c.slug == pin.pinType).firstOrNull;
   if (cat != null && cat.icon.isNotEmpty) {
-    return _iconFromName(cat.icon);
+    return mapIconFromName(cat.icon);
   }
   return switch (pin.pinType) {
     'npc' => Icons.person_pin,

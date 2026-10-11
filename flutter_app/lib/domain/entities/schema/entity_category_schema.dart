@@ -31,6 +31,9 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     /// Free templates only: the player card category the character sheet is
     /// drawn from (docs/free-template/DESIGN.md §10.1). Null elsewhere.
     @JsonKey(includeIfNull: false) bool? isPlayerCard,
+    /// Free templates only: the codex sidebar group (0 lookups, 1 content,
+    /// 2 DM). Null: the built-in slug lists decide (`builtinTier`).
+    @JsonKey(includeIfNull: false) int? tier,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

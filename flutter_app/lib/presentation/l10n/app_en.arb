@@ -3529,5 +3529,154 @@
     }
   },
   "templateLineageSrd": "Based on D&D 5e (SRD 5.2.1)",
-  "templateCategoriesBack": "Categories"
+  "templateCategoriesBack": "Categories",
+  "tplSaved": "Saved",
+  "tplSaving": "Saving…",
+  "tplSaveFailed": "Not saved",
+  "tplPreview": "Preview",
+  "tplLayout": "Layout",
+  "tplPreviewSample": "Sample card",
+  "tplSectionTemplate": "Template",
+  "tplInfo": "Details",
+  "tplPlayerCard": "Player card",
+  "tplCategories": "Categories",
+  "tplAddCategory": "Add category",
+  "tplCategoryName": "Category name",
+  "tplNewCategoryName": "New category",
+  "tplCategorySettings": "Category settings",
+  "tplNoCategory": "Pick a category on the left.",
+  "tplAddGroup": "Add group",
+  "tplGroupName": "Group name",
+  "tplNewGroupName": "New group",
+  "tplGroupSettings": "Group settings",
+  "tplColumns": "{count} col",
+  "@tplColumns": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tplColumnCount": "Columns",
+  "tplCollapsed": "Start collapsed",
+  "tplMoveFields": "Move fields to",
+  "tplMove": "Move",
+  "tplUngroupedHint": "Fields outside a group show here.",
+  "tplGroupEmpty": "No fields yet. Drag one here.",
+  "tplDragHandle": "Drag to reorder",
+  "tplAddField": "Add field",
+  "tplPaletteHint": "Click to add to the selected group, or drag onto the layout.",
+  "tplFieldLabel": "Label",
+  "tplFieldKey": "Key",
+  "tplFieldKeyHint": "Made from the first label; never changes.",
+  "tplStyle": "Style",
+  "tplList": "Holds several values",
+  "tplHelpText": "Help text",
+  "tplDefault": "Default value",
+  "tplRequired": "Required",
+  "tplRequiredHint": "Warns when empty; never blocks saving.",
+  "tplVisibility": "Visible to",
+  "tplVisShared": "Everyone",
+  "tplVisDm": "DM only",
+  "tplVisPrivate": "Private",
+  "tplWidth": "Width (columns)",
+  "tplGroup": "Group",
+  "tplPlaceholder": "Placeholder",
+  "tplMaxLength": "Max length",
+  "tplMin": "Min",
+  "tplMax": "Max",
+  "tplOptions": "Options",
+  "tplAddOption": "Add option",
+  "tplTargets": "Links to",
+  "tplTargetsAny": "None selected = any category.",
+  "tplExtensions": "Allowed extensions",
+  "tplExtensionsHint": "pdf, png — empty allows all",
+  "tplDeleteField": "Delete field",
+  "tplDeleteFieldBody": "\"{name}\" will be removed from the template. Values already in cards are kept, hidden.",
+  "@tplDeleteFieldBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tplDeleteGroup": "Delete group",
+  "tplDeleteGroupBody": "\"{name}\" will be removed. Its fields are kept and move to Properties.",
+  "@tplDeleteGroupBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tplDeleteCategory": "Delete category",
+  "tplDeleteCategoryBody": "\"{name}\" will be removed from the template. Its cards in worlds are not deleted, only hidden.",
+  "@tplDeleteCategoryBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tplPlayerCardLocked": "The player card can't be deleted; its name, icon and color can change.",
+  "tplColor": "Color",
+  "tplFilters": "Filter fields",
+  "tplFiltersHint": "Offered as filters in the card list.",
+  "tplSections": "Can be used in",
+  "tplSectionWorldmap": "World map",
+  "tplSectionMindmap": "Mind map",
+  "tplSectionProjection": "Projection",
+  "tplName": "Name",
+  "tplDescription": "Description",
+  "tplVersion": "Version",
+  "tplTypeChangeTitle": "Change style?",
+  "tplTypeChangeIncompatible": "Existing values can't be read as {style}. A new field with a new key replaces this one; old values stay hidden in the cards.",
+  "@tplTypeChangeIncompatible": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "tplTypeChangeLossy": "Cards linking several cards keep only the first one.",
+  "tplChange": "Change",
+  "tplLegacyBadge": "SRD type",
+  "tplLegacyHint": "Kept from the SRD. Until its own style arrives, only label, group, width and visibility change.",
+  "tplStyleText": "Text",
+  "tplStyleTextHint": "One line of text",
+  "tplStyleTextarea": "Long text",
+  "tplStyleTextareaHint": "Several lines of plain text",
+  "tplStyleMarkdown": "Markdown",
+  "tplStyleMarkdownHint": "Formatted text; @ links cards",
+  "tplStyleInteger": "Whole number",
+  "tplStyleIntegerHint": "e.g. XP, AC",
+  "tplStyleFloat": "Decimal number",
+  "tplStyleFloatHint": "e.g. weight",
+  "tplStyleBoolean": "Checkbox",
+  "tplStyleBooleanHint": "Yes or no",
+  "tplStyleEnum": "Choice",
+  "tplStyleEnumHint": "One of fixed options",
+  "tplStyleDate": "Date",
+  "tplStyleDateHint": "A calendar date",
+  "tplStyleTags": "Tags",
+  "tplStyleTagsHint": "Free list of tags",
+  "tplStyleDice": "Dice",
+  "tplStyleDiceHint": "A roll like 2d6+3",
+  "tplStyleImage": "Image",
+  "tplStyleImageHint": "A picture, e.g. a portrait",
+  "tplStyleImagePerEra": "Era image",
+  "tplStyleImagePerEraHint": "One image per world map era",
+  "tplStyleFile": "File",
+  "tplStyleFileHint": "An attached file or PDF",
+  "tplStyleRelation": "Card link",
+  "tplStyleRelationHint": "Links to other cards",
+  "tplOrder": "Order",
+  "tplMoveUp": "Move up",
+  "tplMoveDown": "Move down",
+  "tplTier": "Tier",
+  "tplTierHint": "The group the category sits in on the codex sidebar.",
+  "tplTier0": "Tier 0 — Lookups",
+  "tplTier1": "Tier 1 — Content",
+  "tplTier2": "Tier 2 — DM",
+  "tplMapIcon": "Map icon"
 }

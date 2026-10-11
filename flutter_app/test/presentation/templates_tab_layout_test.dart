@@ -163,6 +163,8 @@ void main() {
 
     await tapAndSettle(find.text('My SRD'));
     expect(button(Icons.delete_outline).onPressed, isNotNull);
+    // Own templates are edited, the built-in one only viewed.
+    expect(find.widgetWithText(FilledButton, 'Edit'), findsOneWidget);
     await tapAndSettle(find.byIcon(Icons.delete_outline));
     expect(find.text('Delete template?'), findsOneWidget);
     await tapAndSettle(find.widgetWithText(FilledButton, 'Delete'));
@@ -200,15 +202,17 @@ void main() {
     expect(find.textContaining('No templates of your own yet'), findsOneWidget);
   });
 
+  // The built-in template opens read-only in the inspector (R8); own
+  // templates open in the editor (free_template_editor_test.dart).
   testWidgets('phone: inspector goes list → category → back to list',
       (tester) async {
     await _size(tester, const Size(360, 780));
-    await tester.pumpWidget(_app(
-        TemplateEditorScreen(initial: _mine.first), const Locale('en')));
+    await tester.pumpWidget(
+        _app(TemplateEditorScreen(initial: _builtin), const Locale('en')));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    final first = _mine.first.categories.first;
+    final first = _builtin.categories.first;
     await tester.tap(find.text(first.name));
     await tester.pumpAndSettle();
     expect(find.text('slug: ${first.slug}'), findsOneWidget);
@@ -223,11 +227,11 @@ void main() {
   testWidgets('desktop: inspector shows list and detail side by side',
       (tester) async {
     await _size(tester, const Size(1280, 800));
-    await tester.pumpWidget(_app(
-        TemplateEditorScreen(initial: _mine.first), const Locale('en')));
+    await tester.pumpWidget(
+        _app(TemplateEditorScreen(initial: _builtin), const Locale('en')));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('slug: ${_mine.first.categories.first.slug}'),
-        findsOneWidget);
+    expect(
+        find.text('slug: ${_builtin.categories.first.slug}'), findsOneWidget);
   });
 }
