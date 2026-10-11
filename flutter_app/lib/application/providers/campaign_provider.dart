@@ -79,10 +79,14 @@ class CampaignInfo {
   final String id;
   final String name;
   final String templateName;
+
+  /// The world runs on a free template (its schema has a `freeRootId`).
+  final bool isFree;
   const CampaignInfo({
     required this.id,
     required this.name,
     required this.templateName,
+    this.isFree = false,
   });
 }
 
@@ -98,6 +102,7 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
   for (final w in worlds) {
     final settingsRow = await db.worldSettingsDao.get(w.id);
     String templateName = '';
+    var isFree = false;
     if (settingsRow != null && settingsRow.settingsJson.isNotEmpty) {
       try {
         final decoded = jsonDecode(settingsRow.settingsJson);
@@ -106,6 +111,7 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
           if (schema is Map && schema['name'] is String) {
             templateName = schema['name'] as String;
           }
+          isFree = schema is Map && schema['freeRootId'] != null;
         }
       } catch (_) {}
     }
@@ -113,6 +119,7 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
       id: w.id,
       name: w.worldName,
       templateName: templateName,
+      isFree: isFree,
     ));
   }
   return infos;

@@ -14,6 +14,7 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../domain/services/free_template.dart' show isSrdLineage;
 import '../../domain/value_objects/world_section_stamps.dart';
 import '../database/app_database.dart';
 import '../services/first_party_art_service.dart';
@@ -168,7 +169,9 @@ class WorldRepositoryImpl implements CampaignRepository {
       })),
     ));
 
-    if (includeSrd && schema.schemaId == builtinDnd5eV2SchemaId) {
+    // SRD copies get the SRD pack too (V28); an empty free template doesn't.
+    if (includeSrd &&
+        (schema.schemaId == builtinDnd5eV2SchemaId || isSrdLineage(schema))) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,
@@ -564,8 +567,11 @@ class WorldRepositoryImpl implements CampaignRepository {
     // A player who joined before the link-based idempotency fix has no
     // installed_packages row — without this, synthesis yields nothing and
     // the built-in catalog is empty. Cheap when already linked (one query).
-    if (world.templateId == builtinDnd5eV2SchemaId &&
-        settingsBlob[_srdOptOutKey] != true) {
+    // An SRD copy's world (free template, V28) keeps its pack link the same
+    // way. Read off the raw snapshot: `isSrdLineage` without a full parse.
+    final srdWorld = world.templateId == builtinDnd5eV2SchemaId ||
+        schemaSnapshot?['freeRootId'] == builtinDnd5eV2SchemaId;
+    if (srdWorld && settingsBlob[_srdOptOutKey] != true) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,

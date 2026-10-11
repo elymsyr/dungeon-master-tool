@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/campaign_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-10-08
+updated: 2026-10-11
 tags: [file]
 ---
 
@@ -44,7 +44,8 @@ tags: [file]
 - **`_settingsTopKeyBlocklist`** (also `WorldRepositoryImpl._typedTopKeys`): `world_id, world_name, created_at, entities, sessions, world_schema, template_id, template_hash, template_original_hash` — everything else rides in `world_settings.settings_json`.
 - **DM gate**: cloud `enqueueWorldSettings` only fires for `WorldRole.dm` (prefers cached sync role `valueOrNull` to avoid suspending combat/settings on a network round-trip; falls back to async). Non-DM degrades to local-only write (pre-empts RLS 42501 spam).
 - **Row-level API**: `saveEntity`/`deleteEntity` (single `world_entities` row + touch), `saveSettingsPatch` (read-merge-write JSON + cloud enqueue), `saveSettingsPatchLocalOnly` (motion-class: viewport/pan/zoom — local Drift only, no outbox).
-- **Template hash bookkeeping** (`applyTemplateUpdate`): `template_hash` <- current content hash; `template_original_hash` backfilled to lineage hash; clears `template_dismissed_hash`/`template_updates_muted`. Hash gate skips the expensive `deepCopyJson(toJson())` on a no-op match.
+- **`CampaignInfo.isFree`** — the world's schema snapshot has a `freeRootId` (free template). The creation wizard leaves these worlds out of its world list.
+- **Template hash bookkeeping** (`applyTemplateUpdate`, used by [[template_update_dialog]] for free worlds; `dismissTemplateUpdate` / `muteTemplateUpdates` back its Ignore / "do not show again"): `template_hash` <- current content hash; `template_original_hash` backfilled to lineage hash; clears `template_dismissed_hash`/`template_updates_muted`. Hash gate skips the expensive `deepCopyJson(toJson())` on a no-op match.
 - **CDC removal**: `purgeWorldById`/`trashWorldById` artık doğrudan `purge`/`delete`'e id geçiyor — isim çözümü (`resolveWorldName`) kalktı. Must route cache invalidation through `_worldCacheInvalidatorProvider` (a no-watch Provider) — invalidating role/list providers via the notifier's own ref throws `CircularDependencyError` because `currentWorldRoleProvider` transitively depends on `activeCampaignProvider`.
 - **delete vs purge**: `delete` snapshots to trash then cascades; `purge` is hard-delete bypassing trash (online leave/kick). Both orphan bound characters first (re-anchoring SRD refs to bundled stable UUIDs) via `orphanForWorld(worldId, entities)` — **world id, ad değil**: ad geçilirse `c.worldId == worldId` hiçbir zaman tutmaz ve fonksiyon sessizce hiçbir şey yapmaz; 2026-09-02'ye kadar öyleydi. Tuzağın kaynağı `WorldRepositoryImpl.create`'in **ad** döndürmesiydi; Faz 2.5'te id döndürmeye başladı ve `delete`/`purge` zaten id alıyor, then cloud-delete (rethrows on failure so UI cancels the local delete), then best-effort cloud media + marketplace cleanup, and finally `UiStateNotifier.forgetWorld(campaignName)`.
 - **Görünüm izleri silinmeli** (2026-09-12): açık kartlar, panel filtreleri/sıralaması/araması ve `WorldViewState` (aktif sekme + **açık PDF yolları**) SharedPreferences'ta duruyor ve `_purgeWorld` onlara dokunmuyor; `delete` ve `purge` ikisi de `forgetWorld` çağırır. **Faz 2.5'ten beri anahtar dünya id'si** — eskiden addı, yani aynı adla oluşturulan bir sonraki dünya silinenin açık kartlarını miras alabiliyordu. Eski ad anahtarlı kayıtlar artık eşleşmiyor: panel filtresi/açık kart gibi tercihler bir kez sıfırlanır, veri kaybı değil.

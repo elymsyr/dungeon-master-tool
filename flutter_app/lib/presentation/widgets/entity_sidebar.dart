@@ -23,6 +23,8 @@ import '../../domain/entities/schema/builtin/lookups.dart'
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/services/content_translator.dart';
+import '../../domain/services/free_template.dart'
+    show builtinTier, isFreeTemplate;
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../../domain/services/entity_search.dart';
@@ -257,6 +259,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   /// Custom (user-authored) categories not in any list fall through to tier 2,
   /// as do the DM-authored lookups (`condition`).
   int _tierFor(String slug) {
+    // Free template: the category's own Tier (set in the editor).
+    final schema = widget.schema;
+    if (schema != null && isFreeTemplate(schema)) {
+      final cat = schema.categories.where((c) => c.slug == slug).firstOrNull;
+      return (cat?.tier ?? builtinTier(slug)).clamp(0, 2);
+    }
     if (tier0Slugs.contains(slug) && !dmAuthoredLookupSlugs.contains(slug)) {
       return 0;
     }
@@ -1309,8 +1317,11 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     for (final c in categories) {
       byTier[_tierFor(c.slug)]!.add(c);
     }
-    for (final tierCats in byTier.values) {
-      tierCats.sort((a, b) => a.name.compareTo(b.name));
+    // Free template: template order within a Tier.
+    if (widget.schema == null || !isFreeTemplate(widget.schema!)) {
+      for (final tierCats in byTier.values) {
+        tierCats.sort((a, b) => a.name.compareTo(b.name));
+      }
     }
 
     showDialog(

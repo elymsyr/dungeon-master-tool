@@ -3678,5 +3678,7 @@
   "tplTier0": "Tier 0 — Lookups",
   "tplTier1": "Tier 1 — Content",
   "tplTier2": "Tier 2 — DM",
-  "tplMapIcon": "Map icon"
+  "tplMapIcon": "Map icon",
+  "freeWorldNoMultiplayer": "Worlds with your own template can't go multiplayer yet: players would get the built-in sheet instead of yours.",
+  "freeWorldNoCharacters": "Characters aren't available yet in worlds with your own template."
 }

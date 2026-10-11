@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dungeon_master_tool/application/providers/campaign_provider.dart';
 import 'package:dungeon_master_tool/application/providers/template_provider.dart';
 import 'package:dungeon_master_tool/application/services/content_transfer/content_archive.dart';
 import 'package:dungeon_master_tool/application/services/content_transfer/content_codec.dart';
@@ -12,6 +13,8 @@ import 'package:dungeon_master_tool/core/config/app_paths.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/database/database_provider.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
+import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -104,5 +107,58 @@ void main() {
     final newCover = list.single.metadata['cover_image_path'] as String;
     expect(p.isWithin(AppPaths.dataRoot, newCover), isTrue);
     expect(await File(newCover).readAsString(), 'cover');
+  });
+
+  test('a free template world travels without its template', () async {
+    final (a, dbA) = await openRoot('a');
+    await a.read(userTemplatesProvider.future);
+    final t = await a
+        .read(userTemplatesProvider.notifier)
+        .copy(generateBuiltinDnd5eV2Schema().schema, 'Mine');
+    final repoA = a.read(campaignRepositoryProvider);
+    final worldId = await repoA.create('Deneme', template: t);
+    await repoA.saveEntity(worldId, 'f1', {
+      'name': 'Harpers',
+      'type': 'npc',
+      'attributes': {'motto': 'x'},
+    });
+    expect(
+      await exportContentArchive(
+        codec: a.read(contentCodecProvider),
+        type: ContentItemType.world,
+        id: worldId,
+        path: zipPath,
+      ),
+      isTrue,
+    );
+    a.dispose();
+    await dbA.close();
+
+    final (b, dbB) = await openRoot('b');
+    addTearDown(() async {
+      b.dispose();
+      await dbB.close();
+    });
+    final archive = await ContentArchive.open(zipPath);
+    try {
+      await archive.applyTo(b.read(contentCodecProvider));
+    } finally {
+      await archive.close();
+    }
+
+    // The template is not in the file; the world runs on its own copy.
+    final templates = await b.read(userTemplatesProvider.future);
+    expect(templates, isEmpty);
+    final got = await b.read(campaignRepositoryProvider).load(worldId);
+    final schema = WorldSchema.fromJson(
+        Map<String, dynamic>.from(got['world_schema'] as Map));
+    expect(schema.schemaId, t.schemaId);
+    expect(isSrdLineage(schema), isTrue);
+    expect(schema.categories, hasLength(t.categories.length));
+    final entities = got['entities'] as Map;
+    expect(((entities['f1'] as Map)['attributes'] as Map)['motto'], 'x');
+    // SRD pack linked again on this root (V28): the SRD cards are back.
+    expect(entities.length, greaterThan(1));
+    expect(pendingTemplateUpdate(schema, templates), isNull);
   });
 }

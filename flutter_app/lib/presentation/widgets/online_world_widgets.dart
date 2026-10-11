@@ -93,6 +93,15 @@ Future<bool> turnMultiplayerOn(
   final l10n = L10n.of(context)!;
   final messenger = ScaffoldMessenger.of(context);
 
+  // K6 / V21: a free template world stays offline — players don't get the
+  // DM's schema, they would see the built-in sheet instead.
+  if ((data['world_schema'] as Map?)?['freeRootId'] != null) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.freeWorldNoMultiplayer)),
+    );
+    return false;
+  }
+
   if (!await mediaFitsQuota(ref, messenger,
       (svc) => svc.worldMediaRefs(worldId), l10n.multiplayerQuotaExceeded)) {
     return false;

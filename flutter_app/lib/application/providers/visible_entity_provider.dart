@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../../domain/services/free_template.dart'
+    show withoutDeletedCategories;
 import 'auth_provider.dart';
 import 'builtin_package_provider.dart';
 import 'entity_provider.dart';
@@ -30,9 +32,13 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
     activeCampaignIdProvider,
     builtinPackageIdProvider,
     installedWorldPackageIdsProvider,
+    worldSchemaProvider,
   ],
   (ref) {
-    final all = ref.watch(entityProvider);
+    final all = withoutDeletedCategories(
+      ref.watch(entityProvider),
+      ref.watch(worldSchemaProvider),
+    );
     final role =
         ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
     if (role != WorldRole.player) return all;

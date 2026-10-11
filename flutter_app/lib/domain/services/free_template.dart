@@ -1,3 +1,4 @@
+import '../entities/entity.dart';
 import '../entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../entities/schema/builtin/content.dart' show tier1Slugs;
 import '../entities/schema/builtin/lookups.dart'
@@ -63,6 +64,55 @@ WorldSchema copyAsFreeTemplate(
     ],
   );
   return copy.copyWith(originalHash: computeWorldSchemaContentHash(copy));
+}
+
+/// Content hash for the free template update check (ROADMAP Faz 3): the usual
+/// content hash minus the Templates tab's tags and cover, so a new cover
+/// doesn't ask every world to update.
+String freeTemplateContentHash(WorldSchema schema) =>
+    computeWorldSchemaContentHash(
+      schema.copyWith(
+        metadata: {
+          for (final e in schema.metadata.entries)
+            if (e.key != 'tags' && e.key != 'cover_image_path') e.key: e.value,
+        },
+      ),
+    );
+
+/// The template [world] should be offered as an update, or null: the world
+/// isn't free (B2), prompts are muted, its template is gone (V2), or the
+/// template already matches the world or the version the user ignored.
+WorldSchema? pendingTemplateUpdate(
+  WorldSchema world,
+  List<WorldSchema> templates, {
+  String? dismissedHash,
+  bool muted = false,
+}) {
+  if (!isFreeTemplate(world) || muted) return null;
+  final template = templates
+      .where((t) => t.schemaId == world.schemaId)
+      .firstOrNull;
+  if (template == null) return null;
+  final hash = freeTemplateContentHash(template);
+  if (hash == dismissedHash || hash == freeTemplateContentHash(world)) {
+    return null;
+  }
+  return template;
+}
+
+/// V5: in a free world the cards of a deleted category stay stored but are
+/// not shown; adding the category back brings them back. Built-in worlds
+/// pass through untouched.
+Map<String, Entity> withoutDeletedCategories(
+  Map<String, Entity> all,
+  WorldSchema schema,
+) {
+  if (!isFreeTemplate(schema)) return all;
+  final slugs = {for (final c in schema.categories) c.slug};
+  return {
+    for (final e in all.entries)
+      if (slugs.contains(e.value.categorySlug)) e.key: e.value,
+  };
 }
 
 /// A new free template holding only the player card (V1). Its fixed fields

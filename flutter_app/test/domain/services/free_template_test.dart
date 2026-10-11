@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
@@ -97,5 +98,68 @@ void main() {
     final child =
         copyAsFreeTemplate(empty, id: 'e2', name: 'Mine 2', now: _now);
     expect(child.freeRootId, 'e1');
+  });
+
+  group('template update check (Faz 3)', () {
+    // The world holds its own copy of the template (same schemaId).
+    final world = srd;
+    final noSpell = srd.copyWith(categories: [
+      for (final c in srd.categories)
+        if (c.slug != 'spell') c,
+    ]);
+
+    test('same content: nothing to offer', () {
+      expect(pendingTemplateUpdate(world, [srd]), isNull);
+    });
+
+    test('changed template is offered', () {
+      expect(pendingTemplateUpdate(world, [noSpell]), noSpell);
+    });
+
+    test('a new cover or tags alone is not a change', () {
+      final dressed = srd.copyWith(metadata: {
+        ...srd.metadata,
+        'tags': ['homebrew'],
+        'cover_image_path': '/covers/a.png',
+      });
+      expect(pendingTemplateUpdate(world, [dressed]), isNull);
+    });
+
+    test('ignored version stays quiet until the next change', () {
+      final ignored = freeTemplateContentHash(noSpell);
+      expect(
+          pendingTemplateUpdate(world, [noSpell], dismissedHash: ignored),
+          isNull);
+      final noFeat = noSpell.copyWith(categories: [
+        for (final c in noSpell.categories)
+          if (c.slug != 'feat') c,
+      ]);
+      expect(
+          pendingTemplateUpdate(world, [noFeat], dismissedHash: ignored),
+          noFeat);
+    });
+
+    test('muted world, deleted template (V2), built-in world: never', () {
+      expect(pendingTemplateUpdate(world, [noSpell], muted: true), isNull);
+      expect(pendingTemplateUpdate(world, const []), isNull);
+      expect(
+          pendingTemplateUpdate(
+              builtin, [noSpell.copyWith(schemaId: builtin.schemaId)]),
+          isNull);
+    });
+  });
+
+  test('a deleted category hides its cards only in a free world (V5)', () {
+    final cards = {
+      'a': const Entity(id: 'a', name: 'Fireball', categorySlug: 'spell'),
+      'b': const Entity(id: 'b', name: 'Goblin', categorySlug: 'monster'),
+    };
+    final noSpell = srd.copyWith(categories: [
+      for (final c in srd.categories)
+        if (c.slug != 'spell') c,
+    ]);
+    expect(withoutDeletedCategories(cards, noSpell).keys, ['b']);
+    expect(withoutDeletedCategories(cards, srd).keys, ['a', 'b']);
+    expect(identical(withoutDeletedCategories(cards, builtin), cards), isTrue);
   });
 }
