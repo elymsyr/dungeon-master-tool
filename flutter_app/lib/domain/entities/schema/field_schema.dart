@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'field_schema.freezed.dart';
@@ -41,6 +43,38 @@ enum FieldType {
   spellSlotProgression, // `Map<level, Map<spellLevel, count>>` — class-level slot progression override. When populated, overrides the SRD `caster_kind` preset at runtime. Stored with string-coerced keys for JSON compatibility.
   subspeciesOptions,    // `List<{name, description, granted_senses, granted_damage_resistances, granted_damage_immunities, granted_damage_vulnerabilities, granted_condition_immunities, granted_languages, granted_skill_proficiencies, granted_action_refs, granted_bonus_action_refs, granted_reaction_refs, granted_trait_refs}>` — species lineage / subspecies option rows. Resolver matches by `name`, folds grants onto the PC.
   crCalculator,         // `{atk_bonus?: int, dpr_avg?: int, save_dc?: int}` — author-supplied inputs. Widget reads `ac` + `hp_average` from sibling fields and renders the SRD §1 / DMG p.273-275 defensive + offensive CR estimate.
+
+  /// Free templates only: rows under columns the template defines
+  /// (docs/free-template/DESIGN.md §8.1). Column types: text, number,
+  /// check, choice, dice, relation. `styleConfig`:
+  /// `{columns: [{key, label, type, options?: [String] (choice), targets?:
+  /// [slug] (relation), locked?: bool (fixed rows: the template's cell,
+  /// read-only on cards)}], fixedRows: bool, rows: [row]}` — the template's
+  /// rows when fixed, each `{_id, <column key>: value}`.
+  /// Card value: `List<{_id?, <column key>: value}>`; a fixed row holds only
+  /// what differs from the template. The SRD shapes a copy converts are
+  /// read as they are: `{rows: [...]}` (proficiencyTable), `List` rows
+  /// (rangedSenseList, spellEffectList), `Map<level, value>` (levelTable,
+  /// levelTextTable). Read through `free_field_styles.dart`.
+  table,
+
+  /// Free templates only: labelled scores and their modifiers
+  /// (DESIGN §8.2). `styleConfig`:
+  /// `{stats: [{key, label}], base: int, step: int, showModifier: bool}`.
+  /// Card value: `Map<stat key, int>`, the statBlock shape.
+  /// Modifier = ⌊(value − base) ÷ step⌋, rounded down.
+  statTable,
+
+  /// Free templates only: skills / saving throws as the SRD shows them
+  /// (DESIGN §8.1, D32) — fixed rows, each rolled with a stat of the
+  /// card's stat table. `styleConfig`: `{rows: [{_id, name, ability: stat
+  /// key}], stat?: fieldKey (the statTable it reads, default the
+  /// category's first), bonus?: fieldKey (the number a proficient /
+  /// expertise mark adds)}`. Card value: the table's rows
+  /// `[{_id, ability?, proficient?, expertise?, misc?}]` (only what
+  /// differs from the template); the SRD's `{rows: [{name, ability,
+  /// proficient, expertise, misc}]}` is read as it is.
+  skillTable,
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
@@ -106,6 +140,13 @@ abstract class FieldSchema with _$FieldSchema {
     /// packageEntityImage). Schema layer'a `MediaKind` import'u sızdırmamak
     /// için string olarak saklanır; resolver `MediaKind.fromWireName` ile çevirir.
     @Default(null) String? mediaKindWire,
+    /// Free templates only: the style's own settings, shaped per
+    /// [FieldType] (see [FieldType.table], [FieldType.statTable]). Null
+    /// elsewhere, so the built-in schema's JSON is unchanged (K2).
+    @JsonKey(includeIfNull: false) Map<String, dynamic>? styleConfig,
+    /// Free templates only: the preset (`WorldSchema.presets`) this field
+    /// takes its structure from (DESIGN §9). Null elsewhere (K2).
+    @JsonKey(includeIfNull: false) String? presetId,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;

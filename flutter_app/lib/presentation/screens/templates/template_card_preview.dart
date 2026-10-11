@@ -31,6 +31,11 @@ class TemplateCardPreview extends ConsumerWidget {
         .where((f) => f.visibility != FieldVisibility.private_)
         .toSet();
 
+    // The sample card holds the defaults, so a table's totals have scores.
+    final defaults = {
+      for (final f in category.fields)
+        if (f.defaultValue != null) f.fieldKey: f.defaultValue,
+    };
     Widget fieldWidget(FieldSchema f) => FieldWidgetFactory.create(
       schema: f,
       value: f.defaultValue,
@@ -38,8 +43,9 @@ class TemplateCardPreview extends ConsumerWidget {
       onChanged: (_) {},
       entities: const <String, Entity>{},
       ref: ref,
-      entityFields: const {},
+      entityFields: defaults,
       entityName: l10n.tplPreviewSample,
+      categoryFields: category.fields,
     );
 
     Widget grid(List<FieldSchema> fields, int columns) {

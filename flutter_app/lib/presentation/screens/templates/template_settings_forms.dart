@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/services/free_field_styles.dart';
 import '../../../domain/services/template_edit.dart';
 import '../../../domain/services/free_template.dart' show builtinTier;
 import '../../l10n/app_localizations.dart';
@@ -34,6 +35,9 @@ class TemplateSettingsPanel extends StatelessWidget {
         controller: c,
       ),
       TemplatePanel.group when c.group != null => TemplateGroupForm(
+        controller: c,
+      ),
+      TemplatePanel.preset when c.preset != null => TemplatePresetForm(
         controller: c,
       ),
       _ when c.category != null => TemplateCategoryForm(controller: c),
@@ -167,6 +171,57 @@ Future<void> addFieldWithLabel(
     initial: styleLabel(l10n, type),
   );
   if (label != null) c.addField(label, type, groupId: groupId, index: index);
+}
+
+/// What the palette, a drop or the "+ Add" sheet gave: a style asks for a
+/// label first; a preset goes in bound, once per category (V8).
+Future<void> addFromPalette(
+  BuildContext context,
+  TemplateEditController c,
+  TemplateDrag d, {
+  String? groupId,
+  int? index,
+}) async {
+  final presetId = d.presetId;
+  if (presetId == null) {
+    return addFieldWithLabel(
+      context,
+      c,
+      d.type!,
+      groupId: groupId,
+      index: index,
+    );
+  }
+  if (!c.addPresetField(presetId, groupId: groupId, index: index)) {
+    final l10n = L10n.of(context)!;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(
+          l10n.tplPresetAlreadyIn(c.presetById(presetId)?.label ?? ''),
+        ),
+      ),
+    );
+  }
+}
+
+/// A style, then a label → a new preset (DESIGN §9). True when one was made
+/// (it is then the open one).
+Future<bool> addPresetWithLabel(
+  BuildContext context,
+  TemplateEditController c,
+) async {
+  final l10n = L10n.of(context)!;
+  final type = (await showStylePickerSheet(context))?.type;
+  if (type == null || !context.mounted) return false;
+  final label = await askTemplateName(
+    context,
+    title: l10n.tplAddPreset,
+    label: l10n.tplFieldLabel,
+    initial: styleLabel(l10n, type),
+  );
+  if (label == null) return false;
+  c.addPreset(label, type);
+  return true;
 }
 
 Future<void> addGroupWithName(
@@ -494,17 +549,16 @@ class TemplateFieldForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final c = controller;
     final f = c.field!;
     final cat = c.category!;
-    final simple = isSimpleFieldType(f.fieldType);
+    final preset = c.presetById(f.presetId);
+    final legacy = isLegacyFieldType(f.fieldType);
     final groups = sortedGroups(cat);
     final cols =
         groups.where((g) => g.groupId == f.groupId).firstOrNull?.gridColumns ??
         1;
     void set(FieldSchema n) => c.updateField(n);
-    void setRule(FieldValidation v) => set(f.copyWith(validation: v));
 
     return ListView(
       key: ValueKey('field-${f.fieldId}'),
@@ -513,83 +567,25 @@ class TemplateFieldForm extends StatelessWidget {
         _Heading(
           styleLabel(l10n, f.fieldType),
           icon: styleIcon(f.fieldType),
-          trailing: simple
-              ? null
-              : TemplatePill(l10n.tplLegacyBadge, tooltip: l10n.tplLegacyHint),
+          trailing: legacy
+              ? TemplatePill(l10n.tplLegacyBadge, tooltip: l10n.tplLegacyHint)
+              : null,
         ),
-        _TextSetting(
-          label: l10n.tplFieldLabel,
-          value: f.label,
-          onChanged: (v) => set(f.copyWith(label: v)),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              Text(
-                '${l10n.tplFieldKey}  ',
-                style: TextStyle(fontSize: 12, color: palette.tabText),
-              ),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.sidebarFilterBg,
-                    borderRadius: palette.br,
-                  ),
-                  child: SelectableText(
-                    f.fieldKey,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                      color: palette.tabActiveText,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Tooltip(
-                message: l10n.tplFieldKeyHint,
-                child: Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: palette.sidebarLabelSecondary,
-                ),
-              ),
-            ],
+        // A bound field's structure is its preset's (DESIGN §9).
+        if (preset != null) ...[
+          _PresetLink(
+            preset: preset,
+            onUnlink: () => c.unlinkField(f.fieldId),
           ),
-        ),
-        if (simple) ...[
-          _Dropdown<FieldType>(
-            label: l10n.tplStyle,
-            value: f.fieldType,
-            items: {for (final t in simpleFieldTypes) t: styleLabel(l10n, t)},
-            onChanged: (t) =>
-                _changeType(context, f, t!, f.isList && canBeList(t)),
+          _KeyRow(f.fieldKey),
+        ] else
+          ..._structureHead(
+            context,
+            f,
+            set,
+            legacy: legacy,
+            onType: (t, list) => _changeType(context, f, t, list),
           ),
-          if (canBeList(f.fieldType))
-            _Check(
-              label: l10n.tplList,
-              value: f.isList,
-              onChanged: (v) => _changeType(context, f, f.fieldType, v),
-            ),
-          _Check(
-            label: l10n.tplRequired,
-            hint: l10n.tplRequiredHint,
-            value: f.isRequired,
-            onChanged: (v) => set(f.copyWith(isRequired: v)),
-          ),
-          const SizedBox(height: 8),
-          _TextSetting(
-            label: l10n.tplHelpText,
-            value: f.helpText,
-            onChanged: (v) => set(f.copyWith(helpText: v)),
-          ),
-          if (!f.isList) ..._defaultValue(l10n, f, set),
-        ],
         _Dropdown<FieldVisibility>(
           label: l10n.tplVisibility,
           value: f.visibility,
@@ -634,8 +630,28 @@ class TemplateFieldForm extends StatelessWidget {
             );
           },
         ),
-        if (simple) ..._styleSettings(context, l10n, f, set, setRule),
-        const SizedBox(height: 16),
+        if (preset == null && !legacy) ...[
+          ..._styleSettings(
+            context,
+            f,
+            set,
+            categories: c.schema.categories,
+            fields: cat.fields,
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Tooltip(
+              message: l10n.tplSaveAsPresetHint,
+              child: TextButton.icon(
+                onPressed: () => c.saveAsPreset(f.fieldId),
+                icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                label: Text(l10n.tplSaveAsPreset),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
         _DeleteButton(
           label: l10n.tplDeleteField,
           onPressed: () async {
@@ -676,173 +692,1063 @@ class TemplateFieldForm extends StatelessWidget {
     }
     controller.changeFieldType(f.fieldId, to, toList);
   }
+}
 
-  List<Widget> _defaultValue(
-    L10n l10n,
-    FieldSchema f,
-    void Function(FieldSchema) set,
-  ) {
-    final v = f.defaultValue;
-    return switch (f.fieldType) {
-      FieldType.text ||
-      FieldType.textarea ||
-      FieldType.markdown ||
-      FieldType.dice => [
-        _TextSetting(
-          label: l10n.tplDefault,
-          value: v is String ? v : '',
-          maxLines: f.fieldType == FieldType.text ? 1 : 3,
-          onChanged: (s) => set(f.copyWith(defaultValue: s.isEmpty ? null : s)),
+/// A preset's settings (DESIGN §9): the structure every bound field takes,
+/// where it is used, copy and delete. Its style is picked when it is made.
+class TemplatePresetForm extends StatelessWidget {
+  const TemplatePresetForm({super.key, required this.controller});
+
+  final TemplateEditController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final c = controller;
+    final p = c.preset!;
+    final uses = presetUses(c.schema, p.fieldId);
+    void set(FieldSchema n) => c.updatePreset(n);
+    // What a skill table can read: the fields of the categories the preset
+    // is in (all categories while it is in none).
+    final fields = {
+      for (final cat in uses.isEmpty ? c.schema.categories : uses)
+        for (final f in cat.fields) f.fieldKey: f,
+    }.values.toList();
+
+    return ListView(
+      key: ValueKey('preset-${p.fieldId}'),
+      padding: const EdgeInsets.all(16),
+      children: [
+        _Heading(
+          l10n.tplPreset,
+          icon: Icons.bookmark_outline,
+          trailing: TemplatePill(styleLabel(l10n, p.fieldType)),
         ),
-      ],
-      FieldType.integer || FieldType.float_ => [
-        _TextSetting(
-          label: l10n.tplDefault,
-          value: v is num ? '$v' : '',
-          number: true,
-          onChanged: (s) => set(
-            f.copyWith(
-              defaultValue: f.fieldType == FieldType.integer
-                  ? int.tryParse(s.trim())
-                  : _parseDouble(s),
-            ),
-          ),
+        _Hint(l10n.tplPresetFormHint),
+        ..._structureHead(
+          context,
+          p,
+          set,
+          legacy: isLegacyFieldType(p.fieldType),
         ),
-      ],
-      FieldType.boolean_ => [
-        _Check(
-          label: l10n.tplDefault,
-          value: v == true,
-          onChanged: (b) => set(f.copyWith(defaultValue: b ? true : null)),
+        ..._styleSettings(
+          context,
+          p,
+          set,
+          categories: c.schema.categories,
+          fields: fields,
         ),
         const SizedBox(height: 8),
-      ],
-      FieldType.enum_ => [
-        _Dropdown<String?>(
-          label: l10n.tplDefault,
-          value: (f.validation.allowedValues ?? const []).contains(v)
-              ? v as String
-              : null,
-          items: {
-            null: '—',
-            for (final o in f.validation.allowedValues ?? const <String>[])
-              o: o,
+        _Label(l10n.tplPresetUsedIn),
+        if (uses.isEmpty)
+          _Hint(l10n.tplPresetUnused)
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [for (final cat in uses) TemplatePill(cat.name)],
+          ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () async {
+              final name = await askTemplateName(
+                context,
+                title: l10n.tplCopyPreset,
+                label: l10n.tplFieldLabel,
+                initial: l10n.templateCopyName(p.label),
+              );
+              if (name != null) c.copyPreset(p.fieldId, name);
+            },
+            icon: const Icon(Icons.copy_outlined, size: 18),
+            label: Text(l10n.tplCopyPreset),
+          ),
+        ),
+        _DeleteButton(
+          label: l10n.tplDeletePreset,
+          onPressed: () async {
+            if (await confirmTemplateAction(
+              context,
+              title: l10n.tplDeletePreset,
+              body: l10n.tplDeletePresetBody(p.label, uses.length),
+              confirm: l10n.btnDelete,
+            )) {
+              c.removePreset(p.fieldId);
+            }
           },
-          onChanged: (s) => set(f.copyWith(defaultValue: s)),
         ),
       ],
-      _ => const [],
-    };
+    );
   }
+}
 
-  List<Widget> _styleSettings(
-    BuildContext context,
-    L10n l10n,
-    FieldSchema f,
-    void Function(FieldSchema) set,
-    void Function(FieldValidation) setRule,
-  ) {
-    final rule = f.validation;
-    String num(double? d) =>
-        d == null ? '' : (d == d.roundToDouble() ? '${d.toInt()}' : '$d');
-    switch (f.fieldType) {
-      case FieldType.text:
-        return [
-          _TextSetting(
-            label: l10n.tplPlaceholder,
-            value: f.placeholder,
-            onChanged: (v) => set(f.copyWith(placeholder: v)),
-          ),
-          _TextSetting(
-            label: l10n.tplMaxLength,
-            value: rule.maxLength?.toString() ?? '',
-            number: true,
-            onChanged: (v) =>
-                setRule(rule.copyWith(maxLength: int.tryParse(v.trim()))),
-          ),
-        ];
-      case FieldType.integer:
-      case FieldType.float_:
-        return [
+/// "Preset: Skills" and its Break link button, on a bound field.
+class _PresetLink extends StatelessWidget {
+  const _PresetLink({required this.preset, required this.onUnlink});
+
+  final FieldSchema preset;
+  final VoidCallback onUnlink;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(10, 8, 4, 4),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
-              Expanded(
-                child: _TextSetting(
-                  label: l10n.tplMin,
-                  value: num(rule.minValue),
-                  number: true,
-                  onChanged: (v) =>
-                      setRule(rule.copyWith(minValue: _parseDouble(v))),
-                ),
-              ),
+              Icon(Icons.bookmark, size: 16, color: palette.featureCardAccent),
               const SizedBox(width: 8),
               Expanded(
-                child: _TextSetting(
-                  label: l10n.tplMax,
-                  value: num(rule.maxValue),
-                  number: true,
-                  onChanged: (v) =>
-                      setRule(rule.copyWith(maxValue: _parseDouble(v))),
+                child: Text(
+                  l10n.tplBoundTo(preset.label),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
+                  ),
                 ),
               ),
             ],
           ),
-        ];
-      case FieldType.enum_:
-        return [
-          _Label(l10n.tplOptions),
-          _OptionsEditor(
-            options: rule.allowedValues ?? const [],
-            onChanged: (list) => setRule(rule.copyWith(allowedValues: list)),
+          const SizedBox(height: 4),
+          Text(
+            l10n.tplBoundHint,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
           ),
-        ];
-      case FieldType.relation:
-        final targets = rule.allowedTypes ?? const <String>[];
-        return [
-          _Label(l10n.tplTargets, hint: l10n.tplTargetsAny),
-          Wrap(
-            spacing: 16,
-            children: [
-              for (final cat in controller.schema.categories)
-                _Check(
-                  label: cat.name,
-                  dense: true,
-                  leading: TemplateColorDot(color: parseHexColor(cat.color)),
-                  value: targets.contains(cat.slug),
-                  onChanged: (on) {
-                    final next = on
-                        ? [...targets, cat.slug]
-                        : [...targets.where((s) => s != cat.slug)];
-                    setRule(
-                      rule.copyWith(allowedTypes: next.isEmpty ? null : next),
-                    );
-                  },
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onUnlink,
+              icon: const Icon(Icons.link_off, size: 18),
+              label: Text(l10n.tplUnlink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The field key: made once, shown read-only (V3).
+class _KeyRow extends StatelessWidget {
+  const _KeyRow(this.fieldKey);
+
+  final String fieldKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Text(
+            '${l10n.tplFieldKey}  ',
+            style: TextStyle(fontSize: 12, color: palette.tabText),
+          ),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: palette.sidebarFilterBg,
+                borderRadius: palette.br,
+              ),
+              child: SelectableText(
+                fieldKey,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: l10n.tplFieldKeyHint,
+            child: Icon(
+              Icons.info_outline,
+              size: 14,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Label, key and — unless [legacy] — the style ([onType] null: fixed, as
+/// on a preset), list, required, help text and default value.
+List<Widget> _structureHead(
+  BuildContext context,
+  FieldSchema f,
+  void Function(FieldSchema) set, {
+  required bool legacy,
+  void Function(FieldType to, bool toList)? onType,
+}) {
+  final l10n = L10n.of(context)!;
+  final simple = isSimpleFieldType(f.fieldType);
+  return [
+    _TextSetting(
+      label: l10n.tplFieldLabel,
+      value: f.label,
+      onChanged: (v) => set(f.copyWith(label: v)),
+    ),
+    _KeyRow(f.fieldKey),
+    if (!legacy) ...[
+      if (onType != null) ...[
+        _Dropdown<FieldType>(
+          label: l10n.tplStyle,
+          value: f.fieldType,
+          items: {for (final t in paletteFieldTypes) t: styleLabel(l10n, t)},
+          onChanged: (t) => onType(t!, f.isList && canBeList(t)),
+        ),
+        if (canBeList(f.fieldType))
+          _Check(
+            label: l10n.tplList,
+            value: f.isList,
+            onChanged: (v) => onType(f.fieldType, v),
+          ),
+      ],
+      if (simple)
+        _Check(
+          label: l10n.tplRequired,
+          hint: l10n.tplRequiredHint,
+          value: f.isRequired,
+          onChanged: (v) => set(f.copyWith(isRequired: v)),
+        ),
+      const SizedBox(height: 8),
+      _TextSetting(
+        label: l10n.tplHelpText,
+        value: f.helpText,
+        onChanged: (v) => set(f.copyWith(helpText: v)),
+      ),
+      if (simple && !f.isList) ..._defaultValue(l10n, f, set),
+    ],
+  ];
+}
+
+List<Widget> _defaultValue(
+  L10n l10n,
+  FieldSchema f,
+  void Function(FieldSchema) set,
+) {
+  final v = f.defaultValue;
+  return switch (f.fieldType) {
+    FieldType.text ||
+    FieldType.textarea ||
+    FieldType.markdown ||
+    FieldType.dice => [
+      _TextSetting(
+        label: l10n.tplDefault,
+        value: v is String ? v : '',
+        maxLines: f.fieldType == FieldType.text ? 1 : 3,
+        onChanged: (s) => set(f.copyWith(defaultValue: s.isEmpty ? null : s)),
+      ),
+    ],
+    FieldType.integer || FieldType.float_ => [
+      _TextSetting(
+        label: l10n.tplDefault,
+        value: v is num ? '$v' : '',
+        number: true,
+        onChanged: (s) => set(
+          f.copyWith(
+            defaultValue: f.fieldType == FieldType.integer
+                ? int.tryParse(s.trim())
+                : _parseDouble(s),
+          ),
+        ),
+      ),
+    ],
+    FieldType.boolean_ => [
+      _Check(
+        label: l10n.tplDefault,
+        value: v == true,
+        onChanged: (b) => set(f.copyWith(defaultValue: b ? true : null)),
+      ),
+      const SizedBox(height: 8),
+    ],
+    FieldType.enum_ => [
+      _Dropdown<String?>(
+        label: l10n.tplDefault,
+        value: (f.validation.allowedValues ?? const []).contains(v)
+            ? v as String
+            : null,
+        items: {
+          null: '—',
+          for (final o in f.validation.allowedValues ?? const <String>[])
+            o: o,
+        },
+        onChanged: (s) => set(f.copyWith(defaultValue: s)),
+      ),
+    ],
+    _ => const [],
+  };
+}
+
+/// The style's own settings. [categories]: link targets; [fields]: what a
+/// skill table can read (its stat table and bonus).
+List<Widget> _styleSettings(
+  BuildContext context,
+  FieldSchema f,
+  void Function(FieldSchema) set, {
+  required List<EntityCategorySchema> categories,
+  required List<FieldSchema> fields,
+}) {
+  final l10n = L10n.of(context)!;
+  final rule = f.validation;
+  void setRule(FieldValidation v) => set(f.copyWith(validation: v));
+  String num(double? d) =>
+      d == null ? '' : (d == d.roundToDouble() ? '${d.toInt()}' : '$d');
+  switch (f.fieldType) {
+    case FieldType.text:
+      return [
+        _TextSetting(
+          label: l10n.tplPlaceholder,
+          value: f.placeholder,
+          onChanged: (v) => set(f.copyWith(placeholder: v)),
+        ),
+        _TextSetting(
+          label: l10n.tplMaxLength,
+          value: rule.maxLength?.toString() ?? '',
+          number: true,
+          onChanged: (v) =>
+              setRule(rule.copyWith(maxLength: int.tryParse(v.trim()))),
+        ),
+      ];
+    case FieldType.integer:
+    case FieldType.float_:
+      return [
+        Row(
+          children: [
+            Expanded(
+              child: _TextSetting(
+                label: l10n.tplMin,
+                value: num(rule.minValue),
+                number: true,
+                onChanged: (v) =>
+                    setRule(rule.copyWith(minValue: _parseDouble(v))),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _TextSetting(
+                label: l10n.tplMax,
+                value: num(rule.maxValue),
+                number: true,
+                onChanged: (v) =>
+                    setRule(rule.copyWith(maxValue: _parseDouble(v))),
+              ),
+            ),
+          ],
+        ),
+      ];
+    case FieldType.enum_:
+      return [
+        _Label(l10n.tplOptions),
+        _OptionsEditor(
+          options: rule.allowedValues ?? const [],
+          onChanged: (list) => setRule(rule.copyWith(allowedValues: list)),
+        ),
+      ];
+    case FieldType.relation:
+      final targets = rule.allowedTypes ?? const <String>[];
+      return [
+        _Label(l10n.tplTargets, hint: l10n.tplTargetsAny),
+        Wrap(
+          spacing: 16,
+          children: [
+            for (final cat in categories)
+              _Check(
+                label: cat.name,
+                dense: true,
+                leading: TemplateColorDot(color: parseHexColor(cat.color)),
+                value: targets.contains(cat.slug),
+                onChanged: (on) {
+                  final next = on
+                      ? [...targets, cat.slug]
+                      : [...targets.where((s) => s != cat.slug)];
+                  setRule(
+                    rule.copyWith(allowedTypes: next.isEmpty ? null : next),
+                  );
+                },
+              ),
+          ],
+        ),
+      ];
+    case FieldType.file:
+      return [
+        _TextSetting(
+          label: l10n.tplExtensions,
+          hint: l10n.tplExtensionsHint,
+          value: (rule.allowedExtensions ?? const []).join(', '),
+          onChanged: (v) {
+            final list = [
+              for (final e in v.split(RegExp(r'[,\s]+')))
+                if (e.trim().isNotEmpty)
+                  e.trim().replaceFirst('.', '').toLowerCase(),
+            ];
+            setRule(
+              rule.copyWith(allowedExtensions: list.isEmpty ? null : list),
+            );
+          },
+        ),
+      ];
+    case FieldType.statTable:
+      return [_StatTableSettings(field: f, onChanged: set)];
+    case FieldType.table:
+      return [_TableSettings(field: f, onChanged: set, categories: categories)];
+    case FieldType.skillTable:
+      return [_SkillTableSettings(field: f, onChanged: set, fields: fields)];
+    default:
+      return const [];
+  }
+}
+
+// ------------------------------------------------- combined style settings
+
+/// [list] with the item at [i] moved to [to].
+List<T> _moved<T>(List<T> list, int i, int to) =>
+    [...list]..insert(to, list[i])..removeAt(to < i ? i + 1 : i);
+
+/// Stat table (DESIGN §8.2): labels, base value, step, modifier on / off.
+class _StatTableSettings extends StatelessWidget {
+  const _StatTableSettings({required this.field, required this.onChanged});
+
+  final FieldSchema field;
+  final ValueChanged<FieldSchema> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final spec = StatTableSpec.of(field);
+    final stats = spec.stats;
+    void set(StatTableSpec s) =>
+        onChanged(field.copyWith(styleConfig: s.toConfig()));
+    void setStats(List<StatEntry> l) => set(spec.copyWith(stats: l));
+    String mod(int v) {
+      final m = spec.modifier(v);
+      return m >= 0 ? '+$m' : '−${-m}';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(l10n.tplStats),
+        for (final (i, s) in stats.indexed)
+          _ListItem(
+            key: ValueKey('stat-${s.key}'),
+            onUp: i > 0 ? () => setStats(_moved(stats, i, i - 1)) : null,
+            onDown: i < stats.length - 1
+                ? () => setStats(_moved(stats, i, i + 2))
+                : null,
+            onDelete: () => setStats([...stats]..removeAt(i)),
+            deleteLabel: l10n.btnDelete,
+            child: _TextSetting(
+              label: l10n.tplStatLabel,
+              value: s.label,
+              onChanged: (v) {
+                if (v.trim().isEmpty) return;
+                setStats([...stats]..[i] = (key: s.key, label: v.trim()));
+              },
+            ),
+          ),
+        _AddLine(
+          label: l10n.tplAddStat,
+          // The key is made once, from the first label (V3).
+          onAdd: (label) => setStats([
+            ...stats,
+            (key: keyFromLabel(label, stats.map((s) => s.key)), label: label),
+          ]),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _TextSetting(
+                label: l10n.tplStatBase,
+                helper: l10n.tplStatBaseHint,
+                value: '${spec.base}',
+                number: true,
+                onChanged: (v) {
+                  final n = int.tryParse(v.trim());
+                  if (n != null) set(spec.copyWith(base: n));
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _TextSetting(
+                label: l10n.tplStatStep,
+                helper: l10n.tplStatStepHint,
+                value: '${spec.step}',
+                number: true,
+                onChanged: (v) {
+                  final n = int.tryParse(v.trim());
+                  if (n != null && n >= 1) set(spec.copyWith(step: n));
+                },
+              ),
+            ),
+          ],
+        ),
+        _Check(
+          label: l10n.tplShowModifier,
+          hint: l10n.tplShowModifierHint,
+          value: spec.showModifier,
+          onChanged: (v) => set(spec.copyWith(showModifier: v)),
+        ),
+        if (spec.showModifier)
+          _Hint(
+            [
+              for (final v in [spec.base - 1, spec.base, spec.base + spec.step])
+                '$v → ${mod(v)}',
+            ].join('   ·   '),
+          ),
+      ],
+    );
+  }
+}
+
+String _columnTypeLabel(L10n l10n, TableColumnType t) => switch (t) {
+  TableColumnType.text => l10n.tplStyleText,
+  TableColumnType.number => l10n.tplColNumber,
+  TableColumnType.check => l10n.tplStyleBoolean,
+  TableColumnType.choice => l10n.tplStyleEnum,
+  TableColumnType.dice => l10n.tplStyleDice,
+  TableColumnType.relation => l10n.tplStyleRelation,
+};
+
+/// Table (DESIGN §8.1): row mode, columns, and the template's fixed rows.
+class _TableSettings extends StatelessWidget {
+  const _TableSettings({
+    required this.field,
+    required this.onChanged,
+    required this.categories,
+  });
+
+  final FieldSchema field;
+  final ValueChanged<FieldSchema> onChanged;
+
+  /// A link column's possible targets.
+  final List<EntityCategorySchema> categories;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final spec = TableSpec.of(field);
+    final cols = spec.columns;
+    void set(TableSpec s) =>
+        onChanged(field.copyWith(styleConfig: s.toConfig()));
+    void setCols(List<TableColumn> l) => set(spec.copyWith(columns: l));
+
+    Widget column(int i, TableColumn c) {
+      void put(TableColumn n) => setCols([...cols]..[i] = n);
+      return _ListItem(
+        key: ValueKey('col-${c.key}'),
+        boxed: true,
+        onUp: i > 0 ? () => setCols(_moved(cols, i, i - 1)) : null,
+        onDown: i < cols.length - 1
+            ? () => setCols(_moved(cols, i, i + 2))
+            : null,
+        onDelete: () => setCols([...cols]..removeAt(i)),
+        deleteLabel: l10n.tplDeleteColumn,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _TextSetting(
+              label: l10n.tplColumnLabel,
+              value: c.label,
+              onChanged: (v) {
+                if (v.trim().isNotEmpty) put(c.copyWith(label: v.trim()));
+              },
+            ),
+            _Dropdown<TableColumnType>(
+              label: l10n.tplColumnType,
+              value: c.type,
+              items: {
+                for (final t in TableColumnType.values)
+                  t: _columnTypeLabel(l10n, t),
+              },
+              onChanged: (t) => put(c.copyWith(type: t)),
+            ),
+            ...switch (c.type) {
+              TableColumnType.choice => [
+                _OptionsEditor(
+                  options: c.options,
+                  onChanged: (l) => put(c.copyWith(options: l)),
+                ),
+              ],
+              TableColumnType.relation => [
+                _Label(l10n.tplTargets, hint: l10n.tplTargetsAny),
+                Wrap(
+                  spacing: 16,
+                  children: [
+                    for (final t in categories)
+                      _Check(
+                        label: t.name,
+                        dense: true,
+                        leading: TemplateColorDot(
+                          color: parseHexColor(t.color),
+                        ),
+                        value: c.targets.contains(t.slug),
+                        onChanged: (on) => put(
+                          c.copyWith(
+                            targets: on
+                                ? [...c.targets, t.slug]
+                                : [...c.targets.where((s) => s != t.slug)],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+              _ => const <Widget>[],
+            },
+            if (spec.fixedRows)
+              _Check(
+                label: l10n.tplColLocked,
+                hint: l10n.tplColLockedHint,
+                value: c.locked,
+                onChanged: (v) => put(c.copyWith(locked: v)),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(l10n.tplRows, hint: l10n.tplRowsHint),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TemplatePills<bool>(
+            items: [
+              (false, l10n.tplRowsFree, null),
+              (true, l10n.tplRowsFixed, null),
+            ],
+            value: spec.fixedRows,
+            onChanged: (v) => set(spec.copyWith(fixedRows: v)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _Label(l10n.tplTableColumns),
+        for (final (i, c) in cols.indexed) column(i, c),
+        _AddLine(
+          label: l10n.tplAddColumn,
+          // The key is made once, from the first label (V3).
+          onAdd: (label) => setCols([
+            ...cols,
+            TableColumn(
+              key: keyFromLabel(label, cols.map((c) => c.key)),
+              label: label,
+            ),
+          ]),
+        ),
+        if (spec.fixedRows) ...[
+          _Label(l10n.tplTemplateRows),
+          _TemplateRows(
+            spec: spec,
+            onChanged: (rows) => set(spec.copyWith(rows: rows)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Skill table (D32): the stat table it reads, the number a mark adds, and
+/// the template's rows (name and default stat).
+class _SkillTableSettings extends StatelessWidget {
+  const _SkillTableSettings({
+    required this.field,
+    required this.onChanged,
+    required this.fields,
+  });
+
+  final FieldSchema field;
+  final ValueChanged<FieldSchema> onChanged;
+
+  /// The fields its stat table and bonus are picked from.
+  final List<FieldSchema> fields;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final spec = SkillTableSpec.of(field);
+    final rows = spec.rows;
+    void set(SkillTableSpec s) =>
+        onChanged(field.copyWith(styleConfig: s.toConfig()));
+    void setRows(List<Map<String, dynamic>> l) => set(spec.copyWith(rows: l));
+    final statTables = {
+      for (final x in fields)
+        if (x.fieldType == FieldType.statTable) x.fieldKey: x.label,
+    };
+    final numbers = {
+      for (final x in fields)
+        if (x.fieldType == FieldType.integer || x.fieldType == FieldType.float_)
+          x.fieldKey: x.label,
+    };
+    final stats = switch (skillStatField(spec, fields)) {
+      final st? => StatTableSpec.of(st).stats,
+      null => const <StatEntry>[],
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Dropdown<String?>(
+          label: l10n.tplSkillStats,
+          value: statTables.containsKey(spec.stat) ? spec.stat : null,
+          items: {null: l10n.tplSkillStatsFirst, ...statTables},
+          onChanged: (k) => set(spec.copyWith(stat: () => k)),
+        ),
+        _Dropdown<String?>(
+          label: l10n.tplSkillBonus,
+          helper: l10n.tplSkillBonusHint,
+          value: numbers.containsKey(spec.bonus) ? spec.bonus : null,
+          items: {null: l10n.tplSkillBonusNone, ...numbers},
+          onChanged: (k) => set(spec.copyWith(bonus: () => k)),
+        ),
+        _Label(l10n.tplTemplateRows),
+        for (final (i, r) in rows.indexed)
+          _ListItem(
+            key: ValueKey('skill-${r[tableRowId]}'),
+            onUp: i > 0 ? () => setRows(_moved(rows, i, i - 1)) : null,
+            onDown: i < rows.length - 1
+                ? () => setRows(_moved(rows, i, i + 2))
+                : null,
+            onDelete: () => setRows([...rows]..removeAt(i)),
+            deleteLabel: l10n.btnDelete,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _TextSetting(
+                    label: l10n.tplStatLabel,
+                    value: '${r['name'] ?? ''}',
+                    onChanged: (v) {
+                      if (v.trim().isEmpty) return;
+                      setRows([...rows]..[i] = {...r, 'name': v.trim()});
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 92,
+                  child: _Dropdown<String?>(
+                    label: l10n.tplSkillRowStat,
+                    value: stats.any((s) => s.key == r['ability'])
+                        ? r['ability'] as String
+                        : null,
+                    items: {null: '—', for (final s in stats) s.key: s.label},
+                    onChanged: (k) =>
+                        setRows([...rows]..[i] = {...r, 'ability': k}),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        _AddLine(
+          label: l10n.tplAddRow,
+          onAdd: (name) => setRows([
+            ...rows,
+            {tableRowId: nextTableRowId(rows), 'name': name},
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+/// The template's fixed rows: one line of cells per row (card links belong
+/// to the card), scrolling sideways when wide.
+class _TemplateRows extends StatelessWidget {
+  const _TemplateRows({required this.spec, required this.onChanged});
+
+  final TableSpec spec;
+  final ValueChanged<List<Map<String, dynamic>>> onChanged;
+
+  static double _width(TableColumnType t) => switch (t) {
+    TableColumnType.text => 130,
+    TableColumnType.choice => 110,
+    TableColumnType.dice => 72,
+    TableColumnType.number => 64,
+    _ => 44,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final rows = spec.rows;
+    final cols = [
+      for (final c in spec.columns)
+        if (c.type != TableColumnType.relation) c,
+    ];
+    void setCell(int i, String key, Object? v) {
+      final r = {...rows[i]};
+      if (v == null || v == '' || v == false) {
+        r.remove(key);
+      } else {
+        r[key] = v;
+      }
+      onChanged([...rows]..[i] = r);
+    }
+
+    Widget cell(int i, TableColumn c) {
+      final v = rows[i][c.key];
+      final key = ValueKey('trow-${rows[i][tableRowId]}-${c.key}');
+      return switch (c.type) {
+        TableColumnType.check => Checkbox(
+          key: key,
+          value: v == true,
+          visualDensity: VisualDensity.compact,
+          onChanged: (b) => setCell(i, c.key, b == true),
+        ),
+        TableColumnType.choice => DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            key: key,
+            value: c.options.contains(v) ? v as String : null,
+            isExpanded: true,
+            isDense: true,
+            dropdownColor: palette.uiPopupBg,
+            style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+            items: [
+              for (final o in c.options)
+                DropdownMenuItem(
+                  value: o,
+                  child: Text(o, overflow: TextOverflow.ellipsis),
                 ),
             ],
+            onChanged: (s) => setCell(i, c.key, s),
           ),
-        ];
-      case FieldType.file:
-        return [
-          _TextSetting(
-            label: l10n.tplExtensions,
-            hint: l10n.tplExtensionsHint,
-            value: (rule.allowedExtensions ?? const []).join(', '),
-            onChanged: (v) {
-              final list = [
-                for (final e in v.split(RegExp(r'[,\s]+')))
-                  if (e.trim().isNotEmpty)
-                    e.trim().replaceFirst('.', '').toLowerCase(),
-              ];
-              setRule(
-                rule.copyWith(allowedExtensions: list.isEmpty ? null : list),
-              );
-            },
+        ),
+        _ => TextFormField(
+          key: key,
+          initialValue: v == null ? '' : '$v',
+          style: const TextStyle(fontSize: 12),
+          keyboardType: c.type == TableColumnType.number
+              ? const TextInputType.numberWithOptions(
+                  signed: true,
+                  decimal: true,
+                )
+              : null,
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 6),
           ),
-        ];
-      default:
-        return const [];
+          onChanged: (s) {
+            final t = s.trim();
+            setCell(
+              i,
+              c.key,
+              c.type == TableColumnType.number
+                  ? int.tryParse(t) ?? _parseDouble(t)
+                  : t,
+            );
+          },
+        ),
+      };
     }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (cols.isNotEmpty && rows.isNotEmpty)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    for (final c in cols)
+                      SizedBox(
+                        width: _width(c.type),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: Text(
+                            c.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                for (var i = 0; i < rows.length; i++)
+                  SizedBox(
+                    key: ValueKey('trow-${rows[i][tableRowId]}'),
+                    width: cols.fold<double>(0, (s, c) => s + _width(c.type)) +
+                        3 * 40,
+                    child: _ListItem(
+                      onUp: i > 0
+                          ? () => onChanged(_moved(rows, i, i - 1))
+                          : null,
+                      onDown: i < rows.length - 1
+                          ? () => onChanged(_moved(rows, i, i + 2))
+                          : null,
+                      onDelete: () => onChanged([...rows]..removeAt(i)),
+                      deleteLabel: l10n.btnDelete,
+                      child: Row(
+                        children: [
+                          for (final c in cols)
+                            SizedBox(
+                              width: _width(c.type),
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: cell(i, c),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () =>
+                onChanged([...rows, {tableRowId: nextTableRowId(rows)}]),
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(l10n.tplAddRow),
+          ),
+        ),
+      ],
+    );
   }
+}
+
+/// A list entry with up / down / delete beside it ([boxed]: framed, for an
+/// entry with several settings).
+class _ListItem extends StatelessWidget {
+  const _ListItem({
+    super.key,
+    required this.child,
+    required this.onUp,
+    required this.onDown,
+    required this.onDelete,
+    required this.deleteLabel,
+    this.boxed = false,
+  });
+
+  final Widget child;
+  final VoidCallback? onUp;
+  final VoidCallback? onDown;
+  final VoidCallback onDelete;
+  final String deleteLabel;
+  final bool boxed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    Widget button(String tip, IconData icon, VoidCallback? onTap, [Color? c]) =>
+        SizedBox(
+          width: 40,
+          child: IconButton(
+            tooltip: tip,
+            visualDensity: VisualDensity.compact,
+            icon: Icon(icon, size: 18, color: c),
+            color: palette.tabText,
+            disabledColor: palette.featureCardBorder,
+            onPressed: onTap,
+          ),
+        );
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: child),
+        button(l10n.tplMoveUp, Icons.keyboard_arrow_up, onUp),
+        button(l10n.tplMoveDown, Icons.keyboard_arrow_down, onDown),
+        button(
+          deleteLabel,
+          Icons.delete_outline,
+          onDelete,
+          palette.dangerBtnBg,
+        ),
+      ],
+    );
+    if (!boxed) return row;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 4, 4),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: row,
+    );
+  }
+}
+
+/// A text input with an add button: adds the trimmed text and clears.
+class _AddLine extends StatefulWidget {
+  const _AddLine({required this.label, required this.onAdd});
+
+  final String label;
+  final ValueChanged<String> onAdd;
+
+  @override
+  State<_AddLine> createState() => _AddLineState();
+}
+
+class _AddLineState extends State<_AddLine> {
+  final _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    final v = _text.text.trim();
+    if (v.isEmpty) return;
+    widget.onAdd(v);
+    _text.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextField(
+      controller: _text,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        suffixIcon: IconButton(
+          tooltip: widget.label,
+          icon: const Icon(Icons.add, size: 18),
+          onPressed: _add,
+        ),
+      ),
+      onSubmitted: (_) => _add(),
+    ),
+  );
 }
 
 double? _parseDouble(String s) =>
@@ -1314,6 +2220,7 @@ class _TextSetting extends StatefulWidget {
     this.maxLines = 1,
     this.number = false,
     this.hint,
+    this.helper,
   });
 
   final String label;
@@ -1322,6 +2229,9 @@ class _TextSetting extends StatefulWidget {
   final int maxLines;
   final bool number;
   final String? hint;
+
+  /// Shown under the input.
+  final String? helper;
 
   @override
   State<_TextSetting> createState() => _TextSettingState();
@@ -1361,6 +2271,8 @@ class _TextSettingState extends State<_TextSetting> {
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,
+        helperText: widget.helper,
+        helperMaxLines: 2,
       ),
       onChanged: widget.onChanged,
     ),

@@ -7,8 +7,7 @@ import '../entities/schema/world_schema.dart';
 /// §6.6, §7). Each returns a new value; ids and timestamps come from the
 /// caller.
 
-/// The simple styles the palette offers (DESIGN §8). Every other
-/// [FieldType] in a free template is a kept SRD type (ROADMAP §6).
+/// The simple styles the palette offers (DESIGN §8).
 const simpleFieldTypes = [
   FieldType.text,
   FieldType.textarea,
@@ -27,6 +26,20 @@ const simpleFieldTypes = [
 ];
 
 bool isSimpleFieldType(FieldType t) => simpleFieldTypes.contains(t);
+
+/// The combined styles built so far (DESIGN §8; Faz 4: Table, Stat table,
+/// Skill table). Their settings are their own (`FieldSchema.styleConfig`).
+const combinedFieldTypes = [
+  FieldType.table,
+  FieldType.statTable,
+  FieldType.skillTable,
+];
+
+/// Everything the palette offers. Any other [FieldType] in a free template
+/// is a kept SRD type (ROADMAP §6).
+const paletteFieldTypes = [...simpleFieldTypes, ...combinedFieldTypes];
+
+bool isLegacyFieldType(FieldType t) => !paletteFieldTypes.contains(t);
 
 /// Simple styles that cannot be a list: a list of yes/no or of era maps
 /// means nothing, and tags are a list already.
@@ -150,8 +163,9 @@ EntityCategorySchema addField(
   String? groupId,
   int? index,
   required String now,
-}) {
-  final field = FieldSchema(
+}) => _insert(
+  cat,
+  FieldSchema(
     fieldId: id,
     categoryId: cat.categoryId,
     fieldKey: keyFromLabel(label, cat.fields.map((f) => f.fieldKey)),
@@ -161,7 +175,17 @@ EntityCategorySchema addField(
     groupId: groupId,
     createdAt: now,
     updatedAt: now,
-  );
+  ),
+  groupId,
+  index,
+);
+
+EntityCategorySchema _insert(
+  EntityCategorySchema cat,
+  FieldSchema field,
+  String? groupId,
+  int? index,
+) {
   final buckets = _buckets(cat);
   final list = buckets[groupId] ?? [];
   list.insert((index ?? list.length).clamp(0, list.length), field);
@@ -281,6 +305,7 @@ EntityCategorySchema changeFieldType(
     defaultValue: null,
     validation: const FieldValidation(),
     placeholder: '',
+    styleConfig: null,
     createdAt: now,
     updatedAt: now,
   );
@@ -289,6 +314,197 @@ EntityCategorySchema changeFieldType(
     fields: [for (final f in cat.fields) f.fieldId == fieldId ? fresh : f],
   );
 }
+
+// --------------------------------------------------------------- presets
+
+List<FieldSchema> presetsOf(WorldSchema schema) => schema.presets ?? const [];
+
+FieldSchema? presetById(WorldSchema schema, String? id) =>
+    presetsOf(schema).where((p) => p.fieldId == id).firstOrNull;
+
+/// What a bound field takes from its preset (DESIGN §9): the label, the
+/// style and its settings. Its key, place, width, group and visibility stay
+/// its own; card values are never touched.
+FieldSchema withPreset(FieldSchema f, FieldSchema preset) => f.copyWith(
+  label: preset.label,
+  fieldType: preset.fieldType,
+  isList: preset.isList,
+  styleConfig: preset.styleConfig,
+  helpText: preset.helpText,
+  placeholder: preset.placeholder,
+  defaultValue: preset.defaultValue,
+  validation: preset.validation,
+  isRequired: preset.isRequired,
+  presetId: preset.fieldId,
+);
+
+/// Every bound field takes its preset's structure again; a field whose
+/// preset is gone keeps what it has and stands alone (V7).
+WorldSchema syncPresets(WorldSchema schema) {
+  final byId = {for (final p in presetsOf(schema)) p.fieldId: p};
+  FieldSchema sync(FieldSchema f) {
+    if (f.presetId == null) return f;
+    final p = byId[f.presetId];
+    return p == null ? f.copyWith(presetId: null) : withPreset(f, p);
+  }
+
+  return schema.copyWith(
+    categories: [
+      for (final c in schema.categories)
+        c.fields.any((f) => f.presetId != null)
+            ? c.copyWith(fields: [for (final f in c.fields) sync(f)])
+            : c,
+    ],
+  );
+}
+
+/// The categories that hold a field bound to [presetId].
+List<EntityCategorySchema> presetUses(WorldSchema schema, String presetId) => [
+  for (final c in schema.categories)
+    if (c.fields.any((f) => f.presetId == presetId)) c,
+];
+
+/// A new preset [id]: a [type] field labelled [label], its key unique among
+/// the presets.
+WorldSchema addPreset(
+  WorldSchema schema, {
+  required String id,
+  required String label,
+  required FieldType type,
+  required String now,
+}) => schema.copyWith(
+  presets: [
+    ...presetsOf(schema),
+    FieldSchema(
+      fieldId: id,
+      categoryId: '',
+      fieldKey: keyFromLabel(label, presetsOf(schema).map((p) => p.fieldKey)),
+      label: label,
+      fieldType: type,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  ],
+);
+
+/// Puts [preset] in place and passes its structure to every bound field.
+WorldSchema replacePreset(WorldSchema schema, FieldSchema preset) =>
+    syncPresets(
+      schema.copyWith(
+        presets: [
+          for (final p in presetsOf(schema))
+            p.fieldId == preset.fieldId ? preset : p,
+        ],
+      ),
+    );
+
+/// Field [fieldId] of [categoryId] saved as a new preset [id] — same key
+/// and structure — and bound to it.
+WorldSchema saveAsPreset(
+  WorldSchema schema,
+  String categoryId,
+  String fieldId, {
+  required String id,
+  required String now,
+}) {
+  final cat = schema.categories.firstWhere((c) => c.categoryId == categoryId);
+  final f = cat.fields.firstWhere((x) => x.fieldId == fieldId);
+  final preset = withPreset(
+    FieldSchema(
+      fieldId: id,
+      categoryId: '',
+      fieldKey: f.fieldKey,
+      label: f.label,
+      fieldType: f.fieldType,
+      createdAt: now,
+      updatedAt: now,
+    ),
+    f,
+  ).copyWith(presetId: null);
+  return replaceCategory(
+    schema.copyWith(presets: [...presetsOf(schema), preset]),
+    replaceField(cat, f.copyWith(presetId: id)),
+  );
+}
+
+/// A preset goes into a category once, and not over a field with its key
+/// (V8).
+bool canAddPreset(EntityCategorySchema cat, FieldSchema preset) =>
+    !cat.fields.any(
+      (f) => f.presetId == preset.fieldId || f.fieldKey == preset.fieldKey,
+    );
+
+/// Adds a field [id] bound to [preset], under the preset's key, to
+/// [groupId] at [index] (end when null). Check [canAddPreset] first.
+EntityCategorySchema addPresetField(
+  EntityCategorySchema cat,
+  FieldSchema preset, {
+  required String id,
+  String? groupId,
+  int? index,
+  required String now,
+}) => _insert(
+  cat,
+  withPreset(
+    FieldSchema(
+      fieldId: id,
+      categoryId: cat.categoryId,
+      fieldKey: preset.fieldKey,
+      label: preset.label,
+      fieldType: preset.fieldType,
+      groupId: groupId,
+      createdAt: now,
+      updatedAt: now,
+    ),
+    preset,
+  ),
+  groupId,
+  index,
+);
+
+/// [fieldId] keeps what it has and leaves its preset ("Break link").
+EntityCategorySchema unlinkField(EntityCategorySchema cat, String fieldId) =>
+    replaceField(
+      cat,
+      cat.fields.firstWhere((f) => f.fieldId == fieldId).copyWith(presetId: null),
+    );
+
+/// A new, independent preset [id] from [presetId], labelled [label]; its
+/// key is made from the label (D21).
+WorldSchema copyPreset(
+  WorldSchema schema,
+  String presetId, {
+  required String id,
+  required String label,
+  required String now,
+}) {
+  final p = presetById(schema, presetId)!;
+  return schema.copyWith(
+    presets: [
+      ...presetsOf(schema),
+      p.copyWith(
+        fieldId: id,
+        label: label,
+        fieldKey: keyFromLabel(
+          label,
+          presetsOf(schema).map((x) => x.fieldKey),
+        ),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ],
+  );
+}
+
+/// Removes [presetId]; its bound fields stay as independent copies (V7).
+WorldSchema removePreset(WorldSchema schema, String presetId) => syncPresets(
+  schema.copyWith(
+    presets: [
+      for (final p in presetsOf(schema))
+        if (p.fieldId != presetId) p,
+    ],
+  ),
+);
 
 // ---------------------------------------------------------------- groups
 

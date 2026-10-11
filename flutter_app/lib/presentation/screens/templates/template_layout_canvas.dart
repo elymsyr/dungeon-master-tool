@@ -84,13 +84,7 @@ class TemplateLayoutCanvas extends StatelessWidget {
       if (d.fieldId == beforeFieldId) return;
       controller.moveField(d.fieldId!, groupId: groupId, index: index);
     } else {
-      addFieldWithLabel(
-        context,
-        controller,
-        d.type!,
-        groupId: groupId,
-        index: index,
-      );
+      addFromPalette(context, controller, d, groupId: groupId, index: index);
     }
   }
 }
@@ -301,7 +295,7 @@ class _FieldTile extends StatelessWidget {
     final c = canvas.controller;
     final f = field;
     final selected = c.panel == TemplatePanel.field && c.fieldId == f.fieldId;
-    final legacy = !isSimpleFieldType(f.fieldType);
+    final legacy = isLegacyFieldType(f.fieldType);
 
     Widget tile({required bool highlight, Widget? handle}) => Material(
       // The page colour inside the group box, so a tile reads as one.
@@ -358,6 +352,18 @@ class _FieldTile extends StatelessWidget {
                   text: l10n.tplLegacyBadge,
                   tooltip: l10n.tplLegacyHint,
                   palette: palette,
+                ),
+              if (c.presetById(f.presetId) case final p?)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Tooltip(
+                    message: l10n.tplBoundTo(p.label),
+                    child: Icon(
+                      Icons.bookmark,
+                      size: 14,
+                      color: palette.featureCardAccent,
+                    ),
+                  ),
                 ),
               const SizedBox(width: 8),
             ],

@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_template.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-11
+updated: 2026-10-12
 tags: [file]
 ---
 
@@ -29,14 +29,14 @@ tags: [file]
 - `withoutDeletedCategories(entities, schema)` — free world: drops cards whose category is not in the schema (V5); built-in: returns the same map.
 
 ## Dependencies & Links
-- Depends on: [[world_schema]], [[entity_category_schema]], [[field_schema]], [[builtin_schema]] (id constant and the tier slug lists, read only)
+- Depends on: [[world_schema]], [[entity_category_schema]], [[field_schema]], [[free_field_styles]] (style specs of SRD copy v2), [[builtin_schema]] (id constant and the tier slug lists, read only)
 - Used by: [[template_provider]], [[free_template_editor]] (`builtinTier` for the Tier setting), [[template_update_dialog]], [[world_repository_impl]] (`isSrdLineage`), [[campaign_provider]]; the free gates in `entity_provider.dart` (`worldSchemaProvider` skips the legacy patches), `visible_entity_provider.dart`, `entity_card.dart`, `entity_sidebar.dart`, `main_screen.dart`, `character_add_menu.dart` and the creation wizard
 - Domain map: [[World-and-Content]]
 - Spec / reference: `docs/free-template/DESIGN.md` §6.2, §6.4, §16; `docs/free-template/ROADMAP.md` Faz 1, Faz 3
 
 ## Key Logic / Variables
 - **Lineage:** `freeRootId = source.freeRootId ?? source.schemaId`, so SRD → copy → copy-of-copy all point at the built-in id; an empty template points at itself.
-- **SRD copy (v1):** `player-character` gets `isPlayerCard: true`; every category gets `tier: builtinTier(slug)`; `crCalculator` fields are dropped (`_droppedOnCopy`). Every other category, field, group, encounter config and metadata is kept verbatim — later phases add conversions here (ROADMAP §6).
+- **SRD copy (v2, Faz 4a):** `player-character` gets `isPlayerCard: true`; every category gets `tier: builtinTier(slug)`; `_srdCopyField` per field: `crCalculator` dropped; `statBlock` → Stat table (STR–CHA, base 10, step 2; `ability_bonuses` without modifier); `proficiencyTable` → Skill table (rows = the SRD default rows, id = SRD name; reads the category's `stat_block`, a mark adds `proficiency_bonus`); `levelTable` (not `class_levels`, Faz 6) / `levelTextTable` → free-row Table (Level · Value / Text); `rangedSenseList`, `spellEffectList` → free-row Table with the SRD row keys as column keys; `equipmentChoiceGroups`, `playerChoices`, `subspeciesOptions` → Markdown. Column keys equal the SRD row keys, so card data is read as stored ([[free_field_styles]]). Then `_withSrdPresets` (Faz 4b): Skills, Saving Throws and Ability Scores presets, each built from the player card's field, bound to every skill / save / `stat_block` field (not `ability_bonuses`); the fields keep their SRD keys (D33). Groups, encounter config and metadata are kept verbatim; a free → free copy keeps fields as they are. Later phases add the remaining rows of ROADMAP §6.
 - Category/field ids are **kept** (scoped to the schema); every category's `schemaId` is rewritten to the new id.
 - `originalHash` is frozen at creation = `computeWorldSchemaContentHash(copy)`.
 - `isBuiltin` flags on copied categories/fields are left as is: nothing reads the schema-level flag (checked 2026-10-11; the `isBuiltin` reads in the app are about packages/cards).

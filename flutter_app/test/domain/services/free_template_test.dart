@@ -37,25 +37,82 @@ void main() {
           [('player-character', true)]);
     });
 
-    test('drops the CR calculator and keeps everything else as is', () {
+    test('drops the CR calculator, converts Faz 4 types, keeps the rest', () {
+      // ROADMAP §6, Faz 4 rows.
+      const converted = {
+        FieldType.statBlock: FieldType.statTable,
+        FieldType.proficiencyTable: FieldType.skillTable,
+        FieldType.levelTable: FieldType.table,
+        FieldType.levelTextTable: FieldType.table,
+        FieldType.rangedSenseList: FieldType.table,
+        FieldType.spellEffectList: FieldType.table,
+        FieldType.equipmentChoiceGroups: FieldType.markdown,
+        FieldType.playerChoices: FieldType.markdown,
+        FieldType.subspeciesOptions: FieldType.markdown,
+      };
       expect(srd.categories, hasLength(builtin.categories.length));
       for (var i = 0; i < builtin.categories.length; i++) {
         final from = builtin.categories[i];
         final to = srd.categories[i];
         expect(to.slug, from.slug);
         expect(to.fieldGroups, from.fieldGroups);
-        expect(to.fields.any((f) => f.fieldType == FieldType.crCalculator),
-            isFalse);
-        expect(
-          to.fields,
-          [
-            for (final f in from.fields)
-              if (f.fieldType != FieldType.crCalculator) f,
-          ],
-          reason: from.slug,
-        );
+        final kept = [
+          for (final f in from.fields)
+            if (f.fieldType != FieldType.crCalculator) f,
+        ];
+        expect(to.fields.map((f) => f.fieldKey), kept.map((f) => f.fieldKey),
+            reason: from.slug);
+        for (final (j, f) in kept.indexed) {
+          final c = to.fields[j];
+          final target = f.fieldKey == 'class_levels' // leaves in Faz 6
+              ? null
+              : converted[f.fieldType];
+          if (target == null) {
+            expect(c, f, reason: '${from.slug}.${f.fieldKey}');
+          } else {
+            expect(c.fieldType, target, reason: '${from.slug}.${f.fieldKey}');
+            // A field bound to an SRD preset also takes its label.
+            expect(
+              c.copyWith(
+                fieldType: f.fieldType,
+                styleConfig: null,
+                defaultValue: f.defaultValue,
+                presetId: null,
+                label: f.label,
+              ),
+              f,
+              reason: '${from.slug}.${f.fieldKey}: only the style changes',
+            );
+          }
+        }
       }
       expect(srd.encounterConfig, builtin.encounterConfig);
+    });
+
+    test('skills, saves and ability scores come as bound presets', () {
+      final presets = {for (final p in srd.presets!) p.fieldKey: p};
+      expect(presets.keys, {'skills', 'saving_throws', 'stat_block'});
+      expect(presets['skills']!.fieldType, FieldType.skillTable);
+      expect(presets['stat_block']!.fieldType, FieldType.statTable);
+      String? bound(String slug, String key) => srd.categories
+          .firstWhere((c) => c.slug == slug)
+          .fields
+          .firstWhere((f) => f.fieldKey == key)
+          .presetId;
+      final skills = presets['skills']!.fieldId;
+      final saves = presets['saving_throws']!.fieldId;
+      // The fields keep their SRD keys, so SRD cards read as they are.
+      expect(bound('player-character', 'skills'), skills);
+      expect(bound('npc', 'skills'), skills);
+      expect(bound('monster', 'skill_bonuses'), skills);
+      expect(bound('monster', 'save_bonuses'), saves);
+      expect(bound('npc', 'saving_throws'), saves);
+      expect(bound('monster', 'stat_block'), presets['stat_block']!.fieldId);
+      // Species bonuses have no modifier: not the stat preset.
+      expect(bound('feat', 'ability_bonuses'), isNull);
+      // Copying a free template keeps its presets.
+      final again = copyAsFreeTemplate(srd, id: 'c2', name: 'n', now: _now);
+      expect(again.presets, srd.presets);
     });
 
     test('keeps the codex tier the sidebar gives each slug', () {

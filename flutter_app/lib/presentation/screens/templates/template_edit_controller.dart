@@ -10,7 +10,7 @@ import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/template_edit.dart' as edit;
 
 /// What the settings panel (desktop) or sheet (phone) shows.
-enum TemplatePanel { info, category, group, field }
+enum TemplatePanel { info, category, group, field, preset }
 
 enum TemplateSaveState { saved, pending, saving, failed }
 
@@ -41,6 +41,7 @@ class TemplateEditController extends ChangeNotifier {
   TemplatePanel panel = TemplatePanel.info;
   String? groupId;
   String? fieldId;
+  String? presetId;
 
   /// Center panel shows the card preview instead of the layout (V27).
   bool preview = false;
@@ -55,6 +56,11 @@ class TemplateEditController extends ChangeNotifier {
 
   FieldGroup? get group =>
       category?.fieldGroups.where((g) => g.groupId == groupId).firstOrNull;
+
+  /// The preset open in the settings (DESIGN §9).
+  FieldSchema? get preset => presetById(presetId);
+
+  FieldSchema? presetById(String? id) => edit.presetById(_schema, id);
 
   /// Where a palette click puts a new field: the selected group, the
   /// selected field's group, else ungrouped.
@@ -91,6 +97,12 @@ class TemplateEditController extends ChangeNotifier {
   void selectField(String id) {
     fieldId = id;
     panel = TemplatePanel.field;
+    _changed();
+  }
+
+  void selectPreset(String id) {
+    presetId = id;
+    panel = TemplatePanel.preset;
     _changed();
   }
 
@@ -201,6 +213,79 @@ class TemplateEditController extends ChangeNotifier {
       (c) => edit.changeFieldType(c, id, to, toList, newId: newId, now: _now()),
     );
     if (fieldId == id && field == null) selectField(newId);
+  }
+
+  // -------------------------------------------------------------- presets
+
+  void addPreset(String label, FieldType type) {
+    final id = _uuid.v4();
+    _edit(
+      (s) => edit.addPreset(s, id: id, label: label, type: type, now: _now()),
+    );
+    selectPreset(id);
+  }
+
+  void updatePreset(FieldSchema p) =>
+      _edit((s) => edit.replacePreset(s, p.copyWith(updatedAt: _now())));
+
+  /// The open category's field [id] becomes a preset it is bound to.
+  void saveAsPreset(String id) {
+    final cat = category;
+    if (cat == null) return;
+    final presetId = _uuid.v4();
+    _edit(
+      (s) => edit.saveAsPreset(
+        s,
+        cat.categoryId,
+        id,
+        id: presetId,
+        now: _now(),
+      ),
+    );
+  }
+
+  /// Adds a field bound to [presetId] to the open category; false when the
+  /// category already has it or its key (V8).
+  bool addPresetField(String presetId, {String? groupId, int? index}) {
+    final cat = category;
+    final p = edit.presetById(_schema, presetId);
+    if (cat == null || p == null || !edit.canAddPreset(cat, p)) return false;
+    final id = _uuid.v4();
+    _editCategory(
+      (c) => edit.addPresetField(
+        c,
+        p,
+        id: id,
+        groupId: groupId,
+        index: index,
+        now: _now(),
+      ),
+    );
+    selectField(id);
+    return true;
+  }
+
+  void unlinkField(String id) =>
+      _editCategory((c) => edit.unlinkField(c, id));
+
+  void copyPreset(String presetId, String label) {
+    final id = _uuid.v4();
+    _edit(
+      (s) => edit.copyPreset(s, presetId, id: id, label: label, now: _now()),
+    );
+    selectPreset(id);
+  }
+
+  void removePreset(String id) {
+    _edit((s) => edit.removePreset(s, id));
+    if (presetId == id) {
+      presetId = null;
+      if (category != null) {
+        selectGroup(null);
+      } else {
+        selectInfo();
+      }
+    }
   }
 
   // ------------------------------------------------------------- autosave

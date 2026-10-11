@@ -1,6 +1,8 @@
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
+import 'package:dungeon_master_tool/domain/services/free_field_styles.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:dungeon_master_tool/domain/services/template_edit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -191,6 +193,44 @@ void main() {
       expect(out.fields.single.fieldKey, 'ad');
       expect(out.fields.single.fieldType, FieldType.markdown);
     });
+
+    test('a table is a palette style; leaving it drops its settings', () {
+      expect(
+        paletteFieldTypes,
+        containsAll([
+          FieldType.table,
+          FieldType.statTable,
+          FieldType.skillTable,
+        ]),
+      );
+      expect(isLegacyFieldType(FieldType.table), isFalse);
+      expect(isLegacyFieldType(FieldType.proficiencyTable), isTrue);
+      expect(canBeList(FieldType.table), isFalse);
+      expect(
+        typeChangeOf(FieldType.table, false, FieldType.text, false),
+        TypeChange.incompatible,
+      );
+      final c = addField(
+        _cat(),
+        id: 'a',
+        label: 'Skills',
+        type: FieldType.table,
+        now: _now,
+      );
+      final out = changeFieldType(
+        replaceField(
+          c,
+          c.fields.single.copyWith(styleConfig: const {'fixedRows': true}),
+        ),
+        'a',
+        FieldType.markdown,
+        false,
+        newId: 'n',
+        now: _now,
+      );
+      expect(out.fields.single.fieldKey, 'skills_2');
+      expect(out.fields.single.styleConfig, isNull);
+    });
   });
 
   group('categories', () {
@@ -221,6 +261,132 @@ void main() {
       expect(s.categories.map((c) => c.orderIndex), [0, 1, 2]);
       s = removeCategory(s, 'f');
       expect(s.categories.map((c) => c.categoryId), ['t-player', 'f2']);
+    });
+  });
+
+  group('presets (DESIGN §9)', () {
+    // The player card and an NPC category, both holding the Skills preset.
+    WorldSchema base() {
+      var s = emptyFreeTemplate(
+        id: 't',
+        name: 'T',
+        playerCardName: 'PC',
+        now: _now,
+      );
+      s = addCategory(s, id: 'npc', name: 'NPC', now: _now);
+      s = addPreset(
+        s,
+        id: 'p',
+        label: 'Skills',
+        type: FieldType.skillTable,
+        now: _now,
+      );
+      final p = presetById(s, 'p')!;
+      for (final c in s.categories) {
+        s = replaceCategory(
+          s,
+          addPresetField(c, p, id: 'f-${c.categoryId}', now: _now),
+        );
+      }
+      return s;
+    }
+
+    FieldSchema fieldOf(WorldSchema s, String cat) =>
+        s.categories.firstWhere((c) => c.categoryId == cat).fields.single;
+
+    test('a preset change reaches every bound field; card marks stay', () {
+      var s = base();
+      expect(presetUses(s, 'p').map((c) => c.categoryId), ['t-player', 'npc']);
+      expect(fieldOf(s, 'npc').fieldKey, 'skills');
+      final rows = [
+        {'_id': 'r1', 'name': 'Athletics', 'ability': 'STR'},
+      ];
+      s = replacePreset(
+        s,
+        presetById(s, 'p')!.copyWith(
+          label: 'Beceriler',
+          styleConfig: SkillTableSpec(rows: rows).toConfig(),
+        ),
+      );
+      for (final cat in ['t-player', 'npc']) {
+        final f = fieldOf(s, cat);
+        expect(f.label, 'Beceriler');
+        expect(SkillTableSpec.of(f).rows, rows);
+        expect(f.fieldKey, 'skills'); // a key is made once (V3)
+      }
+      // E4.6: a new row reaches the card; its mark on Athletics stays.
+      s = replacePreset(
+        s,
+        presetById(s, 'p')!.copyWith(
+          styleConfig: SkillTableSpec(
+            rows: [
+              ...rows,
+              {'_id': 'r2', 'name': 'Sailing'},
+            ],
+          ).toConfig(),
+        ),
+      );
+      final shown = tableRows(SkillTableSpec.of(fieldOf(s, 'npc')).table, [
+        {'_id': 'r1', 'proficient': true},
+      ]);
+      expect(shown.map((r) => r['name']), ['Athletics', 'Sailing']);
+      expect(shown.first['proficient'], isTrue);
+    });
+
+    test('break link: the field keeps what it has and stops following', () {
+      var s = base();
+      final npc = s.categories.firstWhere((c) => c.categoryId == 'npc');
+      s = replaceCategory(s, unlinkField(npc, 'f-npc'));
+      s = replacePreset(s, presetById(s, 'p')!.copyWith(label: 'New'));
+      expect(fieldOf(s, 'npc').label, 'Skills');
+      expect(fieldOf(s, 'npc').presetId, isNull);
+      expect(fieldOf(s, 't-player').label, 'New');
+    });
+
+    test('delete: bound fields stay as independent copies (V7)', () {
+      final s = removePreset(base(), 'p');
+      expect(presetsOf(s), isEmpty);
+      for (final cat in ['t-player', 'npc']) {
+        expect(fieldOf(s, cat).presetId, isNull);
+        expect(fieldOf(s, cat).fieldType, FieldType.skillTable);
+      }
+    });
+
+    test('once per category, and not over a field with its key (V8)', () {
+      final s = base();
+      final p = presetById(s, 'p')!;
+      expect(canAddPreset(s.categories.first, p), isFalse);
+      final taken = addField(
+        _cat(),
+        id: 'x',
+        label: 'Skills',
+        type: FieldType.text,
+        now: _now,
+      );
+      expect(canAddPreset(taken, p), isFalse);
+      expect(canAddPreset(_cat(), p), isTrue);
+    });
+
+    test('save as preset keeps the key; a copy stands alone', () {
+      var s = emptyFreeTemplate(
+        id: 't',
+        name: 'T',
+        playerCardName: 'PC',
+        now: _now,
+      );
+      final pc = s.categories.single;
+      s = replaceCategory(
+        s,
+        addField(pc, id: 'hp', label: 'HP', type: FieldType.integer, now: _now),
+      );
+      s = saveAsPreset(s, pc.categoryId, 'hp', id: 'p', now: _now);
+      final p = presetById(s, 'p')!;
+      expect(p.fieldKey, 'hp');
+      expect(p.fieldType, FieldType.integer);
+      expect(s.categories.single.fields.single.presetId, 'p');
+      s = copyPreset(s, 'p', id: 'p2', label: 'HP (copy)', now: _now);
+      expect(presetById(s, 'p2')!.fieldKey, 'hp_copy');
+      expect(presetUses(s, 'p2'), isEmpty);
     });
   });
 }
