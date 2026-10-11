@@ -7,12 +7,12 @@
 - **Tasarım:** [DESIGN.md](DESIGN.md) (kararlar D1–D31, varsayımlar V1–V28). Bu doküman *ne
   zaman ve hangi sırayla* sorusunu cevaplar; *ne ve neden* DESIGN.md'dedir.
 - **Branch:** `feature/free-template` · **Başlangıç (base):** `1d3eba6b` — 2026-10-09
-- **Durum:** Taslak, onay bekliyor (2026-10-09). Henüz hiçbir faz başlamadı.
+- **Durum:** Faz 0 kapandı (2026-10-11, R turu referansı alınmadan, bkz. Faz 0 sonucu). Faz 1 sürüyor.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
-| 0 | Güvenlik ağı | S | ⏳ |
-| 1 | Template deposu ve Templates sekmesi | M | ⏳ |
+| 0 | Güvenlik ağı | S | ✅ (R turu yok) |
+| 1 | Template deposu ve Templates sekmesi | M | 🚧 |
 | 2 | Template editörü: kategoriler ve düzen | L | ⏳ |
 | 3 | Free dünya ve template güncellemesi | M | ⏳ |
 | 4 | Tablo, Stat tablosu, hazır içerikler | L | ⏳ |
@@ -80,9 +80,19 @@ cd flutter_app
 DM_DATA_ROOT=$HOME/dmt-free-test ~/flutter-3.47/bin/flutter run -d linux
 ```
 
-- **Ayrı veri klasörü:** `DM_DATA_ROOT` ile branch, gerçek verinden
-  (`~/Documents/DungeonMasterTool`) ayrı bir kopyada çalışır. Kopya Faz 0'da bir kez alınır
-  (§7, Faz 0). Böylece yarım bir faz gerçek dünyalarına dokunamaz.
+Windows (PowerShell; `flutter` PATH'te, 3.47.6):
+
+```powershell
+cd flutter_app
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+$env:DM_DATA_ROOT = "$HOME\dmt-free-test"; flutter run -d windows
+```
+
+- **Ayrı veri klasörü:** `DM_DATA_ROOT` ile branch, gerçek verinden ayrı bir kopyada çalışır
+  (gerçek veri: Linux'ta `~/Documents/DungeonMasterTool`, Windows'ta
+  `%LOCALAPPDATA%\DungeonMasterTool`). Kopya Faz 0'da bir kez alınır (§7, Faz 0). Böylece
+  yarım bir faz gerçek dünyalarına dokunamaz.
 - **Hesapla kullanıyorsan** her zamanki `--dart-define` değerlerini de ekle; yoksa uygulama
   offline açılır ve hesaba bağlı veri klasörünü görmez.
 - **Telefon görünümü (desktop'ta):** pencereyi kısa kenarı 600 px'in altında kalacak şekilde
@@ -155,7 +165,7 @@ Yol haritası hazırlanırken kod okundu. DESIGN.md'nin varsaydığı ama kodda 
 | # | Bulgu | Etkisi | Faz |
 |---|---|---|---|
 | B1 | **Template güncelleme diyaloğu ölü kod.** DESIGN §6.4 "banner bugün de var" diyor; ama diyaloğu açan servis (`TemplateSyncService`, `pendingTemplateUpdateProvider`) `781b8bd7`'de silinmiş. Diyalog [worlds_tab.dart](../../flutter_app/lib/presentation/screens/hub/worlds_tab.dart) içinde `_showPreOpenTemplateDialogDead` adıyla duruyor. `applyTemplateUpdate` / `dismissTemplateUpdate` / `muteTemplateUpdates` ise [campaign_provider.dart](../../flutter_app/lib/application/providers/campaign_provider.dart) içinde çalışır halde. | Değişiklik kontrolü yeniden yazılır, diyalog canlandırılır. Eski servis `git show 781b8bd7^:flutter_app/lib/application/services/template_sync_service.dart` ile referans alınabilir. | 3 |
-| B2 | **Yerleşik şemanın hash'i her açılışta değişir.** `generateBuiltinDnd5eV2Schema()` her kategori ve alana `DateTime.now()` yazıyor; `computeWorldSchemaContentHash` kategorileri zaman damgalarıyla birlikte hash'liyor. | Değişiklik kontrolü sadece **free template'li dünyalarda** çalışır. Yerleşik dünyada açılırsa her açılışta sahte "güncelleme var" çıkar. Faz 0'daki koruma testi zaman damgalarını çıkarıp hash'ler. | 0, 3 |
+| B2 | **Yerleşik şemanın hash'i her açılışta değişir.** `generateBuiltinDnd5eV2Schema()` her kategori ve alana `DateTime.now()` ve rastgele (v4) `categoryId` / `fieldId` yazıyor; `computeWorldSchemaContentHash` kategorileri bunlarla birlikte hash'liyor. | Değişiklik kontrolü sadece **free template'li dünyalarda** çalışır. Yerleşik dünyada açılırsa her açılışta sahte "güncelleme var" çıkar. Faz 0'daki koruma testi zaman damgalarını ve id'leri çıkarıp hash'ler. | 0, 3 |
 | B3 | `allTemplatesProvider` bugün sadece yerleşik template'i döndürdüğü için tüketicileri buna güveniyor: sihirbaz, paket oluşturma, dünya oluşturma, karakter ekranı, global etiketler. | Free template'ler listeye girince sihirbaz ve paket oluşturma onları **görmemeli** (ilgili fazlar gelene kadar). Faz 1'de her tüketici tek tek ele alınır. | 1 |
 | B4 | Eski kullanıcı template'leri `cache/templates/*.json` dosyalarında tutuluyordu (`781b8bd7^`). Cache klasörü silinebilir bir yer. | Yeni depo kullanıcı başına veritabanında yan tablo olur (K5). | 1 |
 | B5 | SRD içeriği altı yerde `templateId == builtinDnd5eV2SchemaId` ile kapılı: [world_repository_impl.dart](../../flutter_app/lib/data/repositories/world_repository_impl.dart) (171, 567, 605), worlds_tab.dart (572), [srd_core_bootstrap.dart](../../flutter_app/lib/application/services/srd_core_bootstrap.dart) (27), [world_join_service.dart](../../flutter_app/lib/application/services/world_join_service.dart) (132). | SRD soyundan gelen kopyalarda SRD paketinin kurulabilmesi (V28) için kapı genişletilir. `_overlayMissingBuiltinCategories` (605) **genişletilmez**: kopyada silinen SRD kategorileri geri gelmemeli. | 3 |
@@ -224,8 +234,8 @@ Kapsam dışı · Otomatik testler · Elle kontrol · Çıkış kriteri.**
 1. **Test temel çizgisi:** temiz ağaçta tam `flutter test` çalıştırılır. Kırmızı testlerin listesi
    bu dokümana (§7, Faz 0 sonucu) yazılır. G6 bununla karşılaştırır.
 2. **Yerleşik şema koruma testi** (`test/domain/entities/schema/builtin_schema_frozen_test.dart`):
-   `generateBuiltinDnd5eV2Schema().schema.toJson()` çıktısından `createdAt` / `updatedAt`
-   çıkarılır, kanonik JSON'un SHA-256'sı sabit bir değerle karşılaştırılır. Kategori sayısı (75)
+   `generateBuiltinDnd5eV2Schema().schema.toJson()` çıktısından `createdAt` / `updatedAt` ve
+   rastgele `categoryId` / `fieldId` çıkarılır, kanonik JSON'un SHA-256'sı sabit bir değerle karşılaştırılır. Kategori sayısı (75)
    ve alan sayısı (928) da ayrıca doğrulanır. Bu test K1 ve K2'nin otomatik bekçisidir.
 3. **Test veri klasörü:** `cp -a ~/Documents/DungeonMasterTool ~/dmt-free-test` (§1.2). Bundan
    sonra branch hep bu klasörle açılır.
@@ -244,7 +254,29 @@ olduğu bir kez elle denenip geri alınır.
 
 **Çıkış kriteri:** temel çizgi kayıtlı, koruma testi yeşil, R turu referansı alınmış.
 
-**Faz 0 sonucu:** *(faz bitince doldurulur: kırmızı test listesi, koruma hash'i)*
+**Faz 0 sonucu** (2026-10-11, Windows, Flutter 3.47.6, base `0b6b2b79` + koruma testi):
+
+- **Tam test:** 1695 test → 1692 geçti, 3 kırmızı, 1 asılı. Temel çizgideki kırmızılar:
+  - `test/application/services/content_transfer/content_archive_test.dart` — "zip olmayan dosya net hata verir"
+  - `test/domain/services/bundled_pack_resolve_test.dart` — "M1 — pack mechanics reach EffectiveCharacter every (pack, mechanic field) pair produces a sheet effect"
+  - `test/presentation/srd_tr_entity_card_test.dart` — "SRD kartı TR okuma modunda Türkçe, düzenleme ve kayıt İngilizce"
+- **Asılı:** `test/presentation/entity_card_flush_test.dart` — "closing the card inside the debounce
+  window keeps the edit" hiç bitmiyor; `--timeout` da kesmiyor ve tam çalıştırmayı kilitliyor. Bu
+  yüzden G6 bu dosya **hariç** çalıştırılır:
+
+  ```bash
+  cd flutter_app
+  flutter test $(find test -name '*_test.dart' ! -name entity_card_flush_test.dart)
+  ```
+- **`flutter analyze`:** 32 info, 0 warning, 0 error (G4 bununla karşılaştırır).
+- **Koruma hash'i:** `2776a95a777c3300d23d31adc126f2f47fa1c16a1e1fb70174fc088affd8d110` (75 kategori, 928 alan).
+- **Test veri klasörü:** `C:\Users\122oa\dmt-free-test` (`%LOCALAPPDATA%\DungeonMasterTool`'un
+  kopyası). Kopyanın `.root_moved_from` dosyası gerçek kökü gösterir: ilk açılışta `beforeOpen`
+  gövdelerdeki mutlak medya yollarını kopyaya çevirir, test sırasında gerçek dosyalara dokunulmaz.
+- **Elle kontrol yapılmadı:** E0.1 (test klasörüyle açılış) ve E0.2 (R turu referansı) bu adımda
+  yapılmadı; faz, Faz 0'da uygulama kodu değişmediği için kullanıcı kararıyla kapatıldı. Sonraki
+  fazların R turu yazılı bir referansla değil, `main`'deki davranışla karşılaştırılır; ilk R turu
+  yapıldığında gözlemler buraya referans olarak eklenir.
 
 ---
 
