@@ -272,6 +272,12 @@ Bütün `out*` klasörleri gitignore'da — silinirlerse geri dönüş yeniden �
 seçilen her görselin prompt'u, seed'i ve yorumu orada durduğu için üretim turlarının
 `art_jobs*.jsonl` dosyaları silinse de düzeltme turu çalışır.
 
+Sürüm turlarının tek seferlik script'leri (`aegis_018_missing.py`, `aegis_019_*`,
+`aegis_022_*`, `aegis_023_gorunus.py`) iş bitince silinir. Seçilen görsellerin prompt'u ve seed'i
+`out_aegis/art_jobs.jsonl`'de, battlemap'lerinki `out_aegis/maps/art_jobs.jsonl`'de durur. Kod
+lazım olursa git geçmişinde (`git log --all -- tool/aegis_art/aegis_022_r4.py`);
+`aegis_023_gorunus.py` hiç commit'lenmedi, onun prompt'ları yalnız `art_jobs.jsonl`'de.
+
 ---
 
 ## 4. `aegis_generate.py` — üretim
