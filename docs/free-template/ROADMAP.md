@@ -25,7 +25,8 @@
   (SRD dönüştürücüsü v4) olarak bölündü. Faz 7a uygulandı, otomatik kapı yeşil; elle kontrol
   bekliyor (2026-10-12). Elle kontrol bulguları düzeltildi ve commit'lendi (E7a.20–25 yeniden
   kontrol bekliyor). Kullanıcı kararıyla (2026-10-12) 7b'den önce **Faz 7a+** (oynanış alanları
-  edit modu kapalıyken de değişsin) yapılır.
+  edit modu kapalıyken de değişsin) yapılır. Faz 7a+ uygulandı, otomatik kapı yeşil; elle kontrol
+  bekliyor (2026-10-12).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -38,7 +39,7 @@
 | 5 | Paketler | M | ✅ (elle kontrol kısmi) |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | 🔶 uygulandı, elle kontrol bekliyor |
 | 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | 🔶 uygulandı, elle kontrol bekliyor |
-| 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | ⏭ sıradaki |
+| 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | 🔶 uygulandı, elle kontrol bekliyor |
 | 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ⏳ |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
 | 9 | Encounter ve harita ayarları | M | ⏳ |
@@ -1444,6 +1445,30 @@ hem karakterde hem canavarda doğru yere düşer.
 | E7a+.2 | Aynı şeyi free kart ekranında (canavar) yap. | Aynı. |
 | E7a+.3 | Görüntüleme modunda bir yazı alanına, Kaynak'ın maksına dokun. | Düzenlenmez. |
 | E7a+.4 | Yerleşik dünyada aynı kart / karakter. | Bugünkü davranış aynen. |
+
+**Faz 7a+ sonucu** (2026-10-12, Linux; elle kontrol bekliyor):
+
+- **Yapılanlar:** `FieldWidgetFactory.create`'e `play` bayrağı (varsayılan kapalı). Açıkken,
+  görüntüleme modunda:
+  - **Onay kutusu** işaretlenir / kaldırılır; işaretsizken de görünür (kart ekranı free dünyada
+    işaretsiz onay kutusunu artık gizlemiyor).
+  - **Kaynak:** sayı görünümünde mevcut değer −/+ ve yazarak, kutucuk görünümünde kutular
+    harcanır / geri gelir. Maks salt okunur.
+  - **Havuz:** kaynak kutucukları ve (kutusuz) mevcut değer. Oyuncunun girdiği maks ve Havuz'daki
+    diğer öğeler salt okunur.
+  - **Savaş değerleri:** HP (mevcut) ve "düzenlenebilir" işaretli sayılar yazılarak değişir. Max
+    HP, zar değerleri ve kart listesi (Durumlar) edit modunda kalır.
+  - Free kağıt bayrağı her zaman, kart ekranı yalnız free dünyada geçirir; yerleşik alanlar onu
+    hiç almaz.
+- **Kararlar:** Durumlar (kart listesi) "listeyi değiştiren" sayıldı, edit modunda kaldı. Savaş
+  değerleri'nde −/+ yok (Faz 6 kullanıcı kararı); HP yazılarak değişir.
+- **Otomatik kapı:** G1 boş · G2 + G3 60 yeşil · G4 32 bilgi notu (temel çizgi) · G5
+  `free_play_fields_test` 5 (görüntüleme modunda onay kutusu, Kaynak −, kutu harcama; maks ve
+  yazı salt okunur; yerleşik onay kutusu aynen), `free_character_sheet_test` (+ görüntüleme
+  modunda HP yazılır ve kaydedilir) yeşil · G6 1883 geçti (Faz 7a düzeltmelerindeki 1878 + 5 yeni); kırmızılar temel çizgideki 3 testle aynı
+- **Elle kontrol:** E7a+.1–E7a+.4 (+ bekleyen E7a.20–25).
+- **Bilinen sınırlar:** Havuz'daki kaynak dışı öğeler (ör. verilen onay kutusu) her modda
+  salt okunur (bugünkü gibi): Havuz onları saklamaz, kartın verisidir.
 
 ---
 

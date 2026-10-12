@@ -971,12 +971,16 @@ class ResourceFieldWidget extends StatelessWidget {
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.play = false,
   });
 
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+
+  /// With [readOnly], the current value still changes; the max does not.
+  final bool play;
 
   /// More boxes than this read better as numbers.
   static const _maxBoxes = 30;
@@ -998,6 +1002,7 @@ class ResourceFieldWidget extends StatelessWidget {
     }
 
     final boxes = spec.boxes && max != null && max > 0 && max <= _maxBoxes;
+    final fixed = readOnly && !play;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1026,7 +1031,7 @@ class ResourceFieldWidget extends StatelessWidget {
                           borderRadius: palette.br,
                           // A filled box spends it, an empty one takes it
                           // back (the class resource tracker's rule).
-                          onTap: readOnly
+                          onTap: fixed
                               ? null
                               : () => put(i < (current ?? 0) ? i : i + 1, max),
                         ),
@@ -1037,7 +1042,7 @@ class ResourceFieldWidget extends StatelessWidget {
                   _NumberBox(
                     key: ValueKey('res_${schema.fieldKey}_current'),
                     value: current,
-                    readOnly: readOnly,
+                    readOnly: fixed,
                     buttons: true,
                     bold: true,
                     onChanged: (n) => put(n, max),
@@ -1074,6 +1079,7 @@ class CombatBlockFieldWidget extends StatelessWidget {
     required this.onChanged,
     this.entities,
     this.ref,
+    this.play = false,
   });
 
   final FieldSchema schema;
@@ -1083,9 +1089,13 @@ class CombatBlockFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
 
+  /// With [readOnly], HP and the editable numbers still change.
+  final bool play;
+
   @override
   Widget build(BuildContext context) {
     final spec = CombatStatsSpec.of(schema);
+    final fixed = readOnly && !play;
     final stats = value is Map
         ? Map<String, dynamic>.from(value as Map)
         : <String, dynamic>{};
@@ -1113,7 +1123,7 @@ class CombatBlockFieldWidget extends StatelessWidget {
         _NumberBox(
           key: ValueKey(k(cv.key)),
           value: combatNumber(stats[cv.key]),
-          readOnly: readOnly || !cv.editable,
+          readOnly: fixed || !cv.editable,
           onChanged: (n) => put(cv.key, n),
         ),
       ),
@@ -1162,7 +1172,7 @@ class CombatBlockFieldWidget extends StatelessWidget {
                       _NumberBox(
                         key: ValueKey(k(combatHpKey)),
                         value: combatNumber(stats[combatHpKey]),
-                        readOnly: readOnly,
+                        readOnly: fixed,
                         bold: true,
                         onChanged: (n) => put(
                           combatHpKey,
@@ -1292,12 +1302,16 @@ class PoolFieldWidget extends StatelessWidget {
     this.grants,
     this.entities,
     this.ref,
+    this.play = false,
   });
 
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+
+  /// With [readOnly], a resource's current value still changes.
+  final bool play;
   final GrantResult? grants;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
@@ -1350,7 +1364,7 @@ class PoolFieldWidget extends StatelessWidget {
                       filled: i < (current ?? 0),
                       color: palette.featureCardAccent,
                       borderRadius: palette.br,
-                      onTap: readOnly
+                      onTap: readOnly && !play
                           ? null
                           : () => put(
                               current: i < (current ?? 0) ? i : i + 1,
@@ -1362,7 +1376,7 @@ class PoolFieldWidget extends StatelessWidget {
               _NumberBox(
                 key: ValueKey('pool_${r.name}_current'),
                 value: current,
-                readOnly: readOnly,
+                readOnly: readOnly && !play,
                 bold: true,
                 onChanged: (n) => put(current: n?.clamp(0, max)),
               ),

@@ -863,6 +863,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       schema: tx.field(field),
       value: shown,
       readOnly: widget.readOnly,
+      // Free world: checkboxes, resources and HP change outside edit mode.
+      play: isFreeTemplate(ref.read(worldSchemaProvider)),
       onChanged: !identical(shown, fieldValue)
           ? (_) {}
           : list && grantCtx != null
@@ -997,6 +999,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           final g = computeGrants(entity.fields, ctx);
           return g.resources.isNotEmpty || g.entries.isNotEmpty;
         }
+        // Unchecked, it is still there to tick.
+        if (free && f.fieldType == FieldType.boolean_) return true;
         return _isFieldVisibleInReadOnly(f, freeFieldValue(f, entity.fields));
       }).toList();
     }
