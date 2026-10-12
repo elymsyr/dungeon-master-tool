@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/character_provider.dart'
+    show characterListProvider;
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/free_character_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../domain/services/free_template.dart' show isFreeTemplate;
 import '../theme/dm_tool_colors.dart';
@@ -34,14 +37,12 @@ class CharacterAddButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // A free template world has no characters until its own sheet exists;
-    // the wizard and the built-in sheet would bind the wrong template.
-    final free = isFreeTemplate(ref.watch(worldSchemaProvider));
-    final hasWorld = activeWorld != null && activeWorld!.isNotEmpty && !free;
+    // A free template world takes no wizard: a blank sheet (DESIGN §10.2).
+    final schema = ref.watch(worldSchemaProvider);
+    final free = isFreeTemplate(schema);
+    final hasWorld = activeWorld != null && activeWorld!.isNotEmpty;
     return PopupMenuButton<String>(
-      tooltip: free
-          ? L10n.of(context)!.freeWorldNoCharacters
-          : L10n.of(context)!.charAddTooltip,
+      tooltip: L10n.of(context)!.charAddTooltip,
       enabled: hasWorld,
       icon: dense
           ? Icon(Icons.add, color: palette.tabActiveText)
@@ -75,6 +76,16 @@ class CharacterAddButton extends ConsumerWidget {
             ),
       onSelected: (v) async {
         switch (v) {
+          case 'create' when free:
+            final worldId = await ref.read(activeCampaignIdProvider.future);
+            if (!context.mounted || worldId == null) return;
+            final c = await createFreeCharacter(
+              ref.read(characterListProvider.notifier),
+              schema: schema,
+              name: L10n.of(context)!.freeNewCharacterName,
+              worldId: worldId,
+            );
+            if (context.mounted) context.push('/character/${c.id}');
           case 'create':
             context.push('/character/new');
           case 'import':

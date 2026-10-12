@@ -38,7 +38,10 @@ class TemplateCardPreview extends ConsumerWidget {
     };
     Widget fieldWidget(FieldSchema f) => FieldWidgetFactory.create(
       schema: f,
-      value: f.defaultValue,
+      // A resource has no default; a sample shows its display (boxes).
+      value: f.fieldType == FieldType.resource && f.defaultValue == null
+          ? const {'current': 2, 'max': 4}
+          : f.defaultValue,
       readOnly: false,
       onChanged: (_) {},
       entities: const <String, Entity>{},

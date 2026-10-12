@@ -39,6 +39,10 @@ String styleLabel(L10n l10n, FieldType t) => switch (t) {
   FieldType.table => l10n.tplStyleTable,
   FieldType.statTable => l10n.tplStyleStatTable,
   FieldType.skillTable => l10n.tplStyleSkillTable,
+  FieldType.resource => l10n.tplStyleResource,
+  FieldType.combatStats => l10n.tplStyleCombatStats,
+  FieldType.characterLevel => l10n.tplStyleLevel,
+  FieldType.autoResources => l10n.tplStyleAutoResources,
   // Kept SRD types show their code name next to the "SRD type" badge.
   _ => t.name,
 };
@@ -61,6 +65,10 @@ String styleHint(L10n l10n, FieldType t) => switch (t) {
   FieldType.table => l10n.tplStyleTableHint,
   FieldType.statTable => l10n.tplStyleStatTableHint,
   FieldType.skillTable => l10n.tplStyleSkillTableHint,
+  FieldType.resource => l10n.tplStyleResourceHint,
+  FieldType.combatStats => l10n.tplStyleCombatStatsHint,
+  FieldType.characterLevel => l10n.tplStyleLevelHint,
+  FieldType.autoResources => l10n.tplStyleAutoResourcesHint,
   _ => l10n.tplLegacyHint,
 };
 
@@ -82,21 +90,29 @@ IconData styleIcon(FieldType t) => switch (t) {
   FieldType.table => Icons.table_chart_outlined,
   FieldType.statTable => Icons.leaderboard_outlined,
   FieldType.skillTable => Icons.checklist,
+  FieldType.resource => Icons.battery_5_bar_outlined,
+  FieldType.combatStats => Icons.shield_outlined,
+  FieldType.characterLevel => Icons.trending_up,
+  FieldType.autoResources => Icons.auto_awesome_outlined,
   _ => Icons.extension_outlined,
 };
 
-/// Desktop palette strip under the three panels (DESIGN §7.5): styles, then
-/// the template's presets. Click adds to the selected group, drag drops
-/// anywhere on the layout.
+/// Desktop palette strip under the three panels (DESIGN §7.5): styles, the
+/// player card's own fields it lacks, then the template's presets. Click
+/// adds to the selected group, drag drops anywhere on the layout.
 class TemplatePaletteStrip extends StatelessWidget {
   const TemplatePaletteStrip({
     super.key,
     required this.onAdd,
     this.presets = const [],
+    this.own = const [],
   });
 
   final ValueChanged<TemplateDrag> onAdd;
   final List<FieldSchema> presets;
+
+  /// The player card fields to offer (D34): only those it lacks.
+  final List<FieldType> own;
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +140,31 @@ class TemplatePaletteStrip extends StatelessWidget {
       );
     }
 
+    Widget section(String title) => Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+      ),
+    );
+
     final items = [
       for (final t in paletteFieldTypes)
+        item(
+          TemplateDrag.style(t),
+          styleIcon(t),
+          styleLabel(l10n, t),
+          styleHint(l10n, t),
+        ),
+      if (own.isNotEmpty) section(l10n.tplPlayerCardSection),
+      for (final t in own)
         item(
           TemplateDrag.style(t),
           styleIcon(t),
@@ -353,11 +392,13 @@ class TemplatePill extends StatelessWidget {
   }
 }
 
-/// The "+ Add" sheet (DESIGN §7.6): one tap picks a style, or one of
-/// [presets] (listed under their own heading).
+/// The "+ Add" sheet (DESIGN §7.6): one tap picks a style, one of [own]
+/// (the player card's own fields it lacks) or one of [presets], each under
+/// its own heading.
 Future<TemplateDrag?> showStylePickerSheet(
   BuildContext context, {
   List<FieldSchema> presets = const [],
+  List<FieldType> own = const [],
 }) {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -410,6 +451,16 @@ Future<TemplateDrag?> showStylePickerSheet(
                 Icons.bookmark_outline,
                 p.label,
                 '${styleLabel(l10n, p.fieldType)} · ${l10n.tplPresetHint}',
+              ),
+          ],
+          if (own.isNotEmpty) ...[
+            heading(l10n.tplPlayerCardSection),
+            for (final t in own)
+              tile(
+                TemplateDrag.style(t),
+                styleIcon(t),
+                styleLabel(l10n, t),
+                styleHint(l10n, t),
               ),
           ],
           heading(l10n.tplAddField),

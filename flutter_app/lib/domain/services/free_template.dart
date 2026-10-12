@@ -9,7 +9,7 @@ import '../entities/schema/field_schema.dart';
 import '../entities/schema/world_schema.dart';
 import '../entities/schema/world_schema_hash.dart';
 import 'free_field_styles.dart';
-import 'template_edit.dart' show syncPresets;
+import 'template_edit.dart' show playerCardFieldKey, syncPresets;
 
 /// The one gate between the built-in and the free code paths
 /// (docs/free-template/ROADMAP.md K3).
@@ -29,10 +29,106 @@ int builtinTier(String slug) {
   return tier1Slugs.contains(slug) ? 1 : 2;
 }
 
-/// [f] as an SRD copy holds it (ROADMAP §6): null when it is dropped, a
-/// free style for the types converted so far, else unchanged (a kept SRD
-/// type, converted in a later phase). Card data is not touched; the free
-/// styles read the SRD shapes as they are (`free_field_styles.dart`).
+/// The SRD copy's Combat stats block (DESIGN §16.2, D36): the built-in
+/// `combat_stats` keys, plus Conditions; Speed, CR and the level leave it.
+const _srdCombat = CombatStatsSpec(
+  values: [
+    CombatValue(key: 'ac', label: 'AC'),
+    CombatValue(
+      key: 'initiative',
+      label: 'Initiative',
+      type: CombatValueType.dice,
+    ),
+    CombatValue(key: 'xp', label: 'XP', encounter: false),
+    CombatValue(
+      key: 'conditions',
+      label: 'Conditions',
+      type: CombatValueType.cards,
+      targets: ['condition'],
+    ),
+  ],
+);
+
+/// Monster and animal cards keep their combat values in flat fields; the
+/// copy gives them the block (read from those fields, §16.3) instead.
+const _flatCombatSlugs = {'monster', 'animal'};
+const _flatCombatKeys = {'ac', 'hp_average', 'initiative_modifier'};
+
+/// A field the SRD copy adds beside [f]: the same group and timestamps.
+FieldSchema _added(
+  FieldSchema f, {
+  required String id,
+  required String key,
+  required String label,
+  required FieldType type,
+  Map<String, dynamic>? config,
+  int span = 1,
+}) => FieldSchema(
+  fieldId: id,
+  categoryId: f.categoryId,
+  fieldKey: key,
+  label: label,
+  fieldType: type,
+  groupId: f.groupId,
+  gridColumnSpan: span,
+  styleConfig: config,
+  createdAt: f.createdAt,
+  updatedAt: f.updatedAt,
+);
+
+/// [f] as an SRD copy holds it (ROADMAP §6): nothing when it is dropped, a
+/// free style for the types converted so far (with the fields that come
+/// out of it), else unchanged (a kept SRD type, converted in a later
+/// phase). Card data is not touched; the free styles read the SRD shapes
+/// as they are (`free_field_styles.dart`).
+Iterable<FieldSchema> _srdCopyFields(
+  FieldSchema f,
+  EntityCategorySchema cat,
+) sync* {
+  if (_flatCombatSlugs.contains(cat.slug) &&
+      _flatCombatKeys.contains(f.fieldKey)) {
+    // The block takes the place of the first of them.
+    if (f.fieldKey == 'ac') {
+      yield _srdCombat.applyTo(
+        _added(
+          f,
+          id: '${cat.categoryId}-combat',
+          key: 'combat_stats',
+          label: 'Combat Stats',
+          type: FieldType.combatStats,
+          span: 2,
+        ),
+      );
+    }
+    return;
+  }
+  if (f.fieldType == FieldType.combatStats) {
+    yield _srdCombat.applyTo(f.copyWith(defaultValue: null));
+    // Out of the block, as numbers (D36).
+    yield _added(
+      f,
+      id: '${f.fieldId}-speed',
+      key: 'speed',
+      label: 'Speed',
+      type: FieldType.integer,
+      config: const {srdReadKey: 'speed'},
+    );
+    if (cat.slug == 'npc') {
+      yield _added(
+        f,
+        id: '${f.fieldId}-cr',
+        key: 'cr',
+        label: 'CR',
+        type: FieldType.float_,
+        config: const {srdReadKey: 'cr'},
+      );
+    }
+    return;
+  }
+  final one = _srdCopyField(f, cat);
+  if (one != null) yield one;
+}
+
 FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
   FieldSchema table(List<TableColumn> columns) => f.copyWith(
     fieldType: FieldType.table,
@@ -58,8 +154,24 @@ FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
       defaultValue: null,
       styleConfig: _skillSpec(f, cat).toConfig(),
     ),
-    // The player card's class levels leave in Faz 6 (ROADMAP §6).
-    FieldType.levelTable when f.fieldKey != 'class_levels' => table(const [
+    // The player card's class levels give way to the main level (§16.1).
+    FieldType.levelTable when f.fieldKey == 'class_levels' => f.copyWith(
+      fieldType: FieldType.characterLevel,
+      fieldKey: playerCardFieldKey(FieldType.characterLevel),
+      label: 'Level',
+      gridColumnSpan: 1,
+    ),
+    // The slot grid's slots arrive as automatic resources (Faz 7).
+    FieldType.spellSlotGrid => f.copyWith(
+      fieldType: FieldType.autoResources,
+      fieldKey: playerCardFieldKey(FieldType.autoResources),
+      label: 'Automatic Resources',
+    ),
+    FieldType.slot => f.copyWith(
+      fieldType: FieldType.resource,
+      styleConfig: const ResourceSpec(boxes: true).toConfig(),
+    ),
+    FieldType.levelTable => table(const [
       level,
       TableColumn(key: 'value', label: 'Value', type: TableColumnType.number),
     ]),
@@ -143,6 +255,7 @@ WorldSchema _withSrdPresets(WorldSchema schema, String now) {
   String? kindOf(FieldSchema f) => switch (f.fieldType) {
     FieldType.skillTable => f.fieldKey.startsWith('sav') ? 'saves' : 'skills',
     FieldType.statTable when f.fieldKey == 'stat_block' => 'stats',
+    FieldType.combatStats => 'combat',
     _ => null,
   };
   final presets = <String, FieldSchema>{};
@@ -186,6 +299,15 @@ WorldSchema _withSrdPresets(WorldSchema schema, String now) {
   );
 }
 
+/// [cat]'s fields in the SRD copy, numbered in card order (the copy adds
+/// fields beside the ones it converts).
+List<FieldSchema> _srdCopyCategoryFields(EntityCategorySchema cat) {
+  final sorted = [...cat.fields]
+    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  final out = [for (final f in sorted) ..._srdCopyFields(f, cat)];
+  return [for (final (i, f) in out.indexed) f.copyWith(orderIndex: i)];
+}
+
 /// [source] copied as a new free template [id] named [name]. Works for the
 /// built-in template (SRD copy, DESIGN §16) and for a free one (the lineage
 /// root is kept). Category and field ids are kept: they are scoped to the
@@ -212,11 +334,7 @@ WorldSchema copyAsFreeTemplate(
               ? (c.slug == 'player-character' ? true : null)
               : c.isPlayerCard,
           tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
-          fields: fromBuiltin
-              ? [
-                  for (final f in c.fields) ?_srdCopyField(f, c),
-                ]
-              : c.fields,
+          fields: fromBuiltin ? _srdCopyCategoryFields(c) : c.fields,
         ),
     ],
   );
@@ -273,14 +391,26 @@ Map<String, Entity> withoutDeletedCategories(
   };
 }
 
-/// A new free template holding only the player card (V1). Its fixed fields
-/// (level, automatic resources) arrive in Faz 6.
+/// A new free template holding only the player card (V1), with its own
+/// fields: Level and Automatic resources (DESIGN §10.1).
 WorldSchema emptyFreeTemplate({
   required String id,
   required String name,
   required String playerCardName,
+  String levelLabel = 'Level',
+  String autoResourcesLabel = 'Automatic Resources',
   required String now,
 }) {
+  FieldSchema own(FieldType type, String label, int order) => FieldSchema(
+    fieldId: '$id-${playerCardFieldKey(type)}',
+    categoryId: '$id-player',
+    fieldKey: playerCardFieldKey(type),
+    label: label,
+    fieldType: type,
+    orderIndex: order,
+    createdAt: now,
+    updatedAt: now,
+  );
   final schema = WorldSchema(
     schemaId: id,
     name: name,
@@ -296,6 +426,10 @@ WorldSchema emptyFreeTemplate({
         icon: 'person_outline',
         color: '#4caf50',
         isPlayerCard: true,
+        fields: [
+          own(FieldType.characterLevel, levelLabel, 0),
+          own(FieldType.autoResources, autoResourcesLabel, 1),
+        ],
         createdAt: now,
         updatedAt: now,
       ),
@@ -303,3 +437,28 @@ WorldSchema emptyFreeTemplate({
   );
   return schema.copyWith(originalHash: computeWorldSchemaContentHash(schema));
 }
+
+/// A new free character's values (D35): level 1, and an empty Combat stats
+/// block (not the built-in default map).
+Map<String, dynamic> freeCharacterSeed(EntityCategorySchema playerCard) => {
+  for (final f in playerCard.fields)
+    if (f.fieldType == FieldType.characterLevel)
+      f.fieldKey: 1
+    else if (isCombatBlock(f))
+      f.fieldKey: <String, dynamic>{},
+};
+
+/// The character's main level, or null when the player card has no Level
+/// field (the sheet then shows none, D34).
+int? characterLevelOf(EntityCategorySchema playerCard, Entity character) {
+  final f = playerCard.fields
+      .where((f) => f.fieldType == FieldType.characterLevel)
+      .firstOrNull;
+  if (f == null) return null;
+  final v = character.fields[f.fieldKey];
+  return v is num ? v.toInt() : int.tryParse('${v ?? ''}');
+}
+
+/// A free template's player card (DESIGN §10.1).
+EntityCategorySchema? freePlayerCard(WorldSchema schema) =>
+    schema.categories.where((c) => c.isPlayerCard == true).firstOrNull;

@@ -177,7 +177,13 @@ class TemplateEditController extends ChangeNotifier {
   void reorderGroups(int oldIndex, int newIndex) =>
       _editCategory((c) => edit.reorderGroups(c, oldIndex, newIndex));
 
-  void addField(String label, FieldType type, {String? groupId, int? index}) {
+  void addField(
+    String label,
+    FieldType type, {
+    String? key,
+    String? groupId,
+    int? index,
+  }) {
     final id = _uuid.v4();
     _editCategory(
       (c) => edit.addField(
@@ -185,6 +191,7 @@ class TemplateEditController extends ChangeNotifier {
         id: id,
         label: label,
         type: type,
+        key: key,
         groupId: groupId,
         index: index,
         now: _now(),

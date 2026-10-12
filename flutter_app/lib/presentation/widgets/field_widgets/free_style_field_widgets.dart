@@ -8,6 +8,8 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../dice/dice_fab.dart';
 import '../dice/dice_log.dart';
+import '../../theme/dm_tool_colors.dart';
+import '../class_resources_card.dart' show UsePip;
 import '../srd_text.dart';
 import 'entity_link.dart';
 import 'field_widget_factory.dart' show ProficiencyDot;
@@ -852,4 +854,453 @@ class _RelationCell extends StatelessWidget {
       ],
     );
   }
+}
+
+// ------------------------------------------------------ resource, combat
+
+/// A whole number: a box to type in (unless [readOnly]) and, with
+/// [buttons], − / + beside it.
+class _NumberBox extends StatefulWidget {
+  const _NumberBox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.readOnly = false,
+    this.buttons = false,
+    this.label,
+    this.bold = false,
+  });
+
+  final int? value;
+  final ValueChanged<int?> onChanged;
+  final bool readOnly;
+  final bool buttons;
+  final String? label;
+  final bool bold;
+
+  static const _width = 52.0;
+
+  @override
+  State<_NumberBox> createState() => _NumberBoxState();
+}
+
+class _NumberBoxState extends State<_NumberBox> {
+  late final _text = TextEditingController(text: _show(widget.value));
+
+  static String _show(int? v) => v?.toString() ?? '';
+
+  @override
+  void didUpdateWidget(covariant _NumberBox old) {
+    super.didUpdateWidget(old);
+    // Only a real change lands, so text being typed ("-", "") stays.
+    if (int.tryParse(_text.text.trim()) != widget.value) {
+      _text.text = _show(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Widget _button(IconData icon, int delta, String tip) => IconButton(
+    tooltip: tip,
+    icon: Icon(icon, size: 18),
+    visualDensity: VisualDensity.compact,
+    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    onPressed: () => widget.onChanged((widget.value ?? 0) + delta),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: widget.bold ? 16 : 14,
+      fontWeight: widget.bold ? FontWeight.bold : FontWeight.w500,
+    );
+    final box = widget.readOnly
+        ? SizedBox(
+            width: _NumberBox._width,
+            child: Text(
+              widget.value?.toString() ?? '—',
+              textAlign: TextAlign.center,
+              style: style,
+            ),
+          )
+        : SizedBox(
+            width: _NumberBox._width,
+            child: TextField(
+              controller: _text,
+              textAlign: TextAlign.center,
+              style: style,
+              keyboardType: const TextInputType.numberWithOptions(
+                signed: true,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: widget.label,
+                floatingLabelAlignment: FloatingLabelAlignment.center,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 4,
+                ),
+              ),
+              onChanged: (t) => widget.onChanged(int.tryParse(t.trim())),
+            ),
+          );
+    if (!widget.buttons || widget.readOnly) return box;
+    final l10n = L10n.of(context)!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _button(Icons.remove, -1, l10n.freeDecrease),
+        box,
+        _button(Icons.add, 1, l10n.freeIncrease),
+      ],
+    );
+  }
+}
+
+/// Resource (DESIGN §8.3): current / max as numbers or boxes. The current
+/// value stays within 0 … max; the max is the card's own.
+class ResourceFieldWidget extends StatelessWidget {
+  const ResourceFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  /// More boxes than this read better as numbers.
+  static const _maxBoxes = 30;
+
+  @override
+  Widget build(BuildContext context) {
+    final spec = ResourceSpec.of(schema);
+    final v = resourceValue(value);
+    final max = v.max;
+    final current = v.current;
+    void put(int? cur, int? m) {
+      final top = m ?? cur;
+      onChanged(
+        resourceJson((
+          current: cur == null || top == null ? cur : cur.clamp(0, top),
+          max: m,
+        )),
+      );
+    }
+
+    final boxes = spec.boxes && max != null && max > 0 && max <= _maxBoxes;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (boxes)
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      for (var i = 0; i < max; i++)
+                        UsePip(
+                          key: ValueKey('res_${schema.fieldKey}_$i'),
+                          filled: i < (current ?? 0),
+                          color: palette.featureCardAccent,
+                          borderRadius: palette.br,
+                          // A filled box spends it, an empty one takes it
+                          // back (the class resource tracker's rule).
+                          onTap: readOnly
+                              ? null
+                              : () => put(i < (current ?? 0) ? i : i + 1, max),
+                        ),
+                    ],
+                  )
+                // Boxes wait for a max; no counter to type into meanwhile.
+                else if (!spec.boxes)
+                  _NumberBox(
+                    key: ValueKey('res_${schema.fieldKey}_current'),
+                    value: current,
+                    readOnly: readOnly,
+                    buttons: true,
+                    bold: true,
+                    onChanged: (n) => put(n, max),
+                  ),
+                if (!spec.boxes) const Text('/'),
+                // The box count is the max; its box shows only while editing.
+                if (!boxes || !readOnly)
+                  _NumberBox(
+                    key: ValueKey('res_${schema.fieldKey}_max'),
+                    value: max,
+                    readOnly: readOnly,
+                    label: L10n.of(context)!.freeMax,
+                    onChanged: (n) => put(current, n),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Combat stats (DESIGN §8.6): HP / Max HP, then the template's values —
+/// numbers, dice and one card list (conditions). [value] is the block as
+/// `combatStatsValue` reads it, so an edit also stores what was read from
+/// an SRD monster's flat fields.
+class CombatBlockFieldWidget extends StatelessWidget {
+  const CombatBlockFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final spec = CombatStatsSpec.of(schema);
+    final stats = value is Map
+        ? Map<String, dynamic>.from(value as Map)
+        : <String, dynamic>{};
+    void put(String key, Object? v) => onChanged({...stats, key: v});
+    final maxHp = combatNumber(stats[combatMaxHpKey]);
+    String k(String key) => 'cb_${schema.fieldKey}_$key';
+
+    Widget labelled(String label, Widget child) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 2),
+        child,
+      ],
+    );
+
+    Widget valueTile(CombatValue cv) => switch (cv.type) {
+      CombatValueType.number => labelled(
+        cv.label,
+        _NumberBox(
+          key: ValueKey(k(cv.key)),
+          value: combatNumber(stats[cv.key]),
+          readOnly: readOnly || !cv.editable,
+          onChanged: (n) => put(cv.key, n),
+        ),
+      ),
+      CombatValueType.dice => labelled(
+        cv.label,
+        SizedBox(
+          width: 84,
+          child: readOnly
+              ? Text(
+                  '${stats[cv.key] ?? '—'}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                )
+              : _TextCell(
+                  key: ValueKey(k(cv.key)),
+                  initial: '${stats[cv.key] ?? ''}',
+                  onChanged: (t) => put(cv.key, t.trim()),
+                ),
+        ),
+      ),
+      CombatValueType.cards => const SizedBox.shrink(),
+    };
+
+    final cards = spec.values
+        .where((v) => v.type == CombatValueType.cards)
+        .firstOrNull;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              children: [
+                labelled(
+                  spec.hpLabel,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _NumberBox(
+                        key: ValueKey(k(combatHpKey)),
+                        value: combatNumber(stats[combatHpKey]),
+                        readOnly: readOnly,
+                        bold: true,
+                        onChanged: (n) => put(
+                          combatHpKey,
+                          n == null || maxHp == null ? n : n.clamp(0, maxHp),
+                        ),
+                      ),
+                      const Text(' / '),
+                      _NumberBox(
+                        key: ValueKey(k(combatMaxHpKey)),
+                        value: maxHp,
+                        readOnly: readOnly,
+                        label: L10n.of(context)!.freeMax,
+                        onChanged: (n) => put(combatMaxHpKey, n),
+                      ),
+                    ],
+                  ),
+                ),
+                for (final cv in spec.values)
+                  if (cv.type != CombatValueType.cards) valueTile(cv),
+              ],
+            ),
+            if (cards != null) ...[
+              const SizedBox(height: 8),
+              _CardList(
+                label: cards.label,
+                ids: [
+                  for (final x in (stats[cards.key] as List?) ?? const [])
+                    '$x',
+                ],
+                targets: cards.targets,
+                readOnly: readOnly,
+                entities: entities,
+                widgetRef: ref,
+                onChanged: (l) => put(cards.key, l),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The block's card list (conditions): chips, × to remove, + to pick more.
+class _CardList extends StatelessWidget {
+  const _CardList({
+    required this.label,
+    required this.ids,
+    required this.targets,
+    required this.readOnly,
+    required this.entities,
+    required this.widgetRef,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<String> ids;
+  final List<String> targets;
+  final bool readOnly;
+  final Map<String, Entity>? entities;
+  final WidgetRef? widgetRef;
+  final ValueChanged<List<String>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = widgetRef;
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        ),
+        for (final id in ids)
+          InputChip(
+            label: Text(
+              switch (entityLinkTarget(id, entities)) {
+                final t? => srdName(context, entities![t]!),
+                null => id,
+              },
+              style: const TextStyle(fontSize: 12),
+            ),
+            visualDensity: VisualDensity.compact,
+            onDeleted: readOnly
+                ? null
+                : () => onChanged([...ids.where((x) => x != id)]),
+          ),
+        if (!readOnly && ref != null)
+          IconButton(
+            tooltip: L10n.of(context)!.btnAdd,
+            icon: const Icon(Icons.add, size: 18),
+            visualDensity: VisualDensity.compact,
+            onPressed: () async {
+              final picked = await showEntitySelectorDialog(
+                context: context,
+                ref: ref,
+                allowedTypes: targets.isEmpty ? null : targets,
+                multiSelect: true,
+                excludeIds: ids,
+                includeBuiltinSrd: true,
+              );
+              if (picked != null && picked.isNotEmpty) {
+                onChanged([...ids, ...picked]);
+              }
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// The player card's automatic resources (DESIGN §12.1): cards grant them
+/// from Faz 7 on; until then the field only says so.
+class AutoResourcesFieldWidget extends StatelessWidget {
+  const AutoResourcesFieldWidget({super.key, required this.schema});
+
+  final FieldSchema schema;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.symmetric(vertical: 4),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 6),
+          Text(
+            L10n.of(context)!.freeAutoResourcesEmpty,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

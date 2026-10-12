@@ -25,6 +25,10 @@ enum FieldType {
   relation,       // Tek referans veya liste referans (allowedTypes ile hedef kategori belirlenir)
   tagList,
   statBlock,
+  /// Built-in: `{hp, max_hp, ac, speed, level, initiative, cr, xp}`, cells
+  /// from `subFields`. A free template's Combat stats block (DESIGN §8.6,
+  /// D36) adds `styleConfig` (`free_field_styles.dart` `CombatStatsSpec`)
+  /// and keeps `subFields` in step with it; same value map, its own keys.
   combatStats,
   conditionStats,
   dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
@@ -75,6 +79,21 @@ enum FieldType {
   /// differs from the template); the SRD's `{rows: [{name, ability,
   /// proficient, expertise, misc}]}` is read as it is.
   skillTable,
+
+  /// Free templates only: a current / max counter and what each rest does
+  /// to it (DESIGN §8.3). `styleConfig`: `{display: number|boxes, short:
+  /// fill|empty|keep, long: fill|empty|keep}`. Card value: `{current: int,
+  /// max: int}`; the SRD slot's `{count, states|filled}` is read as it is.
+  resource,
+
+  /// Free templates only: the player card's main level (DESIGN §10.1, D25).
+  /// At most one per player card; its style never changes. Card value: int.
+  characterLevel,
+
+  /// Free templates only: the player card's automatic resources — the ones
+  /// cards grant (DESIGN §10.1, §12). At most one per player card. Filled
+  /// in Faz 7; card value until then: none.
+  autoResources,
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

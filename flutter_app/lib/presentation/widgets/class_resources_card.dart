@@ -180,7 +180,7 @@ class ClassResourcesTracker extends StatelessWidget {
             runSpacing: 4,
             children: [
               for (var i = 0; i < max; i++)
-                _UsePip(
+                UsePip(
                   // Soldan doldur: i < kalan ⇒ elde duruyor.
                   filled: i < cur,
                   color: palette.featureCardAccent,
@@ -313,14 +313,16 @@ class ClassResourcesTracker extends StatelessWidget {
   }
 }
 
-/// Tek kullanım kutusu. Dolu = elde duran kullanım.
-class _UsePip extends StatelessWidget {
+/// Tek kullanım kutusu. Dolu = elde duran kullanım. Free şablonun Kaynak
+/// tarzı da bunu kullanır (temaya göre köşe ve renk).
+class UsePip extends StatelessWidget {
   final bool filled;
   final Color color;
   final BorderRadius borderRadius;
   final VoidCallback? onTap;
 
-  const _UsePip({
+  const UsePip({
+    super.key,
     required this.filled,
     required this.color,
     required this.borderRadius,

@@ -24,7 +24,7 @@ import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../../domain/services/free_field_styles.dart'
-    show structuredListAsMarkdown;
+    show isCombatBlock, structuredListAsMarkdown;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/map/world_map_notifier.dart';
@@ -307,6 +307,15 @@ class FieldWidgetFactory {
         readOnly: readOnly,
         onChanged: onChanged,
       ),
+      // A free template's block carries settings (DESIGN §8.6).
+      FieldType.combatStats when isCombatBlock(schema) => CombatBlockFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.combatStats => _CombatStatsFieldWidget(
         schema: schema,
         value: value,
@@ -497,6 +506,19 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
+      FieldType.resource => ResourceFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.characterLevel => _IntegerFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.autoResources => AutoResourcesFieldWidget(schema: schema),
       FieldType.skillTable => SkillTableFieldWidget(
         schema: schema,
         value: value,

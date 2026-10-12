@@ -1,7 +1,9 @@
 import '../entities/schema/field_schema.dart';
+import 'template_edit.dart' show keyFromLabel;
 
 /// The free template's combined styles: Table (docs/free-template/DESIGN.md
-/// §8.1), Stat table (§8.2) and Skill table (D32), plus the readers that
+/// §8.1), Stat table (§8.2), Skill table (D32), Resource (§8.3) and Combat
+/// stats (§8.6), the rests (§12.3), plus the readers that
 /// show SRD data in them without changing it (§16.3). Pure; the stored
 /// shapes are documented on [FieldType.table], [FieldType.statTable] and
 /// [FieldType.skillTable].
@@ -444,4 +446,334 @@ String _optionLine(Map<String, dynamic> o, String Function(Object?) nameOf) {
   }
   final id = o['option_id'];
   return id == null ? text : '**$id:** $text';
+}
+
+// -------------------------------------------------------------- resource
+
+/// What a rest does to a counter (DESIGN §8.3).
+enum RestEffect { fill, empty, keep }
+
+enum RestKind { short, long }
+
+RestEffect _effect(Object? v, RestEffect fallback) =>
+    RestEffect.values.where((e) => e.name == v).firstOrNull ?? fallback;
+
+/// Resource (DESIGN §8.3): number or boxes, and each rest's effect.
+class ResourceSpec {
+  const ResourceSpec({
+    this.boxes = false,
+    this.short = RestEffect.keep,
+    this.long = RestEffect.fill,
+  });
+
+  factory ResourceSpec.of(FieldSchema f) {
+    final c = f.styleConfig ?? const {};
+    return ResourceSpec(
+      boxes: c['display'] == 'boxes',
+      short: _effect(c['short'], RestEffect.keep),
+      long: _effect(c['long'], RestEffect.fill),
+    );
+  }
+
+  final bool boxes;
+  final RestEffect short;
+  final RestEffect long;
+
+  RestEffect on(RestKind k) => k == RestKind.short ? short : long;
+
+  ResourceSpec copyWith({bool? boxes, RestEffect? short, RestEffect? long}) =>
+      ResourceSpec(
+        boxes: boxes ?? this.boxes,
+        short: short ?? this.short,
+        long: long ?? this.long,
+      );
+
+  Map<String, dynamic> toConfig() => {
+    'display': boxes ? 'boxes' : 'number',
+    'short': short.name,
+    'long': long.name,
+  };
+}
+
+typedef ResourceValue = ({int? current, int? max});
+
+/// A resource's card value: `{current, max}`, or the SRD slot's
+/// `{count, states}` / `{count, filled}` (count = max, filled = current).
+ResourceValue resourceValue(Object? v) {
+  if (v is! Map) return (current: null, max: null);
+  if (v.containsKey('count')) {
+    final states = v['states'];
+    return (
+      current: states is List
+          ? states.where((s) => s == true).length
+          : _int(v['filled']),
+      max: _int(v['count']),
+    );
+  }
+  return (current: _int(v['current']), max: _int(v['max']));
+}
+
+Map<String, dynamic> resourceJson(ResourceValue v) => {
+  'current': ?v.current,
+  'max': ?v.max,
+};
+
+/// A counter after [effect]: fill → max (nothing without one), empty → 0.
+int? afterRest(RestEffect effect, int? current, int? max) => switch (effect) {
+  RestEffect.fill => max ?? current,
+  RestEffect.empty => 0,
+  RestEffect.keep => current,
+};
+
+// --------------------------------------------------------- combat stats
+
+/// The Combat stats block's keys for HP (DESIGN §8.6): the SRD's, so the
+/// encounter keeps reading them (ROADMAP Y5).
+const combatHpKey = 'hp';
+const combatMaxHpKey = 'max_hp';
+
+enum CombatValueType { number, dice, cards }
+
+/// One value of the block besides HP (DESIGN §8.6).
+class CombatValue {
+  const CombatValue({
+    required this.key,
+    required this.label,
+    this.type = CombatValueType.number,
+    this.encounter = true,
+    this.width,
+    this.editable = true,
+    this.targets = const [],
+  });
+
+  factory CombatValue.fromJson(Map<String, dynamic> m) => CombatValue(
+    key: '${m['key']}',
+    label: '${m['label'] ?? m['key']}',
+    type:
+        CombatValueType.values.where((t) => t.name == m['type']).firstOrNull ??
+        CombatValueType.number,
+    encounter: m['encounter'] != false,
+    width: _int(m['width']),
+    editable: m['editable'] != false,
+    targets: [for (final t in (m['targets'] as List?) ?? const []) '$t'],
+  );
+
+  final String key;
+  final String label;
+  final CombatValueType type;
+
+  /// Shown as an encounter column (read in Faz 9).
+  final bool encounter;
+
+  /// The encounter column's width; null = the default.
+  final int? width;
+
+  /// Number only: the card may change it.
+  final bool editable;
+
+  /// Card list only: the target category slugs (empty = any).
+  final List<String> targets;
+
+  CombatValue copyWith({
+    String? label,
+    CombatValueType? type,
+    bool? encounter,
+    int? Function()? width,
+    bool? editable,
+    List<String>? targets,
+  }) => CombatValue(
+    key: key,
+    label: label ?? this.label,
+    type: type ?? this.type,
+    encounter: encounter ?? this.encounter,
+    width: width == null ? this.width : width(),
+    editable: editable ?? this.editable,
+    targets: targets ?? this.targets,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'key': key,
+    'label': label,
+    'type': type.name,
+    if (!encounter) 'encounter': false,
+    'width': ?width,
+    if (!editable) 'editable': false,
+    if (targets.isNotEmpty) 'targets': targets,
+  };
+}
+
+/// Combat stats (DESIGN §8.6, D36): HP / Max HP — the one part that cannot
+/// go, resting like a resource — and the values the template adds.
+class CombatStatsSpec {
+  const CombatStatsSpec({
+    this.hpLabel = 'HP',
+    this.short = RestEffect.keep,
+    this.long = RestEffect.fill,
+    this.values = const [],
+  });
+
+  factory CombatStatsSpec.of(FieldSchema f) {
+    final c = f.styleConfig ?? const {};
+    return CombatStatsSpec(
+      hpLabel: '${c['hp_label'] ?? 'HP'}',
+      short: _effect(c['short'], RestEffect.keep),
+      long: _effect(c['long'], RestEffect.fill),
+      values: [for (final m in _maps(c['values'])) CombatValue.fromJson(m)],
+    );
+  }
+
+  final String hpLabel;
+  final RestEffect short;
+  final RestEffect long;
+  final List<CombatValue> values;
+
+  RestEffect on(RestKind k) => k == RestKind.short ? short : long;
+
+  /// At most one card list (it feeds the encounter's Conditions).
+  bool get hasCards => values.any((v) => v.type == CombatValueType.cards);
+
+  /// A key for a value labelled [label]: never HP's, never a taken one (V3).
+  String keyFor(String label) => keyFromLabel(label, [
+    combatHpKey,
+    combatMaxHpKey,
+    ...values.map((v) => v.key),
+  ]);
+
+  CombatStatsSpec copyWith({
+    String? hpLabel,
+    RestEffect? short,
+    RestEffect? long,
+    List<CombatValue>? values,
+  }) => CombatStatsSpec(
+    hpLabel: hpLabel ?? this.hpLabel,
+    short: short ?? this.short,
+    long: long ?? this.long,
+    values: values ?? this.values,
+  );
+
+  Map<String, dynamic> toConfig() => {
+    'hp_label': hpLabel,
+    'short': short.name,
+    'long': long.name,
+    'values': [for (final v in values) v.toJson()],
+  };
+
+  /// The built-in `subFields` the encounter reads until Faz 9.
+  List<Map<String, String>> get subFields => [
+    {'key': combatHpKey, 'label': hpLabel, 'type': 'integer'},
+    {'key': combatMaxHpKey, 'label': 'Max $hpLabel', 'type': 'integer'},
+    for (final v in values)
+      {
+        'key': v.key,
+        'label': v.label,
+        'type': switch (v.type) {
+          CombatValueType.number => 'integer',
+          CombatValueType.dice => 'dice',
+          CombatValueType.cards => 'cards',
+        },
+      },
+  ];
+
+  /// [f] with this spec, `subFields` in step.
+  FieldSchema applyTo(FieldSchema f) =>
+      f.copyWith(styleConfig: toConfig(), subFields: subFields);
+}
+
+/// The free Combat stats block (built-in `combatStats` has no settings).
+bool isCombatBlock(FieldSchema f) =>
+    f.fieldType == FieldType.combatStats && f.styleConfig != null;
+
+bool _blankValue(Object? v) => v == null || (v is String && v.trim().isEmpty);
+
+/// The block's values on [card] (DESIGN §16.3): as stored, a value the
+/// block lacks read from the SRD monster's flat fields — `hp_average` → HP
+/// and Max HP, `ac` → AC, `initiative_modifier` → `1d20+N`.
+Map<String, dynamic> combatStatsValue(Object? stored, Map<String, dynamic> card) {
+  final out = stored is Map
+      ? Map<String, dynamic>.from(stored)
+      : <String, dynamic>{};
+  void fill(String key, Object? v) {
+    if (_blankValue(out[key]) && !_blankValue(v)) out[key] = v;
+  }
+
+  final hp = _int(card['hp_average']);
+  fill(combatHpKey, hp);
+  fill(combatMaxHpKey, hp);
+  fill('ac', _int(card['ac']));
+  final init = _int(card['initiative_modifier']);
+  if (init != null) fill('initiative', init < 0 ? '1d20$init' : '1d20+$init');
+  return out;
+}
+
+/// The number a value of the block holds (stored as int or, after the
+/// encounter wrote it, as text).
+int? combatNumber(Object? v) => _int(v);
+
+// ------------------------------------------------------------ SRD reads
+
+/// An SRD copy's Speed / CR field reads the built-in `combat_stats` text
+/// it came from (DESIGN §16.3): `styleConfig: {srd_read: speed|cr}`.
+const srdReadKey = 'srd_read';
+
+/// The leading number of "30 ft." → 30; a CR's "1/2" → 0.5; else null.
+num? srdNumber(Object? v) {
+  if (v is num) return v;
+  final s = '${v ?? ''}'.trim();
+  final frac = RegExp(r'^(\d+)\s*/\s*(\d+)').firstMatch(s);
+  if (frac != null) {
+    final d = int.parse(frac[2]!);
+    return d == 0 ? null : int.parse(frac[1]!) / d;
+  }
+  final n = RegExp(r'^-?\d+(\.\d+)?').firstMatch(s);
+  return n == null ? null : num.parse(n[0]!);
+}
+
+/// What a free field shows for [card]: the stored value, or what the SRD
+/// shape it replaced holds (the combat block's flat fields, Speed / CR's
+/// text). Fields without settings (the built-in schema) read as stored.
+Object? freeFieldValue(FieldSchema f, Map<String, dynamic> card) {
+  final v = card[f.fieldKey];
+  final c = f.styleConfig;
+  if (c == null) return v;
+  if (f.fieldType == FieldType.combatStats) return combatStatsValue(v, card);
+  final from = c[srdReadKey];
+  if (from is String && _blankValue(v)) {
+    final cs = card['combat_stats'];
+    final n = cs is Map ? srdNumber(cs[from]) : null;
+    if (n == null) return v;
+    return f.fieldType == FieldType.integer ? n.toInt() : n.toDouble();
+  }
+  return v;
+}
+
+// ------------------------------------------------------------------ rest
+
+/// What a Short / Long rest writes (DESIGN §12.3): each resource field and
+/// the combat block's HP take the rest's effect; nothing else changes.
+/// Only changed values are returned.
+Map<String, dynamic> restPatch(
+  List<FieldSchema> fields,
+  Map<String, dynamic> card,
+  RestKind kind,
+) {
+  final out = <String, dynamic>{};
+  for (final f in fields) {
+    if (f.fieldType == FieldType.resource) {
+      final v = resourceValue(card[f.fieldKey]);
+      final next = afterRest(ResourceSpec.of(f).on(kind), v.current, v.max);
+      if (next != v.current) {
+        out[f.fieldKey] = resourceJson((current: next, max: v.max));
+      }
+    } else if (isCombatBlock(f)) {
+      final stats = combatStatsValue(card[f.fieldKey], card);
+      final hp = _int(stats[combatHpKey]);
+      final next = afterRest(
+        CombatStatsSpec.of(f).on(kind),
+        hp,
+        _int(stats[combatMaxHpKey]),
+      );
+      if (next != hp) out[f.fieldKey] = {...stats, combatHpKey: next};
+    }
+  }
+  return out;
 }

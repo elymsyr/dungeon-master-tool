@@ -203,11 +203,8 @@ void main() {
         home: TemplateEditorScreen(initial: t),
       ),
     );
-    final empty = emptyFreeTemplate(
-      id: 'e1',
-      name: 'Empty',
-      playerCardName: 'Hero',
-      now: _now,
+    final empty = _bare(
+      emptyFreeTemplate(id: 'e1', name: 'Empty', playerCardName: 'Hero', now: _now),
     );
 
     Future<void> tap(WidgetTester tester, Finder f) async {
@@ -542,3 +539,9 @@ class _Store extends UserTemplatesNotifier {
     ]);
   }
 }
+
+/// An empty template without the player card's own fields: a bare
+/// playground for the editing tests.
+WorldSchema _bare(WorldSchema s) => s.copyWith(
+  categories: [for (final c in s.categories) c.copyWith(fields: const [])],
+);

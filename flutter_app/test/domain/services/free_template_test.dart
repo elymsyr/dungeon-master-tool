@@ -37,8 +37,9 @@ void main() {
           [('player-character', true)]);
     });
 
-    test('drops the CR calculator, converts Faz 4 types, keeps the rest', () {
-      // ROADMAP §6, Faz 4 rows.
+    test('drops the CR calculator, converts Faz 4 and 6 types, keeps the rest',
+        () {
+      // ROADMAP §6, Faz 4 and Faz 6 rows.
       const converted = {
         FieldType.statBlock: FieldType.statTable,
         FieldType.proficiencyTable: FieldType.skillTable,
@@ -49,23 +50,45 @@ void main() {
         FieldType.equipmentChoiceGroups: FieldType.markdown,
         FieldType.playerChoices: FieldType.markdown,
         FieldType.subspeciesOptions: FieldType.markdown,
+        FieldType.slot: FieldType.resource,
+        FieldType.combatStats: FieldType.combatStats,
+        FieldType.spellSlotGrid: FieldType.autoResources,
       };
+      // Keys the copy renames (the player card's own fields, §16.1).
+      const renamed = {'class_levels': 'level', 'spell_slots': 'auto_resources'};
+      const flatCombat = {'ac', 'hp_average', 'initiative_modifier'};
       expect(srd.categories, hasLength(builtin.categories.length));
       for (var i = 0; i < builtin.categories.length; i++) {
         final from = builtin.categories[i];
         final to = srd.categories[i];
         expect(to.slug, from.slug);
         expect(to.fieldGroups, from.fieldGroups);
+        final flat = {'monster', 'animal'}.contains(from.slug);
         final kept = [
           for (final f in from.fields)
-            if (f.fieldType != FieldType.crCalculator) f,
+            if (f.fieldType != FieldType.crCalculator &&
+                !(flat && flatCombat.contains(f.fieldKey)))
+              f,
+        ]..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+        // Fields the copy adds: Speed / CR beside a block, a monster's block.
+        final added = {
+          for (final f in to.fields)
+            if (f.fieldId.endsWith('-speed') ||
+                f.fieldId.endsWith('-cr') ||
+                f.fieldId == '${from.categoryId}-combat')
+              f.fieldId,
+        };
+        final mine = [
+          for (final f in to.fields)
+            if (!added.contains(f.fieldId)) f,
         ];
-        expect(to.fields.map((f) => f.fieldKey), kept.map((f) => f.fieldKey),
+        expect(mine.map((f) => f.fieldKey),
+            kept.map((f) => renamed[f.fieldKey] ?? f.fieldKey),
             reason: from.slug);
         for (final (j, f) in kept.indexed) {
-          final c = to.fields[j];
-          final target = f.fieldKey == 'class_levels' // leaves in Faz 6
-              ? null
+          final c = mine[j].copyWith(orderIndex: f.orderIndex);
+          final target = f.fieldKey == 'class_levels'
+              ? FieldType.characterLevel
               : converted[f.fieldType];
           if (target == null) {
             expect(c, f, reason: '${from.slug}.${f.fieldKey}');
@@ -75,10 +98,13 @@ void main() {
             expect(
               c.copyWith(
                 fieldType: f.fieldType,
+                fieldKey: f.fieldKey,
                 styleConfig: null,
+                subFields: f.subFields,
                 defaultValue: f.defaultValue,
                 presetId: null,
                 label: f.label,
+                gridColumnSpan: f.gridColumnSpan,
               ),
               f,
               reason: '${from.slug}.${f.fieldKey}: only the style changes',
@@ -91,7 +117,8 @@ void main() {
 
     test('skills, saves and ability scores come as bound presets', () {
       final presets = {for (final p in srd.presets!) p.fieldKey: p};
-      expect(presets.keys, {'skills', 'saving_throws', 'stat_block'});
+      expect(presets.keys,
+          {'skills', 'saving_throws', 'stat_block', 'combat_stats'});
       expect(presets['skills']!.fieldType, FieldType.skillTable);
       expect(presets['stat_block']!.fieldType, FieldType.statTable);
       String? bound(String slug, String key) => srd.categories

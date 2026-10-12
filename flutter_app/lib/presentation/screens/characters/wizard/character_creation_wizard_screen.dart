@@ -17,6 +17,8 @@ import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/entity_provider.dart'
     show worldSchemaProvider;
+import '../../../../application/providers/free_character_provider.dart';
+import '../../../../data/database/database_provider.dart';
 import '../../../../application/providers/package_provider.dart';
 import '../../../../application/providers/role_provider.dart';
 import '../../../../application/providers/rule_config_provider.dart';
@@ -122,6 +124,24 @@ class _CharacterCreationWizardScreenState
     // A free template world takes no wizard character.
     if (isFreeTemplate(ref.read(worldSchemaProvider))) return;
     ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
+  }
+
+  /// A free world or template takes no wizard (docs/free-template DESIGN
+  /// §10.2): a blank character opens on its own sheet instead.
+  Future<void> _startFree({String? worldId, WorldSchema? template}) async {
+    final l10n = L10n.of(context)!;
+    final schema =
+        template ??
+        await readWorldSchema(ref.read(appDatabaseProvider), worldId!);
+    if (schema == null || !mounted) return;
+    final name = ref.read(characterDraftProvider).name.trim();
+    final c = await createFreeCharacter(
+      ref.read(characterListProvider.notifier),
+      schema: schema,
+      name: name.isEmpty ? l10n.freeNewCharacterName : name,
+      worldId: worldId,
+    );
+    if (mounted) context.pushReplacement('/character/${c.id}');
   }
 
   /// Entity source the wizard reads from. Active campaign's entities when
@@ -277,13 +297,12 @@ class _CharacterCreationWizardScreenState
                           child: _IdentityStep(
                             draft: draft,
                             notifier: notifier,
-                            // Free template worlds take no wizard
-                            // character (docs/free-template, Faz 3).
-                            worlds: [
-                              for (final w in worlds)
-                                if (!w.isFree) w,
-                            ],
+                            worlds: worlds,
                             templates: playerTemplates,
+                            freeTemplates: [
+                              ...?ref.watch(userTemplatesProvider).valueOrNull,
+                            ],
+                            onFreePicked: _startFree,
                             alignments: _alignments,
                             activatingWorld: _activatingWorld,
                             onWorldPicked: _activateWorld,
@@ -1691,6 +1710,12 @@ class _IdentityStep extends StatelessWidget {
   final CharacterDraftNotifier notifier;
   final List<CampaignInfo> worlds;
   final List<WorldSchema> templates;
+
+  /// The user's free templates: picking one (or a free world) leaves the
+  /// wizard through [onFreePicked].
+  final List<WorldSchema> freeTemplates;
+  final Future<void> Function({String? worldId, WorldSchema? template})
+  onFreePicked;
   final List<String> alignments;
   final bool activatingWorld;
   final Future<void> Function(String) onWorldPicked;
@@ -1701,6 +1726,8 @@ class _IdentityStep extends StatelessWidget {
     required this.notifier,
     required this.worlds,
     required this.templates,
+    required this.freeTemplates,
+    required this.onFreePicked,
     required this.alignments,
     required this.activatingWorld,
     required this.onWorldPicked,
@@ -1759,7 +1786,7 @@ class _IdentityStep extends StatelessWidget {
                     draft.templateId.isEmpty ? null : draft.templateId,
                 isExpanded: true,
                 decoration: InputDecoration(labelText: L10n.of(context)!.wizardTemplateRequired),
-                items: templates
+                items: [...templates, ...freeTemplates]
                     .map((t) => DropdownMenuItem(
                           value: t.schemaId,
                           child: Text(
@@ -1771,6 +1798,12 @@ class _IdentityStep extends StatelessWidget {
                     .toList(),
                 onChanged: (v) {
                   if (v == null) return;
+                  final free =
+                      freeTemplates.where((t) => t.schemaId == v).firstOrNull;
+                  if (free != null) {
+                    onFreePicked(template: free);
+                    return;
+                  }
                   final tpl = templates.firstWhere((t) => t.schemaId == v);
                   notifier.setTemplate(id: tpl.schemaId, name: tpl.name);
                 },
@@ -1828,6 +1861,10 @@ class _IdentityStep extends StatelessWidget {
                       ? null
                       : (v) {
                           if (v == null) return;
+                          if (worlds.any((w) => w.id == v && w.isFree)) {
+                            onFreePicked(worldId: v);
+                            return;
+                          }
                           onUserPickedWorld();
                           notifier.setWorld(v);
                           if (v.isNotEmpty) onWorldPicked(v);

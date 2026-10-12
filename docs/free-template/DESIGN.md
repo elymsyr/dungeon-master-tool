@@ -4,7 +4,8 @@
 > düzeni serbestçe tasarlayabilsin, karakterler bu tasarımla oluşturulsun. Kurallar ise otomatik
 > uygulanmasın, okunarak uygulansın.
 
-- **Durum:** Taslak. Tasarım onayı bekliyor (2026-10-09).
+- **Durum:** Taslak. Tasarım onayı bekliyor (2026-10-09). Revizyon (2026-10-12, Faz 7 öncesi):
+  Kaynak verme ve Otomatik kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39).
 - **Branch:** `feature/free-template`
 - **Kapsam:** Sadece offline. Online oyun ve paylaşım sonraki fazlarda.
 - **Bu doküman neyi anlatır:** Sistemin ne yaptığını, nasıl davrandığını ve neden öyle olduğunu.
@@ -70,7 +71,7 @@ tarafından uygulanır.
 |---|---|---|
 | **İ1** | **Template = oyun sistemi.** | Kategoriler, alanlar, düzen, oyuncu kartı, encounter ayarları ve karakter oluşturma rehberi template'e aittir. |
 | **İ2** | **Otomasyon yok; kural okunur.** | Bir kart karaktere kendiliğinden etki etmez. "Darkvision verir" yazıyorsa oyuncu okur ve kendisi ekler. |
-| **İ3** | **Sadece beş istisna var.** | (a) Seviye tablosu kart verir ve kaynak maksimumu belirler (§11, §12). (b) Stat tablosu değiştiriciyi hesaplar (§8.2). (c) Dinlenme butonları kaynakları doldurur ya da boşaltır (§12). (d) Karakter oluşturma rehberi ilgili alana kaydırır (§13). (e) Yetenek tablosu satırın toplamını hesaplar: stat değiştiricisi, işaretler ve Ek (§8.1, D32). Bunun dışında hesaplanan değer yoktur. |
+| **İ3** | **Sadece beş istisna var.** | (a) Bir kartın Verilenler'i ve seviye tablosu satırları verdiklerini kartın taşıyıcısına geçirir: kartları listelere, gerisini Havuz'a; kaynak maksimumu da buradan gelir (§8.5, §11, §12; D37). (b) Stat tablosu değiştiriciyi hesaplar (§8.2). (c) Dinlenme butonları kaynakları doldurur ya da boşaltır (§12). (d) Karakter oluşturma rehberi ilgili alana kaydırır (§13). (e) Yetenek tablosu satırın toplamını hesaplar: stat değiştiricisi, işaretler ve Ek (§8.1, D32). Bunun dışında hesaplanan değer yoktur. |
 | **İ4** | **Her şey temel tarzlardan kurulur.** | "Skill tablosu" ile "saving throw tablosu" aynı tarzdır (Yetenek tablosu, D32), sadece içerikleri farklıdır. Sisteme özel alan tipi yoktur. |
 | **İ5** | **Mevcut sistem bozulmaz.** | En önemli kural. Yerleşik SRD template'i, ona bağlı dünyalar, karakterler, paketler ve kural motoru bugün nasıl çalışıyorsa öyle çalışmaya devam eder (§17). |
 | **İ6** | **Mobil ve desktop'ta kolay.** | Editör, karakter kağıdı ve rehber telefonda tek elle, desktop'ta geniş ekranla rahat kullanılır. |
@@ -88,13 +89,13 @@ listeli.
 | # | Karar |
 |---|---|
 | **D1** | Template bir oyun sistemini temsil eder; template ile paket birleşince tam sistem oluşur. Free template modu buna izin verir. |
-| **D2** | Free template'te otomatik alan yoktur. Trait'ler ve diğer kartlar karaktere ne doğrudan ne de oyuncuya sorarak etki eder. Kural okunur. |
+| **D2** | Free template'te otomatik alan yoktur. Trait'ler ve diğer kartlar karaktere ne doğrudan ne de oyuncuya sorarak etki eder. Kural okunur. *(2026-10-12, D37: tek istisna kartın Verilenler'idir; verdiklerini taşıyıcının listelerine ve Havuz'una ekler, hiçbir değer hesaplamaz, başka alana dokunmaz.)* |
 | **D3** | Template'in kullandığı yapılar temel tarzlara indirgenir. Örneğin saving throw ve skill tabloları aynı tarzdır, içerikleri farklıdır. |
 | **D4** | Kategori eklenip silinebilir. Kategorinin içeriği ve düzeni (gruplar; 2, 3 ya da daha fazla kolon) serbestçe kurulur. Farklı alan şekilleri sunulur. |
 | **D5** | İlk hedef: kullanıcı mevcut SRD 5.2.1 template'indeki alanların içeriğini ve düzenini istediği gibi değiştirebilsin. Mobil ve desktop'ta kolay kullanım çok önemli. |
 | **D6** | SRD template'inin kopyası otomatik olarak free template olur. Kural motoru, grant'ler, sihirbaz ve seviye atlama otomasyonu kopyada kapalıdır. |
 | **D7** | Her template'te özel bir **oyuncu kartı** kategorisi vardır. Oyuncunun hangi alanlara sahip olacağını template sahibi belirler. |
-| **D8** | Bir kartın seviye tablosundaki satır (a) "N. seviyede şu kartı otomatik ver" olabilir; verilen kart oyuncunun o kategoriyi hedefleyen liste alanına girer. Ya da (b) düz yazı olabilir; sayı ya da yazı fark etmez, oyuncu kendisi uygular. Verilen kartın da seviye tablosu varsa o da işler (zincir). |
+| **D8** | Bir kartın seviye tablosundaki satır (a) "N. seviyede şu kartı otomatik ver" olabilir; verilen kart oyuncunun o kategoriyi hedefleyen liste alanına girer. Ya da (b) düz yazı olabilir; sayı ya da yazı fark etmez, oyuncu kendisi uygular. Verilen kartın da seviye tablosu varsa o da işler (zincir). *(2026-10-12, D37: satır yalnız kart vermez; Verilenler gibi her tarzdan öğe verir.)* |
 | **D9** | Seviye modu **kategori başına** seçilir: **ayrı** ya da **beraber**. |
 | **D10** | Beraber kategoriye sonradan eklenen kart mevcut seviyeden başlar: o seviyeye kadarki satırların hepsi işler. |
 | **D11** | Bir paket, oluşturulduğu template'ten farklı bir template'le kullanılırsa aynı adlı alanlarla açılır; eksik alanlardaki bilgi görünmez. Kurmadan önce kullanıcı uyarılır. |
@@ -108,21 +109,24 @@ listeli.
 | **D19** | Bir dünya hangi template ile oluşturulduysa o template'de kalır, içindeki paketler değişebilir. Eski yerleşik template dünyalarını free template'e dönüştürmek yoktur. |
 | **D20** | Ayrı mod kategori içinde işler. A ve B kategorileri ayrıysa, seviye atlanınca A'dan bir kart ve B'den bir kart seçilir; seçilen iki kart da seviye atlar. |
 | **D21** | Hazır içerik kategorilere **bağlı** gider. Hazır içerik kopyalanabilir de. |
-| **D22** | SRD'nin özel alanları tamamen özelleştirilebilir tarzlara dönüşür. Tablo bir tarzdır. Başlangıç ekipmanı ve "N tane seç" düz yazı olur, CR hesaplayıcı çıkar, büyü slot ızgarası kaynağa dönüşür. Kartların karaktere kaynak eklemesi bugünkü mantıkla kalır. |
+| **D22** | SRD'nin özel alanları tamamen özelleştirilebilir tarzlara dönüşür. Tablo bir tarzdır. Başlangıç ekipmanı ve "N tane seç" düz yazı olur, CR hesaplayıcı çıkar, büyü slot ızgarası kaynağa dönüşür. Kartların karaktere kaynak eklemesi bugünkü mantıkla kalır. *(2026-10-12, D37–D39: kaynak, kartın Verilenler'i ya da seviye tablosu satırıyla taşıyıcının Havuz'una geçer; aynı adlıda büyük olan geçer.)* |
 | **D23** | Template'in encounter ve battlemap ayarlarında encounter'a hangi kategorilerin eklenebileceği ve encounter tablosunda hangi alanların gösterileceği seçilir. Serbestlik önemli. |
 | **D24** | Karakter oluşturma sihirbazı yoktur. Oyuncuya boş karakter kağıdı verilir. Template'te adım adım bir **karakter oluşturma rehberi** yazılır (`1- <alan: a> açıklama…`). Her adımda ilgili alana otomatik kaydırılır ve açıklama gösterilir; oyuncu "Tamam" deyince sonraki adıma geçilir. |
 | **D25** | Karakterde **tek bir ana seviye** alanı vardır ve asıl alan odur. Seviye tablolarından gelenler bu seviyeyi izler. |
-| **D26** | İstisna: büyü slotları gibi kaynaklar doğrudan ayrı bir kartın (örneğin Büyücü kartının) üzerindeyse o kartın seviyesini izler. |
-| **D27** | Kaynak maksimumu şimdilik **sadece seviye tablosundan** gelir. Formül gerekiyorsa düz yazıyla belirtilir. |
+| **D26** | İstisna: büyü slotları gibi kaynaklar doğrudan ayrı bir kartın (örneğin Büyücü kartının) üzerindeyse o kartın seviyesini izler. *(2026-10-12, D37: slotlar Büyücü'nün seviye tablosu satırlarındaki kaynak öğeleridir.)* |
+| **D27** | Kaynak maksimumu şimdilik **sadece seviye tablosundan** gelir. Formül gerekiyorsa düz yazıyla belirtilir. *(2026-10-12, D39: maks kaynak öğesinde yazılır; seviyeyle değişmesi seviye tablosu satırlarında aynı adla yeniden verilerek kurulur. Formül yanına konan bir yazı öğesiyle verilir.)* |
 | **D28** | Encounter: bir sıra alanı seçilir ve tablo ona göre sıralanır. DM sürükleyerek sırayı değiştirebilir; alan zar tipindeyse zar atılabilir. Mevcut/maks kolonlarında +/− butonları olur. Her savaşçının değeri ayrı tutulur. Oyuncu kartından gelen değerler karakter kağıdına geri yazılır. |
 | **D29** | Encounter kolonu bir alan anahtarına karşılık gelir. Aynı alanı birden fazla kategoriye koymanın yolu hazır içeriktir. *(2026-10-12, D36: alan, Savaş değerleri bloğundaki bir değerdir.)* |
-| **D30** | Seviye tablosu olmayan kaynakta maksimumu oyuncu girer. |
+| **D30** | Seviye tablosu olmayan kaynakta maksimumu oyuncu girer. *(2026-10-12, D39: maksı boş bırakılmış kaynakta; oyuncu Havuz'da girer.)* |
 | **D31** | Seviye atlama rehberi ve DM'in bir oyuncunun kaynağını elle düzenlemesi sonraya kalır. |
 | **D32** | *(2026-10-11, Faz 4; 4a elle kontrolünde kullanıcı revize etti)* Skill ve saving throw için ayrı bir birleşik tarz vardır: **Yetenek tablosu** (§8.1). SRD'deki tablo gibi görünür ve çalışır: Yetkin / Uzman işaretleri, ad, stat, Ek, Toplam; satıra dokununca d20 + toplam atılır. Statları kategorideki stat tablosundan okur; template satır başına varsayılan statı yazar, kart satır satır değiştirebilir. Toplam = stat değiştiricisi + işaret başına seçilen sayı alanı (D&D'de Proficiency Bonus) + Ek. Genel **Tablo** hesap yapmaz: stat ve toplam kolonu yoktur. |
 | **D33** | *(2026-10-11, Faz 4b)* Bağlı alan hazır içerikten etiketi, tarzı ve ayarlarını alır; anahtarı kendisinindir. Hazır içerikten eklenen alan hazır içeriğin anahtarıyla başlar (V8). SRD kopyasında ya da "hazır içerik olarak kaydet" ile bağlanan alan kendi anahtarını korur; canavarın `skill_bonuses`'ı ile oyuncunun `skills`'i aynı hazır içeriğe bağlıdır ve SRD kartları olduğu gibi okunur. Hazır içeriğin tarzı oluşturulurken seçilir, sonra değişmez. |
-| **D34** | *(2026-10-12, Faz 6 öncesi; V14'ün yerine)* Oyuncu kartındaki **Seviye** ve **Otomatik kaynaklar** alanları silinebilir; tarzları değişmez, oyuncu kartında en fazla birer tane olur, silinince paletten geri eklenir. Template bunları kullanan bir şey eklerken alan yoksa uyarı çıkar ve tek tıkla eklenir; template bunları kullanırken silinirse önce uyarı sorulur (§10.1). |
+| **D34** | *(2026-10-12, Faz 6 öncesi; V14'ün yerine)* Oyuncu kartındaki **Seviye** ve **Otomatik kaynaklar** alanları silinebilir; tarzları değişmez, oyuncu kartında en fazla birer tane olur, silinince paletten geri eklenir. Template bunları kullanan bir şey eklerken alan yoksa uyarı çıkar ve tek tıkla eklenir; template bunları kullanırken silinirse önce uyarı sorulur (§10.1). *(2026-10-12, D38: Otomatik kaynaklar'ın yerini Havuz aldı. Havuz her kategoriye eklenebilir; oyuncu kartı için bu karar aynen geçerli.)* |
 | **D35** | *(2026-10-12; V15 onaylı)* Yeni karakter seviye 1'de başlar. |
 | **D36** | *(2026-10-12, Faz 6 öncesi; V17, V19 ve V23'ün yerine)* **Savaş değerleri** birleşik bir tarzdır ve özelleştirilebilir (§8.6). İçindeki değerler sadece **Sayı**, **Zar** ya da **Kart listesi** (durumlar için) olabilir. Tek zorunlu parçası **HP / Max HP**'dir. Encounter tablosunda sadece bu bloğun değerleri gösterilebilir; hangilerinin gösterileceği değer başına seçilir. Blok bir hazır içerik olarak encounter'a girebilen her kategoriye bağlanır. SRD'deki metin değerler (Hız, CR) sayıya çevrilir ve bloğun dışında normal alan olur. |
+| **D37** | *(2026-10-12, Faz 7 öncesi; §8.5'teki Kaynak verme'nin ve seviye tablosundaki "Verilen kartlar" kolonunun yerine)* **Verilenler** (grant holder) birleşik bir tarzdır ve her kategoriye eklenebilir (§8.5). İçine diğer tarzlardan öğe konur: kart, yazı, markdown, tablo, kaynak, sayı… Kart bir **taşıyıcının** (karakter ya da başka bir kart) listesine girince Verilenler'indeki öğeler taşıyıcıya geçer. Kart öğesi taşıyıcıda kendi kategorisinden bir listeye girer: öğede seçilen hedef liste, seçilmediyse o kategoriyi hedefleyen ilk liste. Uygun liste yoksa kart, kart olmayan her öğe gibi taşıyıcının **Havuz**'una girer. Seviye tablosu satırının verdikleri de aynı öğelerdir. Verilen kartın da Verilenler'i ya da seviye tablosu varsa aynı taşıyıcıya işler (zincir); tekrar eklenmez, döngüye girmez. |
+| **D38** | *(2026-10-12, Faz 7 öncesi; Otomatik kaynaklar'ın yerine)* **Havuz** birleşik bir tarzdır ve her kategoriye eklenebilir; bir kategoride en fazla bir tane olur (§8.7). Taşıyıcının listelere girmeyen verilenlerini gösterir. Kaynaklar yalnız adı ve kutucuklarıyla görünür, kutucuklar elle doldurulup boşaltılır (yerleşik template'teki sınıf kaynak takipçisi gibi). Diğer öğeler veren kartın adıyla gruplanır ("Savaşçı'dan"). Yeni template'te oyuncu kartında hazır gelir; oyuncu kartı için D34 geçerlidir. |
+| **D39** | *(2026-10-12, Faz 7 öncesi; V25 onaylı)* **Kaynak öğesi** ad, maks ve kısa / uzun dinlenme davranışı taşır; açıklaması yoktur, kural gerekiyorsa yanına bir yazı öğesi konur. Aynı karttan gelen aynı adlı kaynak üstüne eklenmez, yerine geçer: seviye tablosunda ulaşılan en yüksek satırınki geçerlidir, kartın kendi Verilenler'i satırlardan önce sayılır. Farklı kartlardan gelen aynı adlı kaynaklarda büyük olan geçer. |
 
 ---
 
@@ -142,12 +146,13 @@ listeli.
 | **Grup** | Kart içinde başlıklı bir bölüm. Kolon sayısı ayarlanabilir. |
 | **Oyuncu kartı** | Her template'te bulunan, silinemeyen özel kategori. Karakter kağıdı bu kategorinin düzeniyle çizilir (§10). |
 | **Ana seviye** | Karakterin tek, asıl seviyesi (D25). |
-| **Seviye tablosu** | Kartın seviye seviye ne verdiğini yazan tablo. Satır = seviye + düz yazı + verilen kartlar (§8.4). |
+| **Seviye tablosu** | Kartın seviye seviye ne verdiğini yazan tablo. Satır = seviye + düz yazı + verilenler (§8.4). |
 | **Seviye tablolu kategori** | Alanlarında bir seviye tablosu bulunan kategori. Sadece bunların seviye modu vardır. |
 | **Seviye modu** | Ayrı ya da beraber (§11.2). |
 | **Kaynak** | Mevcut/maks sayaç: HP, büyü slotu, Ki… (§8.3). |
-| **Kaynak verme** | Bir kartın karaktere otomatik eklediği kaynaklar ve seviyeye göre maksimumları (§8.5). |
-| **Otomatik kaynaklar** | Oyuncu kartında kartlardan gelen kaynakların göründüğü özel alan (D34). |
+| **Verilenler** | Bir kartın, onu alana geçirdiği öğeleri tutan birleşik tarz: kart, yazı, tablo, kaynak… (§8.5, D37). İngilizcesi *grant holder*. |
+| **Taşıyıcı** | Bir kartı kendi listesine almış karakter ya da kart. O kartın verdikleri taşıyıcıya geçer. |
+| **Havuz** | Taşıyıcıda, listelere girmeyen verilenlerin göründüğü birleşik tarz (§8.7, D38). Otomatik kaynaklar'ın yerini aldı. |
 | **Savaş değerleri** | HP / Max HP ve encounter'da gösterilebilen diğer savaş değerlerini tutan birleşik tarz (§8.6, D36). |
 | **Rehber** | Template'teki adım adım karakter oluşturma dokümanı (§13). |
 | **Paket** | Bir template ile oluşturulmuş, dünyalara kurulabilen kart koleksiyonu. |
@@ -202,8 +207,8 @@ Dört temel fikir:
 - **Yerleşik template'i kopyala** (D6). 75 kategori, 928 alan, gruplar ve düzen kopyalanır. D&D'ye
   özel tipler temel tarzlara dönüştürülür (§16). Kopya yeni bir kimlik alır. Eski kimlikte kalsaydı
   uygulama, kullanıcının sildiği SRD kategorilerini dünyaya geri eklerdi.
-- **Boş template oluştur.** Sadece oyuncu kartıyla başlar. Kartta iki özel alan hazır gelir, ana
-  seviye ve otomatik kaynaklar (§10.1, D34; silinebilirler). Gerisini kullanıcı kurar.
+- **Boş template oluştur.** Sadece oyuncu kartıyla başlar. Kartta Seviye ve Havuz hazır gelir
+  (§10.1, D34, D38; silinebilirler). Gerisini kullanıcı kurar.
 - **Bir free template'i kopyala.** Örneğin "SRD kopyam"dan "SRD kopyam — low magic" türetilir.
 
 Her kopya **soyunu** hatırlar, yani hangi template'ten türediğini bilir. Uyumluluk kontrolü (§15)
@@ -364,7 +369,7 @@ Desktop'ta üç panel yan yana durur; altta bir ekleme şeridi vardır.
 │  …                │                                        │                        │
 ├───────────────────┴────────────────────────────────────────┴────────────────────────┤
 │ EKLE ▸ Tarzlar: Yazı · Markdown · Sayı · Onay · Seçim · Zar · Kart · Tablo · Stat ·   │
-│          Kaynak · Seviye tablosu · Kaynak verme   │  Hazır: Skill tablosu · Saves · … │
+│          Kaynak · Seviye tablosu · Verilenler · Havuz │  Hazır: Skill tablosu · …     │
 └─────────────────────────────────────────────────────────────────────────────────────┘
    ≡ = sürükleme tutamacı    [Sv] = seviye tablolu kategori / bu kategoriye giden alan
 ```
@@ -446,9 +451,10 @@ Her basit tarz "liste" olarak da kullanılabilir (§7.3).
 | **Stat tablosu** | Etiketli değerler ve değiştiricileri | §8.2 |
 | **Yetenek tablosu** | Skill / saving throw satırları: işaretler, stat ve toplam | §8.1 |
 | **Kaynak** | Mevcut/maks sayaç ve dinlenme davranışı | §8.3 |
-| **Seviye tablosu** | Seviyeye göre düz yazı ve verilen kartlar | §8.4 |
-| **Kaynak verme** | Kartın karaktere eklediği kaynaklar | §8.5 |
+| **Seviye tablosu** | Seviyeye göre düz yazı ve verilenler | §8.4 |
+| **Verilenler** | Kartın taşıyıcısına geçirdiği öğeler | §8.5 |
 | **Savaş değerleri** | HP / Max HP ve encounter'a giden değerler | §8.6 |
+| **Havuz** | Taşıyıcıya gelen, listelere girmeyen öğeler | §8.7 |
 
 ### 8.1 Tablo
 
@@ -536,6 +542,8 @@ tarzdır.
 - Mevcut değer her zaman elle değiştirilebilir (+/− ya da doğrudan yazarak).
 - "Kısa dinlenmede bir tane geri gelir" gibi kurallar ifade edilmez. Oyuncu açıklamayı okur ve
   elle uygular (İ2).
+- Kartın üzerindeki Kaynak alanı **o kartın kendi sayacıdır** (örneğin bir asanın yükü) ve
+  taşıyıcıya geçmez. Taşıyıcıya geçecek kaynak kartın Verilenler'ine konur (§8.5).
 
 ### 8.4 Seviye tablosu
 
@@ -545,11 +553,11 @@ Bir kartın seviye seviye ne verdiğini anlatır. Karakterler bu tabloyla seviye
 |---|---|
 | Seviye | 1, 2, 3… |
 | Yazı | Markdown. Oyuncunun okuyup uygulayacağı her şey: "+1d10 HP", "Alt sınıfını seç", "Bir stat'ı 2 artır" (D8-b, D14). |
-| Verilen kartlar | Bu seviyede otomatik verilen kartlar. Her biri isteğe bağlı bir **hedef liste** taşır (§11.6). |
+| Verilenler | Bu seviyede verilen öğeler; Verilenler tarzıyla aynı (§8.5, D37): kart, kaynak, yazı, tablo… Kart öğesi isteğe bağlı bir **hedef liste** taşır (§11.6). |
 
 **Örnek: Savaşçı (kısaltılmış)**
 
-| Seviye | Yazı | Verilen kartlar |
+| Seviye | Yazı | Verilenler |
 |---|---|---|
 | 1 | HP: 10 + CON değiştiricisi. Bir Fighting Style feat'i seç. | Second Wind → *Özellikler* · Weapon Mastery → *Özellikler* |
 | 2 | — | Action Surge → *Özellikler* |
@@ -557,31 +565,71 @@ Bir kartın seviye seviye ne verdiğini anlatır. Karakterler bu tabloyla seviye
 | 4 | Bir stat'ı 2 artır ya da bir feat al. | — |
 | 5 | — | Extra Attack → *Eylemler* |
 
+**Örnek: Barbar (kısaltılmış, kaynak satırları)**
+
+| Seviye | Yazı | Verilenler |
+|---|---|---|
+| 1 | HP: 12 + CON değiştiricisi. | Rage → *Özellikler* · **Kaynak** Rage: maks 2, kısa dokunma, uzun doldur · **Yazı** "Rage: kısa dinlenmede bir kullanım geri gelir." |
+| 3 | Bir Barbar alt sınıfı seç. | **Kaynak** Rage: maks 3 |
+| 6 | — | **Kaynak** Rage: maks 4 |
+
+Seviye 8'deki bir Barbar'ın Havuz'unda Rage'in maksı 4'tür. Aynı karttan gelen aynı adlı kaynak
+yerine geçer, toplanmaz (D39). Satırdaki kaynak öğesi dinlenme ayarlarını da taşır.
+
+- **Yazı kolonu ile yazı öğesi farklıdır.** Yazı kolonu bir kez okunur: özet ekranının
+  "Okunacaklar" bölümünde çıkar (§11.8). Verilenler'deki yazı öğesi taşıyıcının Havuz'unda kalıcı
+  durur.
 - **Bir kategoride en fazla bir seviye tablosu** bulunur. *(V9)* Seviye tablosu olan kategori
   "seviye tablolu kategori" sayılır ve kategori ayarlarında seviye modu seçeneği çıkar.
 - **Oyuncu kartında seviye tablosu olmaz.** Oyuncunun seviyesi ana seviye alanındadır (§10).
 
-### 8.5 Kaynak verme
+### 8.5 Verilenler *(D37)*
 
-Bir kartın karaktere otomatik eklediği kaynakları tanımlar (D22). Bugünkü "resource pool grants"
-mantığının sadeleşmiş halidir.
+Bir kartın, onu kendi listesine alan **taşıyıcıya** geçirdiği öğeleri tutar. Taşıyıcı bir karakter
+ya da başka bir kart olabilir: Aria'nın Feat'ler listesine giren bir feat Aria'ya verir, bir
+canavarın Feat'ler listesine giren feat o canavara. Bugünkü "resource pool grants" mantığının
+genelleşmiş halidir.
 
-| Kolon | İçerik |
+| Öğe | Ne taşır | Taşıyıcıda nereye gider? |
+|---|---|---|
+| **Kart** | Bir kart ve isteğe bağlı bir hedef liste | Taşıyıcıda o kartın kategorisinden bir listeye (§11.6). Uygun liste yoksa Havuz'a. |
+| **Kaynak** | Ad, maks (boş bırakılabilir), kısa ve uzun dinlenmede doldur · boşalt · dokunma | Havuz'a; yalnız adı ve kutucuklarıyla (§8.7). |
+| **Diğer tarzlar** | Yazı, markdown, tablo, sayı, etiketler, zar… kendi ayarlarıyla | Havuz'a, veren kartın adı altında. |
+
+```mermaid
+flowchart TD
+    A["Kart X taşıyıcının<br/>bir listesine girdi"] --> B{"X'in verdiği<br/>her öğe için"}
+    B -- "kart" --> C{"Taşıyıcıda o kartın<br/>kategorisinden liste var mı?"}
+    C -- "evet" --> D["Listeye girer<br/>(öğedeki hedef liste,<br/>seçilmediyse ilk liste)"]
+    C -- "hayır" --> E["Havuz'a girer"]
+    B -- "kaynak, yazı, tablo…" --> E
+    D --> F["Verilen kartın da Verilenler'i ya da<br/>seviye tablosu varsa aynı taşıyıcıya işler"]
+    E --> F
+```
+
+- **Ne zaman işler?** Kart taşıyıcının listesine girdiği anda, seviyeden bağımsız. Seviyeye bağlı
+  verilenler seviye tablosunun satırlarındadır (§8.4).
+- **Zincir:** verilen kart bir listeye de girse Havuz'a da düşse taşıyıcı aynıdır; onun
+  verdikleri de aynı taşıyıcıya gider. Tekrar eklenmez, döngüye girmez (§11.6).
+- **Konamayanlar:** Verilenler, Seviye tablosu, Havuz, Savaş değerleri ve Seviye. Bunlar kartın
+  kendi yapısıdır, havuzda anlamları yoktur. Zincir kart öğesiyle kurulur. *(V31)*
+- **Kaynağın açıklaması yoktur** (D39). "Kullanım sayısı = CHA değiştiricisi (en az 1)" gibi bir
+  kural gerekiyorsa kaynağın yanına bir yazı öğesi konur; maksı boş bırakılır ve oyuncu girer
+  (D30).
+- **Aynı adlı kaynak:** aynı karttan gelen yerine geçer, farklı kartlardan gelenlerde büyük olan
+  geçer (D39, §12.2).
+
+**Örnek: "Üstünlük" feat'i (uydurma)**
+
+| Öğe | İçerik |
 |---|---|
-| Kaynak adı | "Rage", "1. seviye slot", "Focus Points" |
-| Açıklama | Markdown. Formül gerekiyorsa burada düz yazıyla belirtilir (D27): "Kullanım sayısı = CHA değiştiricisi (en az 1)". |
-| Kısa dinlenmede | Doldur · Boşalt · Dokunma |
-| Uzun dinlenmede | Doldur · Boşalt · Dokunma |
-| Seviye → maks tablosu | `{1: 2, 3: 3, 6: 4, 12: 5, 17: 6}` gibi. Boş bırakılabilir (§12.2). |
+| Kaynak | Üstünlük zarı · maks 4 · kısa: doldur · uzun: doldur |
+| Markdown | "Üstünlük zarı d8'dir. Bir saldırının hasarına ekleyebilirsin." |
+| Kart | Riposte → *Tepkiler* |
 
-**Örnek: Rage**
-
-| Seviye | 1 | 3 | 6 | 12 | 17 |
-|---|---|---|---|---|---|
-| Maks | 2 | 3 | 4 | 5 | 6 |
-
-Kısa dinlenmede "Dokunma", uzun dinlenmede "Doldur". Kısa dinlenmede bir kullanım geri gelir;
-bunu oyuncu açıklamadan okuyup kendisi uygular.
+Aria'nın Feat'ler listesine eklenince Riposte, Tepkiler listesine "Üstünlük'ten" etiketiyle girer.
+Üstünlük zarı ve yazı Havuz'a gelir. Aria'nın kartında Tepkiler listesi olmasaydı Riposte da
+Havuz'a girerdi.
 
 ### 8.6 Savaş değerleri *(D36)*
 
@@ -608,6 +656,39 @@ bu bloktan alır (§14.2).
   (§9, D33). Değerler bütün bu kategorilerde aynıdır; kartta değeri olmayan hücre boş kalır.
 - Kart listesi türündeki değer encounter'ın **Durumlar** kolonunu besler (§14.5). Blokta en fazla
   bir kart listesi olur.
+
+### 8.7 Havuz *(D38)*
+
+Taşıyıcının, listelere girmeyen verilenlerini gösterir (§8.5). Her kategoriye eklenebilir; bir
+kategoride en fazla bir tane olur. Yeni template'te oyuncu kartında hazır gelir (D34).
+
+```
+┌─ Havuz ───────────────────────────────────────┐
+│ Rage            ●●●○                          │
+│ Üstünlük zarı   ●●●●                          │
+│ 1. seviye slot  ●●○○                          │
+│ ▾ Üstünlük'ten                                │
+│   Üstünlük zarı d8'dir. Bir saldırının…       │
+│ ▾ Savaşçı'dan                                 │
+│   Riposte                                     │
+└───────────────────────────────────────────────┘
+```
+
+- **Kaynaklar** en üstte, yalnız adı ve kutucuklarıyla durur. Dolu kutuya dokununca harcanır, boş
+  kutuya dokununca geri gelir. Maksı verilmemiş kaynakta kutucukların yanında bir maks kutusu
+  çıkar ve maksı oyuncu girer (D30).
+- **Diğer öğeler** veren kartın adı altında gruplanır ve salt okunurdur. Listesi olmayan bir karta
+  dokununca kart açılır.
+- **Havuz saklanmaz.** Her açılışta taşıyıcının kartlarından okunur. Taşıyıcıda yalnız
+  kaynakların mevcut değerleri saklanır. Veren kart çıkarılınca onun Havuz'daki öğeleri
+  kendiliğinden gider. Template'te kartın Verilenler'i değişince Havuz da değişir. *(V29)*
+- **Mevcut değer:** yeni gelen kaynak dolu başlar. Maks değişince mevcut değer korunur, yeni maksı
+  aşıyorsa maksa iner. *(V32)*
+- **Havuz yoksa** listeye giremeyen verilenler o taşıyıcıda görünmez. Saklanan değerler silinmez
+  (D17).
+- **Kart taşıyıcı:** kartın seviyesi yoktur. Kartların Verilenler'i işler, seviye tabloları
+  işlemez. Dinlenme butonları yalnız karakter kağıdında vardır; kart taşıyıcıdaki kaynaklar elle
+  doldurulur. *(V30)*
 
 ---
 
@@ -649,17 +730,21 @@ değerlerden kurar (§14.2, D36).
 - Her template'te **tam olarak bir** oyuncu kartı kategorisi vardır ve silinemez (D7). Adı ve ikonu
   değiştirilebilir.
 - Alanlarını ve düzenini template sahibi belirler, diğer kategorilerdeki gibi.
-- İki **özel alanı** vardır. Yeni template'te hazır gelir, silinebilir, tarzları değişmez, yerleri
-  ve grupları serbesttir. Oyuncu kartında en fazla birer tane olur; silinirse paletin "Oyuncu
-  kartı" bölümünden geri eklenir. *(D34)*
-  - **Seviye:** ana seviye (D25).
-  - **Otomatik kaynaklar:** kartlardan gelen kaynakların listesi (§12).
+- Yeni template'te iki alan hazır gelir. İkisi de silinebilir, tarzları değişmez, yerleri ve
+  grupları serbesttir, oyuncu kartında en fazla birer tane olur. *(D34, D38)*
+  - **Seviye:** ana seviye (D25). Oyuncu kartına özel alandır; silinirse paletin "Oyuncu kartı"
+    bölümünden geri eklenir.
+  - **Havuz:** karaktere gelen, listelere girmeyen verilenler (§8.7). Sıradan bir tarzdır, başka
+    kategorilere de eklenebilir; silinirse paletten geri eklenir.
 - **Bağımlılık uyarıları (D34):**
 
   | Template'e eklenen | Gerektirdiği alan |
   |---|---|
-  | Herhangi bir kategoriye Seviye tablosu (§8.4) | Seviye |
-  | Herhangi bir kategoriye Kaynak verme (§8.5) | Otomatik kaynaklar (seviye → maks tablosu doluysa Seviye de) |
+  | Herhangi bir kategoriye Seviye tablosu (§8.4) | Seviye (satırlarında kart dışı bir öğe varsa Havuz da) |
+  | Herhangi bir kategoriye Verilenler (§8.5) | Havuz |
+
+  Uyarılar yalnız oyuncu kartına bakar. Başka bir kategoride Havuz olmaması uyarı vermez; o
+  kategorinin kartlarında listeye girmeyen verilenler görünmez.
 
   - **Eklerken:** gereken alan oyuncu kartında yoksa editörde uyarı çıkar: "Bu içerik oyuncu
     kartında Seviye alanı ister. **[Ekle]**". Ekle, alanı oyuncu kartının ilk grubuna koyar.
@@ -667,8 +752,8 @@ değerlerden kurar (§14.2, D36).
   - **Silerken:** template bu alanı kullanıyorsa silmeden önce kullananların listesiyle onay
     sorulur.
   - **Alan yokken:** Seviye yoksa kağıtta [Seviye atla] çıkmaz ve seviye tabloları işlemez.
-    Otomatik kaynaklar yoksa kartların verdiği kaynaklar kağıtta görünmez; karakterdeki değerler
-    silinmez (D17).
+    Havuz yoksa listeye girmeyen verilenler (kaynaklar dahil) kağıtta görünmez; karakterdeki
+    değerler silinmez (D17).
 - Kart bağlantısı listeleri (Sınıf, Feat'ler, Özellikler, Envanter…) oyuncunun kartlarını tutar.
   Seviye tablolu kategoriye giden listeler editörde **[Sv]** etiketiyle gösterilir.
 
@@ -684,7 +769,7 @@ Karakter kağıdı oyuncu kartının düzeniyle çizilir. Başlıkta şu butonla
 │ ▾ Kimlik                                     │
 │ ▾ Statlar                                    │
 │ ▾ Savaş                                      │
-│ ▾ Kaynaklar   Rage ●●●○   1. sv slot ●●○○     │
+│ ▾ Havuz       Rage ●●●○   1. sv slot ●●○○     │
 │ …                                            │
 └──────────────────────────────────────────────┘
 ```
@@ -704,8 +789,11 @@ Karakter kağıdı oyuncu kartının düzeniyle çizilir. Başlıkta şu butonla
 | Ana seviye | Tek sayı. |
 | Kart seviyeleri | Ayrı kategorilerdeki her kartın kendi seviyesi, örneğin Savaşçı → 3, Büyücü → 2. |
 | Verilen kart etiketleri | Hangi kartın hangi karttan ve hangi seviyede geldiği (§11.6). |
-| Kaynakların mevcut değerleri | Hem kaynak alanları hem otomatik kaynaklar için. |
+| Kaynakların mevcut değerleri | Hem kaynak alanları hem Havuz'daki kaynaklar (adıyla) için. Havuzun kendisi saklanmaz (V29). |
 | Rehber ilerlemesi | Rehberde hangi adımda kalındığı. |
+
+Kart taşıyıcı (§8.7) da kendi verilen kart etiketlerini ve Havuz'daki kaynakların mevcut
+değerlerini saklar.
 
 ---
 
@@ -734,7 +822,7 @@ bir kart seçilmiş olmasıdır.
 ### 11.3 Neyin seviyesi nereden gelir?
 
 > **Kural:** Ayrı bir kategoride oyuncunun doğrudan aldığı bir kartın **kendi üzerindekiler**
-> (seviye tablosu satırları ve kaynak verme tabloları) o kartın seviyesine bakar (D20, D26).
+> (seviye tablosu satırları ve satırların verdikleri) o kartın seviyesine bakar (D20, D26).
 > Bunun dışındaki her şey **ana seviyeye** bakar (D25).
 
 ```mermaid
@@ -747,7 +835,7 @@ flowchart TB
     subgraph ALT["Alt Sınıf kategorisi — BERABER"]
         CH["Champion<br/>tablo satırları 1–5"]
     end
-    SL["Büyü slotları<br/>Büyücü kartının kendi kaynağı<br/>→ Büyücü seviyesi 2'ye göre"]
+    SL["Büyü slotları<br/>Büyücü satırlarının verdiği kaynaklar<br/>→ Büyücü seviyesi 2'ye göre"]
     SW["Second Wind<br/>Savaşçı tablosunun verdiği kart<br/>→ ana seviyeye göre"]
     AS --> CH
     AS --> SW
@@ -757,9 +845,10 @@ flowchart TB
 | Ne? | Hangi seviyeye bakar? | Örnekte |
 |---|---|---|
 | Ayrı kartın tablo satırları | Kartın kendi seviyesi | Savaşçı 1–3, Büyücü 1–2 |
-| Ayrı kartın kendi kaynak verme tabloları | Kartın kendi seviyesi | Büyücü slotları → 2 |
+| Ayrı kartın satırlarının verdiği kaynaklar | Kartın kendi seviyesi | Büyücü slotları → 2 |
 | Beraber kartın tablo satırları ve kaynakları | Ana seviye | Champion 1–5 |
 | Tablonun verdiği kart ve onun satırları ve kaynakları | Ana seviye | Second Wind → 5 |
+| Kartın Verilenler'i | Seviyeye bakmaz; kart eklenince işler (§8.5) | Üstünlük feat'inin verdikleri |
 
 - **Verilen kartlar her zaman ana seviyeyi izler.** Ayrı bir kategoriye düşseler bile seviye
   atlamada seçilmezler. *(V11)*
@@ -776,9 +865,9 @@ flowchart TD
     D --> E["Seçilen kartlar +1"]
     C -- "hayır" --> F
     E --> F["Yeni ulaşılan satırları bul"]
-    F --> G["Kart veren satırları uygula<br/>(zincir: verilen kartın tablosu da işler)"]
-    G --> H["Otomatik kaynak maksimumlarını güncelle"]
-    H --> I["Özet ekranı:<br/>eklenen kartlar · okunacak yazılar · değişen kaynaklar"]
+    F --> G["Satırların verdiklerini uygula<br/>(zincir: verilen kartın Verilenler'i<br/>ve tablosu da işler)"]
+    G --> H["Havuz'daki kaynak maksimumlarını güncelle"]
+    H --> I["Özet ekranı:<br/>eklenen kartlar · Havuz'a gelenler ·<br/>okunacak yazılar · değişen kaynaklar"]
 ```
 
 - **Tek kartlı kategori:** ayrı bir kategoride tek kart varsa o kart kendiliğinden seçili gelir.
@@ -808,28 +897,38 @@ flowchart TD
 └───────────────────────────────────────┘
 ```
 
-### 11.5 Seviye tablolu bir kart eklendiğinde
+### 11.5 Seviye tablolu ya da Verilenler'i olan bir kart eklendiğinde
 
-Oyuncu seviye tablolu bir kartı listesine kendisi eklerse, örneğin karakter oluştururken sınıf
+Oyuncu bir kartı listesine kendisi eklerse, örneğin karakter oluştururken sınıf ya da feat
 seçerse:
 
-- **Ayrı kategori:** kart 1. seviyeden başlar ve 1. satırı işler.
-- **Beraber kategori:** 1'den ana seviyeye kadar bütün satırlar işler (D10).
-- Ardından seviye atlamadakiyle aynı özet ekranı çıkar.
+- **Verilenler:** kartın Verilenler'i hemen işler (§8.5).
+- **Seviye tablosu, ayrı kategori:** kart 1. seviyeden başlar ve 1. satırı işler.
+- **Seviye tablosu, beraber kategori:** 1'den ana seviyeye kadar bütün satırlar işler (D10).
+- Kart bir şey verdiyse ardından seviye atlamadakiyle aynı özet ekranı çıkar.
+- **Kart taşıyıcı:** bir kartın listesine (örneğin bir canavarın Feat'leri) kart eklenince yalnız
+  Verilenler işler; özet ekranı çıkmaz, sonuç kartta görünür. *(V30)*
 
 ### 11.6 Verilen kartlar
 
-- **Hedef liste** *(V10)*:
-  1. Satırda bir hedef liste seçildiyse kart oraya girer. Örneğin "Action Surge → *Özellikler*",
-     "Extra Attack → *Eylemler*". Oyuncu kartında aynı kategoriyi hedefleyen birden fazla liste
+Seviye tablosu satırından ya da kartın Verilenler'inden gelen kart öğeleri aynı kurallarla
+işler (D37).
+
+- **Hedef liste** *(V10, 2026-10-12'de D37'ye göre güncellendi)*:
+  1. Öğede bir hedef liste seçildiyse kart oraya girer. Örneğin "Action Surge → *Özellikler*",
+     "Extra Attack → *Eylemler*". Taşıyıcıda aynı kategoriyi hedefleyen birden fazla liste
      varsa bu gerekir; SRD'de Eylemler, Bonus eylemler ve Tepkiler aynı kategoriyi hedefler.
-  2. Seçilmediyse kart, oyuncu kartında o kartın kategorisini hedefleyen **ilk** listeye girer.
-  3. Hiç uygun liste yoksa kart eklenmez ve özet ekranında "bu kartın gideceği liste yok" uyarısı
-     çıkar.
-- **Kaynak etiketi:** verilen kart listede **"Savaşçı'dan · seviye 2"** gibi bir etiketle durur.
-  *(V12)*
+  2. Seçilmediyse ya da seçilen liste taşıyıcıda yoksa kart, taşıyıcıda o kartın kategorisini
+     hedefleyen **ilk** listeye girer.
+  3. Hiç uygun liste yoksa kart Havuz'a girer (§8.7). Havuz da yoksa özet ekranında "bu kartın
+     gideceği yer yok" uyarısı çıkar.
+- **Kaynak etiketi:** listeye giren kart **"Savaşçı'dan · seviye 2"** (satırdan) ya da
+  **"Üstünlük'ten"** (Verilenler'den) gibi bir etiketle durur. *(V12)* Havuz'a giren kart veren
+  kartın adı altında durur.
 - **Tekrar yok:** kart listede zaten varsa yeniden eklenmez.
-- **Zincir:** verilen kartın kendi seviye tablosu varsa o da işler (D8). Ana seviyeye bakar (§11.3).
+- **Zincir:** verilen kartın Verilenler'i ve seviye tablosu da aynı taşıyıcıya işler (D8, D37);
+  kartın bir listeye ya da Havuz'a girmiş olması fark etmez. Seviye tablosu ana seviyeye bakar
+  (§11.3).
 - **Döngü koruması:** bir zincirde aynı kart ikinci kez işlenmez. A, B'yi; B de A'yı veriyorsa
   sonsuz döngü olmaz.
 - **Oyuncu yönetir:** oyuncu verilen kartı silebilir. Etiket sadece bilgi içindir.
@@ -840,6 +939,9 @@ seçerse:
   gelmiş kartların da çıkarılması önerilir. Oyuncu onaylar.
 - **Seviye elle düşürülürse:** ana seviye ya da bir kartın seviyesi elle azaltılırsa, artık
   ulaşılmayan satırlardan etiketle gelmiş kartların çıkarılması önerilir.
+- **Havuz'dakiler öneri beklemez.** Veren kart çıkınca ya da satıra artık ulaşılmayınca onun
+  Havuz'daki öğeleri kendiliğinden gider (V29). Kaynağın mevcut değeri saklı kalır; kaynak geri
+  gelirse kaldığı yerden sürer.
 - **Düz yazı satırları geri alınmaz.** Oyuncu kendisi uyguladığı için kendisi geri alır.
 
 ### 11.8 Düz yazı satırları
@@ -859,7 +961,7 @@ Template: "Sınıf" ayrı, "Alt Sınıf" beraber. Oyuncu Aria'yı oluşturuyor.
 | Karakter oluşturuldu | 1 | — | Boş kağıt. |
 | Sınıf listesine **Savaşçı** eklendi | 1 | Savaşçı 1 | Savaşçı 1. satır: Second Wind ve Weapon Mastery *Özellikler*'e eklendi. "HP: 10 + CON" okunacaklarda. |
 | Seviye atla | 2 | Savaşçı 2 | Tek sınıf olduğu için Savaşçı otomatik seçildi. Action Surge eklendi. |
-| Seviye atla, **Büyücü** eklendi | 3 | Savaşçı 2 · Büyücü 1 | Yeni kart 1'den başladı. Büyücü 1. satır işledi. Büyücü'nün slot tablosu Büyücü seviyesi 1'e göre: 1. seviye slot = 2. |
+| Seviye atla, **Büyücü** eklendi | 3 | Savaşçı 2 · Büyücü 1 | Yeni kart 1'den başladı. Büyücü 1. satır işledi ve "1. seviye slot" kaynağını maks 2 ile verdi; Büyücü ayrı olduğu için kendi seviyesine (1) bakar. Slot Havuz'da. |
 | Seviye atla, Savaşçı seçildi | 4 | Savaşçı 3 · Büyücü 1 | Savaşçı 3: "Alt sınıf seç" okunacaklarda. Oyuncu Champion'ı Alt Sınıf listesine ekledi. Champion beraber olduğu için 1–4. satırları işledi. |
 
 ---
@@ -868,23 +970,26 @@ Template: "Sınıf" ayrı, "Alt Sınıf" beraber. Oyuncu Aria'yı oluşturuyor.
 
 ### 12.1 İki tür kaynak
 
-| | Kaynak alanı | Otomatik kaynak |
+| | Kaynak alanı | Havuz'daki kaynak |
 |---|---|---|
-| Nereden gelir? | Template sahibi oyuncu kartına koyar (örneğin Hit Dice). | Bir kartın kaynak verme alanı ekler (örneğin Rage). |
-| Nerede görünür? | Konduğu grupta. | Oyuncu kartındaki "Otomatik kaynaklar" alanında. |
-| Maksimum | Oyuncu girer. | Seviye tablosundan gelir (§12.2). |
-| Dinlenme davranışı | Alanın ayarında. | Kaynak verme satırında. |
+| Nereden gelir? | Template sahibi oyuncu kartına koyar (örneğin Hit Dice). | Bir kartın Verilenler'i ya da seviye tablosu satırı verir (örneğin Rage). |
+| Nerede görünür? | Konduğu grupta. | Taşıyıcının Havuz'unda, yalnız adı ve kutucuklarıyla (§8.7). |
+| Maksimum | Oyuncu girer. | Kaynak öğesinde yazar; boşsa oyuncu girer (§12.2). |
+| Dinlenme davranışı | Alanın ayarında. | Kaynak öğesinde. |
 
-### 12.2 Otomatik kaynağın maksimumu
+### 12.2 Havuz'daki kaynağın maksimumu
 
-1. **Seviye:** kaynağın bulunduğu kartın seviyesi kullanılır. Ayrı kartın kendi kaynağıysa o
-   kartın seviyesi, değilse ana seviye (§11.3, D26).
-2. **Tablo:** o seviyeye eşit ya da küçük **en yüksek** satırın değeri alınır. Örneğin Rage
-   tablosunda seviye 8 için 6. seviye satırı geçerlidir, sonuç 4.
-3. **Tablo yoksa:** maksimumu oyuncu girer. Gereken kural açıklamada yazar (D27, D30).
-4. **Aynı isimli iki kaynak:** iki kart aynı isimli kaynağı veriyorsa büyük olan geçerli olur
-   (bugünkü mantık, D22).
-5. **Tablolu kaynağın maksimumu elle değiştirilmez.** DM'in elle düzenlemesi sonraki fazda (D31).
+1. **Öğedeki maks:** kaynak öğesi maksını kendisi taşır (D39).
+2. **Seviyeyle değişim:** seviye tablosunun satırları aynı adlı kaynağı yeni maksla yeniden verir.
+   Aynı karttan gelen aynı adlı kaynak üstüne eklenmez, yerine geçer: ulaşılan en yüksek satırınki
+   geçerlidir; kartın kendi Verilenler'i satırlardan önce sayılır. Örneğin Barbar tablosunda
+   Rage 1: 2, 3: 3, 6: 4 ise seviye 8'de sonuç 4'tür (§8.4).
+3. **Hangi seviye:** satırlara ulaşılıp ulaşılmadığı §11.3'teki gibi bulunur. Ayrı kartın kendi
+   satırları kartın seviyesine, diğerleri ana seviyeye bakar (D26).
+4. **Maks boşsa:** maksı oyuncu Havuz'da girer. Gereken kural yanındaki yazı öğesindedir (D27,
+   D30).
+5. **Farklı kartlardan aynı adlı iki kaynak:** büyük olan geçerli olur (bugünkü mantık, D22, D39).
+6. **Verilen maks elle değiştirilmez.** DM'in elle düzenlemesi sonraki fazda (D31).
 
 > **Bilinen sınır:** Wizard 3 / Cleric 3 gibi iki büyücü sınıfı aynı isimli "1. seviye slot"
 > kaynağını veriyorsa büyük olan geçerli olur. D&D'nin çok sınıflı birleşik slot tablosu
@@ -893,8 +998,8 @@ Template: "Sınıf" ayrı, "Alt Sınıf" beraber. Oyuncu Aria'yı oluşturuyor.
 ### 12.3 Dinlenme butonları
 
 - İki buton sabittir: **Kısa dinlenme** ve **Uzun dinlenme** (D15).
-- Buton, oyuncu kartındaki her kaynak alanına, Savaş değerleri'nin HP'sine (§8.6) ve her otomatik
-  kaynağa o dinlenmenin davranışını uygular: doldur, boşalt ya da dokunma.
+- Buton, oyuncu kartındaki her kaynak alanına, Savaş değerleri'nin HP'sine (§8.6) ve Havuz'daki
+  her kaynağa o dinlenmenin davranışını uygular: doldur, boşalt ya da dokunma.
 - Başka hiçbir şeye dokunmaz.
 
 **Örnek ayarlar (SRD kopyası):**
@@ -1146,10 +1251,10 @@ içeriğini ve düzenini istediği gibi değiştirir.
 | Canavar, Hayvan düz savaş alanları | `ac`, `hp_average`, `initiative_modifier` | Savaş değerleri bloğu eklenir (`combat_stats`); bu üç alan kopyanın düzeninden kalkar, değerleri blokta okunur (§16.3). `hp_dice`, `initiative_score`, hız alanları ve `ac_note` normal alan olarak kalır. *(D36)* |
 | `proficiencyTable` | Canavar, Hayvan, NPC, Oyuncu › skills / saves | **Yetenek tablosu**, Skill ve Saving throw hazır içeriklerine bağlı (alanlar SRD anahtarını korur, D33) |
 | `classFeatures` | Sınıf, Alt sınıf › `features` | **Seviye tablosu** (§16.3) |
-| `spellsAtLevel` | Tür, Alt tür, Feat, Büyülü eşya, Trait | **Seviye tablosu**: "N. seviyede büyü kartı ver → Büyüler". Günlük kullanım varsa ayrıca **Kaynak verme** satırı. Bu kategoriler beraber modda seviye tablolu olur. *(V24)* |
-| `resourcePoolGrants` | Tür, Alt tür, Feat, Trait | **Kaynak verme** (§16.3) |
-| `spellSlotProgression` + sınıfın büyücü türü | Sınıf | Sınıf kartında **Kaynak verme**: "1. seviye slot" … "9. seviye slot", uzun dinlenmede doldur. Warlock'ta pact slotları kısa dinlenmede de doldur. Sınıf ayrı olduğu için sınıf seviyesini izler (D26). |
-| `spellSlotGrid` | Oyuncu › `spell_slots` | Kalkar. Slotlar otomatik kaynaklarda görünür. |
+| `spellsAtLevel` | Tür, Alt tür, Feat, Büyülü eşya, Trait | **Seviye tablosu**: "N. seviyede büyü kartı ver → Büyüler". Günlük kullanım varsa aynı satırda bir kaynak öğesi. Bu kategoriler beraber modda seviye tablolu olur. *(V24)* |
+| `resourcePoolGrants` | Tür, Alt tür, Feat, Trait | **Kaynak öğeleri** (§16.3): sabit sayı kartın **Verilenler**'inde, seviyeye bağlı olan kartı veren kartın seviye tablosu satırlarında |
+| `spellSlotProgression` + sınıfın büyücü türü | Sınıf | Sınıfın seviye tablosu satırlarında **kaynak öğeleri**: "1. seviye slot" … "9. seviye slot", uzun dinlenmede doldur. Warlock'ta pact slotları kısa dinlenmede de doldur. Sınıf ayrı olduğu için sınıf seviyesini izler (D26). |
+| `spellSlotGrid` | Oyuncu › `spell_slots` | **Havuz** olur (Faz 6'da Otomatik kaynaklar adıyla; anahtar `spell_slots` kalır). Slotlar orada görünür. |
 | `levelTable` | Sınıf › bilinen cantrip, hazırlanan büyü; çeşitli › extra attack; Paket › içerik miktarları | **Tablo** (Seviye · Değer) |
 | `levelTextTable` | Büyü › `at_higher_levels_text` | **Tablo** (Seviye · Yazı) |
 | `rangedSenseList` | Tür, Alt tür, Feat, Büyülü eşya, Trait, Canavar, Hayvan › duyular | **Tablo**, serbest satırlar (Duyu · Mesafe) |
@@ -1163,7 +1268,8 @@ içeriğini ve düzenini istediği gibi değiştirir.
 
 **Grant alanları** (feat, trait, tür vb. üzerindeki `granted_senses`, `granted_skill_proficiencies`,
 direnç listeleri…) kopyada sıradan kart bağlantısı listeleri olarak kalır. Karta bakan "bu trait
-Darkvision verir" diye okur, ama karaktere bir şey eklenmez (D2).
+Darkvision verir" diye okur, ama karaktere bir şey eklenmez (D2). Verilenler'e çevrilmezler;
+isteyen kullanıcı kopyada bu kartlara Verilenler'i kendisi ekler. *(V33)*
 
 ### 16.3 SRD verisi kopyada nasıl okunur?
 
@@ -1173,7 +1279,8 @@ yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
 - **Sınıf özellikleri → seviye tablosu satırı:**
   - `level` → Seviye.
   - `name` ve `description` → Yazı.
-  - `granted_*_refs` listeleri → verilen kartlar. Her listenin hedefi şu tablodaki gibidir.
+  - `granted_*_refs` listeleri → satırın Verilenler'inde kart öğeleri. Her öğenin hedef listesi şu
+    tablodaki gibidir.
 
   | SRD listesi | Kopyada hedef liste (oyuncu kartı) |
   |---|---|
@@ -1189,16 +1296,22 @@ yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
   | `granted_damage_immunities` | Hasar bağışıklıkları (`damage_immunity_refs`) |
   | `granted_condition_immunities` | Durum bağışıklıkları (`condition_immunity_refs`) |
 
-- **Kaynak havuzları → kaynak verme:**
-  - `count_by_level` → seviye tablosu.
-  - Sabit `count` → tek satırlı tablo `{1: count}`.
-  - Seviyeye bağlı formüller tabloya çevrilir: `monk_level`, `sorcerer_level`, `paladin_level_x5`,
-    `pb`.
+- **Kaynak havuzları (`resource_pool_grants`) → kaynak öğeleri** (D39):
+  - Sabit `count` → kartın kendi Verilenler'inde maksı `count` olan kaynak.
+  - `count_by_level` ve seviyeye bağlı formüller (`monk_level`, `sorcerer_level`,
+    `paladin_level_x5`, `pb`) → kaynağı taşıyan kartı veren kartın (sınıf, alt sınıf ya da tür)
+    seviye tablosunda, değerin değiştiği her satırda aynı adlı bir kaynak öğesi. Yerine geçme
+    kuralıyla seviye ilerledikçe maks büyür. Sınıf ayrı olduğu için sınıf seviyesini izler; bu
+    bugünkü `class_ref`'le aynı sonucu verir.
   - Stat'a bağlı formüller tabloya çevrilemez: `cha_mod_min_1`, `wis_mod_min_1`; SRD'de 4 kaynak.
-    Bunlar açıklamaya düz yazı olarak girer, maksimumu oyuncu girer (D27, D30).
+    Bunlar maksı boş bir kaynak ve formülü anlatan bir yazı öğesi olur; maksı oyuncu girer (D27,
+    D30).
   - `recharge: short_rest` → kısa ve uzun dinlenmede doldur. `long_rest` → uzun dinlenmede doldur.
-- **Büyücü türü → slot tabloları:** sınıfın tam, yarım, üçte bir ya da pact büyücü türü, bugünkü
-  slot tablolarından "N. seviye slot" kaynak verme satırlarına çevrilir.
+  - Kaynağı taşıyan kartın kendisi (örneğin Rage feat'i) satırın kart öğesi olarak verilmeye devam
+    eder.
+- **Büyücü türü → slot satırları:** sınıfın tam, yarım, üçte bir ya da pact büyücü türü, bugünkü
+  slot tablolarından sınıfın seviye tablosu satırlarında "N. seviye slot" kaynak öğelerine
+  çevrilir.
 - **Yapılı listeler → metin:** başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri okunaklı
   markdown'a çevrilerek gösterilir.
 - **Savaş değerleri (D36):**
@@ -1227,7 +1340,7 @@ Yerleşik template'te kural motorunun yaptığı ama SRD kopyasında oyuncunun o
 | Dinlenmede hit dice ile iyileşme | Otomatik | Oyuncu elle |
 | Çok sınıflı büyü slotları | Birleşik tablo | Büyük olan geçer; oyuncu ya da DM düzeltir (§12.2) |
 | Stat bonusları (tür, feat) | Uygulanır | Oyuncu okur ve uygular |
-| Sınıf seviyesi, alt sınıf satırları, verilen kartlar | Resolver | **Seviye tablosu ile otomatik kalır** (§11) |
+| Sınıf seviyesi, alt sınıf satırları, verilen kartlar, kaynak havuzları | Resolver | **Seviye tablosu ve Verilenler ile otomatik kalır** (§8.5, §11) |
 
 ### 16.5 Diğer notlar
 
@@ -1275,7 +1388,7 @@ engellediği özetleniyor.
 | Kenar çubuğu | Kategoriler yerleşik slug listelerine göre Tier 0/1/2 gruplanıyor | Tier kategorinin kendi ayarından gelir (editörde seçilir); grup içinde template sırası. |
 | Kart ekranı | Bazı grup adları ortalama için koda sabit yazılı (`_shouldCenterGroup`) | Free yolda kullanılmaz ya da grup ayarı olur. |
 | Kural motoru | Resolver, sihirbaz, seviye atlama planlayıcısı, bekleyen seçimler, "çözülen grant'ler" kartı, sınıf kaynak takipçisi | Free yolda çağrılmaz. |
-| Alan tipi | `FieldType` 30 değer, D&D'ye özel olanlar dahil | Yeni tarzlar (Tablo, Kaynak, Seviye tablosu, Kaynak verme) eklenir; eskiler yerleşik template için kalır. Savaş değerleri mevcut `combatStats` tipini ve `subFields` / değer şeklini kullanır (encounter bugün de buradan besleniyor); free'ye özgü ayarlar `styleConfig`'tedir. |
+| Alan tipi | `FieldType` 30 değer, D&D'ye özel olanlar dahil | Yeni tarzlar (Tablo, Kaynak, Seviye tablosu, Verilenler, Havuz) eklenir; eskiler yerleşik template için kalır. Havuz, Faz 6'da Otomatik kaynaklar olarak eklenen `autoResources` tipidir; mevcut alan anahtarları değişmez. Savaş değerleri mevcut `combatStats` tipini ve `subFields` / değer şeklini kullanır (encounter bugün de buradan besleniyor); free'ye özgü ayarlar `styleConfig`'tedir. |
 
 ---
 
@@ -1287,8 +1400,8 @@ olur. Sıralama öneridir.
 | Faz | İçerik | Çıkış kriteri |
 |---|---|---|
 | **1 — Template editörü** | Template deposu ve Templates sekmesi (kopyala, düzenle, sil). SRD kopyası (§16.1–16.2). Editörün üç bölümü: tarzlar, hazır içerikler, kategoriler; gruplar, kolonlar, sürükle-bırak; mobil ve desktop. Temel tarzlar, Tablo ve Stat tablosu. Free dünya oluşturma, banner ile güncelleme. Free dünyada karakter oluşturma bu fazda kapalıdır (kağıt Faz 2'de gelir). Paketlerin kendi template'iyle açılması ve anahtar bazlı uyumluluk uyarısı. | Kullanıcı SRD'yi kopyalar, alanları ve düzeni değiştirir, bu template'le dünya kurar. SRD paketinin kartları kopyada doğru görünür. Yerleşik dünyalar hiçbir değişiklik olmadan çalışır. |
-| **2 — Oyuncu kartı ve kağıt** | Oyuncu kartı kategorisi ve özel alanları (D34). Free karakter kağıdı. Kaynak ve Savaş değerleri tarzları, Kısa ve Uzun dinlenme. | Free dünyada karakter oluşturulur, kağıt template düzeniyle görünür, dinlenme kaynakları günceller. |
-| **3 — Seviye sistemi** | Seviye tablosu ve kaynak verme tarzları. Ayrı ve beraber modlar. Seviye atlama akışı. Verilen kartlar, etiketler, zincir. SRD verisinin okunması (§16.3). | Aria örneği (§11.9) baştan sona çalışır. |
+| **2 — Oyuncu kartı ve kağıt** | Oyuncu kartı kategorisi ve özel alanları (D34; Otomatik kaynaklar Faz 3'te Havuz olur, D38). Free karakter kağıdı. Kaynak ve Savaş değerleri tarzları, Kısa ve Uzun dinlenme. | Free dünyada karakter oluşturulur, kağıt template düzeniyle görünür, dinlenme kaynakları günceller. |
+| **3 — Seviye sistemi** | Seviye tablosu, Verilenler ve Havuz tarzları. Ayrı ve beraber modlar. Seviye atlama akışı. Verilen kartlar, etiketler, zincir; kart taşıyıcı. SRD verisinin okunması (§16.3). | Aria örneği (§11.9) baştan sona çalışır. |
 | **4 — Rehber** | Rehber editörü ve oyuncu deneyimi. | Oyuncu rehberle boş kağıttan karakter oluşturur. |
 | **5 — Encounter ve harita** | Encounter kategorileri, kolonlar, sıralama, zar, +/−, geri yazma. Battlemap görsel kaynağı, iz rengi. | Free dünyada canavar ve oyuncu aynı encounter'da doğru kolonlarla oynanır. |
 
@@ -1326,7 +1439,7 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. *(onaylı, 2026-10-11)* | §9 |
 | V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. *(onaylı, 2026-10-11; anahtar istisnası D33)* | §9 |
 | V9 | Bir kategoride en fazla bir seviye tablosu olur. | §8.4 |
-| V10 | Verilen kartın hedefi: satırda seçilen liste; yoksa o kategoriyi hedefleyen ilk liste; o da yoksa uyarı. | §11.6 |
+| V10 | Verilen kartın hedefi: öğede seçilen liste; yoksa o kategoriyi hedefleyen ilk liste; o da yoksa Havuz; Havuz da yoksa uyarı. *(onaylı ve güncellendi, 2026-10-12; D37)* | §11.6 |
 | V11 | Verilen kartlar ayrı bir kategoriye düşse bile ana seviyeyi izler ve seviye atlamada seçilmez. | §11.3 |
 | V12 | Verilen kart kaynak etiketiyle yazılır. Kaynak kart çıkarılırsa ya da seviye elle düşürülürse etiketli kartların çıkarılması önerilir. | §11.6, §11.7 |
 | V13 | Ayrı kategoride tek kart varsa seviye atlamada kendiliğinden seçilir; kartı olmayan ayrı kategori atlanır. | §11.4 |
@@ -1341,7 +1454,12 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V22 | Telefonda gruplar tek kolon; isteğe bağlı "telefonda kolon sayısı" ayarı. | §7.4 |
 | ~~V23~~ | ~~`combat_stats` kopyada ayrı alanlara bölünür.~~ *Reddedildi (2026-10-12): Savaş değerleri bloğu olur; Hız ve CR sayıya çevrilip dışarı çıkar; D36.* | §16.2 |
 | V24 | `spellsAtLevel` kopyada seviye tablosuna çevrilir; o kategoriler beraber modda seviye tablolu olur. | §16.2 |
-| V25 | Aynı isimli tablolu kaynaklarda büyük olan geçer; çok sınıflı birleşik slot tablosu yoktur. | §12.2 |
+| V25 | Aynı isimli tablolu kaynaklarda büyük olan geçer; çok sınıflı birleşik slot tablosu yoktur. *(onaylı, 2026-10-12: farklı kartlardan gelenlerde; aynı karttan gelen yerine geçer, D39)* | §12.2 |
 | V26 | Editör değişiklikleri otomatik kaydeder; dünyalara banner ile gider. | §7.7 |
 | V27 | Editörde gerçek kart görünümüyle önizleme vardır. | §7.5 |
 | V28 | "SRD içeriğini ekle" seçeneği SRD soyundan gelen kopyalarda da çıkar. | §16.5 |
+| V29 | Havuz saklanmaz, taşıyıcının kartlarından okunur; yalnız kaynakların mevcut değerleri saklanır. Veren kart çıkınca Havuz'daki öğeleri kendiliğinden gider. Listeye giren kartlar ise etiketleriyle saklanır (V12). | §8.7, §11.7 |
+| V30 | Kart taşıyıcının seviyesi yoktur: Verilenler işler, seviye tabloları işlemez; özet ekranı ve dinlenme butonları yoktur. | §8.7, §11.5 |
+| V31 | Verilenler'e Verilenler, Seviye tablosu, Havuz, Savaş değerleri ve Seviye konamaz. | §8.5 |
+| V32 | Yeni gelen kaynak dolu başlar. Maks değişince mevcut değer korunur, maksı aşıyorsa maksa iner. | §8.7 |
+| V33 | SRD kopyasında feat, trait ve tür kartlarının grant alanları (`granted_senses`, direnç listeleri…) Verilenler'e çevrilmez, okunur liste olarak kalır. Verilenler'e yalnız sınıf özelliklerinin `granted_*_refs`'i ve kaynak havuzları gelir. | §16.2, §16.3 |

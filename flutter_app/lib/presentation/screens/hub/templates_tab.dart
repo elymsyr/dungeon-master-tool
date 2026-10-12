@@ -207,7 +207,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
       l10n.templateCreated(name),
       () => ref
           .read(userTemplatesProvider.notifier)
-          .createEmpty(name, playerCardName: l10n.templatePlayerCardName),
+          .createEmpty(
+            name,
+            playerCardName: l10n.templatePlayerCardName,
+            levelLabel: l10n.tplStyleLevel,
+            autoResourcesLabel: l10n.tplStyleAutoResources,
+          ),
     );
   }
 

@@ -29,6 +29,10 @@ import '../../../application/services/marketplace_cover_sync_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../widgets/character_stat_chips.dart';
 import '../../widgets/field_widgets/entity_link.dart';
+import '../../../application/providers/free_character_provider.dart';
+import '../../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart'
+    show builtinDnd5eV2SchemaId;
+import 'free_character_sheet.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
 import '../../../core/services/perf_probe.dart';
@@ -389,6 +393,27 @@ class _CharacterEditorScreenState
         ),
         body: Center(child: Text(L10n.of(context)!.charNotFound)),
       );
+    }
+
+    // A free template's character has its own sheet (ROADMAP K3).
+    if (character.templateId != builtinDnd5eV2SchemaId) {
+      final free = ref.watch(
+        freeCharacterSchemaProvider((
+          worldId: character.worldId,
+          templateId: character.templateId,
+        )),
+      );
+      final schema = free.valueOrNull;
+      if (schema != null) {
+        return FreeCharacterSheet(
+          characterId: widget.characterId,
+          schema: schema,
+          onClose: widget.onClose,
+        );
+      }
+      if (free.isLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
     }
 
     _working ??= character;

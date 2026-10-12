@@ -183,15 +183,32 @@ Future<void> addFromPalette(
   int? index,
 }) async {
   final presetId = d.presetId;
-  if (presetId == null) {
-    return addFieldWithLabel(
-      context,
-      c,
-      d.type!,
-      groupId: groupId,
-      index: index,
-    );
+  final type = d.type;
+  if (presetId == null && type != null) {
+    final l10n = L10n.of(context)!;
+    final cat = c.category;
+    // One Combat stats block per category; the player card's own fields
+    // once, on the player card (D34, DESIGN §8.6).
+    if (cat != null && !canAddFieldType(cat, type)) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.tplStyleOnce(styleLabel(l10n, type)))),
+      );
+      return;
+    }
+    // Their keys are fixed; no label to ask.
+    if (playerCardFieldTypes.contains(type)) {
+      c.addField(
+        styleLabel(l10n, type),
+        type,
+        key: playerCardFieldKey(type),
+        groupId: groupId,
+        index: index,
+      );
+      return;
+    }
+    return addFieldWithLabel(context, c, type, groupId: groupId, index: index);
   }
+  if (presetId == null) return;
   if (!c.addPresetField(presetId, groupId: groupId, index: index)) {
     final l10n = L10n.of(context)!;
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -630,7 +647,9 @@ class TemplateFieldForm extends StatelessWidget {
             );
           },
         ),
-        if (preset == null && !legacy) ...[
+        if (preset == null &&
+            !legacy &&
+            !playerCardFieldTypes.contains(f.fieldType)) ...[
           ..._styleSettings(
             context,
             f,
@@ -658,7 +677,11 @@ class TemplateFieldForm extends StatelessWidget {
             if (await confirmTemplateAction(
               context,
               title: l10n.tplDeleteField,
-              body: l10n.tplDeleteFieldBody(f.label),
+              // The player card's own fields come back from the palette
+              // (D34); what uses them is listed from Faz 7 on.
+              body: playerCardFieldTypes.contains(f.fieldType)
+                  ? l10n.tplDeleteOwnFieldBody(f.label)
+                  : l10n.tplDeleteFieldBody(f.label),
               confirm: l10n.btnDelete,
             )) {
               c.removeField(f.fieldId);
@@ -912,11 +935,11 @@ List<Widget> _structureHead(
     ),
     _KeyRow(f.fieldKey),
     if (!legacy) ...[
-      if (onType != null) ...[
+      if (onType != null && !hasFixedStyle(f.fieldType)) ...[
         _Dropdown<FieldType>(
           label: l10n.tplStyle,
           value: f.fieldType,
-          items: {for (final t in paletteFieldTypes) t: styleLabel(l10n, t)},
+          items: {for (final t in switchableFieldTypes) t: styleLabel(l10n, t)},
           onChanged: (t) => onType(t!, f.isList && canBeList(t)),
         ),
         if (canBeList(f.fieldType))
@@ -1116,6 +1139,12 @@ List<Widget> _styleSettings(
       return [_TableSettings(field: f, onChanged: set, categories: categories)];
     case FieldType.skillTable:
       return [_SkillTableSettings(field: f, onChanged: set, fields: fields)];
+    case FieldType.resource:
+      return [_ResourceSettings(field: f, onChanged: set)];
+    case FieldType.combatStats:
+      return [
+        _CombatStatsSettings(field: f, onChanged: set, categories: categories),
+      ];
     default:
       return const [];
   }
@@ -1480,6 +1509,214 @@ class _SkillTableSettings extends StatelessWidget {
           onAdd: (name) => setRows([
             ...rows,
             {tableRowId: nextTableRowId(rows), 'name': name},
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+/// What each rest does (DESIGN §8.3, §12.3): fill, empty or leave as is.
+List<Widget> _restSettings(
+  L10n l10n,
+  RestEffect short,
+  RestEffect long,
+  void Function(RestEffect short, RestEffect long) onChanged,
+) {
+  final items = {
+    RestEffect.fill: l10n.tplRestFill,
+    RestEffect.empty: l10n.tplRestEmpty,
+    RestEffect.keep: l10n.tplRestKeep,
+  };
+  return [
+    _Dropdown<RestEffect>(
+      label: l10n.tplRestShort,
+      value: short,
+      items: items,
+      onChanged: (e) => onChanged(e!, long),
+    ),
+    _Dropdown<RestEffect>(
+      label: l10n.tplRestLong,
+      value: long,
+      items: items,
+      onChanged: (e) => onChanged(short, e!),
+    ),
+  ];
+}
+
+/// Resource (DESIGN §8.3): number or boxes, and each rest's effect. The
+/// max is the card's.
+class _ResourceSettings extends StatelessWidget {
+  const _ResourceSettings({required this.field, required this.onChanged});
+
+  final FieldSchema field;
+  final ValueChanged<FieldSchema> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final spec = ResourceSpec.of(field);
+    void set(ResourceSpec s) =>
+        onChanged(field.copyWith(styleConfig: s.toConfig()));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(l10n.tplResourceDisplay),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TemplatePills<bool>(
+            items: [
+              (false, l10n.tplDisplayNumber, null),
+              (true, l10n.tplDisplayBoxes, null),
+            ],
+            value: spec.boxes,
+            onChanged: (v) => set(spec.copyWith(boxes: v)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._restSettings(
+          l10n,
+          spec.short,
+          spec.long,
+          (sh, lo) => set(spec.copyWith(short: sh, long: lo)),
+        ),
+        _Hint(l10n.tplResourceMaxHint),
+      ],
+    );
+  }
+}
+
+/// Combat stats (DESIGN §8.6, D36): HP / Max HP — its label and rests;
+/// it cannot be removed — then the values: number, dice or one card list,
+/// each with its encounter settings.
+class _CombatStatsSettings extends StatelessWidget {
+  const _CombatStatsSettings({
+    required this.field,
+    required this.onChanged,
+    required this.categories,
+  });
+
+  final FieldSchema field;
+  final ValueChanged<FieldSchema> onChanged;
+
+  /// A card list's possible targets.
+  final List<EntityCategorySchema> categories;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final spec = CombatStatsSpec.of(field);
+    final values = spec.values;
+    void set(CombatStatsSpec s) => onChanged(s.applyTo(field));
+    void setValues(List<CombatValue> l) => set(spec.copyWith(values: l));
+
+    Widget value(int i, CombatValue v) {
+      void put(CombatValue n) => setValues([...values]..[i] = n);
+      return _ListItem(
+        key: ValueKey('combat-${v.key}'),
+        boxed: true,
+        onUp: i > 0 ? () => setValues(_moved(values, i, i - 1)) : null,
+        onDown: i < values.length - 1
+            ? () => setValues(_moved(values, i, i + 2))
+            : null,
+        onDelete: () => setValues([...values]..removeAt(i)),
+        deleteLabel: l10n.btnDelete,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _TextSetting(
+              label: l10n.tplFieldLabel,
+              value: v.label,
+              onChanged: (t) {
+                if (t.trim().isNotEmpty) put(v.copyWith(label: t.trim()));
+              },
+            ),
+            _KeyRow(v.key),
+            _Dropdown<CombatValueType>(
+              label: l10n.tplColumnType,
+              value: v.type,
+              items: {
+                CombatValueType.number: l10n.tplStyleInteger,
+                CombatValueType.dice: l10n.tplStyleDice,
+                // One card list per block: it feeds Conditions.
+                if (v.type == CombatValueType.cards || !spec.hasCards)
+                  CombatValueType.cards: l10n.tplCombatCards,
+              },
+              onChanged: (t) => put(v.copyWith(type: t)),
+            ),
+            _Check(
+              label: l10n.tplCombatEncounter,
+              value: v.encounter,
+              onChanged: (b) => put(v.copyWith(encounter: b)),
+            ),
+            if (v.encounter)
+              _TextSetting(
+                label: l10n.tplCombatWidth,
+                hint: l10n.tplCombatWidthHint,
+                value: v.width?.toString() ?? '',
+                number: true,
+                onChanged: (t) =>
+                    put(v.copyWith(width: () => int.tryParse(t.trim()))),
+              ),
+            if (v.type == CombatValueType.number) ...[
+              _Check(
+                label: l10n.tplCombatEditable,
+                value: v.editable,
+                onChanged: (b) => put(v.copyWith(editable: b)),
+              ),
+            ],
+            if (v.type == CombatValueType.cards) ...[
+              _Label(l10n.tplTargets, hint: l10n.tplTargetsAny),
+              Wrap(
+                spacing: 16,
+                children: [
+                  for (final t in categories)
+                    _Check(
+                      label: t.name,
+                      dense: true,
+                      leading: TemplateColorDot(color: parseHexColor(t.color)),
+                      value: v.targets.contains(t.slug),
+                      onChanged: (on) => put(
+                        v.copyWith(
+                          targets: on
+                              ? [...v.targets, t.slug]
+                              : [...v.targets.where((x) => x != t.slug)],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(l10n.tplCombatHp, hint: l10n.tplCombatHpHint),
+        _TextSetting(
+          label: l10n.tplFieldLabel,
+          value: spec.hpLabel,
+          onChanged: (t) {
+            if (t.trim().isNotEmpty) set(spec.copyWith(hpLabel: t.trim()));
+          },
+        ),
+        ..._restSettings(
+          l10n,
+          spec.short,
+          spec.long,
+          (sh, lo) => set(spec.copyWith(short: sh, long: lo)),
+        ),
+        _Label(l10n.tplCombatValues),
+        for (final (i, v) in values.indexed) value(i, v),
+        _AddLine(
+          label: l10n.tplCombatAddValue,
+          // The key is made once, from the first label (V3).
+          onAdd: (label) => setValues([
+            ...values,
+            CombatValue(key: spec.keyFor(label), label: label),
           ]),
         ),
       ],
