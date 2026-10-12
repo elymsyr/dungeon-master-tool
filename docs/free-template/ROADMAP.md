@@ -23,7 +23,9 @@
   kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39); V10 ve V25 onaylandı, V29–V33 eklendi.
   Faz 7 başı (2026-10-12, kullanıcı): V9, V11–V13, V24, V29–V33 onaylandı; faz 7a (sistem) ve 7b
   (SRD dönüştürücüsü v4) olarak bölündü. Faz 7a uygulandı, otomatik kapı yeşil; elle kontrol
-  bekliyor (2026-10-12).
+  bekliyor (2026-10-12). Elle kontrol bulguları düzeltildi ve commit'lendi (E7a.20–25 yeniden
+  kontrol bekliyor). Kullanıcı kararıyla (2026-10-12) 7b'den önce **Faz 7a+** (oynanış alanları
+  edit modu kapalıyken de değişsin) yapılır.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -36,6 +38,7 @@
 | 5 | Paketler | M | ✅ (elle kontrol kısmi) |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | 🔶 uygulandı, elle kontrol bekliyor |
 | 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | 🔶 uygulandı, elle kontrol bekliyor |
+| 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | ⏭ sıradaki |
 | 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ⏳ |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
 | 9 | Encounter ve harita ayarları | M | ⏳ |
@@ -1419,6 +1422,28 @@ hem karakterde hem canavarda doğru yere düşer.
     dünya kartlarını yüklemez).
   - Öğe olarak görsel, dosya, dönem görseli, tarih ve kart bağlantısı tarzı seçilemez (kart
     bağlantısının yerini kart öğesi tutar).
+
+**Faz 7a+ — Oynanış alanları düzenleme modu kapalıyken de değişsin** (2026-10-12, kullanıcı;
+**7b'den önce yapılır**):
+
+- **İstek:** onay kutusu, Kaynak gibi oyun sırasında değişen tarzlar edit modu kapalıyken de
+  değiştirilebilsin. Bugün görüntüleme modunda salt okunurlar; masada her tik / harcama için edit
+  modunu açmak gerekiyor.
+- **Kapsam (uygularken kesinleşir):** onay kutusu; Kaynak (mevcut +/− ve kutucuklar; maks yine
+  yalnız edit modunda); Havuz'daki kaynak kutucukları; Savaş değerleri'nde HP / mevcut +/− ve
+  "düzenlenebilir" işaretli değerler. Adı, yazıyı, listeyi ve yapıyı değiştiren her şey edit
+  modunda kalır.
+- **Nerede:** free karakter kağıdı ve free kart ekranı (görüntüleme modu). Yerleşik dünyada
+  davranış değişmez (K1).
+- **Testler:** görüntüleme modunda onay kutusu ve Kaynak +/− değeri değiştirir ve kaydedilir;
+  aynı modda yazı alanı salt okunur kalır; yerleşik kart aynen.
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| E7a+.1 | Free kağıtta edit modu kapalıyken bir onay kutusunu işaretle, bir Kaynak'ı −/+ yap, Havuz'da bir kutu harca. | Değişir, kağıt kapatılıp açılınca kalıcı. |
+| E7a+.2 | Aynı şeyi free kart ekranında (canavar) yap. | Aynı. |
+| E7a+.3 | Görüntüleme modunda bir yazı alanına, Kaynak'ın maksına dokun. | Düzenlenmez. |
+| E7a+.4 | Yerleşik dünyada aynı kart / karakter. | Bugünkü davranış aynen. |
 
 ---
 
