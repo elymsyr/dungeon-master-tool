@@ -357,9 +357,18 @@ class _PackageImportCardState extends State<_PackageImportCard> {
       if (schemaMap != null && mounted) {
         final pkgSchema =
             WorldSchema.fromJson(Map<String, dynamic>.from(schemaMap));
+        final entities = data['entities'];
+        final usedSlugs = {
+          if (entities is Map)
+            for (final e in entities.values)
+              if (e is Map && e['type'] is String) e['type'] as String,
+        };
         setState(() {
-          _compat =
-              widget.compatService.check(pkgSchema, widget.worldSchema);
+          _compat = widget.compatService.check(
+            pkgSchema,
+            widget.worldSchema,
+            usedCategorySlugs: usedSlugs,
+          );
           _loading = false;
         });
         return;
@@ -482,7 +491,13 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                               child: Text(L10n.of(context)!.importForce),
                             )
                           : FilledButton(
-                              onPressed: canImport ? widget.onImport : null,
+                              onPressed: !canImport
+                                  ? null
+                                  : (_compat!.byKey &&
+                                          _compat!.level !=
+                                              CompatibilityLevel.perfect)
+                                      ? () => _confirmKeyedInstall(context)
+                                      : widget.onImport,
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12),
@@ -557,7 +572,10 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     const SizedBox(height: 6),
                   ],
                   if (_compat!.removedFields.isNotEmpty) ...[
-                    Text(l10n.importFieldsExtra,
+                    Text(
+                        _compat!.byKey
+                            ? l10n.freeInstallFields
+                            : l10n.importFieldsExtra,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -573,7 +591,10 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     const SizedBox(height: 6),
                   ],
                   if (_compat!.removedCategories.isNotEmpty) ...[
-                    Text(l10n.importCategoriesNotInWorld,
+                    Text(
+                        _compat!.byKey
+                            ? l10n.freeInstallCategories
+                            : l10n.importCategoriesNotInWorld,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -594,6 +615,55 @@ class _PackageImportCardState extends State<_PackageImportCard> {
         ],
       ),
     );
+  }
+
+  /// D11: paket farklı template'li — eşleşmeyenler listelenir, veri pakette
+  /// kalır. Vazgeç / Yine de kur.
+  Future<void> _confirmKeyedInstall(BuildContext context) async {
+    final l10n = widget.l10n;
+    final c = _compat!;
+    Widget list(String title, List<String> items) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            for (final i in items)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 2),
+                child: Text('• $i'),
+              ),
+          ],
+        );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.freeInstallTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.freeInstallBody),
+              if (c.removedCategories.isNotEmpty)
+                list(l10n.freeInstallCategories, c.removedCategories),
+              if (c.removedFields.isNotEmpty)
+                list(l10n.freeInstallFields, c.removedFields),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.freeInstallAnyway),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) widget.onImport();
   }
 
   void _confirmForceImport(BuildContext context) {

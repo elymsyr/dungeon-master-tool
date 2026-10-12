@@ -13,7 +13,8 @@
   ikiye bölündü (kullanıcı kararı). Faz 4a'nın elle kontrolünde kullanıcı skill / save için ayrı
   bir tarz istedi (D32 revize); düzeltme ve Faz 4b uygulandı, otomatik kapı yeşil; ikisi birlikte
   elle kontrol bekliyor (2026-10-11). Kullanıcı kararıyla (2026-10-12) elle kontrol sonraya
-  ertelendi ve iş commit'lendi; bekleyen kontroller Faz 4b sonucundaki listede.
+  ertelendi ve iş commit'lendi; bekleyen kontroller Faz 4b sonucundaki listede. Faz 5 uygulandı,
+  otomatik kapı yeşil; elle kontrol bekliyor (2026-10-12).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -23,7 +24,7 @@
 | 3 | Free dünya ve template güncellemesi | M | ✅ |
 | 4a | Tablo, Stat tablosu, SRD dönüşümü v2 | M | 🔄 elle kontrol ertelendi |
 | 4b | Hazır içerikler | M | 🔄 elle kontrol ertelendi |
-| 5 | Paketler | M | ⏳ |
+| 5 | Paketler | M | 🔄 elle kontrol bekliyor |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | ⏳ |
 | 7 | Seviye sistemi | L | ⏳ |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
@@ -937,6 +938,48 @@ yerleşik sonuçlarının değişmediği.
 | E5.9 | R turu (özellikle R6). | Faz 0 referansıyla aynı. |
 
 **Çıkış kriteri:** DESIGN §19 Faz 1 tamamen bitti.
+
+**Faz 5 sonucu** (2026-10-12, Linux; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - Paket oluşturma diyaloğu kendi şablonlarını da listeler.
+  - Açılış ([package_repository_impl.dart](../../flutter_app/lib/data/repositories/package_repository_impl.dart)):
+    free şablonlu paket şablonun tamamını `packages.state_json` içinde `_world_schema` anahtarıyla
+    taşır (dünyanın `settings_json._world_schema`'sı gibi; `package_schemas`'ta `freeRootId` /
+    `presets` kolonu yok, K5) ve onunla açılır. Diğer bütün paketler bugünkü gibi canlı yerleşik
+    şemayla. `world_schema`'sız kayıt (sadece metadata) şablonu silmez; kopya ve çöp kutusu
+    `load` / `save` üzerinden taşır.
+  - Uyumluluk ([template_compatibility_service.dart](../../flutter_app/lib/application/services/template_compatibility_service.dart)):
+    taraflardan biri free ise kategori slug'la, alan anahtarla; sadece paketin kartı olan
+    kategoriler sayılır. Eşleşmeyen yoksa uyarısız kurulur; varsa kartta liste ve kurarken
+    **Farklı şablon** ekranı: dünyada olmayan kategoriler (kartları görünmez), alanlar (verileri
+    görünmez), "veri pakette kalır" notu; **Vazgeç / Yine de kur**. Yerleşik ↔ yerleşik eski yolda
+    (Y4). Kurulum kodu değişmedi: zaten slug ve alanları olduğu gibi kopyalıyor.
+  - Paket açılınca Faz 3'ün şablon güncellemesi sorulur (paketin `ProviderScope`'u içinde aynı
+    `offerTemplateUpdate`). Free pakette kural ayarları gizli.
+  - K6: free pakette "online yap" yerine "bu cihazda kalır" yazısı (hub ayarları ve Save & Sync,
+    ikisi de `PackageOnlineRow`); marketplace paneli gizli.
+  - `.dmtz`: free paket şablonuyla taşınır (kod değişmedi, repository üzerinden).
+- **Roadmap'ten sapmalar:**
+  - Uyarı ekranı ayrı bir diyalog; eski "Zorla" diyaloğunun metni ("ciddi veri kaybı") D11'e uymadığı
+    için free yolda kullanılmadı.
+  - Bulunan hata: `package_schemas` satırının kimliği şablonun `schemaId`'si, tablonun anahtarı
+    yalnız `id`; aynı şablondan iki paket birbirinin satırını alıyordu (listede şablon adı boş
+    kalırdı). Free pakette satır kimliği paket kimliği. Yerleşik paketlerde aynı durum var, dokunulmadı
+    (satır açılışta zaten okunmuyor).
+- **Otomatik kapı:** G1 boş · G2 yeşil · G3 yeşil · G4 32 info (temel çizgiyle aynı) · G5
+  `package_free_template_test` 5 (yerleşik → yerleşik şema; free → kendi şeması ve hazır içerikleri;
+  kaydet / metadata kaydı / kopya; iki paket aynı şablondan; `isFreePackageState`),
+  `template_compatibility_free_test` 5 (aynı template; E5.6 etiket değişse de eşleşir; eksik
+  kategori / alan ve kartsız kategori; yerleşik → free anahtarla; yerleşik ↔ yerleşik eski yol),
+  `template_archive_test` +1 (E5.7), paket testleri (`package_save_ids`, `world_package_installer`,
+  `cloud_push_pump_package`, `pack_install_roundtrip`, `package_link_service`) yeşil · G6 1804 geçti (4b'deki 1792 + 12 yeni); kırmızılar temel çizgideki 3 testle aynı.
+- **Elle kontrol:** E5.1–E5.9. E5.4'te uyarı sadece paketin kartı olan kategorileri listeler.
+- **Bilinen sınırlar:**
+  - Eşleşmeyen alanların listesi alan etiketleriyle; aynı anahtar farklı tarzdaysa (DESIGN §15.2
+    "aynı anahtar, farklı şekil") listelenmez, alan boş görünür.
+  - Uyarı listesi paketin şemasına göre; paketin şemasında olmayan bir kategoride kart varsa
+    sayılmaz.
 
 ---
 

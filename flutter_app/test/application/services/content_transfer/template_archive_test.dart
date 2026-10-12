@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dungeon_master_tool/application/providers/campaign_provider.dart';
+import 'package:dungeon_master_tool/application/providers/package_provider.dart';
 import 'package:dungeon_master_tool/application/providers/template_provider.dart';
 import 'package:dungeon_master_tool/application/services/content_transfer/content_archive.dart';
 import 'package:dungeon_master_tool/application/services/content_transfer/content_codec.dart';
@@ -164,5 +165,54 @@ void main() {
     // SRD pack linked again on this root (V28): the SRD cards are back.
     expect(entities.length, greaterThan(1));
     expect(pendingTemplateUpdate(schema, templates), isNull);
+  });
+
+  test('a free template package travels with its own template (E5.7)',
+      () async {
+    final (a, dbA) = await openRoot('a');
+    await a.read(userTemplatesProvider.future);
+    final t = await a
+        .read(userTemplatesProvider.notifier)
+        .copy(generateBuiltinDnd5eV2Schema().schema, 'Mine');
+    final repoA = a.read(packageRepositoryProvider);
+    await repoA.create('Paketim', template: t);
+    await repoA.saveEntity('Paketim', 'n1', {
+      'name': 'Harpers',
+      'type': 'npc',
+      'attributes': {'motto': 'x'},
+    });
+    final row = await dbA.packagesDao.getByName('Paketim');
+    expect(
+      await exportContentArchive(
+        codec: a.read(contentCodecProvider),
+        type: ContentItemType.package,
+        id: row!.id,
+        path: zipPath,
+      ),
+      isTrue,
+    );
+    a.dispose();
+    await dbA.close();
+
+    final (b, dbB) = await openRoot('b');
+    addTearDown(() async {
+      b.dispose();
+      await dbB.close();
+    });
+    final archive = await ContentArchive.open(zipPath);
+    try {
+      await archive.applyTo(b.read(contentCodecProvider));
+    } finally {
+      await archive.close();
+    }
+
+    final got = await b.read(packageRepositoryProvider).load('Paketim');
+    final schema = WorldSchema.fromJson(
+        Map<String, dynamic>.from(got['world_schema'] as Map));
+    expect(schema.schemaId, t.schemaId);
+    expect(isFreeTemplate(schema), isTrue);
+    expect(schema.presets, isNotEmpty);
+    final n1 = (got['entities'] as Map)['n1'] as Map;
+    expect((n1['attributes'] as Map)['motto'], 'x');
   });
 }
