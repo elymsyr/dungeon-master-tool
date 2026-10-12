@@ -26,6 +26,8 @@ import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/link_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
+import '../dialogs/template_update_dialog.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 import 'hub/packages_tab.dart';
 import 'hub/settings_tab.dart';
 import '../l10n/app_localizations.dart';
@@ -295,6 +297,10 @@ class _PackageScreenContentState
     super.initState();
     _sidebarWidthNotifier = ValueNotifier(_sidebarWidth);
     HardwareKeyboard.instance.addHandler(_handleGlobalKey);
+    // Free template update check (ROADMAP Faz 5), same as a world's.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) offerTemplateUpdate(context, ref);
+    });
   }
 
   @override
@@ -448,7 +454,10 @@ class _PackageScreenContentState
             ),
           // Rule Settings — template-level numeric rules. Edit mode only;
           // built-in packages are read-only so they never see the button.
-          if (_editMode && widget.packageName != srdCorePackageName)
+          // A free template has no rules engine.
+          if (_editMode &&
+              widget.packageName != srdCorePackageName &&
+              !isFreeTemplate(widget.schema))
             IconButton(
               icon: const Icon(Icons.tune, size: 20),
               tooltip: L10n.of(context)!.ruleSettingsTitle,

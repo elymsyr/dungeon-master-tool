@@ -29,8 +29,14 @@ class TemplateCompatibility {
   /// Pakette var ama dünyada yok kategoriler.
   final List<String> removedCategories;
 
+  /// Free template eşleştirmesi (DESIGN §15.2, D11): kategori slug'la, alan
+  /// anahtarla eşleşti. Eşleşmeyen varsa kurmadan önce sorulur; veri pakette
+  /// kalır, sadece bu dünyada görünmez.
+  final bool byKey;
+
   const TemplateCompatibility({
     required this.level,
+    this.byKey = false,
     this.warnings = const [],
     this.addedFields = const [],
     this.removedFields = const [],

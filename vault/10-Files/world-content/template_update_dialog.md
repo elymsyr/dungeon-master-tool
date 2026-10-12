@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/dialogs/template_update_dialog.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-11
+updated: 2026-10-12
 tags: [file]
 ---
 
@@ -25,7 +25,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[free_template]] (`pendingTemplateUpdate`, `freeTemplateContentHash`), [[campaign_provider]], [[template_provider]]
-- Used by: `main_screen.dart` — `ref.listen(activeCampaignLoadingProvider)` at the top of `build` (before the splash return), true → false runs `offerTemplateUpdate` after the frame.
+- Used by: `main_screen.dart` — `ref.listen(activeCampaignLoadingProvider)` at the top of `build` (before the splash return), true → false runs `offerTemplateUpdate` after the frame. `package_screen.dart` (Faz 5) — `_PackageScreenContent.initState`, after the first frame; inside the package's `ProviderScope`, so `worldSchemaProvider` / `activeCampaignProvider` are the package's and Update saves through `_PackageAsCampaignRepo` → `ActivePackageNotifier.save`.
 - Domain map: [[World-and-Content]]
 
 ## Key Logic / Variables

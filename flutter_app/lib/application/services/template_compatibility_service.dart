@@ -2,6 +2,7 @@ import '../../domain/entities/schema/template_compatibility.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_diff.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 
 /// İki template arasındaki uyumluluğu kontrol eder.
 ///
@@ -10,10 +11,17 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 /// - compatible: farklılıklar var ama import edilebilir
 /// - incompatible: hiç ortak kategori yok
 class TemplateCompatibilityService {
+  /// [usedCategorySlugs]: paketin kartı olan kategoriler. Sadece free yolda
+  /// kullanılır — kartı olmayan kategorinin eşleşmemesi kimseyi ilgilendirmez.
   TemplateCompatibility check(
     WorldSchema packageSchema,
-    WorldSchema worldSchema,
-  ) {
+    WorldSchema worldSchema, {
+    Set<String>? usedCategorySlugs,
+  }) {
+    // Y4: anahtar bazlı eşleştirme sadece taraflardan biri free ise.
+    if (isFreeTemplate(packageSchema) || isFreeTemplate(worldSchema)) {
+      return _checkByKey(packageSchema, worldSchema, usedCategorySlugs);
+    }
     final pkgHash = computeWorldSchemaContentHash(packageSchema);
     final worldHash = computeWorldSchemaContentHash(worldSchema);
 
@@ -93,6 +101,41 @@ class TemplateCompatibilityService {
       removedFields: removedFields,
       addedCategories: worldCatNames.difference(pkgCatNames).toList(),
       removedCategories: pkgCatNames.difference(worldCatNames).toList(),
+    );
+  }
+
+  /// DESIGN §15.2: kategoriler slug'la, alanlar anahtarla eşleşir — free
+  /// template'te etiket serbestçe değişir. Listeler sadece görünmeyecek
+  /// olanları taşır: paketin dünyada olmayan kategorileri ve alanları.
+  TemplateCompatibility _checkByKey(
+    WorldSchema packageSchema,
+    WorldSchema worldSchema,
+    Set<String>? usedCategorySlugs,
+  ) {
+    final worldBySlug = {for (final c in worldSchema.categories) c.slug: c};
+    final removedCategories = <String>[];
+    final removedFields = <String>[];
+    for (final cat in packageSchema.categories) {
+      if (usedCategorySlugs != null && !usedCategorySlugs.contains(cat.slug)) {
+        continue;
+      }
+      final worldCat = worldBySlug[cat.slug];
+      if (worldCat == null) {
+        removedCategories.add(cat.name);
+        continue;
+      }
+      final keys = {for (final f in worldCat.fields) f.fieldKey};
+      for (final f in cat.fields) {
+        if (!keys.contains(f.fieldKey)) removedFields.add('${cat.name}: ${f.label}');
+      }
+    }
+    return TemplateCompatibility(
+      level: removedCategories.isEmpty && removedFields.isEmpty
+          ? CompatibilityLevel.perfect
+          : CompatibilityLevel.compatible,
+      byKey: true,
+      removedFields: removedFields,
+      removedCategories: removedCategories,
     );
   }
 }

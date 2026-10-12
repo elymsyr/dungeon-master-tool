@@ -364,7 +364,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   Future<void> _openCreatePackageDialog() async {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final templates = await ref.read(allTemplatesProvider.future);
+    final templates = [
+      ...await ref.read(allTemplatesProvider.future),
+      ...await ref.read(userTemplatesProvider.future),
+    ];
     if (!mounted) return;
     if (templates.isEmpty) {
       await showDialog<void>(
@@ -775,12 +778,15 @@ Future<void> showPackageSettingsDialog(
               const SizedBox(height: 12),
               PackageOnlineRow(palette: palette, packageId: packageRow.id),
             ],
-            const SizedBox(height: 12),
-            MarketplacePanel(
-              itemType: 'package',
-              localId: packageName,
-              title: packageName,
-            ),
+            // K6: a free template never goes to the marketplace.
+            if (schemaMap?['freeRootId'] == null) ...[
+              const SizedBox(height: 12),
+              MarketplacePanel(
+                itemType: 'package',
+                localId: packageName,
+                title: packageName,
+              ),
+            ],
           ],
         ),
         ),

@@ -19,6 +19,13 @@ import '../services/first_party_art_service.dart';
 
 const _uuid = Uuid();
 
+/// True when a package row's stateJson carries a free template (K6: such a
+/// package never goes online or to the marketplace).
+bool isFreePackageState(String stateJson) =>
+    PackageRepositoryImpl._decodeState(stateJson)?[
+        PackageRepositoryImpl._freeSchemaKey] !=
+    null;
+
 /// PR-D4 v12 rewrite. Packages now route through `PackagesDao` (Packages +
 /// PackageSchemas + PackageEntities) and trash through `TrashDao`. The old
 /// `package_local_ds.dart` sidecar JSON store is gone.
@@ -160,6 +167,9 @@ class PackageRepositoryImpl implements PackageRepository {
     await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: packageId,
       name: packageName,
+      stateJson: Value(schema?.freeRootId == null
+          ? '{}'
+          : jsonEncode({_freeSchemaKey: schema!.toJson()})),
     ));
 
     if (schema != null) {
@@ -458,17 +468,6 @@ class PackageRepositoryImpl implements PackageRepository {
       };
     }
 
-    // All packages share the built-in D&D 5e v2 template (SRD). The stored
-    // package_schemas row is ignored on purpose — the template always
-    // resolves to the live built-in schema so packages never drift or
-    // surface a "No template found" state.
-    final builtin = generateBuiltinDnd5eV2Schema().schema;
-    final worldSchemaMap =
-        deepCopyJson(builtin.toJson()) as Map<String, dynamic>;
-    const templateId = builtinDnd5eV2SchemaId;
-    final templateHash = schemaRow?.templateHash;
-    const templateOriginalHash = builtinDnd5eV2OriginalHash;
-
     // Unpack the stateJson sidecar (metadata, marketplace fields, etc.) so
     // callers see the dynamic state they wrote via save().
     final stateBlob = <String, dynamic>{};
@@ -481,6 +480,27 @@ class PackageRepositoryImpl implements PackageRepository {
       } catch (_) {}
     }
 
+    // A free template package opens with its own template
+    // (docs/free-template/DESIGN.md §15.1). Every other package shares the
+    // built-in D&D 5e v2 template (SRD): the stored package_schemas row is
+    // ignored on purpose — the template always resolves to the live built-in
+    // schema so packages never drift or surface a "No template found" state.
+    final free = stateBlob.remove(_freeSchemaKey);
+    final Map<String, dynamic> worldSchemaMap;
+    final String templateId;
+    final String? templateOriginalHash;
+    if (free is Map) {
+      worldSchemaMap = Map<String, dynamic>.from(free);
+      templateId = worldSchemaMap['schemaId'] as String;
+      templateOriginalHash = worldSchemaMap['originalHash'] as String?;
+    } else {
+      final builtin = generateBuiltinDnd5eV2Schema().schema;
+      worldSchemaMap = deepCopyJson(builtin.toJson()) as Map<String, dynamic>;
+      templateId = builtinDnd5eV2SchemaId;
+      templateOriginalHash = builtinDnd5eV2OriginalHash;
+    }
+    final templateHash = schemaRow?.templateHash;
+
     return {
       ...stateBlob,
       'package_id': pkg.id,
@@ -492,6 +512,20 @@ class PackageRepositoryImpl implements PackageRepository {
       'template_hash': ?templateHash,
       'template_original_hash': templateOriginalHash,
     };
+  }
+
+  /// stateJson key holding a free template package's whole schema — the
+  /// package_schemas columns can't carry `freeRootId` / `presets` (K5: no
+  /// Drift bump). Same idea as a world's `_world_schema` in settings_json.
+  static const _freeSchemaKey = '_world_schema';
+
+  static Map<String, dynamic>? _decodeState(String json) {
+    try {
+      final decoded = jsonDecode(json);
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static const _typedTopKeys = <String>{
@@ -514,6 +548,17 @@ class PackageRepositoryImpl implements PackageRepository {
     for (final entry in data.entries) {
       if (_typedTopKeys.contains(entry.key)) continue;
       stateBlob[entry.key] = entry.value;
+    }
+    final schema = data['world_schema'];
+    if (schema is Map && schema['freeRootId'] != null) {
+      stateBlob[_freeSchemaKey] = schema;
+    } else if (schema == null) {
+      // Metadata-only save: the free template rides in stateJson, keep it.
+      final row = await _db.packagesDao.getById(packageId);
+      final old = row == null ? null : _decodeState(row.stateJson);
+      if (old?[_freeSchemaKey] != null) {
+        stateBlob[_freeSchemaKey] = old![_freeSchemaKey];
+      }
     }
     final stateJsonStr = jsonEncode(stateBlob);
 
@@ -563,7 +608,11 @@ class PackageRepositoryImpl implements PackageRepository {
         final templateOriginalHash =
             data['template_original_hash'] as String?;
         await _db.packagesDao.upsertSchema(PackageSchemasCompanion.insert(
-          id: pickStr('schemaId', 'schema_id', _uuid.v4()),
+          // Free: one row per package — packages made from the same template
+          // share its schemaId and would take each other's row (PK is id).
+          id: schemaData['freeRootId'] != null
+              ? packageId
+              : pickStr('schemaId', 'schema_id', _uuid.v4()),
           packageId: packageId,
           name: Value(schemaData['name'] as String? ?? ''),
           version: Value(schemaData['version'] as String? ?? '1.0'),

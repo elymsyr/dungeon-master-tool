@@ -22,6 +22,8 @@ import '../../core/utils/error_format.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
+import '../../data/repositories/package_repository_impl.dart'
+    show isFreePackageState;
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
@@ -712,7 +714,7 @@ class PackageOnlineRow extends ConsumerStatefulWidget {
   ConsumerState<PackageOnlineRow> createState() => _PackageOnlineRowState();
 }
 
-typedef _PackageRow = ({String id, String name, bool online});
+typedef _PackageRow = ({String id, String name, bool online, bool free});
 
 class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
   bool _busy = false;
@@ -733,7 +735,12 @@ class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
         : (name == null || name.isEmpty ? null : await dao.getByName(name));
     return row == null
         ? null
-        : (id: row.id, name: row.name, online: row.isOnline);
+        : (
+            id: row.id,
+            name: row.name,
+            online: row.isOnline,
+            free: isFreePackageState(row.stateJson),
+          );
   }
 
   void _reload() => setState(() => _row = _load());
@@ -746,6 +753,15 @@ class _PackageOnlineRowState extends ConsumerState<PackageOnlineRow> {
       builder: (context, snap) {
         final row = snap.data;
         if (row == null) return const SizedBox.shrink();
+        if (row.free && !row.online) {
+          return Text(
+            l10n.freePackageNoOnline,
+            style: TextStyle(
+              fontSize: 12,
+              color: widget.palette.sidebarLabelSecondary,
+            ),
+          );
+        }
         if (row.online) {
           return Row(
             mainAxisSize: MainAxisSize.min,
