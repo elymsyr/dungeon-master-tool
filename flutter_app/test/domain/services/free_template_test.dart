@@ -246,4 +246,83 @@ void main() {
     expect(withoutDeletedCategories(cards, srd).keys, ['a', 'b']);
     expect(identical(withoutDeletedCategories(cards, builtin), cards), isTrue);
   });
+
+  group('summary chips', () {
+    final card = freePlayerCard(srd)!;
+    String? name(Object? ref) => {'human': 'Human', 'fighter': 'Fighter'}[ref];
+    String? shown(SheetChip c, Map<String, dynamic> fields) =>
+        sheetChipValue(card, c, fields, name)?.value;
+
+    test('the SRD copy shows the built-in card\'s; a new template its Level',
+        () {
+      expect(
+        sheetChipsOf(card).map((c) => (c.field, c.sub, c.icon)),
+        [
+          ('combat_stats', null, 'favorite'),
+          ('species_ref', null, 'pets'),
+          ('class_refs', null, 'shield_moon_outlined'),
+          ('level', null, 'trending_up'),
+          ('combat_stats', 'ac', 'security'),
+          (ownerChipField, null, 'person_outline'),
+        ],
+      );
+      final empty = emptyFreeTemplate(
+        id: 'e',
+        name: 'E',
+        playerCardName: 'Hero',
+        now: _now,
+      );
+      expect(sheetChipsOf(freePlayerCard(empty)!).map((c) => c.field), [
+        'level',
+        ownerChipField,
+      ]);
+      expect(builtin.categories.every((c) => c.summaryChips == null), isTrue);
+    });
+
+    test('values: HP of max, a block value, cards by name, the level', () {
+      final chips = sheetChipsOf(card);
+      final fields = {
+        'combat_stats': {'hp': 31, 'max_hp': 38, 'ac': 16},
+        'species_ref': 'human',
+        'class_refs': ['fighter', 'unknown'],
+        'level': 3,
+      };
+      expect([for (final c in chips.take(5)) shown(c, fields)], [
+        '31 / 38',
+        'Human',
+        'Fighter',
+        '3',
+        '16',
+      ]);
+      expect(sheetChipValue(card, chips[4], fields, name)?.label, 'AC');
+      // Nothing yet: a dash.
+      expect([for (final c in chips.take(5)) shown(c, const {})], [
+        '—',
+        '—',
+        '—',
+        '—',
+        '—',
+      ]);
+    });
+
+    test('a chip whose field is gone is dropped; choices list each value', () {
+      final noSpecies = card.copyWith(
+        fields: [
+          for (final f in card.fields)
+            if (f.fieldKey != 'species_ref') f,
+        ],
+      );
+      expect(
+        sheetChipsOf(noSpecies).map((c) => c.field),
+        isNot(contains('species_ref')),
+      );
+      final labels = sheetChipChoices(card).map((c) => c.label).toList();
+      expect(labels, containsAll(['Combat Stats › HP', 'Combat Stats › AC']));
+      // Long text and tables are not offered.
+      expect(
+        sheetChipChoices(card).map((c) => c.chip.field),
+        isNot(contains('backstory')),
+      );
+    });
+  });
 }

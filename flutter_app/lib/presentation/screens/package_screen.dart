@@ -284,7 +284,15 @@ class _PackageScreenContent extends ConsumerStatefulWidget {
 class _PackageScreenContentState
     extends ConsumerState<_PackageScreenContent> {
   bool _editMode = false;
-  String? _selectedEntityId;
+  String? _selected;
+  int _selectionSeq = 0;
+
+  /// Every selection counts, the same card again too (DatabaseScreen).
+  String? get _selectedEntityId => _selected;
+  set _selectedEntityId(String? id) {
+    _selected = id;
+    _selectionSeq++;
+  }
 
   // Sidebar state
   double _sidebarWidth = 280;
@@ -566,6 +574,7 @@ class _PackageScreenContentState
               child: DatabaseScreen(
                 editMode: _editMode,
                 selectedEntityId: _selectedEntityId,
+                selectionSeq: _selectionSeq,
                 onEntitySelected: (id) =>
                     setState(() => _selectedEntityId = id),
               ),

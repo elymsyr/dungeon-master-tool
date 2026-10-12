@@ -553,7 +553,7 @@ class _CharacterEditorScreenState
             // Cloud save & sync — desktop/tablet only. On phone the entry
             // moves into the overflow menu below to free AppBar space.
             if (getScreenType(context) != ScreenType.phone)
-              _CharacterSaveSyncButton(
+              CharacterSaveSyncButton(
                 character: character,
                 saving: _saving,
                 flushLocal: () => _save(silent: true),
@@ -568,7 +568,7 @@ class _CharacterEditorScreenState
                     case 'sync':
                       showDialog<void>(
                         context: context,
-                        builder: (ctx) => _CharacterSaveSyncDialog(
+                        builder: (ctx) => CharacterSaveSyncDialog(
                           character: character,
                           flushLocal: () => _save(silent: true),
                         ),
@@ -3751,12 +3751,13 @@ class _ShortRestDialogState extends State<_ShortRestDialog> {
 // bar, tap opens a dialog with Save Locally / Backup to Cloud / Sync from
 // Cloud actions plus this character's save info and cloud storage usage.
 
-class _CharacterSaveSyncButton extends ConsumerWidget {
+class CharacterSaveSyncButton extends ConsumerWidget {
   final Character character;
   final bool saving;
   final Future<void> Function() flushLocal;
 
-  const _CharacterSaveSyncButton({
+  const CharacterSaveSyncButton({
+    super.key,
     required this.character,
     required this.saving,
     required this.flushLocal,
@@ -3791,7 +3792,7 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
           : (isOnline ? L10n.of(context)!.saveAndSyncOnline : L10n.of(context)!.saveAndSync),
       onPressed: () => showDialog<void>(
         context: context,
-        builder: (ctx) => _CharacterSaveSyncDialog(
+        builder: (ctx) => CharacterSaveSyncDialog(
           character: character,
           flushLocal: flushLocal,
         ),
@@ -3814,11 +3815,12 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   }
 }
 
-class _CharacterSaveSyncDialog extends ConsumerWidget {
+class CharacterSaveSyncDialog extends ConsumerWidget {
   final Character character;
   final Future<void> Function() flushLocal;
 
-  const _CharacterSaveSyncDialog({
+  const CharacterSaveSyncDialog({
+    super.key,
     required this.character,
     required this.flushLocal,
   });

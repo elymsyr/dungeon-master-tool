@@ -28,11 +28,16 @@ class CharacterAddButton extends ConsumerWidget {
   /// disable; pass the active world name to enable.
   final String? activeWorld;
 
+  /// Opens a new free character where the host shows characters (the
+  /// sidebar, the player tab); null pushes the full-screen route.
+  final ValueChanged<String>? onOpen;
+
   const CharacterAddButton({
     super.key,
     required this.palette,
     required this.activeWorld,
     this.dense = false,
+    this.onOpen,
   });
 
   @override
@@ -85,7 +90,12 @@ class CharacterAddButton extends ConsumerWidget {
               name: L10n.of(context)!.freeNewCharacterName,
               worldId: worldId,
             );
-            if (context.mounted) context.push('/character/${c.id}');
+            if (!context.mounted) return;
+            if (onOpen != null) {
+              onOpen!(c.id);
+            } else {
+              context.push('/character/${c.id}');
+            }
           case 'create':
             context.push('/character/new');
           case 'import':

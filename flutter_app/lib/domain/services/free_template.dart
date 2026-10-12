@@ -161,11 +161,12 @@ FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
       label: 'Level',
       gridColumnSpan: 1,
     ),
-    // The slot grid's slots arrive as automatic resources (Faz 7).
+    // The slot grid's slots arrive in the Pool (D38); the class's Level
+    // table grants them (Faz 7b).
     FieldType.spellSlotGrid => f.copyWith(
       fieldType: FieldType.autoResources,
       fieldKey: playerCardFieldKey(FieldType.autoResources),
-      label: 'Automatic Resources',
+      label: 'Pool',
     ),
     FieldType.slot => f.copyWith(
       fieldType: FieldType.resource,
@@ -335,12 +336,25 @@ WorldSchema copyAsFreeTemplate(
               : c.isPlayerCard,
           tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
           fields: fromBuiltin ? _srdCopyCategoryFields(c) : c.fields,
+          summaryChips: fromBuiltin && c.slug == 'player-character'
+              ? _srdChips
+              : c.summaryChips,
         ),
     ],
   );
   final out = fromBuiltin ? _withSrdPresets(copy, now) : copy;
   return out.copyWith(originalHash: computeWorldSchemaContentHash(out));
 }
+
+/// The SRD copy's summary chips: the built-in character card's.
+const List<Map<String, dynamic>> _srdChips = [
+  {'field': 'combat_stats', 'icon': 'favorite'},
+  {'field': 'species_ref', 'icon': 'pets'},
+  {'field': 'class_refs', 'icon': 'shield_moon_outlined'},
+  {'field': 'level', 'icon': 'trending_up'},
+  {'field': 'combat_stats', 'sub': 'ac', 'icon': 'security'},
+  {'field': ownerChipField, 'icon': 'person_outline'},
+];
 
 /// Content hash for the free template update check (ROADMAP Faz 3): the usual
 /// content hash minus the Templates tab's tags and cover, so a new cover
@@ -391,14 +405,14 @@ Map<String, Entity> withoutDeletedCategories(
   };
 }
 
-/// A new free template holding only the player card (V1), with its own
-/// fields: Level and Automatic resources (DESIGN §10.1).
+/// A new free template holding only the player card (V1), with its two
+/// ready fields: Level and Pool (DESIGN §10.1, D38).
 WorldSchema emptyFreeTemplate({
   required String id,
   required String name,
   required String playerCardName,
   String levelLabel = 'Level',
-  String autoResourcesLabel = 'Automatic Resources',
+  String poolLabel = 'Pool',
   required String now,
 }) {
   FieldSchema own(FieldType type, String label, int order) => FieldSchema(
@@ -428,7 +442,14 @@ WorldSchema emptyFreeTemplate({
         isPlayerCard: true,
         fields: [
           own(FieldType.characterLevel, levelLabel, 0),
-          own(FieldType.autoResources, autoResourcesLabel, 1),
+          own(FieldType.autoResources, poolLabel, 1),
+        ],
+        summaryChips: [
+          {
+            'field': playerCardFieldKey(FieldType.characterLevel),
+            'icon': 'trending_up',
+          },
+          {'field': ownerChipField, 'icon': 'person_outline'},
         ],
         createdAt: now,
         updatedAt: now,
@@ -462,3 +483,116 @@ int? characterLevelOf(EntityCategorySchema playerCard, Entity character) {
 /// A free template's player card (DESIGN §10.1).
 EntityCategorySchema? freePlayerCard(WorldSchema schema) =>
     schema.categories.where((c) => c.isPlayerCard == true).firstOrNull;
+
+// ---------------------------------------------------------- summary chips
+
+/// A summary chip showing the character's user (the built-in "User" chip).
+const ownerChipField = '_owner';
+
+/// One of the player card's summary chips: a field, one value of its Combat
+/// stats block ([sub]; HP when null), or the user ([ownerChipField]).
+typedef SheetChip = ({String field, String? sub, String icon});
+
+Map<String, dynamic> sheetChipJson(SheetChip c) => {
+  'field': c.field,
+  'sub': ?c.sub,
+  'icon': c.icon,
+};
+
+/// Field types a summary chip can show: short values.
+const chipFieldTypes = {
+  FieldType.text,
+  FieldType.integer,
+  FieldType.float_,
+  FieldType.boolean_,
+  FieldType.enum_,
+  FieldType.dice,
+  FieldType.tagList,
+  FieldType.relation,
+  FieldType.resource,
+  FieldType.characterLevel,
+  FieldType.combatStats,
+};
+
+/// [card]'s summary chips whose field is still there.
+List<SheetChip> sheetChipsOf(EntityCategorySchema card) => [
+  for (final m in card.summaryChips ?? const <Map<String, dynamic>>[])
+    if (m['field'] case final String field
+        when field == ownerChipField ||
+            card.fields.any((f) => f.fieldKey == field))
+      (field: field, sub: m['sub'] as String?, icon: '${m['icon'] ?? ''}'),
+];
+
+/// Every chip [card] can show, by label (a block's HP and each value apart).
+List<({SheetChip chip, String label})> sheetChipChoices(
+  EntityCategorySchema card,
+) {
+  final out = <({SheetChip chip, String label})>[];
+  final fields = [...card.fields]
+    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  for (final f in fields) {
+    if (!chipFieldTypes.contains(f.fieldType)) continue;
+    SheetChip chip([String? sub]) => (field: f.fieldKey, sub: sub, icon: '');
+    if (isCombatBlock(f)) {
+      final spec = CombatStatsSpec.of(f);
+      out.add((chip: chip(), label: '${f.label} › ${spec.hpLabel}'));
+      for (final v in spec.values) {
+        out.add((chip: chip(v.key), label: '${f.label} › ${v.label}'));
+      }
+    } else if (f.fieldType != FieldType.combatStats) {
+      out.add((chip: chip(), label: f.label));
+    }
+  }
+  return out;
+}
+
+/// [chip]'s label and what it shows on [fields]; [name] gives a card's
+/// name for a ref (null: unknown). Null for the user chip and a field gone.
+({String label, String value})? sheetChipValue(
+  EntityCategorySchema card,
+  SheetChip chip,
+  Map<String, dynamic> fields,
+  String? Function(Object? ref) name,
+) {
+  final f = card.fields.where((f) => f.fieldKey == chip.field).firstOrNull;
+  if (f == null) return null;
+  final v = freeFieldValue(f, fields);
+  String text(Object? v, {bool cards = false}) => switch (v) {
+    null || '' => '—',
+    bool b => b ? '✓' : '—',
+    List l when cards => _orDash(l.map(name).nonNulls.join(', ')),
+    List l => _orDash(l.join(', ')),
+    _ when cards => name(v) ?? '—',
+    _ => '$v',
+  };
+  if (isCombatBlock(f)) {
+    final m = v is Map ? v : const {};
+    final spec = CombatStatsSpec.of(f);
+    final sub = spec.values.where((x) => x.key == chip.sub).firstOrNull;
+    if (sub == null) {
+      final hp = combatNumber(m[combatHpKey]);
+      final max = combatNumber(m[combatMaxHpKey]);
+      return (
+        label: spec.hpLabel,
+        value: max == null ? text(hp) : '${hp ?? '—'} / $max',
+      );
+    }
+    return (
+      label: sub.label,
+      value: text(m[sub.key], cards: sub.type == CombatValueType.cards),
+    );
+  }
+  if (f.fieldType == FieldType.resource) {
+    final r = resourceValue(v);
+    return (
+      label: f.label,
+      value: r.max == null ? text(r.current) : '${r.current ?? '—'} / ${r.max}',
+    );
+  }
+  return (
+    label: f.label,
+    value: text(v, cards: f.fieldType == FieldType.relation),
+  );
+}
+
+String _orDash(String s) => s.isEmpty ? '—' : s;

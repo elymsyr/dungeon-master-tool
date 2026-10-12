@@ -34,6 +34,16 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     /// Free templates only: the codex sidebar group (0 lookups, 1 content,
     /// 2 DM). Null: the built-in slug lists decide (`builtinTier`).
     @JsonKey(includeIfNull: false) int? tier,
+    /// Free templates only: how the cards of a category with a level table
+    /// level up (DESIGN §11.2): `separate` (each card its own level) or
+    /// `together` (the main level). Null: together.
+    @JsonKey(includeIfNull: false) String? levelMode,
+    /// Free templates only, on the player card: the summary chips character
+    /// cards and the sheet's header show, in order — `{field: fieldKey,
+    /// sub?: a Combat stats value key (none: HP), icon: material icon
+    /// name}`; `field: _owner` is the character's user. Null: none. Read
+    /// through `sheetChipsOf` (`free_template.dart`).
+    @JsonKey(includeIfNull: false) List<Map<String, dynamic>>? summaryChips,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

@@ -5,9 +5,11 @@ import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/free_field_styles.dart';
 import '../../../domain/services/template_edit.dart';
-import '../../../domain/services/free_template.dart' show builtinTier;
+import '../../../domain/services/free_template.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/character_stat_chips.dart'
+    show chipIconFromName, kChipIconChoices;
 import '../../widgets/pen_color_picker.dart' show showCustomColorDialog;
 import '../database/database_screen.dart' show parseHexColor;
 import '../map/widgets/pin_edit_dialog.dart'
@@ -187,8 +189,8 @@ Future<void> addFromPalette(
   if (presetId == null && type != null) {
     final l10n = L10n.of(context)!;
     final cat = c.category;
-    // One Combat stats block per category; the player card's own fields
-    // once, on the player card (D34, DESIGN §8.6).
+    // One Combat stats block, Level table and Pool per category; the
+    // Level once, on the player card (D34, DESIGN §8.4, §8.6, §8.7).
     if (cat != null && !canAddFieldType(cat, type)) {
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(content: Text(l10n.tplStyleOnce(styleLabel(l10n, type)))),
@@ -196,7 +198,7 @@ Future<void> addFromPalette(
       return;
     }
     // Their keys are fixed; no label to ask.
-    if (playerCardFieldTypes.contains(type)) {
+    if (hasFixedKey(type)) {
       c.addField(
         styleLabel(l10n, type),
         type,
@@ -397,6 +399,39 @@ class TemplateCategoryForm extends StatelessWidget {
                 ),
             ],
           ),
+        // Only a category with a Level table levels up (DESIGN §11.2).
+        if (cat.fields.any(
+          (f) => f.fieldType == FieldType.progressionTable,
+        )) ...[
+          _Label(l10n.tplLevelMode, hint: l10n.tplLevelModeHint),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TemplatePills<String>(
+              items: [
+                ('together', l10n.tplLevelTogether, null),
+                ('separate', l10n.tplLevelSeparate, null),
+              ],
+              value: cat.levelMode == 'separate' ? 'separate' : 'together',
+              onChanged: (m) => set(
+                cat.copyWith(levelMode: m == 'separate' ? m : null),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        // What character cards and the sheet's header show.
+        if (cat.isPlayerCard == true) ...[
+          _Label(l10n.tplSummaryChips, hint: l10n.tplSummaryChipsHint),
+          _SummaryChips(
+            card: cat,
+            onChanged: (chips) => set(
+              cat.copyWith(
+                summaryChips: [for (final c in chips) sheetChipJson(c)],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         const SizedBox(height: 8),
         if (canRemoveCategory(cat)) _categoryOrder(cat),
         const SizedBox(height: 16),
@@ -647,9 +682,7 @@ class TemplateFieldForm extends StatelessWidget {
             );
           },
         ),
-        if (preset == null &&
-            !legacy &&
-            !playerCardFieldTypes.contains(f.fieldType)) ...[
+        if (preset == null && !legacy && !hasFixedKey(f.fieldType)) ...[
           ..._styleSettings(
             context,
             f,
@@ -674,14 +707,21 @@ class TemplateFieldForm extends StatelessWidget {
         _DeleteButton(
           label: l10n.tplDeleteField,
           onPressed: () async {
+            // The player card's Level and Pool come back from the palette;
+            // what uses them is listed first (D34, DESIGN §10.1).
+            final own =
+                cat.isPlayerCard == true && hasFixedKey(f.fieldType);
+            final users = own
+                ? ownFieldUsers(c.schema, f.fieldType)
+                : const <String>[];
             if (await confirmTemplateAction(
               context,
               title: l10n.tplDeleteField,
-              // The player card's own fields come back from the palette
-              // (D34); what uses them is listed from Faz 7 on.
-              body: playerCardFieldTypes.contains(f.fieldType)
+              body: !own
+                  ? l10n.tplDeleteFieldBody(f.label)
+                  : users.isEmpty
                   ? l10n.tplDeleteOwnFieldBody(f.label)
-                  : l10n.tplDeleteFieldBody(f.label),
+                  : l10n.tplDeleteOwnFieldUsers(f.label, users.join(', ')),
               confirm: l10n.btnDelete,
             )) {
               c.removeField(f.fieldId);
@@ -1145,10 +1185,24 @@ List<Widget> _styleSettings(
       return [
         _CombatStatsSettings(field: f, onChanged: set, categories: categories),
       ];
+    // Each card fills these in on its own screen (DESIGN §8.4, §8.5).
+    case FieldType.grantHolder:
+      return [_Hint(l10n.tplGrantsCardHint)];
+    case FieldType.progressionTable:
+      return [_Hint(l10n.tplLevelTableCardHint)];
     default:
       return const [];
   }
 }
+
+/// A style's own settings outside the template: a card sets up a grant item
+/// of that style (DESIGN §8.5) with the editor's forms.
+List<Widget> styleSettingsFor(
+  BuildContext context,
+  FieldSchema f,
+  void Function(FieldSchema) set, {
+  required List<EntityCategorySchema> categories,
+}) => _styleSettings(context, f, set, categories: categories, fields: const []);
 
 // ------------------------------------------------- combined style settings
 
@@ -2342,17 +2396,26 @@ class _ColorChoice extends StatelessWidget {
 /// The category's map pin icon: the current one in a small box; tap for
 /// the pin icon set (names the world map draws, `mapIconFromName`).
 class _MapIconButton extends StatelessWidget {
-  const _MapIconButton({required this.value, required this.onChanged});
+  const _MapIconButton({
+    required this.value,
+    required this.onChanged,
+    this.choices = kPinIconChoices,
+    this.iconOf = mapIconFromName,
+    this.tooltip,
+  });
 
   final String value;
   final ValueChanged<String> onChanged;
+  final List<(String, IconData)> choices;
+  final IconData Function(String) iconOf;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     return PopupMenuButton<String>(
-      tooltip: l10n.tplMapIcon,
+      tooltip: tooltip ?? l10n.tplMapIcon,
       onSelected: onChanged,
       position: PopupMenuPosition.under,
       itemBuilder: (context) => [
@@ -2365,7 +2428,7 @@ class _MapIconButton extends StatelessWidget {
               spacing: 4,
               runSpacing: 4,
               children: [
-                for (final (name, icon) in kPinIconChoices)
+                for (final (name, icon) in choices)
                   Tooltip(
                     message: name,
                     child: InkWell(
@@ -2406,11 +2469,93 @@ class _MapIconButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(mapIconFromName(value), size: 16, color: palette.tabText),
+            Icon(iconOf(value), size: 16, color: palette.tabText),
             Icon(Icons.arrow_drop_down, size: 16, color: palette.tabText),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The player card's summary chips: each a field (or a Combat stats value,
+/// or the user) with its icon, in order; added from what is not shown yet.
+class _SummaryChips extends StatelessWidget {
+  const _SummaryChips({required this.card, required this.onChanged});
+
+  final EntityCategorySchema card;
+  final ValueChanged<List<SheetChip>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final chips = sheetChipsOf(card);
+    final choices = [
+      ...sheetChipChoices(card),
+      (chip: (field: ownerChipField, sub: null, icon: ''), label: l10n.statUser),
+    ];
+    bool same(SheetChip a, SheetChip b) => a.field == b.field && a.sub == b.sub;
+    String label(SheetChip c) =>
+        choices.where((x) => same(x.chip, c)).firstOrNull?.label ?? c.field;
+    final left = [
+      for (final x in choices)
+        if (!chips.any((c) => same(c, x.chip))) x,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (i, c) in chips.indexed)
+          _ListItem(
+            key: ValueKey('chip-${c.field}-${c.sub}'),
+            onUp: i > 0 ? () => onChanged(_moved(chips, i, i - 1)) : null,
+            onDown: i < chips.length - 1
+                ? () => onChanged(_moved(chips, i, i + 2))
+                : null,
+            onDelete: () => onChanged([...chips]..removeAt(i)),
+            deleteLabel: l10n.btnDelete,
+            child: Row(
+              children: [
+                _MapIconButton(
+                  value: c.icon,
+                  choices: kChipIconChoices,
+                  iconOf: chipIconFromName,
+                  tooltip: l10n.tplChipIcon,
+                  onChanged: (icon) => onChanged([
+                    for (final (j, x) in chips.indexed)
+                      j == i ? (field: x.field, sub: x.sub, icon: icon) : x,
+                  ]),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(label(c))),
+              ],
+            ),
+          ),
+        if (left.isNotEmpty)
+          PopupMenuButton<SheetChip>(
+            key: const ValueKey('chip_add'),
+            tooltip: l10n.btnAdd,
+            position: PopupMenuPosition.under,
+            onSelected: (c) => onChanged([
+              ...chips,
+              (field: c.field, sub: c.sub, icon: 'star'),
+            ]),
+            itemBuilder: (_) => [
+              for (final x in left)
+                PopupMenuItem(value: x.chip, child: Text(x.label)),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.add, size: 18),
+                  const SizedBox(width: 4),
+                  Text(l10n.btnAdd),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

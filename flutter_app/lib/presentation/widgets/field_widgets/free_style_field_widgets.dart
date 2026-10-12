@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/free_field_styles.dart';
+import '../../../domain/services/free_grants.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../dice/dice_fab.dart';
@@ -12,7 +13,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../class_resources_card.dart' show UsePip;
 import '../srd_text.dart';
 import 'entity_link.dart';
-import 'field_widget_factory.dart' show ProficiencyDot;
+import 'field_widget_factory.dart' show FieldWidgetFactory, ProficiencyDot;
 
 /// Card widgets of the free template's combined styles (docs/free-template/
 /// DESIGN.md §8.1 Table and Skill table, §8.2 Stat table). Only free
@@ -1275,32 +1276,176 @@ class _CardList extends StatelessWidget {
   }
 }
 
-/// The player card's automatic resources (DESIGN §12.1): cards grant them
-/// from Faz 7 on; until then the field only says so.
-class AutoResourcesFieldWidget extends StatelessWidget {
-  const AutoResourcesFieldWidget({super.key, required this.schema});
+/// The Pool (DESIGN §8.7, D38): what the carrier's cards grant that no
+/// list takes. Resources first — name and boxes, a max the item leaves to
+/// the player in a box of its own (D30) — then the rest under the giving
+/// card's name, read-only. [grants] comes from the host (the character
+/// sheet, a card carrying cards); [value] holds only the resources' current
+/// values (V29).
+class PoolFieldWidget extends StatelessWidget {
+  const PoolFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.grants,
+    this.entities,
+    this.ref,
+  });
 
   final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final GrantResult? grants;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  static const _maxBoxes = 30;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: const EdgeInsets.symmetric(vertical: 4),
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 6),
-          Text(
-            L10n.of(context)!.freeAutoResourcesEmpty,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.outline,
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final g = grants;
+    final muted = TextStyle(
+      fontSize: 12,
+      color: Theme.of(context).colorScheme.outline,
+    );
+    String nameOf(String id) {
+      final e = entities?[id];
+      return e == null ? id : srdName(context, e);
+    }
+
+    Widget resource(PoolResource r) {
+      final v = poolResourceValue(r, value);
+      final max = v.max;
+      final current = v.current;
+      void put({int? current, int? max}) =>
+          onChanged(poolStoredWith(value, r.name, current: current, max: max));
+      final boxes = max != null && max > 0 && max <= _maxBoxes;
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 96),
+              child: Text(
+                r.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (boxes)
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (var i = 0; i < max; i++)
+                    UsePip(
+                      key: ValueKey('pool_${r.name}_$i'),
+                      filled: i < (current ?? 0),
+                      color: palette.featureCardAccent,
+                      borderRadius: palette.br,
+                      onTap: readOnly
+                          ? null
+                          : () => put(
+                              current: i < (current ?? 0) ? i : i + 1,
+                            ),
+                    ),
+                ],
+              )
+            else if (max != null)
+              _NumberBox(
+                key: ValueKey('pool_${r.name}_current'),
+                value: current,
+                readOnly: readOnly,
+                bold: true,
+                onChanged: (n) => put(current: n?.clamp(0, max)),
+              ),
+            // The item leaves the max to the player (D30).
+            if (v.playerMax && !readOnly)
+              _NumberBox(
+                key: ValueKey('pool_${r.name}_max'),
+                value: max,
+                label: l10n.freeMax,
+                onChanged: (n) => put(max: n),
+              ),
+          ],
+        ),
+      );
+    }
+
+    Widget entry(PoolEntry e) {
+      final card = e.cardId;
+      if (card != null) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: EntityLink(
+            targetId: entities?[card] == null ? null : card,
+            ref: ref,
+            entities: entities,
+            child: Text(
+              nameOf(card),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+                decorationStyle: TextDecorationStyle.dotted,
+              ),
             ),
           ),
-        ],
+        );
+      }
+      return FieldWidgetFactory.create(
+        schema: e.item.asField(),
+        value: e.item.value,
+        readOnly: true,
+        onChanged: (_) {},
+        entities: entities,
+        ref: ref,
+      );
+    }
+
+    final givers = <String, List<PoolEntry>>{};
+    for (final e in g?.entries ?? const <PoolEntry>[]) {
+      (givers[e.fromId] ??= []).add(e);
+    }
+    final empty = g == null || (g.resources.isEmpty && givers.isEmpty);
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            if (empty)
+              Text(l10n.freePoolEmpty, style: muted)
+            else ...[
+              for (final r in g.resources) resource(r),
+              for (final MapEntry(key: from, value: list) in givers.entries)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.freeGrantedFromCard(nameOf(from)),
+                        style: muted.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      for (final e in list) entry(e),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

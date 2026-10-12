@@ -3766,9 +3766,7 @@
   "freeDecrease": "Decrease",
   "freeIncrease": "Increase",
   "freeMax": "Max",
-  "freeAutoResourcesEmpty": "Resources granted by cards appear here (coming with the level system).",
-  "freeShortRest": "Short rest",
-  "freeLongRest": "Long rest",
+  "freePoolEmpty": "Nothing granted yet.",
   "freeShortRestDone": "Short rest applied.",
   "freeLongRestDone": "Long rest applied.",
   "freeSheetLevel": "Level {level}",
@@ -3786,8 +3784,8 @@
   "tplStyleCombatStatsHint": "HP / Max HP and the values the encounter shows",
   "tplStyleLevel": "Level",
   "tplStyleLevelHint": "The character's main level",
-  "tplStyleAutoResources": "Automatic resources",
-  "tplStyleAutoResourcesHint": "The resources the character's cards grant",
+  "tplStylePool": "Pool",
+  "tplStylePoolHint": "What the carrier's cards grant that no list takes: resources and the rest",
   "tplPlayerCardSection": "Player card",
   "tplStyleOnce": "This category already has a \"{style}\" field.",
   "@tplStyleOnce": {
@@ -3797,7 +3795,7 @@
       }
     }
   },
-  "tplDeleteOwnFieldBody": "Delete \"{label}\" from the player card? Card values stay stored; you can add it back from the palette's Player card section.",
+  "tplDeleteOwnFieldBody": "Delete \"{label}\" from the player card? Card values stay stored; you can add it back from the palette.",
   "@tplDeleteOwnFieldBody": {
     "placeholders": {
       "label": {
@@ -3805,6 +3803,123 @@
       }
     }
   },
+  "tplStyleGrants": "Grants",
+  "tplStyleGrantsHint": "What this card passes to whoever takes it: cards, resources, text…",
+  "tplStyleLevelTable": "Level table",
+  "tplStyleLevelTableHint": "What the card gives level by level: text to read and grants",
+  "tplLevelMode": "Level mode",
+  "tplLevelModeHint": "Together: the cards follow the main level. Separate: each card has its own level, and one card of this category goes up at each level up.",
+  "tplLevelSeparate": "Separate",
+  "tplLevelTogether": "Together",
+  "tplLevelListBadge": "Lv",
+  "tplLevelListBadgeHint": "Holds cards of a category with a level table",
+  "tplSummaryChips": "Character card",
+  "tplSummaryChipsHint": "What character cards and the character sheet's header show, in this order, each with its icon.",
+  "tplChipIcon": "Icon",
+  "tplNeedsOwnField": "This template needs a \"{field}\" field on the player card.",
+  "@tplNeedsOwnField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "tplDeleteOwnFieldUsers": "Delete \"{label}\" from the player card? These categories use it: {users}. Card values stay stored; you can add it back from the palette.",
+  "@tplDeleteOwnFieldUsers": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "users": {
+        "type": "String"
+      }
+    }
+  },
+  "tplGrantsCardHint": "Each card fills in its own grants on its card screen.",
+  "tplLevelTableCardHint": "Each card fills in its own rows on its card screen. The level mode is in the category settings.",
+  "freeGrantsEmpty": "Grants nothing.",
+  "freeGrantAdd": "Add a grant",
+  "freeGrantCard": "Card",
+  "freeGrantPickCard": "Choose a card",
+  "freeGrantTarget": "Goes into",
+  "freeGrantTargetAuto": "The first list for its category",
+  "freeGrantMaxOpen": "Empty: the player enters it",
+  "freeLevelText": "Text",
+  "freeLevelRowAdd": "Add row",
+  "freeLevelReached": "Reached",
+  "freeGrantedFrom": "From {name} · level {level}",
+  "@freeGrantedFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "freeGrantedFromCard": "From {name}",
+  "@freeGrantedFromCard": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "freeLevelUpTitle": "Level {from} → {to}",
+  "@freeLevelUpTitle": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "freeLevelUpPick": "{category}: which card levels up?",
+  "@freeLevelUpPick": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "freeLevelUpNew": "+ Add a new one ({category})",
+  "@freeLevelUpNew": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "freeLevelUpNone": "No card to choose; the main level goes up.",
+  "freeSummaryTitle": "Summary",
+  "freeSummaryLevel": "Level {level} — summary",
+  "@freeSummaryLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "freeSummaryNothing": "Nothing new at this level.",
+  "freeSummaryAdded": "Cards added",
+  "freeSummaryPool": "Into the pool",
+  "freeSummaryReads": "To read",
+  "freeSummaryResources": "Resources",
+  "freeSummaryHomeless": "No place for these cards: no list takes them and there is no pool",
+  "freeRemoveGrantedTitle": "Remove granted cards?",
+  "freeRemoveGrantedBody": "Nothing grants these any more: {names}. Remove them?",
+  "@freeRemoveGrantedBody": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "freeLevelsTitle": "Levels",
+  "freeMainLevel": "Main level",
   "tplRestFill": "Fill",
   "tplRestEmpty": "Empty",
   "tplRestKeep": "Leave as is",

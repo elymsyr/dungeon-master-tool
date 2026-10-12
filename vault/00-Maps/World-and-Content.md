@@ -29,6 +29,7 @@ tags: [moc]
 - [[template_provider]] · [[user_templates_dao]] · [[free_template]] — template library: built-in list for the built-in flows, the user's free templates (side table) and the SRD / free copy converter (`docs/free-template/`).
 - [[free_template_editor]] · [[template_edit]] — the free template editor (three panels on desktop, nested pages on phone, autosave, preview) and its pure edit functions.
 - [[free_field_styles]] — the free template's combined styles (Table, Stat table, Skill table, Resource, Combat stats), rests, computed totals, and readers that show SRD data in them.
+- [[free_grants]] — the free level system: Grants, the Level table, the Pool, and the pure engine that puts a carrier's granted cards into its lists and the rest into its Pool (not the resolver).
 - [[template_update_dialog]] — free world or package opens: "template updated" check and its Update / Ignore / never dialog.
 - [[template_compatibility_service]] — installing a package into a world: what won't line up (by key when either template is free, D11).
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).

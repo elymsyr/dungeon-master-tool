@@ -28,35 +28,54 @@ const simpleFieldTypes = [
 bool isSimpleFieldType(FieldType t) => simpleFieldTypes.contains(t);
 
 /// The combined styles built so far (DESIGN §8; Faz 4: Table, Stat table,
-/// Skill table; Faz 6: Resource, Combat stats). Their settings are their
-/// own (`FieldSchema.styleConfig`).
+/// Skill table; Faz 6: Resource, Combat stats; Faz 7: Grants, Level table,
+/// Pool). Their settings are their own (`FieldSchema.styleConfig`).
 const combinedFieldTypes = [
   FieldType.table,
   FieldType.statTable,
   FieldType.skillTable,
   FieldType.resource,
   FieldType.combatStats,
+  FieldType.grantHolder,
+  FieldType.progressionTable,
+  FieldType.autoResources,
 ];
 
 /// Everything the palette offers. Any other [FieldType] in a free template
 /// is a kept SRD type (ROADMAP §6), or one of [playerCardFieldTypes].
 const paletteFieldTypes = [...simpleFieldTypes, ...combinedFieldTypes];
 
-/// The player card's own fields (DESIGN §10.1, D34): offered in the
-/// palette's "Player card" section while the player card lacks them.
-const playerCardFieldTypes = [FieldType.characterLevel, FieldType.autoResources];
+/// The player card's own field (DESIGN §10.1, D34): offered in the
+/// palette's "Player card" section while the player card lacks it. The
+/// Pool was one until Faz 7 (D38); any category may take it now.
+const playerCardFieldTypes = [FieldType.characterLevel];
 
-/// Their fixed keys (made unique if a field already holds one).
+/// Fixed keys: the Level's and the Pool's (made unique if a field already
+/// holds one). The Pool keeps its Faz 6 key (`auto_resources`).
 String playerCardFieldKey(FieldType t) =>
     t == FieldType.characterLevel ? 'level' : 'auto_resources';
+
+/// Styles added under their fixed key, with no label asked.
+bool hasFixedKey(FieldType t) =>
+    t == FieldType.characterLevel || t == FieldType.autoResources;
 
 bool isLegacyFieldType(FieldType t) =>
     !paletteFieldTypes.contains(t) && !playerCardFieldTypes.contains(t);
 
+/// Styles at most one per category (DESIGN §8.4, §8.6, §8.7; V9).
+const _oncePerCategory = {
+  FieldType.combatStats,
+  FieldType.progressionTable,
+  FieldType.autoResources,
+};
+
 /// Styles a field cannot be switched to or from: the player card's own
-/// fields, and Combat stats (one per category).
+/// field, the once-per-category styles, and Grants (its card data means
+/// nothing to another style).
 bool hasFixedStyle(FieldType t) =>
-    playerCardFieldTypes.contains(t) || t == FieldType.combatStats;
+    playerCardFieldTypes.contains(t) ||
+    _oncePerCategory.contains(t) ||
+    t == FieldType.grantHolder;
 
 /// What the style dropdown offers.
 final switchableFieldTypes = [
@@ -64,17 +83,78 @@ final switchableFieldTypes = [
     if (!hasFixedStyle(t)) t,
 ];
 
-/// Whether [cat] may take one more [type] field: one Combat stats block
-/// per category (DESIGN §8.6); the player card's own fields only on the
-/// player card, once each (D34).
+/// Whether [cat] may take one more [type] field: one Combat stats block,
+/// Level table and Pool per category (DESIGN §8.4, §8.6, §8.7); the Level
+/// only on the player card, once (D34).
 bool canAddFieldType(EntityCategorySchema cat, FieldType type) {
-  if (type == FieldType.combatStats || playerCardFieldTypes.contains(type)) {
-    if (playerCardFieldTypes.contains(type) && cat.isPlayerCard != true) {
-      return false;
-    }
+  if (playerCardFieldTypes.contains(type) && cat.isPlayerCard != true) {
+    return false;
+  }
+  if (_oncePerCategory.contains(type) || playerCardFieldTypes.contains(type)) {
     return !cat.fields.any((f) => f.fieldType == type);
   }
   return true;
+}
+
+/// What the player card needs for what the template uses (DESIGN §10.1,
+/// D34): a Level for any Level table, a Pool for any Grants. Only the
+/// player card is looked at.
+List<FieldType> missingOwnFields(WorldSchema schema) {
+  final card = schema.categories
+      .where((c) => c.isPlayerCard == true)
+      .firstOrNull;
+  if (card == null) return const [];
+  bool uses(FieldType t) =>
+      schema.categories.any((c) => c.fields.any((f) => f.fieldType == t));
+  bool has(FieldType t) => card.fields.any((f) => f.fieldType == t);
+  return [
+    if (uses(FieldType.progressionTable) && !has(FieldType.characterLevel))
+      FieldType.characterLevel,
+    if (uses(FieldType.grantHolder) && !has(FieldType.autoResources))
+      FieldType.autoResources,
+  ];
+}
+
+/// The categories that use the player card's [own] field (DESIGN §10.1):
+/// the Level — those with a Level table; the Pool — those with Grants or a
+/// Level table (its rows may grant more than cards).
+List<String> ownFieldUsers(WorldSchema schema, FieldType own) => [
+  for (final c in schema.categories)
+    if (c.fields.any(
+      (f) =>
+          f.fieldType == FieldType.progressionTable ||
+          (own == FieldType.autoResources &&
+              f.fieldType == FieldType.grantHolder),
+    ))
+      c.name,
+];
+
+/// The player card with [type] (Level or Pool) added to its first group
+/// (DESIGN §10.1's [Add]).
+WorldSchema addOwnField(
+  WorldSchema schema,
+  FieldType type, {
+  required String id,
+  required String label,
+  required String now,
+}) {
+  final card = schema.categories
+      .where((c) => c.isPlayerCard == true)
+      .firstOrNull;
+  if (card == null || !canAddFieldType(card, type)) return schema;
+  return replaceCategory(
+    schema,
+    addField(
+      card,
+      id: id,
+      label: label,
+      type: type,
+      key: playerCardFieldKey(type),
+      groupId: sortedGroups(card).firstOrNull?.groupId,
+      index: 0,
+      now: now,
+    ),
+  );
 }
 
 /// The player card fields [cat] lacks (empty unless it is the player card).

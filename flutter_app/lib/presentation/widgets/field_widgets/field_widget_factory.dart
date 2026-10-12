@@ -23,6 +23,7 @@ import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/entity_ref.dart';
+import '../../../domain/services/free_grants.dart' show GrantResult;
 import '../../../domain/services/free_field_styles.dart'
     show isCombatBlock, structuredListAsMarkdown;
 import '../../../domain/value_objects/asset_ref.dart';
@@ -35,6 +36,7 @@ import '../dice/dice_log.dart';
 import '../markdown_text_area.dart';
 import '../quota_snackbar.dart';
 import 'entity_link.dart';
+import 'free_grant_widgets.dart';
 import 'free_style_field_widgets.dart';
 import 'structured_list_field_widgets.dart';
 import '../../l10n/app_localizations.dart';
@@ -161,6 +163,18 @@ class FieldWidgetFactory {
     /// stat table it reads here (`FieldType.skillTable`).
     List<FieldSchema> categoryFields = const [],
 
+    /// Free templates: what the carrier's cards grant; the Pool shows it
+    /// (`FieldType.autoResources`, DESIGN §8.7).
+    GrantResult? grants,
+
+    /// Free templates: the level a Level table is reached to on the
+    /// character the card is looked at from (DESIGN §11.8).
+    int? reachedLevel,
+
+    /// Free templates: a line beside cards of a card link list (a granted
+    /// card's giver, a card's own level), by card id.
+    Map<String, String>? itemCaptions,
+
     /// Multi-field patch callback. Used by side-effect widgets (e.g.
     /// `extra_hp` adjusts its own value AND combat_stats.{hp,max_hp}
     /// atomically). Editor merges the patch into the entity fields.
@@ -194,6 +208,7 @@ class FieldWidgetFactory {
             ref: ref,
             panelId: panelId,
             entityFields: entityFields,
+            captions: itemCaptions,
           );
         }
         return _ReferenceListFieldWidget(
@@ -205,6 +220,7 @@ class FieldWidgetFactory {
           ref: ref,
           panelId: panelId,
           entityFields: entityFields,
+          captions: itemCaptions,
         );
       }
       if (schema.fieldType == FieldType.image) {
@@ -518,7 +534,32 @@ class FieldWidgetFactory {
         readOnly: readOnly,
         onChanged: onChanged,
       ),
-      FieldType.autoResources => AutoResourcesFieldWidget(schema: schema),
+      FieldType.autoResources => PoolFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        grants: grants,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.grantHolder => GrantHolderFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.progressionTable => LevelTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+        reachedLevel: reachedLevel,
+      ),
       FieldType.skillTable => SkillTableFieldWidget(
         schema: schema,
         value: value,
@@ -2278,6 +2319,9 @@ class _ReferenceListFieldWidget extends StatefulWidget {
   final String? panelId;
   /// Düzenlenen kartın alanları — seçicide öneri bağlamı.
   final Map<String, dynamic>? entityFields;
+  /// Free templates: a line beside a card, by id (FieldWidgetFactory's
+  /// `itemCaptions`).
+  final Map<String, String>? captions;
 
   const _ReferenceListFieldWidget({
     required this.schema,
@@ -2288,6 +2332,7 @@ class _ReferenceListFieldWidget extends StatefulWidget {
     this.ref,
     this.panelId,
     this.entityFields,
+    this.captions,
   });
 
   @override
@@ -2556,9 +2601,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                   const SizedBox(width: 6),
                                   Builder(
                                     builder: (ctx) {
-                                      final sub = _relationSubtitle(
-                                        linkedEntity,
-                                      );
+                                      final sub =
+                                          widget.captions?[itemId] ??
+                                          _relationSubtitle(linkedEntity);
                                       if (sub == null) {
                                         return const SizedBox.shrink();
                                       }
@@ -2678,6 +2723,8 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   final String? panelId;
   /// Düzenlenen kartın alanları — seçicide öneri bağlamı.
   final Map<String, dynamic>? entityFields;
+  /// Free templates: a line beside a card, by id.
+  final Map<String, String>? captions;
 
   const _InlineRelationListFieldWidget({
     required this.schema,
@@ -2688,6 +2735,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     this.ref,
     this.panelId,
     this.entityFields,
+    this.captions,
   });
 
   /// Ids for a relation **list**. Every envelope goes through
@@ -2718,7 +2766,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   }
   String? _subtitle(String id) {
     final e = entities?[id];
-    return e == null ? null : _relationSubtitle(e);
+    return e == null ? null : captions?[id] ?? _relationSubtitle(e);
   }
 
   Widget _chipLabel(BuildContext context, String id) {

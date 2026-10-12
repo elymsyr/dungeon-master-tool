@@ -46,7 +46,15 @@ class PlayerMainScreen extends ConsumerStatefulWidget {
 
 class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   int _tabIndex = 0;
-  String? _selectedEntityId;
+  String? _selected;
+  int _selectionSeq = 0;
+
+  /// Every selection counts, the same card again too (DatabaseScreen).
+  String? get _selectedEntityId => _selected;
+  set _selectedEntityId(String? id) {
+    _selected = id;
+    _selectionSeq++;
+  }
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -179,6 +187,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
         DatabaseScreen(
           editMode: editMode,
           selectedEntityId: _selectedEntityId,
+          selectionSeq: _selectionSeq,
           selectedEntityPanel: null,
           onEntitySelected: (id) => setState(() => _selectedEntityId = id),
         ),

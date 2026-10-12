@@ -212,6 +212,11 @@ class TemplateEditController extends ChangeNotifier {
     if (fieldId == id) selectGroup(null);
   }
 
+  /// Adds the player card's Level or Pool to its first group (DESIGN §10.1).
+  void addOwnField(FieldType type, String label) => _edit(
+    (s) => edit.addOwnField(s, type, id: _uuid.v4(), label: label, now: _now()),
+  );
+
   /// Applies a style change; an incompatible one swaps in a new field, which
   /// stays selected.
   void changeFieldType(String id, FieldType to, bool toList) {

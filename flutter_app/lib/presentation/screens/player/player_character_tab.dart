@@ -62,6 +62,7 @@ class _PlayerCharacterTabState extends ConsumerState<PlayerCharacterTab> {
             palette: palette,
             activeWorld: activeWorld,
             worldName: ref.watch(activeWorldNameProvider).valueOrNull,
+            onOpen: _open,
           ),
           if (worldId != null)
             MembersStrip(worldId: worldId, palette: palette),
@@ -88,10 +89,12 @@ class _Header extends StatelessWidget {
   final DmToolColors palette;
   final String? activeWorld;
   final String? worldName;
+  final ValueChanged<String> onOpen;
   const _Header({
     required this.palette,
     required this.activeWorld,
     required this.worldName,
+    required this.onOpen,
   });
 
   @override
@@ -123,6 +126,7 @@ class _Header extends StatelessWidget {
           CharacterAddButton(
             palette: palette,
             activeWorld: activeWorld,
+            onOpen: onOpen,
           ),
         ],
       ),

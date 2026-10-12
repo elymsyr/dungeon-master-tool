@@ -5,7 +5,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/template_edit.dart'
-    show missingPlayerCardFields, presetUses, presetsOf;
+    show missingOwnFields, missingPlayerCardFields, presetUses, presetsOf;
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../database/database_screen.dart' show parseHexColor;
@@ -110,6 +110,7 @@ class _FreeTemplateEditorScreenState
       ),
       body: Column(
         children: [
+          _OwnFieldWarning(controller: _c),
           Expanded(
             child: Row(
               children: [
@@ -147,13 +148,23 @@ class _FreeTemplateEditorScreenState
   }
 
   Widget _phoneHome(BuildContext context) {
-    final l10n = L10n.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(_c.schema.name),
         actions: [_SaveStatus(controller: _c, compact: true)],
       ),
-      body: _TemplateNav(
+      body: Column(
+        children: [
+          _OwnFieldWarning(controller: _c),
+          Expanded(child: _phoneNav(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _phoneNav(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    return _TemplateNav(
         controller: _c,
         compact: true,
         onInfo: () {
@@ -192,8 +203,7 @@ class _FreeTemplateEditorScreenState
             ),
           );
         },
-      ),
-    );
+      );
   }
 
   void _push(
@@ -322,22 +332,29 @@ class _PhoneCategoryPage extends StatelessWidget {
           ),
         ],
       ),
-      body: c.preview
-          ? TemplateCardPreview(category: cat)
-          : TemplateLayoutCanvas(
-              controller: c,
-              compact: true,
-              onOpenField: (_) => _sheet(
-                context,
-                () => c.field != null,
-                () => TemplateFieldForm(controller: c),
-              ),
-              onOpenGroup: (_) => _sheet(
-                context,
-                () => c.group != null,
-                () => TemplateGroupForm(controller: c),
-              ),
-            ),
+      body: Column(
+        children: [
+          _OwnFieldWarning(controller: c),
+          Expanded(
+            child: c.preview
+                ? TemplateCardPreview(category: cat)
+                : TemplateLayoutCanvas(
+                    controller: c,
+                    compact: true,
+                    onOpenField: (_) => _sheet(
+                      context,
+                      () => c.field != null,
+                      () => TemplateFieldForm(controller: c),
+                    ),
+                    onOpenGroup: (_) => _sheet(
+                      context,
+                      () => c.group != null,
+                      () => TemplateGroupForm(controller: c),
+                    ),
+                  ),
+          ),
+        ],
+      ),
       floatingActionButton: c.preview
           ? null
           : FloatingActionButton.extended(
@@ -774,6 +791,55 @@ class _SaveStatus extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Center(child: content),
             ),
+    );
+  }
+}
+
+/// DESIGN §10.1 (D34): what the template uses needs a field the player card
+/// lacks — the Level for a Level table, the Pool for Grants. Stays until
+/// it is added; [Add] puts it in the player card's first group.
+class _OwnFieldWarning extends StatelessWidget {
+  const _OwnFieldWarning({required this.controller});
+
+  final TemplateEditController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = missingOwnFields(controller.schema);
+    if (missing.isEmpty) return const SizedBox.shrink();
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Container(
+      width: double.infinity,
+      color: palette.featureCardAccent.withValues(alpha: 0.12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Column(
+        children: [
+          for (final t in missing)
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: palette.featureCardAccent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.tplNeedsOwnField(styleLabel(l10n, t)),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                TextButton(
+                  key: ValueKey('own_field_add_${t.name}'),
+                  onPressed: () =>
+                      controller.addOwnField(t, styleLabel(l10n, t)),
+                  child: Text(l10n.btnAdd),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
@@ -95,6 +94,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
           palette: palette,
           activeWorld: activeWorld,
           worldName: ref.watch(activeWorldNameProvider).valueOrNull,
+          onOpen: _openInline,
         ),
         Expanded(
           child: isOnline
@@ -155,7 +155,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     }
     if (!mounted) return;
     final active = ref.read(activeCampaignProvider);
-    final shouldEmbed = worldName.isNotEmpty && worldName == active;
+    final shouldEmbed = worldId != null && worldId == active;
     if (shouldEmbed) {
       _openInline(c.id);
       return;
@@ -168,10 +168,12 @@ class _SidebarHeader extends StatelessWidget {
   final DmToolColors palette;
   final String? activeWorld;
   final String? worldName;
+  final ValueChanged<String> onOpen;
   const _SidebarHeader({
     required this.palette,
     required this.activeWorld,
     required this.worldName,
+    required this.onOpen,
   });
 
   @override
@@ -204,6 +206,7 @@ class _SidebarHeader extends StatelessWidget {
             palette: palette,
             activeWorld: activeWorld,
             dense: true,
+            onOpen: onOpen,
           ),
         ],
       ),
@@ -428,9 +431,9 @@ class _OfflineCharacterRowState
             layout: MetadataTileLayout.leftAvatar,
             onSettings: () {},
             infoChips: CharacterStatChips(
-              lines: characterStatLines(
-                l10n: L10n.of(context)!,
-                tx: ref.watch(contentTranslatorProvider),
+              lines: characterChipLines(
+                context,
+                ref,
                 c,
                 entities,
                 ownerLabel: resolveCharacterOwnerLabel(ref, c),
