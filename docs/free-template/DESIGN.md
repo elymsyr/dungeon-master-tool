@@ -115,11 +115,14 @@ listeli.
 | **D26** | İstisna: büyü slotları gibi kaynaklar doğrudan ayrı bir kartın (örneğin Büyücü kartının) üzerindeyse o kartın seviyesini izler. |
 | **D27** | Kaynak maksimumu şimdilik **sadece seviye tablosundan** gelir. Formül gerekiyorsa düz yazıyla belirtilir. |
 | **D28** | Encounter: bir sıra alanı seçilir ve tablo ona göre sıralanır. DM sürükleyerek sırayı değiştirebilir; alan zar tipindeyse zar atılabilir. Mevcut/maks kolonlarında +/− butonları olur. Her savaşçının değeri ayrı tutulur. Oyuncu kartından gelen değerler karakter kağıdına geri yazılır. |
-| **D29** | Encounter kolonu bir alan anahtarına karşılık gelir. Aynı alanı birden fazla kategoriye koymanın yolu hazır içeriktir. |
+| **D29** | Encounter kolonu bir alan anahtarına karşılık gelir. Aynı alanı birden fazla kategoriye koymanın yolu hazır içeriktir. *(2026-10-12, D36: alan, Savaş değerleri bloğundaki bir değerdir.)* |
 | **D30** | Seviye tablosu olmayan kaynakta maksimumu oyuncu girer. |
 | **D31** | Seviye atlama rehberi ve DM'in bir oyuncunun kaynağını elle düzenlemesi sonraya kalır. |
 | **D32** | *(2026-10-11, Faz 4; 4a elle kontrolünde kullanıcı revize etti)* Skill ve saving throw için ayrı bir birleşik tarz vardır: **Yetenek tablosu** (§8.1). SRD'deki tablo gibi görünür ve çalışır: Yetkin / Uzman işaretleri, ad, stat, Ek, Toplam; satıra dokununca d20 + toplam atılır. Statları kategorideki stat tablosundan okur; template satır başına varsayılan statı yazar, kart satır satır değiştirebilir. Toplam = stat değiştiricisi + işaret başına seçilen sayı alanı (D&D'de Proficiency Bonus) + Ek. Genel **Tablo** hesap yapmaz: stat ve toplam kolonu yoktur. |
 | **D33** | *(2026-10-11, Faz 4b)* Bağlı alan hazır içerikten etiketi, tarzı ve ayarlarını alır; anahtarı kendisinindir. Hazır içerikten eklenen alan hazır içeriğin anahtarıyla başlar (V8). SRD kopyasında ya da "hazır içerik olarak kaydet" ile bağlanan alan kendi anahtarını korur; canavarın `skill_bonuses`'ı ile oyuncunun `skills`'i aynı hazır içeriğe bağlıdır ve SRD kartları olduğu gibi okunur. Hazır içeriğin tarzı oluşturulurken seçilir, sonra değişmez. |
+| **D34** | *(2026-10-12, Faz 6 öncesi; V14'ün yerine)* Oyuncu kartındaki **Seviye** ve **Otomatik kaynaklar** alanları silinebilir; tarzları değişmez, oyuncu kartında en fazla birer tane olur, silinince paletten geri eklenir. Template bunları kullanan bir şey eklerken alan yoksa uyarı çıkar ve tek tıkla eklenir; template bunları kullanırken silinirse önce uyarı sorulur (§10.1). |
+| **D35** | *(2026-10-12; V15 onaylı)* Yeni karakter seviye 1'de başlar. |
+| **D36** | *(2026-10-12, Faz 6 öncesi; V17, V19 ve V23'ün yerine)* **Savaş değerleri** birleşik bir tarzdır ve özelleştirilebilir (§8.6). İçindeki değerler sadece **Sayı**, **Zar** ya da **Kart listesi** (durumlar için) olabilir. Tek zorunlu parçası **HP / Max HP**'dir. Encounter tablosunda sadece bu bloğun değerleri gösterilebilir; hangilerinin gösterileceği değer başına seçilir. Blok bir hazır içerik olarak encounter'a girebilen her kategoriye bağlanır. SRD'deki metin değerler (Hız, CR) sayıya çevrilir ve bloğun dışında normal alan olur. |
 
 ---
 
@@ -144,7 +147,8 @@ listeli.
 | **Seviye modu** | Ayrı ya da beraber (§11.2). |
 | **Kaynak** | Mevcut/maks sayaç: HP, büyü slotu, Ki… (§8.3). |
 | **Kaynak verme** | Bir kartın karaktere otomatik eklediği kaynaklar ve seviyeye göre maksimumları (§8.5). |
-| **Otomatik kaynaklar** | Oyuncu kartında kartlardan gelen kaynakların göründüğü sabit alan. |
+| **Otomatik kaynaklar** | Oyuncu kartında kartlardan gelen kaynakların göründüğü özel alan (D34). |
+| **Savaş değerleri** | HP / Max HP ve encounter'da gösterilebilen diğer savaş değerlerini tutan birleşik tarz (§8.6, D36). |
 | **Rehber** | Template'teki adım adım karakter oluşturma dokümanı (§13). |
 | **Paket** | Bir template ile oluşturulmuş, dünyalara kurulabilen kart koleksiyonu. |
 | **Dünya** | Bir template ile oluşturulmuş oyun dünyası. Template'in kendi kopyasını taşır. |
@@ -198,8 +202,8 @@ Dört temel fikir:
 - **Yerleşik template'i kopyala** (D6). 75 kategori, 928 alan, gruplar ve düzen kopyalanır. D&D'ye
   özel tipler temel tarzlara dönüştürülür (§16). Kopya yeni bir kimlik alır. Eski kimlikte kalsaydı
   uygulama, kullanıcının sildiği SRD kategorilerini dünyaya geri eklerdi.
-- **Boş template oluştur.** Sadece oyuncu kartıyla başlar. Kartta iki sabit alan vardır, ana
-  seviye ve otomatik kaynaklar (§10). Gerisini kullanıcı kurar.
+- **Boş template oluştur.** Sadece oyuncu kartıyla başlar. Kartta iki özel alan hazır gelir, ana
+  seviye ve otomatik kaynaklar (§10.1, D34; silinebilirler). Gerisini kullanıcı kurar.
 - **Bir free template'i kopyala.** Örneğin "SRD kopyam"dan "SRD kopyam — low magic" türetilir.
 
 Her kopya **soyunu** hatırlar, yani hangi template'ten türediğini bilir. Uyumluluk kontrolü (§15)
@@ -444,6 +448,7 @@ Her basit tarz "liste" olarak da kullanılabilir (§7.3).
 | **Kaynak** | Mevcut/maks sayaç ve dinlenme davranışı | §8.3 |
 | **Seviye tablosu** | Seviyeye göre düz yazı ve verilen kartlar | §8.4 |
 | **Kaynak verme** | Kartın karaktere eklediği kaynaklar | §8.5 |
+| **Savaş değerleri** | HP / Max HP ve encounter'a giden değerler | §8.6 |
 
 ### 8.1 Tablo
 
@@ -578,6 +583,32 @@ mantığının sadeleşmiş halidir.
 Kısa dinlenmede "Dokunma", uzun dinlenmede "Doldur". Kısa dinlenmede bir kullanım geri gelir;
 bunu oyuncu açıklamadan okuyup kendisi uygular.
 
+### 8.6 Savaş değerleri *(D36)*
+
+Bir kartın savaşta kullanılan değerlerini tek blokta tutar. Encounter tablosu kolonlarını sadece
+bu bloktan alır (§14.2).
+
+```
+┌─ Savaş değerleri ──────────────────────────────┐
+│ HP   [−]  31 / 38  [+]     AC  16    İnis. 1d20+2│
+│ Durumlar  Prone ×                               │
+└─────────────────────────────────────────────────┘
+```
+
+| Parça | Açıklama |
+|---|---|
+| **HP / Max HP** | Tek zorunlu parça; silinemez, etiketi değiştirilebilir. Kaynak gibi çalışır (§8.3): kısa ve uzun dinlenmede doldur / boşalt / dokunma; mevcut +/− ya da yazarak; maks elle. Encounter'da her zaman gösterilir. |
+| **Değerler** | Template sahibi ekler, siler, sıralar. Her değer şu üç türden biridir: **Sayı** (tam sayı, örneğin AC, XP), **Zar** (örneğin İnisiyatif `1d20+2`), **Kart listesi** (hedef kategori seçilir; durumlar için, örneğin Condition). |
+| **Değer ayarları** | Etiket, anahtar (etiketten üretilir, değişmez; V3), tür, **encounter'da göster** (açık / kapalı), encounter genişliği. Sayı için ayrıca **+/− butonları** ve **düzenlenebilir**. |
+
+- Yazı, seçim, markdown gibi başka türler bloğa konamaz. Encounter'da gösterilmesi gerekmeyen
+  her şey (Hız, CR, notlar) bloğun dışında normal alandır.
+- Bir kategoride en fazla bir Savaş değerleri bloğu olur.
+- Blok bir hazır içerik olarak kurulur ve encounter'a girebilen her kategoriye bağlı eklenir
+  (§9, D33). Değerler bütün bu kategorilerde aynıdır; kartta değeri olmayan hücre boş kalır.
+- Kart listesi türündeki değer encounter'ın **Durumlar** kolonunu besler (§14.5). Blokta en fazla
+  bir kart listesi olur.
+
 ---
 
 ## 9. Hazır içerikler
@@ -596,7 +627,7 @@ flowchart LR
 
 | Davranış | Açıklama |
 |---|---|
-| **Ne olabilir?** | Tek bir alan (Skill tablosu) ya da birden fazla alandan oluşan bir grup ("Savaş değerleri": HP, AC, İnisiyatif, Hız). *(V6)* |
+| **Ne olabilir?** | Tek bir alan (Skill tablosu, Savaş değerleri) ya da birden fazla alandan oluşan bir grup. *(V6)* |
 | **Bağlı ekleme** | Kategoriye eklenen alan hazır içeriğe bağlı kalır. Hazır içerik değişince (örneğin skill tablosuna "Denizcilik" satırı eklenince) bağlı olduğu her yer güncellenir (D21). |
 | **Ne bağlıdır?** | Sadece yapı: kolonlar, satırlar, etiketler, ayarlar. Kartlardaki değerler bağlı değildir. Bir oyuncunun "Athletics: Yetkin" işareti kendisinde kalır. |
 | **Bağı kopar** | Kategorideki alan bağımsız bir kopyaya dönüşür ve o andan sonra ayrı düzenlenir. |
@@ -605,9 +636,9 @@ flowchart LR
 | **Anahtarlar** | Hazır içerikten eklenen alanın anahtarı hazır içerikten gelir. Bu yüzden aynı hazır içerik bir kategoriye bir kez eklenebilir. *(V8)* SRD kopyasında bağlanan alanlar SRD anahtarlarını korur (D33). |
 | **Nereye ait?** | Template'e. Template kopyalanınca hazır içerikleri de gelir. Template'ler arası ortak kütüphane sonraya kalır (§20). |
 
-**Encounter için önemli bir kullanım:** Aynı hazır içerik (örneğin "Savaş değerleri") hem canavara
-hem oyuncu kartına eklenirse iki kategoride de aynı anahtarlar olur. Encounter tablosu bu
-anahtarlarla kolon kurar (§14.2, D29).
+**Encounter için önemli bir kullanım:** "Savaş değerleri" hazır içeriği (§8.6) hem canavara hem
+oyuncu kartına bağlanınca iki kategoride de aynı değerler olur. Encounter tablosu kolonlarını bu
+değerlerden kurar (§14.2, D36).
 
 ---
 
@@ -618,10 +649,26 @@ anahtarlarla kolon kurar (§14.2, D29).
 - Her template'te **tam olarak bir** oyuncu kartı kategorisi vardır ve silinemez (D7). Adı ve ikonu
   değiştirilebilir.
 - Alanlarını ve düzenini template sahibi belirler, diğer kategorilerdeki gibi.
-- İçinde iki **sabit alan** vardır. Silinemez, tarzları değişmez, yerleri ve grupları serbesttir.
-  *(V14)*
+- İki **özel alanı** vardır. Yeni template'te hazır gelir, silinebilir, tarzları değişmez, yerleri
+  ve grupları serbesttir. Oyuncu kartında en fazla birer tane olur; silinirse paletin "Oyuncu
+  kartı" bölümünden geri eklenir. *(D34)*
   - **Seviye:** ana seviye (D25).
   - **Otomatik kaynaklar:** kartlardan gelen kaynakların listesi (§12).
+- **Bağımlılık uyarıları (D34):**
+
+  | Template'e eklenen | Gerektirdiği alan |
+  |---|---|
+  | Herhangi bir kategoriye Seviye tablosu (§8.4) | Seviye |
+  | Herhangi bir kategoriye Kaynak verme (§8.5) | Otomatik kaynaklar (seviye → maks tablosu doluysa Seviye de) |
+
+  - **Eklerken:** gereken alan oyuncu kartında yoksa editörde uyarı çıkar: "Bu içerik oyuncu
+    kartında Seviye alanı ister. **[Ekle]**". Ekle, alanı oyuncu kartının ilk grubuna koyar.
+    Kullanıcı eklemeden devam edebilir; uyarı editörde, sorun giderilene kadar görünür kalır.
+  - **Silerken:** template bu alanı kullanıyorsa silmeden önce kullananların listesiyle onay
+    sorulur.
+  - **Alan yokken:** Seviye yoksa kağıtta [Seviye atla] çıkmaz ve seviye tabloları işlemez.
+    Otomatik kaynaklar yoksa kartların verdiği kaynaklar kağıtta görünmez; karakterdeki değerler
+    silinmez (D17).
 - Kart bağlantısı listeleri (Sınıf, Feat'ler, Özellikler, Envanter…) oyuncunun kartlarını tutar.
   Seviye tablolu kategoriye giden listeler editörde **[Sv]** etiketiyle gösterilir.
 
@@ -823,7 +870,7 @@ Template: "Sınıf" ayrı, "Alt Sınıf" beraber. Oyuncu Aria'yı oluşturuyor.
 
 | | Kaynak alanı | Otomatik kaynak |
 |---|---|---|
-| Nereden gelir? | Template sahibi oyuncu kartına koyar (örneğin HP). | Bir kartın kaynak verme alanı ekler (örneğin Rage). |
+| Nereden gelir? | Template sahibi oyuncu kartına koyar (örneğin Hit Dice). | Bir kartın kaynak verme alanı ekler (örneğin Rage). |
 | Nerede görünür? | Konduğu grupta. | Oyuncu kartındaki "Otomatik kaynaklar" alanında. |
 | Maksimum | Oyuncu girer. | Seviye tablosundan gelir (§12.2). |
 | Dinlenme davranışı | Alanın ayarında. | Kaynak verme satırında. |
@@ -846,8 +893,8 @@ Template: "Sınıf" ayrı, "Alt Sınıf" beraber. Oyuncu Aria'yı oluşturuyor.
 ### 12.3 Dinlenme butonları
 
 - İki buton sabittir: **Kısa dinlenme** ve **Uzun dinlenme** (D15).
-- Buton, oyuncu kartındaki her kaynak alanına ve her otomatik kaynağa o dinlenmenin davranışını
-  uygular: doldur, boşalt ya da dokunma.
+- Buton, oyuncu kartındaki her kaynak alanına, Savaş değerleri'nin HP'sine (§8.6) ve her otomatik
+  kaynağa o dinlenmenin davranışını uygular: doldur, boşalt ya da dokunma.
 - Başka hiçbir şeye dokunmaz.
 
 **Örnek ayarlar (SRD kopyası):**
@@ -946,7 +993,7 @@ görünür kalır.
 - **Kart eklemenin etkisi:** rehber sırasında seviye tablolu bir kart eklenirse §11.5'teki gibi
   satırlar işler ve özet ekranı çıkar.
 - **Başlangıç seviyesi:** yeni karakter seviye 1'de başlar. Daha yüksek seviyeli bir karakter
-  için oyuncu rehberden sonra seviye atlar. *(V15)*
+  için oyuncu rehberden sonra seviye atlar. *(D35)*
 - **Rehber kapanınca:** rehber kapatılınca ya da bitince kağıt normal haline döner.
 
 ### 13.4 Seviye atlama rehberi
@@ -965,46 +1012,54 @@ Template içeriğindeki "Encounter ve harita" bölümü (D23).
 Bir onay listesidir. SRD kopyasında bugünkü gibi Canavar, Hayvan, NPC, Oyuncu kartı, Encounter ve
 Tuzak seçili gelir.
 
-### 14.2 Kolonlar
+Encounter'a girebilen her kategoride Savaş değerleri bloğu (§8.6) olmalıdır, çünkü HP oradan
+gelir. Blok yoksa editörde D34'teki gibi uyarı çıkar: "Encounter için Savaş değerleri gerekli.
+**[Ekle]**" (hazır içeriği bağlı ekler). Bloksuz kategorinin kartı encounter'a boş HP ile girer.
 
-| Ayar | Açıklama |
+### 14.2 Kolonlar *(D36)*
+
+Kolonlar Savaş değerleri bloğundan gelir; ayrı bir kolon listesi yoktur. Blokta **encounter'da
+göster** açık olan her değer bir kolondur, blokta sıralandığı sırayla. HP her zaman gösterilir.
+
+| Ayar (blokta, değer başına) | Açıklama |
 |---|---|
 | Etiket | Kolon başlığı: "HP", "AC", "İnis." |
-| Alan(lar) | Kolonun gösterdiği alan anahtarı (D29). Birden fazla anahtar verilebilir; her satırda kategoride **ilk bulunan** gösterilir. Hiçbiri yoksa hücre boştur. *(V17)* |
 | Genişlik | Kolon genişliği. |
-| Düzenlenebilir | DM hücreyi değiştirebilir mi. |
-| +/− butonları | Sayaç gibi davranır (D28). |
+| Düzenlenebilir | DM hücreyi değiştirebilir mi (Sayı). |
+| +/− butonları | Sayaç gibi davranır (Sayı; HP'de her zaman açık, D28). |
 
-**Neden birden fazla anahtar?** SRD'de canavarın HP'si `hp_average`, oyuncununki `hp` anahtarında.
-SRD paketinin verisini bozmadan ikisini aynı "HP" kolonunda göstermenin yolu bu. Yeni bir template
-kuran kullanıcı için kolay yol, hazır içerikle iki kategoriye aynı anahtarları koymaktır (§9).
+Bütün kategoriler aynı hazır içeriğe bağlı olduğu için kolon her satırda aynı anahtarı okur. SRD
+canavarının düz alanlarını (`hp_average`, `ac`…) blokta göstermek okuyucunun işidir (§16.3); eski
+"birden fazla anahtar" çözümü (V17) gerekmez.
 
 ### 14.3 Sıralama
 
-- **Sıra kolonu:** template kolonlardan birini sıra kolonu seçer ve yönünü belirler (büyükten küçüğe
-  ya da tersi). Tablo bu kolona göre sıralanır (D28).
+- **Sıra kolonu:** template Savaş değerleri'nden bir Sayı ya da Zar değerini sıra kolonu seçer ve
+  yönünü belirler (büyükten küçüğe ya da tersi). Tablo bu kolona göre sıralanır (D28).
 - **DM sürüklemesi:** DM satırları sürükleyerek sırayı elle değiştirebilir.
 - **Zar at:** *(V18)*
-  - Sıra kolonunun alanı Zar tarzındaysa o zar atılır.
+  - Sıra kolonunun değeri Zar türündeyse o zar atılır.
   - Sayıysa, template'te bir zar ifadesi tanımlanabilir (örneğin `1d20`). Atılan zar alanın
     değerine eklenir.
   - İkisi de yoksa "zar at" butonu çıkmaz.
 
 ### 14.4 Değerler ve geri yazma
 
-- **Savaşçı başına değer:** bir kart encounter'a eklenince gösterilen alanların değerleri o
+- **Savaşçı başına değer:** bir kart encounter'a eklenince Savaş değerleri bloğunun değerleri o
   savaşçıya kopyalanır. 3 goblin eklenirse 3 ayrı HP tutulur (D28).
 - **+/− butonları:**
-  - Kolondaki alan **Kaynak** tarzındaysa mevcut değeri değiştirir ve maks gösterilir.
-  - Alan **sayı** ise savaşçıya eklenirken bu sayı hem maks hem mevcut olur. Örneğin canavarın
-    `hp_average` değeri.
+  - **HP** kolonunda mevcut değeri değiştirir, Max HP yanında gösterilir. Kartta mevcut HP boşsa
+    savaşçıya eklenirken Max HP'ye eşitlenir (SRD canavarında ikisi de `hp_average`).
+  - Diğer **Sayı** değerlerinde sayıyı değiştirir.
 - **Oyuncu kartı satırları:** buradaki değişiklik karakter kağıdına geri yazılır. Encounter'da
   hasar alan oyuncunun kağıdındaki HP de düşer (D28; bugün de böyle).
 
 ### 14.5 Durumlar
 
-Encounter tablosundaki "Durumlar" kolonu bugünkü gibi kalır. Durum listesi template'te seçilen bir
-kategoriden gelir; SRD kopyasında bu kategori Condition'dır. *(V19)*
+Encounter tablosundaki "Durumlar" kolonu bugünkü gibi kalır. Kolonu Savaş değerleri'ndeki Kart
+listesi değeri besler; durum listesi o değerin hedef kategorisinden gelir. SRD kopyasında hedef
+Condition'dır. Blokta kart listesi yoksa ya da encounter'da gösterilmiyorsa Durumlar kolonu çıkmaz.
+*(D36; V19'un yerine)*
 
 ### 14.6 Harita ayarları
 
@@ -1018,13 +1073,16 @@ kategoriden gelir; SRD kopyasında bu kategori Condition'dır. *(V19)*
 ### 14.7 Encounter tablosu
 
 ```
- İnis. ↓ │ Ad             │ Sv │ AC │ HP                │ Durumlar
- ────────┼────────────────┼────┼────┼───────────────────┼─────────
-    18   │ Aria (oyuncu)  │  5 │ 16 │ [−]  31 / 38  [+] │ —
-    14   │ Goblin 1       │  — │ 15 │ [−]   7 / 7   [+] │ Prone
-    11   │ Goblin 2       │  — │ 15 │ [−]   3 / 7   [+] │ —
-                                                     [Zar at]  [+ Ekle]
+ İnis. ↓ │ Ad             │ AC │ HP                │ Durumlar
+ ────────┼────────────────┼────┼───────────────────┼─────────
+    18   │ Aria (oyuncu)  │ 16 │ [−]  31 / 38  [+] │ —
+    14   │ Goblin 1       │ 15 │ [−]   7 / 7   [+] │ Prone
+    11   │ Goblin 2       │ 15 │ [−]   3 / 7   [+] │ —
+                                              [Zar at]  [+ Ekle]
 ```
+
+Seviye Savaş değerleri'nde olmadığı için yerleşik encounter'daki "Sv" kolonu free encounter'da
+yoktur.
 
 ---
 
@@ -1073,9 +1131,10 @@ içeriğini ve düzenini istediği gibi değiştirir.
 - 75 kategori, 928 alan, bütün gruplar, kolon sayıları ve sıralar.
 - `player-character` kategorisi **oyuncu kartı** olur. `class_levels` alanı kalkar; yerine ana
   seviye ve kart seviyeleri gelir (§10.3).
-- Encounter ayarları: kategoriler ve kolonlar (Sv, İnis., AC, HP).
-- Hazır içerikler: Skill tablosu, Saving throw tablosu ve Stat tablosu (STR–CHA) baştan hazır
-  gelir ve ilgili kategorilere bağlıdır.
+- Encounter ayarları: kategoriler; kolonlar Savaş değerleri'nden İnis. (sıra, azalan), AC, HP,
+  Durumlar.
+- Hazır içerikler: Skill tablosu, Saving throw tablosu, Stat tablosu (STR–CHA) ve Savaş değerleri
+  baştan hazır gelir ve ilgili kategorilere bağlıdır.
 
 ### 16.2 Tip dönüşüm tablosu
 
@@ -1083,7 +1142,8 @@ içeriğini ve düzenini istediği gibi değiştirir.
 |---|---|---|
 | `statBlock` | Canavar, Hayvan, NPC, Oyuncu › `stat_block` | **Stat tablosu** (STR–CHA, temel 10, adım 2, değiştirici açık), Stat tablosu hazır içeriğine bağlı |
 | `statBlock` | Tür, Alt tür, Feat, Büyülü eşya, Trait › `ability_bonuses` | **Stat tablosu**, değiştirici kapalı |
-| `combatStats` | Oyuncu, NPC › `combat_stats` | Savaş grubunda **ayrı alanlara** bölünür: HP (Kaynak), AC (Tam sayı), Hız (Yazı), İnisiyatif (Tam sayı); NPC'de ayrıca CR, XP. *(V23)* |
+| `combatStats` | Oyuncu, NPC › `combat_stats` | **Savaş değerleri** (§8.6), anahtarı `combat_stats` kalır, Savaş değerleri hazır içeriğine bağlı. Blokta: HP / Max HP (`hp` / `max_hp`; kısa dokunma, uzun doldur), AC (Sayı, `ac`), İnisiyatif (Zar, `initiative`), XP (Sayı, `xp`, encounter'da gizli), Durumlar (Kart listesi → Condition, `conditions`, yeni). Bloğun dışına, Savaş grubunda normal alan olarak: Hız (Tam sayı; `speed` metninin baştaki sayısı, "30 ft." → 30) ve NPC'de CR (Ondalık sayı; "1/2" → 0.5). `level` alt değeri kalkar (oyuncuda ana seviye, NPC'de zaten ayrı `level` alanı var). *(D36)* |
+| Canavar, Hayvan düz savaş alanları | `ac`, `hp_average`, `initiative_modifier` | Savaş değerleri bloğu eklenir (`combat_stats`); bu üç alan kopyanın düzeninden kalkar, değerleri blokta okunur (§16.3). `hp_dice`, `initiative_score`, hız alanları ve `ac_note` normal alan olarak kalır. *(D36)* |
 | `proficiencyTable` | Canavar, Hayvan, NPC, Oyuncu › skills / saves | **Yetenek tablosu**, Skill ve Saving throw hazır içeriklerine bağlı (alanlar SRD anahtarını korur, D33) |
 | `classFeatures` | Sınıf, Alt sınıf › `features` | **Seviye tablosu** (§16.3) |
 | `spellsAtLevel` | Tür, Alt tür, Feat, Büyülü eşya, Trait | **Seviye tablosu**: "N. seviyede büyü kartı ver → Büyüler". Günlük kullanım varsa ayrıca **Kaynak verme** satırı. Bu kategoriler beraber modda seviye tablolu olur. *(V24)* |
@@ -1141,6 +1201,13 @@ yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
   slot tablolarından "N. seviye slot" kaynak verme satırlarına çevrilir.
 - **Yapılı listeler → metin:** başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri okunaklı
   markdown'a çevrilerek gösterilir.
+- **Savaş değerleri (D36):**
+  - Canavar ve Hayvan kartında blokta değer yoksa düz alanlardan okunur: `hp_average` → HP ve
+    Max HP, `ac` → AC, `initiative_modifier` → İnisiyatif `1d20+N` (N negatifse `1d20−N`). Kart
+    kopyada düzenlenip kaydedilince değerler bloğa yazılır; SRD paketinin kendisi değişmez.
+  - Oyuncu ve NPC'de `combat_stats` aynı şekliyle okunur. `speed` ve `cr` metinleri okunurken
+    sayıya çevrilir ve bloğun dışındaki Hız / CR alanlarında gösterilir; çevrilemeyen metin boş
+    kalır. Bu sayılar encounter'a gitmez.
 
 ### 16.4 Kopyada oyuncunun elle yaptıkları
 
@@ -1208,7 +1275,7 @@ engellediği özetleniyor.
 | Kenar çubuğu | Kategoriler yerleşik slug listelerine göre Tier 0/1/2 gruplanıyor | Tier kategorinin kendi ayarından gelir (editörde seçilir); grup içinde template sırası. |
 | Kart ekranı | Bazı grup adları ortalama için koda sabit yazılı (`_shouldCenterGroup`) | Free yolda kullanılmaz ya da grup ayarı olur. |
 | Kural motoru | Resolver, sihirbaz, seviye atlama planlayıcısı, bekleyen seçimler, "çözülen grant'ler" kartı, sınıf kaynak takipçisi | Free yolda çağrılmaz. |
-| Alan tipi | `FieldType` 30 değer, D&D'ye özel olanlar dahil | Yeni tarzlar (Tablo, Kaynak, Seviye tablosu, Kaynak verme) eklenir; eskiler yerleşik template için kalır. |
+| Alan tipi | `FieldType` 30 değer, D&D'ye özel olanlar dahil | Yeni tarzlar (Tablo, Kaynak, Seviye tablosu, Kaynak verme) eklenir; eskiler yerleşik template için kalır. Savaş değerleri mevcut `combatStats` tipini ve `subFields` / değer şeklini kullanır (encounter bugün de buradan besleniyor); free'ye özgü ayarlar `styleConfig`'tedir. |
 
 ---
 
@@ -1220,7 +1287,7 @@ olur. Sıralama öneridir.
 | Faz | İçerik | Çıkış kriteri |
 |---|---|---|
 | **1 — Template editörü** | Template deposu ve Templates sekmesi (kopyala, düzenle, sil). SRD kopyası (§16.1–16.2). Editörün üç bölümü: tarzlar, hazır içerikler, kategoriler; gruplar, kolonlar, sürükle-bırak; mobil ve desktop. Temel tarzlar, Tablo ve Stat tablosu. Free dünya oluşturma, banner ile güncelleme. Free dünyada karakter oluşturma bu fazda kapalıdır (kağıt Faz 2'de gelir). Paketlerin kendi template'iyle açılması ve anahtar bazlı uyumluluk uyarısı. | Kullanıcı SRD'yi kopyalar, alanları ve düzeni değiştirir, bu template'le dünya kurar. SRD paketinin kartları kopyada doğru görünür. Yerleşik dünyalar hiçbir değişiklik olmadan çalışır. |
-| **2 — Oyuncu kartı ve kağıt** | Oyuncu kartı kategorisi ve sabit alanlar. Free karakter kağıdı. Kaynak tarzı, Kısa ve Uzun dinlenme. | Free dünyada karakter oluşturulur, kağıt template düzeniyle görünür, dinlenme kaynakları günceller. |
+| **2 — Oyuncu kartı ve kağıt** | Oyuncu kartı kategorisi ve özel alanları (D34). Free karakter kağıdı. Kaynak ve Savaş değerleri tarzları, Kısa ve Uzun dinlenme. | Free dünyada karakter oluşturulur, kağıt template düzeniyle görünür, dinlenme kaynakları günceller. |
 | **3 — Seviye sistemi** | Seviye tablosu ve kaynak verme tarzları. Ayrı ve beraber modlar. Seviye atlama akışı. Verilen kartlar, etiketler, zincir. SRD verisinin okunması (§16.3). | Aria örneği (§11.9) baştan sona çalışır. |
 | **4 — Rehber** | Rehber editörü ve oyuncu deneyimi. | Oyuncu rehberle boş kağıttan karakter oluşturur. |
 | **5 — Encounter ve harita** | Encounter kategorileri, kolonlar, sıralama, zar, +/−, geri yazma. Battlemap görsel kaynağı, iz rengi. | Free dünyada canavar ve oyuncu aynı encounter'da doğru kolonlarla oynanır. |
@@ -1250,12 +1317,12 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 
 | # | Varsayım | Bölüm |
 |---|---|---|
-| V1 | Boş template sadece oyuncu kartıyla (ve iki sabit alanıyla) başlar. | §6.2 |
+| V1 | Boş template sadece oyuncu kartıyla (ve iki özel alanıyla, D34) başlar. | §6.2 |
 | V2 | Template silinirse ya da yeniden adlandırılırsa dünyalar ve paketler kendi kopyalarıyla çalışmaya devam eder. | §6.5 |
 | V3 | Alan anahtarı etiketten üretilir ve bir daha değişmez. Eşleştirmeler anahtarla yapılır. | §6.6, §7.3 |
 | V4 | Uyumsuz tip değişikliği = eski alan silinir (veri gizli kalır) + yeni anahtarla yeni alan. | §6.6 |
 | V5 | Silinen kategorinin kartları dünyada silinmez, görünmez olur. | §6.6 |
-| V6 | Hazır içerik tek alan ya da alan grubu olabilir. *(2026-10-11: Faz 4'te yalnız tek alan; grup hazır içeriği ilk gerektiği Faz 6'da.)* | §9 |
+| V6 | Hazır içerik tek alan ya da alan grubu olabilir. *(2026-10-11: Faz 4'te yalnız tek alan. 2026-10-12: Savaş değerleri tek alan oldu (D36); grup hazır içeriğini gerektiren bir şey kalmadı, ihtiyaç çıkana kadar yapılmaz.)* | §9 |
 | V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. *(onaylı, 2026-10-11)* | §9 |
 | V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. *(onaylı, 2026-10-11; anahtar istisnası D33)* | §9 |
 | V9 | Bir kategoride en fazla bir seviye tablosu olur. | §8.4 |
@@ -1263,16 +1330,16 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V11 | Verilen kartlar ayrı bir kategoriye düşse bile ana seviyeyi izler ve seviye atlamada seçilmez. | §11.3 |
 | V12 | Verilen kart kaynak etiketiyle yazılır. Kaynak kart çıkarılırsa ya da seviye elle düşürülürse etiketli kartların çıkarılması önerilir. | §11.6, §11.7 |
 | V13 | Ayrı kategoride tek kart varsa seviye atlamada kendiliğinden seçilir; kartı olmayan ayrı kategori atlanır. | §11.4 |
-| V14 | Ana seviye ve otomatik kaynaklar oyuncu kartında silinemez sabit alanlardır. | §10.1 |
-| V15 | Yeni karakter seviye 1'de başlar; daha yüksek seviye için seviye atlanır. | §13.3 |
+| ~~V14~~ | ~~Ana seviye ve otomatik kaynaklar oyuncu kartında silinemez sabit alanlardır.~~ *Reddedildi (2026-10-12): silinebilir, bağımlılık uyarısıyla; D34.* | §10.1 |
+| V15 | Yeni karakter seviye 1'de başlar; daha yüksek seviye için seviye atlanır. *(onaylı, 2026-10-12; D35)* | §13.3 |
 | V16 | Rehber adımı bir alana bağlı ya da alansız olabilir. | §13.2 |
-| V17 | Encounter kolonu birden fazla alan anahtarı alabilir; satırda ilk bulunan gösterilir. | §14.2 |
+| ~~V17~~ | ~~Encounter kolonu birden fazla alan anahtarı alabilir; satırda ilk bulunan gösterilir.~~ *Gereksiz (2026-10-12): kolonlar Savaş değerleri'nden; D36.* | §14.2 |
 | V18 | Sıra kolonunda zar: alan Zar tarzıysa o atılır; sayıysa template'teki zar ifadesi + değer. | §14.3 |
-| V19 | Durum listesi template'te seçilen kategoriden gelir. | §14.5 |
+| V19 | Durum listesi template'te seçilen kategoriden gelir. *(2026-10-12, D36: kategori Savaş değerleri'ndeki Kart listesinin hedefidir.)* | §14.5 |
 | V20 | Hareket izi rengi: oyuncu kartı yeşil, diğerleri kategori rengi. | §14.6 |
 | V21 | Free template'li dünyada "online yap" ilk fazda kapalıdır. | §17 |
 | V22 | Telefonda gruplar tek kolon; isteğe bağlı "telefonda kolon sayısı" ayarı. | §7.4 |
-| V23 | `combat_stats` kopyada ayrı alanlara bölünür. | §16.2 |
+| ~~V23~~ | ~~`combat_stats` kopyada ayrı alanlara bölünür.~~ *Reddedildi (2026-10-12): Savaş değerleri bloğu olur; Hız ve CR sayıya çevrilip dışarı çıkar; D36.* | §16.2 |
 | V24 | `spellsAtLevel` kopyada seviye tablosuna çevrilir; o kategoriler beraber modda seviye tablolu olur. | §16.2 |
 | V25 | Aynı isimli tablolu kaynaklarda büyük olan geçer; çok sınıflı birleşik slot tablosu yoktur. | §12.2 |
 | V26 | Editör değişiklikleri otomatik kaydeder; dünyalara banner ile gider. | §7.7 |

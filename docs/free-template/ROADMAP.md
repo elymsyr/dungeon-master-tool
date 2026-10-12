@@ -16,7 +16,9 @@
   ertelendi ve iş commit'lendi; bekleyen kontroller Faz 4b sonucundaki listede. Faz 5 uygulandı,
   otomatik kapı yeşil (2026-10-12). Faz 4a, 4b ve 5 kapandı (2026-10-12): kullanıcı elle kontrolü
   kısmen yaptı ("genel olarak okey, bir şey kırılmış gibi durmuyor"); bulgular ve düzeltmeler Faz 5
-  sonucunun altında.
+  sonucunun altında. Faz 6 öncesi kararlar (2026-10-12): V14 reddedildi → D34 (Seviye ve Otomatik
+  kaynaklar silinebilir, bağımlılık uyarısı), V15 onaylandı → D35, V17 / V19 / V23 yerine D36
+  (Savaş değerleri bloğu).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -214,7 +216,8 @@ rozeti olur.
 | `levelTable`, `levelTextTable` | Tablo (Seviye · Değer / Seviye · Yazı) | 4 |
 | `rangedSenseList`, `spellEffectList` | Tablo, serbest satırlar | 4 |
 | `equipmentChoiceGroups`, `playerChoices`, `subspeciesOptions` | Markdown (SRD verisi okunurken metne çevrilir) | 4 |
-| `combatStats` | Ayrı alanlar: HP (Kaynak), AC, Hız, İnisiyatif; NPC'de CR, XP | 6 |
+| `combatStats` | Savaş değerleri (D36): HP / Max HP, AC, İnisiyatif, XP, Durumlar; Hız ve NPC'de CR bloğun dışında sayı alanı | 6 |
+| Canavar, Hayvan › `ac`, `hp_average`, `initiative_modifier` | Savaş değerleri bloğu eklenir, değerler okuyucuyla blokta (D36) | 6 |
 | `slot` | Kaynak (kutucuk) | 6 |
 | `spellSlotGrid`, `class_levels` | Kaldırılır | 6 |
 | `classFeatures` | Seviye tablosu | 7 |
@@ -1016,38 +1019,52 @@ yerleşik sonuçlarının değişmediği.
 **Amaç:** Free dünyada karakter oluşturulsun, kağıt oyuncu kartının düzeniyle çizilsin; Kaynak
 tarzı ve Kısa / Uzun dinlenme çalışsın.
 
-**Onay gereken varsayımlar:** V14 (Seviye ve Otomatik kaynaklar sabit alanlar), V15 (yeni
-karakter seviye 1), V23 (`combat_stats` ayrı alanlara bölünür).
+**Kararlar (2026-10-12):** D34 (V14 yerine), D35 (V15 onaylı), D36 (V17, V19, V23 yerine).
 
 **Yapılacaklar:**
 
-1. **Oyuncu kartının sabit alanları** (DESIGN §10.1): Seviye ve Otomatik kaynaklar. Silinemez,
-   tarzı değişmez, yeri ve grubu serbest. Otomatik kaynaklar Faz 7'ye kadar boş görünür.
+1. **Oyuncu kartının özel alanları** (DESIGN §10.1, D34): Seviye ve Otomatik kaynaklar. Yeni
+   template'te hazır gelir; silinebilir, tarzı değişmez, oyuncu kartında en fazla birer tane, yeri
+   ve grubu serbest. Silinince paletin "Oyuncu kartı" bölümünden geri eklenir. Silerken onay
+   sorulur (kullananların listesi Faz 7'de dolmaya başlar). Otomatik kaynaklar Faz 7'ye kadar boş
+   görünür. Seviye yoksa kağıt başlığında seviye gösterilmez.
 2. **Kaynak tarzı** (DESIGN §8.3): sayı ya da kutucuk görünümü; kısa ve uzun dinlenme için
    doldur / boşalt / dokunma; maks elle; mevcut +/− ya da yazarak.
-3. **SRD kopyası dönüştürücüsü (v3):** §6'da Faz 6 satırları. Dinlenme ayarları DESIGN §12.3'teki
-   örnek tabloya göre.
-4. **Karakter oluşturma:** free dünyada sihirbaz yok; boş kağıt (seviye 1) açılır. Hub'daki
+3. **Savaş değerleri tarzı** (DESIGN §8.6, D36): mevcut `combatStats` tipi, free ayarları
+   `styleConfig`'te. Zorunlu HP / Max HP (dinlenme davranışı Kaynak gibi); değer ekle / sil /
+   sırala; tür Sayı, Zar ya da Kart listesi (en fazla bir); değer başına "encounter'da göster",
+   genişlik, düzenlenebilir, +/−. Kategoride en fazla bir blok. Kart ve kağıtta widget'ı.
+   Encounter ayarlarının bu bloktan okunması Faz 9'da.
+4. **SRD kopyası dönüştürücüsü (v3):** §6'da Faz 6 satırları. Dinlenme ayarları DESIGN §12.3'teki
+   örnek tabloya göre. Savaş değerleri hazır içeriği Oyuncu, NPC, Canavar, Hayvan'a bağlanır;
+   anahtarlar `combat_stats` ve SRD alt anahtarları (`hp`, `max_hp`, `ac`, `initiative`, `xp`)
+   aynı kalır. Okuyucular (DESIGN §16.3): canavarın düz alanları blokta; `speed` / `cr` metni
+   sayıya.
+5. **Karakter oluşturma:** free dünyada sihirbaz yok; boş kağıt (seviye 1, D35) açılır. Hub'daki
    Characters sekmesinden free template seçilirse de aynı.
-5. **Free karakter kağıdı:** **ayrı ekran** (K3). Oyuncu kartı düzenini Faz 2–4'teki alan
+6. **Free karakter kağıdı:** **ayrı ekran** (K3). Oyuncu kartı düzenini Faz 2–4'teki alan
    widget'larıyla çizer. Başlıkta Seviye, [Kısa dinlenme] ve [Uzun dinlenme]. [Seviye atla] Faz
    7'de, [Rehber] Faz 8'de gelir. Yerleşik parçalar (çözülen grant'ler, sınıf kaynak takipçisi,
    gizli alan davranışları) yoktur.
-6. **Şemanın kaynağı:** free karakter, şemayı global listeden değil dünyanın kendi kopyasından
+7. **Şemanın kaynağı:** free karakter, şemayı global listeden değil dünyanın kendi kopyasından
    okur (DESIGN §18).
-7. **Dinlenme:** her kaynak alanına o butonun davranışını uygular, başka hiçbir şeye dokunmaz.
+8. **Dinlenme:** her kaynak alanına ve Savaş değerleri'nin HP'sine o butonun davranışını uygular,
+   başka hiçbir şeye dokunmaz.
 
 **Dokunulan yerler:** yeni free kağıt ekranı, [character_provider.dart](../../flutter_app/lib/application/providers/character_provider.dart)
-(oluşturma dalı), Characters sekmesi, field widget'ları (Kaynak), editör (sabit alanlar),
+(oluşturma dalı), Characters sekmesi, field widget'ları (Kaynak, Savaş değerleri), editör (özel alanlar, Savaş değerleri ayarları),
 dönüştürücü. [character_editor_screen.dart](../../flutter_app/lib/presentation/screens/characters/character_editor_screen.dart)'e
 sadece "free ise yeni ekrana git" kapısı eklenir.
 
 **Kapsam dışı:** seviye atlama, verilen kartlar, otomatik kaynakların dolması, rehber, encounter
-geri yazma. Faz 6'dan sonra free dünyanın encounter HP kolonu Faz 9'a kadar boş kalabilir (§8, Y5).
+geri yazma, encounter kolonlarının Savaş değerleri'nden okunması (Faz 9), bağımlılık uyarıları
+(Seviye tablosu / Kaynak verme Faz 7'de, encounter kategorisi Faz 9'da).
 
-**Otomatik testler:** dinlenme davranışları (üç seçenek × iki buton); Kaynak değer şekli;
-dönüştürücü v3 (`combat_stats` bölünmesi, slot → kaynak); sabit alanların silinememesi; free
-karakterin yerleşik sihirbaza düşmemesi.
+**Otomatik testler:** dinlenme davranışları (üç seçenek × iki buton, HP dahil); Kaynak değer
+şekli; Savaş değerleri (HP / Max HP silinemez, izinli türler, en fazla bir kart listesi, değer şekli
+yerleşik `combat_stats` ile aynı); dönüştürücü v3 (`combat_stats` → blok, canavar düz alanları,
+`speed` / `cr` → sayı, slot → kaynak); özel alanların silinip geri eklenmesi ve ikinci kez
+eklenememesi; free karakterin yerleşik sihirbaza düşmemesi.
 
 **Elle kontrol:**
 
@@ -1056,11 +1073,14 @@ karakterin yerleşik sihirbaza düşmemesi.
 | E6.1 | SRD'yi yeniden kopyala ("SRD kopyam 3"), onunla dünya kur. | — |
 | E6.2 | Free dünyada **Yeni karakter**. | Sihirbaz yok; boş kağıt, seviye 1, oyuncu kartının düzeninde. |
 | E6.3 | Adını, türünü, sınıfını (kart bağlantısı olarak) ve statlarını doldur. | Kalıcı; değiştiriciler doğru. |
-| E6.4 | HP'yi 31 / 38 yap; − ve + kullan. | Değer değişir; maksimum sabit. |
+| E6.4 | Savaş değerleri'nde HP'yi 31 / 38 yap; − ve + kullan. | Değer değişir; maksimum sabit. |
 | E6.5 | **Kısa dinlenme.** | HP değişmez; Focus Points gibi "kısa: doldur" kaynakları dolar. |
 | E6.6 | **Uzun dinlenme.** | HP 38 olur; Heroic Inspiration değişmez. |
 | E6.7 | Editörde oyuncu kartına yeni bir Kaynak alanı ekle (kutucuk, uzun: doldur), dünyayı güncelle. | Kağıtta görünür; uzun dinlenmede dolar. |
-| E6.8 | Editörde Seviye alanını silmeyi ve tarzını değiştirmeyi dene; başka gruba taşı. | Silinmez, tarzı değişmez, taşınır. |
+| E6.8 | Editörde Seviye alanını başka gruba taşı, tarzını değiştirmeyi dene; sonra sil ve paletten geri ekle; ikinci bir Seviye eklemeyi dene. | Taşınır; tarzı değişmez; silerken onay sorulur; geri eklenir; ikincisi eklenemez. |
+| E6.8b | Seviye silinmiş template'le dünya kur, karakter aç. | Kağıt açılır, başlıkta seviye yok, hata yok. |
+| E6.8c | Editörde Savaş değerleri'ne "Hız" (Sayı) ekle, encounter'da göster'i kapat; HP'yi silmeyi ve bloğa Yazı türünde değer eklemeyi dene; ikinci bir Kart listesi eklemeyi dene. | Hız eklenir; HP silinmez; Yazı türü seçilemez; ikinci kart listesi eklenemez. |
+| E6.8d | SRD kopyasıyla kurulan dünyada bir canavar (ör. Goblin Warrior) ve bir NPC kartını aç. | Canavarın bloğunda HP, AC, İnis. (`1d20+N`) SRD değerleriyle dolu; NPC'de Hız ve CR sayı olarak blok dışında. |
 | E6.9 | Kağıdı telefon görünümünde ve Android'de kullan. | Butonlar erişilebilir; +/− tek elle rahat. |
 | E6.10 | R turu (özellikle R2, R3, R4). | Yerleşik karakter, sihirbaz ve dinlenme aynen. |
 
@@ -1083,6 +1103,9 @@ verilen kartlar ve zincir çalışsın. DESIGN §11.9'daki Aria örneği baştan
 2. **Kaynak verme tarzı** (DESIGN §8.5): ad, açıklama, kısa / uzun davranışı, seviye → maks
    tablosu.
 3. **Kategori ayarı:** seviye tablolu kategorilerde seviye modu Ayrı / Beraber.
+   **Bağımlılık uyarısı** (DESIGN §10.1, D34): Seviye tablosu ya da Kaynak verme eklenirken oyuncu
+   kartında Seviye / Otomatik kaynaklar yoksa editörde **[Ekle]**'li uyarı; silerken onay listesi
+   bu kullanımları gösterir. Seviye yoksa [Seviye atla] çıkmaz.
 4. **Karakter verisi** (DESIGN §10.3): kart seviyeleri, verilen kart etiketleri ("Savaşçı'dan ·
    seviye 2"), otomatik kaynakların mevcut değerleri.
 5. **Seviye motoru:** saf ve durumsuz yeni bir domain fonksiyonu, **resolver değil** (K4).
@@ -1109,7 +1132,8 @@ slot tablosu (V25).
 **Otomatik testler:** Aria örneği (DESIGN §11.9) **birebir test** olarak; Rage tablosu (seviye 8
 → 4); ayrı kartın kendi kaynağının kart seviyesini izlemesi (Büyücü slotları); verilen kartın ana
 seviyeyi izlemesi (Second Wind); hedef liste kuralları (V10'un üç durumu); A ↔ B döngüsü; tekrar
-eklenmeme; beraber kategoriye sonradan eklenen kart (D10); SRD okuyucuları (gerçek Fighter,
+eklenmeme; beraber kategoriye sonradan eklenen kart (D10); bağımlılık uyarısı (Seviye yokken seviye
+tablosu eklemek uyarı verir, [Ekle] alanı ekler); SRD okuyucuları (gerçek Fighter,
 Wizard, Barbarian satırlarıyla).
 
 **Elle kontrol:**
@@ -1181,37 +1205,42 @@ oluştursun (D24).
 **Amaç:** Free dünyada encounter ve battlemap, template ayarlarına göre çalışsın; koda sabit
 yazılmış slug ve anahtarlar free yolda template'ten okunsun.
 
-**Onay gereken varsayımlar:** V17, V18, V19, V20.
+**Onay gereken varsayımlar:** V18, V20. (V17 gereksiz, V19 D36'ya göre revize; 2026-10-12.)
 
 **Yapılacaklar:**
 
-1. **Editör bölümü "Encounter ve harita"** (DESIGN §14): encounter'a girebilen kategoriler;
-   kolonlar (etiket, bir ya da birkaç alan anahtarı, genişlik, düzenlenebilir, +/−); sıra kolonu
-   ve yön; sayı alanı için zar ifadesi; durum kategorisi; battlemap görsel alanları; hareket izi
-   rengi. Mevcut `EncounterConfig` modeli K2'ye uyarak genişletilir.
-2. **Free encounter:** kolon değeri satırın kategorisinde ilk bulunan anahtardan; savaşçı başına
-   ayrı değer; Kaynak alanında +/− mevcut değeri değiştirir, sayı alanı eklenirken hem maks hem
-   mevcut olur; oyuncu satırındaki değişiklik kağıda yazılır; sıralama, sürükleme, zar.
+1. **Editör bölümü "Encounter ve harita"** (DESIGN §14): encounter'a girebilen kategoriler (Savaş
+   değerleri bloğu olmayan kategori için **[Ekle]**'li uyarı, D34 deseni); sıra değeri (bloktan bir
+   Sayı ya da Zar) ve yön; sayı için zar ifadesi; battlemap görsel alanları; hareket izi rengi.
+   Kolonlar ayrı listelenmez: Savaş değerleri'nde "encounter'da göster" açık değerler (Faz 6'da
+   gelen ayarlar). Mevcut `EncounterConfig` modeli K2'ye uyarak genişletilir.
+2. **Free encounter:** kolonlar Savaş değerleri'nden (HP her zaman); savaşçı başına ayrı değer;
+   HP'de +/− mevcut değeri değiştirir, mevcut boşsa Max HP'ye eşitlenir; Durumlar kolonu bloktaki
+   Kart listesinin hedefinden; oyuncu satırındaki değişiklik kağıda yazılır; sıralama, sürükleme,
+   zar.
 3. **Sabitler** (DESIGN §18): `combat_stats`, `location` / `battlemaps`, NPC / canavar iz rengi,
    `condition` slug'ı free yolda template ayarlarından okunur. Yerleşik yol aynen kalır.
-4. **SRD kopyası varsayılanları** (DESIGN §14.1–14.2): Canavar, Hayvan, NPC, Oyuncu kartı,
-   Encounter, Tuzak; kolonlar Sv, İnis., AC, HP (`hp`, `hp_average`).
+4. **SRD kopyası varsayılanları** (DESIGN §14.1–14.2, §16.1): Canavar, Hayvan, NPC, Oyuncu kartı,
+   Encounter, Tuzak; kolonlar İnis. (sıra, azalan), AC, HP, Durumlar. Encounter ve Tuzak'a da
+   Savaş değerleri bağlanır ya da listeden çıkarılır (uygularken yerleşik encounter'ın bu iki
+   kategoriyle ne yaptığına bakılıp karar verilir).
 
-**Otomatik testler:** kolon değer çözümü (ilk bulunan anahtar; hiçbiri yoksa boş); savaşçı başına
-kopya; geri yazma; sıra ve zar kuralları (V18).
+**Otomatik testler:** kolonların bloktan çıkması (gösterilmeyen değer kolonsuz, HP her zaman);
+SRD canavarının düz alanlarının okunması; savaşçı başına kopya; geri yazma; sıra ve zar kuralları
+(V18); bloksuz kategori uyarısı.
 
 **Elle kontrol:**
 
 | # | Kontrol | Beklenen |
 |---|---|---|
 | E9.1 | SRD'yi yeniden kopyala ("SRD kopyam 5"), dünya kur, Aria'yı oluştur. | — |
-| E9.2 | Encounter'a Aria ve 3 Goblin ekle. | Kolonlar Sv, İnis., AC, HP; 3 ayrı Goblin HP'si. |
+| E9.2 | Encounter'a Aria ve 3 Goblin ekle. | Kolonlar İnis., AC, HP, Durumlar; 3 ayrı Goblin HP'si. |
 | E9.3 | Bir Goblin'e hasar ver (−). | Sadece o Goblin değişir. |
 | E9.4 | Aria'ya hasar ver, kağıdını aç. | Kağıttaki HP de düşmüş. |
 | E9.5 | **Zar at.** | İnisiyatif atılır, tablo sıralanır. |
 | E9.6 | Bir satırı sürükle. | Elle sıra değişir. |
 | E9.7 | Bir Goblin'e Prone ekle. | Durumlar kolonunda görünür. |
-| E9.8 | Editörde "Hız" kolonu ekle, dünyayı güncelle. | Encounter'da yeni kolon. |
+| E9.8 | Editörde Savaş değerleri'ne "Hız" (Sayı) ekle ya da var olanın "encounter'da göster"ini aç, dünyayı güncelle. | Encounter'da yeni kolon; kapatınca kalkar. |
 | E9.9 | Battlemap'te bir Location görseli seç; token'ları hareket ettir. | Görsel template'teki alanlardan gelir; iz renkleri V20'ye göre. |
 | E9.10 | Encounter'ı telefon görünümünde kullan. | +/− ve zar erişilebilir. |
 | E9.11 | R turu (özellikle R5). | Yerleşik encounter aynen. |
@@ -1254,6 +1283,6 @@ DESIGN.md'deki V1–V28'e ek olarak, bu yol haritası için benim seçtiğim nok
 | **Y2** | Free karakter kağıdı ve free template editörü ayrı ekranlardır; yerleşik ekranlara sadece yönlendirme kapısı eklenir. | K3. Yerleşik ekranların davranışının değişmediğini garanti etmenin en ucuz yolu. |
 | **Y3** | Template güncelleme kontrolü sadece free template'li dünya ve paketlerde çalışır. | B2: yerleşik şemanın hash'i her açılışta değişiyor; yerleşikte sahte istem çıkar. |
 | **Y4** | Anahtar bazlı uyumluluk sadece taraflardan biri free ise kullanılır; yerleşik ↔ yerleşik bugünkü etiket bazlı yolda kalır. | İ5. |
-| **Y5** | Free dünyada encounter Faz 9'a kadar kopyanın bugünkü ayarlarıyla "olduğu gibi" çalışır. Faz 6'da `combat_stats` bölündükten sonra HP kolonu Faz 9'a kadar boş kalabilir; bu hata sayılmaz. | Encounter'ı iki kez yazmamak için. |
+| **Y5** | Free dünyada encounter Faz 9'a kadar kopyanın bugünkü ayarlarıyla "olduğu gibi" çalışır. *(2026-10-12, D36: `combat_stats` bölünmüyor, anahtarlar aynı kaldığı için HP kolonu Faz 6'dan sonra da dolu kalmalı; Durumlar ve gizlenen değerler Faz 9'a kadar eski davranışta.)* | Encounter'ı iki kez yazmamak için. |
 | **Y6** | SRD kopyası rehbersiz gelir; rehberi kullanıcı yazar. | DESIGN rehberin kopyayla gelip gelmeyeceğini söylemiyor. İstenirse §13.2'deki örnek varsayılan olarak eklenebilir (Faz 8'de küçük bir iş). |
 | **Y7** | Yerleşik stat bloğunun yuvarlama hatası (DESIGN §8.2) bu işin parçası değildir; ayrı bir düzeltme olarak ele alınır. | K1, İ5: bu iş yerleşik davranışı değiştirmez. |
