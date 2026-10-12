@@ -175,6 +175,10 @@ class FieldWidgetFactory {
     /// card's giver, a card's own level), by card id.
     Map<String, String>? itemCaptions,
 
+    /// Free templates: with [readOnly], what changes at the table (a checkbox,
+    /// a resource's current value, HP) stays live; the rest stays read-only.
+    bool play = false,
+
     /// Multi-field patch callback. Used by side-effect widgets (e.g.
     /// `extra_hp` adjusts its own value AND combat_stats.{hp,max_hp}
     /// atomically). Editor merges the patch into the entity fields.
@@ -328,6 +332,7 @@ class FieldWidgetFactory {
         schema: schema,
         value: value,
         readOnly: readOnly,
+        play: play,
         onChanged: onChanged,
         entities: entities,
         ref: ref,
@@ -356,7 +361,7 @@ class FieldWidgetFactory {
       FieldType.boolean_ => _BooleanFieldWidget(
         schema: schema,
         value: value,
-        readOnly: readOnly,
+        readOnly: readOnly && !play,
         onChanged: onChanged,
       ),
       FieldType.slot => _SlotFieldWidget(
@@ -526,6 +531,7 @@ class FieldWidgetFactory {
         schema: schema,
         value: value,
         readOnly: readOnly,
+        play: play,
         onChanged: onChanged,
       ),
       FieldType.characterLevel => _IntegerFieldWidget(
@@ -538,6 +544,7 @@ class FieldWidgetFactory {
         schema: schema,
         value: value,
         readOnly: readOnly,
+        play: play,
         onChanged: onChanged,
         grants: grants,
         entities: entities,

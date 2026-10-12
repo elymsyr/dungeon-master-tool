@@ -47,5 +47,7 @@ tags: [file]
 - **Skill total** (D32, revised 2026-10-11 after the Faz 4a check): the row's stat modifier from the card's stat table (its own base / step) + the card's `bonus` field once per mark (proficient, expertise) + misc. A row with no stat, or a card with no score for it, adds 0 for the stat (2026-10-12, user decision after the Faz 4 check: the row still totals and rolls). The generic table has no stat / total columns any more.
 - **Stat keys vs labels:** a stat's key is made once (V3); renaming a label keeps the card values. The SRD copy uses the SRD's own keys (`STR`…`CHA`), so SRD scores read directly.
 
+- **Play flag** (Faz 7a+, widgets side): `FieldWidgetFactory.create(play:)` — with `readOnly`, the free Resource / Pool / combat block keep their current-value controls live and a checkbox stays tickable; maxima, dice, card lists and text stay read-only. `entity_card.dart` passes it in a free world (and keeps unchecked free checkboxes visible in view mode); built-in callers never pass it.
+
 ## Notes
 - Tests: `test/domain/services/free_sheet_test.dart` (Faz 6: rests × effects incl. HP, resource shapes, combat spec / subFields / SRD reads, converter v3), `test/domain/services/free_field_styles_test.dart` (DESIGN §8.2's two rows exactly; fixed / free rows; renamed SRD row; real SRD Goblin Warrior, Bard, Fireball, Fighter rows; skill totals), `test/presentation/free_field_styles_widget_test.dart` (card at phone / desktop, a mark and a stat change on a skill row, editor and preset flows).

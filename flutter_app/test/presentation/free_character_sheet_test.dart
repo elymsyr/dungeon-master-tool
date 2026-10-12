@@ -179,6 +179,23 @@ void main() {
     );
     await tester.pump();
     expect(stats()['hp'], 38);
+
+    // Faz 7a+: the sheet opens in view mode; HP still changes and saves.
+    expect(find.byIcon(Icons.edit), findsWidgets, reason: 'view mode');
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const ValueKey('cb_combat_stats_hp')),
+        matching: find.byType(TextField),
+      ),
+      '20',
+    );
+    await tester.pump(const Duration(seconds: 3));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+    await tester.pump();
+    expect(stats()['hp'], 20);
+    expect(stats()['max_hp'], 38);
   });
 
   testWidgets('Faz 7a: level up grants Action Surge, labelled with its '

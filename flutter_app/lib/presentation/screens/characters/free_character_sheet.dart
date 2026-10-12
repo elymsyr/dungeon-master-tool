@@ -1032,6 +1032,7 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
         value: freeFieldValue(f, character.entity.fields),
         // The Level changes through Level up and the levels dialog.
         readOnly: _readOnly || levelField,
+        play: true,
         onChanged: (v) => list && g.cardsLoaded
             ? _changeCards(g.ctx, {...character.entity.fields, f.fieldKey: v})
             : _setFields({f.fieldKey: v}),
