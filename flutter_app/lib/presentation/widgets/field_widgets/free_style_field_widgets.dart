@@ -499,13 +499,14 @@ class SkillTableFieldWidget extends StatelessWidget {
     }
 
     Widget statCell(int i, Object? ability) {
+      final label = statLabel(ability);
       final text = Text(
-        statLabel(ability),
+        label.isEmpty ? '—' : label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 10, color: outline),
       );
-      if (readOnly || stats.isEmpty) return text;
+      if (readOnly || !spec.statEditable || stats.isEmpty) return text;
       return PopupMenuButton<String>(
         tooltip: l10n.tplSkillRowStat,
         padding: EdgeInsets.zero,
@@ -520,7 +521,11 @@ class SkillTableFieldWidget extends StatelessWidget {
 
     Widget row(int i) {
       final r = rows[i];
-      final name = '${r['name'] ?? ''}';
+      // SRD names read in the app's language; a card may rename a row
+      // when the template lets it.
+      final name = spec.nameEditable && '${r['label'] ?? ''}'.isNotEmpty
+          ? '${r['label']}'
+          : srdText(context, isSave ? 'ability' : 'skill', '${r['name'] ?? ''}');
       final proficient = r['proficient'] == true;
       final expertise = r['expertise'] == true;
       final misc = switch (r['misc']) {
@@ -534,7 +539,7 @@ class SkillTableFieldWidget extends StatelessWidget {
       // deeper, so they keep their own taps.
       return InkWell(
         hoverColor: Colors.transparent,
-        onTap: total == null || widgetRef == null
+        onTap: widgetRef == null
             ? null
             : () => rollDice(
                 context,
@@ -566,11 +571,25 @@ class SkillTableFieldWidget extends StatelessWidget {
               ),
               Expanded(
                 flex: 4,
-                // SRD names read in the app's language; display only.
-                child: Text(
-                  srdText(context, isSave ? 'ability' : 'skill', name),
-                  style: const TextStyle(fontSize: 12),
-                ),
+                child: spec.nameEditable && !readOnly
+                    ? TextFormField(
+                        key: ValueKey(
+                          'st_${schema.fieldKey}_${r[tableRowId]}_label',
+                        ),
+                        initialValue: name,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (v) => setCell(
+                          i,
+                          'label',
+                          v.trim().isEmpty ? null : v.trim(),
+                        ),
+                      )
+                    : Text(name, style: const TextStyle(fontSize: 12)),
               ),
               SizedBox(width: 44, child: statCell(i, r['ability'])),
               SizedBox(
@@ -599,7 +618,7 @@ class SkillTableFieldWidget extends StatelessWidget {
               SizedBox(
                 width: 40,
                 child: Text(
-                  total == null ? '—' : _signed(total),
+                  _signed(total),
                   textAlign: TextAlign.right,
                   style: TextStyle(
                     fontSize: 13,

@@ -98,4 +98,16 @@ void main() {
     expect(isFreePackageState(free!.stateJson), isTrue);
     expect(isFreePackageState(built!.stateJson), isFalse);
   });
+
+  test('SRD\'siz paket: seçim kayıtla korunur', () async {
+    await repo.create('SrdYok', template: srdCopy, includeSrd: false);
+    await repo.create('SrdVar', template: builtin);
+    await repo.save('SrdYok', await repo.load('SrdYok'));
+    await repo.save('SrdYok', {'metadata': {'description': 'x'}});
+    final yok = await db.packagesDao.getByName('SrdYok');
+    final varr = await db.packagesDao.getByName('SrdVar');
+    expect(isSrdOptOutPackageState(yok!.stateJson), isTrue);
+    expect(isFreePackageState(yok.stateJson), isTrue);
+    expect(isSrdOptOutPackageState(varr!.stateJson), isFalse);
+  });
 }

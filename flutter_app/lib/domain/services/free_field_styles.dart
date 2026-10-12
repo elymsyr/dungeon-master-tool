@@ -298,7 +298,13 @@ const _skillColumns = [
 ];
 
 class SkillTableSpec {
-  const SkillTableSpec({this.rows = const [], this.stat, this.bonus});
+  const SkillTableSpec({
+    this.rows = const [],
+    this.stat,
+    this.bonus,
+    this.nameEditable = false,
+    this.statEditable = true,
+  });
 
   factory SkillTableSpec.of(FieldSchema f) {
     final c = f.styleConfig ?? const {};
@@ -306,6 +312,8 @@ class SkillTableSpec {
       rows: _maps(c['rows']),
       stat: c['stat'] as String?,
       bonus: c['bonus'] as String?,
+      nameEditable: c['name_editable'] == true,
+      statEditable: c['stat_editable'] != false,
     );
   }
 
@@ -319,6 +327,13 @@ class SkillTableSpec {
   /// proficiency bonus); null = none.
   final String? bonus;
 
+  /// Whether a card may rename a row (stored as the row's `label`; the
+  /// template's name still matches the row).
+  final bool nameEditable;
+
+  /// Whether a card may pick another stat for a row.
+  final bool statEditable;
+
   /// The card rows as a fixed-row table.
   TableSpec get table =>
       TableSpec(columns: _skillColumns, fixedRows: true, rows: rows);
@@ -327,16 +342,22 @@ class SkillTableSpec {
     List<Map<String, dynamic>>? rows,
     String? Function()? stat,
     String? Function()? bonus,
+    bool? nameEditable,
+    bool? statEditable,
   }) => SkillTableSpec(
     rows: rows ?? this.rows,
     stat: stat == null ? this.stat : stat(),
     bonus: bonus == null ? this.bonus : bonus(),
+    nameEditable: nameEditable ?? this.nameEditable,
+    statEditable: statEditable ?? this.statEditable,
   );
 
   Map<String, dynamic> toConfig() => {
     'rows': rows,
     'stat': ?stat,
     'bonus': ?bonus,
+    if (nameEditable) 'name_editable': true,
+    if (!statEditable) 'stat_editable': false,
   };
 }
 
@@ -356,8 +377,9 @@ int skillBonus(SkillTableSpec spec, Map<String, dynamic> card) =>
 
 /// A skill row's total, as the SRD's skill table adds it (D32): the stat's
 /// modifier from the card's stat table + the bonus per mark (proficient,
-/// expertise) + misc. Null when the card has no score for the row's stat.
-int? skillTotal(
+/// expertise) + misc. A row with no stat, or no score for it, adds 0 for
+/// the stat.
+int skillTotal(
   SkillTableSpec spec,
   Map<String, dynamic> row, {
   required Map<String, dynamic> card,
@@ -366,9 +388,8 @@ int? skillTotal(
   final st = skillStatField(spec, fields);
   final scores = st == null ? null : card[st.fieldKey];
   final score = scores is Map ? _int(scores[row['ability']]) : null;
-  if (score == null) return null;
   final bonus = skillBonus(spec, card);
-  return StatTableSpec.of(st!).modifier(score) +
+  return (score == null ? 0 : StatTableSpec.of(st!).modifier(score)) +
       (row['proficient'] == true ? bonus : 0) +
       (row['expertise'] == true ? bonus : 0) +
       (_int(row['misc']) ?? 0);

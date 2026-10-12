@@ -25,7 +25,7 @@ tags: [file]
 - `storedTableRows(value)` — card rows in whatever shape: `List` rows, the SRD proficiency table's `{rows: [...]}`, a level table's `{level: value}` map (→ `{level, value}` rows, by level).
 - `tableRows(spec, value)` — what a card shows; `tableValue(spec, rows, previous:)` — what it stores.
 - `nextTableRowId(rows)`.
-- `SkillTableSpec.of(field)` — template `rows` (`{_id, name, ability}`), `stat` (stat table key, null = the category's first), `bonus` (number field a mark adds); `.table` is the fixed-row `TableSpec` its card rows are read / stored with (SRD proficiency row keys: `name` locked, `ability`, `proficient`, `expertise`, `misc`).
+- `SkillTableSpec.of(field)` — template `rows` (`{_id, name, ability}`), `stat` (stat table key, null = the category's first), `bonus` (number field a mark adds), `nameEditable` (config `name_editable`, default off: a card may rename a row, stored as the row's `label`), `statEditable` (config `stat_editable`, default on: a card may pick another stat); `.table` is the fixed-row `TableSpec` its card rows are read / stored with (SRD proficiency row keys: `name` locked, `ability`, `proficient`, `expertise`, `misc`).
 - `skillStatField(spec, fields)`, `skillBonus(spec, card)`, `skillTotal(spec, row, card:, fields:)`.
 - `structuredListAsMarkdown(rows, nameOf)` — SRD starting equipment / player choices / subspecies options as markdown.
 
@@ -39,7 +39,7 @@ tags: [file]
 - **Fixed rows:** the template's rows, each overlaid with the card's values for it. A stored row matches by `_id`, or — SRD data has none — by equal **locked** cells (a skill's name), or by its locked cell being the template row's id (the SRD copy ids rows by their SRD name, so a renamed row keeps its SRD data). Locked cells always come from the template.
 - **Storing a fixed row:** only the cells that differ from the template row (blank = null / false / ''), so a template default (a skill's stat) still reaches cards that never changed it. Stored rows of a template row that is gone stay in the card, hidden (D17), and come back with the row.
 - **Free rows:** stored as they are; the card widget gives rows an `_id` when rows come or go so each row's inputs keep their own text.
-- **Skill total** (D32, revised 2026-10-11 after the Faz 4a check): the row's stat modifier from the card's stat table (its own base / step) + the card's `bonus` field once per mark (proficient, expertise) + misc. Null (shown "—") when the card has no score for the row's stat. The generic table has no stat / total columns any more.
+- **Skill total** (D32, revised 2026-10-11 after the Faz 4a check): the row's stat modifier from the card's stat table (its own base / step) + the card's `bonus` field once per mark (proficient, expertise) + misc. A row with no stat, or a card with no score for it, adds 0 for the stat (2026-10-12, user decision after the Faz 4 check: the row still totals and rolls). The generic table has no stat / total columns any more.
 - **Stat keys vs labels:** a stat's key is made once (V3); renaming a label keeps the card values. The SRD copy uses the SRD's own keys (`STR`…`CHA`), so SRD scores read directly.
 
 ## Notes

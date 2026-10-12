@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
+import '../../data/repositories/package_repository_impl.dart'
+    show isSrdOptOutPackageState;
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/package_link.dart';
 import '../services/package_link_service.dart';
@@ -78,7 +80,8 @@ String packageSetKey(List<String> packageNames) =>
     packageNames.join(_keySep);
 
 /// Read-only entities overlaid into [packageName]'s editing view: the built-in
-/// SRD reference set PLUS every package it links (transitively).
+/// SRD reference set PLUS every package it links (transitively). A package
+/// created without the SRD gets only its links.
 ///
 /// Generalises what used to be an SRD-only overlay. Consumed by
 /// `EntityNotifier(referenceOverlayFor: …)`, which injects these on top of the
@@ -93,7 +96,11 @@ final packageReferenceOverlayProvider =
     FutureProvider.family<Map<String, Entity>, String>(
         (ref, packageName) async {
   ref.watch(packageLinkRevisionProvider);
-  final srd = await ref.watch(srdReferenceEntitiesProvider.future);
+  final db = ref.watch(appDatabaseProvider);
+  final row = await db.packagesDao.getByName(packageName);
+  final srd = row != null && isSrdOptOutPackageState(row.stateJson)
+      ? const <String, Entity>{}
+      : await ref.watch(srdReferenceEntitiesProvider.future);
   final closure =
       await ref.watch(packageLinkServiceProvider).closure(packageName);
 
@@ -102,7 +109,6 @@ final packageReferenceOverlayProvider =
   final linked = closure.where((p) => p.name != packageName).toList();
   if (linked.isEmpty) return srd;
 
-  final db = ref.watch(appDatabaseProvider);
   final out = <String, Entity>{...srd};
   // Dependency order: a package later in the closure wins an id collision,
   // matching how the editor layers its own rows on top of everything.

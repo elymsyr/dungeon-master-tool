@@ -471,6 +471,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(_totalIn(tester, 'Athletics'), '+4'); // DEX 14 + PB 2
   });
+
+  testWidgets('a row with no stat counts 0; the template sets what a card '
+      'may change', (tester) async {
+    await _size(tester, const Size(1280, 800));
+    final cat = _cat('monster');
+    FieldSchema skills(SkillTableSpec s) => cat.fields
+        .firstWhere((f) => f.fieldKey == 'skill_bonuses')
+        .copyWith(styleConfig: s.toConfig());
+    Widget host(FieldSchema f, Object? value, ValueChanged<dynamic> set) =>
+        _host(
+          FieldWidgetFactory.create(
+            schema: f,
+            value: value,
+            readOnly: false,
+            onChanged: set,
+            entities: const {},
+            entityFields: _goblin,
+            categoryFields: cat.fields,
+          ),
+        );
+    const row = {'_id': 'x', 'name': 'Sailing'};
+
+    // No stat: the stat counts 0, the row still totals.
+    await tester.pumpWidget(
+      host(skills(const SkillTableSpec(rows: [row])), null, (_) {}),
+    );
+    expect(_totalIn(tester, 'Sailing'), '+0');
+    expect(
+      find.descendant(of: _row('Sailing'), matching: find.byType(TextFormField)),
+      findsOneWidget, // misc only
+    );
+
+    // Name editable, stat locked.
+    Object? stored;
+    await tester.pumpWidget(
+      host(
+        skills(const SkillTableSpec(
+          rows: [{...row, 'ability': 'DEX'}],
+          nameEditable: true,
+          statEditable: false,
+        )),
+        null,
+        (v) => stored = v,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(PopupMenuButton<String>), findsNothing);
+    await tester.enterText(find.byType(TextFormField).first, 'Denizcilik');
+    expect(stored, [
+      {'_id': 'x', 'label': 'Denizcilik'},
+    ]);
+  });
 }
 
 /// In memory; reports every save.

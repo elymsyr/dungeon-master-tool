@@ -1166,7 +1166,9 @@ Yerleşik template'te kural motorunun yaptığı ama SRD kopyasında oyuncunun o
 
 - **"SRD içeriğini ekle":** bugün dünya oluştururken sadece yerleşik template'te çıkıyor. SRD
   soyundan gelen kopyalarda da çıkar, böylece SRD kopyasıyla kurulan dünyaya SRD paketi
-  eklenebilir. *(V28)*
+  eklenebilir. *(V28)* Paket oluştururken de aynı seçenek çıkar; kapalıysa paket ekranı SRD
+  kartlarını referans olarak göstermez. Kutu dünya ve pakette varsayılan olarak işaretsizdir
+  *(2026-10-12, kullanıcı)*.
 - **Türkçe çeviri:** SRD'nin Türkçe görüntü çevirisi İngilizce etiketle eşleşiyor. Kopyada
   yeniden adlandırılan bir etiketin çevirisi kaybolur ve kullanıcının yazdığı etiket görünür. Bu
   kabul edilebilir bir sonuç.

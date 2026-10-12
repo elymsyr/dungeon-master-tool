@@ -384,10 +384,15 @@ class _PackageScreenContentState
           icon: const Icon(Icons.arrow_back),
           onPressed: _exitToHub,
         ),
-        title: Row(
+        // Narrow windows leave the title a few pixels next to the actions:
+        // the icon goes first, the name fades.
+        title: LayoutBuilder(
+          builder: (context, box) => Row(
           children: [
-            Icon(Icons.inventory_2, size: 20, color: palette.tabIndicator),
-            const SizedBox(width: 8),
+            if (box.maxWidth > 60) ...[
+              Icon(Icons.inventory_2, size: 20, color: palette.tabIndicator),
+              const SizedBox(width: 8),
+            ],
             Expanded(
               child: Text(
                 widget.packageName,
@@ -398,6 +403,7 @@ class _PackageScreenContentState
               ),
             ),
           ],
+          ),
         ),
         actions: [
           // Undo / Redo
