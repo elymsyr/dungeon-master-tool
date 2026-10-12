@@ -267,11 +267,8 @@ void main() {
   group('presets (DESIGN §9)', () {
     // The player card and an NPC category, both holding the Skills preset.
     WorldSchema base() {
-      var s = emptyFreeTemplate(
-        id: 't',
-        name: 'T',
-        playerCardName: 'PC',
-        now: _now,
+      var s = _bare(
+        emptyFreeTemplate(id: 't', name: 'T', playerCardName: 'PC', now: _now),
       );
       s = addCategory(s, id: 'npc', name: 'NPC', now: _now);
       s = addPreset(
@@ -368,11 +365,8 @@ void main() {
     });
 
     test('save as preset keeps the key; a copy stands alone', () {
-      var s = emptyFreeTemplate(
-        id: 't',
-        name: 'T',
-        playerCardName: 'PC',
-        now: _now,
+      var s = _bare(
+        emptyFreeTemplate(id: 't', name: 'T', playerCardName: 'PC', now: _now),
       );
       final pc = s.categories.single;
       s = replaceCategory(
@@ -390,3 +384,9 @@ void main() {
     });
   });
 }
+
+/// An empty template without the player card's own fields: a bare
+/// playground for the editing tests.
+WorldSchema _bare(WorldSchema s) => s.copyWith(
+  categories: [for (final c in s.categories) c.copyWith(fields: const [])],
+);

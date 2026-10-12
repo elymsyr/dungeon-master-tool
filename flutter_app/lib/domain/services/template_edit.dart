@@ -28,18 +28,60 @@ const simpleFieldTypes = [
 bool isSimpleFieldType(FieldType t) => simpleFieldTypes.contains(t);
 
 /// The combined styles built so far (DESIGN §8; Faz 4: Table, Stat table,
-/// Skill table). Their settings are their own (`FieldSchema.styleConfig`).
+/// Skill table; Faz 6: Resource, Combat stats). Their settings are their
+/// own (`FieldSchema.styleConfig`).
 const combinedFieldTypes = [
   FieldType.table,
   FieldType.statTable,
   FieldType.skillTable,
+  FieldType.resource,
+  FieldType.combatStats,
 ];
 
 /// Everything the palette offers. Any other [FieldType] in a free template
-/// is a kept SRD type (ROADMAP §6).
+/// is a kept SRD type (ROADMAP §6), or one of [playerCardFieldTypes].
 const paletteFieldTypes = [...simpleFieldTypes, ...combinedFieldTypes];
 
-bool isLegacyFieldType(FieldType t) => !paletteFieldTypes.contains(t);
+/// The player card's own fields (DESIGN §10.1, D34): offered in the
+/// palette's "Player card" section while the player card lacks them.
+const playerCardFieldTypes = [FieldType.characterLevel, FieldType.autoResources];
+
+/// Their fixed keys (made unique if a field already holds one).
+String playerCardFieldKey(FieldType t) =>
+    t == FieldType.characterLevel ? 'level' : 'auto_resources';
+
+bool isLegacyFieldType(FieldType t) =>
+    !paletteFieldTypes.contains(t) && !playerCardFieldTypes.contains(t);
+
+/// Styles a field cannot be switched to or from: the player card's own
+/// fields, and Combat stats (one per category).
+bool hasFixedStyle(FieldType t) =>
+    playerCardFieldTypes.contains(t) || t == FieldType.combatStats;
+
+/// What the style dropdown offers.
+final switchableFieldTypes = [
+  for (final t in paletteFieldTypes)
+    if (!hasFixedStyle(t)) t,
+];
+
+/// Whether [cat] may take one more [type] field: one Combat stats block
+/// per category (DESIGN §8.6); the player card's own fields only on the
+/// player card, once each (D34).
+bool canAddFieldType(EntityCategorySchema cat, FieldType type) {
+  if (type == FieldType.combatStats || playerCardFieldTypes.contains(type)) {
+    if (playerCardFieldTypes.contains(type) && cat.isPlayerCard != true) {
+      return false;
+    }
+    return !cat.fields.any((f) => f.fieldType == type);
+  }
+  return true;
+}
+
+/// The player card fields [cat] lacks (empty unless it is the player card).
+List<FieldType> missingPlayerCardFields(EntityCategorySchema cat) => [
+  for (final t in playerCardFieldTypes)
+    if (canAddFieldType(cat, t)) t,
+];
 
 /// Simple styles that cannot be a list: a list of yes/no or of era maps
 /// means nothing, and tags are a list already.
@@ -153,12 +195,13 @@ Map<String?, List<FieldSchema>> _buckets(EntityCategorySchema cat) {
 }
 
 /// Adds a [type] field labelled [label] to [groupId] at [index] (end when
-/// null). Its key comes from the label and is unique in [cat].
+/// null). Its key comes from [key] (else the label) and is unique in [cat].
 EntityCategorySchema addField(
   EntityCategorySchema cat, {
   required String id,
   required String label,
   required FieldType type,
+  String? key,
   bool isList = false,
   String? groupId,
   int? index,
@@ -168,9 +211,10 @@ EntityCategorySchema addField(
   FieldSchema(
     fieldId: id,
     categoryId: cat.categoryId,
-    fieldKey: keyFromLabel(label, cat.fields.map((f) => f.fieldKey)),
+    fieldKey: keyFromLabel(key ?? label, cat.fields.map((f) => f.fieldKey)),
     label: label,
     fieldType: type,
+    styleConfig: _initialConfig(type),
     isList: isList && canBeList(type),
     groupId: groupId,
     createdAt: now,
@@ -179,6 +223,11 @@ EntityCategorySchema addField(
   groupId,
   index,
 );
+
+/// A new Combat stats block has settings from the start: they are what
+/// tells it from the built-in block (`isCombatBlock`).
+Map<String, dynamic>? _initialConfig(FieldType type) =>
+    type == FieldType.combatStats ? const {} : null;
 
 EntityCategorySchema _insert(
   EntityCategorySchema cat,
@@ -330,6 +379,7 @@ FieldSchema withPreset(FieldSchema f, FieldSchema preset) => f.copyWith(
   fieldType: preset.fieldType,
   isList: preset.isList,
   styleConfig: preset.styleConfig,
+  subFields: preset.subFields,
   helpText: preset.helpText,
   placeholder: preset.placeholder,
   defaultValue: preset.defaultValue,
@@ -381,6 +431,7 @@ WorldSchema addPreset(
       fieldKey: keyFromLabel(label, presetsOf(schema).map((p) => p.fieldKey)),
       label: label,
       fieldType: type,
+      styleConfig: _initialConfig(type),
       createdAt: now,
       updatedAt: now,
     ),
@@ -428,8 +479,9 @@ WorldSchema saveAsPreset(
 }
 
 /// A preset goes into a category once, and not over a field with its key
-/// (V8).
+/// (V8), nor as a second Combat stats block.
 bool canAddPreset(EntityCategorySchema cat, FieldSchema preset) =>
+    canAddFieldType(cat, preset.fieldType) &&
     !cat.fields.any(
       (f) => f.presetId == preset.fieldId || f.fieldKey == preset.fieldKey,
     );

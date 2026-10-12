@@ -46,11 +46,8 @@ final _srdCopy = copyAsFreeTemplate(
   name: 'SRD copy',
   now: _now,
 );
-final _empty = emptyFreeTemplate(
-  id: 'e1',
-  name: 'Empty',
-  playerCardName: 'Hero',
-  now: _now,
+final _empty = _bare(
+  emptyFreeTemplate(id: 'e1', name: 'Empty', playerCardName: 'Hero', now: _now),
 );
 
 late _Store _store;
@@ -431,3 +428,9 @@ void main() {
     expect(_saved.name, 'Mine');
   });
 }
+
+/// An empty template without the player card's own fields: a bare
+/// playground for the editing tests.
+WorldSchema _bare(WorldSchema s) => s.copyWith(
+  categories: [for (final c in s.categories) c.copyWith(fields: const [])],
+);

@@ -19,7 +19,8 @@ tags: [file]
 - An `EntityCategorySchema` (field / group edits) or a `WorldSchema` (category edits), plus ids, labels and an ISO timestamp.
 
 **Outputs**
-- `simpleFieldTypes` (14 simple styles, DESIGN §8), `isSimpleFieldType`, `canBeList`; `combinedFieldTypes` (Faz 4a: `table`, `statTable`, `skillTable`), `paletteFieldTypes` (both lists, what the palette offers), `isLegacyFieldType` (anything else: a kept SRD type).
+- `simpleFieldTypes` (14 simple styles, DESIGN §8), `isSimpleFieldType`, `canBeList`; `combinedFieldTypes` (Faz 4a: `table`, `statTable`, `skillTable`; Faz 6: `resource`, `combatStats`), `paletteFieldTypes` (both lists, what the palette offers), `isLegacyFieldType` (anything else but the player card's own fields: a kept SRD type).
+- Faz 6: `playerCardFieldTypes` (`characterLevel`, `autoResources`) and their fixed keys `playerCardFieldKey`; `hasFixedStyle` (those two and `combatStats`: no style dropdown) and `switchableFieldTypes`; `canAddFieldType(cat, type)` (one combat block per category; the player card's own fields only on the player card, once each, D34); `missingPlayerCardFields(cat)` (the palette's "Player card" section). `addField` takes an optional `key`; a new combat block / combat preset starts with an empty `styleConfig` (that is what marks it free); `canAddPreset` also refuses a second combat block; `withPreset` copies `subFields` too.
 - `keyFromLabel(label, taken, {separator, fallback})` — folded ASCII words, `_2`/`_3` on a clash. Field keys use `_`, category slugs `-`.
 - Fields: `fieldsIn(cat, groupId)`, `addField`, `moveField`, `removeField`, `replaceField`.
 - Style change: `typeChangeOf(from, fromList, to, toList)` → `TypeChange.same | compatible | lossy | incompatible`; `changeFieldType(...)`.

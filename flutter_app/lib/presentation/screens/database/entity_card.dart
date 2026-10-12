@@ -21,6 +21,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/content_translator.dart';
+import '../../../domain/services/free_field_styles.dart' show freeFieldValue;
 import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -55,7 +56,7 @@ final Expando<_SchemaFieldCache> _schemaCache = Expando();
 /// Key: identity of the field-list (stable from _SchemaFieldCache).
 final Expando<List<List<FieldSchema>>> _gridRowsCache = Expando();
 
-List<List<FieldSchema>> _splitRows(
+List<List<FieldSchema>> splitFieldRows(
   List<FieldSchema> fields,
   int gridColumns, {
   bool useCache = true,
@@ -787,7 +788,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     DmToolColors palette, {
     bool compact = false,
   }) {
-    final fieldValue = entity.fields[field.fieldKey];
+    // A free field may read an SRD shape it replaced (DESIGN §16.3).
+    final fieldValue = freeFieldValue(field, entity.fields);
     // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
     // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
     final tx = ref.read(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
@@ -853,7 +855,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte.
     // Cached path uses the stable list identity from _SchemaFieldCache.
     // Filtered (read-only) path skips cache since the list is rebuilt per build.
-    final rows = _splitRows(fields, cols, useCache: cached);
+    final rows = splitFieldRows(fields, cols, useCache: cached);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -916,7 +918,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       final base = fieldsVisibleToRole(fields, isPlayer: isPlayer);
       if (!readOnly) return base;
       return base
-          .where((f) => _isFieldVisibleInReadOnly(f, entity.fields[f.fieldKey]))
+          .where(
+            (f) => _isFieldVisibleInReadOnly(f, freeFieldValue(f, entity.fields)),
+          )
           .toList();
     }
 

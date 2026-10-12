@@ -54,15 +54,19 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
   Future<WorldSchema> copy(WorldSchema source, String name) =>
       _add(copyAsFreeTemplate(source, id: _uuid.v4(), name: name, now: _now()));
 
-  /// Creates a template holding only the player card.
+  /// Creates a template holding only the player card and its own fields.
   Future<WorldSchema> createEmpty(
     String name, {
     required String playerCardName,
+    String levelLabel = 'Level',
+    String autoResourcesLabel = 'Automatic Resources',
   }) => _add(
     emptyFreeTemplate(
       id: _uuid.v4(),
       name: name,
       playerCardName: playerCardName,
+      levelLabel: levelLabel,
+      autoResourcesLabel: autoResourcesLabel,
       now: _now(),
     ),
   );

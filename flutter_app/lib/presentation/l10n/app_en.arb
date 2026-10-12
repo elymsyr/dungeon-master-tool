@@ -3680,7 +3680,6 @@
   "tplTier2": "Tier 2 — DM",
   "tplMapIcon": "Map icon",
   "freeWorldNoMultiplayer": "Worlds with your own template can't go multiplayer yet: players would get the built-in sheet instead of yours.",
-  "freeWorldNoCharacters": "Characters aren't available yet in worlds with your own template.",
   "freeInstallTitle": "Different template",
   "freeInstallBody": "This package was made with a different template. Cards and fields are matched by their keys. Nothing is lost: the data below stays in the package, it just isn't shown in this world.",
   "freeInstallCategories": "Categories not in this world (their cards aren't shown)",
@@ -3763,5 +3762,65 @@
         "type": "String"
       }
     }
-  }
+  },
+  "freeDecrease": "Decrease",
+  "freeIncrease": "Increase",
+  "freeMax": "Max",
+  "freeAutoResourcesEmpty": "Resources granted by cards appear here (coming with the level system).",
+  "freeShortRest": "Short rest",
+  "freeLongRest": "Long rest",
+  "freeShortRestDone": "Short rest applied.",
+  "freeLongRestDone": "Long rest applied.",
+  "freeSheetLevel": "Level {level}",
+  "@freeSheetLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "freeNewCharacterName": "New character",
+  "tplStyleResource": "Resource",
+  "tplStyleResourceHint": "A current / max counter that rests fill or empty",
+  "tplStyleCombatStats": "Combat stats",
+  "tplStyleCombatStatsHint": "HP / Max HP and the values the encounter shows",
+  "tplStyleLevel": "Level",
+  "tplStyleLevelHint": "The character's main level",
+  "tplStyleAutoResources": "Automatic resources",
+  "tplStyleAutoResourcesHint": "The resources the character's cards grant",
+  "tplPlayerCardSection": "Player card",
+  "tplStyleOnce": "This category already has a \"{style}\" field.",
+  "@tplStyleOnce": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "tplDeleteOwnFieldBody": "Delete \"{label}\" from the player card? Card values stay stored; you can add it back from the palette's Player card section.",
+  "@tplDeleteOwnFieldBody": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tplRestFill": "Fill",
+  "tplRestEmpty": "Empty",
+  "tplRestKeep": "Leave as is",
+  "tplRestShort": "On a short rest",
+  "tplRestLong": "On a long rest",
+  "tplResourceDisplay": "Display",
+  "tplDisplayNumber": "Number",
+  "tplDisplayBoxes": "Boxes",
+  "tplResourceMaxHint": "The max is entered on each card.",
+  "tplCombatCards": "Card list",
+  "tplCombatEncounter": "Show in the encounter",
+  "tplCombatWidth": "Encounter width",
+  "tplCombatWidthHint": "Empty: default",
+  "tplCombatEditable": "Editable",
+  "tplCombatHp": "HP / Max HP",
+  "tplCombatHpHint": "Always there and always in the encounter",
+  "tplCombatValues": "Values",
+  "tplCombatAddValue": "Add value"
 }
