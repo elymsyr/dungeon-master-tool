@@ -55,7 +55,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
   WorldSchema? _selectedTemplate;
-  bool _includeSrd = true;
+  bool _includeSrd = false;
   bool _refreshing = false;
 
   @override
@@ -517,7 +517,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         .where((t) => t.schemaId == _selectedTemplate?.schemaId)
         .firstOrNull;
     _selectedTemplate = matched ?? uniqueTemplates.first;
-    _includeSrd = true;
+    _includeSrd = false;
     _nameController.clear();
     final nameFocus = FocusNode();
     // Dialog transition + IME açılışı aynı frame'e binince mobilde gecikme

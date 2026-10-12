@@ -15,6 +15,9 @@ import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../domain/entities/package_info.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart'
+    show builtinDnd5eV2SchemaId;
+import '../../../domain/services/free_template.dart' show isSrdLineage;
 import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -46,6 +49,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
   WorldSchema? _selectedTemplate;
+  bool _includeSrd = false;
   bool _refreshing = false;
 
   @override
@@ -401,6 +405,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         .where((t) => t.schemaId == _selectedTemplate?.schemaId)
         .firstOrNull;
     _selectedTemplate = matched ?? uniqueTemplates.first;
+    _includeSrd = false;
     _nameController.clear();
     final nameFocus = FocusNode();
     Future.delayed(const Duration(milliseconds: 180), () {
@@ -449,6 +454,21 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     await _createPackage();
                   },
                 ),
+                // Same choice as a new world: the SRD cards shown in the
+                // package as references (never copied into it).
+                if (_selectedTemplate!.schemaId == builtinDnd5eV2SchemaId ||
+                    isSrdLineage(_selectedTemplate!))
+                  CheckboxListTile(
+                    value: _includeSrd,
+                    onChanged: (v) =>
+                        setLocal(() => _includeSrd = v ?? false),
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      l10n.worldsIncludeSrd,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -669,13 +689,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     }
 
     final templateFinal = _selectedTemplate;
+    final includeSrd = _includeSrd &&
+        templateFinal != null &&
+        (templateFinal.schemaId == builtinDnd5eV2SchemaId ||
+            isSrdLineage(templateFinal));
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-package-$name',
       L10n.of(context)!.loadingCreatingPackage(name),
       () => ref
           .read(activePackageProvider.notifier)
-          .create(name, template: templateFinal),
+          .create(name, template: templateFinal, includeSrd: includeSrd),
     );
     if (success) {
       ref.invalidate(packageListProvider);

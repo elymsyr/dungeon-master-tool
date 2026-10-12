@@ -2422,6 +2422,8 @@
   "tplSkillBonusHint": "Yetkin bir kez, uzman bir kez daha ekler",
   "tplSkillBonusNone": "Hiçbir şey",
   "tplSkillRowStat": "Stat",
+  "tplSkillNameEditable": "Kartta satır adı değiştirilebilir",
+  "tplSkillStatEditable": "Kartta stat değiştirilebilir",
   "tplPresets": "Hazır içerikler",
   "tplPresetHint": "Bir kez kur, birçok kategoriye ekle",
   "tplAddPreset": "Yeni hazır içerik",

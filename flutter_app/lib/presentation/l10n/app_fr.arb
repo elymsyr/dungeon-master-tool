@@ -2422,6 +2422,8 @@
   "tplSkillBonusHint": "Maîtrise l'ajoute une fois, expertise une fois de plus",
   "tplSkillBonusNone": "Rien",
   "tplSkillRowStat": "Caractéristique",
+  "tplSkillNameEditable": "Une carte peut renommer une ligne",
+  "tplSkillStatEditable": "Une carte peut choisir une autre caractéristique",
   "tplPresets": "Préréglages",
   "tplPresetHint": "À régler une fois, à ajouter à plusieurs catégories",
   "tplAddPreset": "Nouveau préréglage",

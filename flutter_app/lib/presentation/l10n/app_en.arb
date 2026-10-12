@@ -3722,6 +3722,8 @@
   "tplSkillBonusHint": "Proficient adds it once, expertise once more",
   "tplSkillBonusNone": "Nothing",
   "tplSkillRowStat": "Stat",
+  "tplSkillNameEditable": "A card may rename a row",
+  "tplSkillStatEditable": "A card may pick another stat",
   "tplPresets": "Presets",
   "tplPresetHint": "Set up once, add to many categories",
   "tplAddPreset": "New preset",

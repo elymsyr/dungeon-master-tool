@@ -33,8 +33,10 @@ abstract class PackageRepository {
   /// Paketi sil.
   Future<void> delete(String packageName);
 
-  /// Yeni paket oluştur, template ile.
-  Future<String> create(String packageName, {WorldSchema? template});
+  /// Yeni paket oluştur, template ile. [includeSrd] false ise paket
+  /// ekranı SRD kartlarını referans olarak göstermez (dünyadaki seçimle aynı).
+  Future<String> create(String packageName,
+      {WorldSchema? template, bool includeSrd = true});
 
   /// Mevcut bir paketi yeni bir adla klonla (entity'ler + schema dahil).
   /// Built-in pack'i kopyalayıp kullanıcı tarafından düzenlenebilir hale

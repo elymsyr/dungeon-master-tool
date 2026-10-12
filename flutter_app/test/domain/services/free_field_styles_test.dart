@@ -180,7 +180,7 @@ void main() {
       final skills = SkillTableSpec.of(field('monster', 'skill_bonuses'));
       final rows = tableRows(skills.table, goblin['skill_bonuses']);
       expect(rows, hasLength(18));
-      int? totalOf(String name) => skillTotal(
+      int totalOf(String name) => skillTotal(
         skills,
         rows.firstWhere((r) => r['name'] == name),
         card: goblin,
@@ -196,16 +196,17 @@ void main() {
       expect((sense['sense_ref'] as Map)['name'], 'Darkvision');
     });
 
-    test('a row may pick another stat; a missing score has no total', () {
+    test('a row may pick another stat; a missing score adds 0', () {
       final skills = SkillTableSpec.of(field('monster', 'skill_bonuses'));
       final row = tableRows(skills.table, null).first; // Acrobatics, DEX
       final card = {
         'stat_block': {'STR': 16},
         'proficiency_bonus': 3,
       };
-      int? total(Map<String, dynamic> r) =>
+      int total(Map<String, dynamic> r) =>
           skillTotal(skills, r, card: card, fields: cat('monster').fields);
-      expect(total(row), isNull);
+      expect(total(row), 0);
+      expect(total({...row, 'ability': null, 'proficient': true}), 3);
       expect(
         total({...row, 'ability': 'STR', 'proficient': true, 'misc': 1}),
         3 + 3 + 1,

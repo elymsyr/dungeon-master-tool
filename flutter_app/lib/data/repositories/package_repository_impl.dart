@@ -26,6 +26,13 @@ bool isFreePackageState(String stateJson) =>
         PackageRepositoryImpl._freeSchemaKey] !=
     null;
 
+/// True when the package was created without the SRD: its screen then shows
+/// no SRD reference cards (packages made before this always show them).
+bool isSrdOptOutPackageState(String stateJson) =>
+    PackageRepositoryImpl._decodeState(stateJson)?[
+        PackageRepositoryImpl._srdOptOutKey] ==
+    true;
+
 /// PR-D4 v12 rewrite. Packages now route through `PackagesDao` (Packages +
 /// PackageSchemas + PackageEntities) and trash through `TrashDao`. The old
 /// `package_local_ds.dart` sidecar JSON store is gone.
@@ -155,7 +162,7 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<String> create(String packageName,
-      {domain.WorldSchema? template}) async {
+      {domain.WorldSchema? template, bool includeSrd = true}) async {
     final existing = await _findByName(packageName);
     if (existing != null) {
       throw StateError('Package already exists: $packageName');
@@ -167,9 +174,10 @@ class PackageRepositoryImpl implements PackageRepository {
     await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: packageId,
       name: packageName,
-      stateJson: Value(schema?.freeRootId == null
-          ? '{}'
-          : jsonEncode({_freeSchemaKey: schema!.toJson()})),
+      stateJson: Value(jsonEncode({
+        if (schema?.freeRootId != null) _freeSchemaKey: schema!.toJson(),
+        if (!includeSrd) _srdOptOutKey: true,
+      })),
     ));
 
     if (schema != null) {
@@ -519,6 +527,10 @@ class PackageRepositoryImpl implements PackageRepository {
   /// Drift bump). Same idea as a world's `_world_schema` in settings_json.
   static const _freeSchemaKey = '_world_schema';
 
+  /// stateJson key: the package was created without the SRD (same name as
+  /// a world's opt-out in settings_json).
+  static const _srdOptOutKey = '_srdCoreOptOut';
+
   static Map<String, dynamic>? _decodeState(String json) {
     try {
       final decoded = jsonDecode(json);
@@ -552,12 +564,14 @@ class PackageRepositoryImpl implements PackageRepository {
     final schema = data['world_schema'];
     if (schema is Map && schema['freeRootId'] != null) {
       stateBlob[_freeSchemaKey] = schema;
-    } else if (schema == null) {
-      // Metadata-only save: the free template rides in stateJson, keep it.
+    }
+    if (schema == null || !stateBlob.containsKey(_srdOptOutKey)) {
+      // Metadata-only save: the free template and the SRD choice ride in
+      // stateJson, keep them.
       final row = await _db.packagesDao.getById(packageId);
       final old = row == null ? null : _decodeState(row.stateJson);
-      if (old?[_freeSchemaKey] != null) {
-        stateBlob[_freeSchemaKey] = old![_freeSchemaKey];
+      for (final k in [if (schema == null) _freeSchemaKey, _srdOptOutKey]) {
+        if (old?[k] != null) stateBlob[k] = old![k];
       }
     }
     final stateJsonStr = jsonEncode(stateBlob);

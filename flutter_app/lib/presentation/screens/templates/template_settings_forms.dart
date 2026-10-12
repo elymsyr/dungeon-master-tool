@@ -1426,6 +1426,16 @@ class _SkillTableSettings extends StatelessWidget {
           items: {null: l10n.tplSkillBonusNone, ...numbers},
           onChanged: (k) => set(spec.copyWith(bonus: () => k)),
         ),
+        _Check(
+          label: l10n.tplSkillNameEditable,
+          value: spec.nameEditable,
+          onChanged: (v) => set(spec.copyWith(nameEditable: v)),
+        ),
+        _Check(
+          label: l10n.tplSkillStatEditable,
+          value: spec.statEditable,
+          onChanged: (v) => set(spec.copyWith(statEditable: v)),
+        ),
         _Label(l10n.tplTemplateRows),
         for (final (i, r) in rows.indexed)
           _ListItem(

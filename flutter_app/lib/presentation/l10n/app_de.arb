@@ -2422,6 +2422,8 @@
   "tplSkillBonusHint": "Geübt addiert ihn einmal, Expertise noch einmal",
   "tplSkillBonusNone": "Nichts",
   "tplSkillRowStat": "Wert",
+  "tplSkillNameEditable": "Karte darf eine Zeile umbenennen",
+  "tplSkillStatEditable": "Karte darf einen anderen Wert wählen",
   "tplPresets": "Bausteine",
   "tplPresetHint": "Einmal einrichten, in vielen Kategorien verwenden",
   "tplAddPreset": "Neuer Baustein",

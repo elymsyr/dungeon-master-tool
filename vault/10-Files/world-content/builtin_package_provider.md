@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/builtin_package_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-29
+updated: 2026-10-12
 tags: [file]
 ---
 
@@ -30,7 +30,7 @@ tags: [file]
 - Domain map: [[World-and-Content]]
 
 ## Key Logic / Variables
-- **Reference overlay** (Jun 2026; generalised 2026-07-29): `EntityNotifier(referenceOverlayFor: <packageName>)` — set only in [[package_screen]] for non-SRD packages — listens to `packageReferenceOverlayProvider(name)`, which is `srdReferenceEntitiesProvider` UNION the entities of every package this one links ([[Package-Links]]), and merges them on top of the package-own `state`. Package-own rows win on id collision; injected ids tracked in `_referenceEntityIds` and **skipped by every write path** (`_writeEntityToCampaign`, `_syncToCampaign`, `delete`) so the overlay is shown-only, never persisted into the package. Re-applied after every `_loadFromCampaign`.
+- **Reference overlay** (Jun 2026; generalised 2026-07-29): `EntityNotifier(referenceOverlayFor: <packageName>)` — set only in [[package_screen]] for non-SRD packages — listens to `packageReferenceOverlayProvider(name)`, which is `srdReferenceEntitiesProvider` (left out when the package was created without the SRD: `_srdCoreOptOut` in its `state_json`, read by `isSrdOptOutPackageState` in [[package_repository_impl]], 2026-10-12) UNION the entities of every package this one links ([[Package-Links]]), and merges them on top of the package-own `state`. Package-own rows win on id collision; injected ids tracked in `_referenceEntityIds` and **skipped by every write path** (`_writeEntityToCampaign`, `_syncToCampaign`, `delete`) so the overlay is shown-only, never persisted into the package. Re-applied after every `_loadFromCampaign`.
 - Source of truth = the installed SRD package row, so overlay always matches what the SRD package itself shows. Import cycle with [[entity_provider]] (`entityFromRaw` ↔ `srdReferenceEntitiesProvider`) is intentional and legal in Dart.
 
 ## Notes

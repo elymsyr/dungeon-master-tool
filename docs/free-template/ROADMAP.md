@@ -14,7 +14,9 @@
   bir tarz istedi (D32 revize); düzeltme ve Faz 4b uygulandı, otomatik kapı yeşil; ikisi birlikte
   elle kontrol bekliyor (2026-10-11). Kullanıcı kararıyla (2026-10-12) elle kontrol sonraya
   ertelendi ve iş commit'lendi; bekleyen kontroller Faz 4b sonucundaki listede. Faz 5 uygulandı,
-  otomatik kapı yeşil; elle kontrol bekliyor (2026-10-12).
+  otomatik kapı yeşil (2026-10-12). Faz 4a, 4b ve 5 kapandı (2026-10-12): kullanıcı elle kontrolü
+  kısmen yaptı ("genel olarak okey, bir şey kırılmış gibi durmuyor"); bulgular ve düzeltmeler Faz 5
+  sonucunun altında.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -22,9 +24,9 @@
 | 1 | Template deposu ve Templates sekmesi | M | ✅ (E listesi yok) |
 | 2 | Template editörü: kategoriler ve düzen | L | ✅ |
 | 3 | Free dünya ve template güncellemesi | M | ✅ |
-| 4a | Tablo, Stat tablosu, SRD dönüşümü v2 | M | 🔄 elle kontrol ertelendi |
-| 4b | Hazır içerikler | M | 🔄 elle kontrol ertelendi |
-| 5 | Paketler | M | 🔄 elle kontrol bekliyor |
+| 4a | Tablo, Stat tablosu, SRD dönüşümü v2 | M | ✅ (elle kontrol kısmi) |
+| 4b | Hazır içerikler | M | ✅ (elle kontrol kısmi) |
+| 5 | Paketler | M | ✅ (elle kontrol kısmi) |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | ⏳ |
 | 7 | Seviye sistemi | L | ⏳ |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
@@ -980,6 +982,32 @@ yerleşik sonuçlarının değişmediği.
     "aynı anahtar, farklı şekil") listelenmez, alan boş görünür.
   - Uyarı listesi paketin şemasına göre; paketin şemasında olmayan bir kategoride kart varsa
     sayılmaz.
+
+**Faz 4–5 elle kontrol bulguları ve düzeltmeleri** (2026-10-12, Linux; kullanıcı):
+
+- T testleri tamam; P1'de bir hata görüldü, kalan P ve R kontrolleri kısmen yapıldı. Kullanıcı
+  "genel olarak okey" dedi, fazlar kapandı.
+- **Yetenek tablosu, stat seçilmemiş satır:** satır toplamsız kalıyor ve zar atılmıyordu. Artık
+  stat seçilmemişse ya da kartta o statın değeri yoksa stat 0 sayılır; satır toplanır ve zar atar
+  (D32'ye ek, kullanıcı kararı).
+- **Yetenek tablosu, iki ayar (kullanıcı isteği):** "Kartta satır adı değiştirilebilir" (varsayılan
+  kapalı; kartın adı satırın `label`'ında, şablondaki ad eşleşme için kalır) ve "Kartta stat
+  değiştirilebilir" (varsayılan açık, bugünkü davranış). `styleConfig`'te `name_editable` /
+  `stat_editable`, sadece varsayılandan farklıysa yazılır.
+- **P1 — paket ekranı başlığı:** dar pencerede eylem düğmeleri başlığa 24 px bırakıyordu
+  (RenderFlex taşması). Başlık daralınca ikon gizlenir, ad solar. Aynı logdaki üç hata
+  (`TextEditingController` dispose sonrası, 99585 px taşma, `_dependents.isEmpty`) yeniden
+  üretilemedi; tam hata bloğu gelirse bakılacak.
+- **SRD paketlerde zorunlu değil (kullanıcı isteği):** paket ekranı SRD kartlarını her pakette
+  referans olarak gösteriyordu. Paket oluştururken dünyadaki gibi "D&D 5e SRD içeriğini ekle"
+  seçeneği çıkar (yerleşik template ve SRD soyu); kapalıysa paketin `state_json`'ına
+  `_srdCoreOptOut: true` yazılır ve `packageReferenceOverlayProvider` SRD'yi katmaz (bağlı
+  paketler yine görünür). Daha önce oluşturulan paketler SRD'yi göstermeye devam eder.
+- **"SRD içeriğini ekle" varsayılan kapalı:** dünya ve paket oluştururken kutu artık işaretsiz
+  gelir (kullanıcı isteği).
+- **Otomatik kapı:** G4 32 info (temel çizgiyle aynı) · G5 `free_field_styles_test`,
+  `free_field_styles_widget_test` (+1: stat'sız satır 0, iki ayar), `package_free_template_test`
+  (+1: SRD'siz paket, seçim metadata kaydında korunur) yeşil · G6 1806 geçti (Faz 5'teki 1804 + 2 yeni); kırmızılar temel çizgideki 3 testle aynı.
 
 ---
 
