@@ -325,6 +325,23 @@ void main() {
     expect(pc.icon, 'castle');
   });
 
+  testWidgets('desktop: the player card picks its summary chips and icons', (
+    tester,
+  ) async {
+    await _size(tester, const Size(1280, 800));
+    await tester.pumpWidget(_app(_srdCopy));
+    await tester.pumpAndSettle();
+    await _scrollTo(tester, find.byKey(const ValueKey('chip_add')));
+    await _tap(tester, find.byKey(const ValueKey('chip_add')));
+    await _tap(tester, find.text('Speed').last);
+    await _tap(tester, find.byTooltip('Icon').first);
+    await _tap(tester, find.byTooltip('bolt'));
+    await _autosave(tester);
+    final chips = sheetChipsOf(freePlayerCard(_saved)!);
+    expect((chips.first.field, chips.first.icon), ('combat_stats', 'bolt'));
+    expect((chips.last.field, chips.last.icon), ('speed', 'star'));
+  });
+
   testWidgets('desktop: deleting a group keeps its fields', (tester) async {
     await _size(tester, const Size(1280, 800));
     var pc = _empty.categories.single;

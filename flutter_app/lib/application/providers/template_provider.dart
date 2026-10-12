@@ -59,14 +59,14 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
     String name, {
     required String playerCardName,
     String levelLabel = 'Level',
-    String autoResourcesLabel = 'Automatic Resources',
+    String poolLabel = 'Pool',
   }) => _add(
     emptyFreeTemplate(
       id: _uuid.v4(),
       name: name,
       playerCardName: playerCardName,
       levelLabel: levelLabel,
-      autoResourcesLabel: autoResourcesLabel,
+      poolLabel: poolLabel,
       now: _now(),
     ),
   );

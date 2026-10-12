@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
@@ -284,9 +283,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       // gövdesinde bir kez hesaplanır — seçim değişiminde
                       // VLB builder'ında TEKRARLANMAZ.
                       final infoChips = CharacterStatChips(
-                        lines: characterStatLines(
-                          l10n: L10n.of(context)!,
-                          tx: ref.watch(contentTranslatorProvider),
+                        lines: characterChipLines(
+                          context,
+                          ref,
                           c,
                           entitiesFor(c),
                           ownerLabel: resolveCharacterOwnerLabel(ref, c),
@@ -482,13 +481,13 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         return;
       }
       final active = ref.read(activeCampaignProvider);
-      if (active != worldName) {
+      if (active != worldId) {
         // Optimistic flip (B1 pattern): sync state change so the editor
         // route pushes immediately. Heavy flush + file IO completes in the
         // background; relation widgets render with the default schema until
         // _data lands and the revision bump triggers a reparse.
         final notifier = ref.read(activeCampaignProvider.notifier);
-        notifier.beginLoad(worldName);
+        notifier.beginLoad(worldId);
         if (!mounted) return;
         context.push('/character/${c.id}');
         final ok = await notifier.completeLoad();

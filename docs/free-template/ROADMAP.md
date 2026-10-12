@@ -21,6 +21,9 @@
   (Savaş değerleri bloğu). Faz 6 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor
   (2026-10-12). Faz 7 öncesi tasarım revizyonu (2026-10-12, kullanıcı): Kaynak verme ve Otomatik
   kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39); V10 ve V25 onaylandı, V29–V33 eklendi.
+  Faz 7 başı (2026-10-12, kullanıcı): V9, V11–V13, V24, V29–V33 onaylandı; faz 7a (sistem) ve 7b
+  (SRD dönüştürücüsü v4) olarak bölündü. Faz 7a uygulandı, otomatik kapı yeşil; elle kontrol
+  bekliyor (2026-10-12).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -32,7 +35,8 @@
 | 4b | Hazır içerikler | M | ✅ (elle kontrol kısmi) |
 | 5 | Paketler | M | ✅ (elle kontrol kısmi) |
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | 🔶 uygulandı, elle kontrol bekliyor |
-| 7 | Seviye sistemi | L | ⏳ |
+| 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | 🔶 uygulandı, elle kontrol bekliyor |
+| 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ⏳ |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
 | 9 | Encounter ve harita ayarları | M | ⏳ |
 | 10 | Kapanış | S | ⏳ |
@@ -1181,6 +1185,13 @@ onaylandı ve D37'ye göre güncellendi.
 
 **Onay gereken varsayımlar:** V9, V11, V12, V13, V24, V29, V30, V31, V32, V33.
 
+**Faz başı kararları (2026-10-12, kullanıcı):**
+
+- V9, V11, V12, V13, V24, V29–V33 onaylandı.
+- **Faz ikiye bölünür** (Faz 4'teki gibi). **7a:** yapılacakların 1–10. maddeleri; elle kontrol
+  editörde elle kurulan bir template'le yapılır (E7.2–E7.19'un SRD'ye bağlı olmayan karşılıkları).
+  **7b:** 11. madde (SRD kopyası dönüştürücüsü v4 ve okuyucular), E7.1 ve SRD'li kontroller.
+
 **Yapılacaklar:**
 
 1. **Verilenler tarzı** (DESIGN §8.5, D37): her kategoriye eklenebilir; öğe ekle / sil / sırala.
@@ -1280,6 +1291,134 @@ Verilenler'e çevrilmesi (V33).
 
 **Çıkış kriteri:** DESIGN §19 Faz 3: Aria örneği baştan sona çalışır; bir feat'in Verilenler'i
 hem karakterde hem canavarda doğru yere düşer.
+
+**Faz 7a sonucu** (2026-10-12, Linux; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - Yeni tarzlar (K2: yeni `FieldType` değerleri, mevcutlar aynı): **Verilenler** (`grantHolder`) ve
+    **Seviye tablosu** (`progressionTable`; B6: `levelTable` adı yerleşiğin). Faz 6'nın
+    `autoResources` tipi artık **Havuz**: etiket ve l10n "Havuz" / "Pool", anahtar
+    `auto_resources` aynı; paletin "Oyuncu kartı" bölümünden genel palete geçti, her kategoriye
+    eklenir. Seviye tablosu ve Havuz kategoride en fazla bir tane (V9, D38).
+  - Verilenler ve Seviye tablosu **kartın değeridir**: her kart kendi öğelerini kart ekranında
+    doldurur. Öğe türleri: kart (seçilen kart + isteğe bağlı hedef liste), kaynak (ad, maks boş
+    olabilir, kısa / uzun), diğer tarzlar (yazı, uzun yazı, markdown, tam / ondalık sayı, onay
+    kutusu, seçim, etiketler, zar, tablo, stat tablosu; seçim / tablo / stat tablosu editörün
+    ayar formlarıyla kurulur). V31'deki tarzlar listede yok. Seviye tablosu satırı: seviye ·
+    markdown yazı · öğeler.
+  - Kategori ayarı: Seviye tablolu kategoride **Seviye modu** Beraber / Ayrı
+    (`EntityCategorySchema.levelMode`, K2: null = beraber).
+  - **Bağımlılık uyarısı** (D34): Seviye tablosu varken oyuncu kartında Seviye, Verilenler varken
+    Havuz yoksa editörün üstünde **[Ekle]**'li uyarı (oyuncu kartının ilk grubuna ekler); Seviye /
+    Havuz silinirken onay kullanan kategorileri listeler. Seviye tablolu kategoriye giden
+    listelerde editörde **Sv** etiketi (DESIGN §10.1).
+  - **Verme motoru** `free_grants.dart` (saf, resolver değil, K4): kökler taşıyıcının
+    listelerindeki kartlar; ayrı kategoride oyuncunun aldığı kart kendi seviyesine, diğer her şey
+    ana seviyeye bakar (DESIGN §11.3, V11); hedef liste kuralı (V10; "herhangi" hedefli liste
+    verilen kartı yutmaz); zincir, tekrar yok, döngü koruması; aynı karttan aynı adlı kaynak
+    yerine geçer, farklı kartlardan büyük olan (D39); Havuz saklanmaz, yalnız mevcut değerler
+    (V29, V32). Seviye alanı olmayan taşıyıcıda seviye tabloları işlemez (V30, D34).
+  - **Karakter kağıdı:** [Seviye atla] (her ayrı kategoriden bir kart ya da "+ yeni"; tek kart
+    kendiliğinden seçili, V13) → özet (eklenen kartlar, Havuz'a gelenler, okunacaklar, kaynaklar,
+    gidecek yeri olmayanlar). Listeye kart eklenince Verilenler / satırlar işler ve bir şey
+    verdiyse özet çıkar. Düzenleme modunda Seviye alanına dokununca **seviyeler** penceresi (ana
+    seviye ve ayrı kartların seviyeleri). Verilen kartlar "Veren: Savaşçı · seviye 2" etiketiyle, ayrı
+    kartlar "Seviye 3" ile görünür. Kaynak kart çıkınca ya da seviye düşünce etiketli kartların
+    çıkarılması önerilir (V12); Havuz'dakiler kendiliğinden gider. Havuz: kaynaklar ad ve
+    kutucuk (`UsePip`), maksı boş kaynakta maks kutusu, diğer öğeler veren kartın adı altında.
+    Dinlenme Havuz'daki kaynaklara da uygulanır.
+  - **Kart taşıyıcı** (free dünyada kart ekranı, V30): kartın listesine kart eklenince Verilenler
+    işler, özet çıkmaz; kartın Havuz'u; geri alma önerisi aynı.
+  - **Ulaşılan satırlar** (DESIGN §11.8): kağıt açıkken, o karakterin kartlarının Seviye
+    tablosunda ulaşılan satırlar işaretli (`freeReachedLevelsProvider`).
+- **Uygulamada verilen kararlar** (DESIGN'da açık değildi):
+  - Taşıyıcı verisi karakterin / kartın alanlarında: `_card_levels` (kart → seviye), `_granted`
+    (kart → veren ve satır). Listeden çıkan kartın etiketi ve seviyesi silinir; yeniden eklenen
+    kart baştan başlar (§11.2).
+  - Kağıtta Seviye alanı salt okunur: seviye yalnız [Seviye atla] ve seviyeler penceresiyle
+    değişir. Yazarken geçilen ara değerler ("1" → "" → "12") kart geri alma önerisi çıkarmasın
+    diye.
+  - Oyuncunun sildiği verilen kart bir daha eklenmez: değişiklikten önce de verilen bir kart
+    yeniden eklenmez (§11.6 "oyuncu yönetir").
+  - Havuz uyarısı yalnız Verilenler'e bakar: Seviye tablosu satırlarındaki kart dışı öğeler kart
+    verisidir, editör göremez. Silme onayı ise Seviye tablolu kategorileri de listeler.
+- **Otomatik kapı:** G1 boş · G2 + G3 + dokunulan dosyaların testleri 169 yeşil ·
+  G4 yeni uyarı yok (32 bilgi notu, hepsi önceden var) · G5 `free_grants_test` 32,
+  `free_grants_widget_test` 7, `free_character_sheet_test` 5 (+1: kağıttan seviye atlama) yeşil ·
+  G6 1873 geçti (Faz 6'daki 1833 + 40 yeni); kırmızılar temel çizgideki 3 testle aynı
+  (`bundled_pack_resolve`, `entity_card_flush`, `srd_tr_entity_card`).
+- **Nasıl açılır:** §1.2.
+- **Elle kontrol (7a):** SRD kopyası Faz 7b'de dönüşeceği için elle kurulan bir template'le:
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| E7a.1 | Templates'te boş bir template oluştur. Kategoriler: **Sınıf** (Seviye tablosu ekle; kategori ayarında Seviye modu **Ayrı**), **Alt sınıf** (Seviye tablosu; Beraber), **Özellik**, **Feat** (Verilenler ekle), **Tepki**. Oyuncu kartına listeler: Sınıflar → Sınıf, Alt sınıflar → Alt sınıf, Özellikler → Özellik, Feat'ler → Feat, Tepkiler → Tepki. | Sınıflar ve Alt sınıflar döşemesinde "Sv" etiketi. |
+| E7a.2 | Oyuncu kartından Seviye'yi sil. | Onayda "Sınıf, Alt sınıf" listelenir; editörün üstünde "Seviye alanı ister" uyarısı ve **[Ekle]**; Ekle'ye basınca uyarı kalkar. |
+| E7a.3 | Template'le dünya kur. Kartlar: **Savaşçı** (1: yazı "HP: 10 + CON", Second Wind → Özellikler, Weapon Mastery; 2: Action Surge; 3: yazı "Alt sınıf seç"), **Büyücü** (1: kaynak "1. seviye slot" maks 2, uzun: doldur; 3: aynı kaynak maks 4), **Champion** (1: Improved Critical), gerekli Özellik kartları. | Kart ekranında satır ve öğe eklenir, sıralanır, silinir. |
+| E7a.4 | Aria'yı oluştur, Sınıflar'a **Savaşçı** ekle. | Özet: Second Wind ve Weapon Mastery eklendi; "HP: 10 + CON" okunacaklarda. Özellikler'de "Veren: Savaşçı · seviye 1". |
+| E7a.5 | **Seviye atla.** | Savaşçı kendiliğinden seçili; özet: Action Surge eklendi. |
+| E7a.6 | Seviye atla, "+ Yeni ekle", **Büyücü** seç. | Büyücü "Seviye 1"; Havuz'da "1. seviye slot" 2 kutu. |
+| E7a.7 | Seviye atla, Savaşçı'yı seç; sonra Alt sınıflar'a Champion ekle. | "Alt sınıf seç" okunacaklarda; Champion'ın 1. satırı işledi. |
+| E7a.8 | Büyücü'yü listeden çıkar. | Büyücü'den gelen kartlar için çıkarma önerisi; slot Havuz'dan kendiliğinden gider. |
+| E7a.9 | Düzenleme modunda Seviye alanına dokun, Savaşçı'nın seviyesini 1'e düşür. | Action Surge için çıkarma önerisi. |
+| E7a.10 | Barbar kartı (1: kaynak Rage maks 2; 3: maks 3; 6: maks 4) ile bir karakteri 8. seviyeye çıkar. | Havuz'da Rage 4 kutu; kutu harcanır; uzun dinlenmede dolar. |
+| E7a.11 | Kağıt açıkken Savaşçı kartını aç. | Ulaşılan satırlar işaretli. |
+| E7a.12 | Birbirini veren iki Özellik kartı (A → B, B → A), birini ekle. | Uygulama takılmaz; ikisi de bir kez eklenir. |
+| E7a.13 | **Üstünlük** feat'i: Verilenler'e kaynak (maks 3, kısa / uzun: doldur), bir markdown ve bir kart (Riposte → Tepkiler). Aria'ya ekle. | Riposte Tepkiler'de "Veren: Üstünlük"; kaynak ve yazı Havuz'da, yazı feat'in adı altında. |
+| E7a.14 | Oyuncu kartından Tepkiler'i sil, dünyayı güncelle, feat'i başka bir karaktere ekle. | Riposte Havuz'da, feat'in adı altında; dokununca açılır. |
+| E7a.15 | Feat'i Aria'dan çıkar. | Havuz'daki kaynak ve yazı kendiliğinden gider; Riposte için çıkarma önerisi. |
+| E7a.16 | Canavar kategorisine Feat'ler listesi ve Havuz ekle; bir canavara feat'i ekle (kart ekranı, düzenleme). | Kaynak canavarın Havuz'unda; özet yok, dinlenme butonu yok. |
+| E7a.17 | Oyuncu kartından Havuz'u sil. | Onayda Verilenler / Seviye tablosu kullanan kategoriler; paletten geri eklenir. |
+| E7a.18 | Seviye atlama, özet ve Havuz'u telefonda ve Android'de kullan. | Rahat ve okunaklı. |
+| E7a.19 | R turu (özellikle R3, R4). | Yerleşik seviye atlama aynen. |
+
+- **Elle kontrol bulguları (2026-10-12, kullanıcı) ve düzeltmeler:**
+  - *Verilen kartın hedef listesi kategori başına seçilsin* (bir feat hem canavara hem oyuncuya
+    verilebilir): kart öğesi artık `targets: {taşıyıcı kategori: liste}` tutar; diyalogda kartı
+    alabilen her kategori için ayrı seçim (D41).
+  - *Edit modunu açıp kapatınca son kapatılan kart geri açılıyordu:* veritabanı ekranı "son
+    seçilen" kartı tutuyor, sekme kapanınca sıfırlıyordu; ilgisiz her yeniden çizim (edit modu)
+    kartı yeniden açıyordu. Seçim artık sayaçla gelir (`selectionSeq`); yalnız yeni bir seçim
+    sekme açar, aynı kartı yeniden seçmek de çalışır. Yerleşik dünyalarda da geçerli.
+  - *Havuz görüntüleme modunda görünmüyordu:* görüntüleme modu boş alanları gizliyor, Havuz'un
+    saklanan değeri boş. Kartın verdiği bir şey varsa artık görünür.
+  - *Oyuncu kısmı çalışmıyor:* hub'ın Karakterler sekmesi karakteri açarken dünyayı kimliği
+    yerine adıyla yüklemeye çalışıyordu (dünya kimliğine geçişten kalma); dünya açılmıyor, kağıtta
+    kartlar çözülmüyor, [Seviye atla] pasif kalıyordu. Kimlikle yükleniyor. Aynı hata dünyanın
+    karakter listesinde karakteri yerinde açmayı da engelliyor, karakter tam ekran açılıyordu;
+    düzeldi (yerleşik karakterler de yine yerinde açılır). Free dünyada **Yeni karakter** de
+    yerinde açılır.
+  - *Karakter ekranı yerleşikle birebir aynı olsun:* free kağıt yerleşik ekranın görünümünde
+    (D40); Faz 6'daki "portre, açıklama, görüntüle / düzenle yok" sapması kalktı. Kağıt yine
+    ayrı ekran (K3); yerleşik dosyada yalnız kaydet / senkron butonu ve penceresi public oldu.
+  - *Karakter kartındaki çipler free template'te seçilsin:* oyuncu kartının kategori ayarında
+    **Karakter kartı** bölümü (alan, Savaş değerleri'nin HP'si ya da bir değeri, kullanıcı;
+    sıra ve simge). SRD kopyası yerleşik kartın çipleriyle (HP, Tür, Sınıf, Seviye, AC,
+    Kullanıcı), yeni template Seviye ve Kullanıcı ile gelir. Yerleşik template'in çipleri aynı.
+  - Otomatik testler: `free_grants_test` (+1 kategori başına hedef), `free_template_test`
+    (+3 özet çipleri), `free_template_editor_test` (+1 çip ekle / simge),
+    `free_character_sheet_test` (yeni kağıt). G4 32 bilgi notu (temel çizgi); G6 1878 geçti
+    (+5 yeni), kırmızılar temel çizgideki 3 testle aynı.
+
+| # | Yeniden kontrol | Beklenen |
+|---|---|---|
+| E7a.20 | Bir feat'in Verilenler'ine kart öğesi ekle; oyuncu kartı ve Canavar için ayrı listeler seç. Feat'i bir karaktere ve bir canavara ekle. | Kart her birinde seçilen listeye girer. |
+| E7a.21 | Veritabanında bir kartı aç, sekmesini kapat, edit modunu aç / kapat; sonra aynı kartı kenar çubuğundan yeniden seç. | Kapatılan kart geri açılmaz; yeniden seçilince açılır. |
+| E7a.22 | Feat'i olan canavarın kartını görüntüleme modunda aç. | Havuz görünür. |
+| E7a.23 | Hub'ın Karakterler sekmesinden, dünyası kapalı bir free karakteri aç. | Dünya yüklenir; kartlar adlarıyla, [Seviye atla] etkin. |
+| E7a.24 | Free ve yerleşik dünyada karakteri kenar çubuğundan aç; free dünyada **Yeni karakter**. | Karakter kenar çubuğunda açılır; free kağıt yerleşik ekranla aynı görünümde (portre, açıklama, çipler, görüntüle / düzenle, geri al, DM notları). |
+| E7a.25 | SRD'yi yeniden kopyala; oyuncu kartının ayarında **Karakter kartı**'na Hız ekle, bir simgeyi değiştir, sırayı değiştir; dünyayı güncelle. | Hub, dünya listesi ve kağıt başlığındaki çipler yeni sırayla ve simgelerle; yerleşik karakterlerin çipleri aynı. |
+
+- **Bilinen sınırlar:**
+  - SRD kopyası henüz dönüşmüyor (Faz 7b): SRD'nin sınıfları eski `classFeatures` tipinde kalır.
+  - Ulaşılan satır işareti "kağıttan açılan kart"a değil, o sırada açık kağıda bağlı.
+  - Dünyası yüklenemeyen (diskte olmayan) karakterin kağıdında seviye sistemi kapalı.
+  - Free kağıtta grupların kolonları korunur (template düzeni); yerleşik kağıt alanları tek
+    kolonda dizer.
+  - Çiplerde dünyası kapalı karakterin dünya kartları adla değil "—" ile görünür (hub listesi
+    dünya kartlarını yüklemez).
+  - Öğe olarak görsel, dosya, dönem görseli, tarih ve kart bağlantısı tarzı seçilemez (kart
+    bağlantısının yerini kart öğesi tutar).
 
 ---
 

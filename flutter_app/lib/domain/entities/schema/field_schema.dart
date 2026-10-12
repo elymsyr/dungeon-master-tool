@@ -90,10 +90,31 @@ enum FieldType {
   /// At most one per player card; its style never changes. Card value: int.
   characterLevel,
 
-  /// Free templates only: the player card's automatic resources — the ones
-  /// cards grant (DESIGN §10.1, §12). At most one per player card. Filled
-  /// in Faz 7; card value until then: none.
+  /// Free templates only: the **Pool** (DESIGN §8.7, D38) — what a carrier's
+  /// cards grant that no list takes: resources (name and boxes), other
+  /// items under the granting card's name. At most one per category; the
+  /// name and key (`auto_resources`) are Faz 6's. The pool itself is read
+  /// from the carrier's cards (`free_grants.dart`), never stored (V29).
+  /// Card value: the resources' current values by name, `{name: {current?,
+  /// max?}}` (`max` only where the item leaves it to the player, D30).
   autoResources,
+
+  /// Free templates only: **Grants** (Verilenler, DESIGN §8.5, D37) — what
+  /// a card passes to the carrier that takes it into a list. Card value:
+  /// `List<item>`, each `{_id, kind: card|resource|style, …}`: a card
+  /// `{card: ref, targets?: {carrier category slug: list fieldKey}}`, a
+  /// resource `{name, max?, short: fill|empty|keep, long: …}` (D39),
+  /// another style `{style: FieldType
+  /// json name, label, config?: styleConfig, value?}`. Read through
+  /// `free_grants.dart`.
+  grantHolder,
+
+  /// Free templates only: the **Level table** (DESIGN §8.4; a new name, the
+  /// built-in [levelTable] is taken, ROADMAP B6). At most one per category
+  /// (V9); the category's `levelMode` says whose level its rows follow.
+  /// Card value: `List<{_id, level: int, text?: markdown, items?: [grant
+  /// item]}>` — items as in [grantHolder].
+  progressionTable,
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

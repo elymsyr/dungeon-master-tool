@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
+import '../../application/providers/content_translator_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/free_character_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
@@ -11,8 +13,12 @@ import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart'
+    show builtinDnd5eV2SchemaId;
+import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/services/content_translator.dart';
 import '../../domain/services/entity_ref.dart';
+import '../../domain/services/free_template.dart';
 import '../theme/dm_tool_colors.dart';
 import '../l10n/app_localizations.dart';
 
@@ -250,6 +256,125 @@ List<CharacterStatLine> characterStatLinesWithNames(
       value: ownerLabel ?? '—',
     ),
   ];
+}
+
+/// The icons a free template's summary chip can take (the template
+/// editor's picker), by material name.
+const List<(String, IconData)> kChipIconChoices = [
+  ('favorite', Icons.favorite),
+  ('pets', Icons.pets),
+  ('diversity_3', Icons.diversity_3),
+  ('shield_moon_outlined', Icons.shield_moon_outlined),
+  ('trending_up', Icons.trending_up),
+  ('security', Icons.security),
+  ('person_outline', Icons.person_outline),
+  ('shield', Icons.shield),
+  ('bolt', Icons.bolt),
+  ('auto_awesome', Icons.auto_awesome),
+  ('auto_fix_high', Icons.auto_fix_high),
+  ('star', Icons.star),
+  ('speed', Icons.speed),
+  ('directions_run', Icons.directions_run),
+  ('local_fire_department', Icons.local_fire_department),
+  ('psychology', Icons.psychology),
+  ('visibility', Icons.visibility),
+  ('school', Icons.school),
+  ('menu_book', Icons.menu_book),
+  ('history_edu', Icons.history_edu),
+  ('military_tech', Icons.military_tech),
+  ('emoji_events', Icons.emoji_events),
+  ('monetization_on', Icons.monetization_on),
+  ('healing', Icons.healing),
+  ('fitness_center', Icons.fitness_center),
+  ('backpack', Icons.backpack),
+  ('casino', Icons.casino),
+  ('explore', Icons.explore),
+  ('public', Icons.public),
+  ('groups', Icons.groups),
+];
+
+IconData chipIconFromName(String name) =>
+    kChipIconChoices.where((c) => c.$1 == name).firstOrNull?.$2 ??
+    Icons.label_outline;
+
+/// A free character's summary chips: its player card's own, fields and
+/// icons picked in the template editor. The user chip reads [ownerLabel].
+List<CharacterStatLine> freeChipLines(
+  EntityCategorySchema card,
+  Map<String, dynamic> fields,
+  Map<String, Entity> entities, {
+  required L10n l10n,
+  ContentTranslator tx = ContentTranslator.identity,
+  String? ownerLabel,
+}) {
+  String? name(Object? raw) {
+    final id = resolveEntityRef(raw, entities);
+    final e = id == null ? null : entities[id];
+    if (e != null) {
+      return tx.forCard(isSrdCard(e.linked, e.source)).tr(e.categorySlug, e.name);
+    }
+    return raw is Map && raw['name'] is String ? raw['name'] as String : null;
+  }
+
+  return [
+    for (final chip in sheetChipsOf(card))
+      if (chip.field == ownerChipField)
+        CharacterStatLine(
+          icon: chipIconFromName(chip.icon),
+          label: l10n.statUser,
+          value: ownerLabel ?? '—',
+        )
+      else if (sheetChipValue(card, chip, fields, name) case final v?)
+        CharacterStatLine(
+          icon: chipIconFromName(chip.icon),
+          label: tx.tr(ContentTranslator.schemaScope, v.label),
+          value: v.value,
+        ),
+  ];
+}
+
+/// The chips a character card shows: a free template's own
+/// ([freeChipLines]), the built-in template's six otherwise
+/// ([characterStatLines]).
+List<CharacterStatLine> characterChipLines(
+  BuildContext context,
+  WidgetRef ref,
+  Character character,
+  Map<String, Entity> entities, {
+  String? ownerLabel,
+}) {
+  final l10n = L10n.of(context)!;
+  final tx = ref.watch(contentTranslatorProvider);
+  if (character.templateId != builtinDnd5eV2SchemaId) {
+    final free = ref.watch(
+      freeCharacterSchemaProvider((
+        worldId: character.worldId,
+        templateId: character.templateId,
+      )),
+    );
+    if (free.isLoading) return const [];
+    final card = switch (free.valueOrNull) {
+      final schema? => freePlayerCard(schema),
+      null => null,
+    };
+    if (card != null) {
+      return freeChipLines(
+        card,
+        character.entity.fields,
+        entities,
+        l10n: l10n,
+        tx: tx,
+        ownerLabel: ownerLabel,
+      );
+    }
+  }
+  return characterStatLines(
+    l10n: l10n,
+    tx: tx,
+    character,
+    entities,
+    ownerLabel: ownerLabel,
+  );
 }
 
 /// Resolves the human-readable owner label for [character]'s `User` chip.

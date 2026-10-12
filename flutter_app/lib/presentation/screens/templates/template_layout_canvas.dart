@@ -336,6 +336,22 @@ class _FieldTile extends StatelessWidget {
                 _Tag(text: '[ ]', tooltip: l10n.tplList, palette: palette),
               if (f.isRequired)
                 _Tag(text: '*', tooltip: l10n.tplRequired, palette: palette),
+              // DESIGN §10.1: a list of a category with a Level table.
+              if (f.fieldType == FieldType.relation &&
+                  f.isList &&
+                  c.schema.categories.any(
+                    (t) =>
+                        (f.validation.allowedTypes?.contains(t.slug) ??
+                            false) &&
+                        t.fields.any(
+                          (x) => x.fieldType == FieldType.progressionTable,
+                        ),
+                  ))
+                _Tag(
+                  text: l10n.tplLevelListBadge,
+                  tooltip: l10n.tplLevelListBadgeHint,
+                  palette: palette,
+                ),
               if (f.visibility != FieldVisibility.shared)
                 Tooltip(
                   message: f.visibility == FieldVisibility.dmOnly

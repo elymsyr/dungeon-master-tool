@@ -9,6 +9,8 @@ import '../../../core/utils/screen_type.dart';
 import '../../../application/providers/builtin_package_provider.dart';
 import '../../../application/providers/content_translator_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/free_character_provider.dart'
+    show freeReachedLevelsProvider;
 import '../../../application/providers/shared_entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
@@ -22,9 +24,11 @@ import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/content_translator.dart';
 import '../../../domain/services/free_field_styles.dart' show freeFieldValue;
+import '../../../domain/services/free_grants.dart';
 import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../characters/free_level_dialogs.dart' show confirmRemoveGranted;
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/quota_snackbar.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
@@ -284,6 +288,47 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   ) {
     if (!focus.hasFocus && ctrl.text != newValue) {
       ctrl.text = newValue;
+    }
+  }
+
+  /// The level system's context when this card lives in a free world and
+  /// may carry cards (DESIGN §8.7, V30); null elsewhere.
+  GrantContext? _grantContext(Entity entity) {
+    final schema = ref.read(worldSchemaProvider);
+    if (!isFreeTemplate(schema)) return null;
+    final cat = schema.categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    if (cat == null) return null;
+    return GrantContext(
+      carrier: cat,
+      categories: schema.categories,
+      entities: ref.read(entityProvider),
+    );
+  }
+
+  /// A card carrying cards: a change to its lists applies their Grants (no
+  /// summary, V30) and offers to take back labelled cards nothing grants
+  /// any more (V12).
+  Future<void> _settleCarried(
+    GrantContext ctx,
+    Map<String, dynamic> Function(Map<String, dynamic>) change,
+  ) async {
+    final current =
+        _takePendingUpdate() ?? ref.read(entityProvider)[widget.entityId];
+    if (current == null) return;
+    final result = settleGrants(current.fields, change(current.fields), ctx);
+    ref
+        .read(entityProvider.notifier)
+        .update(current.copyWith(fields: result.fields));
+    if (result.stale.isEmpty || !mounted) return;
+    if (await confirmRemoveGranted(
+          context,
+          ids: result.stale,
+          entities: ctx.entities,
+        ) &&
+        mounted) {
+      await _settleCarried(ctx, (f) => withoutCards(f, result.stale, ctx));
     }
   }
 
@@ -805,13 +850,40 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         field.fieldType == FieldType.relation &&
         !field.hasEquip;
 
+    // Free world: the card may carry cards (DESIGN §8.5, §8.7).
+    final list = field.isList && field.fieldType == FieldType.relation;
+    final grantCtx =
+        list ||
+            field.fieldType == FieldType.autoResources ||
+            field.fieldType == FieldType.progressionTable
+        ? _grantContext(entity)
+        : null;
+
     return FieldWidgetFactory.create(
       schema: tx.field(field),
       value: shown,
       readOnly: widget.readOnly,
-      onChanged: identical(shown, fieldValue)
-          ? (v) => _updateField(field.fieldKey, v)
-          : (_) {},
+      onChanged: !identical(shown, fieldValue)
+          ? (_) {}
+          : list && grantCtx != null
+          ? (v) => _settleCarried(grantCtx, (f) => {...f, field.fieldKey: v})
+          : (v) => _updateField(field.fieldKey, v),
+      grants: grantCtx != null && field.fieldType == FieldType.autoResources
+          ? computeGrants(entity.fields, grantCtx)
+          : null,
+      reachedLevel:
+          grantCtx != null && field.fieldType == FieldType.progressionTable
+          ? ref.watch(freeReachedLevelsProvider)[entity.id]
+          : null,
+      itemCaptions: list && grantCtx != null
+          ? {
+              for (final MapEntry(key: id, value: l)
+                  in grantLabelsOf(entity.fields).entries)
+                id: L10n.of(context)!.freeGrantedFromCard(
+                  grantCtx.entities[l.from]?.name ?? l.from,
+                ),
+            }
+          : null,
       entities: ref.read(entityProvider),
       ref: ref,
       entityFields: entity.fields,
@@ -917,11 +989,16 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       // grup kartı da aşağıdaki `groupFields.isEmpty` ile tamamen düşer.
       final base = fieldsVisibleToRole(fields, isPlayer: isPlayer);
       if (!readOnly) return base;
-      return base
-          .where(
-            (f) => _isFieldVisibleInReadOnly(f, freeFieldValue(f, entity.fields)),
-          )
-          .toList();
+      return base.where((f) {
+        // The Pool stores only spent values; what fills it is granted.
+        if (f.fieldType == FieldType.autoResources) {
+          final ctx = _grantContext(entity);
+          if (ctx == null) return false;
+          final g = computeGrants(entity.fields, ctx);
+          return g.resources.isNotEmpty || g.entries.isNotEmpty;
+        }
+        return _isFieldVisibleInReadOnly(f, freeFieldValue(f, entity.fields));
+      }).toList();
     }
 
     final ungrouped = filterVisible(fullUngrouped);

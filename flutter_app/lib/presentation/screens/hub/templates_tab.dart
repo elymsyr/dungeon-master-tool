@@ -211,7 +211,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             name,
             playerCardName: l10n.templatePlayerCardName,
             levelLabel: l10n.tplStyleLevel,
-            autoResourcesLabel: l10n.tplStyleAutoResources,
+            poolLabel: l10n.tplStylePool,
           ),
     );
   }

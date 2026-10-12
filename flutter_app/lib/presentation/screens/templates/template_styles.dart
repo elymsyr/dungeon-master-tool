@@ -42,7 +42,9 @@ String styleLabel(L10n l10n, FieldType t) => switch (t) {
   FieldType.resource => l10n.tplStyleResource,
   FieldType.combatStats => l10n.tplStyleCombatStats,
   FieldType.characterLevel => l10n.tplStyleLevel,
-  FieldType.autoResources => l10n.tplStyleAutoResources,
+  FieldType.autoResources => l10n.tplStylePool,
+  FieldType.grantHolder => l10n.tplStyleGrants,
+  FieldType.progressionTable => l10n.tplStyleLevelTable,
   // Kept SRD types show their code name next to the "SRD type" badge.
   _ => t.name,
 };
@@ -68,7 +70,9 @@ String styleHint(L10n l10n, FieldType t) => switch (t) {
   FieldType.resource => l10n.tplStyleResourceHint,
   FieldType.combatStats => l10n.tplStyleCombatStatsHint,
   FieldType.characterLevel => l10n.tplStyleLevelHint,
-  FieldType.autoResources => l10n.tplStyleAutoResourcesHint,
+  FieldType.autoResources => l10n.tplStylePoolHint,
+  FieldType.grantHolder => l10n.tplStyleGrantsHint,
+  FieldType.progressionTable => l10n.tplStyleLevelTableHint,
   _ => l10n.tplLegacyHint,
 };
 
@@ -94,6 +98,8 @@ IconData styleIcon(FieldType t) => switch (t) {
   FieldType.combatStats => Icons.shield_outlined,
   FieldType.characterLevel => Icons.trending_up,
   FieldType.autoResources => Icons.auto_awesome_outlined,
+  FieldType.grantHolder => Icons.card_giftcard_outlined,
+  FieldType.progressionTable => Icons.stairs_outlined,
   _ => Icons.extension_outlined,
 };
 

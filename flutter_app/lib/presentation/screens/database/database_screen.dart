@@ -40,11 +40,17 @@ class DatabaseScreen extends ConsumerStatefulWidget {
   /// concrete 'left'/'right' before propagating.
   final String? selectedEntityPanel;
 
+  /// Bumped by the host on every selection, so choosing the card again
+  /// (after its tab closed) opens it, and any other rebuild (edit mode)
+  /// does not.
+  final int selectionSeq;
+
   const DatabaseScreen({
     this.editMode = false,
     this.selectedEntityId,
     this.onEntitySelected,
     this.selectedEntityPanel,
+    this.selectionSeq = 0,
     super.key,
   });
 
@@ -59,23 +65,22 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   int _rightActiveIndex = -1;
   String? _currentWorldKey;
 
-  /// En son sekmeye çevrilmiş [DatabaseScreen.selectedEntityId]. Sekme
-  /// kapatılınca sıfırlanır — aksi halde aynı kart ikinci kez seçildiğinde
-  /// değer değişmediği için didUpdateWidget sekmeyi hiç açmıyordu.
-  String? _consumedSelection;
-
   @override
   void didUpdateWidget(DatabaseScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Yalnız yeni bir seçim sekme açar. Eskiden "son açılan" id tutuluyor ve
+    // sekme kapanınca sıfırlanıyordu; edit modu gibi ilgisiz bir rebuild
+    // kapatılan kartı geri açıyordu.
     if (widget.selectedEntityId != null &&
-        widget.selectedEntityId != _consumedSelection) {
+        (widget.selectedEntityId != oldWidget.selectedEntityId ||
+            widget.selectedEntityPanel != oldWidget.selectedEntityPanel ||
+            widget.selectionSeq != oldWidget.selectionSeq)) {
       // Build sırasında provider değiştirilemez — frame sonrasına ertele
       final eid = widget.selectedEntityId!;
       final targetPanel = switch (widget.selectedEntityPanel) {
         'right' => _Panel.right,
         _ => _Panel.left,
       };
-      _consumedSelection = eid;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _openTab(eid, panel: targetPanel);
       });
@@ -148,8 +153,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           ? _phoneMaxOpenTabs
           : _desktopMaxOpenTabs;
       while (tabs.length > limit) {
-        final dropped = tabs.removeAt(0);
-        if (dropped.entityId == _consumedSelection) _consumedSelection = null;
+        tabs.removeAt(0);
       }
       if (panel == _Panel.left) {
         _leftActiveIndex = _leftTabs.length - 1;
@@ -171,8 +175,6 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   }
 
   void _closeTab(int index, _Panel panel) {
-    final closed = (panel == _Panel.left ? _leftTabs : _rightTabs)[index];
-    if (closed.entityId == _consumedSelection) _consumedSelection = null;
     setState(() {
       if (panel == _Panel.left) {
         _leftTabs.removeAt(index);
@@ -188,7 +190,6 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   /// Closes every tab showing [entityId] — fired when the entity is deleted
   /// from within a card so the tab doesn't linger as a blank page.
   void _closeTabForEntity(String entityId) {
-    if (entityId == _consumedSelection) _consumedSelection = null;
     setState(() {
       _leftTabs.removeWhere((t) => t.entityId == entityId);
       _rightTabs.removeWhere((t) => t.entityId == entityId);

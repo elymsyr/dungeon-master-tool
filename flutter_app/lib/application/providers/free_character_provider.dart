@@ -54,6 +54,13 @@ final freeCharacterSchemaProvider = FutureProvider.autoDispose
       return templates.where((t) => t.schemaId == key.templateId).firstOrNull;
     });
 
+/// The open free character's reached levels by card id (DESIGN §11.8): a
+/// card opened while the sheet is open marks the Level table rows its
+/// character has reached. The sheet writes it and clears it on close.
+final freeReachedLevelsProvider = StateProvider<Map<String, int>>(
+  (_) => const {},
+);
+
 /// A blank free character on [schema] (DESIGN §10.2, D24): no wizard,
 /// level 1 (D35). [worldId] null: a worldless character of the template.
 Future<Character> createFreeCharacter(

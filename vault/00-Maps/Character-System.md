@@ -24,7 +24,7 @@ tags: [moc]
 - [[wizard_options]] — sihirbaz adımlarının seçenek yüklemleri (büyü→sınıf, alt sınıf→sınıf, alt tür→tür); adımlar ve U2 paket testleri aynı fonksiyonları çağırır.
 - [[pending_choices]] — queued choice kinds (ASI, feat, subclass, spell, equipment…).
 - [[effective_character]] — computed view (AC, init, prof, immunities, warnings).
-- [[free_character_sheet]] — a free template's character: blank sheet in the player card's layout, main level, Short / Long rest; no wizard, no resolver (`docs/free-template`, Faz 6).
+- [[free_character_sheet]] — a free template's character: blank sheet in the player card's layout, main level, Level up, Short / Long rest, granted cards and the Pool through [[free_grants]]; no wizard, no resolver (`docs/free-template`, Faz 6, Faz 7a).
 
 > [!warning] Bir mekaniğin "alanda değeri var" olması sayfaya ulaştığı anlamına gelmiyor — audit **M1** (2026-08-13)
 > `test/domain/services/bundled_pack_resolve_test.dart` artık 19 paketin oyuncuya dönük kartlarının yazdığı **her** alanı gezip [[character_resolver]] üzerinden bir `EffectiveCharacter` etkisi istiyor: **68 (paket, mekanik alan) çifti, 227 iddia**. Bir alan ya bir sayfa probuna, ya `notResolverRead`'e (okuyucusu adlandırılmış 24 alan), ya da `unreadByAnyone`'a düşmek zorunda; başka her şey testi kırar. İlk koşuda **hiçbir paket feat'inin ASI'sini uygulamadığı** ortaya çıktı — `asi_ability_options` kurulumdan sonra id tutuyor, sezgisel ise yalnız `{_lookup, name}` okuyordu; tek okuyucu [[entity_ref]]`.abilityAbbrevFromRef` oldu.

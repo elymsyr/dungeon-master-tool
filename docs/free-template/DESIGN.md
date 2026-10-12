@@ -124,9 +124,11 @@ listeli.
 | **D34** | *(2026-10-12, Faz 6 öncesi; V14'ün yerine)* Oyuncu kartındaki **Seviye** ve **Otomatik kaynaklar** alanları silinebilir; tarzları değişmez, oyuncu kartında en fazla birer tane olur, silinince paletten geri eklenir. Template bunları kullanan bir şey eklerken alan yoksa uyarı çıkar ve tek tıkla eklenir; template bunları kullanırken silinirse önce uyarı sorulur (§10.1). *(2026-10-12, D38: Otomatik kaynaklar'ın yerini Havuz aldı. Havuz her kategoriye eklenebilir; oyuncu kartı için bu karar aynen geçerli.)* |
 | **D35** | *(2026-10-12; V15 onaylı)* Yeni karakter seviye 1'de başlar. |
 | **D36** | *(2026-10-12, Faz 6 öncesi; V17, V19 ve V23'ün yerine)* **Savaş değerleri** birleşik bir tarzdır ve özelleştirilebilir (§8.6). İçindeki değerler sadece **Sayı**, **Zar** ya da **Kart listesi** (durumlar için) olabilir. Tek zorunlu parçası **HP / Max HP**'dir. Encounter tablosunda sadece bu bloğun değerleri gösterilebilir; hangilerinin gösterileceği değer başına seçilir. Blok bir hazır içerik olarak encounter'a girebilen her kategoriye bağlanır. SRD'deki metin değerler (Hız, CR) sayıya çevrilir ve bloğun dışında normal alan olur. |
-| **D37** | *(2026-10-12, Faz 7 öncesi; §8.5'teki Kaynak verme'nin ve seviye tablosundaki "Verilen kartlar" kolonunun yerine)* **Verilenler** (grant holder) birleşik bir tarzdır ve her kategoriye eklenebilir (§8.5). İçine diğer tarzlardan öğe konur: kart, yazı, markdown, tablo, kaynak, sayı… Kart bir **taşıyıcının** (karakter ya da başka bir kart) listesine girince Verilenler'indeki öğeler taşıyıcıya geçer. Kart öğesi taşıyıcıda kendi kategorisinden bir listeye girer: öğede seçilen hedef liste, seçilmediyse o kategoriyi hedefleyen ilk liste. Uygun liste yoksa kart, kart olmayan her öğe gibi taşıyıcının **Havuz**'una girer. Seviye tablosu satırının verdikleri de aynı öğelerdir. Verilen kartın da Verilenler'i ya da seviye tablosu varsa aynı taşıyıcıya işler (zincir); tekrar eklenmez, döngüye girmez. |
+| **D37** | *(2026-10-12, Faz 7 öncesi; §8.5'teki Kaynak verme'nin ve seviye tablosundaki "Verilen kartlar" kolonunun yerine)* **Verilenler** (grant holder) birleşik bir tarzdır ve her kategoriye eklenebilir (§8.5). İçine diğer tarzlardan öğe konur: kart, yazı, markdown, tablo, kaynak, sayı… Kart bir **taşıyıcının** (karakter ya da başka bir kart) listesine girince Verilenler'indeki öğeler taşıyıcıya geçer. Kart öğesi taşıyıcıda kendi kategorisinden bir listeye girer: öğede seçilen hedef liste, seçilmediyse o kategoriyi hedefleyen ilk liste. Uygun liste yoksa kart, kart olmayan her öğe gibi taşıyıcının **Havuz**'una girer. Seviye tablosu satırının verdikleri de aynı öğelerdir. Verilen kartın da Verilenler'i ya da seviye tablosu varsa aynı taşıyıcıya işler (zincir); tekrar eklenmez, döngüye girmez. *(D41: hedef liste taşıyıcı kategori başına seçilir.)* |
 | **D38** | *(2026-10-12, Faz 7 öncesi; Otomatik kaynaklar'ın yerine)* **Havuz** birleşik bir tarzdır ve her kategoriye eklenebilir; bir kategoride en fazla bir tane olur (§8.7). Taşıyıcının listelere girmeyen verilenlerini gösterir. Kaynaklar yalnız adı ve kutucuklarıyla görünür, kutucuklar elle doldurulup boşaltılır (yerleşik template'teki sınıf kaynak takipçisi gibi). Diğer öğeler veren kartın adıyla gruplanır ("Savaşçı'dan"). Yeni template'te oyuncu kartında hazır gelir; oyuncu kartı için D34 geçerlidir. |
 | **D39** | *(2026-10-12, Faz 7 öncesi; V25 onaylı)* **Kaynak öğesi** ad, maks ve kısa / uzun dinlenme davranışı taşır; açıklaması yoktur, kural gerekiyorsa yanına bir yazı öğesi konur. Aynı karttan gelen aynı adlı kaynak üstüne eklenmez, yerine geçer: seviye tablosunda ulaşılan en yüksek satırınki geçerlidir, kartın kendi Verilenler'i satırlardan önce sayılır. Farklı kartlardan gelen aynı adlı kaynaklarda büyük olan geçer. |
+| **D40** | *(2026-10-12, Faz 7a elle kontrolü)* Free karakter kağıdı yerleşik karakter ekranıyla aynı görünür: portre, ad, "template · dünya", açıklama, özet çipleri, görüntüle / düzenle, geri al / yinele, kaydet / senkron, DM notları, bölüm atlama; altında oyuncu kartının grupları. Kağıt yine ayrı ekrandır. Karakter kartlarında (hub, dünyanın karakter listesi, oyuncu sekmesi) ve kağıdın başlığında görünen **özet çipleri** free template'te oyuncu kartının kategori ayarında seçilir: alan (Savaş değerleri'nin HP'si ya da bir değeri dahil) ya da kullanıcı; sırası ve simgesiyle. Yerleşik template'in çipleri aynı kalır. |
+| **D41** | *(2026-10-12, Faz 7a elle kontrolü; D37'deki hedef listeyi değiştirir)* Kart öğesinin hedef listesi **taşıyıcı kategori başına** seçilir: aynı feat bir canavara da oyuncuya da verilebilir, her birinde kendi listesine girer. Seçim yapılmayan kategoride D37'deki kural geçerlidir. |
 
 ---
 
@@ -777,6 +779,10 @@ Karakter kağıdı oyuncu kartının düzeniyle çizilir. Başlıkta şu butonla
 - **[Seviye atla]** §11.4'teki akışı başlatır.
 - **[Kısa dinlenme] / [Uzun]** §12.3'teki gibi kaynakları günceller.
 - **[Rehber]** karakter oluşturma rehberini açar ya da kaldığı yerden sürdürür (§13).
+- **Görünüm (D40):** yerleşik karakter ekranıyla aynı: portre, ad, "template · dünya", açıklama,
+  özet çipleri, görüntüle / düzenle, geri al / yinele, DM notları, bölüm atlama. Butonlar yerleşik
+  kağıttaki gibi başlığın altında bir satırdadır; ana seviye bir özet çipinde görünür. Çipler
+  oyuncu kartının kategori ayarında seçilir (alan ya da kullanıcı, sıra, simge).
 - **Yerleşik template'e özel parçalar çıkmaz.** "Çözülen grant'ler" kartı, sınıf kaynak takipçisi
   ve gizli alan davranışları free kağıtta yoktur. Gizli davranışlara örnek: `extra_hp`'nin HP'yi
   değiştirmesi, AC'nin üzerine yazılması.
@@ -1438,11 +1444,11 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V6 | Hazır içerik tek alan ya da alan grubu olabilir. *(2026-10-11: Faz 4'te yalnız tek alan. 2026-10-12: Savaş değerleri tek alan oldu (D36); grup hazır içeriğini gerektiren bir şey kalmadı, ihtiyaç çıkana kadar yapılmaz.)* | §9 |
 | V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. *(onaylı, 2026-10-11)* | §9 |
 | V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. *(onaylı, 2026-10-11; anahtar istisnası D33)* | §9 |
-| V9 | Bir kategoride en fazla bir seviye tablosu olur. | §8.4 |
+| V9 | Bir kategoride en fazla bir seviye tablosu olur. *(onaylı, 2026-10-12)* | §8.4 |
 | V10 | Verilen kartın hedefi: öğede seçilen liste; yoksa o kategoriyi hedefleyen ilk liste; o da yoksa Havuz; Havuz da yoksa uyarı. *(onaylı ve güncellendi, 2026-10-12; D37)* | §11.6 |
-| V11 | Verilen kartlar ayrı bir kategoriye düşse bile ana seviyeyi izler ve seviye atlamada seçilmez. | §11.3 |
-| V12 | Verilen kart kaynak etiketiyle yazılır. Kaynak kart çıkarılırsa ya da seviye elle düşürülürse etiketli kartların çıkarılması önerilir. | §11.6, §11.7 |
-| V13 | Ayrı kategoride tek kart varsa seviye atlamada kendiliğinden seçilir; kartı olmayan ayrı kategori atlanır. | §11.4 |
+| V11 | Verilen kartlar ayrı bir kategoriye düşse bile ana seviyeyi izler ve seviye atlamada seçilmez. *(onaylı, 2026-10-12)* | §11.3 |
+| V12 | Verilen kart kaynak etiketiyle yazılır. Kaynak kart çıkarılırsa ya da seviye elle düşürülürse etiketli kartların çıkarılması önerilir. *(onaylı, 2026-10-12)* | §11.6, §11.7 |
+| V13 | Ayrı kategoride tek kart varsa seviye atlamada kendiliğinden seçilir; kartı olmayan ayrı kategori atlanır. *(onaylı, 2026-10-12)* | §11.4 |
 | ~~V14~~ | ~~Ana seviye ve otomatik kaynaklar oyuncu kartında silinemez sabit alanlardır.~~ *Reddedildi (2026-10-12): silinebilir, bağımlılık uyarısıyla; D34.* | §10.1 |
 | V15 | Yeni karakter seviye 1'de başlar; daha yüksek seviye için seviye atlanır. *(onaylı, 2026-10-12; D35)* | §13.3 |
 | V16 | Rehber adımı bir alana bağlı ya da alansız olabilir. | §13.2 |
@@ -1453,13 +1459,13 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V21 | Free template'li dünyada "online yap" ilk fazda kapalıdır. | §17 |
 | V22 | Telefonda gruplar tek kolon; isteğe bağlı "telefonda kolon sayısı" ayarı. | §7.4 |
 | ~~V23~~ | ~~`combat_stats` kopyada ayrı alanlara bölünür.~~ *Reddedildi (2026-10-12): Savaş değerleri bloğu olur; Hız ve CR sayıya çevrilip dışarı çıkar; D36.* | §16.2 |
-| V24 | `spellsAtLevel` kopyada seviye tablosuna çevrilir; o kategoriler beraber modda seviye tablolu olur. | §16.2 |
+| V24 | `spellsAtLevel` kopyada seviye tablosuna çevrilir; o kategoriler beraber modda seviye tablolu olur. *(onaylı, 2026-10-12)* | §16.2 |
 | V25 | Aynı isimli tablolu kaynaklarda büyük olan geçer; çok sınıflı birleşik slot tablosu yoktur. *(onaylı, 2026-10-12: farklı kartlardan gelenlerde; aynı karttan gelen yerine geçer, D39)* | §12.2 |
 | V26 | Editör değişiklikleri otomatik kaydeder; dünyalara banner ile gider. | §7.7 |
 | V27 | Editörde gerçek kart görünümüyle önizleme vardır. | §7.5 |
 | V28 | "SRD içeriğini ekle" seçeneği SRD soyundan gelen kopyalarda da çıkar. | §16.5 |
-| V29 | Havuz saklanmaz, taşıyıcının kartlarından okunur; yalnız kaynakların mevcut değerleri saklanır. Veren kart çıkınca Havuz'daki öğeleri kendiliğinden gider. Listeye giren kartlar ise etiketleriyle saklanır (V12). | §8.7, §11.7 |
-| V30 | Kart taşıyıcının seviyesi yoktur: Verilenler işler, seviye tabloları işlemez; özet ekranı ve dinlenme butonları yoktur. | §8.7, §11.5 |
-| V31 | Verilenler'e Verilenler, Seviye tablosu, Havuz, Savaş değerleri ve Seviye konamaz. | §8.5 |
-| V32 | Yeni gelen kaynak dolu başlar. Maks değişince mevcut değer korunur, maksı aşıyorsa maksa iner. | §8.7 |
-| V33 | SRD kopyasında feat, trait ve tür kartlarının grant alanları (`granted_senses`, direnç listeleri…) Verilenler'e çevrilmez, okunur liste olarak kalır. Verilenler'e yalnız sınıf özelliklerinin `granted_*_refs`'i ve kaynak havuzları gelir. | §16.2, §16.3 |
+| V29 | Havuz saklanmaz, taşıyıcının kartlarından okunur; yalnız kaynakların mevcut değerleri saklanır. Veren kart çıkınca Havuz'daki öğeleri kendiliğinden gider. Listeye giren kartlar ise etiketleriyle saklanır (V12). *(onaylı, 2026-10-12)* | §8.7, §11.7 |
+| V30 | Kart taşıyıcının seviyesi yoktur: Verilenler işler, seviye tabloları işlemez; özet ekranı ve dinlenme butonları yoktur. *(onaylı, 2026-10-12)* | §8.7, §11.5 |
+| V31 | Verilenler'e Verilenler, Seviye tablosu, Havuz, Savaş değerleri ve Seviye konamaz. *(onaylı, 2026-10-12)* | §8.5 |
+| V32 | Yeni gelen kaynak dolu başlar. Maks değişince mevcut değer korunur, maksı aşıyorsa maksa iner. *(onaylı, 2026-10-12)* | §8.7 |
+| V33 | SRD kopyasında feat, trait ve tür kartlarının grant alanları (`granted_senses`, direnç listeleri…) Verilenler'e çevrilmez, okunur liste olarak kalır. Verilenler'e yalnız sınıf özelliklerinin `granted_*_refs`'i ve kaynak havuzları gelir. *(onaylı, 2026-10-12)* | §16.2, §16.3 |

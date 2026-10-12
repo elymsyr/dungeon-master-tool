@@ -73,11 +73,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
   /// olan HER child'ı build ettiği için, bir kart seçimi için atılan setState
   /// yedi ağır alt ağacı birden yeniden inşa ediyordu. Artık yalnız
   /// `DatabaseScreen`'i saran ValueListenableBuilder tetikleniyor.
-  final ValueNotifier<({String? id, String? panel})> _selectedEntity =
-      ValueNotifier<({String? id, String? panel})>((id: null, panel: null));
+  final ValueNotifier<({String? id, String? panel, int seq})> _selectedEntity =
+      ValueNotifier((id: null, panel: null, seq: 0));
 
   void _selectEntity(String? id, {String? panel}) {
-    _selectedEntity.value = (id: id, panel: panel);
+    _selectedEntity.value = (
+      id: id,
+      panel: panel,
+      seq: _selectedEntity.value.seq + 1,
+    );
   }
 
   // Left sidebar state
@@ -692,12 +696,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // build ediliyor. Sekme ilk ziyaretinde zaten mount edilip saklanıyor.
       prewarm: screen != ScreenType.phone,
       children: [
-        ValueListenableBuilder<({String? id, String? panel})>(
+        ValueListenableBuilder<({String? id, String? panel, int seq})>(
           valueListenable: _selectedEntity,
           builder: (_, sel, _) => DatabaseScreen(
             editMode: editMode,
             selectedEntityId: sel.id,
             selectedEntityPanel: sel.panel,
+            selectionSeq: sel.seq,
             onEntitySelected: (id) => _selectEntity(id),
           ),
         ),
