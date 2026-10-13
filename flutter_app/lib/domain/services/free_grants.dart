@@ -2,7 +2,8 @@ import '../entities/entity.dart';
 import '../entities/schema/entity_category_schema.dart';
 import '../entities/schema/field_schema.dart';
 import 'entity_ref.dart';
-import 'free_field_styles.dart' show RestEffect, RestKind, afterRest;
+import 'free_field_styles.dart'
+    show RestEffect, RestKind, afterRest, freeFieldValue;
 
 /// The free template's level system (docs/free-template/DESIGN.md §8.4,
 /// §8.5, §8.7, §11): Grants, the Level table and the Pool. A card passes
@@ -273,6 +274,13 @@ List<FieldSchema> carrierListsOf(EntityCategorySchema c) => [
     if (f.fieldType == FieldType.relation && f.isList) f,
 ];
 
+/// The links whose cards grant the carrier: its lists and its single card
+/// links. Granted cards still only join lists.
+List<FieldSchema> carrierLinksOf(EntityCategorySchema c) => [
+  for (final f in c.fields)
+    if (f.fieldType == FieldType.relation) f,
+];
+
 /// Whether [list] takes cards of [slug]: it names it, or names nothing.
 bool listTakes(FieldSchema list, String slug) {
   final t = list.validation.allowedTypes;
@@ -329,12 +337,11 @@ int? mainLevelOf(EntityCategorySchema carrier, Map<String, dynamic> fields) {
 String? _refId(Object? raw, Map<String, Entity> byId) =>
     resolveEntityRef(raw is Map && raw['id'] != null ? raw['id'] : raw, byId);
 
-/// The card ids in a list value (`[id]` or `[{id, equipped}]`, soft refs
-/// resolved); unknown cards are left out.
+/// The card ids in a card link value: a list (`[id]` or `[{id, equipped}]`)
+/// or one card; soft refs resolved, unknown cards left out.
 List<String> listedIds(Object? value, Map<String, Entity> byId) => [
-  if (value is List)
-    for (final r in value)
-      if (_refId(r, byId) case final String id) id,
+  for (final r in value is List ? value : [value])
+    if (_refId(r, byId) case final String id) id,
 ];
 
 // ----------------------------------------------------------------- engine
@@ -433,9 +440,10 @@ class GrantResult {
 }
 
 /// Everything [fields]' cards grant the carrier (DESIGN §8.5, §11.3,
-/// §11.6). Roots are the cards in the carrier's lists; a separate-mode
-/// card the carrier took itself reads its rows to its own level, every
-/// other card to the main level (V11). A granted card no list takes goes
+/// §11.6). Roots are the cards in the carrier's card links, lists and
+/// single links; a separate-mode card the carrier took itself into a list
+/// reads its rows to its own level, every other card to the main level
+/// (V11; a single link holds one card). A granted card no list takes goes
 /// to the Pool and its own grants still apply (chain). Each card is read
 /// once (no loop, no repeats).
 GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
@@ -444,9 +452,6 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
   final labels = grantLabelsOf(fields);
   final lists = carrierListsOf(ctx.carrier);
   final hasPool = poolFieldOf(ctx.carrier) != null;
-  final listed = {
-    for (final f in lists) f.fieldKey: listedIds(fields[f.fieldKey], ctx.entities),
-  };
 
   final reached = <String, int>{};
   final cards = <CardGrant>[];
@@ -466,12 +471,13 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
   }
 
   final queue = <(String, int?)>[];
-  for (final f in lists) {
-    for (final id in listed[f.fieldKey]!) {
+  for (final f in carrierLinksOf(ctx.carrier)) {
+    for (final id in listedIds(fields[f.fieldKey], ctx.entities)) {
       final cat = ctx.category(ctx.entities[id]!.categorySlug);
       int? level;
       if (main != null) {
         final own =
+            f.isList &&
             cat != null &&
             levelModeOf(cat) == LevelMode.separate &&
             !labels.containsKey(id);
@@ -531,14 +537,16 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
     // The card's own Grants count before its rows (D39).
     for (final f in cat.fields) {
       if (f.fieldType != FieldType.grantHolder) continue;
-      for (final item in grantItemsOf(card.fields[f.fieldKey])) {
+      final value = freeFieldValue(f, card.fields, byId: ctx.entities);
+      for (final item in grantItemsOf(value)) {
         emit(item, null);
       }
     }
     final table = levelTableOf(cat);
     if (table != null && level != null) {
       reached[id] = level;
-      for (final row in levelRowsOf(card.fields[table.fieldKey])) {
+      final rows = freeFieldValue(table, card.fields, byId: ctx.entities);
+      for (final row in levelRowsOf(rows)) {
         if (row.level > level) break;
         if (row.text.trim().isNotEmpty) {
           reads.add((cardId: id, level: row.level, text: row.text.trim()));

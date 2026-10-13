@@ -37,9 +37,9 @@ void main() {
           [('player-character', true)]);
     });
 
-    test('drops the CR calculator, converts Faz 4 and 6 types, keeps the rest',
-        () {
-      // ROADMAP §6, Faz 4 and Faz 6 rows.
+    test('drops the CR calculator and slot override, converts Faz 4, 6 and 7 '
+        'types, keeps the rest', () {
+      // ROADMAP §6, Faz 4, 6 and 7 rows.
       const converted = {
         FieldType.statBlock: FieldType.statTable,
         FieldType.proficiencyTable: FieldType.skillTable,
@@ -53,7 +53,11 @@ void main() {
         FieldType.slot: FieldType.resource,
         FieldType.combatStats: FieldType.combatStats,
         FieldType.spellSlotGrid: FieldType.autoResources,
+        FieldType.classFeatures: FieldType.progressionTable,
+        FieldType.spellsAtLevel: FieldType.progressionTable,
+        FieldType.resourcePoolGrants: FieldType.grantHolder,
       };
+      const dropped = {FieldType.crCalculator, FieldType.spellSlotProgression};
       // Keys the copy renames (the player card's own fields, §16.1).
       const renamed = {'class_levels': 'level', 'spell_slots': 'auto_resources'};
       const flatCombat = {'ac', 'hp_average', 'initiative_modifier'};
@@ -66,15 +70,27 @@ void main() {
         final flat = {'monster', 'animal'}.contains(from.slug);
         final kept = [
           for (final f in from.fields)
-            if (f.fieldType != FieldType.crCalculator &&
+            if (!dropped.contains(f.fieldType) &&
                 !(flat && flatCombat.contains(f.fieldKey)))
               f,
         ]..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-        // Fields the copy adds: Speed / CR beside a block, a monster's block.
+        // The player card's Feats move above its Traits, into their group.
+        if (from.slug == 'player-character') {
+          final feats = kept.firstWhere((f) => f.fieldKey == 'feats');
+          final traits = kept.firstWhere((f) => f.fieldKey == 'trait_refs');
+          kept.remove(feats);
+          kept.insert(
+            kept.indexOf(traits),
+            feats.copyWith(groupId: traits.groupId),
+          );
+        }
+        // Fields the copy adds: Speed / CR beside a block, a monster's
+        // block, the player card's Subspecies.
         final added = {
           for (final f in to.fields)
             if (f.fieldId.endsWith('-speed') ||
                 f.fieldId.endsWith('-cr') ||
+                f.fieldId.endsWith('-subspecies') ||
                 f.fieldId == '${from.categoryId}-combat')
               f.fieldId,
         };

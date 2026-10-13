@@ -834,7 +834,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     bool compact = false,
   }) {
     // A free field may read an SRD shape it replaced (DESIGN §16.3).
-    final fieldValue = freeFieldValue(field, entity.fields);
+    final fieldValue = freeFieldValue(
+      field,
+      entity.fields,
+      byId: ref.read(entityProvider),
+    );
     // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
     // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
     final tx = ref.read(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
@@ -851,9 +855,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         !field.hasEquip;
 
     // Free world: the card may carry cards (DESIGN §8.5, §8.7).
-    final list = field.isList && field.fieldType == FieldType.relation;
+    final link = field.fieldType == FieldType.relation;
+    final list = link && field.isList;
     final grantCtx =
-        list ||
+        link ||
             field.fieldType == FieldType.autoResources ||
             field.fieldType == FieldType.progressionTable
         ? _grantContext(entity)
@@ -867,7 +872,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       play: isFreeTemplate(ref.read(worldSchemaProvider)),
       onChanged: !identical(shown, fieldValue)
           ? (_) {}
-          : list && grantCtx != null
+          : link && grantCtx != null
           ? (v) => _settleCarried(grantCtx, (f) => {...f, field.fieldKey: v})
           : (v) => _updateField(field.fieldKey, v),
       grants: grantCtx != null && field.fieldType == FieldType.autoResources
@@ -1001,7 +1006,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         }
         // Unchecked, it is still there to tick.
         if (free && f.fieldType == FieldType.boolean_) return true;
-        return _isFieldVisibleInReadOnly(f, freeFieldValue(f, entity.fields));
+        return _isFieldVisibleInReadOnly(
+          f,
+          freeFieldValue(f, entity.fields, byId: ref.read(entityProvider)),
+        );
       }).toList();
     }
 

@@ -30,6 +30,7 @@ tags: [moc]
 - [[free_template_editor]] · [[template_edit]] — the free template editor (three panels on desktop, nested pages on phone, autosave, preview) and its pure edit functions.
 - [[free_field_styles]] — the free template's combined styles (Table, Stat table, Skill table, Resource, Combat stats), rests, computed totals, and readers that show SRD data in them.
 - [[free_grants]] — the free level system: Grants, the Level table, the Pool, and the pure engine that puts a carrier's granted cards into its lists and the rest into its Pool (not the resolver).
+- [[free_srd_levels]] — the SRD copy's Level tables and Grants read from the SRD shapes (class features, slots, resource pools, spells at level), the pack itself untouched.
 - [[template_update_dialog]] — free world or package opens: "template updated" check and its Update / Ignore / never dialog.
 - [[template_compatibility_service]] — installing a package into a world: what won't line up (by key when either template is free, D11).
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
