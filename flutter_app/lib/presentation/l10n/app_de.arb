@@ -6,6 +6,7 @@
   "btnLoad": "Laden",
   "btnCancel": "Abbrechen",
   "btnDelete": "Löschen",
+  "btnDuplicate": "Kopieren",
   "btnCreate": "Erstellen",
   "btnImport": "Importieren",
   "btnExport": "Exportieren",
