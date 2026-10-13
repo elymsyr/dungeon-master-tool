@@ -32,6 +32,7 @@ import '../characters/free_level_dialogs.dart' show confirmRemoveGranted;
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/quota_snackbar.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
+import '../../widgets/field_widgets/entity_link.dart' show navigateToEntity;
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/projection/projectable.dart';
@@ -680,6 +681,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            OutlinedButton.icon(
+              onPressed: () {
+                final notifier = ref.read(entityProvider.notifier);
+                final pending = _takePendingUpdate();
+                if (pending != null) notifier.update(pending);
+                final id = notifier.duplicate(entity.id);
+                if (id != null) navigateToEntity(ref, id, context: context);
+              },
+              icon: const Icon(Icons.copy_outlined, size: 16),
+              label: Text(L10n.of(context)!.btnDuplicate),
+            ),
+            const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: () {
                 showDialog(

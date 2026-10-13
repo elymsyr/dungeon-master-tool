@@ -104,6 +104,37 @@ void rollDice(BuildContext context, WidgetRef ref, Map<String, int> counts,
   );
 }
 
+/// Parses a notation like `2d6+3`, `d20 - 1` or `1d8+1d6+2` into dice counts
+/// and a flat modifier. `null` when it holds no die, a die the roller lacks
+/// (d3), a subtracted die or more than 40 dice.
+({Map<String, int> counts, int modifier})? parseDiceNotation(String text) {
+  final s = text.replaceAll(' ', '').toLowerCase();
+  if (s.isEmpty || !RegExp(r'^[+-]?(\d*d\d+|\d+)([+-](\d*d\d+|\d+))*$').hasMatch(s)) return null;
+  final counts = <String, int>{};
+  var modifier = 0;
+  for (final m in RegExp(r'([+-]?)(\d*)(d?)(\d+)').allMatches(s)) {
+    final neg = m[1] == '-';
+    if (m[3]!.isEmpty) {
+      modifier += neg ? -int.parse(m[4]!) : int.parse(m[4]!);
+      continue;
+    }
+    final kind = 'd${m[4]}';
+    if (neg || !diceKinds.contains(kind)) return null;
+    counts[kind] = (counts[kind] ?? 0) + (m[2]!.isEmpty ? 1 : int.parse(m[2]!));
+  }
+  final n = counts.values.fold(0, (a, b) => a + b);
+  // ponytail: 40 dice is where the 3D tray stops being readable.
+  return n == 0 || n > 40 ? null : (counts: counts, modifier: modifier);
+}
+
+/// Rolls a typed notation (see [parseDiceNotation]); false when it can't.
+bool rollDiceNotation(BuildContext context, WidgetRef ref, String text, {String? label}) {
+  final p = parseDiceNotation(text);
+  if (p == null) return false;
+  rollDice(context, ref, p.counts, modifier: p.modifier, label: label ?? text);
+  return true;
+}
+
 void _pushDiceRoute(BuildContext context, Widget child) {
   Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
     opaque: false,

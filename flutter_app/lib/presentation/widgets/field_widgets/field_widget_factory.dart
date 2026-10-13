@@ -361,6 +361,7 @@ class FieldWidgetFactory {
         value: value,
         readOnly: readOnly,
         onChanged: onChanged,
+        ref: ref,
       ),
       FieldType.boolean_ => _BooleanFieldWidget(
         schema: schema,
@@ -4717,12 +4718,14 @@ class _DiceFieldWidget extends StatefulWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final WidgetRef? ref;
 
   const _DiceFieldWidget({
     required this.schema,
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.ref,
   });
 
   @override
@@ -4753,21 +4756,42 @@ class _DiceFieldWidgetState extends State<_DiceFieldWidget> {
     super.dispose();
   }
 
+  /// Rolls the typed notation; null when there is nothing rollable.
+  VoidCallback? _roll(BuildContext context) {
+    final ref = widget.ref;
+    final text = _controller.text;
+    if (ref == null || parseDiceNotation(text) == null) return null;
+    return () => rollDiceNotation(context, ref, text, label: widget.schema.label);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${widget.schema.fieldKey}_dice'),
-        controller: _controller,
-        readOnly: widget.readOnly,
-        decoration: InputDecoration(
-          labelText: widget.schema.label,
-          hintText: 'e.g. 2d6+3',
-          isDense: true,
-          prefixIcon: const Icon(Icons.casino, size: 18),
-        ),
-        onChanged: (v) => widget.onChanged(v),
+      child: ValueListenableBuilder(
+        valueListenable: _controller,
+        builder: (context, _, _) {
+          final roll = _roll(context);
+          return TextFormField(
+            key: ValueKey('${widget.schema.fieldKey}_dice'),
+            controller: _controller,
+            readOnly: widget.readOnly,
+            // View mode: a tap anywhere on the field rolls it.
+            onTap: widget.readOnly ? roll : null,
+            mouseCursor: widget.readOnly && roll != null ? SystemMouseCursors.click : null,
+            decoration: InputDecoration(
+              labelText: widget.schema.label,
+              hintText: 'e.g. 2d6+3',
+              isDense: true,
+              prefixIcon: IconButton(
+                icon: const Icon(Icons.casino, size: 18),
+                tooltip: roll == null ? null : L10n.of(context)!.diceRollerTooltip,
+                onPressed: roll,
+              ),
+            ),
+            onChanged: (v) => widget.onChanged(v),
+          );
+        },
       ),
     );
   }

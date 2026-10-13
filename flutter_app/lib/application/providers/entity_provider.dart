@@ -554,6 +554,29 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     return id;
   }
 
+  /// [id]'nin homebrew kopyasını oluşturur: yeni id, paket bağı yok,
+  /// kaynak 'Homebrew'. Kopyanın id'sini döner; kart yoksa null.
+  String? duplicate(String id) {
+    final src = state[id];
+    if (src == null) return null;
+    pushUndo(state);
+    final copy = src.copyWith(
+      id: _uuid.v4(),
+      linked: false,
+      packageId: null,
+      packageEntityId: null,
+      source: 'Homebrew',
+    );
+    state = {...state, copy.id: copy};
+    _writeEntityToCampaign(copy, kind: WriteKind.immediate);
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.entityCreated,
+      {'entity_id': copy.id, 'entity_type': copy.categorySlug, 'name': copy.name},
+      campaignId: _campaignId,
+    ));
+    return copy.id;
+  }
+
   void update(Entity entity) {
     if (identical(state[entity.id], entity)) return;
 
