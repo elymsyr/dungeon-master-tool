@@ -142,6 +142,23 @@ void main() {
       expect(rage['category_ref'], '');
     });
 
+    test('a card edited in the world survives a resync, no second copy',
+        () async {
+      await installer.installIntoWorld(worldId: _worldId, packageId: 'id-A');
+      // What an edit writes: the same row, unlinked, package ids kept.
+      final row = (await worldRowFor('a-class'))!;
+      await (db.update(db.worldEntities)..where((t) => t.id.equals(row.id)))
+          .write(const WorldEntitiesCompanion(
+              name: Value('Pyromancer X'), linked: Value(false)));
+
+      await installer.resync(worldId: _worldId, packageId: 'id-A');
+      final rows = await (db.select(db.worldEntities)
+            ..where((t) => t.packageEntityId.equals('a-class')))
+          .get();
+      expect(rows.single.id, row.id);
+      expect(rows.single.name, 'Pyromancer X');
+    });
+
     test('is idempotent — a second run adds nothing', () async {
       await installer.installIntoWorld(worldId: _worldId, packageId: 'id-A');
       final again =

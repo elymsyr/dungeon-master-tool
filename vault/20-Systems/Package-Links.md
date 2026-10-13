@@ -102,7 +102,7 @@ skipped, so a malformed graph degrades instead of hanging.
 
 | Where | What happens |
 |---|---|
-| **Package editor** | `packageReferenceOverlayProvider(name)` = SRD entities ∪ closure entities. `EntityNotifier(referenceOverlayFor: name)` injects them read-only; `_referenceEntityIds` keeps them out of every write path, so editing one forks a homebrew copy exactly as an SRD row does. |
+| **Package editor** | `packageReferenceOverlayProvider(name)` = SRD entities ∪ closure entities. `EntityNotifier(referenceOverlayFor: name)` injects them read-only; `_referenceEntityIds` keeps them out of every write path, so editing one forks a homebrew copy (only these; every other package card is edited in place, 2026-10-13). |
 | **World import** | [[world_package_installer]] installs the whole closure, dependencies first. |
 | **Catalog download** | `CatalogEntry.requires` (emitted by [[build_catalog]] from the pack's `metadata.links`) is resolved transitively by `FirstPartyInstallNotifier` before the requested entry. [[package_payload_importer]] carries `links` across the re-install that would otherwise replace `state_json`. |
 | **Character creation** | `expandedPackageNames` widens the player's picked packages to their closure, so a class borrowed from a linked pack dereferences in the wizard, the resolver, the header chips and the editor. |

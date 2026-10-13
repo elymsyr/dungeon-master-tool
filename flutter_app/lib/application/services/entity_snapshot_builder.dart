@@ -33,7 +33,7 @@ class EntitySnapshotBuilder {
 
     // Build the field rows in order, skipping hidden fields
     final fieldRows = <EntityFieldSnapshot>[];
-    final srd = isSrdCard(entity.linked, entity.source);
+    final srd = isSrdCard(entity.source);
     if (cat != null) {
       // Group lookup
       final groupLabels = <String, String>{
@@ -66,7 +66,7 @@ class EntitySnapshotBuilder {
           parts = [
             for (final id in extractRelationIds(raw))
               if (entities[id] case final e? when e.name.isNotEmpty)
-                (isSrdCard(e.linked, e.source) ? e.categorySlug : '', e.name),
+                (isSrdCard(e.source) ? e.categorySlug : '', e.name),
           ];
           str = parts.map((p) => p.$2).join(', ');
         } else if (ft == FieldType.text ||

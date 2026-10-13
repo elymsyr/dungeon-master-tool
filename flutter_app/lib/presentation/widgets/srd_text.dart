@@ -29,7 +29,7 @@ String srdText(BuildContext context, String scope, String en) {
 /// [e] kartının gösterilecek adı.
 /// SRD olmayan kart ([isSrdCard]) çevrilmez.
 String srdName(BuildContext context, Entity e) =>
-    isSrdCard(e.linked, e.source)
+    isSrdCard(e.source)
         ? srdText(context, e.categorySlug, e.name)
         : e.name;
 
@@ -62,6 +62,6 @@ String srdConditionName(BuildContext context, String name) =>
 
 /// [e] kartının gösterilecek açıklaması.
 String srdDescription(BuildContext context, Entity e) =>
-    isSrdCard(e.linked, e.source)
+    isSrdCard(e.source)
         ? srdText(context, e.categorySlug, e.description)
         : e.description;

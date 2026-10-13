@@ -78,7 +78,7 @@ class _PreviewBody extends StatelessWidget {
     // ikinci render yolu — filtreyi burada da uygulamak zorunlu.
     final isPlayer = ref.watch(isPlayerViewProvider);
     // SRD içerik çevirisi — kartın okuma moduyla aynı, yalnızca görüntü.
-    final tx = ref.watch(contentTranslatorProvider).forCard(isSrdCard(entity.linked, entity.source));
+    final tx = ref.watch(contentTranslatorProvider).forCard(isSrdCard(entity.source));
     final slug = entity.categorySlug;
     final name = tx.tr(slug, entity.name);
     final description = tx.tr(slug, entity.description);

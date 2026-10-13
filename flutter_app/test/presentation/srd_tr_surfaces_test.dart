@@ -141,11 +141,12 @@ void main() {
             .srd,
         isFalse);
 
-    // Düzenlenmiş kart homebrew'dur: adı, açıklaması, metni çevrilmez.
+    // Homebrew kart: adı, açıklaması, metni çevrilmez. (Yerinde düzenlenen
+    // SRD kartı kaynağını tutar, çevrilmeye devam eder.)
     final hb = EntitySnapshotBuilder.build(
-        entity: goblin.copyWith(linked: false),
+        entity: goblin.copyWith(linked: false, source: 'Homebrew'),
         schema: schema,
-        entities: {'w1': scimitar.copyWith(linked: false)});
+        entities: {'w1': scimitar.copyWith(linked: false, source: 'Homebrew')});
     final hbRows = {for (final r in hb.fields) r.label: r};
     expect(hb.srd, isFalse);
     expect(hbRows['size']!.parts, [(ContentTranslator.schemaScope, 'Medium')]);

@@ -330,10 +330,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// referansı (`linked_character_ids`) tutar.
   final Set<String> _linkedCharacterIds = {};
 
-  /// Yeni fork edilmiş built-in id → homebrew kopya id. Fork sonrası eski
-  /// kartın dispose-flush'ı gibi gecikmeli edit'lerin İKİNCİ bir kopya
+  /// Yeni fork edilmiş referans kartı id → homebrew kopya id. Fork sonrası
+  /// eski kartın dispose-flush'ı gibi gecikmeli edit'lerin İKİNCİ bir kopya
   /// üretmesini engeller — bunun yerine edit kopyaya yönlendirilir. Her
-  /// kayıt kısa süre sonra temizlenir, böylece kullanıcı built-in'i
+  /// kayıt kısa süre sonra temizlenir, böylece kullanıcı referans kartını
   /// tekrar açarsa yeni bir kopya forklayabilir.
   final Map<String, String> _recentForks = {};
 
@@ -570,13 +570,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
     final prev = state[entity.id];
 
-    // Fork-on-edit: built-in/pack (linked) bir entity'de içerik değişimi,
-    // yerinde detach etmek yerine YENİ bir homebrew kopya oluşturur.
-    // Orijinal built-in `state`'te değişmeden kalır — `world_entities`'e
-    // satır yazılmadığı için reload'da `synthesizeWorldBuiltins` onu
-    // yeniden üretir (kaybolmaz). UI, fork redirect sinyaliyle açık
-    // kartı/sekmeyi kopyaya geçirir.
-    if (prev != null && prev.linked && _isContentChanged(prev, entity)) {
+    // Paket ekranının referans katmanındaki kart başka bir paketin kartı,
+    // buraya hiç yazılmaz: düzenlemek YENİ bir homebrew kopya forklar. UI,
+    // fork redirect sinyaliyle açık kartı/sekmeyi kopyaya geçirir.
+    if (prev != null &&
+        prev.linked &&
+        _referenceEntityIds.contains(prev.id) &&
+        _isContentChanged(prev, entity)) {
       pushUndo(state);
       final newId = _uuid.v4();
       final userEditedSource =
@@ -604,6 +604,17 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       _ref.read(entityForkRedirectProvider.notifier).state =
           EntityForkRedirect(oldId: prev.id, newId: newId);
       return;
+    }
+
+    // Öteki paket kartı (yerleşik SRD, kurulu paketin satırı) yerinde
+    // düzenlenir: aynı id ve kaynak, her ref düzenlemeyi görür. `linked`
+    // düşer: paket eşitlemesi ve yerleşik sentez `package_entity_id`'si
+    // tutulan satıra dokunmaz, bulut ve paylaşım onu homebrew gibi taşır —
+    // dünya başka cihazda açılınca düzenleme paketin kartını yine örter.
+    // ponytail: düzenlenen kart artık paket güncellemesi almaz; gerekirse
+    // paket satırının üstüne alan bazında bindirme.
+    if (prev != null && prev.linked && _isContentChanged(prev, entity)) {
+      entity = entity.copyWith(linked: false);
     }
 
     pushUndo(state);
@@ -712,16 +723,16 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// Mevcut entity map'inin bir kopyasını döndürür (import service için).
   Map<String, Entity> get currentEntities => Map.unmodifiable(state);
 
-  /// Returns false when the deletion was rejected (synth built-in entry
-  /// — fork first by editing). UI layer should surface a snackbar.
+  /// Returns false when the deletion was rejected (pristine synth built-in
+  /// entry). UI layer should surface a snackbar.
   bool delete(String entityId) {
     // Read-only SRD reference overlay isn't deletable — it has no package row
     // and would just resurrect on the next reload from the overlay.
     if (_referenceEntityIds.contains(entityId)) return false;
     // F2 reject-on-synth: built-in synth entries have no DB row; deleting
-    // would resurrect on next load from the synthesizer. Force the user
-    // to fork (edit) first, which removes the `_synth` flag and persists
-    // a real `world_entities` row that *can* be deleted normally.
+    // would resurrect on next load from the synthesizer. An edit persists
+    // a real `world_entities` row at the same id; deleting that row brings
+    // the pristine card back on the next load.
     final raw = _campaign.data?['entities'];
     if (raw is Map) {
       final entry = raw[entityId];

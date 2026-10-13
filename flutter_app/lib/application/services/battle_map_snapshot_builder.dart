@@ -109,7 +109,7 @@ class BattleMapSnapshotBuilder {
         id: c.id,
         name: c.name,
         nameScope: entity != null &&
-                isSrdCard(entity.linked, entity.source) &&
+                isSrdCard(entity.source) &&
                 entity.name == c.name
             ? entity.categorySlug
             : null,

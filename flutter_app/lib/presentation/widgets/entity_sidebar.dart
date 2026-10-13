@@ -134,7 +134,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final en = <String, String>{};
     final out = <_EntitySummary>[];
     for (final e in src) {
-      final n = isSrdCard(e.linked, e.source) ? tx.tr(e.categorySlug, e.name) : e.name;
+      final n = isSrdCard(e.source) ? tx.tr(e.categorySlug, e.name) : e.name;
       if (n == e.name) {
         out.add(e);
         continue;

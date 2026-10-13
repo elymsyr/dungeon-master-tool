@@ -13,11 +13,11 @@ const srdL10nMachineTextKeys = {
   'granted_tool_variant_group',
 };
 
-/// Kart asıl SRD içeriği mi — çeviri tabloları yalnızca bunlar için.
-/// Düzenlenip forklanan kart (homebrew, `linked == false`) ve başka
-/// kaynaklı paket kartları (Open5e, marketplace…) yazıldığı gibi kalır.
-bool isSrdCard(bool linked, String source) =>
-    linked && source == srdSourceTag;
+/// Kart SRD içeriği mi — çeviri tabloları yalnızca bunlar için. Yerinde
+/// düzenlenen SRD kartı da (kaynağı aynı): çeviri metin anahtarlı, yazılan
+/// metin aynen görünür. Homebrew ve başka kaynaklı paket kartları (Open5e,
+/// marketplace…) yazıldığı gibi kalır.
+bool isSrdCard(String source) => source == srdSourceTag;
 
 /// SRD içerik çevirisi (docs/srd-tr/ROADMAP.md §3, Yaklaşım A): ekrana
 /// basılan İngilizce metni seçili dildeki karşılığıyla değiştirir. Anahtar
