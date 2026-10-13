@@ -39,6 +39,7 @@ import '../../widgets/app_icon_image.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/character_stat_chips.dart';
 import '../../widgets/dice/dice_fab.dart';
+import '../../widgets/field_widgets/entity_link.dart' show EntityOpenScope;
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/perf/image_cache_size.dart';
@@ -311,26 +312,41 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
     if (ok && mounted) context.go('/main');
   }
 
-  /// The reached levels a card opened from here marks (DESIGN §11.8).
+  /// The character's reached levels; only the cards opened from here show
+  /// theirs (DESIGN §11.8).
   Map<String, int> _reached = const {};
+  final _opened = <String>{};
+  Map<String, int> _shown = const {};
 
   @override
   void deactivate() {
-    // Not in dispose: Riverpod forbids `ref` there.
-    if (_reached.isNotEmpty) {
-      ref.read(freeReachedLevelsProvider.notifier).state = const {};
+    // Not in dispose: Riverpod forbids `ref` there. After the frame: a
+    // provider change while the tree is being finalized rebuilds an open
+    // card in the wrong build scope.
+    if (_shown.isNotEmpty) {
+      final reached = ref.read(freeReachedLevelsProvider.notifier);
+      _shown = const {};
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) reached.state = const {};
+      });
     }
     super.deactivate();
   }
 
   void _publishReached(Map<String, int> reached) {
-    if (_mapEquals(reached, _reached)) return;
     _reached = reached;
+    final shown = {for (final id in _opened) id: ?reached[id]};
+    if (_mapEquals(shown, _shown)) return;
+    _shown = shown;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(freeReachedLevelsProvider.notifier).state = reached;
+        ref.read(freeReachedLevelsProvider.notifier).state = shown;
       }
     });
+  }
+
+  void _opensCard(String id) {
+    if (_opened.add(id)) _publishReached(_reached);
   }
 
   static bool _mapEquals(Map<String, int> a, Map<String, int> b) =>
@@ -589,7 +605,10 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
             const SizedBox(width: 4),
           ],
         ),
-        body: _body(context, palette, character, card),
+        body: EntityOpenScope(
+          onOpen: _opensCard,
+          child: _body(context, palette, character, card),
+        ),
         // Embedded in a world screen, that screen's dice button is there.
         floatingActionButton: embedded ? null : const DiceFab(),
       ),

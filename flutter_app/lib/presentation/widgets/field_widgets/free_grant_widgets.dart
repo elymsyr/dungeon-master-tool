@@ -616,6 +616,9 @@ class _GrantItemDialogState extends State<_GrantItemDialog> {
 
   List<Widget> _cardForm(L10n l10n) {
     final card = _card;
+    final carriers = card == null
+        ? const <(EntityCategorySchema, List<FieldSchema>)>[]
+        : _carriersFor(widget.categories, card.categorySlug);
     return [
       OutlinedButton.icon(
         key: const ValueKey('gi_pick_card'),
@@ -637,10 +640,21 @@ class _GrantItemDialogState extends State<_GrantItemDialog> {
           l10n.freeGrantTarget,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        for (final (c, lists) in _carriersFor(
-          widget.categories,
-          card.categorySlug,
-        ))
+        // No list takes it (built-in has two "Action"s: the Tier 0 lookup
+        // and Tier 1 content): say why instead of an empty section.
+        if (carriers.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.freeGrantNoTarget,
+              key: const ValueKey('gi_no_target'),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+            ),
+          ),
+        for (final (c, lists) in carriers)
           DropdownButtonFormField<String?>(
             key: ValueKey('gi_target_${c.slug}'),
             initialValue: lists.any((f) => f.fieldKey == _item.targets[c.slug])

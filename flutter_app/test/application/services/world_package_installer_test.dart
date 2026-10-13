@@ -114,6 +114,34 @@ void main() {
       expect(fields['spells_known'], isNot(contains('b-spell')));
     });
 
+    test('a package\'s own lookup rows resolve its `_lookup` placeholders',
+        () async {
+      // A copied SRD pack ships its Tier-0 rows; the world has no SRD pack.
+      await makePackage('Copy');
+      await addEntity('Copy', 'c-pool',
+          slug: 'resource-pool', name: 'pool:rage_uses');
+      await addEntity('Copy', 'c-rage',
+          slug: 'feat',
+          name: 'Rage',
+          fields: {
+            'resource_pool_grants': [
+              {
+                'pool_ref': {'_lookup': 'resource-pool', 'name': 'pool:rage_uses'},
+              },
+            ],
+            'category_ref': {'_lookup': 'feat-category', 'name': 'Missing'},
+          });
+      await installer.installIntoWorld(
+          worldId: _worldId, packageId: 'id-Copy');
+
+      final pool = await worldRowFor('c-pool');
+      final rage = jsonDecode((await worldRowFor('c-rage'))!.fieldsJson)
+          as Map<String, dynamic>;
+      expect(rage['resource_pool_grants'][0]['pool_ref'], pool!.id);
+      // Not in the package and no SRD pack: the Tier-0 resolver's ''.
+      expect(rage['category_ref'], '');
+    });
+
     test('is idempotent — a second run adds nothing', () async {
       await installer.installIntoWorld(worldId: _worldId, packageId: 'id-A');
       final again =

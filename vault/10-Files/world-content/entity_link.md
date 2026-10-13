@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/widgets/field_widgets/entity_link.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-08-21
+updated: 2026-10-13
 tags: [file]
 ---
 
@@ -36,6 +36,8 @@ tags: [file]
 **The bug this closed was not "untappable", it was "invisible".** The reported symptom was that tapping a spell in a spell list did nothing. The cause was one layer lower: the presentation layer carried its own envelope readers (`resolveRelationId`'s O(n) scan, `_parseIds`, `_parseItems`) that knew `_lookup` and `_ref` but **not** the soft `{slug, name}` shape a package writes for a cross-pack target. Those fell through to `e['id']` → null → dropped, so a packaged spell never rendered in the first place. U3 pointed all three at `entityLinkTarget`, and folded `_lookup` into `resolveEntityRef` so there is one reader rather than two that disagree.
 
 **Long-press previews, and why the lookup is inside the callback** (2026-08-21). Tap navigates, long-press opens a read-only [[entity_preview_dialog]] — same links, same resolution rule, so a player can inspect a background's skill or an inventory item without losing their place in the wizard. The entity is resolved *when the gesture fires*, never during build: an eager `ref.read(entityProvider)` to decide whether to enable the gesture boots the character/world DB graph from inside a field widget, which broke `entity_link_navigation_test` outright (`LateInitializationError: dataRoot`). A press that resolves to nothing quietly does nothing — `entityLinkTarget`'s rule, one layer later.
+
+**`EntityOpenScope` (2026-10-13).** An `InheritedWidget` whose `onOpen(id)` hears every card a link inside it opens: `navigateToEntity` takes an optional `context` and calls the nearest scope first (`EntityLink` and `field_widget_factory`'s `_navigateToEntity` pass theirs). The free character sheet wraps its body in one, so only a card opened from the sheet marks its reached Level table rows ([[free_character_sheet]]); one opened from the sidebar shows none.
 
 ## Dependencies & Links
 - Depends on: [[entity_ref]] (`resolveEntityRef`), [[entity_preview_dialog]], `ui_state_provider` (`entityNavigationProvider`, `entityNavigationTargetPanelProvider`), `entity.dart`.

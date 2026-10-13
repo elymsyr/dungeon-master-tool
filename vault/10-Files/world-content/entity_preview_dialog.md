@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/dialogs/entity_preview_dialog.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-10-05
+updated: 2026-10-13
 tags: [file]
 ---
 
@@ -28,6 +28,8 @@ tags: [file]
 **Why not `EntityCard`.** The obvious reuse does not work: `entity_card.dart` reads *and writes* `entityProvider` on essentially every field (`ref.read(entityProvider)[widget.entityId]!` appears ~15 times, and its `build` starts by watching that map). The creation wizard's entities are the bundled SRD rows plus installed-package rows served by [[package_source_entities|wizardEntitiesProvider]] — **none of which are in `entityProvider`** — so an `EntityCard` opened from a wizard step renders "Entity not found". Taking an `Entity` plus an entity map instead makes one widget serve both contexts.
 
 **Art is shown.** `entity.imagePath` (legacy tek portre yuvası — çoğu kartın görseli hâlâ burada) + `entity.images` birleşimi renders as a 260-high horizontal strip of 200-wide [[asset_ref_image|AssetRefImage]]s above the title — the same `AssetRef` path the card uses, so bundled `dmt-art://`, local paths and `dmt-asset://` all resolve. `BoxFit.contain`, not `cover`: a quick look should show the whole piece rather than a portrait crop.
+
+**Values go through `freeFieldValue`** — the same read `entity_card` does. A free-template SRD copy's Level table / Grants field (`styleConfig: {srd_read: …}`) still stores the SRD shape until edited; passed raw, its rows have no `_id`, every row's key became `lt_` and a card with two such rows (Drow's spells-at-level) threw "Duplicate keys found". The empty-field filter reads the same converted value.
 
 **Empty fields are skipped.** `_isEmpty` drops null / blank-string / empty-list / empty-map values, so a preview is the card's actual content rather than a wall of empty inputs — the read-only card in the Database panel can afford placeholders, a transient dialog cannot.
 

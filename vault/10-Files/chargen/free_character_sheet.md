@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/characters/free_character_sheet.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-12
+updated: 2026-10-13
 tags: [file]
 ---
 
@@ -23,7 +23,7 @@ tags: [file]
 - Edits → `_edit` (undo baseline, coalesced after 400 ms like the built-in editor) → `pendingWriteBufferProvider.schedule(key: 'character:$id', kind: shortText)` → `characterListProvider.update`, only when the user may edit (owner or the online world's DM — the built-in `_canEdit`); close flushes that key and saves under the global loading overlay.
 - Rest → [[free_field_styles]] `restPatch` over the player card's fields plus [[free_grants]] `poolAfterRest` for the Pool's resources, then a snackbar.
 - A card link list change, Level up and the levels dialog go through [[free_grants]] `settleGrants`: granted cards join their lists (labelled), a summary dialog shows what came (always after a level up), and labelled cards nothing grants any more are offered for removal (V12).
-- `freeReachedLevelsProvider` (in `free_character_provider.dart`): the open character's reached levels by card id, written after a frame, cleared in `deactivate`; `entity_card.dart` marks a Level table's reached rows from it (DESIGN §11.8).
+- `freeReachedLevelsProvider` (in `free_character_provider.dart`): the open character's reached levels by card id, **only for the cards opened from the sheet** (its body is an [[entity_link]] `EntityOpenScope`; `_opened` collects the ids), written after a frame, cleared in `deactivate`; `entity_card.dart` marks a Level table's reached rows from it (DESIGN §11.8). A card opened from the sidebar shows no marks.
 
 `free_character_provider.dart`:
 - `readWorldSchema(db, worldId)` — a world's own copy (`world_settings._world_schema`) without opening it.
@@ -32,7 +32,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[free_field_styles]], [[free_template]] (`freePlayerCard`, `characterLevelOf`, `freeCharacterSeed`), [[template_edit]] (`fieldsIn`, `sortedGroups`), `field_widget_factory.dart`, `entity_card.dart` (`EntityCardCollapsibleGroupCard`, `splitFieldRows`), [[pending_write_buffer]]
-- Used by: [[character_editor_screen]] (gate: `templateId != builtinDnd5eV2SchemaId` and the provider gives a free schema), `character_add_menu.dart` (in a free world "Create" makes a blank character and opens it), the creation wizard (picking a free world or a free template leaves the wizard for a blank sheet)
+- Used by: [[character_editor_screen]] (gate: `templateId != builtinDnd5eV2SchemaId` and the provider gives a free schema), `character_add_menu.dart` (in a free world "Create" makes a blank character and opens it), the creation wizard (picking a free world or a free template says there is no wizard — `freeNoWizardTitle` / `freeNoWizardBody`, Cancel / Continue — then leaves it for a blank sheet)
 - Domain map: [[Character-System]]
 - Spec / reference: `docs/free-template/DESIGN.md` §10.2, §12.3, §18; `docs/free-template/ROADMAP.md` Faz 6
 
