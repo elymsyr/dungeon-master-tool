@@ -564,11 +564,11 @@ final entityNavigationProvider = StateProvider<String?>((ref) => null);
 final entityNavigationTargetPanelProvider =
     StateProvider<String?>((ref) => null);
 
-/// Bir built-in/pack entity edit'lendiğinde [EntityNotifier.update] yerinde
-/// detach etmek yerine yeni bir homebrew kopya forklar; orijinal built-in
-/// korunur. Bu sinyal, açık olan kartın/sekmenin kopyaya geçmesi için
-/// database screen tarafından dinlenir. Consumer handle ettikten sonra
-/// null'a resetlemeli.
+/// Paket ekranının referans katmanındaki bir kart edit'lendiğinde
+/// [EntityNotifier.update] yeni bir homebrew kopya forklar (öteki paket
+/// kartları yerinde düzenlenir). Bu sinyal, açık olan kartın/sekmenin
+/// kopyaya geçmesi için database screen tarafından dinlenir. Consumer
+/// handle ettikten sonra null'a resetlemeli.
 class EntityForkRedirect {
   final String oldId;
   final String newId;

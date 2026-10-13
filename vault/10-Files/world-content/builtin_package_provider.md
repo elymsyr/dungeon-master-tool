@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/builtin_package_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-10-12
+updated: 2026-10-13
 tags: [file]
 ---
 
@@ -35,4 +35,4 @@ tags: [file]
 
 ## Notes
 - All packages share the built-in D&D 5e v2 schema ([[package_repository_impl]] `_loadFromDb`), so every category chip exists in every package — that's why the overlay's entities (e.g. `condition`) always have a category to render under.
-- Editing a reference card in a writable package forks a homebrew copy (standard `linked` fork-on-edit), which *does* persist — consistent with linked pack rows everywhere.
+- Editing a reference card in a writable package forks a homebrew copy, which *does* persist. Only reference cards fork: since 2026-10-13 any other package card (built-in SRD, an installed pack's row) is edited in place — same id, unlinked, `package_entity_id` kept (`EntityNotifier.update`).

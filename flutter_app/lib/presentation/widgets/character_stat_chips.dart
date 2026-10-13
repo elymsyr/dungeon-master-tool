@@ -124,7 +124,7 @@ List<CharacterStatLine> characterStatLines(
   final cid = ids.classId;
   // SRD içerik çevirisi: bu cihazın dilinde, yalnızca görüntü.
   String? shown(String? id) => switch (id == null ? null : entities[id]) {
-        final e? => tx.forCard(isSrdCard(e.linked, e.source)).tr(e.categorySlug, e.name),
+        final e? => tx.forCard(isSrdCard(e.source)).tr(e.categorySlug, e.name),
         _ => null,
       };
   final raceName = shown(rid) ??
@@ -311,7 +311,7 @@ List<CharacterStatLine> freeChipLines(
     final id = resolveEntityRef(raw, entities);
     final e = id == null ? null : entities[id];
     if (e != null) {
-      return tx.forCard(isSrdCard(e.linked, e.source)).tr(e.categorySlug, e.name);
+      return tx.forCard(isSrdCard(e.source)).tr(e.categorySlug, e.name);
     }
     return raw is Map && raw['name'] is String ? raw['name'] as String : null;
   }

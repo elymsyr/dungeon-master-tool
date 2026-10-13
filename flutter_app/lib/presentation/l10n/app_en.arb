@@ -2189,8 +2189,8 @@
       }
     }
   },
-  "entityBuiltinNoDelete": "Built-in entries can't be deleted. Edit it first to create a homebrew copy, then delete the copy.",
-  "entityLinkedToPackage": "Linked to package — edits will detach this entity into a homebrew copy.",
+  "entityBuiltinNoDelete": "Built-in entries can't be deleted.",
+  "entityLinkedToPackage": "Linked to package. Editing changes this card here; package updates no longer reach it after that.",
   "lblSource": "Source",
   "entitySourceHint": "e.g. D&D 5e SRD",
   "tagsCommaHint": "comma separated",

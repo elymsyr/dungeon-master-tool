@@ -299,7 +299,7 @@ class EntityNameText extends ConsumerWidget {
     // text only rebuilds when this specific entity's name flips.
     (String, String, bool)? key(Map<String, Entity> m) {
       final e = m[entityId];
-      return e == null ? null : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
+      return e == null ? null : (e.categorySlug, e.name, isSrdCard(e.source));
     }
 
     final hit = ref.watch(entityProvider.select(key)) ??

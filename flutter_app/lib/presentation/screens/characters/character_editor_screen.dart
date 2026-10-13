@@ -3948,7 +3948,7 @@ class _StatChipsHeader extends ConsumerWidget {
         final e = m[id];
         return e == null || e.name.isEmpty
             ? null
-            : (e.categorySlug, e.name, isSrdCard(e.linked, e.source));
+            : (e.categorySlug, e.name, isSrdCard(e.source));
       }
 
       if (useCampaign) {
