@@ -9,6 +9,8 @@ import '../entities/schema/field_schema.dart';
 import '../entities/schema/world_schema.dart';
 import '../entities/schema/world_schema_hash.dart';
 import 'free_field_styles.dart';
+import 'free_grants.dart' show LevelMode;
+import 'free_srd_levels.dart';
 import 'template_edit.dart' show playerCardFieldKey, syncPresets;
 
 /// The one gate between the built-in and the free code paths
@@ -125,14 +127,38 @@ Iterable<FieldSchema> _srdCopyFields(
     }
     return;
   }
+  // Feats are a card list like the Traits, just above them.
+  final player = cat.slug == 'player-character';
+  if (player && f.fieldKey == 'feats') return;
+  if (player && f.fieldKey == 'trait_refs') {
+    final feats = cat.fields.where((x) => x.fieldKey == 'feats').firstOrNull;
+    final moved = feats == null ? null : _srdCopyField(feats, cat);
+    if (moved != null) yield moved.copyWith(groupId: f.groupId);
+  }
   final one = _srdCopyField(f, cat);
   if (one != null) yield one;
+  // The built-in kept the lineage on the character model; the copy links
+  // it beside Species, so its Level table reaches the character (Faz 7b).
+  if (cat.slug == 'player-character' && f.fieldKey == 'species_ref') {
+    yield f.copyWith(
+      fieldId: '${f.fieldId}-subspecies',
+      fieldKey: 'subspecies_ref',
+      label: 'Subspecies',
+      isRequired: false,
+      validation: const FieldValidation(allowedTypes: ['subspecies']),
+    );
+  }
 }
 
 FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
   FieldSchema table(List<TableColumn> columns) => f.copyWith(
     fieldType: FieldType.table,
     styleConfig: TableSpec(columns: columns).toConfig(),
+  );
+  FieldSchema srd(FieldType type, String read) => f.copyWith(
+    fieldType: type,
+    defaultValue: null,
+    styleConfig: {srdReadKey: read},
   );
   const level = TableColumn(
     key: 'level',
@@ -172,6 +198,12 @@ FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
       fieldType: FieldType.resource,
       styleConfig: const ResourceSpec(boxes: true).toConfig(),
     ),
+    // The level system (Faz 7b, DESIGN §16.3): read from the SRD shapes.
+    FieldType.classFeatures => srd(FieldType.progressionTable, srdClassFeatures),
+    FieldType.spellsAtLevel => srd(FieldType.progressionTable, srdSpellsAtLevel),
+    FieldType.resourcePoolGrants => srd(FieldType.grantHolder, srdResourcePools),
+    // Its slots are the class's Level table rows.
+    FieldType.spellSlotProgression => null,
     FieldType.levelTable => table(const [
       level,
       TableColumn(key: 'value', label: 'Value', type: TableColumnType.number),
@@ -339,6 +371,10 @@ WorldSchema copyAsFreeTemplate(
           summaryChips: fromBuiltin && c.slug == 'player-character'
               ? _srdChips
               : c.summaryChips,
+          // Multiclass: each class keeps its own level (DESIGN §11.2).
+          levelMode: fromBuiltin && c.slug == 'class'
+              ? LevelMode.separate.name
+              : c.levelMode,
         ),
     ],
   );

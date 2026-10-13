@@ -1,4 +1,6 @@
+import '../entities/entity.dart';
 import '../entities/schema/field_schema.dart';
+import 'free_srd_levels.dart';
 import 'template_edit.dart' show keyFromLabel;
 
 /// The free template's combined styles: Table (docs/free-template/DESIGN.md
@@ -730,13 +732,22 @@ num? srdNumber(Object? v) {
 
 /// What a free field shows for [card]: the stored value, or what the SRD
 /// shape it replaced holds (the combat block's flat fields, Speed / CR's
-/// text). Fields without settings (the built-in schema) read as stored.
-Object? freeFieldValue(FieldSchema f, Map<String, dynamic> card) {
+/// text, a class's features as a Level table — that one reads other cards
+/// from [byId]). Fields without settings (the built-in schema) read as
+/// stored.
+Object? freeFieldValue(
+  FieldSchema f,
+  Map<String, dynamic> card, {
+  Map<String, Entity> byId = const {},
+}) {
   final v = card[f.fieldKey];
   final c = f.styleConfig;
   if (c == null) return v;
   if (f.fieldType == FieldType.combatStats) return combatStatsValue(v, card);
   final from = c[srdReadKey];
+  if (from is String && srdLevelReads.contains(from)) {
+    return isSrdLevelShape(v) ? srdLevelValue(from, v, card, byId) : v;
+  }
   if (from is String && _blankValue(v)) {
     final cs = card['combat_stats'];
     final n = cs is Map ? srdNumber(cs[from]) : null;

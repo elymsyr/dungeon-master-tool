@@ -25,7 +25,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `entity.dart` only.
-- Used by: [[level_up_planner]], [[multiclass_helper]] (`combinedCasterLevel` calls `defaultSpellSlotsByLevel(CasterKind.full,...)`), the wizard Spells step.
+- Used by: [[level_up_planner]], [[multiclass_helper]] (`combinedCasterLevel` calls `defaultSpellSlotsByLevel(CasterKind.full,...)`), the wizard Spells step, [[free_srd_levels]] (the SRD copy's class slot rows, read only).
 - Domain map: [[Character-System]]
 - System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]] §1.5

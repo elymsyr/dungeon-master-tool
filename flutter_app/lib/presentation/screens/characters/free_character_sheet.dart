@@ -1025,7 +1025,8 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
   ) {
     final tx = ref.read(contentTranslatorProvider);
     Widget tile(FieldSchema f, {bool compact = false}) {
-      final list = f.fieldType == FieldType.relation && f.isList;
+      final link = f.fieldType == FieldType.relation;
+      final list = link && f.isList;
       final levelField = f.fieldType == FieldType.characterLevel;
       final w = FieldWidgetFactory.create(
         schema: tx.field(f),
@@ -1033,7 +1034,7 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
         // The Level changes through Level up and the levels dialog.
         readOnly: _readOnly || levelField,
         play: true,
-        onChanged: (v) => list && g.cardsLoaded
+        onChanged: (v) => link && g.cardsLoaded
             ? _changeCards(g.ctx, {...character.entity.fields, f.fieldKey: v})
             : _setFields({f.fieldKey: v}),
         entities: entities,

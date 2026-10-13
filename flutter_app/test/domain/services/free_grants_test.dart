@@ -703,6 +703,44 @@ void main() {
     });
   });
 
+  group('single card links (Faz 7b)', () {
+    // The player card with its class as one card, beside the lists.
+    final ctx = GrantContext(
+      carrier: _player.copyWith(
+        fields: [
+          ..._player.fields,
+          _f('main_class', FieldType.relation, targets: ['class']),
+        ],
+      ),
+      categories: _categories,
+      entities: _entities,
+    );
+
+    test('its card grants like a listed one, read to the main level', () {
+      final c = settleGrants(const {}, {'level': 2, 'main_class': 'fighter'}, ctx);
+      // Separate, but one card has no level of its own.
+      expect(c.after.reached['fighter'], 2);
+      expect(
+        _ids(c.fields['features']),
+        containsAll(['second_wind', 'weapon_mastery', 'action_surge']),
+      );
+      expect(c.fields['main_class'], 'fighter');
+    });
+
+    test('another card linked: what the old one granted is offered', () {
+      final f = settleGrants(const {}, {'level': 1, 'main_class': 'fighter'}, ctx)
+          .fields;
+      final c = settleGrants(f, {...f, 'main_class': 'wizard'}, ctx);
+      expect(c.stale, containsAll(['second_wind', 'weapon_mastery']));
+      expect(_ids(c.fields['features']), contains('arcane_recovery'));
+      // Offered, not removed: Second Wind's own pool stays with it.
+      expect(
+        c.after.resources.map((r) => r.name),
+        ['Second Wind', '1st-level slot'],
+      );
+    });
+  });
+
   group('card carrier (V30)', () {
     test('a monster takes a feat: the card list, the Pool; no levels', () {
       final c = settleGrants(
