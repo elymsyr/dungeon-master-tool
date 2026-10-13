@@ -5,7 +5,8 @@
 > uygulanmasın, okunarak uygulansın.
 
 - **Durum:** Taslak. Tasarım onayı bekliyor (2026-10-09). Revizyon (2026-10-12, Faz 7 öncesi):
-  Kaynak verme ve Otomatik kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39).
+  Kaynak verme ve Otomatik kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39). Faz 7a ve 7b
+  elle kontrolleri (2026-10-12, 2026-10-13): D40–D42, tek kart bağlantısı da kök (§11.5).
 - **Branch:** `feature/free-template`
 - **Kapsam:** Sadece offline. Online oyun ve paylaşım sonraki fazlarda.
 - **Bu doküman neyi anlatır:** Sistemin ne yaptığını, nasıl davrandığını ve neden öyle olduğunu.
@@ -129,6 +130,7 @@ listeli.
 | **D39** | *(2026-10-12, Faz 7 öncesi; V25 onaylı)* **Kaynak öğesi** ad, maks ve kısa / uzun dinlenme davranışı taşır; açıklaması yoktur, kural gerekiyorsa yanına bir yazı öğesi konur. Aynı karttan gelen aynı adlı kaynak üstüne eklenmez, yerine geçer: seviye tablosunda ulaşılan en yüksek satırınki geçerlidir, kartın kendi Verilenler'i satırlardan önce sayılır. Farklı kartlardan gelen aynı adlı kaynaklarda büyük olan geçer. |
 | **D40** | *(2026-10-12, Faz 7a elle kontrolü)* Free karakter kağıdı yerleşik karakter ekranıyla aynı görünür: portre, ad, "template · dünya", açıklama, özet çipleri, görüntüle / düzenle, geri al / yinele, kaydet / senkron, DM notları, bölüm atlama; altında oyuncu kartının grupları. Kağıt yine ayrı ekrandır. Karakter kartlarında (hub, dünyanın karakter listesi, oyuncu sekmesi) ve kağıdın başlığında görünen **özet çipleri** free template'te oyuncu kartının kategori ayarında seçilir: alan (Savaş değerleri'nin HP'si ya da bir değeri dahil) ya da kullanıcı; sırası ve simgesiyle. Yerleşik template'in çipleri aynı kalır. |
 | **D41** | *(2026-10-12, Faz 7a elle kontrolü; D37'deki hedef listeyi değiştirir)* Kart öğesinin hedef listesi **taşıyıcı kategori başına** seçilir: aynı feat bir canavara da oyuncuya da verilebilir, her birinde kendi listesine girer. Seçim yapılmayan kategoride D37'deki kural geçerlidir. |
+| **D42** | *(2026-10-13, Faz 7b elle kontrolü)* Dünyada bir paket kartı (yerleşik SRD ya da kurulu paket) **yerinde** düzenlenir: aynı kart kalır (kimlik ve kaynak aynı), Homebrew kopya oluşmaz. Düzenlenen kart artık paket güncellemesi almaz. Yalnız paket ekranındaki referans kartları düzenlenince kopyalanır (§15.3). Her template'te geçerli. |
 
 ---
 
@@ -914,6 +916,10 @@ seçerse:
 - Kart bir şey verdiyse ardından seviye atlamadakiyle aynı özet ekranı çıkar.
 - **Kart taşıyıcı:** bir kartın listesine (örneğin bir canavarın Feat'leri) kart eklenince yalnız
   Verilenler işler; özet ekranı çıkmaz, sonuç kartta görünür. *(V30)*
+- **Tek kart bağlantısı** *(2026-10-12, kullanıcı)*: tek kart tutan bir alana (Tür, Alt tür,
+  Background) kart konunca da aynı kurallar işler. Kart her zaman ana seviyeye bakar; ayrı
+  kategoride bile kendi seviyesi yoktur. Bağlantı başka bir karta değişirse eskisinin verdikleri
+  çıkarılmak üzere önerilir (§11.7). Verilen kartlar yine yalnız listelere girer.
 
 ### 11.6 Verilen kartlar
 
@@ -1035,6 +1041,9 @@ uygular (İ2).
 Sihirbaz her adımda neyin seçileceğini bilmek zorunda; bu da template'in anlamını bilmek demek.
 Free template'te sistem alanların anlamını bilmez. Bu yüzden oyuncuya **boş karakter kağıdı**
 verilir ve template sahibinin yazdığı bir **rehber** adım adım yol gösterir (D24).
+
+Sihirbazda free template'li bir dünya ya da template seçilince önce bunu anlatan bir not çıkar
+(İptal / Devam), sonra boş kağıt açılır.
 
 ### 13.2 Rehberi yazmak
 
@@ -1229,6 +1238,22 @@ flowchart TD
   kurulunca hepsi görünür.
 - **Aynı anahtar, farklı şekil:** anahtar aynı ama değer okunamıyorsa (örneğin alan tarzı farklı)
   alan boş görünür. SRD verisi için özel okuyucular vardır (§16.3).
+- **Kopyalanmış SRD paketi:** kendi Tier-0 kartlarını (Resource Pool, hasar türü…) taşır; SRD paketi
+  olmayan bir dünyaya kurulunca kartları bunlara bağlanır.
+
+### 15.3 Dünyada paket kartını düzenlemek *(D42)*
+
+- Dünyadaki bir paket kartı (yerleşik SRD ya da kurulu paket) düzenlenince **aynı kart** değişir:
+  kimliği ve kaynağı aynı kalır, ona bağlı her alan düzenlemeyi görür. Pakete bağlılığı düşer,
+  hangi paketten geldiğini hatırlar.
+- Paket eşitlemesi düzenlenen karta dokunmaz: düzenleme paketin kartını örter, paket güncellemesi
+  artık ona gelmez. Bulut ve paylaşım onu dünyanın kendi kartı gibi taşır; dünya başka cihazda
+  açılınca da düzenleme geçerlidir.
+- Düzenlenen SRD kartı SRD kaynağını koruduğu için çevrilmeye devam eder (çeviri metin anahtarlı;
+  yazılan yeni metin olduğu gibi görünür).
+- Yerleşik SRD kartı silinemez; düzenlenmiş hali silinirse SRD'deki hali geri gelir.
+- **İstisna:** paket ekranında başka paketin referans kartları gösterilir; onlar o pakete ait
+  değildir, düzenlenince Homebrew kopya oluşur ve açılır.
 
 ---
 
@@ -1241,7 +1266,12 @@ içeriğini ve düzenini istediği gibi değiştirir.
 
 - 75 kategori, 928 alan, bütün gruplar, kolon sayıları ve sıralar.
 - `player-character` kategorisi **oyuncu kartı** olur. `class_levels` alanı kalkar; yerine ana
-  seviye ve kart seviyeleri gelir (§10.3).
+  seviye ve kart seviyeleri gelir (§10.3). Tür'ün yanına **Subspecies** tek kart bağlantısı
+  (`subspecies_ref`) eklenir: yerleşikte alt tür karakter modelindeydi, kopyada seviye tablosu
+  karaktere ulaşsın diye bağlantıdır (§11.5). Feat'ler Kimlik grubundan çıkar, Traits & Actions'ta
+  Traits'in üstünde kart listesi olur.
+- Seviye modları: **Sınıf** ayrı (çok sınıflı karakterde her sınıf kendi seviyesinde, §11.2); diğer
+  seviye tablolu kategoriler (Alt sınıf, Tür, Alt tür, Feat, Büyülü eşya, Trait) beraber.
 - Encounter ayarları: kategoriler; kolonlar Savaş değerleri'nden İnis. (sıra, azalan), AC, HP,
   Durumlar.
 - Hazır içerikler: Skill tablosu, Saving throw tablosu, Stat tablosu (STR–CHA) ve Savaş değerleri
@@ -1259,7 +1289,7 @@ içeriğini ve düzenini istediği gibi değiştirir.
 | `classFeatures` | Sınıf, Alt sınıf › `features` | **Seviye tablosu** (§16.3) |
 | `spellsAtLevel` | Tür, Alt tür, Feat, Büyülü eşya, Trait | **Seviye tablosu**: "N. seviyede büyü kartı ver → Büyüler". Günlük kullanım varsa aynı satırda bir kaynak öğesi. Bu kategoriler beraber modda seviye tablolu olur. *(V24)* |
 | `resourcePoolGrants` | Tür, Alt tür, Feat, Trait | **Kaynak öğeleri** (§16.3): sabit sayı kartın **Verilenler**'inde, seviyeye bağlı olan kartı veren kartın seviye tablosu satırlarında |
-| `spellSlotProgression` + sınıfın büyücü türü | Sınıf | Sınıfın seviye tablosu satırlarında **kaynak öğeleri**: "1. seviye slot" … "9. seviye slot", uzun dinlenmede doldur. Warlock'ta pact slotları kısa dinlenmede de doldur. Sınıf ayrı olduğu için sınıf seviyesini izler (D26). |
+| `spellSlotProgression` + sınıfın büyücü türü | Sınıf | Alan kopyadan kalkar. Sınıfın seviye tablosu satırlarında **kaynak öğeleri**: `Level 1 Slots` … `Level 9 Slots`, uzun dinlenmede doldur. Warlock'ta tek `Pact Slots`, kısa dinlenmede de doldur. Sınıf ayrı olduğu için sınıf seviyesini izler (D26). |
 | `spellSlotGrid` | Oyuncu › `spell_slots` | **Havuz** olur (Faz 6'da Otomatik kaynaklar adıyla; anahtar `spell_slots` kalır). Slotlar orada görünür. |
 | `levelTable` | Sınıf › bilinen cantrip, hazırlanan büyü; çeşitli › extra attack; Paket › içerik miktarları | **Tablo** (Seviye · Değer) |
 | `levelTextTable` | Büyü › `at_higher_levels_text` | **Tablo** (Seviye · Yazı) |
@@ -1315,9 +1345,20 @@ yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
   - `recharge: short_rest` → kısa ve uzun dinlenmede doldur. `long_rest` → uzun dinlenmede doldur.
   - Kaynağı taşıyan kartın kendisi (örneğin Rage feat'i) satırın kart öğesi olarak verilmeye devam
     eder.
+  - Kaynak adları İngilizce veridir (SRD gibi): Resource Pool kartının görünen adı ("Rage",
+    "Focus Points"). Havuz bu adlarla birleştirir (D39).
+  - Seviyeye bağlı formül sınıfsızsa (`pb`, örneğin Lucky) kaynak kartın kendi seviye tablosuna
+    gider ve ana seviyeyi izler.
+  - SRD'nin "sınırsız" sayısı (Rage 20'de) kutucukla gösterilemez, atlanır; bir önceki maks kalır,
+    kartın yazısı sınırsızı söyler.
 - **Büyücü türü → slot satırları:** sınıfın tam, yarım, üçte bir ya da pact büyücü türü, bugünkü
-  slot tablolarından sınıfın seviye tablosu satırlarında "N. seviye slot" kaynak öğelerine
-  çevrilir.
+  slot tablolarından (Paladin ve Ranger'da sınıfın kendi `spell_slots_by_level`'ından) sınıfın
+  seviye tablosu satırlarında, sayının değiştiği her seviyede `Level N Slots` kaynak öğelerine
+  çevrilir. Warlock'ta ad seviye taşımaz (`Pact Slots`): adı değişseydi eskisinin yerine geçmez,
+  ikisi birden kalırdı; slot seviyesi sınıfın Pact Magic yazısındadır.
+- **Okuma ve saklama:** kartın değeri SRD şeklindeyse (ya da boşsa) okuyucu çalışır; kart kopyada
+  düzenlenip kaydedilince kendi satırlarını saklar ve okuyucu devreden çıkar. Verme motoru, kart
+  ekranı ve uzun basma önizlemesi aynı okumayı kullanır.
 - **Yapılı listeler → metin:** başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri okunaklı
   markdown'a çevrilerek gösterilir.
 - **Savaş değerleri (D36):**

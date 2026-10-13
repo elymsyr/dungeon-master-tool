@@ -26,7 +26,10 @@
   bekliyor (2026-10-12). Elle kontrol bulguları düzeltildi ve commit'lendi (E7a.20–25 yeniden
   kontrol bekliyor). Kullanıcı kararıyla (2026-10-12) 7b'den önce **Faz 7a+** (oynanış alanları
   edit modu kapalıyken de değişsin) yapılır. Faz 7a+ uygulandı, otomatik kapı yeşil; elle kontrol
-  bekliyor (2026-10-12).
+  bekliyor (2026-10-12). Faz 7b (SRD kopyası dönüştürücüsü v4) uygulandı, otomatik kapı yeşil;
+  elle kontrol bekliyor (2026-10-12). Faz 7b elle kontrolünün 1. turu yapıldı (2026-10-13);
+  bulgular düzeltildi, paket kartı artık yerinde düzenleniyor (D42); düzeltmeler yeniden kontrol
+  bekliyor.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -40,7 +43,7 @@
 | 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | 🔶 uygulandı, elle kontrol bekliyor |
 | 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | 🔶 uygulandı, elle kontrol bekliyor |
 | 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | 🔶 uygulandı, elle kontrol bekliyor |
-| 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ⏳ |
+| 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | 🔶 uygulandı, elle kontrol 1. tur yapıldı, düzeltmeler bekliyor |
 | 8 | Karakter oluşturma rehberi | M | ⏳ |
 | 9 | Encounter ve harita ayarları | M | ⏳ |
 | 10 | Kapanış | S | ⏳ |
@@ -232,7 +235,7 @@ rozeti olur.
 | `spellSlotGrid`, `class_levels` | `spell_slots` → Otomatik kaynaklar (Faz 7'de Havuz, D38); `class_levels` → Seviye | 6 |
 | `classFeatures` | Seviye tablosu; özelliklerin `granted_*_refs`'i satırın Verilenler'inde | 7 |
 | `resourcePoolGrants` | Kaynak öğeleri: sabit sayı kartın Verilenler'inde, seviyeye bağlı olan veren kartın satırlarında | 7 |
-| `spellSlotProgression` + büyücü türü | Sınıfın satırlarında "N. seviye slot" kaynak öğeleri | 7 |
+| `spellSlotProgression` + büyücü türü | Alan kalkar; sınıfın satırlarında `Level N Slots` (Warlock'ta `Pact Slots`) kaynak öğeleri | 7 |
 | `spellsAtLevel` | Seviye tablosu (+ günlük kullanım için satırda kaynak öğesi) | 7 |
 
 > **Önemli:** Bir fazda yeni dönüşüm eklenince önceki fazlarda oluşturulmuş test kopyaları eski
@@ -1469,6 +1472,128 @@ hem karakterde hem canavarda doğru yere düşer.
 - **Elle kontrol:** E7a+.1–E7a+.4 (+ bekleyen E7a.20–25).
 - **Bilinen sınırlar:** Havuz'daki kaynak dışı öğeler (ör. verilen onay kutusu) her modda
   salt okunur (bugünkü gibi): Havuz onları saklamaz, kartın verisidir.
+
+**Faz 7b sonucu** (2026-10-12, Linux; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - **SRD kopyası v4** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    Sınıf ve Alt sınıf `features` → Seviye tablosu; Tür, Alt tür, Feat, Büyülü eşya, Trait
+    `granted_spells_at_level` → Seviye tablosu (V24); `resource_pool_grants` → Verilenler. Üçü de
+    `styleConfig.srd_read` taşır: kartın SRD verisi okunurken çevrilir, SRD paketi değişmez (K1).
+    `spell_slots_by_level` kopyadan kalkar (slotlar sınıfın satırlarında). Sınıf kategorisi
+    **Ayrı**; diğer seviye tablolu kategoriler Beraber.
+  - **Okuyucu** ([free_srd_levels.dart](../../flutter_app/lib/domain/services/free_srd_levels.dart),
+    saf): `freeFieldValue` bu alanlarda kartın değeri hâlâ SRD şeklindeyse onu çağırır; verme
+    motoru ve kart ekranı aynı satırları okur. Kart kopyada düzenlenince kendi satırlarını saklar.
+    - Özellik satırı → Seviye · `**Ad.** açıklama` · `granted_*_refs` → hedef listeli kart
+      öğeleri (DESIGN §16.3 tablosu; hedef oyuncu kartının listesi).
+    - Büyücü türü (ve Paladin / Ranger'ın `spell_slots_by_level`'ı) → değerin değiştiği her
+      seviyede `Level N Slots` kaynağı (kısa dokunma, uzun doldur); Warlock'ta tek `Pact Slots`
+      (kısa ve uzun doldur).
+    - Satırın verdiği feat'in seviyeye bağlı havuzu (`count_by_level` + `class_ref`, ya da
+      `monk_level` / `sorcerer_level` / `paladin_level_x5`) → veren kartın satırlarında, değerin
+      değiştiği her seviyede aynı adlı kaynak (D39: aynı karttan gelen yerine geçer).
+    - Sabit `count` → feat'in kendi Verilenler'inde kaynak; `cha_mod_min_1` / `wis_mod_min_1` →
+      maksı boş kaynak + "Max = CHA modifier (min. 1)" markdown öğesi (D27, D30).
+    - `pb` (Lucky) → kartın kendi Seviye tablosunda (ana seviye): 2, 5'te 3, … 17'de 6.
+    - `recharge: short_rest` → kısa ve uzun doldur; `long_rest` → yalnız uzun doldur.
+  - **Tek kart bağlantıları da kök** (kullanıcı kararı, DESIGN §11.5): verme motoru listelerin
+    yanında tek kart tutan alanlardaki kartı da okur (`carrierLinksOf`). Tür, Alt tür ya da
+    Background kartının Verilenler'i ve Seviye tablosu karaktere işler; kâğıtta ve kart ekranında
+    tek bağlantı değişince de özet ve geri alma önerisi çıkar. Bu her template'te geçerli. Editörde
+    **Sv** etiketi tek bağlantılarda da çıkar.
+  - SRD kopyasının oyuncu kartına Tür'ün yanına **Subspecies** tek bağlantısı eklendi
+    (`subspecies_ref`; yerleşikte alt tür karakter modelindeydi). Drow 3. seviyede Faerie Fire,
+    5'te Darkness verir.
+- **Uygulamada verilen kararlar:**
+  - Kaynak adları İngilizce veridir (SRD gibi): Resource Pool kartının görünen adı ("Rage",
+    "Focus Points"), slotlar `Level 1 Slots` … `Level 9 Slots`, `Pact Slots`. Havuz bunlarla
+    birleştirir (D39).
+  - Warlock'un pact slotlarının seviyesi addan çıkarıldı (adı seviyeyle değişseydi eskisi
+    yerine geçmez, ikisi birden kalırdı); slot seviyesi sınıfın Pact Magic yazısında.
+  - SRD'nin "sınırsız" sayısı (Rage 20'de 99) kutucukla gösterilemediği için atlanır; 20'de 6
+    kalır, Rage kartının yazısı sınırsızı söyler.
+  - Alt sınıfın satırlarına bağlanan havuzlar ana seviyeye bakar (§11.3; SRD'de alt sınıf
+    havuzlarının hepsi sabit sayı, fark etmez).
+  - Kartın değeri boş liste ise SRD okunur: kopyada bir SRD sınıfının bütün satırları silinirse
+    SRD'den yeniden gelir.
+  - Tek bağlantıdaki kart her zaman ana seviyeye bakar, ayrı kategoride bile: tek kart tutan
+    alanda kartın kendi seviyesi olmaz, seviye atlama onu sormaz. Verilen kartlar yine yalnız
+    listelere girer, tek bağlantıya yazılmaz.
+- **Otomatik kapı:** G1 boş · G2 + G3 yeşil · G4 32 bilgi notu (temel çizgi) · G5
+  `free_srd_levels_test` 10 (gerçek SRD kartlarıyla: v4 tipleri ve Sınıf = Ayrı; saklanan değer
+  SRD okumasını ezer; Fighter 1 → 2 → Wizard 1 (slotlar, Arcane Recovery) ve Champion 4;
+  Barbarian 8 Rage 4, 20'de 6; Monk 5 Focus 5; Paladin 3 Lay on Hands 15 ve 1. seviye slot;
+  Bard'ın Bardic Inspiration'ı maks boş + yazı; Warlock pact slotları; Lucky 5'te 3; Drow alt
+  türü 3'te Faerie Fire), `free_grants_test`'e tek bağlantı grubu (kartı ana seviyeyle verir;
+  başka karta değişince eskisinin verdikleri önerilir), güncellenen `free_template_test` (v4
+  satırları, Subspecies) yeşil · G6 1896 geçti; kırmızılar temel çizgideki 3 testle aynı
+  (`bundled_pack_resolve`, `srd_tr_entity_card`, `entity_card_flush`).
+- **Nasıl açılır:** §1.2.
+- **Elle kontrol (7b):** önce **SRD'yi yeniden kopyala** (eski kopyalarda sınıflar eski
+  `classFeatures` tipinde kalır).
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| E7b.1 | SRD'yi yeniden kopyala ("SRD kopyam 4"); editörde Sınıf'ın seviye modu **Ayrı**, Alt sınıf'ınki **Beraber**. "SRD içeriğini ekle" açık dünya kur. | — |
+| E7b.2 | Aria'yı oluştur, Sınıflar'a **Fighter** ekle. | Özet: Second Wind (feat ve bonus eylem), Weapon Mastery eklendi; Fighting Style / Second Wind / Weapon Mastery yazıları okunacaklarda; Havuz'da Second Wind 2. |
+| E7b.3 | **Seviye atla.** | Fighter kendiliğinden seçili; Action Surge eklendi; Havuz'da Action Surge 1. |
+| E7b.4 | Seviye atla, "+ Yeni ekle", **Wizard**. | Wizard "Seviye 1"; Havuz'da Level 1 Slots 2 kutu, Arcane Recovery 1. |
+| E7b.5 | Seviye atla, Fighter'ı seç; Alt sınıflar'a **Champion** ekle. | "Fighter Subclass" okunacaklarda; Champion'ın 1–4. satırları işledi (Improved Critical). |
+| E7b.6 | Verilen bir kartın etiketine bak. | "Veren: Fighter · seviye 2" gibi. |
+| E7b.7 | Wizard'ı listeden çıkar. | Wizard'dan gelen kartlar için çıkarma önerisi; slotlar Havuz'dan kendiliğinden gider, Arcane Recovery feat'i çıkarılınca gider. |
+| E7b.8 | Kağıt açıkken Fighter kartını aç. | Satırlar SRD özellikleriyle dolu, ulaşılanlar işaretli; slot / kaynak satırları en altta. |
+| E7b.9 | Bir **Barbarian** karakteri 8. seviyeye çıkar. | Havuz'da Rage 4 kutu; uzun dinlenmede dolar. |
+| E7b.10 | Bir **Bard** oluştur. | Havuz'da Bardic Inspiration'ın maksı boş, Bardic Inspiration altında "Max = CHA modifier (min. 1)"; edit modunda maksı gir, kutular çıkar. |
+| E7b.11 | Bir **Warlock**'u 2. seviyeye çıkar, bir slot harca, **Kısa dinlenme**. | Pact Slots 2; kısa dinlenmede dolar. |
+| E7b.12 | 5. seviyedeki bir karaktere Feats'ten **Lucky** ekle. | Havuz'da Luck Points 3. |
+| E7b.13 | Kart ekranında (edit modu) SRD Fighter'ın tablosuna bir satır ekle, kaydet, kartı kapatıp aç. | Satır kalıcı; diğer satırlar aynı. |
+| E7b.14 | Seviye atlama, özet ve Havuz'u telefonda ve Android'de kullan. | Rahat ve okunaklı. |
+| E7b.15 | R turu (özellikle R3, R4). | Yerleşik sihirbaz ve seviye atlama aynen. |
+| E7b.16 | 1. seviye bir karakterde Tür'e **Elf**, Subspecies'e **Drow** koy; 3. seviyeye çıkar. | 3. seviyede özet: Faerie Fire büyülere eklendi, Havuz'da Faerie Fire 1. |
+| E7b.17 | Subspecies'i **Drow**'dan **High Elf**'e değiştir. | Drow'un verdiği Faerie Fire için çıkarma önerisi; Havuz'daki Faerie Fire kendiliğinden gider. |
+| E7b.18 | Kendi template'inde tek kart bağlantısı olan bir alana (örneğin "Köken") Verilenler'i olan bir kart koy. | Verilenler karaktere işler, özet çıkar. |
+
+- **Elle kontrol sonucu (2026-10-13), 1. tur:** E7b.1, 3, 5–7, 11, 14, 18 tamam; E7b.4'te slotlar geldi.
+  Düzeltilenler:
+  - **E7b.2, 9, 10, 12 (Havuz boş):** test dünyası SRD paketinin **kopyasını** kullanıyordu; kopya,
+    SRD paketi olmayan bir dünyaya kurulurken `_lookup` yer tutucularını boş metne çeviriyordu
+    (Resource Pool adları kayboldu, Havuz'a yalnız slotlar geldi). `PackageSyncService.sync`
+    artık bunları önce paketin kendi Tier-0 kartlarına çözüyor. Var olan dünya için:
+    **Paketten yeniden eşitle**. Gerçek dünya verisiyle de denendi.
+  - **E7b.8:** ulaşılan satırlar yalnız karakter kâğıdından açılan kartta işaretli
+    (`EntityOpenScope`); kenar çubuğundan açılan kartta işaret yok.
+  - **Feats:** SRD kopyasında Kimlik'ten çıktı; Traits & Actions'ta, Traits'in üstünde kart
+    listesi (yeni kopyada).
+  - **E7b.15:** sihirbazda free dünya / template seçilince önce "sihirbaz yok" notu (İptal /
+    Devam), sonra boş kâğıt. Yerleşik sihirbaz aynen.
+  - **E7b.13 (2. tur, kullanıcı isteği):** paket kartı artık **yerinde** düzenlenir: aynı kart
+    (id, kaynak aynı), Homebrew kopya yok. Kart `linked`'den düşer, `package_entity_id`'sini
+    tutar: paket eşitlemesi ve yerleşik SRD sentezi ona dokunmaz, bulut / paylaşım onu taşır;
+    dünya başka cihazda açılınca düzenleme SRD kartını yine örter. Düzenlenen kart artık paket
+    güncellemesi almaz. Yerinde düzenlenen SRD kartı çevrilmeye devam eder (`isSrdCard` yalnız
+    kaynağa bakar). Paket ekranının referans kartları eskisi gibi kopya forklar.
+  - **E7b.16, 17:** motor ve kullanıcının dünya verisi doğru sonuç veriyor (Drow 3'te Faerie
+    Fire; High Elf'e geçince çıkarma önerisi, Detect Magic gelir; teste eklendi). Uyarı yazısı
+    yalnız ayrı modda kartı olmayan karakterde çıkar. Yeniden denenecek.
+  - **E7a.20 (2. tur):** "Gideceği liste" boş kaldı: Riposte Tier 0 lookup "Action"
+    (`action`) kategorisinde açılmıştı, Reactions yalnız Tier 1 "Action"ı
+    (`creature-action`) alır. Motor doğru; hiçbir liste kartı almıyorsa diyalog artık boş
+    bölüm yerine nedenini yazar (`freeGrantNoTarget`).
+  - **Uzun basma önizlemesi (Drow):** "Duplicate keys found" hatası veriyordu: önizleme alanı ham
+    değerden okuyordu, SRD şeklindeki Seviye tablosu `_id`'siz geliyordu. Artık kart ekranı gibi
+    `freeFieldValue`'den okuyor (teste eklendi).
+  - **Tek kart bağlantısının alt yazısı** (ör. "· Species") uzun adla dar ekranda taşıyordu;
+    kısaltılıyor.
+  - **Paket kartı yerinde düzenlenir** (D42, DESIGN §15.3) yerleşik template'te de geçerli:
+    "Pakete bağlı" ve "silinemez" yazıları buna göre değişti.
+  - **Otomatik kapı (1. tur sonrası, 2026-10-13):** G4 32 bilgi notu (temel çizgi) · G6 1899
+    geçti; kırmızılar temel çizgideki 3 testle aynı. Üç commit (7b, düzeltmeler, D42) ayrı ayrı
+    analyze ve hedef testlerle doğrulandı.
+- **Bilinen sınırlar:**
+  - Çok sınıflı birleşik slot tablosu yok: iki büyücü sınıfında aynı adlı slotun büyüğü geçer
+    (V25).
+  - Faz 1–7a'da alınmış SRD kopyaları eski tipleriyle kalır (§6 notu, Y1).
 
 ---
 
