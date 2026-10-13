@@ -117,8 +117,12 @@ String? _relationSubtitle(Entity e) {
 /// tap) supplies the source panel; null source → default routing. The write
 /// itself is [navigateToEntity] in `entity_link.dart` — the single entry point
 /// audit U3 settled on, shared with the structured-list mini fields.
-void _navigateToEntity(WidgetRef ref, String id, String? sourcePanel) =>
-    navigateToEntity(ref, id, sourcePanel: sourcePanel);
+void _navigateToEntity(
+  BuildContext context,
+  WidgetRef ref,
+  String id,
+  String? sourcePanel,
+) => navigateToEntity(ref, id, sourcePanel: sourcePanel, context: context);
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -1529,7 +1533,7 @@ class _RelationFieldWidget extends StatelessWidget {
                 ? InkWell(
                     onTap: ref == null || linkedEntity == null
                         ? null
-                        : () => _navigateToEntity(ref!, linkedId, panelId),
+                        : () => _navigateToEntity(context, ref!, linkedId, panelId),
                     onLongPress:
                         entityPreviewHandler(context, ref, linkedId, entities),
                     child: Row(
@@ -1549,7 +1553,13 @@ class _RelationFieldWidget extends StatelessWidget {
                         ),
                         if (subtitle != null) ...[
                           const SizedBox(width: 6),
-                          Text('· $subtitle', style: _fieldEmptyStyle(context)),
+                          Flexible(
+                            child: Text(
+                              '· $subtitle',
+                              style: _fieldEmptyStyle(context),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -2582,7 +2592,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                             onTap: ref == null || linkedEntity == null
                                 ? null
                                 : () =>
-                                      _navigateToEntity(ref!, itemId, panelId),
+                                      _navigateToEntity(context, ref!, itemId, panelId),
                             onLongPress: entityPreviewHandler(
                                 context, ref, itemId, entities),
                             child: Row(
@@ -2834,7 +2844,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
               InkWell(
                 onTap: ref == null || entities?[id] == null
                     ? null
-                    : () => _navigateToEntity(ref!, id, panelId),
+                    : () => _navigateToEntity(context, ref!, id, panelId),
                 onLongPress: entityPreviewHandler(context, ref, id, entities),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -2870,7 +2880,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
               label: _chipLabel(context, id),
               onPressed: ref == null || entities?[id] == null
                   ? null
-                  : () => _navigateToEntity(ref!, id, panelId),
+                  : () => _navigateToEntity(context, ref!, id, panelId),
               onDeleted: () {
                 final next = List<String>.from(ids)..remove(id);
                 onChanged(next);

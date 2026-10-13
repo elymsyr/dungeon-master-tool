@@ -6,12 +6,15 @@
 
 import 'package:dungeon_master_tool/application/providers/entity_provider.dart';
 import 'package:dungeon_master_tool/application/providers/template_provider.dart';
+import 'package:dungeon_master_tool/application/services/builtin_srd_entities.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/domain/services/free_grants.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:dungeon_master_tool/domain/services/template_edit.dart';
+import 'package:dungeon_master_tool/presentation/dialogs/entity_preview_dialog.dart';
 import 'package:dungeon_master_tool/presentation/l10n/app_localizations.dart';
 import 'package:dungeon_master_tool/presentation/screens/characters/free_level_dialogs.dart';
 import 'package:dungeon_master_tool/presentation/screens/templates/template_editor_screen.dart';
@@ -276,6 +279,43 @@ void main() {
       ),
       isTrue,
     );
+  });
+
+  testWidgets('the long-press preview reads an SRD card as the copy does '
+      '(Drow: two spell rows, no duplicate keys)', (tester) async {
+    final srd = copyAsFreeTemplate(
+      generateBuiltinDnd5eV2Schema().schema,
+      id: 'copy',
+      name: 'SRD copy',
+      now: _now,
+    );
+    final entities = buildBuiltinSrdEntities();
+    // No art: the image loader needs the app's paths.
+    final drow = entities.values
+        .firstWhere((e) => e.categorySlug == 'subspecies' && e.name == 'Drow')
+        .copyWith(imagePath: '', images: const []);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [worldSchemaProvider.overrideWithValue(srd)],
+        child: MaterialApp(
+          localizationsDelegates: L10n.localizationsDelegates,
+          supportedLocales: L10n.supportedLocales,
+          theme: buildThemeData('dark'),
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () =>
+                  showEntityPreview(context, drow, entities: entities),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const ValueKey('lt_srd0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('lt_srd1')), findsOneWidget);
   });
 }
 

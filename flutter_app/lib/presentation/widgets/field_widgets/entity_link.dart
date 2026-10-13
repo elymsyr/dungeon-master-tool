@@ -19,7 +19,13 @@ import '../../dialogs/entity_preview_dialog.dart';
 /// links already wrote to it. This file lifts the write out of
 /// `field_widget_factory` so every ref renderer — including the ones in
 /// `structured_list_field_widgets` — uses the same one.
-void navigateToEntity(WidgetRef ref, String id, {String? sourcePanel}) {
+void navigateToEntity(
+  WidgetRef ref,
+  String id, {
+  String? sourcePanel,
+  BuildContext? context,
+}) {
+  context?.getInheritedWidgetOfExactType<EntityOpenScope>()?.onOpen(id);
   final target = switch (sourcePanel) {
     'left' => 'right',
     'right' => 'left',
@@ -27,6 +33,18 @@ void navigateToEntity(WidgetRef ref, String id, {String? sourcePanel}) {
   };
   ref.read(entityNavigationTargetPanelProvider.notifier).state = target;
   ref.read(entityNavigationProvider.notifier).state = id;
+}
+
+/// A subtree told which cards its links open: the free character sheet, so
+/// a card opened from it marks the Level table rows its character reached
+/// and one opened anywhere else does not (DESIGN §11.8).
+class EntityOpenScope extends InheritedWidget {
+  const EntityOpenScope({super.key, required this.onOpen, required super.child});
+
+  final ValueChanged<String> onOpen;
+
+  @override
+  bool updateShouldNotify(EntityOpenScope oldWidget) => false;
 }
 
 /// The id a stored ref should open, or `null` when nothing is there to open.
@@ -94,7 +112,8 @@ class EntityLink extends StatelessWidget {
     final r = ref;
     if (id == null || r == null) return child;
     return InkWell(
-      onTap: () => navigateToEntity(r, id, sourcePanel: sourcePanel),
+      onTap: () =>
+          navigateToEntity(r, id, sourcePanel: sourcePanel, context: context),
       onLongPress: entityPreviewHandler(context, r, id, entities),
       child: child,
     );

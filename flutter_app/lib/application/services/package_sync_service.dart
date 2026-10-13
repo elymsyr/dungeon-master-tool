@@ -83,6 +83,15 @@ class PackageSyncService {
         packToWorld[pack.id] = existing?.id ?? _uuid.v4();
       }
 
+      // A package carrying its own lookup rows (a copied SRD pack) points
+      // its `_lookup` placeholders at them; [resolveAttrs] gets the rest.
+      // Without this every one became '' in a world without the SRD pack.
+      final ownLookups = <String, Map<String, String>>{};
+      for (final pack in packRows) {
+        (ownLookups[pack.categorySlug] ??= {})[pack.name] =
+            packToWorld[pack.id]!;
+      }
+
       var added = 0;
       var updated = 0;
       var removed = 0;
@@ -92,8 +101,11 @@ class PackageSyncService {
       final upserts = <WorldEntitiesCompanion>[];
       for (final pack in packRows) {
         final existing = byPackEntId[pack.id];
-        final attrsRaw =
-            jsonDecode(pack.fieldsJson) as Map<String, dynamic>? ?? const {};
+        final attrsRaw = _resolveOwnLookups(
+              jsonDecode(pack.fieldsJson),
+              ownLookups,
+            ) as Map<String, dynamic>? ??
+            const {};
         final attrsResolved = resolveAttrs != null
             ? resolveAttrs(Map<String, dynamic>.from(attrsRaw))
             : Map<String, dynamic>.from(attrsRaw);
@@ -270,6 +282,27 @@ class PackageSyncService {
         detachedSurvived: detachedSurvived,
       );
     });
+  }
+
+  /// [value] with each `{_lookup, name}` placeholder that [own] knows
+  /// replaced by its world id; the others stay for the Tier-0 resolver.
+  static dynamic _resolveOwnLookups(
+      dynamic value, Map<String, Map<String, String>> own) {
+    if (value is Map) {
+      final lookup = value['_lookup'];
+      final name = value['name'];
+      if (lookup is String && name is String) {
+        return own[lookup]?[name] ?? value;
+      }
+      return <String, dynamic>{
+        for (final e in value.entries)
+          e.key.toString(): _resolveOwnLookups(e.value, own),
+      };
+    }
+    if (value is List) {
+      return [for (final e in value) _resolveOwnLookups(e, own)];
+    }
+    return value;
   }
 
   /// Walks [value] and replaces any string that matches a key in

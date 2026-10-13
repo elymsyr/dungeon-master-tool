@@ -130,6 +130,25 @@ class _CharacterCreationWizardScreenState
   /// §10.2): a blank character opens on its own sheet instead.
   Future<void> _startFree({String? worldId, WorldSchema? template}) async {
     final l10n = L10n.of(context)!;
+    // Say why the wizard ends here before leaving it.
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.freeNoWizardTitle),
+        content: Text(l10n.freeNoWizardBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.btnContinue),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
     final schema =
         template ??
         await readWorldSchema(ref.read(appDatabaseProvider), worldId!);

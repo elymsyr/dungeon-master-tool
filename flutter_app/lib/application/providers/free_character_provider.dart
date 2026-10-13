@@ -55,8 +55,9 @@ final freeCharacterSchemaProvider = FutureProvider.autoDispose
     });
 
 /// The open free character's reached levels by card id (DESIGN §11.8): a
-/// card opened while the sheet is open marks the Level table rows its
-/// character has reached. The sheet writes it and clears it on close.
+/// card opened from the sheet marks the Level table rows its character has
+/// reached; one opened anywhere else shows none. The sheet writes it and
+/// clears it on close.
 final freeReachedLevelsProvider = StateProvider<Map<String, int>>(
   (_) => const {},
 );

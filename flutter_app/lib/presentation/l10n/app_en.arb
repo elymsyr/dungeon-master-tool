@@ -3778,6 +3778,9 @@
     }
   },
   "freeNewCharacterName": "New character",
+  "freeNoWizardTitle": "Your own template",
+  "@freeNoWizardTitle": {"description": "Wizard: a world or template with its own template was picked; title of the note before its blank sheet opens."},
+  "freeNoWizardBody": "Your own templates have no creation wizard. A blank character opens on its sheet at level 1; fill it in there.",
   "tplStyleResource": "Resource",
   "tplStyleResourceHint": "A current / max counter that rests fill or empty",
   "tplStyleCombatStats": "Combat stats",
@@ -3843,6 +3846,7 @@
   "freeGrantPickCard": "Choose a card",
   "freeGrantTarget": "Goes into",
   "freeGrantTargetAuto": "The first list for its category",
+  "freeGrantNoTarget": "No list takes cards of this category. Add a Card link that targets it in the template editor.",
   "freeGrantMaxOpen": "Empty: the player enters it",
   "freeLevelText": "Text",
   "freeLevelRowAdd": "Add row",
