@@ -2485,6 +2485,7 @@
   "freeGrantPickCard": "Choisir une carte",
   "freeGrantTarget": "Va dans",
   "freeGrantTargetAuto": "La première liste de sa catégorie",
+  "freeGrantTargetNone": "Ne pas accorder",
   "freeGrantNoTarget": "Aucune liste ne prend les cartes de cette catégorie. Ajoutez dans l'éditeur de template un lien de carte qui la cible.",
   "freeGrantMaxOpen": "Vide : le joueur le saisit",
   "freeLevelText": "Texte",

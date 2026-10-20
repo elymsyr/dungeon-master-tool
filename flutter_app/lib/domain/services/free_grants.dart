@@ -102,7 +102,7 @@ class GrantItem {
   /// field key) — a feat may give a monster's and a player's lists
   /// different homes. A carrier not named takes the first list holding the
   /// card's category; a named list it lacks sends the card to the Pool
-  /// (V10).
+  /// (V10); [noGrantTarget] grants it nothing there.
   final Map<String, String> targets;
 
   /// Resource: its name — the Pool merges by it (D39).
@@ -184,6 +184,10 @@ class GrantItem {
     updatedAt: '',
   );
 }
+
+/// A card item's target for a carrier category that is not granted the
+/// card at all: no list, no Pool, no chain.
+const noGrantTarget = '_none';
 
 List<GrantItem> grantItemsOf(Object? value) => [
   for (final m in _maps(value)) GrantItem.fromJson(m),
@@ -506,6 +510,7 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
     void emit(GrantItem item, int? row) {
       switch (item.kind) {
         case GrantKind.card:
+          if (item.targets[ctx.carrier.slug] == noGrantTarget) return;
           final target = _refId(item.card, ctx.entities);
           if (target == null || target == id) return;
           if (cards.any((g) => g.cardId == target)) return;

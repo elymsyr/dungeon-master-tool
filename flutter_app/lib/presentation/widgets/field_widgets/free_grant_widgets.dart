@@ -427,7 +427,7 @@ class GrantItemList extends StatelessWidget {
             ? null
             : [
                 for (final MapEntry(:key, :value) in item.targets.entries)
-                  _targetLabel(_categories, key, value),
+                  _targetLabel(_categories, key, value, L10n.of(context)!),
               ].join(', ');
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -497,15 +497,15 @@ class GrantItemList extends StatelessWidget {
 String? _cardIdIn(Object? raw, Map<String, Entity>? entities) =>
     entities == null ? null : entityLinkTarget(raw, entities);
 
-/// The categories that can carry a card of [slug], each with its lists
-/// that take it.
+/// The categories that can carry a card of [slug] — a list takes it, or
+/// it falls to their Pool — each with its lists that take it.
 List<(EntityCategorySchema, List<FieldSchema>)> _carriersFor(
   List<EntityCategorySchema> categories,
   String slug,
 ) => [
   for (final c in categories)
     if (carrierListsOf(c).where((f) => listTakes(f, slug)).toList()
-        case final lists when lists.isNotEmpty)
+        case final lists when lists.isNotEmpty || poolFieldOf(c) != null)
       (c, lists),
 ];
 
@@ -514,12 +514,16 @@ String _targetLabel(
   List<EntityCategorySchema> categories,
   String slug,
   String key,
+  L10n l10n,
 ) {
   final c = categories.where((c) => c.slug == slug).firstOrNull;
   final f = c == null
       ? null
       : carrierListsOf(c).where((f) => f.fieldKey == key).firstOrNull;
-  return '${c?.name ?? slug} › ${f?.label ?? key}';
+  final to = key == noGrantTarget
+      ? l10n.freeGrantTargetNone
+      : f?.label ?? key;
+  return '${c?.name ?? slug} › $to';
 }
 
 /// Sets up one grant item (DESIGN §8.5): a card and its list, a resource,
@@ -657,7 +661,9 @@ class _GrantItemDialogState extends State<_GrantItemDialog> {
         for (final (c, lists) in carriers)
           DropdownButtonFormField<String?>(
             key: ValueKey('gi_target_${c.slug}'),
-            initialValue: lists.any((f) => f.fieldKey == _item.targets[c.slug])
+            initialValue:
+                _item.targets[c.slug] == noGrantTarget ||
+                    lists.any((f) => f.fieldKey == _item.targets[c.slug])
                 ? _item.targets[c.slug]
                 : null,
             isExpanded: true,
@@ -665,13 +671,21 @@ class _GrantItemDialogState extends State<_GrantItemDialog> {
             items: [
               DropdownMenuItem(
                 value: null,
-                child: Text(l10n.freeGrantTargetAuto),
+                child: Text(
+                  lists.isEmpty
+                      ? l10n.tplStylePool
+                      : l10n.freeGrantTargetAuto,
+                ),
               ),
               for (final f in lists)
                 DropdownMenuItem(
                   value: f.fieldKey,
                   child: Text(f.label, overflow: TextOverflow.ellipsis),
                 ),
+              DropdownMenuItem(
+                value: noGrantTarget,
+                child: Text(l10n.freeGrantTargetNone),
+              ),
             ],
             onChanged: (v) => setState(
               () => _item = _item.copyWith(

@@ -370,11 +370,18 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
         title: title ?? l10n.freeSummaryTitle,
         summary: summary,
         entities: ctx.entities,
-        listLabels: {
-          for (final f in carrierListsOf(ctx.carrier)) f.fieldKey: f.label,
-        },
+        listLabels: _listLabels(ctx),
       );
     }
+    await _offerStale(ctx, change);
+  }
+
+  Map<String, String> _listLabels(GrantContext ctx) => {
+    for (final f in carrierListsOf(ctx.carrier)) f.fieldKey: f.label,
+  };
+
+  /// V12: labelled cards nothing grants any more, offered for removal.
+  Future<void> _offerStale(GrantContext ctx, GrantChange change) async {
     if (change.stale.isEmpty || !mounted) return;
     if (await confirmRemoveGranted(
           context,
@@ -402,11 +409,21 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
       entities: ctx.entities,
     );
     if (picks == null || !mounted) return;
-    await _changeCards(
-      ctx,
-      levelUp(fields, ctx, picked: picks.picked, added: picks.added),
-      title: L10n.of(context)!.freeSummaryLevel(from + 1),
+    final after = levelUp(fields, ctx, picked: picks.picked, added: picks.added);
+    final l10n = L10n.of(context)!;
+    // What it grants, shown before anything changes; [Level Up] applies it
+    // and the same dialog stays.
+    final change = settleGrants(fields, after, ctx);
+    final applied = await showGrantSummaryDialog(
+      context,
+      title: l10n.freeLevelUpTitle(from, from + 1),
+      summary: summarize(change),
+      entities: ctx.entities,
+      listLabels: _listLabels(ctx),
+      confirm: l10n.charLevelUp,
+      onConfirm: () async => _replaceFields(change.fields),
     );
+    if (applied) await _offerStale(ctx, change);
   }
 
   Future<void> _editLevels(GrantContext ctx) async {

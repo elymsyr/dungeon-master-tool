@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/characters/free_character_sheet.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-13
+updated: 2026-10-20
 tags: [file]
 ---
 
@@ -40,7 +40,7 @@ tags: [file]
 - **Layout:** parchment, centred at 760 px, lazy rows: header (200×260 portrait — picked in edit mode, its replaced cloud copy cleaned up —, red serif name, subtitle that opens the world, markdown description, `CharacterStatChips` from `freeChipLines` — the player card's summary chips, [[free_template]] `sheetChipsOf`), the action row, ungrouped fields under "Properties", each group in template order as a collapsible group card (`gridColumns` columns on desktop / tablet, one on a phone, a field as wide as its span), DM notes. Group names and labels go through the SRD content translator like the built-in sheet. Opens in view mode; the toggle needs edit rights.
 - **Play fields in view mode** (Faz 7a+): fields go through the factory with `play: true`, so a checkbox, a Resource's current value / boxes, the Pool's resources and the combat block's HP and editable numbers change without edit mode; names, text, maxima, lists and structure stay edit-mode only.
 - **Values** go through `freeFieldValue`, so an SRD shape the copy replaced still shows.
-- **Action row** (works in view mode too, as the built-in one): [Level up] only with a Level field (D34) → `free_level_dialogs.dart`: one pick per separate category with own cards (V13: a single card is picked), "+ add a new one" joins at 1; then `levelUp` + `settleGrants` + the summary. [Short rest], [Long rest]. In edit mode tapping the Level field opens the levels dialog (main level, own separate cards' levels). [Guide] arrives in Faz 8.
+- **Action row** (works in view mode too, as the built-in one): [Level up] only with a Level field (D34) → `free_level_dialogs.dart`: one checkbox pick per separate category with own cards (one checked at a time; V13: a single card is picked), "+ add a new one" joins at 1; then a **preview** summary of `settleGrants` on the would-be values (`showGrantSummaryDialog(confirm:)`, nothing changed until [Level Up]); [Level Up] applies it (`onConfirm`) and the same dialog stays with only [Close] — no second dialog. Stale grants are offered after it closes. [Short rest], [Long rest]. In edit mode tapping the Level field opens the levels dialog (main level, own separate cards' levels). [Guide] arrives in Faz 8.
 - **Level field** is read-only on the sheet: a level changes only through those dialogs, so a typed intermediate value never takes cards back.
 - **Captions** under listed cards: "From X · level N" (granted) or "Level N" (own card in a separate category), through the field factory's `itemCaptions`.
 - Without the world's cards (world closed) nothing is granted or taken back; Level up and the levels dialog are disabled.
@@ -48,4 +48,4 @@ tags: [file]
 
 ## Notes
 - The hub's Characters tab loads the character's world by id before opening (it used the world's name, so the world never loaded and the sheet had no cards); a world missing on disk still leaves the sheet without them.
-- Tests: `test/presentation/free_character_sheet_test.dart` (world character on the world's copy at level 1; built-in world → not free; worldless → template; editor routes to this sheet; short rest leaves HP, long rest fills it; Faz 7a: Level up grants Action Surge, the summary lists it, it is captioned with its giver and level; the Level and HP summary chips; HP typed in view mode saves). Factory-level play checks: `test/presentation/free_play_fields_test.dart`.
+- Tests: `test/presentation/free_character_sheet_test.dart` (world character on the world's copy at level 1; built-in world → not free; worldless → template; editor routes to this sheet; short rest leaves HP, long rest fills it; Faz 7a: Level up previews then grants Action Surge, the summary lists it, it is captioned with its giver and level; the Level and HP summary chips; HP typed in view mode saves). Factory-level play checks: `test/presentation/free_play_fields_test.dart`.

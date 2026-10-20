@@ -283,8 +283,16 @@ void main() {
     expect(find.text('Level 1 → 2'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('lu_continue')));
     await tester.pumpAndSettle();
-    expect(find.text('Level 2 — summary'), findsOneWidget);
+    // The preview: nothing changed yet.
     expect(find.text('• Action Surge → features'), findsOneWidget);
+    expect(_chip('Level', '1'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('summary_confirm')));
+    await tester.pumpAndSettle();
+    // Applied; the same dialog stays with only Close.
+    expect(find.text('Level 1 → 2'), findsOneWidget);
+    expect(find.text('• Action Surge → features'), findsOneWidget);
+    expect(find.byKey(const ValueKey('summary_confirm')), findsNothing);
+    expect(find.text('Close'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('summary_done')));
     await tester.pumpAndSettle();
 

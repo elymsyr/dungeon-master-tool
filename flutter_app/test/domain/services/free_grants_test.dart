@@ -499,6 +499,31 @@ void main() {
         {'pc': 'reactions', 'beast': 'moves'},
       );
     });
+
+    test('"no grant" gives a carrier category nothing: no list, no Pool',
+        () {
+      final entities = {
+        ..._entities,
+        'tough': _e('tough', 'feat', {
+          'grants': [_card('riposte', target: noGrantTarget)],
+        }),
+      };
+      GrantResult r(EntityCategorySchema carrier) => computeGrants(
+        {
+          'feats': ['tough'],
+        },
+        GrantContext(
+          carrier: carrier,
+          categories: _categories,
+          entities: entities,
+        ),
+      );
+      expect(r(_player).cards, isEmpty);
+      expect(r(_player).entries, isEmpty);
+      expect(r(_player).homeless, isEmpty);
+      // Another carrier is not named: the card still falls to its Pool.
+      expect(r(_monster).entries.single.cardId, 'riposte');
+    });
   });
 
   group('Grants (DESIGN §8.5)', () {

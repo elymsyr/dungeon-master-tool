@@ -92,6 +92,31 @@ class _LevelUpDialogState extends State<_LevelUpDialog> {
     if (mounted) Navigator.pop(context, (picked: picked, added: added));
   }
 
+  Widget _option(
+    LevelUpGroup g,
+    String value, {
+    required String key,
+    required String title,
+    Widget? secondary,
+  }) {
+    final slug = g.category.slug;
+    return CheckboxListTile(
+      key: ValueKey(key),
+      dense: true,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: _pick[slug] == value,
+      title: Text(title),
+      secondary: secondary,
+      onChanged: (on) => setState(() {
+        if (on ?? false) {
+          _pick[slug] = value;
+        } else {
+          _pick.remove(slug);
+        }
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
@@ -113,29 +138,20 @@ class _LevelUpDialogState extends State<_LevelUpDialog> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                RadioGroup<String>(
-                  groupValue: _pick[g.category.slug],
-                  onChanged: (v) {
-                    if (v != null) setState(() => _pick[g.category.slug] = v);
-                  },
-                  child: Column(
-                    children: [
-                      for (final c in g.cards)
-                        RadioListTile<String>(
-                          key: ValueKey('lu_${c.id}'),
-                          dense: true,
-                          value: c.id,
-                          title: Text(_name(context, widget.entities, c.id)),
-                          secondary: Text('${c.level} → ${c.level + 1}'),
-                        ),
-                      RadioListTile<String>(
-                        key: ValueKey('lu_new_${g.category.slug}'),
-                        dense: true,
-                        value: _newCard,
-                        title: Text(l10n.freeLevelUpNew(g.category.name)),
-                      ),
-                    ],
+                // Checkboxes, one checked per category.
+                for (final c in g.cards)
+                  _option(
+                    g,
+                    c.id,
+                    key: 'lu_${c.id}',
+                    title: _name(context, widget.entities, c.id),
+                    secondary: Text('${c.level} → ${c.level + 1}'),
                   ),
+                _option(
+                  g,
+                  _newCard,
+                  key: 'lu_new_${g.category.slug}',
+                  title: l10n.freeLevelUpNew(g.category.name),
                 ),
               ],
             ],
@@ -158,14 +174,18 @@ class _LevelUpDialogState extends State<_LevelUpDialog> {
 }
 
 /// What a change granted (DESIGN §11.4's summary): cards added, what came
-/// into the Pool, rows to read, resources, cards with nowhere to go.
-Future<void> showGrantSummaryDialog(
+/// into the Pool, rows to read, resources, cards with nowhere to go. With
+/// [confirm] it is a preview before the change: [onConfirm] makes the
+/// change and the same dialog stays with only [Close]; true when confirmed.
+Future<bool> showGrantSummaryDialog(
   BuildContext context, {
   required String title,
   required GrantSummary summary,
   required Map<String, Entity> entities,
   Map<String, String> listLabels = const {},
-}) {
+  String? confirm,
+  Future<void> Function()? onConfirm,
+}) async {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
   Widget heading(String text) => Padding(
@@ -179,66 +199,84 @@ Future<void> showGrantSummaryDialog(
     ),
   );
   String name(String id) => _name(context, entities, id);
-  return showDialog<void>(
+  var done = confirm == null;
+  await showDialog<void>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: SizedBox(
-        width: 440,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (summary.isEmpty) Text(l10n.freeSummaryNothing),
-              if (summary.added.isNotEmpty) ...[
-                heading(l10n.freeSummaryAdded),
-                for (final g in summary.added)
-                  Text(
-                    '• ${name(g.cardId)} → ${listLabels[g.listKey] ?? g.listKey}',
-                  ),
-              ],
-              if (summary.toPool.isNotEmpty) ...[
-                heading(l10n.freeSummaryPool),
-                for (final e in summary.toPool)
-                  Text(
-                    '• ${e.cardId != null ? name(e.cardId!) : e.item.label} '
-                    '(${l10n.freeGrantedFromCard(name(e.fromId))})',
-                  ),
-              ],
-              if (summary.reads.isNotEmpty) ...[
-                heading(l10n.freeSummaryReads),
-                for (final r in summary.reads)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: MarkdownBody(
-                      data: '**${name(r.cardId)} ${r.level}:** ${r.text}',
-                      styleSheet: dmMarkdownStyle(ctx),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: Text(title),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (summary.isEmpty) Text(l10n.freeSummaryNothing),
+                if (summary.added.isNotEmpty) ...[
+                  heading(l10n.freeSummaryAdded),
+                  for (final g in summary.added)
+                    Text(
+                      '• ${name(g.cardId)} → ${listLabels[g.listKey] ?? g.listKey}',
                     ),
-                  ),
+                ],
+                if (summary.toPool.isNotEmpty) ...[
+                  heading(l10n.freeSummaryPool),
+                  for (final e in summary.toPool)
+                    Text(
+                      '• ${e.cardId != null ? name(e.cardId!) : e.item.label} '
+                      '(${l10n.freeGrantedFromCard(name(e.fromId))})',
+                    ),
+                ],
+                if (summary.reads.isNotEmpty) ...[
+                  heading(l10n.freeSummaryReads),
+                  for (final r in summary.reads)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: MarkdownBody(
+                        data: '**${name(r.cardId)} ${r.level}:** ${r.text}',
+                        styleSheet: dmMarkdownStyle(ctx),
+                      ),
+                    ),
+                ],
+                if (summary.resources.isNotEmpty) ...[
+                  heading(l10n.freeSummaryResources),
+                  for (final r in summary.resources)
+                    Text('• ${r.name}   ${r.from ?? '—'} → ${r.to ?? '—'}'),
+                ],
+                if (summary.homeless.isNotEmpty) ...[
+                  heading(l10n.freeSummaryHomeless),
+                  for (final id in summary.homeless) Text('• ${name(id)}'),
+                ],
               ],
-              if (summary.resources.isNotEmpty) ...[
-                heading(l10n.freeSummaryResources),
-                for (final r in summary.resources)
-                  Text('• ${r.name}   ${r.from ?? '—'} → ${r.to ?? '—'}'),
-              ],
-              if (summary.homeless.isNotEmpty) ...[
-                heading(l10n.freeSummaryHomeless),
-                for (final id in summary.homeless) Text('• ${name(id)}'),
-              ],
-            ],
+            ),
           ),
         ),
+        actions: [
+          if (!done) ...[
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.btnCancel),
+            ),
+            FilledButton(
+              key: const ValueKey('summary_confirm'),
+              onPressed: () async {
+                await onConfirm?.call();
+                setState(() => done = true);
+              },
+              child: Text(confirm!),
+            ),
+          ] else
+            FilledButton(
+              key: const ValueKey('summary_done'),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(confirm == null ? l10n.btnDone : l10n.btnClose),
+            ),
+        ],
       ),
-      actions: [
-        FilledButton(
-          key: const ValueKey('summary_done'),
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l10n.btnDone),
-        ),
-      ],
     ),
   );
+  return done;
 }
 
 /// V12: these labelled cards are granted by nothing any more; true when

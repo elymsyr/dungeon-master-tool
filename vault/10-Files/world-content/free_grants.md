@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_grants.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-12
+updated: 2026-10-20
 tags: [file]
 ---
 
@@ -38,7 +38,7 @@ tags: [file]
 ## Key Logic / Variables
 - **Roots** are the cards in the carrier's card links: its lists and, since Faz 7b, its single links (Species, Subspecies, Background; `listedIds` reads one card or a list). A single link's card always reads to the main level, even in a separate category, and is never asked at a level up; granted cards still only join lists. A card the carrier took itself into a list in a **separate** category reads its rows to its own level (`_card_levels`, default 1); every other card — together categories, and every **granted** card even in a separate category (V11) — reads to the main level. No Level field → no rows read (V30, D34); Grants still apply.
 - **One card, one read:** a visited set guards chains and loops (A ↔ B, §11.6); a card granted twice is one `CardGrant`.
-- **Where a granted card goes (V10, D41):** the list the item names for the carrier's category if the carrier has it and it takes the card's category; else the first list **naming** that category (an "any" list never swallows grants); else the Pool (under its giver), or `homeless` without a Pool. A card bound for a list is read as a root only once it is listed — the player may have removed it. A Pool card's own grants apply at once (chain).
+- **Where a granted card goes (V10, D41):** the list the item names for the carrier's category if the carrier has it and it takes the card's category; else the first list **naming** that category (an "any" list never swallows grants); else the Pool (under its giver), or `homeless` without a Pool. A `noGrantTarget` (`_none`) target grants that carrier category nothing — no list, no Pool, no chain. A card bound for a list is read as a root only once it is listed — the player may have removed it. A Pool card's own grants apply at once (chain).
 - **Resources (D39):** per giver, a later one with the same name replaces an earlier one — the card's own Grants first, then rows by level; across givers the larger max wins, a set max over one left to the player. The winner's rest settings apply.
 - **Settling a change:** grants not wanted before the change and not yet listed are added, labelled `{from, level}`, round after round until nothing new (chains). A card wanted before is never added again (§11.6: the player manages them). `stale` = labelled cards still listed that were wanted before and are not now (V12) — offered, never removed unasked. Labels and card levels of cards gone from the lists are pruned (raw stored ids count, so an unloaded world keeps them).
 - **Pool values (V29, V32):** only `{name: {current?, max?}}` is stored (max only when the item leaves it open, D30). A new resource reads full; a lower max lowers the current value on read; a resource that leaves keeps its stored value for when it comes back.

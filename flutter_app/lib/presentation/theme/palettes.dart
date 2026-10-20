@@ -1151,7 +1151,7 @@ ThemeData buildThemeData(String themeName) {
       ),
       checkColor: WidgetStatePropertyAll(palette.primaryBtnText),
       side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+      shape: RoundedRectangleBorder(borderRadius: palette.br),
     ),
 
     // Switch

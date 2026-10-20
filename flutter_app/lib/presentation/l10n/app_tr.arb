@@ -2485,6 +2485,7 @@
   "freeGrantPickCard": "Kart seç",
   "freeGrantTarget": "Gideceği liste",
   "freeGrantTargetAuto": "Kategorisinin ilk listesi",
+  "freeGrantTargetNone": "Verme",
   "freeGrantNoTarget": "Bu kategorinin kartlarını alan liste yok. Template editöründe onu hedefleyen bir Kart bağlantısı ekle.",
   "freeGrantMaxOpen": "Boş: oyuncu girer",
   "freeLevelText": "Yazı",

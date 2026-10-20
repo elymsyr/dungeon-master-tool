@@ -3855,6 +3855,7 @@
   "freeGrantPickCard": "Choose a card",
   "freeGrantTarget": "Goes into",
   "freeGrantTargetAuto": "The first list for its category",
+  "freeGrantTargetNone": "No grant",
   "freeGrantNoTarget": "No list takes cards of this category. Add a Card link that targets it in the template editor.",
   "freeGrantMaxOpen": "Empty: the player enters it",
   "freeLevelText": "Text",
