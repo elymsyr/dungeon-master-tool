@@ -246,13 +246,13 @@ void main() {
         ('level', FieldType.characterLevel),
         ('auto_resources', FieldType.autoResources),
       ]);
-      expect(missingPlayerCardFields(card), isEmpty);
+      expect(canAddFieldType(card, FieldType.characterLevel), isFalse);
     });
 
-    test('deleted, they come back once; only on the player card', () {
+    test('deleted, they come back once; any category may take one', () {
       final level = card.fields.first;
       var c = removeField(card, level.fieldId);
-      expect(missingPlayerCardFields(c), [FieldType.characterLevel]);
+      expect(canAddFieldType(c, FieldType.characterLevel), isTrue);
       c = addField(
         c,
         id: 'l2',
@@ -264,8 +264,8 @@ void main() {
       expect(c.fields.last.fieldKey, 'level');
       expect(canAddFieldType(c, FieldType.characterLevel), isFalse);
       final npc = card.copyWith(isPlayerCard: null, fields: const []);
-      expect(canAddFieldType(npc, FieldType.characterLevel), isFalse);
-      expect(missingPlayerCardFields(npc), isEmpty);
+      expect(canAddFieldType(npc, FieldType.characterLevel), isTrue);
+      expect(paletteFieldTypes, contains(FieldType.characterLevel));
     });
 
     test('their style is fixed; Combat stats too', () {
@@ -386,7 +386,7 @@ void main() {
         pc.fields.where((f) => f.fieldType == FieldType.spellSlotGrid),
         isEmpty,
       );
-      expect(missingPlayerCardFields(pc), isEmpty);
+      expect(canAddFieldType(pc, FieldType.characterLevel), isFalse);
       // Keys stay unique and the order is clean.
       final keys = pc.fields.map((f) => f.fieldKey).toList();
       expect(keys.toSet(), hasLength(keys.length));

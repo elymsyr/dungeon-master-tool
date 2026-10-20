@@ -29,7 +29,7 @@ bool isSimpleFieldType(FieldType t) => simpleFieldTypes.contains(t);
 
 /// The combined styles built so far (DESIGN §8; Faz 4: Table, Stat table,
 /// Skill table; Faz 6: Resource, Combat stats; Faz 7: Grants, Level table,
-/// Pool). Their settings are their own (`FieldSchema.styleConfig`).
+/// Level, Pool). Their settings are their own (`FieldSchema.styleConfig`).
 const combinedFieldTypes = [
   FieldType.table,
   FieldType.statTable,
@@ -38,17 +38,13 @@ const combinedFieldTypes = [
   FieldType.combatStats,
   FieldType.grantHolder,
   FieldType.progressionTable,
+  FieldType.characterLevel,
   FieldType.autoResources,
 ];
 
 /// Everything the palette offers. Any other [FieldType] in a free template
-/// is a kept SRD type (ROADMAP §6), or one of [playerCardFieldTypes].
+/// is a kept SRD type (ROADMAP §6).
 const paletteFieldTypes = [...simpleFieldTypes, ...combinedFieldTypes];
-
-/// The player card's own field (DESIGN §10.1, D34): offered in the
-/// palette's "Player card" section while the player card lacks it. The
-/// Pool was one until Faz 7 (D38); any category may take it now.
-const playerCardFieldTypes = [FieldType.characterLevel];
 
 /// Fixed keys: the Level's and the Pool's (made unique if a field already
 /// holds one). The Pool keeps its Faz 6 key (`auto_resources`).
@@ -59,23 +55,22 @@ String playerCardFieldKey(FieldType t) =>
 bool hasFixedKey(FieldType t) =>
     t == FieldType.characterLevel || t == FieldType.autoResources;
 
-bool isLegacyFieldType(FieldType t) =>
-    !paletteFieldTypes.contains(t) && !playerCardFieldTypes.contains(t);
+bool isLegacyFieldType(FieldType t) => !paletteFieldTypes.contains(t);
 
-/// Styles at most one per category (DESIGN §8.4, §8.6, §8.7; V9).
+/// Styles at most one per category (DESIGN §8.4, §8.6, §8.7; V9). The
+/// Level was the player card's alone until the Faz 7 check; any category
+/// may take it now, and its Level tables read it (like the Pool, D38).
 const _oncePerCategory = {
   FieldType.combatStats,
   FieldType.progressionTable,
+  FieldType.characterLevel,
   FieldType.autoResources,
 };
 
-/// Styles a field cannot be switched to or from: the player card's own
-/// field, the once-per-category styles, and Grants (its card data means
-/// nothing to another style).
+/// Styles a field cannot be switched to or from: the once-per-category
+/// styles, and Grants (its card data means nothing to another style).
 bool hasFixedStyle(FieldType t) =>
-    playerCardFieldTypes.contains(t) ||
-    _oncePerCategory.contains(t) ||
-    t == FieldType.grantHolder;
+    _oncePerCategory.contains(t) || t == FieldType.grantHolder;
 
 /// What the style dropdown offers.
 final switchableFieldTypes = [
@@ -84,17 +79,10 @@ final switchableFieldTypes = [
 ];
 
 /// Whether [cat] may take one more [type] field: one Combat stats block,
-/// Level table and Pool per category (DESIGN §8.4, §8.6, §8.7); the Level
-/// only on the player card, once (D34).
-bool canAddFieldType(EntityCategorySchema cat, FieldType type) {
-  if (playerCardFieldTypes.contains(type) && cat.isPlayerCard != true) {
-    return false;
-  }
-  if (_oncePerCategory.contains(type) || playerCardFieldTypes.contains(type)) {
-    return !cat.fields.any((f) => f.fieldType == type);
-  }
-  return true;
-}
+/// Level table, Level and Pool per category (DESIGN §8.4, §8.6, §8.7).
+bool canAddFieldType(EntityCategorySchema cat, FieldType type) =>
+    !_oncePerCategory.contains(type) ||
+    !cat.fields.any((f) => f.fieldType == type);
 
 /// What the player card needs for what the template uses (DESIGN §10.1,
 /// D34): a Level for any Level table, a Pool for any Grants. Only the
@@ -156,12 +144,6 @@ WorldSchema addOwnField(
     ),
   );
 }
-
-/// The player card fields [cat] lacks (empty unless it is the player card).
-List<FieldType> missingPlayerCardFields(EntityCategorySchema cat) => [
-  for (final t in playerCardFieldTypes)
-    if (canAddFieldType(cat, t)) t,
-];
 
 /// Simple styles that cannot be a list: a list of yes/no or of era maps
 /// means nothing, and tags are a list already.

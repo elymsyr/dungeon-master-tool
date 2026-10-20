@@ -11,6 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/entity_provider.dart'
+    show worldSchemaProvider;
 import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
@@ -24,6 +26,7 @@ import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/entity_ref.dart';
 import '../../../domain/services/free_grants.dart' show GrantResult;
+import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/services/free_field_styles.dart'
     show isCombatBlock, structuredListAsMarkdown;
 import '../../../domain/value_objects/asset_ref.dart';
@@ -2392,6 +2395,11 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
     final items = _parseItems(value);
     final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
     final showEquip = schema.hasEquip;
+    // A free template's lists show every card's text, like its Traits.
+    final noDesc =
+        ref != null && isFreeTemplate(ref!.read(worldSchemaProvider))
+        ? const <String>{}
+        : _noInlineDescCats;
 
     // Read-only mode collapses identical rows into a single entry with an
     // "(×N)" suffix. Edit mode keeps each row separate so the close/equip
@@ -2507,7 +2515,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
 
               final linkedEntity = entities?[itemId];
               final description = (linkedEntity != null &&
-                      !_noInlineDescCats.contains(linkedEntity.categorySlug))
+                      !noDesc.contains(linkedEntity.categorySlug))
                   ? linkedEntity.description
                   : '';
               // Indent description to align with the entity name (past the

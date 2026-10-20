@@ -1332,6 +1332,18 @@ class PoolFieldWidget extends StatelessWidget {
       return e == null ? id : srdName(context, e);
     }
 
+    // Edit mode: take an item out of the Pool, put them all back.
+    final removed = poolRemovedOf(value);
+    Widget? remove(String key) => readOnly
+        ? null
+        : IconButton(
+            key: ValueKey('pool_remove_$key'),
+            icon: const Icon(Icons.close, size: 16),
+            visualDensity: VisualDensity.compact,
+            tooltip: l10n.freePoolRemove,
+            onPressed: () => onChanged(poolWithRemoved(value, key)),
+          );
+
     Widget resource(PoolResource r) {
       final v = poolResourceValue(r, value);
       final max = v.max;
@@ -1388,12 +1400,13 @@ class PoolFieldWidget extends StatelessWidget {
                 label: l10n.freeMax,
                 onChanged: (n) => put(max: n),
               ),
+            ?remove(r.name),
           ],
         ),
       );
     }
 
-    Widget entry(PoolEntry e) {
+    Widget entryBody(PoolEntry e) {
       final card = e.cardId;
       if (card != null) {
         return Padding(
@@ -1422,6 +1435,12 @@ class PoolFieldWidget extends StatelessWidget {
         entities: entities,
         ref: ref,
       );
+    }
+
+    Widget entry(PoolEntry e) {
+      final x = remove(poolEntryKey(e.fromId, e.item));
+      if (x == null) return entryBody(e);
+      return Row(children: [Expanded(child: entryBody(e)), x]);
     }
 
     final givers = <String, List<PoolEntry>>{};
@@ -1457,6 +1476,12 @@ class PoolFieldWidget extends StatelessWidget {
                   ),
                 ),
             ],
+            if (!readOnly && removed.isNotEmpty)
+              TextButton.icon(
+                icon: const Icon(Icons.undo, size: 16),
+                label: Text(l10n.freePoolRestore(removed.length)),
+                onPressed: () => onChanged(poolWithRemoved(value, null)),
+              ),
           ],
         ),
       ),

@@ -3768,6 +3768,15 @@
   "freeIncrease": "Increase",
   "freeMax": "Max",
   "freePoolEmpty": "Nothing granted yet.",
+  "freePoolRemove": "Remove from the Pool",
+  "freePoolRestore": "Put back removed ({count})",
+  "@freePoolRestore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "freeShortRestDone": "Short rest applied.",
   "freeLongRestDone": "Long rest applied.",
   "freeSheetLevel": "Level {level}",
@@ -3787,10 +3796,9 @@
   "tplStyleCombatStats": "Combat stats",
   "tplStyleCombatStatsHint": "HP / Max HP and the values the encounter shows",
   "tplStyleLevel": "Level",
-  "tplStyleLevelHint": "The character's main level",
+  "tplStyleLevelHint": "The main level that Level tables read",
   "tplStylePool": "Pool",
   "tplStylePoolHint": "What the carrier's cards grant that no list takes: resources and the rest",
-  "tplPlayerCardSection": "Player card",
   "tplStyleOnce": "This category already has a \"{style}\" field.",
   "@tplStyleOnce": {
     "placeholders": {

@@ -5,7 +5,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/template_edit.dart'
-    show missingOwnFields, missingPlayerCardFields, presetUses, presetsOf;
+    show missingOwnFields, presetUses, presetsOf;
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../database/database_screen.dart' show parseHexColor;
@@ -137,7 +137,6 @@ class _FreeTemplateEditorScreenState
           if (cat != null && !_c.preview) ...[
             TemplatePaletteStrip(
               presets: presetsOf(_c.schema),
-              own: missingPlayerCardFields(cat),
               onAdd: (d) =>
                   addFromPalette(context, _c, d, groupId: _c.targetGroupId),
             ),
@@ -359,11 +358,9 @@ class _PhoneCategoryPage extends StatelessWidget {
           ? null
           : FloatingActionButton.extended(
               onPressed: () async {
-                final cat = c.category;
                 final d = await showStylePickerSheet(
                   context,
                   presets: presetsOf(c.schema),
-                  own: cat == null ? const [] : missingPlayerCardFields(cat),
                 );
                 if (d != null && context.mounted) {
                   await addFromPalette(context, c, d, groupId: c.targetGroupId);

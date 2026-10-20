@@ -436,8 +436,8 @@ void main() {
       expect(summarize(change).homeless, ['lonely_feat']);
     });
 
-    test('a chosen list that does not take the card falls back', () {
-      final r = computeGrants({
+    test('a chosen list that is gone or does not take the card: the Pool', () {
+      GrantResult r(String target) => computeGrants({
         'feats': ['wrong_target'],
       }, GrantContext(
         carrier: _player,
@@ -445,11 +445,16 @@ void main() {
         entities: {
           ..._entities,
           'wrong_target': _e('wrong_target', 'feat', {
-            'grants': [_card('riposte', target: 'features')],
+            'grants': [_card('riposte', target: target)],
           }),
         },
       ));
-      expect(r.cards.single.listKey, 'reactions');
+      // Features takes no actions; a deleted list is not there at all.
+      // Reactions would take it, but the owner did not pick it.
+      for (final target in ['features', 'deleted']) {
+        expect(r(target).cards.single.listKey, isNull);
+        expect(r(target).entries.single.cardId, 'riposte');
+      }
     });
 
     test('each carrier category has its own list for the card', () {
@@ -658,6 +663,36 @@ void main() {
       // Full already: nothing to write.
       expect(poolAfterRest(r, null, RestKind.long), isNull);
     });
+
+    test('taken out by the player: not granted at all; put back', () {
+      // Superiority's resource and text; Riposte has no list here.
+      final c = _cat('pc', [
+        _f('level', FieldType.characterLevel),
+        _list('feats', 'feat'),
+        _f('auto_resources', FieldType.autoResources),
+      ], player: true);
+      var f = <String, dynamic>{
+        'feats': ['superiority'],
+      };
+      final before = computeGrants(f, _ctx(c));
+      expect(before.resources.single.name, 'Superiority die');
+      expect(before.entries.map((e) => e.cardId ?? e.item.id), [
+        'sup_note',
+        'riposte',
+      ]);
+      var pool = poolWithRemoved(null, 'Superiority die');
+      for (final e in before.entries) {
+        pool = poolWithRemoved(pool, poolEntryKey(e.fromId, e.item));
+      }
+      f = {...f, 'auto_resources': pool};
+      final after = computeGrants(f, _ctx(c));
+      expect(after.resources, isEmpty);
+      expect(after.entries, isEmpty);
+      expect(after.cards, isEmpty);
+      expect(poolAfterRest(after, pool, RestKind.long), isNull);
+      f = {...f, 'auto_resources': poolWithRemoved(pool, null)};
+      expect(computeGrants(f, _ctx(c)).entries, hasLength(2));
+    });
   });
 
   group('taking back (V12)', () {
@@ -828,7 +863,9 @@ void main() {
       expect(canAddFieldType(_feats, FieldType.autoResources), isTrue);
       expect(canAddFieldType(_monster, FieldType.autoResources), isFalse);
       expect(canAddFieldType(_feats, FieldType.grantHolder), isTrue);
-      expect(canAddFieldType(_feats, FieldType.characterLevel), isFalse);
+      // The Level too, on any category (no longer the player card's alone).
+      expect(canAddFieldType(_feats, FieldType.characterLevel), isTrue);
+      expect(canAddFieldType(_player, FieldType.characterLevel), isFalse);
     });
   });
 

@@ -101,7 +101,8 @@ class GrantItem {
   /// Card: per carrier category (slug), the list it goes into there (a
   /// field key) — a feat may give a monster's and a player's lists
   /// different homes. A carrier not named takes the first list holding the
-  /// card's category (V10).
+  /// card's category; a named list it lacks sends the card to the Pool
+  /// (V10).
   final Map<String, String> targets;
 
   /// Resource: its name — the Pool merges by it (D39).
@@ -264,7 +265,8 @@ FieldSchema? levelTableOf(EntityCategorySchema c) =>
 FieldSchema? poolFieldOf(EntityCategorySchema c) =>
     _first(c, FieldType.autoResources);
 
-/// The player card's Level (D25); no other category has one.
+/// The category's Level (D25): the player card's, or any other category's
+/// that took one (at most one).
 FieldSchema? levelFieldOf(EntityCategorySchema c) =>
     _first(c, FieldType.characterLevel);
 
@@ -451,7 +453,11 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
   final levels = cardLevelsOf(fields);
   final labels = grantLabelsOf(fields);
   final lists = carrierListsOf(ctx.carrier);
-  final hasPool = poolFieldOf(ctx.carrier) != null;
+  final pool = poolFieldOf(ctx.carrier);
+  final hasPool = pool != null;
+  final removed = pool == null
+      ? const <String>{}
+      : poolRemovedOf(fields[pool.fieldKey]);
 
   final reached = <String, int>{};
   final cards = <CardGrant>[];
@@ -463,9 +469,11 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
   final names = <String>[];
 
   String? listFor(String? target, String slug) {
+    // A chosen list that is gone, or no longer takes the card: the Pool,
+    // not a list the owner did not pick (V10).
     if (target != null) {
       final chosen = lists.where((f) => f.fieldKey == target).firstOrNull;
-      if (chosen != null && listTakes(chosen, slug)) return target;
+      return chosen != null && listTakes(chosen, slug) ? target : null;
     }
     return lists.where((f) => listTargets(f, slug)).firstOrNull?.fieldKey;
   }
@@ -505,6 +513,9 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
             item.targets[ctx.carrier.slug],
             ctx.entities[target]!.categorySlug,
           );
+          if (listKey == null && removed.contains(poolEntryKey(id, item))) {
+            return;
+          }
           cards.add(
             CardGrant(cardId: target, fromId: id, rowLevel: row, listKey: listKey),
           );
@@ -518,6 +529,7 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
         case GrantKind.resource:
           if (item.name.trim().isEmpty) return;
           final name = item.name.trim();
+          if (removed.contains(name)) return;
           if (!names.contains(name)) names.add(name);
           (byGiver[id] ??= {})[name] = PoolResource(
             name: name,
@@ -530,6 +542,7 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
           if (item.style == null || !grantItemStyles.contains(item.style)) {
             return;
           }
+          if (removed.contains(poolEntryKey(id, item))) return;
           entries.add(PoolEntry(fromId: id, item: item));
       }
     }
@@ -907,6 +920,33 @@ Map<String, dynamic> poolStoredWith(
     'current': ?current,
     'max': ?max,
   };
+  return out;
+}
+
+/// What the player took out of the Pool: resource names and [poolEntryKey]s,
+/// kept in the Pool's value. Taken out, an item is not granted at all — no
+/// Pool line, no rest, no chain.
+const poolRemovedKey = '_removed';
+
+/// A Pool entry's key: its giver and the item.
+String poolEntryKey(String fromId, GrantItem item) => '$fromId/${item.id}';
+
+Set<String> poolRemovedOf(Object? stored) => {
+  if (stored is Map && stored[poolRemovedKey] is List)
+    for (final k in stored[poolRemovedKey] as List) '$k',
+};
+
+/// [stored] with [key] taken out of the Pool; a null [key] puts everything
+/// back.
+Map<String, dynamic> poolWithRemoved(Object? stored, String? key) {
+  final out = stored is Map
+      ? Map<String, dynamic>.from(stored)
+      : <String, dynamic>{};
+  if (key == null) {
+    out.remove(poolRemovedKey);
+  } else {
+    out[poolRemovedKey] = [...poolRemovedOf(stored), key];
+  }
   return out;
 }
 

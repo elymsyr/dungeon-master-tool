@@ -124,6 +124,66 @@ void main() {
     });
   });
 
+  testWidgets('the Pool: edit mode takes an item out and puts it back', (
+    tester,
+  ) async {
+    const grants = GrantResult(
+      resources: [PoolResource(name: 'Rage', fromId: 'barb', max: 3)],
+    );
+    final store = <String, dynamic>{};
+    await tester.pumpWidget(
+      _fieldHost(FieldType.autoResources, store, grants: grants),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pool_remove_Rage')));
+    await tester.pump();
+    expect(store['f'], {
+      poolRemovedKey: ['Rage'],
+    });
+    await tester.tap(find.text('Put back removed (1)'));
+    await tester.pump();
+    expect(store['f'], isEmpty);
+
+    // View mode: nothing to take out.
+    await tester.pumpWidget(
+      _fieldHost(FieldType.autoResources, {}, grants: grants, readOnly: true),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pool_remove_Rage')), findsNothing);
+  });
+
+  testWidgets('a free card list shows a feat\'s text, like a trait\'s', (
+    tester,
+  ) async {
+    final list = _field('f', FieldType.relation).copyWith(
+      isList: true,
+      validation: const FieldValidation(allowedTypes: ['feat']),
+    );
+    await tester.pumpWidget(
+      _host(
+        Consumer(
+          builder: (context, ref, _) => FieldWidgetFactory.create(
+            schema: list,
+            value: const ['lucky'],
+            readOnly: true,
+            onChanged: (_) {},
+            entities: const {
+              'lucky': Entity(
+                id: 'lucky',
+                name: 'Lucky',
+                categorySlug: 'feat',
+                description: 'You have inexplicable luck.',
+              ),
+            },
+            ref: ref,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('inexplicable luck'), findsOneWidget);
+  });
+
   testWidgets('the Pool says so when nothing is granted', (tester) async {
     await tester.pumpWidget(_fieldHost(FieldType.autoResources, {}));
     await tester.pumpAndSettle();

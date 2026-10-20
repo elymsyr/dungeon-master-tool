@@ -103,22 +103,18 @@ IconData styleIcon(FieldType t) => switch (t) {
   _ => Icons.extension_outlined,
 };
 
-/// Desktop palette strip under the three panels (DESIGN §7.5): styles, the
-/// player card's own fields it lacks, then the template's presets. Click
-/// adds to the selected group, drag drops anywhere on the layout.
+/// Desktop palette strip under the three panels (DESIGN §7.5): styles, then
+/// the template's presets. Click adds to the selected group, drag drops
+/// anywhere on the layout.
 class TemplatePaletteStrip extends StatelessWidget {
   const TemplatePaletteStrip({
     super.key,
     required this.onAdd,
     this.presets = const [],
-    this.own = const [],
   });
 
   final ValueChanged<TemplateDrag> onAdd;
   final List<FieldSchema> presets;
-
-  /// The player card fields to offer (D34): only those it lacks.
-  final List<FieldType> own;
 
   @override
   Widget build(BuildContext context) {
@@ -169,29 +165,7 @@ class TemplatePaletteStrip extends StatelessWidget {
           styleLabel(l10n, t),
           styleHint(l10n, t),
         ),
-      if (own.isNotEmpty) section(l10n.tplPlayerCardSection),
-      for (final t in own)
-        item(
-          TemplateDrag.style(t),
-          styleIcon(t),
-          styleLabel(l10n, t),
-          styleHint(l10n, t),
-        ),
-      if (presets.isNotEmpty)
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              l10n.tplPresets.toUpperCase(),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
-                color: palette.sidebarLabelSecondary,
-              ),
-            ),
-          ),
-        ),
+      if (presets.isNotEmpty) section(l10n.tplPresets),
       for (final p in presets)
         item(
           TemplateDrag.preset(p.fieldId),
@@ -398,13 +372,11 @@ class TemplatePill extends StatelessWidget {
   }
 }
 
-/// The "+ Add" sheet (DESIGN §7.6): one tap picks a style, one of [own]
-/// (the player card's own fields it lacks) or one of [presets], each under
-/// its own heading.
+/// The "+ Add" sheet (DESIGN §7.6): one tap picks a style or one of
+/// [presets], each under its own heading.
 Future<TemplateDrag?> showStylePickerSheet(
   BuildContext context, {
   List<FieldSchema> presets = const [],
-  List<FieldType> own = const [],
 }) {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -457,16 +429,6 @@ Future<TemplateDrag?> showStylePickerSheet(
                 Icons.bookmark_outline,
                 p.label,
                 '${styleLabel(l10n, p.fieldType)} · ${l10n.tplPresetHint}',
-              ),
-          ],
-          if (own.isNotEmpty) ...[
-            heading(l10n.tplPlayerCardSection),
-            for (final t in own)
-              tile(
-                TemplateDrag.style(t),
-                styleIcon(t),
-                styleLabel(l10n, t),
-                styleHint(l10n, t),
               ),
           ],
           heading(l10n.tplAddField),
