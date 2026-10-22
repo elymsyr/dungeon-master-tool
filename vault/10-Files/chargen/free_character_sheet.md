@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/characters/free_character_sheet.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-20
+updated: 2026-10-22
 tags: [file]
 ---
 
@@ -37,7 +37,7 @@ tags: [file]
 - Spec / reference: `docs/free-template/DESIGN.md` §10.2, §12.3, §18; `docs/free-template/ROADMAP.md` Faz 6
 
 ## Key Logic / Variables
-- **Layout:** parchment, centred at 760 px, lazy rows: header (200×260 portrait — picked in edit mode, its replaced cloud copy cleaned up —, red serif name, subtitle that opens the world, markdown description, `CharacterStatChips` from `freeChipLines` — the player card's summary chips, [[free_template]] `sheetChipsOf`), the action row, ungrouped fields under "Properties", each group in template order as a collapsible group card (`gridColumns` columns on desktop / tablet, one on a phone, a field as wide as its span), DM notes. Group names and labels go through the SRD content translator like the built-in sheet. Opens in view mode; the toggle needs edit rights.
+- **Layout:** parchment, centred at 760 px, every row laid out in one `SingleChildScrollView` (a lazy `ListView` guessed its extent from rows of very uneven height — the scrollbar resized and the sheet jumped), each row its own `RepaintBoundary`: header (200×260 portrait — picked in edit mode, its replaced cloud copy cleaned up —, red serif name, subtitle that opens the world, markdown description, `CharacterStatChips` from `freeChipLines` — the player card's summary chips, [[free_template]] `sheetChipsOf`), the action row, ungrouped fields under "Properties", each group in template order as a collapsible group card (`gridColumns` columns on desktop / tablet, one on a phone, a field as wide as its span), DM notes. Group names and labels go through the SRD content translator like the built-in sheet. Opens in view mode; the toggle needs edit rights.
 - **Play fields in view mode** (Faz 7a+): fields go through the factory with `play: true`, so a checkbox, a Resource's current value / boxes, the Pool's resources and the combat block's HP and editable numbers change without edit mode; names, text, maxima, lists and structure stay edit-mode only.
 - **Values** go through `freeFieldValue`, so an SRD shape the copy replaced still shows.
 - **Action row** (works in view mode too, as the built-in one): [Level up] only with a Level field (D34) → `free_level_dialogs.dart`: one checkbox pick per separate category with own cards (one checked at a time; V13: a single card is picked), "+ add a new one" joins at 1; then a **preview** summary of `settleGrants` on the would-be values (`showGrantSummaryDialog(confirm:)`, nothing changed until [Level Up]); [Level Up] applies it (`onConfirm`) and the same dialog stays with only [Close] — no second dialog. Stale grants are offered after it closes. [Short rest], [Long rest]. In edit mode tapping the Level field opens the levels dialog (main level, own separate cards' levels). [Guide] arrives in Faz 8.

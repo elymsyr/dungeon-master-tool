@@ -108,7 +108,6 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
   final _sheetScroll = ScrollController();
   final List<GlobalKey> _rowKeys = [];
   List<({String label, int row})> _navTargets = const [];
-  final Map<int, double> _rowOffsetCache = {};
 
   /// Held from initState: `ref` is gone in dispose.
   PendingWriteBuffer? _pendingBuffer;
@@ -825,13 +824,18 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
             constraints: const BoxConstraints(maxWidth: 760),
             child: Stack(
               children: [
-                ListView.builder(
+                // Not a lazy ListView: see character_editor_screen.
+                SingleChildScrollView(
                   controller: _sheetScroll,
                   // Bottom room so the dice button never covers the last row.
                   padding: const EdgeInsets.fromLTRB(28, 24, 28, 96),
-                  itemCount: rows.length,
-                  itemBuilder: (_, i) =>
-                      KeyedSubtree(key: _rowKeys[i], child: rows[i]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < rows.length; i++)
+                        RepaintBoundary(key: _rowKeys[i], child: rows[i]),
+                    ],
+                  ),
                 ),
                 Positioned(
                   top: 8,
@@ -840,7 +844,7 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
                     palette: palette,
                     sections: [for (final t in _navTargets) t.label],
                     onSelect: (i) =>
-                        _jumpToRow(_navTargets[i].row, rows.length),
+                        _jumpToRow(_navTargets[i].row),
                   ),
                 ),
               ],
@@ -1117,49 +1121,10 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
     ];
   }
 
-  /// Scrolls to row [index] of the lazy list: its offset is not known
-  /// until it is built, so the built-in sheet's bisection finds it.
-  Future<void> _jumpToRow(int index, int rowCount) async {
-    if (!_sheetScroll.hasClients || index >= _rowKeys.length) return;
-    var lo = _sheetScroll.position.minScrollExtent;
-    var hi = _sheetScroll.position.maxScrollExtent;
-    final seed =
-        _rowOffsetCache[index] ?? (rowCount == 0 ? 0.0 : hi * index / rowCount);
-    if ((seed - _sheetScroll.position.pixels).abs() > 8) {
-      _sheetScroll.jumpTo(seed.clamp(lo, hi));
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted || !_sheetScroll.hasClients) return;
-    }
-    for (var attempt = 0; attempt < 16; attempt++) {
-      final pos = _sheetScroll.position;
-      final ctx = _rowKeys[index].currentContext;
-      if (ctx != null && ctx.mounted) {
-        await Scrollable.ensureVisible(ctx, alignment: 0.02);
-        if (_sheetScroll.hasClients) {
-          _rowOffsetCache[index] = _sheetScroll.position.pixels;
-        }
-        return;
-      }
-      int? mountedRow;
-      for (var j = 0; j < rowCount && j < _rowKeys.length; j++) {
-        if (_rowKeys[j].currentContext != null) {
-          mountedRow = j;
-          break;
-        }
-      }
-      if (mountedRow == null) return;
-      if (index > mountedRow) {
-        lo = pos.pixels;
-        if (pos.maxScrollExtent > hi) hi = pos.maxScrollExtent;
-      } else {
-        hi = pos.pixels;
-      }
-      final next = ((lo + hi) / 2).clamp(pos.minScrollExtent, hi);
-      if ((next - pos.pixels).abs() < 1) return;
-      _sheetScroll.jumpTo(next);
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted) return;
-    }
+  /// Scrolls row [index] to the top of the sheet; every row is mounted.
+  Future<void> _jumpToRow(int index) async {
+    final ctx = index < _rowKeys.length ? _rowKeys[index].currentContext : null;
+    if (ctx != null) await Scrollable.ensureVisible(ctx, alignment: 0.02);
   }
 }
 

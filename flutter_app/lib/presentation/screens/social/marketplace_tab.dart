@@ -101,8 +101,13 @@ class _MarketplaceFeed extends ConsumerWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: kCardMaxWidth),
-          child: ListView(
+          // Not a lazy ListView: its few, very uneven children made the
+          // guessed extent (and so the scrollbar and speed) keep changing.
+          // The RepaintBoundary keeps a scroll frame to a recomposite.
+          child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
+        child: RepaintBoundary(child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _FilterBar(filters: filters, palette: palette),
           const SizedBox(height: 12),
@@ -169,6 +174,7 @@ class _MarketplaceFeed extends ConsumerWidget {
             const SoundpackCatalogView(),
           ],
         ],
+        )),
           ),
         ),
       ),

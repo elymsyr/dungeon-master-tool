@@ -127,7 +127,6 @@ class _CharacterEditorScreenState
   final ScrollController _sheetScroll = ScrollController();
   final List<GlobalKey> _rowKeys = [];
   List<({String label, int row})> _navTargets = const [];
-  final Map<int, double> _rowOffsetCache = {};
 
   // Markdown controllers — kept in sync with `_working.entity` so user input
   // doesn't fight the rebuild loop. Initialized lazily on first build.
@@ -634,57 +633,10 @@ class _CharacterEditorScreenState
     );
   }
 
-  /// Verilen satır indeksine kaydırır. ListView lazy olduğu için hedef
-  /// satırın offset'i önceden bilinmiyor; scroll offset'i üzerinde ikili
-  /// arama yapıp satır mount olunca `ensureVisible` ile hizalıyoruz.
-  /// ponytail: tek buton için `scrollable_positioned_list` bağımlılığı
-  /// eklemek yerine ~15 kare sürebilen bisection; darlarsa paket eklenir.
-  Future<void> _jumpToRow(int index, int rowCount) async {
-    if (!_sheetScroll.hasClients || index >= _rowKeys.length) return;
-    var lo = _sheetScroll.position.minScrollExtent;
-    var hi = _sheetScroll.position.maxScrollExtent;
-    // Aynı bölüme ikinci gidiş bedava: bulunan offset'i sakla, sonraki
-    // seferde oradan başla. Kart açılıp kapanınca kayarsa alttaki döngü
-    // zaten düzeltiyor — cache sadece tahmin.
-    final seed = _rowOffsetCache[index] ??
-        (rowCount == 0 ? 0.0 : hi * index / rowCount);
-    if ((seed - _sheetScroll.position.pixels).abs() > 8) {
-      _sheetScroll.jumpTo(seed.clamp(lo, hi));
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted || !_sheetScroll.hasClients) return;
-    }
-    for (var attempt = 0; attempt < 16; attempt++) {
-      // Rebuild sırasında ScrollPosition değişebilir — her turda tazele.
-      final pos = _sheetScroll.position;
-      final ctx = _rowKeys[index].currentContext;
-      if (ctx != null && ctx.mounted) {
-        await Scrollable.ensureVisible(ctx, alignment: 0.02);
-        if (_sheetScroll.hasClients) {
-          _rowOffsetCache[index] = _sheetScroll.position.pixels;
-        }
-        return;
-      }
-      // Ekranda duran ilk satırı bul: hedef ondan ileride mi geride mi?
-      int? mountedRow;
-      for (var j = 0; j < rowCount && j < _rowKeys.length; j++) {
-        if (_rowKeys[j].currentContext != null) {
-          mountedRow = j;
-          break;
-        }
-      }
-      if (mountedRow == null) return;
-      if (index > mountedRow) {
-        lo = pos.pixels;
-        if (pos.maxScrollExtent > hi) hi = pos.maxScrollExtent;
-      } else {
-        hi = pos.pixels;
-      }
-      final next = ((lo + hi) / 2).clamp(pos.minScrollExtent, hi);
-      if ((next - pos.pixels).abs() < 1) return;
-      _sheetScroll.jumpTo(next);
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted) return;
-    }
+  /// Verilen satırı sayfanın üstüne hizalar; tüm satırlar mount'lu.
+  Future<void> _jumpToRow(int index) async {
+    final ctx = index < _rowKeys.length ? _rowKeys[index].currentContext : null;
+    if (ctx != null) await Scrollable.ensureVisible(ctx, alignment: 0.02);
   }
 
   Widget _buildCardBody(
@@ -733,16 +685,11 @@ class _CharacterEditorScreenState
           )
         : baseTheme;
 
-    // PERF: the sheet is a LAZY viewport. It used to be
-    // `SingleChildScrollView + Column`, which inflated an Element +
-    // RenderObject for EVERY field of EVERY group and laid out and painted
-    // the whole sheet on each rebuild — the scroll hitches on mobile. The
-    // children list below is still built eagerly (cheap Widget ctors); the
-    // sliver builds/lays out/paints only what is on screen and wraps each
-    // row in its own RepaintBoundary. Safe to unmount off-screen rows
-    // because every field widget seeds its controller from `value` in
-    // initState and commits per keystroke via onChanged — no state lives
-    // only in the unmounted row.
+    // Not a lazy ListView on purpose: the rows are few and wildly uneven
+    // (an 8 px gap next to a whole group card), so a sliver's guessed
+    // extent changed as rows came on screen — the scrollbar resized and the
+    // sheet sped up, slowed down and jumped. Each row gets its own
+    // RepaintBoundary, so a scroll frame only recomposites.
     final rows = <Widget>[
     _entityHeader(palette, character, template, effectiveAc),
     const SizedBox(height: 12),
@@ -806,13 +753,20 @@ class _CharacterEditorScreenState
             constraints: const BoxConstraints(maxWidth: 760),
             child: Stack(
               children: [
-                ListView.builder(
+                SingleChildScrollView(
                   controller: _sheetScroll,
                   // Bottom room so the dice button never covers the last row.
                   padding: const EdgeInsets.fromLTRB(28, 24, 28, 96),
-                  itemCount: rows.length,
-                  itemBuilder: (_, i) =>
-                      KeyedSubtree(key: _rowKeys[i], child: rows[i]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < rows.length; i++)
+                        RepaintBoundary(
+                          key: _rowKeys[i],
+                          child: rows[i],
+                        ),
+                    ],
+                  ),
                 ),
                 Positioned(
                   top: 8,
@@ -821,7 +775,7 @@ class _CharacterEditorScreenState
                     palette: palette,
                     sections: [for (final t in _navTargets) t.label],
                     onSelect: (i) =>
-                        _jumpToRow(_navTargets[i].row, rows.length),
+                        _jumpToRow(_navTargets[i].row),
                   ),
                 ),
               ],
