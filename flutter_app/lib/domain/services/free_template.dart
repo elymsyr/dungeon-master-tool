@@ -4,10 +4,12 @@ import '../entities/schema/builtin/content.dart' show tier1Slugs;
 import '../entities/schema/builtin/lookups.dart'
     show dmAuthoredLookupSlugs, tier0Slugs;
 import '../entities/schema/dnd5e_constants.dart' show kDnd5eAbilities;
+import '../entities/schema/encounter_config.dart';
 import '../entities/schema/entity_category_schema.dart';
 import '../entities/schema/field_schema.dart';
 import '../entities/schema/world_schema.dart';
 import '../entities/schema/world_schema_hash.dart';
+import 'free_encounter.dart' show builtinBattlemapFields, encounterSection;
 import 'free_field_styles.dart';
 import 'free_grants.dart' show LevelMode;
 import 'free_srd_levels.dart';
@@ -67,6 +69,11 @@ const _srdCombat = CombatStatsSpec(
     ),
   ],
 );
+
+/// Built-in categories that join the encounter without a Combat stats
+/// block; the SRD copy takes them out of it (ROADMAP Faz 9: the built-in
+/// encounter gives them a stand-in 10 HP / 10 AC).
+const _noCombatSlugs = {'encounter', 'trap'};
 
 /// Monster and animal cards keep their combat values in flat fields; the
 /// copy gives them the block (read from those fields, §16.3) instead.
@@ -376,10 +383,24 @@ WorldSchema copyAsFreeTemplate(
     createdAt: now,
     updatedAt: now,
     originalHash: null,
+    // DESIGN §14: the Combat Stats preset (`_withSrdPresets`), sorted by its
+    // Initiative (a Dice value), maps from Location.
+    encounterConfig: fromBuiltin
+        ? EncounterConfig(
+            combatPresetId: '$id-preset-combat',
+            battlemapFields: builtinBattlemapFields,
+          )
+        : source.encounterConfig,
     categories: [
       for (final c in source.categories)
         c.copyWith(
           schemaId: id,
+          allowedInSections: fromBuiltin && _noCombatSlugs.contains(c.slug)
+              ? [
+                  for (final s in c.allowedInSections)
+                    if (s != encounterSection) s,
+                ]
+              : c.allowedInSections,
           isPlayerCard: fromBuiltin
               ? (c.slug == 'player-character' ? true : null)
               : c.isPlayerCard,

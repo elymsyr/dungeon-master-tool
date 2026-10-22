@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/combat_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-09-13
+updated: 2026-10-22
 tags: [file]
 ---
 # `combat_provider.dart`
@@ -51,6 +51,8 @@ tags: [file]
 - `getSessionState`: forced JSON round-trip (`jsonDecode(jsonEncode(...))`) because freezed `Encounter.toJson` lacks `explicitToJson` — without it nested `Combatant`/`CombatCondition` stay as object refs and `loadSessionState` crashes.
 - `loadSessionState`: legacy heal — rebuilds a minimal `stats` map from typed `hp/maxHp/ac/init` fields when an older save dropped the per-combatant `stats` snapshot.
 - Battle-map writes: `saveMapData` (mapPath/token positions/sizes/hiddenTokenIds), `saveFogAndAnnotation` (fogData/annotation/measurements/strokes/`sceneVectorJson` — null leaves unchanged, '' clears), `updateGridSettings` (gridSize/visible/snap/feetPerCell/diagonalRule/showAllHp/hideTokenHud), `toggleTokenHidden` (hidden tokens filtered out of player projection by snapshot builder, ghosted on DM map).
+
+- **Free template (Faz 9, DESIGN §14):** `_encounterConfig` is [[free_encounter]] `encounterConfigOf(schema)` (built-in: unchanged). In a free world `_addCombatant` → `_addFreeCombatant`: the card's block values (`freeCombatantValues`) become the combatant's own `stats` (each Goblin its own HP), the block's card list its starting conditions, `init` the flat part of `freeSortSpec`. `rollInitiatives` evaluates the free spec as the whole roll (V18; no spec keeps the value), `_sortByInitiative` honours `sortDirection: asc` only when free. Write-back goes into the character's block only (`_syncFreeCharacter`: HP, Max HP and a typed number; never the sort value, never the flat built-in keys). Quick-add rows get a `stats` copy. `reorderCombatant(from, to)` — the DM's drag; the turn stays with the combatant who had it.
 
 ## Notes
 - Combat state lives entirely inside `combat_state` in `world_settings.settings_json` — it does NOT use [[combat_dao]] (that DAO is for a separate normalized encounters/combatants table family that this provider does not touch).

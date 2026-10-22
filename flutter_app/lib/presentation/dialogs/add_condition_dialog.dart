@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/combat_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../domain/services/free_encounter.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 import '../l10n/app_localizations.dart';
 import '../widgets/perf/image_cache_size.dart';
 import '../widgets/srd_text.dart';
@@ -28,10 +30,15 @@ void showAddConditionDialog(
   final schema = ref.read(worldSchemaProvider);
   final cfg = schema.encounterConfig;
   final conditionSlugs = <String>{};
-  for (final cat in schema.categories) {
-    if (knownConditionSlugs.contains(cat.slug) ||
-        cat.fields.any((f) => f.fieldKey == cfg.conditionStatsFieldKey)) {
-      conditionSlugs.add(cat.slug);
+  if (isFreeTemplate(schema)) {
+    // Free: the targets of the Combat stats block's card list (DESIGN §14.5).
+    conditionSlugs.addAll(encounterConditionsValue(schema)?.targets ?? const []);
+  } else {
+    for (final cat in schema.categories) {
+      if (knownConditionSlugs.contains(cat.slug) ||
+          cat.fields.any((f) => f.fieldKey == cfg.conditionStatsFieldKey)) {
+        conditionSlugs.add(cat.slug);
+      }
     }
   }
   final entities = ref.read(entityProvider);

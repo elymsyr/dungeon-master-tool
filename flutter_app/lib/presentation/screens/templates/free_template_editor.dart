@@ -125,6 +125,7 @@ class _FreeTemplateEditorScreenState
                     onCategory: _c.openCategory,
                     onPreset: _c.selectPreset,
                     onGuide: _c.selectGuide,
+                    onEncounter: _c.selectEncounter,
                   ),
                 ),
                 const VerticalDivider(width: 1),
@@ -202,6 +203,20 @@ class _FreeTemplateEditorScreenState
                 actions: [_SaveStatus(controller: _c, compact: true)],
               ),
               body: TemplateGuideForm(controller: _c),
+            ),
+          );
+        },
+        onEncounter: () {
+          _c.selectEncounter();
+          _push(
+            context,
+            alive: () => true,
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(l10n.tplEncounter),
+                actions: [_SaveStatus(controller: _c, compact: true)],
+              ),
+              body: TemplateEncounterForm(controller: _c),
             ),
           );
         },
@@ -462,6 +477,7 @@ class _TemplateNav extends StatelessWidget {
     required this.onCategory,
     required this.onPreset,
     required this.onGuide,
+    required this.onEncounter,
   });
 
   final TemplateEditController controller;
@@ -470,6 +486,7 @@ class _TemplateNav extends StatelessWidget {
   final ValueChanged<String> onCategory;
   final ValueChanged<String> onPreset;
   final VoidCallback onGuide;
+  final VoidCallback onEncounter;
 
   @override
   Widget build(BuildContext context) {
@@ -498,6 +515,18 @@ class _TemplateNav extends StatelessWidget {
             leading: Icon(Icons.info_outline, size: 16, color: palette.tabText),
             title: l10n.tplInfo,
             onTap: onInfo,
+          ),
+          _NavRow(
+            key: const ValueKey('nav-encounter'),
+            nav: this,
+            selected: !compact && c.panel == TemplatePanel.encounter,
+            leading: Icon(
+              Icons.sports_kabaddi_outlined,
+              size: 16,
+              color: palette.tabText,
+            ),
+            title: l10n.tplEncounter,
+            onTap: onEncounter,
           ),
           for (final pc in players) ...[
             _CategoryTile(nav: this, category: pc, tag: l10n.tplPlayerCard),
@@ -617,6 +646,7 @@ class _CategoryTile extends StatelessWidget {
           c.panel != TemplatePanel.info &&
           c.panel != TemplatePanel.preset &&
           c.panel != TemplatePanel.guide &&
+          c.panel != TemplatePanel.encounter &&
           c.categoryId == category.categoryId,
       // The pinned player card shows what it is where the others have
       // their drag handle.

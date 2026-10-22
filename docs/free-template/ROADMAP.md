@@ -31,7 +31,8 @@
   bulgular düzeltildi, paket kartı artık yerinde düzenleniyor (D42); düzeltmeler yeniden kontrol
   bekliyor. Faz 6, 7a, 7a+ ve 7b kapandı (2026-10-22): kullanıcı bekleyen elle kontrolleri
   yaptı ("elle kontroller okey"). Faz 8 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor
-  (2026-10-22).
+  (2026-10-22). Faz 8 kapandı (2026-10-22, kullanıcı: "yapıldı, okey"). Faz 9 başı: V18 ve V20
+  onaylandı. Faz 9 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor (2026-10-22).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -46,8 +47,8 @@
 | 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | ✅ |
 | 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | ✅ |
 | 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ✅ |
-| 8 | Karakter oluşturma rehberi | M | 🔶 uygulandı, elle kontrol bekliyor |
-| 9 | Encounter ve harita ayarları | M | ⏳ |
+| 8 | Karakter oluşturma rehberi | M | ✅ |
+| 9 | Encounter ve harita ayarları | M | 🔶 uygulandı, elle kontrol bekliyor |
 | 10 | Kapanış | S | ⏳ |
 
 ---
@@ -1638,7 +1639,7 @@ oluştursun (D24).
 
 **Çıkış kriteri:** DESIGN §19 Faz 4: oyuncu rehberle boş kağıttan karakter oluşturur.
 
-**Faz 8 sonucu** (2026-10-22, Linux; elle kontrol bekliyor):
+**Faz 8 sonucu** (2026-10-22, Linux; kapandı 2026-10-22, kullanıcı elle kontrolü yaptı):
 
 - **Faz başı:** kullanıcı "devam edebiliriz" dedi; V15 zaten onaylı (D35). V16 ayrıca sorulmadı,
   tasarımdaki haliyle uygulandı (adım alanlı ya da alansız). Y6 kullanıcı isteğiyle değişti: SRD
@@ -1727,6 +1728,71 @@ SRD canavarının düz alanlarının okunması; savaşçı başına kopya; geri 
 
 **Çıkış kriteri:** DESIGN §19 Faz 5: free dünyada canavar ve oyuncu aynı encounter'da doğru
 kolonlarla oynanır.
+
+**Faz 9 sonucu** (2026-10-22, Linux; elle kontrol bekliyor):
+
+- **Faz başı:** Faz 8 kapandı; V18 ve V20 onaylandı (kullanıcı).
+- **Yapılanlar:**
+  - **Tek okuyucu** ([free_encounter.dart](../../flutter_app/lib/domain/services/free_encounter.dart)):
+    `encounterConfigOf(schema)` yerleşikte şemanın kendi ayarını, free'de bloklardan türetilmiş
+    ayarı döndürür; encounter, durum seçici ve battlemap seçici hep buradan okur (K3: dal çağrı
+    noktasında). **Encounter tek bir Savaş değerleri hazır içeriğini okur** (kullanıcı kararı,
+    2026-10-22; seçmek zorunlu): kolonlar saklanmaz, her seferinde o hazır içerikten çıkar: sıra
+    değeri, "encounter'da göster" açık değerler sırasıyla, HP (her zaman, −/+), Durumlar (kart
+    listesi gösteriliyorsa). Sıra değeri o hazır içeriğin Sayı / Zar değerlerinden biridir.
+    Hazır içerik seçilmemişse tabloda yalnız HP olur.
+  - **Model (K2):** `EncounterConfig`'e `combatPresetId`, `sortDice` ve `battlemapFields` (nullable,
+    `includeIfNull: false`); sıra değeri ve yönü mevcut `sortBySubField` / `sortDirection`'da.
+    Encounter'a girebilen kategoriler mevcut `allowedInSections`'taki `encounter`.
+  - **Encounter:** kart eklenince bloğun değerleri savaşçıya kopyalanır (SRD canavarında düz
+    alanlardan okunarak); mevcut HP boşsa Max HP; bloksuz kategori 0 / 0 HP ile girer; bloğun kart
+    listesindeki durumlar savaşçıya başlangıç durumu olur. **Zar at** (V18): Zar türündeki sıra
+    değeri olduğu gibi atılır, Sayı ise template'teki zar + değer; ikisi yoksa buton yok. Sıra yönü
+    template'ten. **Satır sürükleme:** desktop'ta ad sürüklenir, telefonda kart basılı tutulur;
+    sıra bende kalan savaşçıda kalır. Telefon kartında AC rozeti yerine template'in kolonları.
+  - **Geri yazma:** oyuncu satırındaki HP, Max HP ve elle girilen sayılar kağıttaki Savaş
+    değerleri bloğuna yazılır; sıra değeri (atılan inisiyatif) yazılmaz; yerleşik düz anahtarlara
+    (`hp`, `max_hp`, `ac`) dokunulmaz.
+  - **Sabitler (DESIGN §18):** Durumlar seçicisi bloğun kart listesinin hedef kategorilerinden;
+    battlemap görselleri template'te seçilen kategori / görsel alanlarından (Görsel ve dönemlik
+    görsel); hareket izi rengi (V20) oyuncu kartı yeşil, diğer kartlar kategori renginde, kartsız
+    satır beyaz.
+  - **Editör:** Detaylar'ın altında **Encounter ve harita** (desktop'ta sağ panel, telefonda
+    sayfa): **Savaş değerleri hazır içeriği** (zorunlu; seçilmemişse uyarı, template'te hiç yoksa
+    "Hazır içerikler'den ekle" uyarısı), kategori onay listesi (oyuncu kartı her zaman girer),
+    bloksuz seçili kategoride "Encounter için Savaş değerleri hazır içeriği gerekli. **[Ekle]**"
+    (seçili hazır içeriği bağlar), sıra değeri (Yok / hazır içeriğin Sayı ve Zar değerleri), yön, Sayı için zar
+    ifadesi, görsel alanı olan her kategori için battlemap alanları, iz rengi notu.
+  - **SRD kopyası:** encounter hazır içeriği Combat Stats, sıra Initiative (Zar, büyükten küçüğe), battlemap Location › `battlemaps`,
+    `map`, `map_per_era`; Canavar, Hayvan, NPC ve Oyuncu kartı encounter'da.
+- **Uygulamada verilen kararlar:**
+  - **Encounter ve Tuzak SRD kopyasında encounter'dan çıkarıldı.** Yerleşik encounter bu iki
+    kategoriyi 10 HP / 10 AC'lik yer tutucu değerlerle ekliyor; SRD'de ikisinin de HP'si yok.
+    Blok bağlansaydı boş HP'li satır, bırakılsaydı yeni kopyada iki uyarı çıkacaktı. Editörden
+    tek tıkla geri açılır, [Ekle] bloğu bağlar.
+  - Sıra kolonu, değerinin "encounter'da göster"i kapalı olsa da gösterilir (sıralamayı görmek
+    için).
+  - Sıra yönü butonlar yerine açılır liste: 340 px'lik panelde iki etiket sığmadı (test yakaladı;
+    DE / FR daha uzun).
+  - Yerleşik encounter'ın −/+ dışı sayılarda buton ayarı yok (Faz 6'da kullanıcı isteğiyle
+    kalktı); free encounter'da da yalnız HP'de −/+.
+- **Otomatik kapı:** G1 boş (yol haritasındaki `1d3eba6b` bu repoda bulunamadı; Faz 0 commit'inin
+  öncesi `a798a6eb^` ve `main` ile karşılaştırıldı, ikisi de boş) · G2 + G3 yeşil · G4 32 bilgi
+  notu (temel çizgi) · G5 `free_encounter_test` 16 (SRD varsayılanları ve hazır içeriği, kolonlar, gizli değer,
+  HP her zaman, hazır içeriksiz yalnız HP, canavar düz alanları, boş HP, bloksuz kategori, V18'in üç durumu, battlemap
+  görselleri, [Ekle]'nin seçili hazır içeriği bağlaması / hazır içerik yoksa bir şey yapmaması, yerleşik şemanın değişmeden geçmesi),
+  `combat_provider_free_test` 6 (Goblin başına HP, kağıda geri yazma, zar ve sıra, küçükten
+  büyüğe, sürükleme ve sıra, kart listesinden durum), `free_template_editor_test`'e desktop ve
+  telefon encounter bölümü ve hazır içeriksiz template'in uyarısı, yerleşik `combat_provider_test` 62 yeşil · G6 __G6__
+- **Nasıl açılır:** §1.2. Önce SRD'yi yeniden kopyala (E9.1): eski kopyaların encounter ayarı
+  yerleşikten kalma (Y1).
+- **Bilinen sınırlar:**
+  - Template'te bir değer eklenip dünya güncellenince yeni kolon gelir, ama encounter'da zaten
+    olan savaşçıların kopyasında o değer yoktur ("—"); yeniden eklenen savaşçıda dolu.
+  - Telefon listesinde durum eklemek için buton yok (yerleşikte de yok); token menüsünden ya da
+    desktop tablosundan eklenir.
+  - Durumlar kağıda geri yazılmaz (yalnız sayılar ve HP).
+  - Battlemap seçicisinin menü adı hâlâ "Konumlardan seç".
 
 ---
 

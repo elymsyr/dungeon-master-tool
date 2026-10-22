@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/services/free_encounter.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
@@ -79,11 +80,12 @@ Future<void> openBattlemapPicker(
     return;
   }
 
-  final locId = await _pickLocationWithBattlemaps(context, ref);
+  final fields = battlemapFieldsOf(ref.read(worldSchemaProvider));
+  final locId = await _pickLocationWithBattlemaps(context, ref, fields);
   if (locId == null || !context.mounted) return;
   final entity = ref.read(entityProvider)[locId];
   if (entity == null) return;
-  final battlemaps = _battlemapsOf(entity);
+  final battlemaps = _battlemapsOf(entity, fields);
   if (battlemaps.isEmpty) return;
   final picked = await _pickBattlemapImage(context, battlemaps);
   if (picked == null || !context.mounted) return;
@@ -92,30 +94,21 @@ Future<void> openBattlemapPicker(
 
 enum _PickerSource { device, location }
 
-/// Location'ın Maps grubundaki tüm görseller: `battlemaps` listesi + tekil
-/// `map` + `map_per_era` varyantları. Sıra korunur, tekrar edenler atılır.
-List<String> _battlemapsOf(Entity e) {
-  final out = <String>{};
-  void add(Object? v) {
-    if (v is String && v.isNotEmpty) out.add(v);
-  }
-
-  final maps = e.fields['battlemaps'];
-  if (maps is List) maps.forEach(add);
-  add(e.fields['map']);
-  final perEra = e.fields['map_per_era'];
-  if (perEra is Map) perEra.values.forEach(add);
-  return out.toList();
-}
+/// [e]'in battlemap alanlarındaki görseller (yerleşikte Location'ın Maps
+/// grubu: `battlemaps` + `map` + `map_per_era`; free'de template ayarı,
+/// DESIGN §14.6). Sıra korunur, tekrar edenler atılır.
+List<String> _battlemapsOf(Entity e, Map<String, List<String>> fields) =>
+    battlemapImages(e, fields[e.categorySlug] ?? const []);
 
 Future<String?> _pickLocationWithBattlemaps(
   BuildContext context,
   WidgetRef ref,
+  Map<String, List<String>> fields,
 ) async {
   final entities = ref.read(entityProvider);
   final eligible = [
     for (final e in entities.values)
-      if (e.categorySlug == 'location' && _battlemapsOf(e).isNotEmpty) e,
+      if (_battlemapsOf(e, fields).isNotEmpty) e,
   ];
   if (eligible.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -126,10 +119,11 @@ Future<String?> _pickLocationWithBattlemaps(
   final picked = await showEntitySelectorDialog(
     context: context,
     ref: ref,
-    allowedTypes: const ['location'],
+    allowedTypes: fields.keys.toList(),
     excludeIds: [
       for (final e in entities.values)
-        if (e.categorySlug == 'location' && _battlemapsOf(e).isEmpty) e.id,
+        if (fields.containsKey(e.categorySlug) && _battlemapsOf(e, fields).isEmpty)
+          e.id,
     ],
   );
   return picked == null || picked.isEmpty ? null : picked.first;

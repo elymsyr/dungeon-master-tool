@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_encounter.dart' show encounterSection;
 import '../../../domain/services/free_template.dart'
     show GuideStep, freePlayerCard, guideStepJson;
 import '../../../domain/services/template_edit.dart' as edit;
 
 /// What the settings panel (desktop) or sheet (phone) shows.
-enum TemplatePanel { info, category, group, field, preset, guide }
+enum TemplatePanel { info, category, group, field, preset, guide, encounter }
 
 enum TemplateSaveState { saved, pending, saving, failed }
 
@@ -117,6 +119,12 @@ class TemplateEditController extends ChangeNotifier {
     final card = freePlayerCard(_schema);
     if (card != null) categoryId = card.categoryId;
     panel = TemplatePanel.guide;
+    _changed();
+  }
+
+  /// The encounter and battle map settings (DESIGN §14).
+  void selectEncounter() {
+    panel = TemplatePanel.encounter;
     _changed();
   }
 
@@ -240,6 +248,37 @@ class TemplateEditController extends ChangeNotifier {
           guide: steps.isEmpty ? null : [for (final x in steps) guideStepJson(x)],
         ),
       ),
+    );
+  }
+
+  void updateEncounter(EncounterConfig cfg) =>
+      _edit((s) => s.copyWith(encounterConfig: cfg));
+
+  /// Whether category [id]'s cards join the encounter (DESIGN §14.1).
+  void setInEncounter(String id, bool on) {
+    final cat = categoryById(id);
+    if (cat == null) return;
+    _edit(
+      (s) => edit.replaceCategory(
+        s,
+        cat.copyWith(
+          allowedInSections: [
+            for (final x in cat.allowedInSections)
+              if (x != encounterSection) x,
+            if (on) encounterSection,
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The block the encounter needs, bound to its preset, for category [id]
+  /// (DESIGN §14.1).
+  void addCombatBlock(String id) {
+    final preset = _schema.encounterConfig.combatPresetId;
+    if (preset == null) return;
+    _edit(
+      (s) => edit.addCombatBlock(s, id, preset, id: _uuid.v4(), now: _now()),
     );
   }
 

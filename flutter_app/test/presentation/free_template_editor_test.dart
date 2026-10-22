@@ -480,6 +480,62 @@ void main() {
     expect(guideOf(freePlayerCard(_saved)!), hasLength(1));
   });
 
+  testWidgets('desktop: encounter and map — a category joins and gets its '
+      'block, sort, battle maps (Faz 9)', (tester) async {
+    await _size(tester, const Size(1280, 800));
+    await tester.pumpWidget(_app(_srdCopy));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const ValueKey('nav-encounter')));
+    await _scrollTo(tester, find.byKey(const ValueKey('enc_cat_trap')));
+    await _tap(tester, find.byKey(const ValueKey('enc_cat_trap')));
+    await _tap(tester, find.byKey(const ValueKey('enc_add_block_trap')));
+    expect(find.byKey(const ValueKey('enc_add_block_trap')), findsNothing);
+    await _scrollTo(tester, find.text('High to low'));
+    await _tap(tester, find.text('High to low'));
+    await _tap(tester, find.text('Low to high').last);
+    await _scrollTo(
+      tester,
+      find.byKey(const ValueKey('enc_map_location_map')),
+    );
+    await _tap(tester, find.byKey(const ValueKey('enc_map_location_map')));
+    expect(tester.takeException(), isNull);
+    await _autosave(tester);
+    final trap = _saved.categories.firstWhere((c) => c.slug == 'trap');
+    expect(trap.allowedInSections, contains('encounter'));
+    expect(trap.fields.where((f) => f.fieldType == FieldType.combatStats),
+        hasLength(1));
+    expect(_saved.encounterConfig.sortDirection, 'asc');
+    expect(_saved.encounterConfig.battlemapFields!['location'],
+        ['battlemaps', 'map_per_era']);
+  });
+
+  testWidgets('phone: encounter and map opens as its own page (Faz 9)', (
+    tester,
+  ) async {
+    await _size(tester, const Size(360, 780));
+    await tester.pumpWidget(_app(_srdCopy));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const ValueKey('nav-encounter')));
+    expect(find.text('Categories in the encounter'), findsOneWidget);
+    expect(find.text('Combat stats preset'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop: without a Combat stats preset the encounter asks for '
+      'one (Faz 9)', (tester) async {
+    await _size(tester, const Size(1280, 800));
+    await tester.pumpWidget(_app(_empty));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const ValueKey('nav-encounter')));
+    expect(
+      find.text(
+        'The encounter needs a Combat stats preset. Add one under Presets.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('closing with a pending edit still saves', (tester) async {
     await _size(tester, const Size(1280, 800));
     await tester.pumpWidget(_app(_empty));

@@ -11,6 +11,8 @@ import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/schema/encounter_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../../domain/services/free_encounter.dart';
+import '../../domain/services/free_template.dart' show isFreeTemplate;
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
@@ -113,6 +115,10 @@ class CombatNotifier extends StateNotifier<CombatState>
   /// encounter +/- edits.
   void _syncCharacterFields(String? entityId,
       {int? hp, int? maxHp, int? ac}) {
+    if (isFreeTemplate(_getSchema())) {
+      _syncFreeCharacter(entityId, {'hp': ?hp, 'max_hp': ?maxHp});
+      return;
+    }
     final character = _characterByEntityId(entityId);
     if (character == null) return;
     final fields = Map<String, dynamic>.from(character.entity.fields);
@@ -157,6 +163,23 @@ class CombatNotifier extends StateNotifier<CombatState>
     );
     // ignore: discarded_futures
     _saveCharacter(patched);
+  }
+
+  /// Free template: [changes] go into the character's Combat stats block
+  /// (DESIGN §14.4), nowhere else.
+  void _syncFreeCharacter(String? entityId, Map<String, Object> changes) {
+    final character = _characterByEntityId(entityId);
+    if (character == null) return;
+    final key = combatBlockKey(_getSchema(), character.entity.categorySlug);
+    if (key == null) return;
+    final raw = character.entity.fields[key];
+    final block = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    if (changes.entries.every((e) => block[e.key] == e.value)) return;
+    final fields = {...character.entity.fields, key: {...block, ...changes}};
+    // ignore: discarded_futures
+    _saveCharacter(character.copyWith(
+      entity: character.entity.copyWith(fields: fields),
+    ));
   }
 
   String? get _campaignId => _getCampaignData()?['world_id'] as String?;
@@ -216,7 +239,8 @@ class CombatNotifier extends StateNotifier<CombatState>
     _saveSettingsPatch({'combat_state': session});
   }
 
-  EncounterConfig get _encounterConfig => _getSchema().encounterConfig;
+  // A free template's comes from its Combat stats blocks (DESIGN §14).
+  EncounterConfig get _encounterConfig => encounterConfigOf(_getSchema());
 
   // --- Encounter Management ---
 
@@ -313,6 +337,11 @@ class CombatNotifier extends StateNotifier<CombatState>
     if (enc == null) return;
     pushUndo(state);
 
+    final schema = _getSchema();
+    if (isFreeTemplate(schema)) {
+      _addFreeCombatant(schema, entity);
+      return;
+    }
     final cfg = _encounterConfig;
     final combatStats = entity.fields[cfg.combatStatsFieldKey];
 
@@ -383,8 +412,40 @@ class CombatNotifier extends StateNotifier<CombatState>
       stats: snapshotStats,
     );
 
-    _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
     _log('Added ${entity.name} (Init: $initMod, AC: $ac, HP: $currentHp/$maxHp)');
+    _pushCombatant(enc, combatant);
+  }
+
+  /// Free template (DESIGN §14.4): the card's block values become this
+  /// combatant's own copy, its card list the conditions it starts with.
+  void _addFreeCombatant(WorldSchema schema, Entity entity) {
+    final enc = state.activeEncounter!;
+    final v = freeCombatantValues(schema, entity);
+    final init = _flatModValue(freeSortSpec(schema, v.stats));
+    final cards = encounterConditionsValue(schema);
+    final entities = _getEntities();
+    final combatant = Combatant(
+      id: _uuid.v4(),
+      name: entity.name,
+      init: init,
+      ac: int.tryParse('${v.stats['ac'] ?? ''}') ?? 0,
+      hp: v.hp,
+      maxHp: v.maxHp,
+      entityId: entity.id,
+      stats: v.stats,
+      conditions: [
+        if (cards != null && v.stats[cards.key] is List)
+          for (final id in v.stats[cards.key] as List)
+            if (entities['$id'] case final e?)
+              CombatCondition(name: e.name, entityId: e.id),
+      ],
+    );
+    _log('Added ${entity.name} (Init: $init, HP: ${v.hp}/${v.maxHp})');
+    _pushCombatant(enc, combatant);
+  }
+
+  void _pushCombatant(Encounter enc, Combatant combatant) {
+    _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
     _sortByInitiative();
     _saveAndNotify();
     _eventBus.emit(EventEnvelope.now(
@@ -416,6 +477,10 @@ class CombatNotifier extends StateNotifier<CombatState>
       ac: ac,
       hp: hp,
       maxHp: maxHp,
+      // Free: the table's columns read the row's own copy.
+      stats: isFreeTemplate(_getSchema())
+          ? {...stats, 'hp': '$hp', 'max_hp': '$maxHp'}
+          : const {},
     );
 
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
@@ -521,10 +586,14 @@ class CombatNotifier extends StateNotifier<CombatState>
     final entities = _getEntities();
     final cfg = _encounterConfig;
 
+    final free = isFreeTemplate(_getSchema());
     final rolled = enc.combatants.map((c) {
-      return c.copyWith(
-          init: _rollInitFromSpec(_initSpecFor(c, entities, cfg),
-              dSides: dSides));
+      final spec = _initSpecFor(c, entities, cfg);
+      // Free (V18): the spec is the whole roll; nothing to roll keeps it.
+      if (free) {
+        return spec == null ? c : c.copyWith(init: _evalDiceSpec(spec));
+      }
+      return c.copyWith(init: _rollInitFromSpec(spec, dSides: dSides));
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: rolled));
@@ -560,9 +629,17 @@ class CombatNotifier extends StateNotifier<CombatState>
   /// entity's `combat_stats[initiative]` first, then the flat
   /// `initiative_modifier`. Null when nothing is exposed (→ flat value 0).
   String? _initSpecFor(Combatant c, Map<String, Entity> entities, EncounterConfig cfg) {
-    if (c.entityId == null) return null;
+    final schema = _getSchema();
+    final free = isFreeTemplate(schema);
+    // Free: a row without a card (quick add) rolls from its own copy.
+    if (c.entityId == null) return free ? freeSortSpec(schema, c.stats) : null;
     final entity = entities[c.entityId] ??
         _characterByEntityId(c.entityId)?.entity;
+    if (free) {
+      return freeSortSpec(
+          schema,
+          entity == null ? c.stats : freeCombatantValues(schema, entity).stats);
+    }
     if (entity == null) return null;
     final cs = entity.fields[cfg.combatStatsFieldKey];
     if (cs is Map) return cs[cfg.initiativeSubField]?.toString();
@@ -716,7 +793,34 @@ class CombatNotifier extends StateNotifier<CombatState>
     // Manual initiative edits re-sort the encounter by the new value.
     if (isInit) _sortByInitiative();
     final c = updated.firstWhere((c) => c.id == combatantId);
-    _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp, ac: c.ac);
+    if (isFreeTemplate(_getSchema())) {
+      // A player's numbers go back to the sheet; the rolled order does not.
+      final n = int.tryParse(value);
+      _syncFreeCharacter(c.entityId, {
+        'hp': c.hp,
+        'max_hp': c.maxHp,
+        if (!isInit && n != null) subKey: n,
+      });
+    } else {
+      _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp, ac: c.ac);
+    }
+    _saveAndNotify();
+  }
+
+  /// The DM drags a row (DESIGN §14.3); the turn stays with whoever had it.
+  void reorderCombatant(int from, int to) {
+    final enc = state.activeEncounter;
+    if (enc == null || from == to) return;
+    pushUndo(state);
+    final list = [...enc.combatants];
+    final active = enc.turnIndex >= 0 && enc.turnIndex < list.length
+        ? list[enc.turnIndex].id
+        : null;
+    list.insert(to, list.removeAt(from));
+    _updateEncounter(enc.copyWith(
+      combatants: list,
+      turnIndex: active == null ? enc.turnIndex : list.indexWhere((c) => c.id == active),
+    ));
     _saveAndNotify();
   }
 
@@ -859,8 +963,11 @@ class CombatNotifier extends StateNotifier<CombatState>
     final enc = state.activeEncounter;
     if (enc == null) return;
 
+    // Free templates choose the direction (DESIGN §14.3).
+    final asc = isFreeTemplate(_getSchema()) &&
+        _encounterConfig.sortDirection == 'asc';
     final sorted = List<Combatant>.from(enc.combatants)
-      ..sort((a, b) => b.init.compareTo(a.init)); // desc
+      ..sort((a, b) => asc ? a.init.compareTo(b.init) : b.init.compareTo(a.init));
 
     _updateEncounter(enc.copyWith(combatants: sorted));
   }

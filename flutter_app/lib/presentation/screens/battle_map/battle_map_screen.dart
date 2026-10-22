@@ -9,6 +9,7 @@ import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/session.dart';
+import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
@@ -454,9 +455,17 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // -------------------------------------------------------------------------
 
   /// Fixed trail colour per kind: player green, NPC amber, monster red,
-  /// anything else white.
+  /// anything else white. A free template (V20): the player card green,
+  /// any other card its category's colour.
   Color _trailColor(String? entityId) {
     final slug = _entityFor(entityId)?.categorySlug;
+    final schema = ref.read(worldSchemaProvider);
+    if (isFreeTemplate(schema)) {
+      final cat = schema.categories.where((c) => c.slug == slug).firstOrNull;
+      if (cat == null) return Colors.white;
+      if (cat.isPlayerCard == true) return const Color(0xFF4CAF50);
+      return _categoryColor(entityId, Theme.of(context).extension<DmToolColors>()!);
+    }
     if (kPlayerCategorySlugs.contains(slug)) return const Color(0xFF4CAF50);
     if (slug == 'npc') return const Color(0xFFFFC107);
     if (slug == 'monster') return const Color(0xFFE53935);

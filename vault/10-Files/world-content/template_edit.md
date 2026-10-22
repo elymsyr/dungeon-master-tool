@@ -45,6 +45,8 @@ tags: [file]
 - **Player card:** `canRemoveCategory` is false for `isPlayerCard == true`; `removeCategory` ignores it.
 - New categories get a unique slug, `workspaces` icon, a blue colour and sections `worldmap`, `mindmap`, `projection` (encounter is Faz 9).
 
+- **Encounter block (Faz 9):** `addCombatBlock(schema, categoryId, presetId, id:, now:)` gives a category the Combat stats block the encounter needs, bound to the encounter's preset; no-op when the category already has a block or the preset is missing.
+
 ## Notes
 - Test: `test/domain/services/template_edit_test.dart` (includes "every SRD copy category survives a move" and the preset group: a change reaches every bound field and card marks stay (E4.6), break link, delete (V7), once per category (V8), save as preset / copy).
 - A retired key is not remembered: a later field with the same label could get the old key back (and its hidden old-style data). Matters once worlds use free templates (Faz 3).

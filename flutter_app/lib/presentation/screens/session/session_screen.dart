@@ -19,6 +19,8 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/session.dart';
+import '../../../domain/services/free_encounter.dart';
+import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../dialogs/add_condition_dialog.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -266,6 +268,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final height = compact ? 30.0 : 36.0;
     final text = TextStyle(fontSize: compact ? 11 : 12);
     final compactIcon = IconButton.styleFrom(visualDensity: VisualDensity.compact);
+    // A free template without anything to roll has no roll button (V18).
+    final canRoll = canRollEncounter(ref.watch(worldSchemaProvider));
     return [
       FilledButton.icon(
         onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
@@ -279,7 +283,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ),
       ),
       SizedBox(width: compact ? 2 : 6),
-      if (compact)
+      if (!canRoll)
+        const SizedBox.shrink()
+      else if (compact)
         IconButton(
           onPressed: _promptRollInitiative,
           icon: const Icon(Icons.casino, size: 18),
@@ -516,7 +522,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   /// user position the condition badges anywhere in the table column list
   /// from the encounter settings editor instead of the legacy "always at
   /// the end" placement. Detected by both the header and row builders.
-  static const String conditionsColumnKey = '__conditions__';
+  static const String conditionsColumnKey = encounterConditionsColumn;
 
   /// Returns the column list for the combat tracker, falling back to a
   /// hardcoded legacy default (Init / AC / HP) when the loaded schema's
@@ -560,13 +566,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // template's columns / labels never reach this screen until a full
     // restart.
     final schema = ref.watch(worldSchemaProvider);
-    final cfg = schema.encounterConfig;
+    final cfg = encounterConfigOf(schema);
     final cols = _effectiveColumns(cfg);
     // When the user has placed a conditions column explicitly via the
     // table-columns editor, that column owns the condition badges and the
     // legacy "always at the end" block is skipped. Otherwise the legacy
     // block keeps showing up so existing campaigns don't lose conditions.
-    final hasConditions = _hasConditionsColumn(cols);
+    // A free template has no legacy block (DESIGN §14.5).
+    final free = isFreeTemplate(schema);
+    final hasConditions = free || _hasConditionsColumn(cols);
 
     return Column(
       children: [
@@ -600,16 +608,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ],
           ),
         ),
-        // Rows — drops land on the panel's DragTarget.
+        // Rows — drops land on the panel's DragTarget. A free template's
+        // DM drags rows by the name (DESIGN §14.3).
         Expanded(
-          child: ListView.builder(
-            itemCount: enc.combatants.length,
+          child: _combatantList(
+            free: free,
+            count: enc.combatants.length,
             itemBuilder: (context, index) => _CombatantRow(
               key: ValueKey(enc.combatants[index].id),
               combatant: enc.combatants[index],
               index: index,
               turnIndex: enc.turnIndex,
               palette: palette,
+              draggable: free,
               onModifyStat: (c, subKey, delta, stats, cfg) => _modifyStat(c, subKey, delta, stats, cfg),
               onSetStat: (c, subKey, newVal, cfg) => _setStat(c, subKey, newVal, cfg),
               onShowAddCondition: (combatantId, _) => showAddConditionDialog(context, ref, combatantId),
@@ -617,6 +628,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// The combatant rows; reorderable in a free template.
+  Widget _combatantList({
+    required bool free,
+    required int count,
+    required IndexedWidgetBuilder itemBuilder,
+    EdgeInsets? padding,
+  }) {
+    if (!free) {
+      return ListView.builder(padding: padding, itemCount: count, itemBuilder: itemBuilder);
+    }
+    return ReorderableListView.builder(
+      padding: padding,
+      buildDefaultDragHandles: false,
+      itemCount: count,
+      itemBuilder: itemBuilder,
+      onReorderItem: (from, to) =>
+          ref.read(combatProvider.notifier).reorderCombatant(from, to),
     );
   }
 
@@ -654,13 +685,25 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   Widget _buildMobileCombatList(DmToolColors palette, Encounter enc) {
     final schema = ref.read(worldSchemaProvider);
-    final cfg = schema.encounterConfig;
+    final cfg = encounterConfigOf(schema);
     // Once per list build, not per item.
     final condSubFields = _conditionSubFields(schema);
+    // Free template: its own columns as chips, long-press to drag the card.
+    final free = isFreeTemplate(schema);
+    final freeCols = [
+      if (free)
+        for (final col in cfg.columns)
+          if (col.subFieldKey != cfg.initiativeSubField &&
+              col.subFieldKey != 'hp' &&
+              col.subFieldKey != conditionsColumnKey)
+            col,
+    ];
+    final showConditions = !free || _hasConditionsColumn(cfg.columns);
 
-    return ListView.builder(
+    return _combatantList(
+      free: free,
       padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: enc.combatants.length,
+      count: enc.combatants.length,
       itemBuilder: (context, index) {
         final c = enc.combatants[index];
         // Encounter is a COPY — read stats from combatant snapshot, not the
@@ -668,12 +711,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // player's owned char) and never updates after add anyway.
         final statsMap = Map<String, dynamic>.from(c.stats);
 
-        return _MobileCombatCard(
-          key: ValueKey(c.id),
+        final card = _MobileCombatCard(
+          key: free ? null : ValueKey(c.id),
           combatant: c,
           isActive: index == enc.turnIndex,
           palette: palette,
           statsMap: statsMap,
+          freeColumns: free ? freeCols : null,
+          showConditions: showConditions,
+          showInit: cfg.initiativeSubField.isNotEmpty,
           onModifyStat: (subKey, delta) => _modifyStat(c, subKey, delta, statsMap, cfg),
           onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
           onAddCondition: (id) => showAddConditionDialog(context, ref, id),
@@ -688,6 +734,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             return raw is Map ? Map<String, dynamic>.from(raw) : {};
           },
         );
+        if (!free) return card;
+        return ReorderableDelayedDragStartListener(
+          key: ValueKey(c.id),
+          index: index,
+          child: card,
+        );
       },
     );
   }
@@ -698,7 +750,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _showQuickAddDialog() {
     final schema = ref.read(worldSchemaProvider);
-    final cfg = schema.encounterConfig;
+    final cfg = encounterConfigOf(schema);
+    final columns = [
+      for (final c in cfg.columns)
+        if (c.subFieldKey != conditionsColumnKey) c,
+    ];
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
 
@@ -707,10 +763,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     int quantity = 1;
     // Dinamik alan controller'ları — encounterConfig columns'dan + max_hp
     final statControllers = <String, TextEditingController>{};
-    for (final col in cfg.columns) {
+    for (final col in columns) {
       statControllers[col.subFieldKey] = TextEditingController();
     }
-    final hasMaxHpColumn = cfg.columns.any((c) => c.subFieldKey == 'max_hp');
+    final hasMaxHpColumn = columns.any((c) => c.subFieldKey == 'max_hp');
     if (!hasMaxHpColumn) {
       statControllers['max_hp'] = TextEditingController();
     }
@@ -779,7 +835,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     Text(l10n.sessionCombatStats, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
                     const SizedBox(height: 8),
                     // Dinamik stat alanları
-                    ...cfg.columns.map((col) => Padding(
+                    ...columns.map((col) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: TextField(
                         controller: statControllers[col.subFieldKey],
@@ -821,7 +877,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
                   // Stat map oluştur
                   final stats = <String, String>{};
-                  for (final col in cfg.columns) {
+                  for (final col in columns) {
                     final val = statControllers[col.subFieldKey]?.text.trim() ?? '';
                     if (val.isNotEmpty) stats[col.subFieldKey] = val;
                   }
@@ -897,6 +953,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
 /// Compact mobile combat card showing combatant stats in a card layout.
 class _MobileCombatCard extends StatelessWidget {
+  Widget _badge(Widget child) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(color: palette.tabBg, borderRadius: palette.chr),
+        child: child,
+      );
+
   final Combatant combatant;
   final bool isActive;
   final DmToolColors palette;
@@ -908,6 +970,11 @@ class _MobileCombatCard extends StatelessWidget {
   final void Function(String combatantId, String condName, int? newDuration) onUpdateConditionDuration;
   final List<Map<String, String>>? conditionStatsSubFields;
   final Map<String, dynamic> Function(String? entityId) getConditionStats;
+  /// Free template: these columns instead of the AC badge.
+  final List<EncounterColumnConfig>? freeColumns;
+  final bool showConditions;
+  /// False in a free template without a sort value.
+  final bool showInit;
 
   const _MobileCombatCard({
     super.key,
@@ -922,6 +989,9 @@ class _MobileCombatCard extends StatelessWidget {
     required this.onUpdateConditionDuration,
     required this.getConditionStats,
     this.conditionStatsSubFields,
+    this.freeColumns,
+    this.showConditions = true,
+    this.showInit = true,
   });
 
   @override
@@ -951,6 +1021,7 @@ class _MobileCombatCard extends StatelessWidget {
           Row(
             children: [
               // Initiative badge
+              if (showInit) ...[
               Container(
                 width: 28, height: 28,
                 decoration: BoxDecoration(
@@ -962,6 +1033,7 @@ class _MobileCombatCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              ],
               // Name
               Expanded(
                 child: Text(
@@ -970,7 +1042,12 @@ class _MobileCombatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              for (final col in freeColumns ?? const <EncounterColumnConfig>[]) ...[
+                _badge(Text('${col.label} ${statsMap[col.subFieldKey] ?? '—'}', style: TextStyle(fontSize: 11, color: palette.tabActiveText, fontWeight: FontWeight.w600))),
+                const SizedBox(width: 4),
+              ],
               // AC badge
+              if (freeColumns == null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -1020,7 +1097,7 @@ class _MobileCombatCard extends StatelessWidget {
             ],
           ),
           // Conditions
-          if (combatant.conditions.isNotEmpty) ...[
+          if (showConditions && combatant.conditions.isNotEmpty) ...[
             const SizedBox(height: 4),
             Wrap(
               spacing: 4,
@@ -1056,6 +1133,8 @@ class _CombatantRow extends ConsumerWidget {
   /// Sets a combat stat to a raw string value (for inline editing).
   final void Function(Combatant c, String subKey, String newVal, EncounterConfig cfg) onSetStat;
   final void Function(String combatantId, List<String> conditions) onShowAddCondition;
+  /// Free template: the name is the drag handle (DESIGN §14.3).
+  final bool draggable;
 
   const _CombatantRow({
     super.key,
@@ -1063,6 +1142,7 @@ class _CombatantRow extends ConsumerWidget {
     required this.index,
     required this.turnIndex,
     required this.palette,
+    this.draggable = false,
     required this.onModifyStat,
     required this.onSetStat,
     required this.onShowAddCondition,
@@ -1076,7 +1156,7 @@ class _CombatantRow extends ConsumerWidget {
     // sync — otherwise their column layout / labels stay frozen on the
     // pre-update schema until a hot restart.
     final schema = ref.watch(worldSchemaProvider);
-    final cfg = schema.encounterConfig;
+    final cfg = encounterConfigOf(schema);
     final cols = _SessionScreenState._effectiveColumns(cfg);
 
     // Encounter is a COPY — stats come from the combatant snapshot, not the
@@ -1106,14 +1186,16 @@ class _CombatantRow extends ConsumerWidget {
           // combatant and switches the bottom tab to Entity Stats.
           Expanded(
             flex: 2,
-            child: Text(
-              srdCombatantName(context, c),
-              style: TextStyle(
-                fontSize: 13,
-                color: palette.tabActiveText,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            child: _dragHandle(
+              Text(
+                srdCombatantName(context, c),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: palette.tabActiveText,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           // Dynamic columns from encounterConfig (with legacy fallback
@@ -1220,7 +1302,8 @@ class _CombatantRow extends ConsumerWidget {
           // the user has NOT placed a conditions column explicitly via
           // the encounter settings editor. Keeps existing campaigns
           // working without forcing them to opt-in.
-          if (!_SessionScreenState._hasConditionsColumn(cols)) ...[
+          if (!isFreeTemplate(schema) &&
+              !_SessionScreenState._hasConditionsColumn(cols)) ...[
             const SizedBox(width: 8),
             Expanded(
               flex: 2,
@@ -1235,6 +1318,14 @@ class _CombatantRow extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _dragHandle(Widget name) {
+    if (!draggable) return name;
+    return ReorderableDragStartListener(
+      index: index,
+      child: MouseRegion(cursor: SystemMouseCursors.grab, child: name),
     );
   }
 

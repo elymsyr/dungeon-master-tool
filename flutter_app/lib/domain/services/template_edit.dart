@@ -772,3 +772,23 @@ WorldSchema reorderCategories(WorldSchema schema, List<String> orderedIds) {
     ],
   );
 }
+
+/// Gives category [categoryId] the Combat stats block the encounter needs
+/// (DESIGN §14.1): bound to the encounter's preset [presetId]. No-op when
+/// the category already has a block or cannot take the preset.
+WorldSchema addCombatBlock(
+  WorldSchema schema,
+  String categoryId,
+  String presetId, {
+  required String id,
+  required String now,
+}) {
+  final cat = schema.categories
+      .where((c) => c.categoryId == categoryId)
+      .firstOrNull;
+  final preset = presetById(schema, presetId);
+  if (cat == null || preset == null || !canAddPreset(cat, preset)) {
+    return schema;
+  }
+  return replaceCategory(schema, addPresetField(cat, preset, id: id, now: now));
+}

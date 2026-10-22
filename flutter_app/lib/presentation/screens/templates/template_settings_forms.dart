@@ -4,6 +4,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_encounter.dart';
 import '../../../domain/services/free_field_styles.dart';
 import '../../../domain/services/template_edit.dart';
 import '../../../domain/services/free_template.dart';
@@ -35,6 +36,7 @@ class TemplateSettingsPanel extends StatelessWidget {
     return switch (c.panel) {
       TemplatePanel.info => TemplateInfoForm(controller: c),
       TemplatePanel.guide => TemplateGuideForm(controller: c),
+      TemplatePanel.encounter => TemplateEncounterForm(controller: c),
       TemplatePanel.field when c.field != null => TemplateFieldForm(
         controller: c,
       ),
@@ -512,6 +514,188 @@ class _GuideStepTile extends StatelessWidget {
                   onChanged((id: step.id, field: step.field, text: v)),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Encounter and map (DESIGN §14): which categories join, what the table
+/// sorts and rolls by, where battle maps come from. The columns are the
+/// Combat stats blocks' own settings.
+class TemplateEncounterForm extends StatelessWidget {
+  const TemplateEncounterForm({super.key, required this.controller});
+
+  final TemplateEditController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final c = controller;
+    final s = c.schema;
+    final cfg = s.encounterConfig;
+    final joined = encounterCategories(s).map((x) => x.categoryId).toSet();
+    final sortable = [
+      for (final v in encounterValues(s))
+        if (v.type != CombatValueType.cards) v,
+    ];
+    final sort = encounterSortValue(s);
+    final preset = encounterPreset(s);
+    final presets = [
+      for (final p in presetsOf(s))
+        if (p.fieldType == FieldType.combatStats) p,
+    ];
+    final maps = cfg.battlemapFields ?? const <String, List<String>>{};
+    final withImages = [
+      for (final cat in s.categories)
+        if (cat.fields.any((f) => isBattlemapFieldType(f.fieldType))) cat,
+    ];
+
+    return ListView(
+      key: const ValueKey('encounter'),
+      padding: const EdgeInsets.all(16),
+      children: [
+        _Heading(l10n.tplEncounter),
+        _Hint(l10n.tplEncounterHint),
+        // Required: the encounter reads one Combat stats preset (§14.2).
+        if (presets.isEmpty)
+          _EncounterWarning(l10n.tplEncounterNoPresets)
+        else ...[
+          _Dropdown<String>(
+            label: l10n.tplEncounterPreset,
+            value: preset?.fieldId ?? '',
+            items: {
+              if (preset == null) '': l10n.tplEncounterSortNone,
+              for (final p in presets) p.fieldId: p.label,
+            },
+            onChanged: (id) {
+              if (id != null && id.isNotEmpty) {
+                c.updateEncounter(cfg.copyWith(combatPresetId: id));
+              }
+            },
+          ),
+          if (preset == null) _EncounterWarning(l10n.tplEncounterPickPreset),
+        ],
+        _Label(l10n.tplEncounterCategories),
+        for (final cat in s.categories) ...[
+          _Check(
+            key: ValueKey('enc_cat_${cat.slug}'),
+            label: cat.name,
+            hint: cat.isPlayerCard == true ? l10n.tplEncounterPlayerAlways : null,
+            value: joined.contains(cat.categoryId),
+            onChanged: (on) {
+              if (cat.isPlayerCard != true) c.setInEncounter(cat.categoryId, on);
+            },
+          ),
+          if (joined.contains(cat.categoryId) && combatBlockOf(cat) == null)
+            _EncounterWarning(
+              l10n.tplEncounterNeedsBlock,
+              indent: true,
+              action: preset == null
+                  ? null
+                  : TextButton(
+                      key: ValueKey('enc_add_block_${cat.slug}'),
+                      onPressed: () => c.addCombatBlock(cat.categoryId),
+                      child: Text(l10n.btnAdd),
+                    ),
+            ),
+        ],
+        const SizedBox(height: 12),
+        _Dropdown<String>(
+          label: l10n.tplEncounterSort,
+          helper: l10n.tplEncounterSortHint,
+          value: sort?.key ?? '',
+          items: {
+            '': l10n.tplEncounterSortNone,
+            for (final v in sortable) v.key: v.label,
+          },
+          onChanged: (k) => c.updateEncounter(
+            cfg.copyWith(sortBySubField: k ?? '', initiativeSubField: k ?? ''),
+          ),
+        ),
+        if (sort != null)
+          _Dropdown<String>(
+            key: const ValueKey('enc_sort_direction'),
+            label: l10n.tplEncounterSortDirection,
+            value: cfg.sortDirection == 'asc' ? 'asc' : 'desc',
+            items: {
+              'desc': l10n.tplEncounterSortDesc,
+              'asc': l10n.tplEncounterSortAsc,
+            },
+            onChanged: (d) =>
+                c.updateEncounter(cfg.copyWith(sortDirection: d ?? 'desc')),
+          ),
+        if (sort?.type == CombatValueType.number)
+          _TextSetting(
+            label: l10n.tplEncounterSortDice,
+            value: cfg.sortDice ?? '',
+            hint: '1d20',
+            helper: l10n.tplEncounterSortDiceHint,
+            onChanged: (v) => c.updateEncounter(
+              cfg.copyWith(sortDice: v.trim().isEmpty ? null : v.trim()),
+            ),
+          ),
+        _Label(l10n.tplBattlemapFields, hint: l10n.tplBattlemapFieldsHint),
+        if (withImages.isEmpty) _Hint(l10n.tplBattlemapNone),
+        for (final cat in withImages) ...[
+          Text(cat.name, style: const TextStyle(fontSize: 12)),
+          Wrap(
+            spacing: 16,
+            children: [
+              for (final f in cat.fields)
+                if (isBattlemapFieldType(f.fieldType))
+                  _Check(
+                    key: ValueKey('enc_map_${cat.slug}_${f.fieldKey}'),
+                    label: f.label,
+                    dense: true,
+                    value: maps[cat.slug]?.contains(f.fieldKey) ?? false,
+                    onChanged: (on) {
+                      final keys = [
+                        for (final k in maps[cat.slug] ?? const <String>[])
+                          if (k != f.fieldKey) k,
+                        if (on) f.fieldKey,
+                      ];
+                      c.updateEncounter(
+                        cfg.copyWith(
+                          battlemapFields: {
+                            for (final e in maps.entries)
+                              if (e.key != cat.slug) e.key: e.value,
+                            if (keys.isNotEmpty) cat.slug: keys,
+                          },
+                        ),
+                      );
+                    },
+                  ),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+        const SizedBox(height: 8),
+        _Hint(l10n.tplTrailColorHint),
+      ],
+    );
+  }
+}
+
+/// An info line of the encounter settings, with an optional fix.
+class _EncounterWarning extends StatelessWidget {
+  const _EncounterWarning(this.text, {this.indent = false, this.action});
+
+  final String text;
+  final bool indent;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Padding(
+      padding: EdgeInsets.only(left: indent ? 26 : 0, bottom: 8),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
+          const SizedBox(width: 6),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 12))),
+          ?action,
         ],
       ),
     );
@@ -2424,6 +2608,7 @@ class _Hint extends StatelessWidget {
 /// tappable. [dense] rows size to their label (for wraps).
 class _Check extends StatelessWidget {
   const _Check({
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,
@@ -2881,6 +3066,7 @@ class _TextSettingState extends State<_TextSetting> {
 /// drawn like the app's `DropdownButtonFormField`s.
 class _Dropdown<T> extends StatelessWidget {
   const _Dropdown({
+    super.key,
     required this.label,
     required this.value,
     required this.items,

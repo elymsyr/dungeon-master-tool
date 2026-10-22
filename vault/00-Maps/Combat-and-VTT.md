@@ -12,6 +12,7 @@ tags: [moc]
 
 ## Key Files
 - [[combat_provider]] — combat state notifier (initiative, turn order, HP, conditions).
+- [[free_encounter]] — free template's encounter: categories, columns from the Combat stats blocks, sort / roll (V18), Conditions targets, battle map fields (DESIGN §14).
 - [[battlemap_marks_protocol]] — protocol for battle-map marks/condition ops (`bm_mark_ops`).
 - [[combat_dao]] — encounters / combatants / conditions persistence.
 - [[fog_externalizer]] — fog-of-war serialization for projection. See [[Fog-of-War-and-Visibility]].
