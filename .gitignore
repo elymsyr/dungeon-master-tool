@@ -19,7 +19,8 @@ supabase/.temp
 supabase/.branches
 **/node_modulees/
 .wrangler/
-.claude/
+.claude/*
+!.claude/settings.json
 # User data & runtime
 cache/
 output.txt
