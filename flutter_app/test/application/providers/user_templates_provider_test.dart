@@ -38,7 +38,10 @@ void main() {
       () async {
     var (c, close) = await open();
     final n = c.read(userTemplatesProvider.notifier);
-    expect(await c.read(userTemplatesProvider.future), isEmpty);
+    // Only the ready-made SRD free template, which can't be changed.
+    expect(await c.read(userTemplatesProvider.future), [srdFreeTemplate]);
+    await n.save(srdFreeTemplate.copyWith(name: 'x'));
+    await n.delete(srdFreeTemplateId);
 
     final builtin = generateBuiltinDnd5eV2Schema().schema;
     final a = await n.copy(builtin, 'SRD copy');
@@ -53,7 +56,7 @@ void main() {
     await close();
 
     (c, close) = await open();
-    final list = await c.read(userTemplatesProvider.future);
+    final list = (await c.read(userTemplatesProvider.future)).skip(1);
     expect(list.map((t) => t.name), ['My SRD', 'Empty']);
     expect(list.map((t) => t.schemaId), [a.schemaId, e.schemaId]);
     expect(list.first.categories, hasLength(builtin.categories.length));

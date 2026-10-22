@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/template_provider.dart
 layer: application
 language: dart
 status: active
-updated: 2026-10-11
+updated: 2026-10-22
 tags: [file]
 ---
 
@@ -31,6 +31,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - Free templates reach a built-in flow only when that flow opts into `userTemplatesProvider` in its own phase (worlds Faz 3, packages Faz 5, characters Faz 6). Test: `user_templates_provider_test.dart` "built-in flows never see free templates".
+- `userTemplatesProvider` lists [[free_template]]'s `srdFreeTemplate` first (not in the DB); `save` / `saveInfo` / `delete` ignore it, so the Templates tab, world / package creation and the update check see it like any free template. The editor opens it with `TemplateEditController(readOnly: true)`: every edit funnels through `_edit`, which returns early.
 - An unreadable row is skipped with a `debugPrint`, never deleted.
 - Notifier methods update `state` in place after the DAO write (no full reload).
 

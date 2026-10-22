@@ -40,7 +40,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     final mine = mineAsync.valueOrNull ?? const <WorldSchema>[];
     final all = [...builtins, ...mine];
     final selected = all.where((t) => t.schemaId == _selectedId).firstOrNull;
-    final own = selected != null && isFreeTemplate(selected);
+    final own = selected != null && !isBuiltinTemplate(selected);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -99,9 +99,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   isSelected: schema.schemaId == _selectedId,
                   onTap: () => setState(() => _selectedId = schema.schemaId),
                   onOpen: () => _view(context, schema),
-                  onSettings: isFreeTemplate(schema)
-                      ? () => _settings(context, ref, schema)
-                      : null,
+                  onSettings: isBuiltinTemplate(schema)
+                      ? null
+                      : () => _settings(context, ref, schema),
                 ),
                 const SizedBox(height: 4),
               ],
@@ -112,7 +112,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     formatError(mineAsync.error!),
                   ),
                 )
-              else if (mineAsync.hasValue && mine.isEmpty)
+              else if (mineAsync.hasValue && mine.every(isBuiltinTemplate))
                 _HintCard(palette: palette, text: l10n.templateMineEmpty),
               const SizedBox(height: 12),
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
@@ -98,6 +99,14 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     _reconcile();
   }
 
+  bool _hasPersistedSession() {
+    try {
+      return Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      return false; // Supabase.initialize başarısız / zaman aşımı
+    }
+  }
+
   Future<void> _runSequence() async {
     await ref.read(pendingWriteBufferProvider).flush();
 
@@ -115,6 +124,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     // sinyali bekle; gelirse devam, gelmezse offline gibi davran. Bağlanma
     // sonraki sign-in event'inde retry edilecek.
     if (ref.read(authProvider) == null) {
+      // Kayıtlı oturum yoksa (misafir) gelecek sinyal de yok: 4 s beklemek
+      // her soğuk açılışı uzatıyordu. Geç giriş build()'deki listener'da.
+      if (!_hasPersistedSession()) return;
       try {
         await ref
             .read(authProvider.notifier)

@@ -2265,6 +2265,7 @@
   "templateDeleted": "\"{name}\" silindi",
   "templateActionFailed": "Bir sorun çıktı: {error}",
   "templateLineageSrd": "D&D 5e (SRD 5.2.1) tabanlı",
+  "templateBuiltinReadOnly": "Yerleşik template, salt okunur. Düzenlemek için kopyala.",
   "templateCategoriesBack": "Kategoriler",
   "tplSaved": "Kaydedildi",
   "tplSaving": "Kaydediliyor…",

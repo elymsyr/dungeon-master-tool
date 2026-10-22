@@ -2265,6 +2265,7 @@
   "templateDeleted": "« {name} » supprimé",
   "templateActionFailed": "Une erreur est survenue : {error}",
   "templateLineageSrd": "Basé sur D&D 5e (SRD 5.2.1)",
+  "templateBuiltinReadOnly": "Modèle intégré, en lecture seule. Copiez-le pour le modifier.",
   "templateCategoriesBack": "Catégories",
   "tplSaved": "Enregistré",
   "tplSaving": "Enregistrement…",

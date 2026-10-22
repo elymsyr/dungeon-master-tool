@@ -71,7 +71,7 @@ class LinkPackageDialog extends ConsumerWidget {
                 .map((p) => p.name)
                 .where((n) =>
                     n != packageName &&
-                    n != srdCorePackageName &&
+                    !isBuiltinPackageName(n) &&
                     !directNames.contains(n) &&
                     !indirect.contains(n))
                 .toList()

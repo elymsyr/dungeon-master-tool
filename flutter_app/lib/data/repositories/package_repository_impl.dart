@@ -75,8 +75,15 @@ class PackageRepositoryImpl implements PackageRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> loadMetadata(String packageName) async {
+    final existing = await _findByName(packageName);
+    final meta = existing == null ? null : _decodeState(existing.stateJson)?['metadata'];
+    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
+  }
+
+  @override
   Future<void> save(String packageName, Map<String, dynamic> data) async {
-    if (packageName == srdCorePackageName) {
+    if (isBuiltinPackageName(packageName)) {
       // Built-in pack is regenerated from code on every app start.
       return;
     }
@@ -105,7 +112,7 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<void> delete(String packageName) async {
-    if (packageName == srdCorePackageName) {
+    if (isBuiltinPackageName(packageName)) {
       // Built-in pack — protected. UI also blocks Delete; this is the
       // belt-and-suspenders fallback for any non-UI caller.
       return;
@@ -211,7 +218,7 @@ class PackageRepositoryImpl implements PackageRepository {
     String entityId,
     Map<String, dynamic> row,
   ) async {
-    if (packageName == srdCorePackageName) return;
+    if (isBuiltinPackageName(packageName)) return;
     final existing = await _findByName(packageName);
     if (existing == null) {
       throw StateError('Package not found: $packageName');
@@ -226,7 +233,7 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<void> deleteEntity(String packageName, String entityId) async {
-    if (packageName == srdCorePackageName) return;
+    if (isBuiltinPackageName(packageName)) return;
     final existing = await _findByName(packageName);
     if (existing == null) return;
     final packageId = existing.id;
@@ -241,7 +248,7 @@ class PackageRepositoryImpl implements PackageRepository {
     String packageName,
     Map<String, dynamic> patch,
   ) async {
-    if (packageName == srdCorePackageName) return;
+    if (isBuiltinPackageName(packageName)) return;
     if (patch.isEmpty) return;
     final existing = await _findByName(packageName);
     if (existing == null) {
@@ -329,7 +336,7 @@ class PackageRepositoryImpl implements PackageRepository {
     required String sourceName,
     required String destinationName,
   }) async {
-    if (destinationName == srdCorePackageName) {
+    if (isBuiltinPackageName(destinationName)) {
       throw StateError('Cannot overwrite the built-in package');
     }
     final existing = await _findByName(destinationName);
@@ -661,7 +668,7 @@ class PackageRepositoryImpl implements PackageRepository {
   /// Package adını değiştir — DB kolonunu güncelle + klasörü yeniden adlandır.
   @override
   Future<void> renamePackage(String oldName, String newName) async {
-    if (oldName == srdCorePackageName) {
+    if (isBuiltinPackageName(oldName)) {
       throw StateError('Cannot rename the built-in package');
     }
     final existing = await _findByName(oldName);

@@ -3,6 +3,7 @@
 //
 //   cd flutter_app && flutter test test/data/repositories/package_free_template_test.dart
 
+import 'package:dungeon_master_tool/application/services/srd_core_package_bootstrap.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/repositories/package_repository_impl.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -109,5 +110,32 @@ void main() {
     expect(isSrdOptOutPackageState(yok!.stateJson), isTrue);
     expect(isFreePackageState(yok.stateJson), isTrue);
     expect(isSrdOptOutPackageState(varr!.stateJson), isFalse);
+  });
+
+  test('hazır free SRD paketi: SRD kartları kendi kimlikleriyle, salt okunur',
+      () async {
+    await SrdCorePackageBootstrap(db).ensureInstalled();
+    final core = await repo.load(srdCorePackageName);
+    final free = await repo.load(srdFreePackageName);
+    expect(free['template_id'], srdFreeTemplateId);
+    expect(schemaOf(free).schemaId, srdFreeTemplateId);
+    final coreIds = (core['entities'] as Map).keys.cast<String>().toSet();
+    final freeIds = (free['entities'] as Map).keys.toSet();
+    expect(freeIds, hasLength(coreIds.length));
+    expect(freeIds.intersection(coreIds), isEmpty);
+    // Paket içi ref'ler yeni kimliklere döndü: hiçbir alan çekirdeği göstermez.
+    final fields = [
+      for (final e in (free['entities'] as Map).values) '${e['attributes']}',
+    ].join();
+    expect(coreIds.where((id) => fields.contains(id)), isEmpty);
+    final coreFields = [
+      for (final e in (core['entities'] as Map).values) '${e['attributes']}',
+    ].join();
+    expect(coreIds.where((id) => coreFields.contains(id)), isNotEmpty);
+    final row = await db.packagesDao.getByName(srdFreePackageName);
+    expect(isSrdOptOutPackageState(row!.stateJson), isTrue);
+
+    await repo.delete(srdFreePackageName);
+    expect(await db.packagesDao.getByName(srdFreePackageName), isNotNull);
   });
 }

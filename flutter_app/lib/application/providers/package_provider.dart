@@ -73,9 +73,7 @@ final packageListProvider = FutureProvider<List<PackageInfo>>((ref) async {
 final packageMetadataProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, packageName) async {
   try {
-    final data = await ref.read(packageRepositoryProvider).load(packageName);
-    final meta = data['metadata'];
-    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
+    return await ref.read(packageRepositoryProvider).loadMetadata(packageName);
   } catch (_) {
     return <String, dynamic>{};
   }

@@ -855,7 +855,7 @@ class WorldRepositoryImpl implements CampaignRepository {
       // link, so they never appear here; built-in SRD is name-guarded; packages
       // still linked in another world survive (countWorldsForPackage > 0).
       for (final link in pkgLinks) {
-        if (link.packageName == srdCorePackageName) continue;
+        if (isBuiltinPackageName(link.packageName)) continue;
         if (await _db.installedPackagesDao
                 .countWorldsForPackage(link.packageId) >
             0) {

@@ -145,7 +145,7 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
               // damage types, ...) and linked content render in every package.
               // The SRD package itself already owns the SRD rows.
               referenceOverlayFor:
-                  packageName == srdCorePackageName ? null : packageName,
+                  isBuiltinPackageName(packageName) ? null : packageName,
             );
           },
         ),
@@ -454,12 +454,12 @@ class _PackageScreenContentState
           const SizedBox(width: 4),
           // PR-SYNC-5: DM-only — share this package into the active world.
           if (ref.watch(hasAccountProvider) &&
-              widget.packageName != srdCorePackageName)
+              !isBuiltinPackageName(widget.packageName))
             _ShareToWorldButton(packageName: widget.packageName),
           // Linked Packages — borrow another package's content instead of
           // duplicating it. Edit mode only; the built-in pack is regenerated
           // from code every boot so it can never hold links.
-          if (_editMode && widget.packageName != srdCorePackageName)
+          if (_editMode && !isBuiltinPackageName(widget.packageName))
             IconButton(
               icon: const Icon(Icons.link, size: 20),
               tooltip: L10n.of(context)!.packageLinksTooltip,
@@ -470,7 +470,7 @@ class _PackageScreenContentState
           // built-in packages are read-only so they never see the button.
           // A free template has no rules engine.
           if (_editMode &&
-              widget.packageName != srdCorePackageName &&
+              !isBuiltinPackageName(widget.packageName) &&
               !isFreeTemplate(widget.schema))
             IconButton(
               icon: const Icon(Icons.tune, size: 20),
@@ -485,7 +485,7 @@ class _PackageScreenContentState
             ),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
-            final isBuiltin = widget.packageName == srdCorePackageName;
+            final isBuiltin = isBuiltinPackageName(widget.packageName);
             return IconButton(
               icon: Icon(
                 isBuiltin

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../../domain/services/free_template.dart' show guideOf;
+import '../../../domain/services/free_template.dart' show guideOf, isBuiltinTemplate;
 import '../../../domain/services/template_edit.dart'
     show missingOwnFields, presetUses, presetsOf;
 import '../../l10n/app_localizations.dart';
@@ -52,6 +52,7 @@ class _FreeTemplateEditorScreenState
     _c = TemplateEditController(
       latest,
       ref.read(userTemplatesProvider.notifier).save,
+      readOnly: isBuiltinTemplate(latest),
     );
     // Desktop opens on the player card (E2.1).
     final first =
@@ -792,7 +793,10 @@ class _SaveStatus extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final c = controller;
     final failed = c.saveState == TemplateSaveState.failed;
-    final (icon, text, color) = switch (c.saveState) {
+    final (icon, text, color) = c.readOnly
+        ? (Icons.lock_outline, l10n.templateBuiltinReadOnly,
+            palette.sidebarLabelSecondary)
+        : switch (c.saveState) {
       TemplateSaveState.saved => (
         Icons.cloud_done_outlined,
         l10n.tplSaved,

@@ -3530,6 +3530,7 @@
     }
   },
   "templateLineageSrd": "Based on D&D 5e (SRD 5.2.1)",
+  "templateBuiltinReadOnly": "Built-in template, read-only. Copy it to edit.",
   "templateCategoriesBack": "Categories",
   "tplSaved": "Saved",
   "tplSaving": "Saving…",

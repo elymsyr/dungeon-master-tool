@@ -23,8 +23,9 @@ final allTemplatesProvider = FutureProvider<List<WorldSchema>>((ref) async {
 /// Alias for callers still written around the old built-in / custom split.
 final customTemplatesProvider = allTemplatesProvider;
 
-/// The user's free templates (`user_templates`), oldest first. Follows the
-/// per-user database, so switching accounts reloads it.
+/// The free templates: the ready-made [srdFreeTemplate] first, then the
+/// user's own (`user_templates`), oldest first. Follows the per-user
+/// database, so switching accounts reloads it.
 final userTemplatesProvider =
     AsyncNotifierProvider<UserTemplatesNotifier, List<WorldSchema>>(
       UserTemplatesNotifier.new,
@@ -38,7 +39,7 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
   @override
   Future<List<WorldSchema>> build() async {
     final dao = UserTemplatesDao(ref.watch(appDatabaseProvider));
-    final out = <WorldSchema>[];
+    final out = <WorldSchema>[srdFreeTemplate];
     for (final json in await dao.allJson()) {
       try {
         out.add(WorldSchema.fromJson(jsonDecode(json) as Map<String, dynamic>));
@@ -81,6 +82,7 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
     required String coverImagePath,
   }) async {
     final t = (await future).firstWhere((t) => t.schemaId == id);
+    if (isBuiltinTemplate(t)) return;
     await save(
       t.copyWith(
         name: name,
@@ -96,6 +98,7 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
 
   /// Stores an edited template (the editor's autosave, V26).
   Future<void> save(WorldSchema t) async {
+    if (isBuiltinTemplate(t)) return;
     final current = await future;
     final saved = t.copyWith(updatedAt: _now());
     await _dao.upsert(saved.schemaId, jsonEncode(saved.toJson()));
@@ -105,6 +108,7 @@ class UserTemplatesNotifier extends AsyncNotifier<List<WorldSchema>> {
   }
 
   Future<void> delete(String id) async {
+    if (id == srdFreeTemplateId) return;
     final current = await future;
     await _dao.remove(id);
     // Its cover folder, best effort: the template is already gone, a locked

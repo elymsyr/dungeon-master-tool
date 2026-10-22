@@ -2265,6 +2265,7 @@
   "templateDeleted": "„{name}“ gelöscht",
   "templateActionFailed": "Etwas ist schiefgelaufen: {error}",
   "templateLineageSrd": "Basiert auf D&D 5e (SRD 5.2.1)",
+  "templateBuiltinReadOnly": "Integrierte Vorlage, schreibgeschützt. Zum Bearbeiten kopieren.",
   "templateCategoriesBack": "Kategorien",
   "tplSaved": "Gespeichert",
   "tplSaving": "Wird gespeichert…",

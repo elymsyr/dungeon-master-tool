@@ -12,6 +12,10 @@ abstract class PackageRepository {
   /// Paket verisini yükle.
   Future<Map<String, dynamic>> load(String packageName);
 
+  /// Yalnız `metadata` bloğu (state_json'dan) — entity'leri yüklemez.
+  /// Liste UI'ı satır başına çağırır; tam [load] orada donma demekti.
+  Future<Map<String, dynamic>> loadMetadata(String packageName);
+
   /// Paket verisini kaydet.
   Future<void> save(String packageName, Map<String, dynamic> data);
 

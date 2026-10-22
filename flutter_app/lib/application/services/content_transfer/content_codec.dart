@@ -88,7 +88,7 @@ class ContentCodec {
     }
 
     for (final pkg in await _db.packagesDao.getAll()) {
-      if (pkg.name == srdCorePackageName) continue;
+      if (isBuiltinPackageName(pkg.name)) continue;
       out.add(ContentItemRef(
         type: ContentItemType.package,
         id: pkg.id,
@@ -416,7 +416,7 @@ class ContentCodec {
     ContentItemRef ref,
     Map<String, dynamic> payload,
   ) async {
-    if (ref.name == srdCorePackageName) return;
+    if (isBuiltinPackageName(ref.name)) return;
     final existing = await _db.packagesDao.getById(ref.id);
     var name = existing?.name ?? ref.name;
 

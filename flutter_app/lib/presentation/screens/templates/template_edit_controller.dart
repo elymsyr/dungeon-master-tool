@@ -23,10 +23,14 @@ class TemplateEditController extends ChangeNotifier {
     WorldSchema initial,
     this._save, {
     this.saveDelay = const Duration(milliseconds: 600),
+    this.readOnly = false,
   }) : _schema = initial;
 
   final Future<void> Function(WorldSchema) _save;
   final Duration saveDelay;
+
+  /// A built-in template: it can be browsed, every edit is ignored.
+  final bool readOnly;
   static const _uuid = Uuid();
 
   WorldSchema _schema;
@@ -124,6 +128,7 @@ class TemplateEditController extends ChangeNotifier {
   // ---------------------------------------------------------------- edits
 
   void _edit(WorldSchema Function(WorldSchema) change) {
+    if (readOnly) return;
     _schema = change(_schema);
     _edits++;
     saveState = TemplateSaveState.pending;

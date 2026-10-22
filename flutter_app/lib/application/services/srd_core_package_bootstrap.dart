@@ -7,14 +7,27 @@ import '../../data/database/app_database.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
+import '../../core/utils/deep_copy.dart';
+import '../../domain/services/free_template.dart';
 
 const _uuid = Uuid();
+
+/// uuidv5 namespace of the free SRD package's card ids.
+const _freeNamespace = 'b3f1c8e2-7a4d-5c9e-8f2b-1d6a3e9c4b70';
 
 /// Canonical name of the built-in SRD content package. The package row is
 /// owned by the app — never deleted by `getAvailableNames` cleanup, and
 /// re-seeded whenever the code's `pack_version` differs from the stored copy
 /// so content fixes / new rows land without a manual reinstall.
 const srdCorePackageName = 'SRD 5.2.1 Core';
+
+/// The SRD pack again, opened with [srdFreeTemplate]: same cards under their
+/// own ids, read-only, re-seeded with the core pack.
+const srdFreePackageName = 'SRD 5.2.1 Core - Free Template';
+
+/// The packages the app owns: never saved, renamed or deleted by the user.
+bool isBuiltinPackageName(String name) =>
+    name == srdCorePackageName || name == srdFreePackageName;
 
 /// Idempotent installer that materialises the hand-authored SRD 5.2.1
 /// content pack as a real `Packages` row in the DB. Gated per DB instance
@@ -33,6 +46,15 @@ class SrdCorePackageBootstrap {
   Future<int> ensureInstalled() async {
     final key = identityHashCode(_db);
     if (_installedFor.contains(key)) return 0;
+    final inserted = await _ensureCore();
+    await _ensureFree();
+    // Mark this DB instance as installed only after both succeed; if one
+    // threw we want a retry on the next call rather than a permanent lockout.
+    _installedFor.add(key);
+    return inserted;
+  }
+
+  Future<int> _ensureCore() async {
 
     // CS-1: cheap gate FIRST — compare the stored DB version against the code
     // const WITHOUT building the ~2000-entity pack. Warm-DB returning users
@@ -47,7 +69,6 @@ class SrdCorePackageBootstrap {
       // materialising every row just to check non-empty.
       final count = await _db.packagesDao.countEntities(existingRow.id);
       if (count > 0 && _storedPackVersion(existingRow) == srdCorePackVersion) {
-        _installedFor.add(key);
         return 0;
       }
     }
@@ -150,11 +171,69 @@ class SrdCorePackageBootstrap {
 
       return companions.length;
     });
-    // Mark this DB instance as installed only after the transaction
-    // succeeds; if it threw we want a retry on the next call rather than
-    // a permanent lockout.
-    _installedFor.add(key);
     return inserted;
+  }
+
+  /// [srdFreePackageName] from the core package's rows: ids are derived from
+  /// the core ids (uuidv5) and every ref is rewritten to them. Re-seeded when
+  /// the pack version or the free template changes.
+  Future<void> _ensureFree() async {
+    final core = await _findByName(srdCorePackageName);
+    if (core == null) return;
+    final schema = srdFreeTemplate;
+    final hash = freeTemplateContentHash(schema);
+    final existing = await _findByName(srdFreePackageName);
+    if (existing != null) {
+      final state = jsonDecode(existing.stateJson);
+      if (state is Map &&
+          state['_template_hash'] == hash &&
+          _storedPackVersion(existing) == _storedPackVersion(core) &&
+          await _db.packagesDao.countEntities(existing.id) > 0) {
+        return;
+      }
+    }
+
+    final rows = await _db.packagesDao.getEntities(core.id);
+    final ids = {for (final r in rows) r.id: _uuid.v5(_freeNamespace, r.id)};
+    await _db.transaction(() async {
+      final packageId = existing?.id ?? _uuid.v4();
+      final coreState = jsonDecode(core.stateJson) as Map<String, dynamic>;
+      await _db.packagesDao.upsertPackage(PackagesCompanion(
+        id: Value(packageId),
+        name: const Value(srdFreePackageName),
+        stateJson: Value(jsonEncode({
+          'metadata': coreState['metadata'],
+          '_template_hash': hash,
+          // Same keys as PackageRepositoryImpl: the free template, and no
+          // SRD overlay — the package holds the SRD cards itself.
+          '_world_schema': schema.toJson(),
+          '_srdCoreOptOut': true,
+        })),
+        updatedAt: Value(DateTime.now()),
+      ));
+      await _db.packagesDao.deleteSchemasByPackage(packageId);
+      await _db.packagesDao.upsertSchema(PackageSchemasCompanion.insert(
+        id: packageId,
+        packageId: packageId,
+        name: Value(schema.name),
+        version: Value(schema.version),
+        templateId: Value(schema.schemaId),
+        templateHash: Value(computeWorldSchemaContentHash(schema)),
+        templateOriginalHash: Value(schema.originalHash),
+      ));
+      await _db.packagesDao.deleteEntitiesByPackage(packageId);
+      await _db.packagesDao.upsertEntities([
+        for (final r in rows)
+          r.toCompanion(true).copyWith(
+            id: Value(ids[r.id]!),
+            packageId: Value(packageId),
+            description: Value(remapIdsJson(r.description, ids) as String),
+            fieldsJson: Value(
+              jsonEncode(remapIdsJson(jsonDecode(r.fieldsJson), ids)),
+            ),
+          ),
+      ]);
+    });
   }
 
   /// Reads `metadata.pack_version` out of a package row's `stateJson`.

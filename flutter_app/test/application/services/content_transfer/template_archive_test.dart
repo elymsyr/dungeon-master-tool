@@ -105,7 +105,7 @@ void main() {
       await archive.close();
     }
 
-    final list = await b.read(userTemplatesProvider.future);
+    final list = (await b.read(userTemplatesProvider.future)).skip(1);
     expect(list.map((x) => x.schemaId), [t.schemaId]);
     expect(list.single.name, 'Mine');
     expect(list.single.categories, hasLength(t.categories.length));
@@ -153,7 +153,7 @@ void main() {
 
     // The template is not in the file; the world runs on its own copy.
     final templates = await b.read(userTemplatesProvider.future);
-    expect(templates, isEmpty);
+    expect(templates.every(isBuiltinTemplate), isTrue);
     final got = await b.read(campaignRepositoryProvider).load(worldId);
     final schema = WorldSchema.fromJson(
         Map<String, dynamic>.from(got['world_schema'] as Map));

@@ -232,7 +232,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         itemBuilder: (context, index) {
                           final info = filtered[index];
                           final isSelected = index == _selectedIndex;
-                          final isBuiltin = info.name == srdCorePackageName;
+                          final isBuiltin = isBuiltinPackageName(info.name);
                           // H5: narrow watch to `valueOrNull` only. The
                           // loading/error transitions of the metadata
                           // future no longer trigger a tile rebuild —
@@ -575,7 +575,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   bool _isBuiltinSelected() {
     final packages = _currentFiltered();
     if (_selectedIndex < 0 || _selectedIndex >= packages.length) return false;
-    return packages[_selectedIndex].name == srdCorePackageName;
+    return isBuiltinPackageName(packages[_selectedIndex].name);
   }
 
   Future<void> _deletePackage() async {

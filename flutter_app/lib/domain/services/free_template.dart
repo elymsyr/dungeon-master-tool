@@ -17,6 +17,23 @@ import 'template_edit.dart' show playerCardFieldKey, syncPresets;
 /// (docs/free-template/ROADMAP.md K3).
 bool isFreeTemplate(WorldSchema schema) => schema.freeRootId != null;
 
+/// Id of the ready-made SRD free template: the built-in template's copy,
+/// generated from code like the built-in one and never stored.
+const srdFreeTemplateId = 'builtin-dnd5e-srd-free';
+
+/// The ready-made SRD free template (read-only; copy it to edit).
+final WorldSchema srdFreeTemplate = copyAsFreeTemplate(
+  generateBuiltinDnd5eV2Schema().schema,
+  id: srdFreeTemplateId,
+  name: 'D&D 5e (SRD 5.2.1) - Free Template',
+  now: '2026-10-22T00:00:00.000Z',
+);
+
+/// The templates the app ships: viewed and copied, never edited or deleted.
+bool isBuiltinTemplate(WorldSchema schema) =>
+    schema.schemaId == builtinDnd5eV2SchemaId ||
+    schema.schemaId == srdFreeTemplateId;
+
 /// True when [schema] descends from the built-in SRD template.
 bool isSrdLineage(WorldSchema schema) =>
     schema.freeRootId == builtinDnd5eV2SchemaId;

@@ -24,7 +24,7 @@ import '../../../../application/providers/role_provider.dart';
 import '../../../../application/providers/rule_config_provider.dart';
 import '../../../../application/providers/template_provider.dart';
 import '../../../../application/services/srd_core_package_bootstrap.dart'
-    show srdCorePackageName;
+    show isBuiltinPackageName;
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
 import '../../../../domain/services/entity_ref.dart';
@@ -1983,7 +1983,7 @@ class _SourcePackagePicker extends ConsumerWidget {
     final addonNames = packagesAsync.maybeWhen(
       data: (list) => list
           .map((p) => p.name)
-          .where((n) => n != srdCorePackageName)
+          .where((n) => !isBuiltinPackageName(n))
           .toList()
         ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
       orElse: () => const <String>[],
