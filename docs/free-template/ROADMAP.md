@@ -29,7 +29,9 @@
   bekliyor (2026-10-12). Faz 7b (SRD kopyası dönüştürücüsü v4) uygulandı, otomatik kapı yeşil;
   elle kontrol bekliyor (2026-10-12). Faz 7b elle kontrolünün 1. turu yapıldı (2026-10-13);
   bulgular düzeltildi, paket kartı artık yerinde düzenleniyor (D42); düzeltmeler yeniden kontrol
-  bekliyor.
+  bekliyor. Faz 6, 7a, 7a+ ve 7b kapandı (2026-10-22): kullanıcı bekleyen elle kontrolleri
+  yaptı ("elle kontroller okey"). Faz 8 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor
+  (2026-10-22).
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -40,11 +42,11 @@
 | 4a | Tablo, Stat tablosu, SRD dönüşümü v2 | M | ✅ (elle kontrol kısmi) |
 | 4b | Hazır içerikler | M | ✅ (elle kontrol kısmi) |
 | 5 | Paketler | M | ✅ (elle kontrol kısmi) |
-| 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | 🔶 uygulandı, elle kontrol bekliyor |
-| 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | 🔶 uygulandı, elle kontrol bekliyor |
-| 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | 🔶 uygulandı, elle kontrol bekliyor |
-| 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | 🔶 uygulandı, elle kontrol 1. tur yapıldı, düzeltmeler bekliyor |
-| 8 | Karakter oluşturma rehberi | M | ⏳ |
+| 6 | Oyuncu kartı, karakter kağıdı, kaynak, dinlenme | L | ✅ |
+| 7a | Seviye sistemi: tarzlar, verme motoru, kağıt | L | ✅ |
+| 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | ✅ |
+| 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ✅ |
+| 8 | Karakter oluşturma rehberi | M | 🔶 uygulandı, elle kontrol bekliyor |
 | 9 | Encounter ve harita ayarları | M | ⏳ |
 | 10 | Kapanış | S | ⏳ |
 
@@ -1636,6 +1638,46 @@ oluştursun (D24).
 
 **Çıkış kriteri:** DESIGN §19 Faz 4: oyuncu rehberle boş kağıttan karakter oluşturur.
 
+**Faz 8 sonucu** (2026-10-22, Linux; elle kontrol bekliyor):
+
+- **Faz başı:** kullanıcı "devam edebiliriz" dedi; V15 zaten onaylı (D35). V16 ayrıca sorulmadı,
+  tasarımdaki haliyle uygulandı (adım alanlı ya da alansız). Y6 kullanıcı isteğiyle değişti: SRD
+  kopyası SRD 5.2.1 sırasıyla 13 adımlık İngilizce bir rehberle gelir (sınıf, geçmiş, tür, diller,
+  statlar, yönelim, kurtarma zarları, skill'ler, köken feat'i, HP/AC, ekipman, büyüler,
+  ayrıntılar; `_srdGuide`). Eski SRD kopyaları değişmez, sadece yeni kopyalar rehberli gelir.
+- **Yapılanlar:**
+  - **Rehber oyuncu kartında durur** (`EntityCategorySchema.guide`: `[{id, field?, text}]`,
+    K2'ye uygun). Kategori içerik hash'ine girdiği için rehber değişikliği dünyaya "template
+    güncellendi" olarak gelir; `presets` gibi şema düzeyinde olsaydı gelmezdi.
+  - **Editör:** sol listede oyuncu kartının altında **Oluşturma rehberi** (adım sayısıyla).
+    Desktop'ta sağ panelde açılır, tuvalde oyuncu kartı kalır; telefonda kendi sayfası. Adım
+    ekle / sil / tutamaçtan sürükle; her adımda alan seçici (Alan yok, ardından oyuncu kartının
+    alanları grup başlıklarıyla; seviye tablolu kartlara bağlanan alanlar **[Sv]**) ve markdown
+    açıklama. Alanı silinmiş adım "Alan silinmiş" gösterir.
+  - **Kağıt:** yeni karakter rehberle açılır (adım 1). Adım alanın satırına kayar, kapalı grubu
+    açar, alanı vurgular (çerçeve alanın üstüne çizilir, alan yeniden kurulmaz). Alansız ya da
+    alanı silinmiş adım yalnız yazıyı gösterir. Panel: "Adım N / M", açıklama, **Geri / Kapat /
+    Tamam**. Rehber açılınca edit moduna geçer; doğrulama yok (D24). Seviye tablolu kart
+    eklenirse özet her zamanki gibi çıkar, rehber sürer.
+  - **İlerleme** karakterin alanlarında (`_guide: {step, open}`), geri almaya girmeden. Kapat
+    adımda duraklatır; son adımda Tamam rehberi bitirir (sonraki açılış baştan). Başlıktaki
+    **Rehber** butonu kaldığı adımdan sürdürür; template'te rehber yoksa buton yok.
+- **Uygulamada verilen kararlar:**
+  - Panel yeri genişliğe göre: 900 px'ten dar alanda kağıdın altında, genişte kağıdın sağında
+    320 px'lik panel (gömülü kağıtta da aynı kural). Rehber açıkken zar butonu gizlenir.
+  - Var olan karakterlerde (rehber eklenmeden önce oluşturulmuş) rehber kendiliğinden açılmaz;
+    butonla başlar.
+  - Sürükle-bırak dışında adım sırası değiştirme yolu (yukarı / aşağı) eklenmedi.
+- **Otomatik kapı:** G1 boş · G2 + G3 yeşil · G4 32 bilgi notu (temel çizgi) · G5
+  `free_template_test`'e rehber grubu (sıra, alansız ve silinmiş alanlı adım, tohum, ilerleme
+  sınırlama, rehber değişikliği = template güncellemesi), `free_character_sheet_test`'e rehber
+  akışı (kendiliğinden açılma, kapalı grubun açılması, Geri / Tamam / Kapat, kalıcılık, butonla
+  sürdürme, silinmiş alan, bitirme), `free_template_editor_test`'e desktop ve telefon rehber
+  düzenleme yeşil · G6 1911 geçti; kırmızılar temel çizgideki 3 testle aynı
+  (`bundled_pack_resolve`, `srd_tr_entity_card`, `entity_card_flush`).
+- **Nasıl açılır:** §1.2.
+- **Bilinen sınırlar:** seviye atlama rehberi yok (D31).
+
 ---
 
 ### Faz 9 — Encounter ve harita ayarları
@@ -1722,5 +1764,5 @@ DESIGN.md'deki V1–V33'e ek olarak, bu yol haritası için benim seçtiğim nok
 | **Y3** | Template güncelleme kontrolü sadece free template'li dünya ve paketlerde çalışır. | B2: yerleşik şemanın hash'i her açılışta değişiyor; yerleşikte sahte istem çıkar. |
 | **Y4** | Anahtar bazlı uyumluluk sadece taraflardan biri free ise kullanılır; yerleşik ↔ yerleşik bugünkü etiket bazlı yolda kalır. | İ5. |
 | **Y5** | Free dünyada encounter Faz 9'a kadar kopyanın bugünkü ayarlarıyla "olduğu gibi" çalışır. *(2026-10-12, D36: `combat_stats` bölünmüyor, anahtarlar aynı kaldığı için HP kolonu Faz 6'dan sonra da dolu kalmalı; Durumlar ve gizlenen değerler Faz 9'a kadar eski davranışta.)* | Encounter'ı iki kez yazmamak için. |
-| **Y6** | SRD kopyası rehbersiz gelir; rehberi kullanıcı yazar. | DESIGN rehberin kopyayla gelip gelmeyeceğini söylemiyor. İstenirse §13.2'deki örnek varsayılan olarak eklenebilir (Faz 8'de küçük bir iş). |
+| **Y6** | ~~SRD kopyası rehbersiz gelir; rehberi kullanıcı yazar.~~ 2026-10-22: kullanıcı istedi, SRD kopyası varsayılan rehberle gelir (Faz 8 sonucu). | DESIGN rehberin kopyayla gelip gelmeyeceğini söylemiyor. İstenirse §13.2'deki örnek varsayılan olarak eklenebilir (Faz 8'de küçük bir iş). |
 | **Y7** | Yerleşik stat bloğunun yuvarlama hatası (DESIGN §8.2) bu işin parçası değildir; ayrı bir düzeltme olarak ele alınır. | K1, İ5: bu iş yerleşik davranışı değiştirmez. |

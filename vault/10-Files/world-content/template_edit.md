@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/template_edit.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-12
+updated: 2026-10-22
 tags: [file]
 ---
 
@@ -41,6 +41,7 @@ tags: [file]
 - **Compatibility (DESIGN §6.6):** text/long text/markdown among themselves, integer → decimal, choice → text, single → list of the same style are `compatible`; relation list → single is `lossy` (first card kept); everything else `incompatible`. An incompatible change retires the field and adds a new one in the same slot with a new id and key (V4); the old key also leaves `filterFieldKeys`, and the new field starts without the old `styleConfig`. Table and Stat table change only incompatibly.
 - **Presets:** a preset is a `FieldSchema` in `WorldSchema.presets`; a bound field names it in `presetId` and takes its label, style, `styleConfig`, help, placeholder, default, validation and required flag (`withPreset`) — never its card values. `replacePreset` / `removePreset` run `syncPresets`, so every bound field follows at once; a field whose preset is gone stays as it is, unbound (V7). A bound field's **key is its own** (D33): `addPresetField` starts it with the preset's key, the SRD copy and `saveAsPreset` keep the field's key. `canAddPreset`: once per category and not over a field with the preset's key (V8). A copy gets a key from its new label.
 - **Groups:** removing a group moves its fields (default: ungrouped "Properties"); fields are never deleted with a group.
+- **Lv tag:** `linksLevelCards(schema, field)` — a card link (list or single) to a category with a Level table; the canvas badge and the guide's field picker use it.
 - **Player card:** `canRemoveCategory` is false for `isPlayerCard == true`; `removeCategory` ignores it.
 - New categories get a unique slug, `workspaces` icon, a blue colour and sections `worldmap`, `mindmap`, `projection` (encounter is Faz 9).
 

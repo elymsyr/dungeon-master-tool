@@ -7,10 +7,12 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_template.dart'
+    show GuideStep, freePlayerCard, guideStepJson;
 import '../../../domain/services/template_edit.dart' as edit;
 
 /// What the settings panel (desktop) or sheet (phone) shows.
-enum TemplatePanel { info, category, group, field, preset }
+enum TemplatePanel { info, category, group, field, preset, guide }
 
 enum TemplateSaveState { saved, pending, saving, failed }
 
@@ -103,6 +105,14 @@ class TemplateEditController extends ChangeNotifier {
   void selectPreset(String id) {
     presetId = id;
     panel = TemplatePanel.preset;
+    _changed();
+  }
+
+  /// The creation guide (DESIGN §13.2), with the player card on the canvas.
+  void selectGuide() {
+    final card = freePlayerCard(_schema);
+    if (card != null) categoryId = card.categoryId;
+    panel = TemplatePanel.guide;
     _changed();
   }
 
@@ -210,6 +220,22 @@ class TemplateEditController extends ChangeNotifier {
   void removeField(String id) {
     _editCategory((c) => edit.removeField(c, id));
     if (fieldId == id) selectGroup(null);
+  }
+
+  /// A step id for the guide.
+  String newGuideStepId() => _uuid.v4();
+
+  void updateGuide(List<GuideStep> steps) {
+    final card = freePlayerCard(_schema);
+    if (card == null) return;
+    _edit(
+      (s) => edit.replaceCategory(
+        s,
+        card.copyWith(
+          guide: steps.isEmpty ? null : [for (final x in steps) guideStepJson(x)],
+        ),
+      ),
+    );
   }
 
   /// Adds the player card's Level or Pool to its first group (DESIGN §10.1).

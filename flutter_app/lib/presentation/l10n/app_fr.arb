@@ -2526,5 +2526,14 @@
   "tplCombatHp": "PV / PV max",
   "tplCombatHpHint": "Toujours présent et toujours en rencontre",
   "tplCombatValues": "Valeurs",
-  "tplCombatAddValue": "Ajouter une valeur"
+  "tplCombatAddValue": "Ajouter une valeur",
+  "tplGuide": "Guide de création",
+  "tplGuideSteps": "Étapes",
+  "tplGuideHint": "Montré étape par étape au joueur qui crée un personnage : chaque étape fait défiler jusqu'à son champ, s'il en a un, et affiche son texte. Les champs marqués Niv lient des cartes avec une table de niveaux ; place-les en premier.",
+  "tplGuideAddStep": "Ajouter une étape",
+  "tplGuideNoField": "Aucun champ",
+  "tplGuideFieldGone": "Champ supprimé",
+  "tplGuideText": "Texte (markdown)",
+  "freeGuide": "Guide",
+  "freeGuideStep": "Étape {n} / {total}"
 }

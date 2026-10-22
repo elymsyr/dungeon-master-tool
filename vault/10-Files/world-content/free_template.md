@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_template.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-13
+updated: 2026-10-22
 tags: [file]
 ---
 
@@ -45,6 +45,7 @@ tags: [file]
 - `originalHash` is frozen at creation = `computeWorldSchemaContentHash(copy)`.
 - `isBuiltin` flags on copied categories/fields are left as is: nothing reads the schema-level flag (checked 2026-10-11; the `isBuiltin` reads in the app are about packages/cards).
 
+- **Creation guide (Faz 8, DESIGN §13.2):** `guideOf(card)` reads the player card's `guide` as `GuideStep (id, field?, text)`, keeping a step whose field is gone; `guideStepJson`. A character's place is `guideKey` (`_guide`) `{step, open}`, read by `guideProgressOf` (step clamped to the guide, null when absent or the guide is empty). `freeCharacterSeed` adds `{step: 0, open: true}` when the card has a guide. The SRD copy (`copyAsFreeTemplate` from the built-in) comes with `_srdGuide`: 13 English steps in the SRD 5.2.1 creation order, each on a player-card field (ROADMAP Y6, changed 2026-10-22); copies made before keep their own guide. A guide edit is a content change (the guide lives on the category), so worlds are offered the update.
 - **Update check (Faz 3):** compares the template with the world's own copy by content (`freeTemplateContentHash` of both), not the recorded `template_hash` — that one includes the cover and tags. Same → nothing; equal to `dismissedHash` (the user's "Ignore") → nothing until the next change; template deleted → nothing (V2); built-in world → never (B2: its hash changes on every generate).
 
 ## Notes

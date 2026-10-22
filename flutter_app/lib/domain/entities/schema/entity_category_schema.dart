@@ -44,6 +44,10 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     /// name}`; `field: _owner` is the character's user. Null: none. Read
     /// through `sheetChipsOf` (`free_template.dart`).
     @JsonKey(includeIfNull: false) List<Map<String, dynamic>>? summaryChips,
+    /// Free templates only, on the player card: the character creation
+    /// guide (DESIGN §13.2), in order — `{id, field?: fieldKey, text:
+    /// markdown}`. Null: none. Read through `guideOf` (`free_template.dart`).
+    @JsonKey(includeIfNull: false) List<Map<String, dynamic>>? guide,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

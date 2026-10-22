@@ -103,6 +103,16 @@ List<FieldType> missingOwnFields(WorldSchema schema) {
   ];
 }
 
+/// Whether [f] is a card link (list or single, §11.5) to a category with a
+/// Level table: the editor tags it Lv (DESIGN §10.1, §13.2).
+bool linksLevelCards(WorldSchema schema, FieldSchema f) =>
+    f.fieldType == FieldType.relation &&
+    schema.categories.any(
+      (t) =>
+          (f.validation.allowedTypes?.contains(t.slug) ?? false) &&
+          t.fields.any((x) => x.fieldType == FieldType.progressionTable),
+    );
+
 /// The categories that use the player card's [own] field (DESIGN §10.1):
 /// the Level — those with a Level table; the Pool — those with Grants or a
 /// Level table (its rows may grant more than cards).

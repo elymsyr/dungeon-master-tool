@@ -341,4 +341,81 @@ void main() {
       );
     });
   });
+
+  group('creation guide (Faz 8)', () {
+    final card = freePlayerCard(srd)!.copyWith(
+      guide: [
+        {'id': 's1', 'field': 'species_ref', 'text': 'Pick a species.'},
+        {'id': 's2', 'text': 'Think about your past.'},
+        {'id': 's3', 'field': 'gone', 'text': 'Old step.'},
+      ],
+    );
+
+    test('the SRD copy comes with a guide on its own fields', () {
+      final pc = freePlayerCard(srd)!;
+      final steps = guideOf(pc);
+      expect(steps.first.field, 'class_refs');
+      expect(steps.length, 13);
+      final keys = {for (final f in pc.fields) f.fieldKey};
+      for (final s in steps) {
+        expect(keys, contains(s.field));
+      }
+      expect(guideProgressOf(freeCharacterSeed(pc), steps.length), (
+        step: 0,
+        open: true,
+      ));
+    });
+
+    test('steps keep their order, an optional field and one gone (V16)', () {
+      expect(guideOf(card).map((s) => (s.id, s.field, s.text)), [
+        ('s1', 'species_ref', 'Pick a species.'),
+        ('s2', null, 'Think about your past.'),
+        ('s3', 'gone', 'Old step.'),
+      ]);
+      expect(builtin.categories.every((c) => c.guide == null), isTrue);
+      final json = guideStepJson(guideOf(card)[1]);
+      expect(json, {'id': 's2', 'text': 'Think about your past.'});
+    });
+
+    test('a new character starts on step 1 only when there is a guide', () {
+      expect(freeCharacterSeed(card)[guideKey], {'step': 0, 'open': true});
+      expect(
+        freeCharacterSeed(card.copyWith(guide: null)).containsKey(guideKey),
+        isFalse,
+      );
+    });
+
+    test('progress: missing, clamped to a shorter guide, paused', () {
+      expect(guideProgressOf(const {}, 3), isNull);
+      expect(
+        guideProgressOf({
+          guideKey: {'step': 5, 'open': true},
+        }, 3),
+        (step: 2, open: true),
+      );
+      expect(
+        guideProgressOf({
+          guideKey: {'step': 1, 'open': false},
+        }, 3),
+        (step: 1, open: false),
+      );
+      expect(
+        guideProgressOf({
+          guideKey: {'step': 1, 'open': true},
+        }, 0),
+        isNull,
+        reason: 'the guide was emptied',
+      );
+    });
+
+    test('a guide edit is a template change', () {
+      final edited = srd.copyWith(
+        categories: [
+          for (final c in srd.categories)
+            c.isPlayerCard == true ? card : c,
+        ],
+      );
+      expect(pendingTemplateUpdate(srd, [edited]), edited);
+    });
+  });
 }

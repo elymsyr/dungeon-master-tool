@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,6 +36,7 @@ import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../theme/markdown_theme.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/character_stat_chips.dart';
@@ -48,6 +50,7 @@ import '../../widgets/srd_text.dart';
 import '../database/entity_card.dart'
     show
         EntityCardCollapsibleGroupCard,
+        EntityCardCollapsibleGroupCardState,
         EntityCardSectionHeading,
         splitFieldRows;
 import '../hub/characters_tab.dart' show showCharacterSettingsDialog;
@@ -59,8 +62,9 @@ import 'free_level_dialogs.dart';
 /// A free template character's sheet (docs/free-template/DESIGN.md §10.2):
 /// the built-in character screen's look — portrait, name, description,
 /// summary chips, view / edit, undo, DM notes — drawn with the player
-/// card's layout, plus Level up, Short / Long rest and what the
-/// character's cards grant (§11: cards into lists, the Pool). None of the
+/// card's layout, plus Level up, Short / Long rest, what the character's
+/// cards grant (§11: cards into lists, the Pool) and the template's
+/// creation guide (§13.3). None of the
 /// built-in sheet's rules (resolved grants, class resource tracker, derived
 /// values): the built-in editor only routes here (ROADMAP K3).
 class FreeCharacterSheet extends ConsumerStatefulWidget {
@@ -108,6 +112,15 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
   final _sheetScroll = ScrollController();
   final List<GlobalKey> _rowKeys = [];
   List<({String label, int row})> _navTargets = const [];
+
+  // The creation guide (DESIGN §13.3): the step shown, null while closed;
+  // each field's tile and row, to scroll to and highlight it.
+  int? _guideStep;
+  bool _guideChecked = false;
+  final Map<String, GlobalKey> _fieldKeys = {};
+  final Map<String, GlobalKey<EntityCardCollapsibleGroupCardState>>
+  _groupKeys = {};
+  Map<String, int> _fieldRows = const {};
 
   /// Held from initState: `ref` is gone in dispose.
   PendingWriteBuffer? _pendingBuffer;
@@ -475,6 +488,75 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
     );
   }
 
+  List<GuideStep> get _guide {
+    final card = freePlayerCard(widget.schema);
+    return card == null ? const [] : guideOf(card);
+  }
+
+  String? get _guideField =>
+      _guideStep == null ? null : _guide.elementAtOrNull(_guideStep!)?.field;
+
+  /// Where the guide is, stored outside undo.
+  void _storeGuide(int step, bool open) {
+    final c = _working;
+    if (c == null || !_canEdit) return;
+    _working = c.copyWith(
+      entity: c.entity.copyWith(
+        fields: {
+          ...c.entity.fields,
+          guideKey: guideProgressJson((step: step, open: open)),
+        },
+      ),
+    );
+    _pending = true;
+    _scheduleSave();
+  }
+
+  /// Shows step [step]; every field is editable while the guide is open.
+  void _guideTo(int step) {
+    setState(() {
+      _guideStep = step;
+      if (_canEdit) _readOnly = false;
+    });
+    _storeGuide(step, true);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showGuideField());
+  }
+
+  /// Close pauses on the step; Done on the last one ends the guide, which
+  /// then starts over.
+  void _closeGuide({required bool done}) {
+    final step = done ? 0 : _guideStep ?? 0;
+    setState(() => _guideStep = null);
+    _storeGuide(step, false);
+  }
+
+  void _resumeGuide() => _guideTo(
+    guideProgressOf(_working!.entity.fields, _guide.length)?.step ?? 0,
+  );
+
+  /// Scrolls the step's field into view, opening its group; a step without
+  /// a field, or whose field is gone, shows only its text.
+  Future<void> _showGuideField() async {
+    final key = _guideField;
+    final row = _fieldRows[key];
+    if (key == null || row == null || !mounted) return;
+    await _jumpToRow(row);
+    if (!mounted) return;
+    final group = freePlayerCard(
+      widget.schema,
+    )?.fields.where((f) => f.fieldKey == key).firstOrNull?.groupId;
+    _groupKeys[group]?.currentState?.expand();
+    await WidgetsBinding.instance.endOfFrame;
+    final ctx = _fieldKeys[key]?.currentContext;
+    if (ctx != null && ctx.mounted) {
+      await Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 250),
+      );
+    }
+  }
+
   void _syncIfNotFocused(
     TextEditingController ctrl,
     FocusNode focus,
@@ -510,6 +592,22 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
     }
     final embedded = widget.onClose != null;
     final phone = getScreenType(context) == ScreenType.phone;
+    final steps = guideOf(card);
+    // A new character opens on the guide (DESIGN §13.3).
+    if (!_guideChecked) {
+      _guideChecked = true;
+      if (guideProgressOf(character.entity.fields, steps.length)?.open ??
+          false) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _resumeGuide();
+        });
+      }
+    }
+    final sheet = EntityOpenScope(
+      onOpen: _opensCard,
+      child: _body(context, palette, character, card),
+    );
+    final guideOpen = _guideStep != null && steps.isNotEmpty;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -564,6 +662,14 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
             ],
           ),
           actions: [
+            if (steps.isNotEmpty)
+              IconButton(
+                key: const ValueKey('free_sheet_guide'),
+                icon: const Icon(Icons.signpost_outlined, size: 20),
+                tooltip: l10n.freeGuide,
+                onPressed: guideOpen ? null : _resumeGuide,
+                visualDensity: VisualDensity.compact,
+              ),
             IconButton(
               key: const ValueKey('free_sheet_edit'),
               icon: Icon(_readOnly ? Icons.edit : Icons.visibility, size: 20),
@@ -621,12 +727,111 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
             const SizedBox(width: 4),
           ],
         ),
-        body: EntityOpenScope(
-          onOpen: _opensCard,
-          child: _body(context, palette, character, card),
+        // The guide: under the sheet when narrow, beside it when wide.
+        body: !guideOpen
+            ? sheet
+            : LayoutBuilder(
+                builder: (context, box) => box.maxWidth < 900
+                    ? Column(
+                        children: [
+                          Expanded(child: sheet),
+                          _guidePanel(steps, palette, side: false),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: sheet),
+                          SizedBox(
+                            width: 320,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                              child: _guidePanel(steps, palette, side: true),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+        // Embedded in a world screen, that screen's dice button is there;
+        // the guide's buttons take its corner.
+        floatingActionButton: embedded || guideOpen ? null : const DiceFab(),
+      ),
+    );
+  }
+
+  /// The guide's step (DESIGN §13.3): its text, Back / Close / Done; no
+  /// check that the field was filled (D24).
+  Widget _guidePanel(
+    List<GuideStep> steps,
+    DmToolColors palette, {
+    required bool side,
+  }) {
+    final l10n = L10n.of(context)!;
+    final i = _guideStep!.clamp(0, steps.length - 1);
+    final last = i == steps.length - 1;
+    return Material(
+      key: const ValueKey('free_guide_panel'),
+      color: palette.featureCardBg,
+      elevation: 6,
+      shape: side
+          ? RoundedRectangleBorder(
+              borderRadius: palette.br,
+              side: BorderSide(color: palette.featureCardBorder),
+            )
+          : Border(top: BorderSide(color: palette.featureCardAccent, width: 2)),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.freeGuideStep(i + 1, steps.length),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: palette.srdHeadingRed,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: side ? 420 : MediaQuery.sizeOf(context).height / 4,
+                ),
+                child: SingleChildScrollView(
+                  child: MarkdownBody(
+                    data: steps[i].text,
+                    styleSheet: dmMarkdownStyle(context),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  TextButton(
+                    key: const ValueKey('guide_back'),
+                    onPressed: i > 0 ? () => _guideTo(i - 1) : null,
+                    child: Text(l10n.btnBack),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    key: const ValueKey('guide_close'),
+                    onPressed: () => _closeGuide(done: false),
+                    child: Text(l10n.btnClose),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    key: const ValueKey('guide_next'),
+                    onPressed: () =>
+                        last ? _closeGuide(done: true) : _guideTo(i + 1),
+                    child: Text(l10n.btnDone),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        // Embedded in a world screen, that screen's dice button is there.
-        floatingActionButton: embedded ? null : const DiceFab(),
       ),
     );
   }
@@ -751,6 +956,7 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
         EntityCardSectionHeading(title: l10n.propertiesTitle, palette: palette),
         const SizedBox(height: 8),
         Column(
+          key: _ungroupedKey,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: _fields(ungrouped, 1, card, character, entities, g),
         ),
@@ -759,6 +965,10 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
       for (final grp in sortedGroups(card))
         if (fieldsIn(card, grp.groupId).isNotEmpty) ...[
           EntityCardCollapsibleGroupCard(
+            key: _groupKeys.putIfAbsent(
+              grp.groupId,
+              GlobalKey<EntityCardCollapsibleGroupCardState>.new,
+            ),
             group: grp.copyWith(
               name: tx.tr(ContentTranslator.schemaScope, grp.name),
             ),
@@ -807,6 +1017,13 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
     while (_rowKeys.length < rows.length) {
       _rowKeys.add(GlobalKey());
     }
+    _fieldRows = {
+      for (final (i, r) in rows.indexed)
+        if (r case EntityCardCollapsibleGroupCard(:final group))
+          for (final f in fieldsIn(card, group.groupId)) f.fieldKey: i
+        else if (r.key == _ungroupedKey)
+          for (final f in ungrouped) f.fieldKey: i,
+    };
     _navTargets = [
       for (var i = 0; i < rows.length; i++)
         if (rows[i] case EntityCardSectionHeading(:final title))
@@ -1086,11 +1303,15 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
         grants: g.grants,
         itemCaptions: list ? g.captions : null,
       );
-      if (!levelField || !g.cardsLoaded || _readOnly) return w;
-      return InkWell(
-        key: const ValueKey('free_sheet_levels'),
-        onTap: () => _editLevels(g.ctx),
-        child: w,
+      return _guided(
+        f,
+        !levelField || !g.cardsLoaded || _readOnly
+            ? w
+            : InkWell(
+                key: const ValueKey('free_sheet_levels'),
+                onTap: () => _editLevels(g.ctx),
+                child: w,
+              ),
       );
     }
 
@@ -1119,6 +1340,28 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
           ],
         ),
     ];
+  }
+
+  static const _ungroupedKey = ValueKey('free_sheet_ungrouped');
+
+  /// [w] under its field's key, outlined while the guide shows it; the
+  /// outline is drawn over it so nothing is rebuilt.
+  Widget _guided(FieldSchema f, Widget w) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: _guideField == f.fieldKey
+          ? BoxDecoration(
+              color: palette.featureCardAccent.withValues(alpha: 0.06),
+              borderRadius: palette.br,
+              border: Border.all(color: palette.featureCardAccent, width: 2),
+            )
+          : const BoxDecoration(),
+      child: KeyedSubtree(
+        key: _fieldKeys.putIfAbsent(f.fieldKey, GlobalKey.new),
+        child: w,
+      ),
+    );
   }
 
   /// Scrolls row [index] to the top of the sheet; every row is mounted.

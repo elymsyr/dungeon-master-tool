@@ -1592,6 +1592,11 @@ class EntityCardCollapsibleGroupCardState
     _collapsed = widget.group.isCollapsed;
   }
 
+  /// Opens the group (the free sheet's guide shows a field inside it).
+  void expand() {
+    if (_collapsed) setState(() => _collapsed = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasName = widget.group.name.isNotEmpty;

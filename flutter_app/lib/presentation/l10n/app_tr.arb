@@ -2526,5 +2526,14 @@
   "tplCombatHp": "HP / Max HP",
   "tplCombatHpHint": "Her zaman var, encounter'da her zaman görünür",
   "tplCombatValues": "Değerler",
-  "tplCombatAddValue": "Değer ekle"
+  "tplCombatAddValue": "Değer ekle",
+  "tplGuide": "Oluşturma rehberi",
+  "tplGuideSteps": "Adım",
+  "tplGuideHint": "Yeni karakter oluşturan oyuncuya adım adım gösterilir: her adım, varsa alanına kayar ve yazısını gösterir. Sv etiketli alanlar seviye tablolu kartlara bağlanır; bunları başa koy.",
+  "tplGuideAddStep": "Adım ekle",
+  "tplGuideNoField": "Alan yok",
+  "tplGuideFieldGone": "Alan silinmiş",
+  "tplGuideText": "Açıklama (markdown)",
+  "freeGuide": "Rehber",
+  "freeGuideStep": "Adım {n} / {total}"
 }

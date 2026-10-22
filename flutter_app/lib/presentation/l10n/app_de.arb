@@ -2526,5 +2526,14 @@
   "tplCombatHp": "TP / Max-TP",
   "tplCombatHpHint": "Immer vorhanden und immer in der Begegnung",
   "tplCombatValues": "Werte",
-  "tplCombatAddValue": "Wert hinzufügen"
+  "tplCombatAddValue": "Wert hinzufügen",
+  "tplGuide": "Erstellungsleitfaden",
+  "tplGuideSteps": "Schritte",
+  "tplGuideHint": "Wird einem Spieler, der einen neuen Charakter erstellt, Schritt für Schritt gezeigt: Jeder Schritt scrollt zu seinem Feld, falls vorhanden, und zeigt seinen Text. Mit St markierte Felder verknüpfen Karten mit einer Stufentabelle; stelle sie an den Anfang.",
+  "tplGuideAddStep": "Schritt hinzufügen",
+  "tplGuideNoField": "Kein Feld",
+  "tplGuideFieldGone": "Feld entfernt",
+  "tplGuideText": "Text (Markdown)",
+  "freeGuide": "Leitfaden",
+  "freeGuideStep": "Schritt {n} / {total}"
 }

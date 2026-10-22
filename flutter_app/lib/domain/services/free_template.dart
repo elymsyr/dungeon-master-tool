@@ -371,6 +371,9 @@ WorldSchema copyAsFreeTemplate(
           summaryChips: fromBuiltin && c.slug == 'player-character'
               ? _srdChips
               : c.summaryChips,
+          guide: fromBuiltin && c.slug == 'player-character'
+              ? _srdGuide
+              : c.guide,
           // Multiclass: each class keeps its own level (DESIGN §11.2).
           levelMode: fromBuiltin && c.slug == 'class'
               ? LevelMode.separate.name
@@ -390,6 +393,97 @@ const List<Map<String, dynamic>> _srdChips = [
   {'field': 'level', 'icon': 'trending_up'},
   {'field': 'combat_stats', 'sub': 'ac', 'icon': 'security'},
   {'field': ownerChipField, 'icon': 'person_outline'},
+];
+
+/// The SRD copy's creation guide (DESIGN §13.2), in the SRD 5.2.1 order:
+/// class, origin, ability scores, alignment, details. Template content,
+/// so English like the SRD cards.
+const List<Map<String, dynamic>> _srdGuide = [
+  {
+    'id': 'srd-class',
+    'field': 'class_refs',
+    'text': '**Choose a class.** Its level 1 features come from the class\'s '
+        'level table and are added to your sheet. Note its hit die, primary '
+        'ability and saving throw proficiencies.',
+  },
+  {
+    'id': 'srd-background',
+    'field': 'background_ref',
+    'text': '**Choose a background.** It lists three abilities to increase, '
+        'an Origin feat, two skill proficiencies, a tool proficiency and '
+        'starting equipment. You apply these in the next steps.',
+  },
+  {
+    'id': 'srd-species',
+    'field': 'species_ref',
+    'text': '**Choose a species.** Its traits (size, speed, senses and the '
+        'rest) are added from the species card. If it has lineages, pick '
+        'one under Subspecies.',
+  },
+  {
+    'id': 'srd-languages',
+    'field': 'languages',
+    'text': '**Choose languages.** You know Common plus two languages of '
+        'your choice from the Standard Languages table.',
+  },
+  {
+    'id': 'srd-abilities',
+    'field': 'stat_block',
+    'text': '**Determine ability scores.** Assign 15, 14, 13, 12, 10 and 8 '
+        '(or use point buy, or roll 4d6 and drop the lowest). Then apply '
+        'your background: +2 to one of its abilities and +1 to another, or '
+        '+1 to all three. No score goes above 20.',
+  },
+  {
+    'id': 'srd-alignment',
+    'field': 'alignment_ref',
+    'text': '**Choose an alignment.**',
+  },
+  {
+    'id': 'srd-saves',
+    'field': 'saving_throws',
+    'text': '**Saving throws.** Mark the two your class gives. Your '
+        'Proficiency Bonus is +2 at level 1.',
+  },
+  {
+    'id': 'srd-skills',
+    'field': 'skills',
+    'text': '**Skills.** Mark your background\'s two skills and the ones you '
+        'choose from your class\'s list.',
+  },
+  {
+    'id': 'srd-feat',
+    'field': 'feats',
+    'text': '**Origin feat.** Add the feat your background gives.',
+  },
+  {
+    'id': 'srd-combat',
+    'field': 'combat_stats',
+    'text': '**Hit points and Armor Class.** Max HP = your class\'s hit die '
+        'maximum + your Constitution modifier. AC is 10 + your Dexterity '
+        'modifier unless your armor or a feature says otherwise. Initiative '
+        'is your Dexterity modifier.',
+  },
+  {
+    'id': 'srd-equipment',
+    'field': 'inventory',
+    'text': '**Equipment.** Take your class\'s and background\'s starting '
+        'equipment, or their gold instead (write it under Currency).',
+  },
+  {
+    'id': 'srd-spells',
+    'field': 'spells_known',
+    'text': '**Spells** (spellcasters only). Choose your cantrips and level 1 '
+        'spells. Spell save DC = 8 + your spellcasting ability modifier + '
+        'Proficiency Bonus; spell attack bonus = that modifier + '
+        'Proficiency Bonus.',
+  },
+  {
+    'id': 'srd-details',
+    'field': 'personality_traits',
+    'text': '**Details.** Name your character, then fill in personality, '
+        'ideals, bonds, flaws, appearance and backstory.',
+  },
 ];
 
 /// Content hash for the free template update check (ROADMAP Faz 3): the usual
@@ -495,15 +589,63 @@ WorldSchema emptyFreeTemplate({
   return schema.copyWith(originalHash: computeWorldSchemaContentHash(schema));
 }
 
-/// A new free character's values (D35): level 1, and an empty Combat stats
-/// block (not the built-in default map).
+/// A new free character's values (D35): level 1, an empty Combat stats
+/// block (not the built-in default map), and the guide open on its first
+/// step when the template has one (DESIGN §13.3).
 Map<String, dynamic> freeCharacterSeed(EntityCategorySchema playerCard) => {
   for (final f in playerCard.fields)
     if (f.fieldType == FieldType.characterLevel)
       f.fieldKey: 1
     else if (isCombatBlock(f))
       f.fieldKey: <String, dynamic>{},
+  if (guideOf(playerCard).isNotEmpty)
+    guideKey: guideProgressJson((step: 0, open: true)),
 };
+
+// ---------------------------------------------------------- creation guide
+
+/// One step of the player card's creation guide (DESIGN §13.2): a field to
+/// scroll to, or none (V16), and a markdown text.
+typedef GuideStep = ({String id, String? field, String text});
+
+Map<String, dynamic> guideStepJson(GuideStep s) => {
+  'id': s.id,
+  'field': ?s.field,
+  'text': s.text,
+};
+
+/// [card]'s guide steps in order. A step keeps a field that is gone; the
+/// sheet then shows only its text.
+List<GuideStep> guideOf(EntityCategorySchema card) => [
+  for (final m in card.guide ?? const <Map<String, dynamic>>[])
+    (
+      id: '${m['id'] ?? ''}',
+      field: m['field'] is String ? m['field'] as String : null,
+      text: '${m['text'] ?? ''}',
+    ),
+];
+
+/// The character's place in the guide (DESIGN §13.3): `{step, open}`.
+const guideKey = '_guide';
+
+typedef GuideProgress = ({int step, bool open});
+
+Map<String, dynamic> guideProgressJson(GuideProgress p) => {
+  'step': p.step,
+  'open': p.open,
+};
+
+/// Where [fields] left a guide of [length] steps, the step kept inside it;
+/// null when the character never had it or the guide is empty.
+GuideProgress? guideProgressOf(Map<String, dynamic> fields, int length) {
+  final v = fields[guideKey];
+  if (v is! Map || length == 0) return null;
+  final step = v['step'];
+  return (
+    step: (step is num ? step.toInt() : 0).clamp(0, length - 1),
+    open: v['open'] == true,
+  );
+}
 
 /// The character's main level, or null when the player card has no Level
 /// field (the sheet then shows none, D34).

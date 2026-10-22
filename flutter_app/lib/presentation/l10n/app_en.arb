@@ -3951,5 +3951,20 @@
   "tplCombatHp": "HP / Max HP",
   "tplCombatHpHint": "Always there and always in the encounter",
   "tplCombatValues": "Values",
-  "tplCombatAddValue": "Add value"
+  "tplCombatAddValue": "Add value",
+  "tplGuide": "Creation guide",
+  "tplGuideSteps": "Steps",
+  "tplGuideHint": "Shown step by step to a player making a new character: each step scrolls to its field, if it has one, and shows its text. Fields tagged Lv link cards with a Level table; put them first.",
+  "tplGuideAddStep": "Add step",
+  "tplGuideNoField": "No field",
+  "tplGuideFieldGone": "Field removed",
+  "tplGuideText": "Text (markdown)",
+  "freeGuide": "Guide",
+  "freeGuideStep": "Step {n} / {total}",
+  "@freeGuideStep": {
+    "placeholders": {
+      "n": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  }
 }

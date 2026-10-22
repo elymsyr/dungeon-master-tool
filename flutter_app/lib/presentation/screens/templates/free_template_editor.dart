@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/free_template.dart' show guideOf;
 import '../../../domain/services/template_edit.dart'
     show missingOwnFields, presetUses, presetsOf;
 import '../../l10n/app_localizations.dart';
@@ -122,6 +123,7 @@ class _FreeTemplateEditorScreenState
                     onInfo: _c.selectInfo,
                     onCategory: _c.openCategory,
                     onPreset: _c.selectPreset,
+                    onGuide: _c.selectGuide,
                   ),
                 ),
                 const VerticalDivider(width: 1),
@@ -186,6 +188,20 @@ class _FreeTemplateEditorScreenState
             context,
             alive: () => _c.category != null,
             builder: (_) => _PhoneCategoryPage(controller: _c),
+          );
+        },
+        onGuide: () {
+          _c.selectGuide();
+          _push(
+            context,
+            alive: () => true,
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(l10n.tplGuide),
+                actions: [_SaveStatus(controller: _c, compact: true)],
+              ),
+              body: TemplateGuideForm(controller: _c),
+            ),
           );
         },
         onPreset: (id) {
@@ -434,8 +450,9 @@ class _CategoryBar extends StatelessWidget {
   }
 }
 
-/// Template details, the player card, the presets (DESIGN §9), then the
-/// other categories in sidebar order (drag to reorder).
+/// Template details, the player card and its guide (DESIGN §13.2), the
+/// presets (§9), then the other categories in sidebar order (drag to
+/// reorder).
 class _TemplateNav extends StatelessWidget {
   const _TemplateNav({
     required this.controller,
@@ -443,6 +460,7 @@ class _TemplateNav extends StatelessWidget {
     required this.onInfo,
     required this.onCategory,
     required this.onPreset,
+    required this.onGuide,
   });
 
   final TemplateEditController controller;
@@ -450,6 +468,7 @@ class _TemplateNav extends StatelessWidget {
   final VoidCallback onInfo;
   final ValueChanged<String> onCategory;
   final ValueChanged<String> onPreset;
+  final VoidCallback onGuide;
 
   @override
   Widget build(BuildContext context) {
@@ -479,8 +498,23 @@ class _TemplateNav extends StatelessWidget {
             title: l10n.tplInfo,
             onTap: onInfo,
           ),
-          for (final pc in players)
+          for (final pc in players) ...[
             _CategoryTile(nav: this, category: pc, tag: l10n.tplPlayerCard),
+            _NavRow(
+              key: const ValueKey('nav-guide'),
+              nav: this,
+              selected: !compact && c.panel == TemplatePanel.guide,
+              leading: Icon(
+                Icons.signpost_outlined,
+                size: 16,
+                color: palette.tabText,
+              ),
+              title: l10n.tplGuide,
+              count: '${guideOf(pc).length}',
+              countTooltip: l10n.tplGuideSteps,
+              onTap: onGuide,
+            ),
+          ],
           _NavLabel(
             text: l10n.tplPresets,
             action: IconButton(
@@ -581,6 +615,7 @@ class _CategoryTile extends StatelessWidget {
           !nav.compact &&
           c.panel != TemplatePanel.info &&
           c.panel != TemplatePanel.preset &&
+          c.panel != TemplatePanel.guide &&
           c.categoryId == category.categoryId,
       // The pinned player card shows what it is where the others have
       // their drag handle.

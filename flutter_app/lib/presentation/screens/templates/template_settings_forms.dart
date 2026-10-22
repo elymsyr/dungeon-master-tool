@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/free_field_styles.dart';
 import '../../../domain/services/template_edit.dart';
 import '../../../domain/services/free_template.dart';
@@ -33,6 +34,7 @@ class TemplateSettingsPanel extends StatelessWidget {
     final c = controller;
     return switch (c.panel) {
       TemplatePanel.info => TemplateInfoForm(controller: c),
+      TemplatePanel.guide => TemplateGuideForm(controller: c),
       TemplatePanel.field when c.field != null => TemplateFieldForm(
         controller: c,
       ),
@@ -308,6 +310,210 @@ class TemplateInfoForm extends StatelessWidget {
           onChanged: (v) => controller.updateInfo(version: v),
         ),
       ],
+    );
+  }
+}
+
+/// The player card's character creation guide (DESIGN §13.2): steps, each
+/// an optional field (V16) and a markdown text; drag to reorder.
+class TemplateGuideForm extends StatelessWidget {
+  const TemplateGuideForm({super.key, required this.controller});
+
+  final TemplateEditController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final c = controller;
+    final card = freePlayerCard(c.schema);
+    if (card == null) return const SizedBox.shrink();
+    final steps = guideOf(card);
+    void set(int i, GuideStep s) =>
+        c.updateGuide([for (final (j, x) in steps.indexed) j == i ? s : x]);
+
+    return ReorderableListView.builder(
+      key: const ValueKey('guide'),
+      buildDefaultDragHandles: false,
+      padding: const EdgeInsets.all(16),
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _Heading(l10n.tplGuide),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              l10n.tplGuideHint,
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+      footer: Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          key: const ValueKey('guide_add'),
+          onPressed: () => c.updateGuide([
+            ...steps,
+            (id: c.newGuideStepId(), field: null, text: ''),
+          ]),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(l10n.tplGuideAddStep),
+        ),
+      ),
+      itemCount: steps.length,
+      onReorderItem: (from, to) {
+        final next = [...steps];
+        next.insert(to, next.removeAt(from));
+        c.updateGuide(next);
+      },
+      itemBuilder: (context, i) => _GuideStepTile(
+        key: ValueKey('guide-${steps[i].id}'),
+        index: i,
+        step: steps[i],
+        schema: c.schema,
+        card: card,
+        onChanged: (s) => set(i, s),
+        onDelete: () => c.updateGuide([...steps]..removeAt(i)),
+      ),
+    );
+  }
+}
+
+class _GuideStepTile extends StatelessWidget {
+  const _GuideStepTile({
+    super.key,
+    required this.index,
+    required this.step,
+    required this.schema,
+    required this.card,
+    required this.onChanged,
+    required this.onDelete,
+  });
+
+  final int index;
+  final GuideStep step;
+  final WorldSchema schema;
+  final EntityCategorySchema card;
+  final ValueChanged<GuideStep> onChanged;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final gone =
+        step.field != null && !card.fields.any((f) => f.fieldKey == step.field);
+    // The player card's fields by group (DESIGN §13.2), level links tagged.
+    DropdownMenuItem<String?> field(FieldSchema f) => DropdownMenuItem(
+      value: f.fieldKey,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 12),
+        child: Text(
+          linksLevelCards(schema, f)
+              ? '${f.label}  [${l10n.tplLevelListBadge}]'
+              : f.label,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+    DropdownMenuItem<String?> heading(String id, String text) =>
+        DropdownMenuItem(
+          value: '#$id',
+          enabled: false,
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+        );
+    final ungrouped = fieldsIn(card, null);
+    final items = <DropdownMenuItem<String?>>[
+      DropdownMenuItem(value: null, child: Text(l10n.tplGuideNoField)),
+      if (gone)
+        DropdownMenuItem(value: step.field, child: Text(l10n.tplGuideFieldGone)),
+      if (ungrouped.isNotEmpty) heading('', l10n.propertiesTitle),
+      for (final f in ungrouped) field(f),
+      for (final g in sortedGroups(card))
+        if (fieldsIn(card, g.groupId).isNotEmpty) ...[
+          heading(g.groupId, g.name),
+          for (final f in fieldsIn(card, g.groupId)) field(f),
+        ],
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+      decoration: BoxDecoration(
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              ReorderableDragStartListener(
+                index: index,
+                child: Tooltip(
+                  message: l10n.tplDragHandle,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.grab,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 18,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Text(
+                '${index + 1}.',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    key: ValueKey('guide_field_$index'),
+                    value: step.field,
+                    isExpanded: true,
+                    style: TextStyle(fontSize: 13, color: palette.tabActiveText),
+                    items: items,
+                    onChanged: (v) =>
+                        onChanged((id: step.id, field: v, text: step.text)),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.btnDelete,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.delete_outline, size: 18),
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: _TextSetting(
+              label: l10n.tplGuideText,
+              value: step.text,
+              maxLines: 6,
+              onChanged: (v) =>
+                  onChanged((id: step.id, field: step.field, text: v)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

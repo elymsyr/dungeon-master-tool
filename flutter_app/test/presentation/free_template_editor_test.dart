@@ -46,6 +46,11 @@ final _srdCopy = copyAsFreeTemplate(
   name: 'SRD copy',
   now: _now,
 );
+
+/// [s] without its creation guide, for tests about something else.
+WorldSchema _unguided(WorldSchema s) => s.copyWith(
+  categories: [for (final c in s.categories) c.copyWith(guide: null)],
+);
 final _empty = _bare(
   emptyFreeTemplate(id: 'e1', name: 'Empty', playerCardName: 'Hero', now: _now),
 );
@@ -342,6 +347,38 @@ void main() {
     expect((chips.last.field, chips.last.icon), ('speed', 'star'));
   });
 
+  testWidgets('desktop: the creation guide — steps, a field, text, delete '
+      '(Faz 8)', (tester) async {
+    await _size(tester, const Size(1280, 800));
+    await tester.pumpWidget(_app(_unguided(_srdCopy)));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const ValueKey('nav-guide')));
+    expect(find.text('Creation guide'), findsWidgets);
+    await _tap(tester, find.byKey(const ValueKey('guide_add')));
+    await _tap(tester, find.byKey(const ValueKey('guide_add')));
+    // The field picker tags links to cards with a Level table.
+    await _tap(tester, find.byKey(const ValueKey('guide_field_0')));
+    await _tap(tester, find.textContaining('[Lv]').last);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Text (markdown)').first,
+      'Pick a class.',
+    );
+    await _autosave(tester);
+    var steps = guideOf(freePlayerCard(_saved)!);
+    expect(steps, hasLength(2));
+    final card = freePlayerCard(_saved)!;
+    final f = card.fields.firstWhere((x) => x.fieldKey == steps.first.field);
+    expect(linksLevelCards(_saved, f), isTrue);
+    expect(steps.first.text, 'Pick a class.');
+    expect(steps.last.field, isNull, reason: 'V16: a step without a field');
+
+    await _tap(tester, find.byTooltip('Delete').first);
+    await _autosave(tester);
+    steps = guideOf(freePlayerCard(_saved)!);
+    expect(steps.map((s) => s.text), ['']);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('desktop: deleting a group keeps its fields', (tester) async {
     await _size(tester, const Size(1280, 800));
     var pc = _empty.categories.single;
@@ -430,6 +467,17 @@ void main() {
     expect(find.text('Damage'), findsOneWidget);
     await _autosave(tester);
     expect(_saved.categories.single.fields.single.fieldType, FieldType.dice);
+  });
+
+  testWidgets('phone: the guide opens as its own page (Faz 8)', (tester) async {
+    await _size(tester, const Size(360, 780));
+    await tester.pumpWidget(_app(_unguided(_srdCopy)));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(const ValueKey('nav-guide')));
+    await _tap(tester, find.byKey(const ValueKey('guide_add')));
+    expect(tester.takeException(), isNull);
+    await _autosave(tester);
+    expect(guideOf(freePlayerCard(_saved)!), hasLength(1));
   });
 
   testWidgets('closing with a pending edit still saves', (tester) async {

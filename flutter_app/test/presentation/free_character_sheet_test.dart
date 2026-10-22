@@ -31,11 +31,19 @@ import '../support/test_database.dart';
 
 const _now = '2026-10-12T00:00:00.000Z';
 
-final _srdCopy = copyAsFreeTemplate(
-  generateBuiltinDnd5eV2Schema().schema,
-  id: 'free-srd',
-  name: 'SRD copy',
-  now: _now,
+// The guide auto-opens and scrolls; the Faz 8 test covers it.
+final _srdCopy = _unguided(
+  copyAsFreeTemplate(
+    generateBuiltinDnd5eV2Schema().schema,
+    id: 'free-srd',
+    name: 'SRD copy',
+    now: _now,
+  ),
+);
+
+/// [s] without its creation guide, for tests about something else.
+WorldSchema _unguided(WorldSchema s) => s.copyWith(
+  categories: [for (final c in s.categories) c.copyWith(guide: null)],
 );
 
 void main() {
@@ -305,6 +313,95 @@ void main() {
     expect(cardLevelsOf(fields), {'fighter': 2});
     expect(fields['features'], ['second_wind', 'action_surge']);
   });
+
+  testWidgets('Faz 8: a new character opens on the guide, which walks its '
+      'steps and remembers where it stopped', (tester) async {
+    late String id;
+    late WorldSchema schema;
+    await tester.runAsync(() async {
+      final worldId = await WorldRepositoryImpl(
+        db,
+      ).create('Guide', template: _guideTemplate());
+      schema = (await readWorldSchema(db, worldId))!;
+      final c = await createFreeCharacter(
+        container.read(characterListProvider.notifier),
+        schema: schema,
+        name: 'Aria',
+        worldId: worldId,
+      );
+      id = c.id;
+    });
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    Future<void> open() async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: L10n.localizationsDelegates,
+            supportedLocales: L10n.supportedLocales,
+            theme: buildThemeData('dark'),
+            home: FreeCharacterSheet(
+              key: UniqueKey(),
+              characterId: id,
+              schema: schema,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // The debounced save fires, then its write runs (the rest test's way).
+    Future<Object?> stored() async {
+      await tester.pump(const Duration(seconds: 3));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)),
+      );
+      await tester.pump();
+      return container.read(characterByIdProvider(id))!.entity.fields[guideKey];
+    }
+
+    Finder text(String t) => find.text(t, findRichText: true);
+
+    await open();
+    // Step 1: its field's collapsed group opened, in edit mode.
+    expect(text('Step 1 / 3'), findsOneWidget);
+    expect(text('Write a backstory.'), findsOneWidget);
+    expect(find.text('Backstory'), findsOneWidget);
+    expect(find.byIcon(Icons.visibility), findsOneWidget, reason: 'edit mode');
+
+    await tester.tap(find.byKey(const ValueKey('guide_back')));
+    await tester.pumpAndSettle();
+    expect(text('Step 1 / 3'), findsOneWidget, reason: 'no step before 1');
+
+    // Step 2 has no field: only its text.
+    await tester.tap(find.byKey(const ValueKey('guide_next')));
+    await tester.pumpAndSettle();
+    expect(text('Step 2 / 3'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('guide_close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('free_guide_panel')), findsNothing);
+    expect(await stored(), {'step': 1, 'open': false});
+
+    // Reopened, a paused guide stays closed; the button resumes it.
+    await open();
+    expect(find.byKey(const ValueKey('free_guide_panel')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('free_sheet_guide')));
+    await tester.pumpAndSettle();
+    expect(text('Step 2 / 3'), findsOneWidget);
+
+    // Step 3's field is gone: its text, no crash; Done ends the guide.
+    await tester.tap(find.byKey(const ValueKey('guide_next')));
+    await tester.pumpAndSettle();
+    expect(text('Step 3 / 3'), findsOneWidget);
+    expect(text('Old step.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('guide_next')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('free_guide_panel')), findsNothing);
+    expect(await stored(), {'step': 0, 'open': false});
+  });
 }
 
 /// The summary chip labelled [label] showing [value].
@@ -354,5 +451,39 @@ WorldSchema _levelTemplate() {
           .copyWith(validation: FieldValidation(allowedTypes: [target])),
     );
   }
+  return replaceCategory(t, card);
+}
+
+/// A player card with a collapsed Story group and a three-step guide: a
+/// field in that group, no field, a field that is gone.
+WorldSchema _guideTemplate() {
+  final t = emptyFreeTemplate(
+    id: 'guide',
+    name: 'Guide',
+    playerCardName: 'Hero',
+    now: _now,
+  );
+  var card = addGroup(t.categories.first, id: 'story', name: 'Story');
+  card = replaceGroup(
+    card,
+    card.fieldGroups
+        .firstWhere((g) => g.groupId == 'story')
+        .copyWith(isCollapsed: true),
+  );
+  card = addField(
+    card,
+    id: 'backstory',
+    label: 'Backstory',
+    key: 'backstory',
+    type: FieldType.markdown,
+    groupId: 'story',
+    now: _now,
+  ).copyWith(
+    guide: [
+      {'id': 'a', 'field': 'backstory', 'text': 'Write a backstory.'},
+      {'id': 'b', 'text': 'Think it over.'},
+      {'id': 'c', 'field': 'gone', 'text': 'Old step.'},
+    ],
+  );
   return replaceCategory(t, card);
 }
