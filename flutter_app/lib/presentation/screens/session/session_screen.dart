@@ -376,10 +376,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       return out;
     }
     final list = ref.read(characterListProvider).valueOrNull ?? const [];
-    return list
-        .where(
-            (c) => worldId == null || c.worldId == null || c.worldId == worldId)
-        .toList();
+    return list.where((c) => c.worldId == worldId).toList();
   }
 
   /// Minimal theme-aware dialog opened from Actions → Add Players. Compact

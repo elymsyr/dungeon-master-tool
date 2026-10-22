@@ -495,7 +495,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     final existingIds = enc.combatants.map((c) => c.entityId).toSet();
     final worldId = _campaignId;
     for (final c in _getCharacters()) {
-      if (worldId != null && c.worldId != null && c.worldId != worldId) continue;
+      if (c.worldId != worldId) continue;
       if (existingIds.contains(c.entity.id)) continue;
       addCombatantFromEntity(c.entity.id);
     }

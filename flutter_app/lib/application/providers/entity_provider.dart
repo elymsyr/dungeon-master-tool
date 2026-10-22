@@ -371,7 +371,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       var changed = false;
       final patched = Map<String, Entity>.from(state);
       for (final c in list) {
-        if (!_linkedCharacterIds.contains(c.id)) continue;
+        if (!_linkedCharacterIds.contains(c.entity.id)) continue;
         final existing = patched[c.entity.id];
         if (!identical(existing, c.entity)) {
           patched[c.entity.id] = c.entity;

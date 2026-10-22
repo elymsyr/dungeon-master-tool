@@ -850,6 +850,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           .read(activeCampaignProvider.notifier)
           .create(name, template: templateFinal, includeSrd: _includeSrd),
     );
+    ref.invalidate(campaignInfoListProvider);
     if (success && mounted) {
       context.go('/main');
     }
