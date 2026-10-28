@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-10-01
+updated: 2026-10-28
 tags: [moc, architecture]
 ---
 
@@ -58,6 +58,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 - **Sync-and-Realtime** has three independent arms: bulut aynası ([[cloud_push_service]] / [[cloud_pull_service]]), `.dmtz` dosya aktarımı ([[content_archive]] — hesapsız, internetsiz, [[content_codec]]) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a).
 - **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]]. Packages may [[Package-Links|link]] each other instead of duplicating content.
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
+- **Two template kinds** (2026-10-28, `docs/free-template/`): the built-in D&D 5e template stays read-only and rule-driven ([[Grant-Resolution]]); a user's **free template** ([[template_provider]], [[user_templates_dao]] side table, [[free_template]]) is edited in [[free_template_editor]] and has no rules engine — its sheet, level system ([[free_grants]], [[free_srd_levels]]), rests and encounter ([[free_encounter]]) are separate branches behind `isFreeTemplate(schema)`. Free worlds and packages carry their own schema copy, update through [[template_update_dialog]], and never go online. [[Template-System]] (2026-06-10) is superseded.
 - **SRD content translation** ([[content_translator]]) is display-only: data, refs and the rules engine stay English; each device renders SRD text in its own SRD language setting (independent of the UI language) from `assets/srd_l10n/<lang>/`, and projection payloads carry English plus scopes so the receiver translates.
 
 ## Key cross-cutting flows
@@ -70,5 +71,6 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 ## Source docs (design history)
 - `flutter_app/docs/`: `open5e_import_roadmap.md`, `security_media_supabase_r2_audit_may21.md`, `email_confirmation_setup.md`.
 - `docs/content-audit/`: `entity_audit_log.md` + `system_mechanics_roadmap.md` — Jun 2026 full-pack audit (19 packs, 20 712 cards).
+- `docs/free-template/`: `DESIGN.md` (decisions D1–D42, assumptions V1–V33) + `ROADMAP.md` (Faz 0–10) — free templates.
 - `docs/new_system/`: `master-roadmap.md`, `the-template-system.md`, `content-convert.md` — [[Template-System]] initiative (approved 2026-06-10).
 - `docs/TEMPLATE_RELEASE_NOTE.md` — release note style guide.

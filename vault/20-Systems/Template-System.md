@@ -1,7 +1,7 @@
 ---
 type: system
 domain: world-content
-updated: 2026-07-28
+updated: 2026-10-28
 tags: [system]
 ---
 
@@ -10,8 +10,8 @@ tags: [system]
 > [!summary] What this is
 > The approved migration (2026-06-10) from hardcoded schema + per-card DSL rules to a user-editable JSON Template that owns both field definitions and rule semantics. An entity card becomes pure data; rules fire from field semantics declared once in the template. Owned by [[World-and-Content]] / [[Character-System]].
 
-> [!warning] Superseded 2026-10-09
-> The template work now follows `docs/free-template/DESIGN.md` + `ROADMAP.md` (free templates: no automation, the built-in template stays read-only and rule-driven). Start at [[free_template]] / [[template_provider]].
+> [!warning] Geçersiz kılındı — bkz. `docs/free-template/DESIGN.md`
+> 2026-10-09'dan beri template işi `docs/free-template/DESIGN.md` + `ROADMAP.md`'yi izliyor ve 2026-10-28'de uygulandı (Faz 0–9): free template'te otomasyon yok, yerleşik template salt okunur ve kural motoruyla kalır. Bu notun planı uygulanmayacak. Başlangıç: [[free_template]] / [[template_provider]] / [[free_template_editor]].
 
 > [!warning] Status as of 2026-07-28
 > This note describes a migration **approved 2026-06-10 but not implemented** — all four phases are still `Planned`, and the source docs it cites (`docs/new_system/…`) are no longer in the repo. Meanwhile pain point #2 was solved independently and differently: the per-card rule DSL was deleted outright on 2026-07-28 in favour of named grant fields (see [[Grant-Resolution]]), without moving rule semantics into the template. Treat the phase plan below as historical intent, not a current roadmap.

@@ -32,7 +32,8 @@
   bekliyor. Faz 6, 7a, 7a+ ve 7b kapandı (2026-10-22): kullanıcı bekleyen elle kontrolleri
   yaptı ("elle kontroller okey"). Faz 8 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor
   (2026-10-22). Faz 8 kapandı (2026-10-22, kullanıcı: "yapıldı, okey"). Faz 9 başı: V18 ve V20
-  onaylandı. Faz 9 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor (2026-10-22).
+  onaylandı. Faz 9 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor (2026-10-22). Faz 9
+  kapandı (2026-10-28, kullanıcı: "elle kontrol okey"). Sırada Faz 10.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -48,7 +49,7 @@
 | 7a+ | Oynanış alanları edit modu kapalıyken de değişsin | S | ✅ |
 | 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ✅ |
 | 8 | Karakter oluşturma rehberi | M | ✅ |
-| 9 | Encounter ve harita ayarları | M | 🔶 uygulandı, elle kontrol bekliyor |
+| 9 | Encounter ve harita ayarları | M | ✅ |
 | 10 | Kapanış | S | ⏳ |
 
 ---
@@ -1729,7 +1730,7 @@ SRD canavarının düz alanlarının okunması; savaşçı başına kopya; geri 
 **Çıkış kriteri:** DESIGN §19 Faz 5: free dünyada canavar ve oyuncu aynı encounter'da doğru
 kolonlarla oynanır.
 
-**Faz 9 sonucu** (2026-10-22, Linux; elle kontrol bekliyor):
+**Faz 9 sonucu** (2026-10-22, Linux; elle kontrol 2026-10-28'de okey):
 
 - **Faz başı:** Faz 8 kapandı; V18 ve V20 onaylandı (kullanıcı).
 - **Yapılanlar:**
@@ -1783,9 +1784,16 @@ kolonlarla oynanır.
   görselleri, [Ekle]'nin seçili hazır içeriği bağlaması / hazır içerik yoksa bir şey yapmaması, yerleşik şemanın değişmeden geçmesi),
   `combat_provider_free_test` 6 (Goblin başına HP, kağıda geri yazma, zar ve sıra, küçükten
   büyüğe, sürükleme ve sıra, kart listesinden durum), `free_template_editor_test`'e desktop ve
-  telefon encounter bölümü ve hazır içeriksiz template'in uyarısı, yerleşik `combat_provider_test` 62 yeşil · G6 __G6__
+  telefon encounter bölümü ve hazır içeriksiz template'in uyarısı, yerleşik `combat_provider_test` 62 yeşil · G6 çalıştırılmadı (Faz 10'daki tam test setine kaldı)
 - **Nasıl açılır:** §1.2. Önce SRD'yi yeniden kopyala (E9.1): eski kopyaların encounter ayarı
   yerleşikten kalma (Y1).
+- **Faz 9'dan sonra gelen commit'ler:**
+  - `7fd80396`: Templates'te salt okunur "D&D 5e (SRD 5.2.1) - Free Template" (koddan üretilir,
+    saklanmaz) ve `SrdCorePackageBootstrap`'in kurduğu kilitli "SRD 5.2.1 Core - Free Template"
+    paketi.
+  - `14566544`: encounter'a otomatik eklenen ve session'da listelenen karakterler yalnız aynı
+    dünyanınkiler; dünyasız (`worldId == null`) karakter artık her dünyaya girmiyor. Yerleşik yolu
+    da etkiler (R5).
 - **Bilinen sınırlar:**
   - Template'te bir değer eklenip dünya güncellenince yeni kolon gelir, ama encounter'da zaten
     olan savaşçıların kopyasında o değer yoktur ("—"); yeniden eklenen savaşçıda dolu.

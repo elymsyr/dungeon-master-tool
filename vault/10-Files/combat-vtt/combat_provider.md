@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/combat_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-10-22
+updated: 2026-10-28
 tags: [file]
 ---
 # `combat_provider.dart`
@@ -36,6 +36,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
+- Auto-added player characters are only the active world's (`c.worldId == worldId`, 2026-10-22 `14566544`): a character with no world no longer joins every world's encounter. The session screen's character list filters the same way.
 - `_loaded` gate (critical anti-data-loss invariant): write paths (`_saveAndNotify`, `createEncounter`) are no-ops until `_loadFromCampaign` consumes real campaign data OR `_isLoadWithoutDataSafe()` confirms safety (world offline → safe; online + `worldInitialSyncSettledProvider` contains worldId → safe; online + sync pending → defer, stays false). Prevents the session-screen auto-create-encounter post-frame from clobbering cloud `combat_state` with an empty payload during the cross-device pre-sync window.
 - `_saveAndNotify` → `_saveSettingsPatch({'combat_state': session})`. The factory routes this through `pendingWriteBufferProvider.schedule(key: 'settings:$worldId:combat_state', kind: WriteKind.combatTick)` — coalesced (timer-reset) read-merge-write; `combatTick` debounce ≈ 500ms. No global `markDirty`, so the old `world_entities` delete+insertAll cycle never fires for combat ticks (F3 row-level).
 - `_eventLogCap = 500`: `_log` trims oldest entries beyond cap.

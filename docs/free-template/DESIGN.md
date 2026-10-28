@@ -7,6 +7,8 @@
 - **Durum:** Taslak. Tasarım onayı bekliyor (2026-10-09). Revizyon (2026-10-12, Faz 7 öncesi):
   Kaynak verme ve Otomatik kaynaklar yerine **Verilenler** ve **Havuz** (D37–D39). Faz 7a ve 7b
   elle kontrolleri (2026-10-12, 2026-10-13): D40–D42, tek kart bağlantısı da kök (§11.5).
+  **Uygulandı (2026-10-28):** [ROADMAP.md](ROADMAP.md) Faz 0–9 kapandı; varsayımların son durumu
+  §21'de, uygulamada tasarımdan sapılan noktalar ve açık kalan sınırlar §22'de.
 - **Branch:** `feature/free-template`
 - **Kapsam:** Sadece offline. Online oyun ve paylaşım sonraki fazlarda.
 - **Bu doküman neyi anlatır:** Sistemin ne yaptığını, nasıl davrandığını ve neden öyle olduğunu.
@@ -41,6 +43,7 @@
 19. [Fazlar](#19-fazlar)
 20. [Sonraya bırakılanlar](#20-sonraya-bırakılanlar)
 21. [Varsayımlar — onay bekleyenler](#21-varsayımlar--onay-bekleyenler)
+22. [Uygulamada sapmalar ve açık sınırlar](#22-uygulamada-sapmalar-ve-açık-sınırlar)
 
 ---
 
@@ -1415,7 +1418,7 @@ Bu, işin en önemli kuralıdır (D18, İ5).
 | Veritabanı bozulmaz | Free template depolaması mevcut tablolara dokunmaz. Mümkünse Drift şema sürümü artmaz. Bugünkü yan tablo yaklaşımı (`beforeOpen` içinde idempotent DDL) tercih edilir. |
 | Online güvenli | Free template'li dünyada "online yap" ilk fazda kapalıdır. Oyuncular bugün DM'in şemasını almıyor ve yerleşik şemaya düşüyor; free dünyayı online açmak oyunculara bozuk kağıt gösterir. *(V21)* |
 | Testler yeşil kalır | Mevcut test seti değişmeden geçmeli. Free yol için yeni testler eklenir. Kural motoru sözleşme testleri (`grant_contract_test`, `grant_field_isolation_test`) dokunulmadan geçer. |
-| `.dmtz` | Dünya dosyası şemasını taşıyor gibi görünüyor. Free template'li dünya ve paketlerin `.dmtz` ile taşınması Faz 1'de doğrulanır. Desteklenmiyorsa dışa aktarmada açık bir uyarı çıkar. |
+| `.dmtz` | Dünya dosyası şemasını taşıyor gibi görünüyor. Free template'li dünya ve paketlerin `.dmtz` ile taşınması Faz 1'de doğrulanır. Desteklenmiyorsa dışa aktarmada açık bir uyarı çıkar. *(Doğrulandı: dünya ve paket şemasıyla kod değişmeden taşınıyor; tek başına template de taşınıyor, §22.)* |
 
 ---
 
@@ -1443,7 +1446,8 @@ engellediği özetleniyor.
 ## 19. Fazlar
 
 Her faz kendi içinde çalışır halde biter. Bir sonraki faz başlamadan önceki faz kullanılabilir
-olur. Sıralama öneridir.
+olur. Sıralama öneridir. *(Uygulamada bu beş faz, elle kontrol edilebilir on parçaya bölündü:
+ROADMAP §5.)*
 
 | Faz | İçerik | Çıkış kriteri |
 |---|---|---|
@@ -1460,7 +1464,7 @@ olur. Sıralama öneridir.
 | Konu | Neden sonra? |
 |---|---|
 | Online oyun: DM şemasının oyunculara gitmesi | D18. Bugün oyuncular yerleşik şemaya düşüyor; şemayı göndermek bir paylaşım kararı. |
-| Template paylaşımı (marketplace, `.dmtz` ile tek başına template) | Önce offline. |
+| Template paylaşımı (marketplace) | Önce offline. *(`.dmtz` ile tek başına template Faz 1'de yapıldı, §22.)* |
 | Seviye atlama rehberi | D31 |
 | DM'in bir oyuncunun kaynağını ya da maksimumunu elle düzenlemesi | D31 |
 | Tabloda ve kaynaklarda hesaplanan değerler (formüller; Yetenek tablosunun toplamı dışında, D32) | D12, D27 |
@@ -1476,13 +1480,17 @@ olur. Sıralama öneridir.
 Aşağıdakiler tasarımı tamamlamak için benim seçtiğim noktalar. Kullanıcı açıkça onaylamadı ama
 itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 
+**Son durum (2026-10-28):** hepsi kapandı. Açıkça onaylanmayanlar (V1–V5, V16, V21, V22, V26–V28)
+ilgili fazda tasarımdaki haliyle uygulandı ve faz, kullanıcının elle kontrolüyle kapandı; satırda
+"uygulandı" diye işaretli. V22'nin isteğe bağlı kısmı yapılmadı.
+
 | # | Varsayım | Bölüm |
 |---|---|---|
-| V1 | Boş template sadece oyuncu kartıyla (ve iki özel alanıyla, D34) başlar. | §6.2 |
-| V2 | Template silinirse ya da yeniden adlandırılırsa dünyalar ve paketler kendi kopyalarıyla çalışmaya devam eder. | §6.5 |
-| V3 | Alan anahtarı etiketten üretilir ve bir daha değişmez. Eşleştirmeler anahtarla yapılır. | §6.6, §7.3 |
-| V4 | Uyumsuz tip değişikliği = eski alan silinir (veri gizli kalır) + yeni anahtarla yeni alan. | §6.6 |
-| V5 | Silinen kategorinin kartları dünyada silinmez, görünmez olur. | §6.6 |
+| V1 | Boş template sadece oyuncu kartıyla (ve iki özel alanıyla, D34) başlar. *(uygulandı, Faz 1 / 6)* | §6.2 |
+| V2 | Template silinirse ya da yeniden adlandırılırsa dünyalar ve paketler kendi kopyalarıyla çalışmaya devam eder. *(uygulandı, Faz 1 / 3)* | §6.5 |
+| V3 | Alan anahtarı etiketten üretilir ve bir daha değişmez. Eşleştirmeler anahtarla yapılır. *(uygulandı, Faz 2)* | §6.6, §7.3 |
+| V4 | Uyumsuz tip değişikliği = eski alan silinir (veri gizli kalır) + yeni anahtarla yeni alan. *(uygulandı, Faz 2; emekli anahtar hatırlanmıyor, §22)* | §6.6 |
+| V5 | Silinen kategorinin kartları dünyada silinmez, görünmez olur. *(uygulandı, Faz 3)* | §6.6 |
 | V6 | Hazır içerik tek alan ya da alan grubu olabilir. *(2026-10-11: Faz 4'te yalnız tek alan. 2026-10-12: Savaş değerleri tek alan oldu (D36); grup hazır içeriğini gerektiren bir şey kalmadı, ihtiyaç çıkana kadar yapılmaz.)* | §9 |
 | V7 | Hazır içerik silinirse bağlı alanlar bağımsız kopyaya dönüşür. *(onaylı, 2026-10-11)* | §9 |
 | V8 | Aynı hazır içerik bir kategoriye bir kez eklenebilir. *(onaylı, 2026-10-11; anahtar istisnası D33)* | §9 |
@@ -1493,21 +1501,62 @@ itiraz da etmedi. Biri yanlışsa ilgili bölüm değişir.
 | V13 | Ayrı kategoride tek kart varsa seviye atlamada kendiliğinden seçilir; kartı olmayan ayrı kategori atlanır. *(onaylı, 2026-10-12)* | §11.4 |
 | ~~V14~~ | ~~Ana seviye ve otomatik kaynaklar oyuncu kartında silinemez sabit alanlardır.~~ *Reddedildi (2026-10-12): silinebilir, bağımlılık uyarısıyla; D34.* | §10.1 |
 | V15 | Yeni karakter seviye 1'de başlar; daha yüksek seviye için seviye atlanır. *(onaylı, 2026-10-12; D35)* | §13.3 |
-| V16 | Rehber adımı bir alana bağlı ya da alansız olabilir. | §13.2 |
+| V16 | Rehber adımı bir alana bağlı ya da alansız olabilir. *(uygulandı, Faz 8)* | §13.2 |
 | ~~V17~~ | ~~Encounter kolonu birden fazla alan anahtarı alabilir; satırda ilk bulunan gösterilir.~~ *Gereksiz (2026-10-12): kolonlar Savaş değerleri'nden; D36.* | §14.2 |
-| V18 | Sıra kolonunda zar: alan Zar tarzıysa o atılır; sayıysa template'teki zar ifadesi + değer. | §14.3 |
+| V18 | Sıra kolonunda zar: alan Zar tarzıysa o atılır; sayıysa template'teki zar ifadesi + değer. *(onaylı, 2026-10-22)* | §14.3 |
 | V19 | Durum listesi template'te seçilen kategoriden gelir. *(2026-10-12, D36: kategori Savaş değerleri'ndeki Kart listesinin hedefidir.)* | §14.5 |
-| V20 | Hareket izi rengi: oyuncu kartı yeşil, diğerleri kategori rengi. | §14.6 |
-| V21 | Free template'li dünyada "online yap" ilk fazda kapalıdır. | §17 |
-| V22 | Telefonda gruplar tek kolon; isteğe bağlı "telefonda kolon sayısı" ayarı. | §7.4 |
+| V20 | Hareket izi rengi: oyuncu kartı yeşil, diğerleri kategori rengi. *(onaylı, 2026-10-22)* | §14.6 |
+| V21 | Free template'li dünyada "online yap" ilk fazda kapalıdır. *(uygulandı, Faz 3; ROADMAP K6)* | §17 |
+| V22 | Telefonda gruplar tek kolon; isteğe bağlı "telefonda kolon sayısı" ayarı. *(tek kolon uygulandı, Faz 2; kolon sayısı ayarı yapılmadı)* | §7.4 |
 | ~~V23~~ | ~~`combat_stats` kopyada ayrı alanlara bölünür.~~ *Reddedildi (2026-10-12): Savaş değerleri bloğu olur; Hız ve CR sayıya çevrilip dışarı çıkar; D36.* | §16.2 |
 | V24 | `spellsAtLevel` kopyada seviye tablosuna çevrilir; o kategoriler beraber modda seviye tablolu olur. *(onaylı, 2026-10-12)* | §16.2 |
 | V25 | Aynı isimli tablolu kaynaklarda büyük olan geçer; çok sınıflı birleşik slot tablosu yoktur. *(onaylı, 2026-10-12: farklı kartlardan gelenlerde; aynı karttan gelen yerine geçer, D39)* | §12.2 |
-| V26 | Editör değişiklikleri otomatik kaydeder; dünyalara banner ile gider. | §7.7 |
-| V27 | Editörde gerçek kart görünümüyle önizleme vardır. | §7.5 |
-| V28 | "SRD içeriğini ekle" seçeneği SRD soyundan gelen kopyalarda da çıkar. | §16.5 |
+| V26 | Editör değişiklikleri otomatik kaydeder; dünyalara banner ile gider. *(uygulandı, Faz 2 / 3: 600 ms sonra ve kapanırken)* | §7.7 |
+| V27 | Editörde gerçek kart görünümüyle önizleme vardır. *(uygulandı, Faz 2 / 3)* | §7.5 |
+| V28 | "SRD içeriğini ekle" seçeneği SRD soyundan gelen kopyalarda da çıkar. *(uygulandı, Faz 3)* | §16.5 |
 | V29 | Havuz saklanmaz, taşıyıcının kartlarından okunur; yalnız kaynakların mevcut değerleri saklanır. Veren kart çıkınca Havuz'daki öğeleri kendiliğinden gider. Listeye giren kartlar ise etiketleriyle saklanır (V12). *(onaylı, 2026-10-12)* | §8.7, §11.7 |
 | V30 | Kart taşıyıcının seviyesi yoktur: Verilenler işler, seviye tabloları işlemez; özet ekranı ve dinlenme butonları yoktur. *(onaylı, 2026-10-12)* | §8.7, §11.5 |
 | V31 | Verilenler'e Verilenler, Seviye tablosu, Havuz, Savaş değerleri ve Seviye konamaz. *(onaylı, 2026-10-12)* | §8.5 |
 | V32 | Yeni gelen kaynak dolu başlar. Maks değişince mevcut değer korunur, maksı aşıyorsa maksa iner. *(onaylı, 2026-10-12)* | §8.7 |
 | V33 | SRD kopyasında feat, trait ve tür kartlarının grant alanları (`granted_senses`, direnç listeleri…) Verilenler'e çevrilmez, okunur liste olarak kalır. Verilenler'e yalnız sınıf özelliklerinin `granted_*_refs`'i ve kaynak havuzları gelir. *(onaylı, 2026-10-12)* | §16.2, §16.3 |
+
+---
+
+## 22. Uygulamada sapmalar ve açık sınırlar
+
+Uygulama sırasında (ROADMAP Faz 0–9) tasarımdan ayrılan ve bilerek açık bırakılan noktalar. Her
+fazın ayrıntısı ROADMAP'te o fazın sonucunda.
+
+### 22.1 Tasarımdan sapmalar
+
+| Konu | Tasarım | Uygulama |
+|---|---|---|
+| Template güncelleme banner'ı (§6.4) | "Banner bugün de var." | Diyaloğu açan servis silinmişti (ROADMAP B1); değişiklik kontrolü yeniden yazıldı, güncelleme diyaloğu canlandı. |
+| Değişiklik kontrolü | Her template'te. | Yalnız free template'li dünya ve paketlerde (ROADMAP B2, Y3): yerleşik şemanın hash'i her açılışta değişiyor. |
+| Template listesi (§18) | Kullanıcı template'leri `allTemplatesProvider`'a eklenir. | `allTemplatesProvider` yalnız yerleşik kaldı; free template'ler ayrı `userTemplatesProvider`'da (ROADMAP B3), yerleşik akışlara filtre gerekmedi. Depo, ayrı repository sınıfı olmadan DAO'lu yan tablo (ROADMAP K5). |
+| `.dmtz` ile tek başına template (§20) | Sonraya bırakılmıştı. | Faz 1'de yapıldı: Templates sekmesinde Aktar. Yalnız yerel dosya; senkron, paylaşım ve marketplace yolu yok. |
+| Yeni seviye tablosu tarzı | — | `FieldType.levelTable` adı doluydu (ROADMAP B6); yeni tarz başka bir enum adı aldı (ROADMAP K2). |
+| SRD paketinin kapısı (§16.5) | SRD soyundan gelen kopyalarda da "SRD içeriğini ekle". | Kapı genişletildi; `_overlayMissingBuiltinCategories` genişletilmedi: kopyada silinen SRD kategorileri geri gelmez (ROADMAP B5). |
+| Rehber (§13) | Rehberi kullanıcı yazar. | SRD kopyası SRD 5.2.1 sırasıyla 13 adımlık varsayılan bir rehberle gelir (ROADMAP Y6, kullanıcı isteği). Eski kopyalar değişmez. |
+| Hazır SRD free template'i | Kullanıcı SRD'yi kopyalar. | Ek olarak Templates'te salt okunur "D&D 5e (SRD 5.2.1) - Free Template" (koddan üretilir, saklanmaz) ve onunla kurulu kilitli "SRD 5.2.1 Core - Free Template" paketi var (`7fd80396`). |
+| Hazır içerik (§9, V6) | Tek alan ya da alan grubu. | Yalnız tek alan; grup hazır içeriği gereken bir şey kalmadı. |
+| Paket kartını dünyada düzenlemek (§15.3) | Homebrew kopya. | Kart yerinde düzenlenir, paket eşitlemesi ona dokunmaz (D42). |
+| Encounter'daki karakterler (§14) | — | Yerleşik yolu da etkiler: encounter'a otomatik eklenen ve session'da listelenen karakterler yalnız aynı dünyanınkiler; dünyasız karakter artık her dünyaya girmiyor (`14566544`). |
+
+### 22.2 Açık sınırlar
+
+- **Emekli anahtar:** uyumsuz tip değişikliğinde (V4) eski anahtar hatırlanmıyor; sonra aynı
+  etiketle eklenen alan eski anahtarı ve kartlardaki eski tipteki gizli veriyi geri alabilir.
+- **Eski SRD kopyaları:** bir fazdan önce alınmış SRD kopyaları o fazın tiplerini almaz;
+  "yeniden kopyala" gerekir (ROADMAP Y1: fazlar arası geçiş kodu yok).
+- **Geri al yok** editörde; silmeler onay sorar. Tablo kolonu silme onay sormuyor, verisi gizli
+  kalır.
+- **Çok sınıflı birleşik slot tablosu yok:** aynı adlı slotun büyüğü geçer (V25).
+- **Encounter:** template'e sonradan eklenen bir değer, encounter'da zaten olan savaşçıların
+  kopyasında "—"; Durumlar kağıda geri yazılmaz; telefon listesinde durum ekleme butonu yok;
+  battlemap seçicisinin menü adı hâlâ "Konumlardan seç".
+- **Kağıt:** hub'dan, dünyası kapalıyken açılan kağıtta dünya kartları yok (kayıtlı adlar
+  görünür); dünyası diskte olmayan karakterde seviye sistemi kapalı.
+- **TR okuma modu:** genel tablo hücreleri ve markdown'a çevrilen SRD listeleri İngilizce.
+- **Uyumluluk listesi:** aynı anahtar farklı tarzdaysa listelenmez, alan boş görünür.
+- §20'deki konular (online oyun, marketplace, seviye atlama rehberi, formüller…) açık.
