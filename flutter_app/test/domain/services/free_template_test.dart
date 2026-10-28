@@ -5,6 +5,7 @@ import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema_hash.dart';
+import 'package:dungeon_master_tool/domain/services/free_encounter.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -128,7 +129,9 @@ void main() {
           }
         }
       }
-      expect(srd.encounterConfig, builtin.encounterConfig);
+      // Faz 9: encounter reads the copy's Combat Stats preset, maps from Location.
+      expect(srd.encounterConfig.combatPresetId, '${srd.schemaId}-preset-combat');
+      expect(srd.encounterConfig.battlemapFields, builtinBattlemapFields);
     });
 
     test('skills, saves and ability scores come as bound presets', () {

@@ -33,7 +33,8 @@
   yaptı ("elle kontroller okey"). Faz 8 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor
   (2026-10-22). Faz 8 kapandı (2026-10-22, kullanıcı: "yapıldı, okey"). Faz 9 başı: V18 ve V20
   onaylandı. Faz 9 uygulandı, otomatik kapı yeşil; elle kontrol bekliyor (2026-10-22). Faz 9
-  kapandı (2026-10-28, kullanıcı: "elle kontrol okey"). Sırada Faz 10.
+  kapandı (2026-10-28, kullanıcı: "elle kontrol okey"). Faz 10 kapandı (2026-10-28): uçtan uca tur
+  ve merge kullanıcı kararıyla atlandı; belgeler, vault ve tam test yapıldı.
 
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
@@ -50,7 +51,7 @@
 | 7b | Seviye sistemi: SRD dönüştürücüsü v4 ve okuyucular | M | ✅ |
 | 8 | Karakter oluşturma rehberi | M | ✅ |
 | 9 | Encounter ve harita ayarları | M | ✅ |
-| 10 | Kapanış | S | ⏳ |
+| 10 | Kapanış | S | ✅ (tur ve merge atlandı) |
 
 ---
 
@@ -1824,6 +1825,25 @@ kullanıcıya bırakmak.
 5. **Merge:** sürüm notu ve PR, kullanıcı isterse.
 
 **Elle kontrol:** uçtan uca tur + tam R turu.
+
+**Faz 10 sonucu** (2026-10-28, Linux, Flutter 3.47):
+
+- **Atlananlar (kullanıcı kararı):** uçtan uca tur (madde 1), tam R turu ve merge (madde 5).
+  Branch `main`'e merge edilmedi; PR ve sürüm notu yok.
+- **Vault (madde 2):** fazların notları zaten yazılmıştı. Eklenenler: `_Architecture-Overview`'a iki
+  template türü ve `docs/free-template/`; `Template-System` "geçersiz kılındı, bkz. DESIGN.md";
+  `combat_provider` notuna `14566544` (yalnız aynı dünyanın karakterleri); Vault-Changelog satırı.
+- **DESIGN.md (madde 3):** durum "uygulandı"; §21'de her varsayımın son durumu; yeni §22: §4'teki
+  bulgular dahil tasarımdan sapmalar ve açık kalan sınırlar; §17 `.dmtz` doğrulandı, §19 bölünme
+  notu, §20'den tek başına template `.dmtz` düştü.
+- **Tam test ve analiz (madde 4):**
+  - G1 boş · G2, G3 yeşil · G4 32 info, 0 warning, 0 error (Faz 0 ile aynı).
+  - G6 (`entity_card_flush_test` hariç): 1936 geçti, 4 kırmızı. Üçü temel çizgide:
+    `bundled_pack_resolve` M1, `srd_tr_entity_card` TR okuma, `free_character_sheet` uzun dinlenme
+    (RenderFlex taşması; 2026-10-22'den beri temiz ağaçta da kırmızı). Dördüncüsü yeniydi:
+    `free_template_test` SRD kopyasının encounter ayarını hâlâ yerleşikle aynı bekliyordu; Faz 9
+    bunu bilerek değiştirmişti. Beklenti güncellendi (`combatPresetId`, `battlemapFields`), dosya
+    23/23 yeşil. Faz 0'daki `content_archive_test` kırmızısı artık geçiyor.
 
 ---
 
