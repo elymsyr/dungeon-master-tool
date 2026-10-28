@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 
 import '../../data/database/app_database.dart';
+import '../../data/database/util/builtin_synth.dart' show linkedBuiltinPackage;
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
-import 'srd_core_package_bootstrap.dart' show srdCorePackageName;
+import 'srd_core_package_bootstrap.dart'
+    show srdCorePackageName, srdFreePackageName;
 
 /// Registers the built-in SRD pack against a freshly-created v2 D&D 5e
 /// world. F1 (built-in decouple): the world no longer stores per-row copies
@@ -20,22 +22,31 @@ class SrdCoreBootstrap {
 
   /// Returns 1 once installed_packages has been linked for this world, 0
   /// otherwise (wrong schema, link already present, or built-in pack missing).
+  /// An SRD copy's world ([free]) links the free SRD package instead
+  /// (docs/free-template/SRD-FREE-ALANLAR.md §8).
   Future<int> ensureImported({
     required String worldId,
     required BuiltinDnd5eV2Build build,
+    bool free = false,
   }) async {
     if (build.schema.schemaId != builtinDnd5eV2SchemaId) return 0;
 
-    final pkg = await _findPackageByName(srdCorePackageName);
+    final pkg = await _findPackageByName(
+      free ? srdFreePackageName : srdCorePackageName,
+    );
     if (pkg == null) return 0;
 
     // Idempotency keys on the LOCAL installed_packages link, NOT the
     // _srdCoreImportedAt settings flag: that flag rides in synced
     // world_settings.settings_json, so a player joining a world inherits the
     // DM's flag without ever creating their own (device-local) link.
-    // Checking the link directly self-heals any world missing it.
-    final existingLink = await _db.installedPackagesDao.get(worldId, pkg.id);
-    if (existingLink != null) return 0;
+    // Checking the link directly self-heals any world missing it. For an SRD
+    // copy's world either built-in link counts: one linked to the core
+    // before the free package existed keeps it (K14).
+    final linked = free
+        ? await linkedBuiltinPackage(_db, worldId) != null
+        : await _db.installedPackagesDao.get(worldId, pkg.id) != null;
+    if (linked) return 0;
 
     await _db.installedPackagesDao.upsert(
       InstalledPackagesCompanion.insert(

@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/repositories/package_repository_impl.dart'
-    show isSrdOptOutPackageState;
+    show isFreePackageState, isSrdOptOutPackageState;
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/package_link.dart';
 import '../services/package_link_service.dart';
+import '../services/srd_core_package_bootstrap.dart'
+    show srdCorePackageName, srdFreePackageName;
 import '../services/world_package_installer.dart';
 import 'builtin_package_provider.dart' show srdReferenceEntitiesProvider;
 import 'entity_provider.dart' show entityFromRaw;
@@ -100,7 +102,11 @@ final packageReferenceOverlayProvider =
   final row = await db.packagesDao.getByName(packageName);
   final srd = row != null && isSrdOptOutPackageState(row.stateJson)
       ? const <String, Entity>{}
-      : await ref.watch(srdReferenceEntitiesProvider.future);
+      : await ref.watch(srdReferenceEntitiesProvider(
+          row != null && isFreePackageState(row.stateJson)
+              ? srdFreePackageName
+              : srdCorePackageName,
+        ).future);
   final closure =
       await ref.watch(packageLinkServiceProvider).closure(packageName);
 

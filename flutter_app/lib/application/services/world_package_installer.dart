@@ -7,7 +7,6 @@ import '../../domain/repositories/package_repository.dart';
 import 'package_import_service.dart';
 import 'package_link_service.dart';
 import 'package_sync_service.dart';
-import 'srd_core_package_bootstrap.dart' show srdCorePackageName;
 
 /// Result of installing one package (and its link closure) into a world.
 class WorldInstallResult {
@@ -132,11 +131,9 @@ class WorldPackageInstaller {
   Future<Map<String, String>> buildForeignRefIndex(String worldId) async {
     final out = <String, String>{};
 
-    final installed = await _db.installedPackagesDao.getByWorld(worldId);
-    for (final link in installed) {
-      final pkg = await _db.packagesDao.getById(link.packageId);
-      if (pkg == null || pkg.name != srdCorePackageName) continue;
-      for (final row in await _db.packagesDao.getEntities(pkg.id)) {
+    final builtin = await linkedBuiltinPackage(_db, worldId);
+    if (builtin != null) {
+      for (final row in await _db.packagesDao.getEntities(builtin.id)) {
         out[row.id] = synthBuiltinEntityId(worldId, row.id);
       }
     }

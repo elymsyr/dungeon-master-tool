@@ -3,11 +3,15 @@
 //
 //   cd flutter_app && flutter test test/data/repositories/package_free_template_test.dart
 
+import 'dart:convert';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:dungeon_master_tool/application/services/srd_core_package_bootstrap.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/repositories/package_repository_impl.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
+import 'package:dungeon_master_tool/domain/services/free_srd_pack.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -137,5 +141,41 @@ void main() {
 
     await repo.delete(srdFreePackageName);
     expect(await db.packagesDao.getByName(srdFreePackageName), isNotNull);
+  });
+
+  test('hazır free SRD paketi dönüştürücünün verisini taşır; dönüştürücü '
+      'sürümü değişince yeniden kurulur (SRD-FREE-ALANLAR A1)', () async {
+    await SrdCorePackageBootstrap(db).ensureInstalled();
+    final free = await repo.load(srdFreePackageName);
+    final fighter = (free['entities'] as Map).values.firstWhere(
+      (e) => e['type'] == 'class' && e['name'] == 'Fighter',
+    ) as Map;
+    expect(
+      ((fighter['attributes'] as Map)['features'] as List).first,
+      containsPair('_id', 'srd0'),
+    );
+    final row = (await db.packagesDao.getByName(srdFreePackageName))!;
+    final state = jsonDecode(row.stateJson) as Map<String, dynamic>;
+    expect(state['_free_version'], freeSrdPackVersion);
+
+    // Aynı sürüm: paket yeniden kurulmaz.
+    SrdCorePackageBootstrap.resetInstallGate();
+    await SrdCorePackageBootstrap(db).ensureInstalled();
+    expect(
+      (await db.packagesDao.getByName(srdFreePackageName))!.updatedAt,
+      row.updatedAt,
+    );
+
+    // Eski sürüm: yeniden kurulur.
+    await db.packagesDao.upsertPackage(PackagesCompanion(
+      id: Value(row.id),
+      name: Value(row.name),
+      stateJson: Value(jsonEncode({...state, '_free_version': 0})),
+      updatedAt: Value(row.updatedAt),
+    ));
+    SrdCorePackageBootstrap.resetInstallGate();
+    await SrdCorePackageBootstrap(db).ensureInstalled();
+    final after = (await db.packagesDao.getByName(srdFreePackageName))!;
+    expect(jsonDecode(after.stateJson)['_free_version'], freeSrdPackVersion);
   });
 }

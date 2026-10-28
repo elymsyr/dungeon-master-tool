@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/builtin_package_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-10-13
+updated: 2026-10-28
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 
 **Outputs**
 - `builtinPackageIdProvider` → `FutureProvider<String?>` — SRD pack's `packages.id`.
-- `srdReferenceEntitiesProvider` → `FutureProvider<Map<String, Entity>>` — every SRD entity (Tier-0 lookups + Tier-1 content) parsed to [[entity]], forced `linked: true`. Cached once per DB instance. Now one input of `packageReferenceOverlayProvider` rather than the overlay itself.
+- `srdReferenceEntitiesProvider(packageName)` → `FutureProvider.family<Map<String, Entity>, String>` (family since 2026-10-28, SRD-FREE-ALANLAR A1: a free package made from an SRD copy shows the free SRD package's cards, every other package the core's) — every SRD entity (Tier-0 lookups + Tier-1 content) parsed to [[entity]], forced `linked: true`. Cached once per DB instance. Now one input of `packageReferenceOverlayProvider` rather than the overlay itself.
 
 ## Dependencies & Links
 - Depends on: [[package_provider]], [[entity_provider]], [[packages_dao]], [[srd_core_package_bootstrap]]

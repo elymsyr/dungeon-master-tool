@@ -8,6 +8,8 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../core/utils/deep_copy.dart';
+import '../../domain/entities/entity.dart';
+import '../../domain/services/free_srd_pack.dart';
 import '../../domain/services/free_template.dart';
 
 const _uuid = Uuid();
@@ -175,8 +177,9 @@ class SrdCorePackageBootstrap {
   }
 
   /// [srdFreePackageName] from the core package's rows: ids are derived from
-  /// the core ids (uuidv5) and every ref is rewritten to them. Re-seeded when
-  /// the pack version or the free template changes.
+  /// the core ids (uuidv5) and every ref is rewritten to them; the fields
+  /// come out of the free converter ([freeSrdFields]). Re-seeded when the
+  /// pack version, the free template or the converter changes.
   Future<void> _ensureFree() async {
     final core = await _findByName(srdCorePackageName);
     if (core == null) return;
@@ -187,6 +190,7 @@ class SrdCorePackageBootstrap {
       final state = jsonDecode(existing.stateJson);
       if (state is Map &&
           state['_template_hash'] == hash &&
+          state['_free_version'] == freeSrdPackVersion &&
           _storedPackVersion(existing) == _storedPackVersion(core) &&
           await _db.packagesDao.countEntities(existing.id) > 0) {
         return;
@@ -195,6 +199,18 @@ class SrdCorePackageBootstrap {
 
     final rows = await _db.packagesDao.getEntities(core.id);
     final ids = {for (final r in rows) r.id: _uuid.v5(_freeNamespace, r.id)};
+    final cards = <String, Entity>{
+      for (final r in rows)
+        ids[r.id]!: Entity(
+          id: ids[r.id]!,
+          name: r.name,
+          categorySlug: r.categorySlug,
+          description: remapIdsJson(r.description, ids) as String,
+          fields: Map<String, dynamic>.from(
+            remapIdsJson(jsonDecode(r.fieldsJson), ids) as Map,
+          ),
+        ),
+    };
     await _db.transaction(() async {
       final packageId = existing?.id ?? _uuid.v4();
       final coreState = jsonDecode(core.stateJson) as Map<String, dynamic>;
@@ -204,6 +220,7 @@ class SrdCorePackageBootstrap {
         stateJson: Value(jsonEncode({
           'metadata': coreState['metadata'],
           '_template_hash': hash,
+          '_free_version': freeSrdPackVersion,
           // Same keys as PackageRepositoryImpl: the free template, and no
           // SRD overlay — the package holds the SRD cards itself.
           '_world_schema': schema.toJson(),
@@ -227,9 +244,9 @@ class SrdCorePackageBootstrap {
           r.toCompanion(true).copyWith(
             id: Value(ids[r.id]!),
             packageId: Value(packageId),
-            description: Value(remapIdsJson(r.description, ids) as String),
+            description: Value(cards[ids[r.id]]!.description),
             fieldsJson: Value(
-              jsonEncode(remapIdsJson(jsonDecode(r.fieldsJson), ids)),
+              jsonEncode(freeSrdFields(cards[ids[r.id]]!, cards)),
             ),
           ),
       ]);

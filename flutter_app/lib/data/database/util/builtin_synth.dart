@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../application/services/package_import_service.dart';
 import '../../schema/rule_effects_migration.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart'
-    show srdCorePackageName;
+    show srdCorePackageName, srdFreePackageName;
 import '../app_database.dart';
 
 const _uuid = Uuid();
@@ -38,6 +38,20 @@ class BuiltinSynthResult {
   });
 }
 
+/// The built-in SRD package [worldId] synthesises: the core pack, or the
+/// free one an SRD copy's world links instead
+/// (docs/free-template/SRD-FREE-ALANLAR.md §8). Core wins when both are
+/// linked: a world from before the free link (K14) keeps reading the core.
+Future<Package?> linkedBuiltinPackage(AppDatabase db, String worldId) async {
+  Package? free;
+  for (final row in await db.installedPackagesDao.getByWorld(worldId)) {
+    final pkg = await db.packagesDao.getById(row.packageId);
+    if (pkg?.name == srdCorePackageName) return pkg;
+    if (pkg?.name == srdFreePackageName) free = pkg;
+  }
+  return free;
+}
+
 /// Last built-in pack read. Its rows change only when `SrdCorePackageBootstrap`
 /// reseeds, which re-stamps the package's `updatedAt`; re-reading ~2700 rows
 /// cost ~40 ms of UI-isolate time on every world open and reload.
@@ -56,18 +70,9 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
   String worldId, {
   required Set<String> existingPackageEntityIds,
 }) async {
-  final installed = await db.installedPackagesDao.getByWorld(worldId);
-  String? builtinPkgId;
-  DateTime? builtinStamp;
-  for (final row in installed) {
-    final pkg = await db.packagesDao.getById(row.packageId);
-    if (pkg == null) continue;
-    if (pkg.name == srdCorePackageName) {
-      builtinPkgId = pkg.id;
-      builtinStamp = pkg.updatedAt;
-      break;
-    }
-  }
+  final builtin = await linkedBuiltinPackage(db, worldId);
+  final builtinPkgId = builtin?.id;
+  final builtinStamp = builtin?.updatedAt;
   if (builtinPkgId == null) {
     return const BuiltinSynthResult(entries: {}, builtinPackageId: null);
   }
@@ -186,16 +191,7 @@ Future<Map<String, Map<String, String>>> buildTier0LookupIndex(
   final index = <String, Map<String, String>>{};
 
   // 1. Synth IDs for Tier-0 entries from the installed SRD pack.
-  final installed = await db.installedPackagesDao.getByWorld(worldId);
-  String? builtinPkgId;
-  for (final row in installed) {
-    final pkg = await db.packagesDao.getById(row.packageId);
-    if (pkg == null) continue;
-    if (pkg.name == srdCorePackageName) {
-      builtinPkgId = pkg.id;
-      break;
-    }
-  }
+  final builtinPkgId = (await linkedBuiltinPackage(db, worldId))?.id;
   if (builtinPkgId != null) {
     final packRows = await db.packagesDao.getEntities(builtinPkgId);
     for (final r in packRows) {

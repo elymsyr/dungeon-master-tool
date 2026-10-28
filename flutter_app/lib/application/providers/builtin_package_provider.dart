@@ -31,11 +31,13 @@ final builtinPackageIdProvider = FutureProvider<String?>((ref) async {
 /// matches what the SRD package itself shows. Marked `linked: true` so the UI
 /// treats them as pack rows (fork-on-edit, read-only badge). Cached by
 /// Riverpod — loaded once per DB instance.
+///
+/// Keyed by the built-in package's name: an SRD copy's package shows the
+/// free SRD package's cards ([srdFreePackageName], SRD-FREE-ALANLAR §8).
 final srdReferenceEntitiesProvider =
-    FutureProvider<Map<String, Entity>>((ref) async {
+    FutureProvider.family<Map<String, Entity>, String>((ref, name) async {
   await ref.watch(srdCorePackageBootstrapProvider.future);
-  final data =
-      await ref.watch(packageRepositoryProvider).load(srdCorePackageName);
+  final data = await ref.watch(packageRepositoryProvider).load(name);
   final raw = data['entities'];
   if (raw is! Map) return const <String, Entity>{};
   final out = <String, Entity>{};

@@ -294,12 +294,10 @@ class FieldWidgetFactory {
         // An SRD copy shows the SRD's structured lists (starting equipment,
         // player choices) as text; the card data itself stays (DESIGN §16.3).
         value: value is List
-            ? structuredListAsMarkdown(value, (r) {
-                final id = resolveEntityRef(r, entities ?? const {});
-                return id != null
-                    ? entities![id]!.name
-                    : (r is Map ? '${r['name'] ?? ''}' : '${r ?? ''}');
-              })
+            ? structuredListAsMarkdown(
+                value,
+                (r) => entityRefName(r, entities ?? const {}),
+              )
             : value,
         readOnly: readOnly,
         onChanged: onChanged,

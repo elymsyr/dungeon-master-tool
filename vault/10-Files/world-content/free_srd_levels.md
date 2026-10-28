@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_srd_levels.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-12
+updated: 2026-10-28
 tags: [file]
 ---
 
@@ -26,7 +26,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[entity]], [[entity_ref]] (`resolveEntityRef`), [[caster_progression]] (`parseCasterKind`, `slotsByLevelOverride`, `defaultSpellSlotsByLevel` — read only, K4; an application-layer import like `character_ext.dart`'s), [[builtin_schema]] `lookups.dart` (`kResourcePoolLabels`, read only)
-- Used by: [[free_field_styles]] (`freeFieldValue` dispatches on `srd_read`), so [[free_grants]] `computeGrants` and `entity_card.dart` read the same rows
+- Used by: [[free_field_styles]] (`freeFieldValue` dispatches on `srd_read`), so [[free_grants]] `computeGrants` and `entity_card.dart` read the same rows; since 2026-10-28 also [[free_srd_pack]], which writes these rows into the free SRD package (A1), so in a world on that package the read only runs for SRD copies made before it (K14)
 - Domain map: [[World-and-Content]]
 - Spec / reference: `docs/free-template/DESIGN.md` §8.4, §8.5, §12.2, §16.2–§16.3; `docs/free-template/ROADMAP.md` Faz 7b
 

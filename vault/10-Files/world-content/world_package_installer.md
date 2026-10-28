@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_package_installer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-29
+updated: 2026-10-28
 tags: [file]
 ---
 
@@ -28,7 +28,7 @@ tags: [file]
 **Outputs**
 - `WorldInstallResult` — per-package `PackageSyncResult` in install order, plus
   `added`/`updated`/`removed` totals and `dependencyCount`.
-- `buildForeignRefIndex(worldId)` → `packageEntityId → world id`.
+- `buildForeignRefIndex(worldId)` → `packageEntityId → world id`. The synthesised SRD rows come from `linkedBuiltinPackage` ([[builtin_synth]]): the core pack, or the free SRD package in an SRD copy's world (2026-10-28).
 - `buildLookupResolver(worldId)` → the Tier-0 `_lookup` resolver for `sync`.
 - Writes: `installed_packages`, `world_entities` (through
   [[package_sync_service]]).

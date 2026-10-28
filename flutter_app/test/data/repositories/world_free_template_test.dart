@@ -4,6 +4,8 @@
 //
 //   cd flutter_app && flutter test test/data/repositories/world_free_template_test.dart
 
+import 'package:drift/drift.dart' show Value;
+import 'package:dungeon_master_tool/application/services/srd_core_package_bootstrap.dart';
 import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:dungeon_master_tool/data/repositories/world_repository_impl.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -40,6 +42,53 @@ void main() {
     expect(await linkCount(id), greaterThan(0));
     expect((data['entities'] as Map), isNotEmpty);
     expect(data['template_id'], 'free-srd');
+  });
+
+  Future<List<String>> linkNames(String worldId) async => [
+    for (final l in await db.installedPackagesDao.getByWorld(worldId))
+      l.packageName,
+  ];
+  Map<String, dynamic> card(Map<String, dynamic> data, String slug, String name) =>
+      Map<String, dynamic>.from(
+        (data['entities'] as Map).values.firstWhere(
+          (e) => e['type'] == slug && e['name'] == name,
+        ) as Map,
+      );
+
+  test('SRD kopyası free paketi bağlar, yerleşik dünya yerleşik paketi '
+      '(SRD-FREE-ALANLAR A1)', () async {
+    final id = await repo.create('Free', template: srdCopy);
+    expect(await linkNames(id), [srdFreePackageName]);
+    final fighter = card(await repo.load(id), 'class', 'Fighter');
+    expect(
+      ((fighter['attributes'] as Map)['features'] as List).first,
+      containsPair('_id', 'srd0'),
+    );
+    expect(await linkNames(id), [srdFreePackageName]);
+
+    final builtin = await repo.create(
+      'Yerleşik',
+      template: generateBuiltinDnd5eV2Schema().schema,
+    );
+    await repo.load(builtin);
+    expect(await linkNames(builtin), [srdCorePackageName]);
+  });
+
+  test('yerleşik pakete bağlı eski SRD kopyası dünyası öyle kalır (K14)',
+      () async {
+    final id = await repo.create('Eski', template: srdCopy);
+    final free = await db.packagesDao.getByName(srdFreePackageName);
+    final core = await db.packagesDao.getByName(srdCorePackageName);
+    await db.installedPackagesDao.deleteOne(id, free!.id);
+    await db.installedPackagesDao.upsert(InstalledPackagesCompanion.insert(
+      worldId: id,
+      packageId: core!.id,
+      packageName: const Value(srdCorePackageName),
+    ));
+    final fighter = card(await repo.load(id), 'class', 'Fighter');
+    expect(await linkNames(id), [srdCorePackageName]);
+    final rows = (fighter['attributes'] as Map)['features'] as List;
+    expect((rows.first as Map).containsKey('_id'), isFalse);
   });
 
   test('SRD kopyası, SRD kapalı: ne create ne load bağlar', () async {

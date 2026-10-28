@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/entity_ref.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-10-28
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 - Events / triggers: none.
 
 **Outputs**
-- Public API: `String? resolveEntityRef(Object? raw, Map<String,Entity> byId)`; `List<String> resolveEntityRefList(Object? raw, Map<String,Entity> byId)`; `String? abilityAbbrevFromRef(Object? raw, Map<String,Entity> byId)`; `String? abilityAbbrev(String raw)`; `String? findEntityIdByName(Map<String,Entity> byId, String slug, String name)`.
+- Public API: `String? resolveEntityRef(Object? raw, Map<String,Entity> byId)`; `List<String> resolveEntityRefList(Object? raw, Map<String,Entity> byId)`; `String entityRefName(Object? raw, Map<String,Entity> byId)` (2026-10-28: the card's name, else the envelope's `name`, else the raw value — shared by the markdown field's SRD-list text and [[free_srd_pack]]); `String? abilityAbbrevFromRef(Object? raw, Map<String,Entity> byId)`; `String? abilityAbbrev(String raw)`; `String? findEntityIdByName(Map<String,Entity> byId, String slug, String name)`.
 
 ## Dependencies & Links
 - Depends on: `entity.dart` (reads `Entity.categorySlug`, `.name`, `.id`).

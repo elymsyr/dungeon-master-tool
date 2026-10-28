@@ -169,13 +169,15 @@ class WorldRepositoryImpl implements CampaignRepository {
       })),
     ));
 
-    // SRD copies get the SRD pack too (V28); an empty free template doesn't.
+    // SRD copies get the SRD pack too (V28), as the free package's cards
+    // (SRD-FREE-ALANLAR §8); an empty free template gets none.
     if (includeSrd &&
         (schema.schemaId == builtinDnd5eV2SchemaId || isSrdLineage(schema))) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,
         build: generateBuiltinDnd5eV2Schema(),
+        free: isSrdLineage(schema),
       );
     }
 
@@ -569,13 +571,14 @@ class WorldRepositoryImpl implements CampaignRepository {
     // the built-in catalog is empty. Cheap when already linked (one query).
     // An SRD copy's world (free template, V28) keeps its pack link the same
     // way. Read off the raw snapshot: `isSrdLineage` without a full parse.
-    final srdWorld = world.templateId == builtinDnd5eV2SchemaId ||
-        schemaSnapshot?['freeRootId'] == builtinDnd5eV2SchemaId;
+    final srdCopy = schemaSnapshot?['freeRootId'] == builtinDnd5eV2SchemaId;
+    final srdWorld = world.templateId == builtinDnd5eV2SchemaId || srdCopy;
     if (srdWorld && settingsBlob[_srdOptOutKey] != true) {
       await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         worldId: worldId,
         build: generateBuiltinDnd5eV2Schema(),
+        free: srdCopy,
       );
     }
     final synth = await synthesizeWorldBuiltins(
