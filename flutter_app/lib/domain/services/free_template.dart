@@ -232,10 +232,6 @@ FieldSchema? _srdCopyField(FieldSchema f, EntityCategorySchema cat) {
       level,
       TableColumn(key: 'value', label: 'Value', type: TableColumnType.number),
     ]),
-    FieldType.levelTextTable => table(const [
-      level,
-      TableColumn(key: 'value', label: 'Text'),
-    ]),
     FieldType.rangedSenseList => table(const [
       TableColumn(
         key: 'sense_ref',
@@ -356,12 +352,56 @@ WorldSchema _withSrdPresets(WorldSchema schema, String now) {
   );
 }
 
+/// Built-in categories the SRD copy leaves out (SRD-FREE-ALANLAR §5.14):
+/// their only users were fields the copy turned into text.
+const _srdDroppedSlugs = {
+  'duration-unit',
+  'casting-time-unit',
+  'casting-component',
+};
+
+/// The categories the SRD copy lays out as the SRD writes them
+/// (SRD-FREE-ALANLAR §5): the fields that stay, in the SRD's order, as
+/// `(key, span, label)`. A labelled key is a new text line beside the
+/// first field; the free SRD package writes its value (`free_srd_pack.dart`).
+const _srdLayouts = <String, List<(String, int, String?)>>{
+  'spell': [
+    ('level', 1, null),
+    ('school_ref', 1, null),
+    ('class_refs', 2, null),
+    ('casting_time', 2, 'Casting Time'),
+    ('range', 2, 'Range'),
+    ('components', 2, 'Components'),
+    ('duration', 2, 'Duration'),
+    ('is_ritual', 1, null),
+    ('requires_concentration', 1, null),
+    ('description', 1, null),
+  ],
+};
+
 /// [cat]'s fields in the SRD copy, numbered in card order (the copy adds
 /// fields beside the ones it converts).
 List<FieldSchema> _srdCopyCategoryFields(EntityCategorySchema cat) {
   final sorted = [...cat.fields]
     ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-  final out = [for (final f in sorted) ..._srdCopyFields(f, cat)];
+  var out = [for (final f in sorted) ..._srdCopyFields(f, cat)];
+  if (_srdLayouts[cat.slug] case final layout?) {
+    final byKey = {for (final f in out) f.fieldKey: f};
+    out = [
+      for (final (key, span, label) in layout)
+        if (label == null)
+          byKey[key]!.copyWith(gridColumnSpan: span)
+        else
+          _added(
+            out.first,
+            id: '${cat.categoryId}-$key',
+            key: key,
+            label: label,
+            type: FieldType.text,
+            span: span,
+          ),
+    ];
+  }
   return [for (final (i, f) in out.indexed) f.copyWith(orderIndex: i)];
 }
 
@@ -393,34 +433,47 @@ WorldSchema copyAsFreeTemplate(
         : source.encounterConfig,
     categories: [
       for (final c in source.categories)
-        c.copyWith(
-          schemaId: id,
-          allowedInSections: fromBuiltin && _noCombatSlugs.contains(c.slug)
-              ? [
-                  for (final s in c.allowedInSections)
-                    if (s != encounterSection) s,
-                ]
-              : c.allowedInSections,
-          isPlayerCard: fromBuiltin
-              ? (c.slug == 'player-character' ? true : null)
-              : c.isPlayerCard,
-          tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
-          fields: fromBuiltin ? _srdCopyCategoryFields(c) : c.fields,
-          summaryChips: fromBuiltin && c.slug == 'player-character'
-              ? _srdChips
-              : c.summaryChips,
-          guide: fromBuiltin && c.slug == 'player-character'
-              ? _srdGuide
-              : c.guide,
-          // Multiclass: each class keeps its own level (DESIGN §11.2).
-          levelMode: fromBuiltin && c.slug == 'class'
-              ? LevelMode.separate.name
-              : c.levelMode,
-        ),
+        if (!fromBuiltin || !_srdDroppedSlugs.contains(c.slug))
+          _copyCategory(c, id, fromBuiltin),
     ],
   );
   final out = fromBuiltin ? _withSrdPresets(copy, now) : copy;
   return out.copyWith(originalHash: computeWorldSchemaContentHash(out));
+}
+
+EntityCategorySchema _copyCategory(
+  EntityCategorySchema c,
+  String id,
+  bool fromBuiltin,
+) {
+  final fields = fromBuiltin ? _srdCopyCategoryFields(c) : c.fields;
+  return c.copyWith(
+    schemaId: id,
+    allowedInSections: fromBuiltin && _noCombatSlugs.contains(c.slug)
+        ? [
+            for (final s in c.allowedInSections)
+              if (s != encounterSection) s,
+          ]
+        : c.allowedInSections,
+    isPlayerCard: fromBuiltin
+        ? (c.slug == 'player-character' ? true : null)
+        : c.isPlayerCard,
+    tier: fromBuiltin ? builtinTier(c.slug) : c.tier,
+    fields: fields,
+    // A filter on a field the copy dropped goes with it.
+    filterFieldKeys: [
+      for (final k in c.filterFieldKeys)
+        if (fields.any((f) => f.fieldKey == k)) k,
+    ],
+    summaryChips: fromBuiltin && c.slug == 'player-character'
+        ? _srdChips
+        : c.summaryChips,
+    guide: fromBuiltin && c.slug == 'player-character' ? _srdGuide : c.guide,
+    // Multiclass: each class keeps its own level (DESIGN §11.2).
+    levelMode: fromBuiltin && c.slug == 'class'
+        ? LevelMode.separate.name
+        : c.levelMode,
+  );
 }
 
 /// The SRD copy's summary chips: the built-in character card's.

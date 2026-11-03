@@ -125,7 +125,13 @@ void main() {
     expect(schemaOf(free).schemaId, srdFreeTemplateId);
     final coreIds = (core['entities'] as Map).keys.cast<String>().toSet();
     final freeIds = (free['entities'] as Map).keys.toSet();
-    expect(freeIds, hasLength(coreIds.length));
+    // The copy drops some lookups (SRD-FREE-ALANLAR §5.14); their cards too.
+    final kept = [
+      for (final e in (core['entities'] as Map).values)
+        if (inFreeSrd(e['type'] as String)) e,
+    ];
+    expect(kept.length, lessThan(coreIds.length));
+    expect(freeIds, hasLength(kept.length));
     expect(freeIds.intersection(coreIds), isEmpty);
     // Paket içi ref'ler yeni kimliklere döndü: hiçbir alan çekirdeği göstermez.
     final fields = [

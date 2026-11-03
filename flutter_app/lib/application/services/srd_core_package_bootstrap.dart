@@ -197,7 +197,11 @@ class SrdCorePackageBootstrap {
       }
     }
 
-    final rows = await _db.packagesDao.getEntities(core.id);
+    // The copy drops some categories (`inFreeSrd`); their cards go too.
+    final rows = [
+      for (final r in await _db.packagesDao.getEntities(core.id))
+        if (inFreeSrd(r.categorySlug)) r,
+    ];
     final ids = {for (final r in rows) r.id: _uuid.v5(_freeNamespace, r.id)};
     final cards = <String, Entity>{
       for (final r in rows)
@@ -244,7 +248,7 @@ class SrdCorePackageBootstrap {
           r.toCompanion(true).copyWith(
             id: Value(ids[r.id]!),
             packageId: Value(packageId),
-            description: Value(cards[ids[r.id]]!.description),
+            description: Value(freeSrdDescription(cards[ids[r.id]]!)),
             fieldsJson: Value(
               jsonEncode(freeSrdFields(cards[ids[r.id]]!, cards)),
             ),

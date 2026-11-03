@@ -1,8 +1,10 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
-> **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3 ve S5 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10. Güncel faz: **A1** (uygulandı, otomatik kapı yeşil; elle kontrol
-> bekliyor).
+> **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
+> haritası §11'de: A1–A10. Güncel faz: **A2** (uygulandı, otomatik kapı yeşil; elle kontrol
+> bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28).
+> A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
+> `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
 > `free_srd_levels.dart`, SRD paketinin dökümü (~1 900 kart, alan alan doluluk sayıları) ve
 > `docs/SRD_CC_v5.2.1.pdf`.
@@ -442,6 +444,23 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
    - Half-Elf (tür) ve Skill Expert (feat) SRD 5.2.1'de yok.
    - Lightning Bolt'un malzemesi 2014 metninden.
    - Metinler genel olarak SRD'nin kısaltılmış hâli.
+   - **Büyü başlık satırları (A2'de görüldü).** 316 büyünün satırları PDF'le karşılaştırıldı:
+     - **23 Bonus Action büyüsü pakette Action.** Paketin kurucusu (`spells.dart` `_spell`)
+       "Bonus Action"ı "sayı + birim" diye bölüp "Action" olarak saklıyor; Healing Word, Misty
+       Step, Spiritual Weapon, Hunter's Mark, Hex, Shield of Faith, Divine Smite ve diğerleri.
+       Yerleşik kart da "1 Action" gösteriyor.
+     - Tepki tetikleyicileri kısaltılmış (Counterspell'in "with Verbal, Somatic, or Material
+       components" kısmı yok; Hellish Rebuke ve Feather Fall farklı sözcüklerle).
+     - Mil cinsinden menziller: Meteor Swarm pakette 1,000 feet, Clairvoyance Unlimited, Storm of
+       Vengeance Sight (SRD'de üçü de 1 mile).
+     - Süreler: "Until dispelled" olan birkaç büyü pakette 365 days ya da Instantaneous
+       (Hallow, Magic Mouth, Arcane Lock, Continual Flame…); "Up to 1 minute" gibi SRD süreleri
+       düz "1 minute"; birkaç büyünün konsantrasyonu ya da süresi farklı (Conjure büyüleri 1 hour,
+       SRD'de 10 minutes).
+     - Malzemeler: 136 satırda malzeme yazısı farklı (2014 metni ya da kısaltma; Bless'te "a
+       sprinkling of holy water", SRD'de "a Holy Symbol worth 5+ GP").
+     - Kalan satırlar birebir: Casting Time 275, Range 288, Components 187, Duration 271 / 316;
+       dördü birden 146 büyüde.
 
    Alanları taşımak bunları düzeltmez → **S2**.
 2. **Sınıf özellikleri iki kart veriyor.** 93 sınıf/alt sınıf satırı hem bir "Class Feature"
@@ -479,7 +498,7 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
   tablosu ve diğer sözlük metinleri A9'da.
 - **S6 — Ritual / Concentration onay kutuları** kalsın mı? Öneri: kalsın (SRD listelerindeki C/R
   sütunları; filtrede işe yarar).
-  *A2'nin başında onaylanır.*
+  **Karar (2026-10-28): kalsın.**
 
 ## 11. Yol haritası
 
@@ -495,8 +514,8 @@ Süreç [ROADMAP.md](ROADMAP.md) §1 ile aynı:
 
 | Faz | Konu | Alanlar (kopyada) | Boyut | Durum |
 |---|---|---|---|---|
-| A1 | Altyapı: dönüştürücü, free paket, free dünya | değişmez (görünür fark yok) | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A2 | Büyü | 25 → 10; 3 lookup kategorisi çıkar | M | |
+| A1 | Altyapı: dönüştürücü, free paket, free dünya | değişmez (görünür fark yok) | M | ⏳ uygulandı, elle kontrol A2 ile birlikte |
+| A2 | Büyü | 25 → 10; 3 lookup kategorisi çıkar | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A3 | Grant bloğu, Feat, Trait | 60 → 5, 46 → 3 | M | |
 | A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | |
 | A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | |
@@ -719,7 +738,7 @@ Components · Duration · Ritual · Concentration · metin.
 |---|---|---|
 | EA2.1 | SRD-A'yı aç. | Template güncellemesi teklif edilir; uygula. |
 | EA2.2 | Fireball, Counterspell, Identify, Raise Dead, Bless'i aç. | Satırlar SRD'deki gibi; kural metni tek yerde, üstte tekrar yok. |
-| EA2.3 | Büyü listesinde Level, School, Ritual, Concentration filtreleri. | Çalışır; çıkan alanların filtresi yok. |
+| EA2.3 | Templates → hazır free template → Spell → kategori ayarları → Filtreler. | Yalnız var olan alanlar listelenir; Level ve School işaretli. (Kenar çubuğu alan filtresi okumuyor; bkz. A2 sonucu.) |
 | EA2.4 | Kenar çubuğu. | Duration Unit, Casting Time Unit, Casting Component yok. |
 | EA2.5 | Aria'nın büyülerinden birine uzun bas. | Önizleme yeni satırlarla. |
 | EA2.6 | TR modunda aynı büyüler. | Dört satır Türkçe; sayılar ve birimler aynı. |

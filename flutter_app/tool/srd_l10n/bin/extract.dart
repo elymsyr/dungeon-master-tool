@@ -12,10 +12,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/services/content_translator.dart';
+import 'package:dungeon_master_tool/domain/services/free_srd_pack.dart';
+import 'package:dungeon_master_tool/domain/services/free_template.dart';
 
 /// Satır adları makine anahtarı olan kategoriler (`pool:rage_uses`,
 /// `state:raging`); `resource-pool`'un görünen adı `display_name` alanındadır,
@@ -25,6 +28,9 @@ const _machineNameSlugs = {'resource-pool', 'character-state'};
 final _hasLetters = RegExp(r'[A-Za-z]{2,}');
 final _snakeKey = RegExp(r'^[a-z0-9_+/.\-]+$');
 final _diceOnly = RegExp(r'^[\d\s+×x*/\-−d]+$');
+
+/// Free büyünün harf harf bileşen satırı ("V, S"): Türkçesi "S, B".
+final _componentLine = RegExp(r'^[VSM](, [VSM])*$');
 
 /// Çevrilecek metin mi, yoksa makine değeri mi (snake_case anahtar, zar,
 /// sayı)?
@@ -42,8 +48,8 @@ Map<String, List<String>> collectSrdTexts() {
   final build = generateBuiltinDnd5eV2Schema();
   final scopes = <String, List<String>>{}; // scope → sıralı benzersiz metin
   final seen = <String, Set<String>>{};
-  void add(String scope, Object? v) {
-    if (v is! String || !_isProse(v)) return;
+  void add(String scope, Object? v, [bool keep = false]) {
+    if (v is! String || !(keep || _isProse(v))) return;
     if (seen.putIfAbsent(scope, () => {}).add(v)) {
       scopes.putIfAbsent(scope, () => []).add(v);
     }
@@ -131,6 +137,44 @@ Map<String, List<String>> collectSrdTexts() {
     final m = raw as Map;
     addRow(m['type'] as String, m['name'] as String?,
         m['description'] as String?, (m['attributes'] as Map?) ?? const {});
+  }
+
+  // Free SRD (docs/free-template/SRD-FREE-ALANLAR.md §7): kapanan
+  // kategorilerin free paketteki hali — yeni etiketler ve dönüştürücünün
+  // kurduğu satırlar.
+  final cards = <String, Entity>{
+    for (final e in build.seedRows.entries)
+      for (final r in e.value)
+        if (r['name'] case final String name when name.isNotEmpty)
+          srdStableEntityId(e.key, name): Entity(
+            id: srdStableEntityId(e.key, name),
+            name: name,
+            categorySlug: e.key,
+            fields: Map<String, dynamic>.from((r['fields'] as Map?) ?? {}),
+          ),
+    for (final MapEntry(:key, :value) in buildSrdCorePack().entities.entries)
+      key: Entity(
+        id: key,
+        name: (value as Map)['name'] as String,
+        categorySlug: value['type'] as String,
+        fields: Map<String, dynamic>.from((value['attributes'] as Map?) ?? {}),
+      ),
+  };
+  final free = {for (final c in srdFreeTemplate.categories) c.slug: c};
+  for (final slug in freeSrdClosed) {
+    for (final f in free[slug]!.fields) {
+      add('_schema', f.label);
+    }
+  }
+  for (final c in cards.values) {
+    if (!freeSrdClosed.contains(c.categorySlug)) continue;
+    final fields = freeSrdFields(c, cards);
+    for (final f in free[c.categorySlug]!.fields) {
+      final v = fields[f.fieldKey];
+      if (f.fieldType == FieldType.text || f.fieldType == FieldType.markdown) {
+        add(c.categorySlug, v, v is String && _componentLine.hasMatch(v));
+      }
+    }
   }
 
   return scopes;

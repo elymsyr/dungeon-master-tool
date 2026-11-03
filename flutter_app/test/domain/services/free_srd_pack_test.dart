@@ -24,6 +24,7 @@ void main() {
             id: srdStableEntityId(slug, name),
             name: name,
             categorySlug: slug,
+            description: (r['description'] as String?) ?? '',
             fields: Map<String, dynamic>.from(
               (r['fields'] as Map?) ?? const {},
             ),
@@ -33,6 +34,7 @@ void main() {
         id: key,
         name: (value as Map)['name'] as String,
         categorySlug: value['type'] as String,
+        description: (value['description'] as String?) ?? '',
         fields: Map<String, dynamic>.from(
           (value['attributes'] as Map?) ?? const {},
         ),
@@ -49,7 +51,8 @@ void main() {
       },
   };
   final converted = {
-    for (final c in raw.values) c.id: freeSrdFields(c, raw),
+    for (final c in raw.values)
+      if (inFreeSrd(c.categorySlug)) c.id: freeSrdFields(c, raw),
   };
   // A card's fields as a world holds them: synthesis resolves every row's
   // placeholders (`buildBuiltinSrdEntities` leaves the Tier-0 rows' own).
@@ -58,6 +61,10 @@ void main() {
           as Map<String, dynamic>;
   Map<String, dynamic> stored(String id) => resolved(converted[id]!);
   final cats = {for (final c in srdFreeTemplate.categories) c.slug: c};
+  final builtin = {for (final c in build.schema.categories) c.slug: c};
+  String id(String slug, String name) => raw.values
+      .firstWhere((e) => e.categorySlug == slug && e.name == name)
+      .id;
 
   const eq = DeepCollectionEquality();
   bool blank(Object? v) =>
@@ -85,7 +92,12 @@ void main() {
         if (cat == null) continue;
         final s = stored(c.id);
         final today = resolved(world[c.id]!.fields);
+        final ids = {for (final f in builtin[cat.slug]!.fields) f.fieldId};
         for (final f in cat.fields) {
+          // A closed category's new lines (A2+) were never read from the SRD.
+          if (freeSrdClosed.contains(cat.slug) && !ids.contains(f.fieldId)) {
+            continue;
+          }
           if (!same(shown(f, s), shown(f, today))) {
             diffs.add('${c.categorySlug} / ${c.name} / ${f.fieldKey}');
           }
@@ -110,9 +122,6 @@ void main() {
     });
 
     test('class rows, a pool and a monster block, written as free values', () {
-      String id(String slug, String name) => raw.values
-          .firstWhere((e) => e.categorySlug == slug && e.name == name)
-          .id;
       final fighter = converted[id('class', 'Fighter')]!;
       expect((fighter['features'] as List).first, containsPair('_id', 'srd0'));
       final rage = converted[id('feat', 'Rage')]!['resource_pool_grants'];
@@ -139,7 +148,7 @@ void main() {
         'animal': {'ac', 'hp_average', 'initiative_modifier'},
       };
       final found = <String, Set<String>>{};
-      for (final c in raw.values) {
+      for (final c in raw.values.where((c) => converted.containsKey(c.id))) {
         final cat = cats[c.categorySlug];
         expect(cat, isNotNull, reason: c.categorySlug);
         final keys = {for (final f in cat!.fields) f.fieldKey};
@@ -173,14 +182,19 @@ void main() {
         }
       }
 
-      for (final c in raw.values) {
+      for (final c in raw.values.where((c) => converted.containsKey(c.id))) {
         walk(converted[c.id], '${c.categorySlug} / ${c.name}');
       }
       expect(missing, isEmpty);
     });
 
+    test('a closed category has the field count of §5', () {
+      const targets = {'spell': 10};
+      expect(freeSrdClosed, targets.keys.toSet());
+      expect({for (final s in targets.keys) s: cats[s]!.fields.length}, targets);
+    });
+
     test('every field the copy adds is filled in some card', () {
-      final builtin = {for (final c in build.schema.categories) c.slug: c};
       final withCards = {for (final c in raw.values) c.categorySlug};
       final empty = <String>[];
       for (final cat in srdFreeTemplate.categories) {
@@ -197,6 +211,123 @@ void main() {
         }
       }
       expect(empty, isEmpty);
+    });
+  });
+
+  group('A2 spell', () {
+    // §5.1; the PDF's lines, but where the pack deviates (K13): Counterspell's
+    // trigger is shorter, Bless's material is the 2014 one.
+    const lines = {
+      'Fireball': [
+        'Action',
+        '150 feet',
+        'V, S, M (a ball of bat guano and sulfur)',
+        'Instantaneous',
+      ],
+      'Counterspell': [
+        'Reaction, which you take when you see a creature within 60 feet of '
+            'yourself casting a spell',
+        '60 feet',
+        'S',
+        'Instantaneous',
+      ],
+      'Shield': [
+        'Reaction, which you take when you are hit by an attack roll or '
+            'targeted by the Magic Missile spell',
+        'Self',
+        'V, S',
+        '1 round',
+      ],
+      'Identify': [
+        '1 minute or Ritual',
+        'Touch',
+        'V, S, M (a pearl worth 100+ GP)',
+        'Instantaneous',
+      ],
+      'Raise Dead': [
+        '1 hour',
+        'Touch',
+        'V, S, M (a diamond worth 500+ GP, which the spell consumes)',
+        'Instantaneous',
+      ],
+      'Bless': [
+        'Action',
+        '30 feet',
+        'V, S, M (a sprinkling of holy water)',
+        'Concentration, up to 1 minute',
+      ],
+      'Sequester': [
+        'Action',
+        'Touch',
+        'V, S, M (gem dust worth 5,000+ GP, which the spell consumes)',
+        'Until dispelled',
+      ],
+      'Wish': ['Action', 'Self', 'V', 'Instantaneous'],
+      'Fire Bolt': ['Action', '120 feet', 'V, S', 'Instantaneous'],
+      // The cost is in no text (R4); the range was "Special".
+      'Find Familiar': [
+        '1 hour or Ritual',
+        '10 feet',
+        'V, S, M (charcoal, incense, and herbs that must be consumed by fire '
+            'in a brass brazier, worth 10+ GP)',
+        'Instantaneous',
+      ],
+      'Dream': [
+        '1 minute',
+        'Special',
+        'V, S, M (a handful of sand, a dab of ink, and a writing quill '
+            'plucked from a sleeping bird)',
+        '8 hours',
+      ],
+    };
+    const keys = ['casting_time', 'range', 'components', 'duration'];
+
+    test('the header lines read as the SRD writes them', () {
+      for (final MapEntry(key: name, value: want) in lines.entries) {
+        final s = converted[id('spell', name)]!;
+        expect([for (final k in keys) s[k]], want, reason: name);
+      }
+    });
+
+    test('every spell has its four lines and only the copy\'s fields', () {
+      final fields = [for (final f in cats['spell']!.fields) f.fieldKey];
+      expect(fields, [
+        'level',
+        'school_ref',
+        'class_refs',
+        ...keys,
+        'is_ritual',
+        'requires_concentration',
+        'description',
+      ]);
+      final spells = raw.values.where((c) => c.categorySlug == 'spell');
+      expect(spells, hasLength(341));
+      for (final c in spells) {
+        final s = converted[c.id]!;
+        for (final k in keys) {
+          expect(s[k], isA<String>().having((v) => v.isEmpty, 'empty', false),
+              reason: '${c.name} / $k');
+        }
+        expect(s.keys.toSet().difference(fields.toSet()), isEmpty,
+            reason: c.name);
+      }
+    });
+
+    test('the description goes, and it was only the rules text again (S1)',
+        () {
+      for (final c in raw.values.where((c) => c.categorySlug == 'spell')) {
+        expect(c.description, c.fields['description'], reason: c.name);
+        expect(freeSrdDescription(c), '');
+      }
+    });
+
+    test('the unit and component lookups leave the copy and the package', () {
+      for (final slug in ['duration-unit', 'casting-time-unit',
+          'casting-component']) {
+        expect(cats.containsKey(slug), isFalse, reason: slug);
+        expect(inFreeSrd(slug), isFalse);
+      }
+      expect(build.seedRows.keys, contains('duration-unit'));
     });
   });
 }

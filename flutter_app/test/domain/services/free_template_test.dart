@@ -6,6 +6,7 @@ import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema_hash.dart';
 import 'package:dungeon_master_tool/domain/services/free_encounter.dart';
+import 'package:dungeon_master_tool/domain/services/free_srd_pack.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -45,7 +46,6 @@ void main() {
         FieldType.statBlock: FieldType.statTable,
         FieldType.proficiencyTable: FieldType.skillTable,
         FieldType.levelTable: FieldType.table,
-        FieldType.levelTextTable: FieldType.table,
         FieldType.rangedSenseList: FieldType.table,
         FieldType.spellEffectList: FieldType.table,
         FieldType.equipmentChoiceGroups: FieldType.markdown,
@@ -62,12 +62,20 @@ void main() {
       // Keys the copy renames (the player card's own fields, §16.1).
       const renamed = {'class_levels': 'level', 'spell_slots': 'auto_resources'};
       const flatCombat = {'ac', 'hp_average', 'initiative_modifier'};
-      expect(srd.categories, hasLength(builtin.categories.length));
-      for (var i = 0; i < builtin.categories.length; i++) {
-        final from = builtin.categories[i];
+      // SRD-FREE-ALANLAR §5.14: lookups the copy drops.
+      const gone = {'duration-unit', 'casting-time-unit', 'casting-component'};
+      final froms = [
+        for (final c in builtin.categories)
+          if (!gone.contains(c.slug)) c,
+      ];
+      expect(srd.categories, hasLength(froms.length));
+      for (var i = 0; i < froms.length; i++) {
+        final from = froms[i];
         final to = srd.categories[i];
         expect(to.slug, from.slug);
         expect(to.fieldGroups, from.fieldGroups);
+        // Laid out as the SRD writes it: free_srd_pack_test.
+        if (freeSrdClosed.contains(from.slug)) continue;
         final flat = {'monster', 'animal'}.contains(from.slug);
         final kept = [
           for (final f in from.fields)

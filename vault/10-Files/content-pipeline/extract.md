@@ -5,7 +5,7 @@ path: flutter_app/tool/srd_l10n/bin/extract.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-10-08
+updated: 2026-10-28
 tags: [file]
 ---
 
@@ -26,13 +26,14 @@ tags: [file]
 ## Dependencies & Links
 - Kaynak: [[builtin_schema]] · [[srd_core_pack]] · [[srd-pack-content]]
 - Kardeşi: [[dump_srd]] (aynı paketi `.pkg.json`'a döker).
-- Çıktısını denetleyen: [[check_pairs]] · okuyan: [[content_translator]].
+- Çıktısını denetleyen: [[check_pairs]] · dolduran: [[suggest]] (free satırlar) · okuyan: [[content_translator]].
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
 - **Scope:** `_schema` = kategori adları, alan grubu adları, alan etiketleri, `placeholder`, `helpText`, `subFields` etiketleri, enum seçenekleri. Diğerleri = kategori slug'ı: satır adı, `description`, `text`/`textarea`/`markdown` alanları, `levelTextTable` değerleri, `classFeatures`/`subspeciesOptions` `name`+`description`, `equipmentChoiceGroups`/`playerChoices` `label`+`prompt`+`options[].label`.
 - **Makine değeri, çıkarılmaz (K10):** relation/sayı/zar alanları, `tags`, `srdL10nMachineTextKeys` ([[content_translator]] ile ortak — çalışma zamanı da bunları çevirmez; `source`, `icon_name`, `color`, `legacy_subspecies_key`, `weapon_mastery_filter`, `granted_tool_variant_group`), `_machineNameSlugs` satır adları (`resource-pool` `pool:…` — görünen ad `display_name`; `character-state` `state:…` — görünen metni yok), `_isProse`'tan geçmeyen değerler (snake_case anahtar, zar/sayı, harfsiz). `proficiencyTable` satır adları ayrıca çıkarılmaz — ability/skill scope'larında zaten var.
 - **`collectSrdTexts()`** toplama mantığının tamamı; `main` yalnızca dosyaya yazar ve tabloyu basar. Faz 7 testi (`test/tool/srd_l10n_coverage_test.dart`) aynı fonksiyonu okur: kaynakta olup çevirisi boş metin = eksik (7.1), tabloda olup kaynakta olmayan = bayat (7.2) — ikisi de CI'da kırmızı.
+- **Free SRD (SRD-FREE-ALANLAR §7, A2'den beri):** `freeSrdClosed` kategorilerinin free hali de toplanır — free kategorinin etiketleri `_schema`'ya, [[free_srd_pack]]'in yazdığı `text`/`markdown` değerleri kategori scope'una. Harf harf bileşen satırı ("V, S") `_isProse`'tan geçmese de alınır (`_componentLine`; Türkçesi "S, B"). Boş kalanları [[suggest]] doldurur.
 - **Mevcut çeviri korunur:** yeniden koşunca var olan değer aynen kalır, yeni anahtar `""` alır, kaynakta artık olmayan anahtar silinmez, "bayat" sütununda sayılır. Sıra kaynak sırasıdır (ad, ardından açıklaması — çevirmene bağlam).
 
 ## Notes

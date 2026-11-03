@@ -595,5 +595,8 @@
   "Recharge": "Yenilenme",
   "Free Action": "Serbest Eylem",
   "Short or Long Rest": "Kısa ya da Uzun Dinlenme",
-  "Special": "Özel"
+  "Special": "Özel",
+  "Casting Time": "Büyü Yapma Süresi",
+  "Range": "Menzil",
+  "Duration": "Etki Süresi"
 }

@@ -266,18 +266,12 @@ void main() {
       ]);
     });
 
-    test('class level tables and spell upcasting read as rows', () {
+    test('class level tables read as rows', () {
       final bard = srdCard('class', 'Bard');
       final cantrips = TableSpec.of(field('class', 'cantrips_known_by_level'));
       final rows = tableRows(cantrips, bard['cantrips_known_by_level']);
       expect(rows.first, {'level': 1, 'value': 2});
       expect(rows, hasLength(20));
-
-      final fireball = srdCard('spell', 'Fireball');
-      final upcast = TableSpec.of(field('spell', 'at_higher_levels_text'));
-      final row = tableRows(upcast, fireball['at_higher_levels_text']).single;
-      expect(row['level'], 4);
-      expect(row['value'], contains('1d6'));
     });
 
     test('Fighter starting equipment reads as markdown', () {
