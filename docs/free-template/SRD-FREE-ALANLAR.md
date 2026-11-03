@@ -1,9 +1,9 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10. Güncel faz: **A7** (uygulandı, otomatik kapı yeşil; elle kontrol
+> haritası §11'de: A1–A10. Güncel faz: **A8** (uygulandı, otomatik kapı yeşil; elle kontrol
 > bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28);
-> A1–A6'nın elle kontrolü de henüz yapılmadı.
+> A1–A7'nin elle kontrolü de henüz yapılmadı. A7 `2ac10140` ile commit'lendi.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -475,6 +475,9 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
      "uzun dinlenmede" (SRD: Recharge 6), free'de "(1/Day)". Dragonborn'un Breath Weapon'ı pakette
      "Short or Long Rest" (SRD: PB kadar kullanım, Long Rest). Metalik ejderhaların nefeslerinde DC
      metinde yoktu (A6'da yazıldı) ve metinler kısaltılmış.
+   - **Lookup'lar (A8'de görüldü).** Pakette 11 silah özelliği var; "Improvised" SRD'nin
+     Properties listesinde yok (SRD'de yalnız sözlükteki "Improvised Weapons" kuralı), free'de
+     metni boş. Durum, özellik ve ustalık kartlarında bugüne kadar hiç kural metni yoktu (R4).
    - Lightning Bolt'un malzemesi 2014 metninden.
    - Metinler genel olarak SRD'nin kısaltılmış hâli.
    - **Büyü başlık satırları (A2'de görüldü).** 316 büyünün satırları PDF'le karşılaştırıldı:
@@ -554,7 +557,7 @@ Süreç [ROADMAP.md](ROADMAP.md) §1 ile aynı:
 | A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | ⏳ uygulandı, elle kontrol bekliyor |
 | A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | |
+| A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | |
 | A10 | Kapanış | 521 → 167 doğrulanır | S | |
 
@@ -1417,6 +1420,57 @@ kategorilere hiçbir kart bağlanmıyor (G7); rehber ve çipler yalnız var olan
 | EA8.6 | TR; yeni dünya; R turu. | — |
 
 **Çıkış kriteri:** §5'teki bütün kategoriler hedef alanlarında; çıkan 7 kategori yok.
+
+**A8 sonucu** (2026-11-03, `2ac10140` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** S2 kullanıcıya yeniden soruldu (2026-11-03): **kalsın**. Sapmalar düzeltilmez,
+  §9'a yazılır. A1–A7'nin elle kontrolü açık.
+- **Yapılanlar:**
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    lookup kartının `effects`'i tek haritadan, `srdLookupEffects`
+    ([free_srd_texts.dart](../../flutter_app/lib/domain/services/free_srd_texts.dart)): zırh
+    kategorilerinin süreleri (A7), Rules Glossary'nin 15 durumu, 10 silah özelliği ve 8 ustalık;
+    PDF'ten birebir. `freeSrdClosed` += kartı olan 33 lookup (`freeSrdLookups`);
+    `freeSrdPackVersion = 8`. Lookup'ların açıklaması zaten boştu (S1).
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    `_srdDroppedKeys` (`icon_name`, `color`, 39 lookup'tan) ve `_srdDroppedFields` (§5.14'ün
+    bayrak ve boş alanları; oyuncu kartından `current_conditions`, `extra_hp`, `trinket_ref`;
+    NPC'den `initiative_modifier`). `_srdDroppedSlugs` += Character State, Resource Pool, Body
+    Slot, Starter Bundle; kartları da free pakete girmez. Condition, Weapon Property, Weapon
+    Mastery: Abbreviation · Summary · Effects. Size, Rarity, Coin, Lifestyle, Language `tier`
+    olduğu gibi kalır.
+  - **Rehber:** `_srdGuide`'a "Starting at Higher Levels" adımı (Equipment'tan sonra, Level
+    alanına), SRD'nin üç paragrafı ve Starting Equipment at Higher Levels tablosu (markdown).
+  - **Türkçe:** 33 anahtar, elle; sözlükle (durum adları, Avantaj / Dezavantaj, Etkisiz Hal,
+    Kritik İsabet, Sürpriz…), kalıplar `spell.json`'dan ("hareketin her fiti … fite mal olur").
+  - Vault: `free_srd_pack`, `free_template` notları; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - Lookup'lar kapandı (A10'a bırakılmadı): alan listeleri §5.14'teki son hâlinde olduğu için.
+    Oyuncu kartı ve NPC kapalı listeye girmedi; kartları yok, alanları testte tek tek bakılıyor.
+  - "Improvised" özelliğinin SRD'de karşılığı yok; metin uydurulmadı (K12), §9'a yazıldı.
+  - **Rehber yazısı Türkçeleşmedi:** rehber adımları bugün de çevrilmiyor (`MarkdownBody(data:
+    step.text)`, çeviri yolu yok); yeni adım diğer 13 adım gibi İngilizce. Rehber çevirisi
+    yeni bir yol ister; A9'a ya da ayrı işe önerilir.
+  - Silinen alanların okuyucusu yok: `extra_hp` sihirbazı ve alan bileşeni yalnız alan varsa
+    çalışıyor; `order_index`, `default_range_ft`, bayraklar free kodunda okunmuyor.
+- **K12, PDF karşılaştırması:** 33 metnin ve rehber adımının her paragrafı PDF'in düz metninde
+  birebir geçiyor (betikle); tek istisna, PDF'te tablonun iki sütununa bölünen "Creating a
+  higher-level character…" cümlesi, elle karşılaştırıldı. Tablonun "5,000 gp"si PDF'teki gibi
+  küçük harf.
+- **Otomatik kapı:**
+  - G4: 32 info, 0 warning, 0 error (A7 ile aynı).
+  - G5: `free_srd_pack_test` A8 grubu, 7 test (lookup'larda ikon / renk yok, kalan alanlar;
+    Paralyzed, Grappled, Finesse, Topple PDF'le birebir; her durum ve ustalığın metni,
+    Improvised'ınki yok; R3: `grants_incapacitated` / `stacks` metinde; çıkan 4 kategori;
+    oyuncu kartı ve NPC; rehber ve çipler yalnız var olan alanlara bakıyor) ve G7 hedefleri
+    33 lookup'la: 57/57.
+  - G6 (`entity_card_flush` hariç): G6_SONUC
+  - G7: bekçi yeşil; 53 kategori kapalı, alan sayıları §5'le aynı.
+  - G8: `check_pairs` 7200 / 7200, 0 FAIL, 200 UYARI (+4, hepsi yanlış alarm: Exhaustion'da
+    "reaches" → reach, üç ustalık / özellik metninde genel "extra attack" → Extra Attack);
+    kapsam testi yeşil.
+- **Elle kontrol:** EA8.1–EA8.6. EA8.2'de Paralyzed'ın Effects'ine, EA8.5'te rehberin
+  "Starting at Higher Levels" adımındaki tabloya bak; TR'de durum metinleri.
 
 ---
 
