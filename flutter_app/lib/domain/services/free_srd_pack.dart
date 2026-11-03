@@ -14,7 +14,7 @@ import 'free_template.dart' show srdFreeTemplate;
 
 /// Bumped whenever [freeSrdFields] writes something new: the free package
 /// re-seeds on a change (`SrdCorePackageBootstrap._ensureFree`).
-const freeSrdPackVersion = 6;
+const freeSrdPackVersion = 7;
 
 /// The categories finished so far (SRD-FREE-ALANLAR §11): their cards hold
 /// only the copy's fields and no description of their own (S1). One more
@@ -31,6 +31,15 @@ const freeSrdClosed = {
   'monster',
   'animal',
   'creature-action',
+  'magic-item',
+  'weapon',
+  'armor',
+  'tool',
+  'adventuring-gear',
+  'pack',
+  'ammunition',
+  'mount',
+  'vehicle',
 };
 
 final Map<String, EntityCategorySchema> _categories = {
@@ -64,6 +73,13 @@ Map<String, dynamic> freeSrdFields(Entity card, Map<String, Entity> byId) {
       ..._statBlockLines(card.fields),
     if (card.categorySlug == 'creature-action')
       'description': _actionText(card.fields, byId),
+    if (card.categorySlug == 'armor') 'armor_class': _armorClass(card, byId),
+    if (srdToolCrafts[card.name] case final craft?
+        when card.categorySlug == 'tool')
+      'craft': craft,
+    if (srdArmorDonDoff[card.name] case final time?
+        when card.categorySlug == 'armor-category')
+      'effects': time,
   };
   final out = closed
       ? <String, dynamic>{}
@@ -449,6 +465,17 @@ String _actionText(Map<String, dynamic> f, Map<String, Entity> byId) {
       '$n/Day',
   ].nonNulls;
   return limits.isEmpty ? text : '(${limits.join(', ')}). $text';
+}
+
+/// An armor's Armor Class (AC) as the Armor table writes it (§5.12): "14 +
+/// Dex modifier (max 2)", "16", a Shield's "+2".
+String _armorClass(Entity card, Map<String, Entity> byId) {
+  final f = card.fields;
+  final ac = f['base_ac'];
+  if (entityRefName(f['category_ref'], byId) == 'Shield') return '+$ac';
+  if (f['adds_dex'] != true) return '$ac';
+  final cap = f['dex_cap'];
+  return '$ac + Dex modifier${cap is num ? ' (max $cap)' : ''}';
 }
 
 /// [card]'s description in the free package. A closed category's rules

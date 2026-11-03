@@ -258,14 +258,6 @@ void main() {
       );
     });
 
-    test('granted ability bonuses keep values only', () {
-      final bonus = StatTableSpec.of(field('magic-item', 'ability_bonuses'));
-      expect(bonus.showModifier, isFalse);
-      expect(bonus.stats.map((s) => s.key), [
-        'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', //
-      ]);
-    });
-
     test('class level tables read as rows', () {
       final bard = srdCard('class', 'Bard');
       final cantrips = TableSpec.of(field('class', 'cantrips_known_by_level'));

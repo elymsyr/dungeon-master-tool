@@ -169,8 +169,6 @@ void main() {
       expect(bound('monster', 'save_bonuses'), saves);
       expect(bound('npc', 'saving_throws'), saves);
       expect(bound('monster', 'stat_block'), presets['stat_block']!.fieldId);
-      // Granted bonuses have no modifier: not the stat preset.
-      expect(bound('magic-item', 'ability_bonuses'), isNull);
       // Copying a free template keeps its presets.
       final again = copyAsFreeTemplate(srd, id: 'c2', name: 'n', now: _now);
       expect(again.presets, srd.presets);

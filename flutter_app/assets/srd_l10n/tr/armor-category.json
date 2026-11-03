@@ -2,5 +2,9 @@
   "Light": "Hafif",
   "Medium": "Orta",
   "Heavy": "Ağır",
-  "Shield": "Kalkan"
+  "Shield": "Kalkan",
+  "1 Minute to Don or Doff": "Giyme ya da çıkarma 1 dakika",
+  "5 Minutes to Don and 1 Minute to Doff": "Giyme 5 dakika, çıkarma 1 dakika",
+  "10 Minutes to Don and 5 Minutes to Doff": "Giyme 10 dakika, çıkarma 5 dakika",
+  "Utilize Action to Don or Doff": "Giyme ya da çıkarma bir Nesne Kullanma eylemi"
 }

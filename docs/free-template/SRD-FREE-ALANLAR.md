@@ -1,9 +1,9 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10. Güncel faz: **A6** (uygulandı, otomatik kapı yeşil; elle kontrol
+> haritası §11'de: A1–A10. Güncel faz: **A7** (uygulandı, otomatik kapı yeşil; elle kontrol
 > bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28);
-> A1–A5'in elle kontrolü de henüz yapılmadı.
+> A1–A6'nın elle kontrolü de henüz yapılmadı.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -522,7 +522,7 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
   mi? Eşya envantere girince "Wand of Magic Missiles: 7" kutucuğu çıkar. Ancak "şafakta 1d6+1" gibi
   kısmi dolum kaynakta yok; dinlenmede dokunulmaz ve kural metinde kalır. Öneri: şimdilik hayır,
   alanlar veri olarak kalsın.
-  *A7'nin başında onaylanır.*
+  **Karar (2026-11-03): öneri.** Şarjlar veri olarak kalır, Verilenler eklenmez.
 - **S5 — SRD'den eksik metinler eklensin mi?** Durum kuralları, silah özelliği / ustalık metinleri
   ve sınıfların "Becoming a…" kutusu, çıkan bayrakların yerine geçtiği için gerekli (öneri: evet).
   Aletlerin "Craft" satırı, Trinket tablosu ve diğer lookup'ların sözlük metinleri isteğe bağlı
@@ -553,7 +553,7 @@ Süreç [ROADMAP.md](ROADMAP.md) §1 ile aynı:
 | A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | ⏳ uygulandı, elle kontrol bekliyor |
 | A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | |
+| A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | |
 | A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | |
 | A10 | Kapanış | 521 → 167 doğrulanır | S | |
@@ -1326,6 +1326,65 @@ PDF'le birebir; Wand of Magic Missiles'ın şarj alanları; G7.
 
 **Çıkış kriteri:** eşya kartları SRD tablolarının sütunlarıyla okunuyor.
 
+**A7 sonucu** (2026-11-03, `0d86c8a2` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** S4 kullanıcıya soruldu; karar öneri (şarjlar veri olarak kalır, Verilenler
+  eklenmez). A1–A6'nın elle kontrolü açık.
+- **Yapılanlar:**
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    - Zırh: `armor_class` SRD tablosunun sütunu (`_armorClass`): "11 + Dex modifier", "14 + Dex
+      modifier (max 2)", "16", Kalkan'da "+2".
+    - Alet: `craft`, SRD'nin Craft satırı ([free_srd_texts.dart](../../flutter_app/lib/domain/services/free_srd_texts.dart)
+      `srdToolCrafts`, 20 alet; Navigator's, Thieves', Forgery, oyun setleri ve çalgılarda SRD'de
+      Craft yok, alan boş).
+    - Zırh kategorisi kartları (Light / Medium / Heavy / Shield): `effects`'e giyme / çıkarma
+      süresi, SRD tablosunun kategori başlığından (`srdArmorDonDoff`: "10 Minutes to Don and 5
+      Minutes to Doff", "Utilize Action to Don or Doff").
+    - `freeSrdClosed` += magic-item, weapon, armor, tool, adventuring-gear, pack ve değişmeyen
+      ammunition, mount, vehicle; `freeSrdPackVersion = 7`. S1: büyülü eşyanın açıklaması 286
+      kartın hepsinde Effects'in birebir aynısıydı, boşaldı; ekipmanın açıklaması zaten boş.
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    Magic Item 64 → 10 (Category · Rarity · Requires Attunement · Attunement Prerequisite · Base
+    Item · Max Charges · Charge Regain · Effects · Cost · Weight), Weapon 12 → 11, Armor 10 → 6
+    (Category · Armor Class · Strength · Stealth · Cost · Weight), Tool 8 → 7 (… · Utilize · Craft
+    · …), Adventuring Gear 8 → 4, Pack 5 → 3. "(narrative)" etiketleri SRD başlıkları oldu
+    (Attunement Prerequisite, Effects, Contents, Utilize).
+  - **Extract:** açık bir kategoride dönüştürücünün yazdığı yazı da toplanır (zırh kategorisinin
+    süreleri; genel kural yalnız bu 4 anahtarı ekledi).
+  - **Türkçe:** 34 anahtar, elle; adlar mevcut tablolardan: 3 etiket (Uyumlanma Ön Koşulu, Zırh
+    Sınıfı, Üretim), 6 AC yazısı ("14 + ÇEV katkısı (en fazla 2)"), 4 süre ("Giyme 10 dakika,
+    çıkarma 5 dakika"), 21 Craft satırı (eşya adları `adventuring-gear` / `weapon` / `armor` /
+    `ammunition` / `magic-item` / `_schema` çevirilerinden; tabloda ters yazılanlar düz sırayla:
+    "Bottle, Glass" → Cam Şişe, "Clothes, Traveler's" → Seyyah Kıyafeti).
+  - Vault: `free_srd_pack`, `free_template`, `extract` notları; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - Etiket "Armor Class (AC)" yerine **"Armor Class"**: Türkçede kısaltma yazılmadığı için (sözlük
+    D12) "Zırh Sınıfı" N7 parantez kuralına takılıyordu; SRD de metinde sütunu "Armor Class
+    column" diye anıyor.
+  - Giyme / çıkarma süreleri SRD'de ayrı bir tablo değil, Armor tablosunun kategori başlıkları;
+    metin oradan birebir.
+  - Büyülü eşyanın Attunement Prerequisite'i yerleşikteki gibi Properties grubunda; kartta Category
+    / Rarity / Requires Attunement'ın altında, ayrı grupta çiziliyor.
+  - Eski iki test kopyanın A7 öncesini sabitliyordu (`free_template_test` ve `free_field_styles_test`:
+    büyülü eşyanın `ability_bonuses`'ı); alan kopyada artık hiçbir kategoride yok, ikisi kaldırıldı.
+- **K12, PDF karşılaştırması:** 13 zırhın AC yazısı PDF'teki Armor tablosuyla birebir (testte
+  tablonun tamamı); 20 Craft satırı ve 4 süre metni PDF'ten birebir (’ dahil). Zırh verisi
+  (Str 13 / 15, Stealth) PDF'le aynı. Eşya metinleri paketin metni (K13).
+- **Otomatik kapı:**
+  - G4: 32 info, 0 warning, 0 error (A6 ile aynı).
+  - G5: `free_srd_pack_test` A7 grubu, 7 test (alan sırası; 13 zırhın AC'si; Heavy / Shield
+    süreleri; Alchemist's Supplies'ın Craft ve Utilize'ı, Craft'sız aletler; Wand of Magic
+    Missiles'ın şarjları; R3: 42 Utilize DC'si yazıda, 7 paketin içerik sayısı yazıda; S1) ve
+    dokunulan dosyaların testleri: 205/205.
+  - G6 (`entity_card_flush` hariç): 1990 geçti (A6'nın 1984'ü + 7 yeni − 1 kaldırılan), 3 kırmızı;
+    üçü de temel çizgidekiyle aynı. Yeni kırmızı yok.
+  - G7: bekçi yeşil; 20 kategori kapalı, alan sayıları §5'le aynı.
+  - G8: `check_pairs` 7167 / 7167, 0 FAIL, 196 UYARI (+2, ikisi de yanlış alarm: "Glass Bottle…"
+    satırında uzunluk oranı; Smith's Tools'ta Sling Bullets → Misket ve Hide (zırh) → Post);
+    kapsam testi yeşil.
+- **Elle kontrol:** EA7.1–EA7.5. EA7.3'te Alchemist's Supplies'ın Craft satırına, EA7.4'te Heavy
+  kartının Effects'ine bak; TR'de Craft satırları ve "Zırh Sınıfı".
+
 ---
 
 #### A8 — Lookup'lar, oyuncu kartı, NPC ve çıkan kategoriler (§5.13–5.15)
@@ -1408,6 +1467,6 @@ sorulur.
 ### 11.5 Kapsam dışı
 
 - **SRD sapmaları** (S2, §9.1): ayrı iş. Free paket yerleşik paketin sapmalarını taşır.
-- **Eşya şarjlarının Havuz'a gitmesi** (S4): A7'de onaylanırsa kapsam dışı kalır.
+- **Eşya şarjlarının Havuz'a gitmesi** (S4, 2026-11-03): kapsam dışı.
 - **Yerleşik SRD template'i ve paketi:** hiç değişmez (K1).
 - **Eski SRD kopyalarının ve dünyalarının yeni veriye geçirilmesi** (K14).

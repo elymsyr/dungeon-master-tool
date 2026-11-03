@@ -128,3 +128,55 @@ const srdSubclassIntros = {
   'Fiend Patron': 'Make a Deal with the Lower Planes',
   'Evoker': 'Create Explosive Elemental Effects',
 };
+
+/// A tool's Craft line (A7, S5): the pack holds no craftable items. The
+/// tools without one craft nothing.
+const srdToolCrafts = {
+  "Alchemist's Supplies":
+      'Acid, Alchemist’s Fire, Component Pouch, Oil, Paper, Perfume',
+  "Brewer's Supplies": 'Antitoxin',
+  "Calligrapher's Supplies": 'Ink, Spell Scroll',
+  "Carpenter's Tools":
+      'Club, Greatclub, Quarterstaff, Barrel, Chest, Ladder, Pole, Portable '
+      'Ram, Torch',
+  "Cartographer's Tools": 'Map',
+  "Cobbler's Tools": 'Climber’s Kit',
+  "Cook's Utensils": 'Rations',
+  "Glassblower's Tools": 'Glass Bottle, Magnifying Glass, Spyglass, Vial',
+  "Jeweler's Tools": 'Arcane Focus, Holy Symbol',
+  "Leatherworker's Tools":
+      'Sling, Whip, Hide Armor, Leather Armor, Studded Leather Armor, '
+      'Backpack, Crossbow Bolt Case, Map or Scroll Case, Parchment, Pouch, '
+      'Quiver, Waterskin',
+  "Mason's Tools": 'Block and Tackle',
+  "Painter's Supplies": 'Druidic Focus, Holy Symbol',
+  "Potter's Tools": 'Jug, Lamp',
+  "Smith's Tools":
+      'Any Melee weapon (except Club, Greatclub, Quarterstaff, and Whip), '
+      'Medium armor (except Hide), Heavy armor, Ball Bearings, Bucket, '
+      'Caltrops, Chain, Crowbar, Firearm Bullets, Grappling Hook, Iron Pot, '
+      'Iron Spikes, Sling Bullets',
+  "Tinker's Tools":
+      'Musket, Pistol, Bell, Bullseye Lantern, Flask, Hooded Lantern, '
+      'Hunting Trap, Lock, Manacles, Mirror, Shovel, Signal Whistle, '
+      'Tinderbox',
+  "Weaver's Tools":
+      'Padded Armor, Basket, Bedroll, Blanket, Fine Clothes, Net, Robe, '
+      'Rope, Sack, String, Tent, Traveler’s Clothes',
+  "Woodcarver's Tools":
+      'Club, Greatclub, Quarterstaff, Ranged weapons (except Pistol, Musket, '
+      'and Sling), Arcane Focus, Arrows, Bolts, Druidic Focus, Ink Pen, '
+      'Needles',
+  'Disguise Kit': 'Costume',
+  "Poisoner's Kit": 'Basic Poison',
+  'Herbalism Kit': 'Antitoxin, Candle, Healer’s Kit, Potion of Healing',
+};
+
+/// How long an armor category takes to don or doff (A7): the Armor
+/// table's category headings.
+const srdArmorDonDoff = {
+  'Light': '1 Minute to Don or Doff',
+  'Medium': '5 Minutes to Don and 1 Minute to Doff',
+  'Heavy': '10 Minutes to Don and 5 Minutes to Doff',
+  'Shield': 'Utilize Action to Don or Doff',
+};

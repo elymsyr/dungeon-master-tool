@@ -11,5 +11,11 @@
   "Chain Mail": "Zincir Zırh",
   "Splint Armor": "Geçmeli Zırh",
   "Plate Armor": "Plaka Zırh",
-  "Shield": "Kalkan"
+  "Shield": "Kalkan",
+  "11 + Dex modifier": "11 + ÇEV katkısı",
+  "12 + Dex modifier": "12 + ÇEV katkısı",
+  "12 + Dex modifier (max 2)": "12 + ÇEV katkısı (en fazla 2)",
+  "13 + Dex modifier (max 2)": "13 + ÇEV katkısı (en fazla 2)",
+  "14 + Dex modifier (max 2)": "14 + ÇEV katkısı (en fazla 2)",
+  "15 + Dex modifier (max 2)": "15 + ÇEV katkısı (en fazla 2)"
 }

@@ -186,7 +186,10 @@ Map<String, List<String>> collectSrdTexts() {
     for (final f in free[c.categorySlug]!.fields) {
       final v = fields[f.fieldKey];
       switch (f.fieldType) {
-        case FieldType.text || FieldType.markdown when closed:
+        // An open category's line the converter writes (the armor
+        // categories' don / doff times, A7).
+        case FieldType.text || FieldType.markdown
+            when closed || v != c.fields[f.fieldKey]:
           add(c.categorySlug, v, v is String && _componentLine.hasMatch(v));
         case FieldType.progressionTable:
           for (final r in v is List ? v : const []) {

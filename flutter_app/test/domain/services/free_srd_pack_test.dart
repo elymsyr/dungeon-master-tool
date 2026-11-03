@@ -102,6 +102,8 @@ void main() {
           if (freeSrdClosed.contains(cat.slug) && !ids.contains(f.fieldId)) {
             continue;
           }
+          // The Armor table's don / doff times (A7) were in no card.
+          if (cat.slug == 'armor-category' && f.fieldKey == 'effects') continue;
           if (!same(shown(f, s), shown(f, today))) {
             diffs.add('${c.categorySlug} / ${c.name} / ${f.fieldKey}');
           }
@@ -199,6 +201,15 @@ void main() {
         'monster': 27,
         'animal': 27,
         'creature-action': 3,
+        'magic-item': 10,
+        'weapon': 11,
+        'armor': 6,
+        'tool': 7,
+        'adventuring-gear': 4,
+        'pack': 3,
+        'ammunition': 4,
+        'mount': 4,
+        'vehicle': 9,
       };
       expect(freeSrdClosed, targets.keys.toSet());
       expect({for (final s in targets.keys) s: cats[s]!.fields.length}, targets);
@@ -1199,6 +1210,108 @@ void main() {
         for (final c in raw.values.where((c) => c.categorySlug == slug)) {
           expect(freeSrdDescription(c), '', reason: c.name);
         }
+      }
+    });
+  });
+
+  group('A7 magic item and equipment', () {
+    Map<String, dynamic> of(String slug, String name) =>
+        converted[id(slug, name)]!;
+    String fields(String slug) =>
+        [for (final f in cats[slug]!.fields) f.fieldKey].join(', ');
+
+    test('the copy reads as the SRD tables', () {
+      expect(
+        fields('magic-item'),
+        'magic_category_ref, rarity_ref, requires_attunement, '
+        'attunement_prereq, base_item_ref, charges_max, charge_regain, '
+        'effects, cost_gp, weight_lb',
+      );
+      expect(fields('armor'),
+          'category_ref, armor_class, strength_requirement, '
+          'stealth_disadvantage, cost_gp, weight_lb');
+      expect(fields('tool'),
+          'category_ref, variant_of_ref, ability_ref, utilize_description, '
+          'craft, cost_gp, weight_lb');
+      expect(fields('adventuring-gear'),
+          'cost_cp, weight_lb, utilize_description, focus_kind_ref');
+      expect(fields('pack'), 'cost_gp, weight_lb, contents');
+      expect(fields('weapon'), isNot(contains('is_melee')));
+    });
+
+    test("every armor's AC is the Armor table's (PDF)", () {
+      const table = {
+        'Padded Armor': '11 + Dex modifier',
+        'Leather Armor': '11 + Dex modifier',
+        'Studded Leather Armor': '12 + Dex modifier',
+        'Hide Armor': '12 + Dex modifier (max 2)',
+        'Chain Shirt': '13 + Dex modifier (max 2)',
+        'Scale Mail': '14 + Dex modifier (max 2)',
+        'Breastplate': '14 + Dex modifier (max 2)',
+        'Half Plate Armor': '15 + Dex modifier (max 2)',
+        'Ring Mail': '14',
+        'Chain Mail': '16',
+        'Splint Armor': '17',
+        'Plate Armor': '18',
+        'Shield': '+2',
+      };
+      expect({
+        for (final c in raw.values.where((c) => c.categorySlug == 'armor'))
+          c.name: converted[c.id]!['armor_class'],
+      }, table);
+    });
+
+    test('the don / doff times are on the armor category cards', () {
+      expect(of('armor-category', 'Heavy')['effects'],
+          '10 Minutes to Don and 5 Minutes to Doff');
+      expect(of('armor-category', 'Shield')['effects'],
+          'Utilize Action to Don or Doff');
+    });
+
+    test("a tool's Craft line is the SRD's; some craft nothing", () {
+      expect(of('tool', "Alchemist's Supplies")['craft'],
+          'Acid, Alchemist’s Fire, Component Pouch, Oil, Paper, Perfume');
+      expect(of('tool', "Alchemist's Supplies")['utilize_description'],
+          'Identify a substance (DC 15), or start a fire (DC 15)');
+      expect(of('tool', "Thieves' Tools")['craft'], isNull);
+      expect(of('tool', "Navigator's Tools")['craft'], isNull);
+      final tools = {
+        for (final c in raw.values.where((c) => c.categorySlug == 'tool'))
+          c.name,
+      };
+      expect(tools.containsAll(srdToolCrafts.keys), isTrue);
+    });
+
+    test('Wand of Magic Missiles: its charges stay data (S4)', () {
+      final w = of('magic-item', 'Wand of Magic Missiles');
+      expect((w['charges_max'], w['charge_regain']), (7, '1d6+1 daily at dawn'));
+      expect(w['effects'], startsWith('This wand has 7 charges.'));
+      expect(w.keys, isNot(contains('activation')));
+    });
+
+    test('what a dropped field says is in a line or the text (R3)', () {
+      final missing = <String>[];
+      for (final c in raw.values) {
+        final dc = c.fields['utilize_check_dc'];
+        if (dc is num &&
+            !'${converted[c.id]!['utilize_description']}'.contains('DC $dc')) {
+          missing.add(c.name);
+        }
+        if (c.categorySlug == 'pack') {
+          final n = (c.fields['content_refs'] as List).length;
+          final contents = converted[c.id]!['contents'] as String;
+          if (contents.split(', ').length != n) missing.add(c.name);
+        }
+      }
+      expect(missing, isEmpty);
+    });
+
+    test('the description above goes (S1): an item\'s was its text again', () {
+      for (final c in raw.values.where(
+        (c) => c.categorySlug == 'magic-item',
+      )) {
+        expect(c.description, c.fields['effects'], reason: c.name);
+        expect(freeSrdDescription(c), '', reason: c.name);
       }
     });
   });
