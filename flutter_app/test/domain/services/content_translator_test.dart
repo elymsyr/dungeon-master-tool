@@ -119,6 +119,40 @@ void main() {
     expect(table['2'], '+1d6 damage.');
   });
 
+  test('value: free Seviye tablosu ve Verilenler — yazı çevrilir, ad ve '
+      'ref kalır (SRD-FREE-ALANLAR A4)', () {
+    const card = {'_id': 'c', 'kind': 'card', 'card': 'Rage'};
+    const res = {'_id': 'r', 'kind': 'resource', 'name': 'Rage'};
+    const style = {
+      '_id': 's',
+      'kind': 'style',
+      'style': 'markdown',
+      'label': 'Rage',
+      'value': '+1d6 damage.',
+    };
+    final rows = [
+      {
+        '_id': 'l1',
+        'level': 1,
+        'text': '+1d6 damage.',
+        'items': [card, res, style],
+      },
+    ];
+    final shown =
+        tx.value('class', field(FieldType.progressionTable), rows) as List;
+    expect(shown.single['text'], '+1d6 hasar.');
+    expect(shown.single['items'], [
+      card,
+      res,
+      {...style, 'label': 'Hiddet', 'value': '+1d6 hasar.'},
+    ]);
+    expect(rows.single['text'], '+1d6 damage.');
+    expect(tx.value('class', field(FieldType.grantHolder), [card, style]), [
+      card,
+      {...style, 'label': 'Hiddet', 'value': '+1d6 hasar.'},
+    ]);
+  });
+
   test('forCard: homebrew kartın içeriği çevrilmez, şema sözcükleri çevrilir', () {
     expect(identical(tx.forCard(true), tx), isTrue);
     final hb = tx.forCard(false);

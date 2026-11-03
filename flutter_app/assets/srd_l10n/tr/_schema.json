@@ -598,5 +598,12 @@
   "Special": "Özel",
   "Casting Time": "Büyü Yapma Süresi",
   "Range": "Menzil",
-  "Duration": "Etki Süresi"
+  "Duration": "Etki Süresi",
+  "Prerequisite": "Ön Koşul",
+  "Benefits": "Faydalar",
+  "Hit Point Die": "Can Zarı",
+  "Spellcasting Ability": "Büyü Yapma Kabiliyeti",
+  "Starting Equipment": "Başlangıç Ekipmanı",
+  "Becoming a …": "… Olmak",
+  "Tool Proficiency": "Alet Yetkinliği"
 }

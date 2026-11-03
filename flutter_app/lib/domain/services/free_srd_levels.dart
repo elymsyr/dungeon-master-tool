@@ -73,7 +73,8 @@ List<Map<String, dynamic>> _maps(Object? v) => [
       if (r is Map) Map<String, dynamic>.from(r),
 ];
 
-Map<String, dynamic> _card(String id, Object? ref, String list) => {
+/// A card item for the player card's [list] (DESIGN §8.5).
+Map<String, dynamic> srdCardItem(String id, Object? ref, String list) => {
   '_id': id,
   'kind': 'card',
   'card': ref,
@@ -268,7 +269,7 @@ List<Map<String, dynamic>> _classRows(
       final refs = r[from];
       if (refs is! List) continue;
       for (final ref in refs) {
-        items.add(_card('$id-${items.length + 1}', ref, list));
+        items.add(srdCardItem('$id-${items.length + 1}', ref, list));
       }
     }
     for (final ref in (r['granted_feat_refs'] as List?) ?? const []) {
@@ -308,7 +309,7 @@ List<Map<String, dynamic>> _spellRows(
       '_id': id,
       'level': _int(s['at_level']) ?? 1,
       'items': [
-        _card('$id-1', s['spell_ref'], 'spells_known'),
+        srdCardItem('$id-1', s['spell_ref'], 'spells_known'),
         if (uses != null && uses > 0 && spell != null)
           {'_id': '$id-2', ..._resource(spell.name, uses)},
       ],

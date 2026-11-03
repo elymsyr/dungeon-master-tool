@@ -1,6 +1,7 @@
 import '../entities/entity.dart';
 import '../entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../entities/schema/builtin/content.dart' show tier1Slugs;
+import '../entities/schema/builtin/groups.dart';
 import '../entities/schema/builtin/lookups.dart'
     show dmAuthoredLookupSlugs, tier0Slugs;
 import '../entities/schema/dnd5e_constants.dart' show kDnd5eAbilities;
@@ -377,6 +378,155 @@ const _srdLayouts = <String, List<(String, int, String?)>>{
     ('requires_concentration', 1, null),
     ('description', 1, null),
   ],
+  'feat': [
+    ('category_ref', 1, null),
+    ('prerequisite', 2, null),
+    ('benefits', 2, null),
+    ('granted_spells_at_level', 2, null),
+    ('resource_pool_grants', 2, null),
+  ],
+  'trait': [
+    ('trait_kind', 1, null),
+    ('description', 2, null),
+    ('resource_pool_grants', 2, null),
+  ],
+  'species': [
+    ('creature_type_ref', 1, null),
+    ('size', 1, 'Size'),
+    ('speed_ft', 1, null),
+    ('traits', 2, 'Traits'),
+    ('resource_pool_grants', 2, null),
+  ],
+  'subspecies': [
+    ('parent_species_ref', 1, null),
+    ('granted_spells_at_level', 2, null),
+    ('resource_pool_grants', 2, null),
+  ],
+  'class': [
+    ('complexity', 1, null),
+    ('primary_ability', 1, 'Primary Ability'),
+    ('hit_die', 1, null),
+    ('saving_throw_refs', 1, null),
+    ('skill_proficiencies', 2, 'Skill Proficiencies'),
+    ('weapon_proficiencies', 1, 'Weapon Proficiencies'),
+    ('tool_proficiencies', 1, 'Tool Proficiencies'),
+    ('armor_training_refs', 1, null),
+    ('casting_ability_ref', 1, null),
+    ('equipment_choice_groups', 2, null),
+    ('becoming', 2, 'Becoming a …'),
+    ('features', 2, null),
+    ('cantrips_known_by_level', 1, null),
+    ('prepared_spells_by_level', 1, null),
+  ],
+  'subclass': [
+    ('parent_class_ref', 1, null),
+    ('granted_at_level', 1, null),
+    ('flavor_description', 2, null),
+    ('features', 2, null),
+  ],
+  'background': [
+    ('ability_score_options', 2, null),
+    ('origin_feat_ref', 1, null),
+    ('granted_skill_refs', 1, null),
+    ('tool_proficiency', 1, 'Tool Proficiency'),
+    ('equipment_choice_groups', 2, null),
+    ('grants', 2, 'Grants'),
+  ],
+  'monster': _srdStatBlock,
+  'animal': _srdStatBlock,
+  'creature-action': [
+    ('action_type', 1, null),
+    ('damage_dice', 1, null),
+    ('description', 2, null),
+  ],
+};
+
+/// A monster's stat block (§5.10): AC · HP · Speed · Initiative, the
+/// ability scores, defenses, senses, CR, then the traits and actions.
+const _srdStatBlock = [
+  ('size_ref', 1, null),
+  ('creature_type_ref', 1, null),
+  ('tags_line', 1, null),
+  ('alignment_ref', 1, null),
+  ('combat_stats', 2, null),
+  ('hp_dice', 1, null),
+  ('speed', 1, 'Speed'),
+  ('stat_block', 2, null),
+  ('save_bonuses', 2, null),
+  ('skill_bonuses', 2, null),
+  ('resistance_refs', 1, null),
+  ('vulnerability_refs', 1, null),
+  ('damage_immunity_refs', 1, null),
+  ('condition_immunity_refs', 1, null),
+  ('senses', 2, null),
+  ('passive_perception', 1, null),
+  ('language_refs', 1, null),
+  ('telepathy_ft', 1, null),
+  ('cr', 1, null),
+  ('proficiency_bonus', 1, null),
+  ('trait_refs', 1, null),
+  ('action_refs', 1, null),
+  ('bonus_action_refs', 1, null),
+  ('reaction_refs', 1, null),
+  ('legendary_action_uses', 1, null),
+  ('legendary_action_refs', 1, null),
+  ('gear_refs', 1, null),
+];
+
+/// The groups a stat block's fields move to, and the groups' order, so the
+/// card reads in the SRD's order: Speed with AC and HP, the saves and
+/// skills with the ability scores, all of them before the defenses.
+const _srdStatBlockGroups = {
+  'speed': grpCombat,
+  'save_bonuses': grpAbilityScores,
+  'skill_bonuses': grpAbilityScores,
+};
+const _srdStatBlockGroupOrder = [
+  grpIdentity,
+  grpCombat,
+  grpAbilityScores,
+  grpResistances,
+  grpSensesLanguages,
+  grpMeta,
+  grpTraitsActions,
+  grpSpells,
+];
+
+/// The new lines a layout writes as other than one line of text.
+const _srdLineTypes = {
+  'traits': FieldType.markdown,
+  'becoming': FieldType.markdown,
+  'grants': FieldType.grantHolder,
+};
+
+/// The SRD copy's own names for the fields a layout keeps: the SRD's
+/// headings, and Grants for the field that now carries the granted cards.
+const _srdLabels = <String, Map<String, String>>{
+  'feat': {
+    'prerequisite': 'Prerequisite',
+    'benefits': 'Benefits',
+    'resource_pool_grants': 'Grants',
+  },
+  'trait': {'description': 'Description', 'resource_pool_grants': 'Grants'},
+  'species': {'speed_ft': 'Speed', 'resource_pool_grants': 'Grants'},
+  'subspecies': {'resource_pool_grants': 'Grants'},
+  'class': {
+    'hit_die': 'Hit Point Die',
+    'casting_ability_ref': 'Spellcasting Ability',
+    'equipment_choice_groups': 'Starting Equipment',
+    'features': 'Features',
+    'cantrips_known_by_level': 'Cantrips',
+  },
+  'subclass': {'features': 'Features'},
+  'monster': {'senses': 'Senses'},
+  'animal': {'senses': 'Senses'},
+  'creature-action': {'description': 'Description'},
+  'background': {
+    'ability_score_options': 'Ability Scores',
+    'origin_feat_ref': 'Feat',
+    'granted_skill_refs': 'Skill Proficiencies',
+    'equipment_choice_groups': 'Equipment',
+  },
 };
 
 /// [cat]'s fields in the SRD copy, numbered in card order (the copy adds
@@ -390,19 +540,31 @@ List<FieldSchema> _srdCopyCategoryFields(EntityCategorySchema cat) {
     out = [
       for (final (key, span, label) in layout)
         if (label == null)
-          byKey[key]!.copyWith(gridColumnSpan: span)
+          byKey[key]!.copyWith(
+            gridColumnSpan: span,
+            label: _srdLabels[cat.slug]?[key] ?? byKey[key]!.label,
+          )
         else
           _added(
             out.first,
             id: '${cat.categoryId}-$key',
             key: key,
             label: label,
-            type: FieldType.text,
+            type: _srdLineTypes[key] ?? FieldType.text,
             span: span,
           ),
     ];
   }
-  return [for (final (i, f) in out.indexed) f.copyWith(orderIndex: i)];
+  final statBlock = identical(_srdLayouts[cat.slug], _srdStatBlock);
+  return [
+    for (final (i, f) in out.indexed)
+      f.copyWith(
+        orderIndex: i,
+        groupId: statBlock
+            ? _srdStatBlockGroups[f.fieldKey] ?? f.groupId
+            : f.groupId,
+      ),
+  ];
 }
 
 /// [source] copied as a new free template [id] named [name]. Works for the
@@ -447,7 +609,15 @@ EntityCategorySchema _copyCategory(
   bool fromBuiltin,
 ) {
   final fields = fromBuiltin ? _srdCopyCategoryFields(c) : c.fields;
+  final statBlock =
+      fromBuiltin && identical(_srdLayouts[c.slug], _srdStatBlock);
   return c.copyWith(
+    fieldGroups: statBlock
+        ? [
+            for (final g in c.fieldGroups)
+              g.copyWith(orderIndex: _srdStatBlockGroupOrder.indexOf(g.groupId)),
+          ]
+        : c.fieldGroups,
     schemaId: id,
     allowedInSections: fromBuiltin && _noCombatSlugs.contains(c.slug)
         ? [

@@ -258,8 +258,8 @@ void main() {
       );
     });
 
-    test('species / feat ability bonuses keep values only', () {
-      final bonus = StatTableSpec.of(field('feat', 'ability_bonuses'));
+    test('granted ability bonuses keep values only', () {
+      final bonus = StatTableSpec.of(field('magic-item', 'ability_bonuses'));
       expect(bonus.showModifier, isFalse);
       expect(bonus.stats.map((s) => s.key), [
         'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', //

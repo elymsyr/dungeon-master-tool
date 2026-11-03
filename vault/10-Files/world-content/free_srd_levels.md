@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_srd_levels.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-28
+updated: 2026-11-03
 tags: [file]
 ---
 

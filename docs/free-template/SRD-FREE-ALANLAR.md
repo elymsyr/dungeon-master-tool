@@ -1,8 +1,9 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10. Güncel faz: **A2** (uygulandı, otomatik kapı yeşil; elle kontrol
-> bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28).
+> haritası §11'de: A1–A10. Güncel faz: **A6** (uygulandı, otomatik kapı yeşil; elle kontrol
+> bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28);
+> A1–A5'in elle kontrolü de henüz yapılmadı.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -442,6 +443,38 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
    - Cüce'nin Darkvision'ı pakette 60 ft, SRD'de 120 ft. Cüce'de SRD'de olmayan bir "Forge Wise"
      trait'i var.
    - Half-Elf (tür) ve Skill Expert (feat) SRD 5.2.1'de yok.
+   - **Feat'ler (A3'te görüldü).** Sınıf özelliği olmayan 62 feat'ten (Divine / Primal Order hariç) 45'i SRD 5.2.1'de yok:
+     Origin'den Crafter, Healer, Lucky, Musician, Tavern Brawler, Tough; General'den
+     Ability Score Improvement ve Grappler dışındaki 33'ü (Skill Expert dahil); Fighting Style'dan
+     Blind Fighting, Dueling, Interception, Protection, Thrown Weapon Fighting, Unarmed Fighting.
+     SRD'de olan 17'nin Benefits metni PDF'le birebir.
+   - Crossbow Expert, Defensive Duelist ve Inspiring Leader'ın `prereq_ability_ref`'i hiçbir
+     karta çözülmüyor. Alan free'de çıktığı ve önkoşul yazısında olduğu için etkisi yok.
+   - **Türler (A4'te görüldü).** Ork'un Darkvision'ı da pakette 60 ft (SRD'de 120) ve SRD'deki
+     Orc'ta olmayan bir Powerful Build trait'i var. Gnome'un Gnomish Lineage trait'i yok; Forest
+     Gnome'un Speak with Animals'ı (pakette "Speak with Small Beasts") ve High Elf'in
+     Prestidigitation cantrip'i veride yok. Trait metinleri kısaltılmış ya da 2014 metninden
+     (Halfling Lucky / SRD'de Luck, Trance'ın "proficiency with one weapon or tool" cümlesi, Large
+     Form "Uses = PB", Breath Weapon eylemi). Hill / Mountain Dwarf, Lightfoot / Stout Halfling,
+     Standard Human ve Half-Orc SRD 5.1 soyları, SRD 5.2.1'de yok.
+   - **Sınıflar ve geçmişler (A5'te görüldü).** Core Traits satırları veriden kurulunca: Fighter'ın
+     skill listesinde Persuasion, Wizard'ınkinde Nature yok; Rogue'unkinde SRD'de olmayan
+     Performance var. Monk ve Rogue pakette yalnız Simple silahlarda yetkin (SRD: "and Martial
+     weapons that have the Light / Finesse or Light property"). Başlangıç ekipmanı adları kısaltılmış:
+     Bard ve Monk'ta çalgı / alet şıkkı yok, Druid'de "Druidic Focus (Quarterstaff)" yerine
+     Quarterstaff, Ranger'da Druidic Focus yok, Fighter ve Ranger'da "Studded Leather Armor" yerine
+     Studded Leather, Warlock'ta "Book (occult lore)" yerine Book; Acolyte ve Sage'de "Book (prayers)",
+     "Parchment (10 sheets)" gibi açıklamalar yok. Acolyte ve Sage'in feat'i pakette tek bir
+     "Magic Initiate" (SRD: Magic Initiate (Cleric) / (Wizard)). 16 geçmişten 12'si (Artisan,
+     Charlatan, …, Wayfarer) SRD 5.2.1'de yok. Alt sınıfların Flavor yazısı SRD'nin giriş
+     paragrafının kısaltması. Sorcerous Restoration satırı Spellcasting Focus trait'i veriyor.
+   - **Canavarlar (A6'da görüldü).** Speed satırlarının 98 farklı yazısından 19'u PDF'te yok:
+     çoğu yürüme hızının 0 ft. olduğu yerde SRD 5 ya da 10 ft. yazıyor (Specter, Ghost, Banshee
+     dışı uçanlar, Shrieker, köpekbalıkları…); birkaçında hover ya da bir hız eksik (Air
+     Elemental'da hover, Storm Giant'ta "Fly 25 ft. (hover)"). Ankheg'in Acid Spray'i pakette
+     "uzun dinlenmede" (SRD: Recharge 6), free'de "(1/Day)". Dragonborn'un Breath Weapon'ı pakette
+     "Short or Long Rest" (SRD: PB kadar kullanım, Long Rest). Metalik ejderhaların nefeslerinde DC
+     metinde yoktu (A6'da yazıldı) ve metinler kısaltılmış.
    - Lightning Bolt'un malzemesi 2014 metninden.
    - Metinler genel olarak SRD'nin kısaltılmış hâli.
    - **Büyü başlık satırları (A2'de görüldü).** 316 büyünün satırları PDF'le karşılaştırıldı:
@@ -516,10 +549,10 @@ Süreç [ROADMAP.md](ROADMAP.md) §1 ile aynı:
 |---|---|---|---|---|
 | A1 | Altyapı: dönüştürücü, free paket, free dünya | değişmez (görünür fark yok) | M | ⏳ uygulandı, elle kontrol A2 ile birlikte |
 | A2 | Büyü | 25 → 10; 3 lookup kategorisi çıkar | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A3 | Grant bloğu, Feat, Trait | 60 → 5, 46 → 3 | M | |
-| A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | |
-| A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | |
-| A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | |
+| A3 | Grant bloğu, Feat, Trait | 60 → 5, 46 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
+| A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
+| A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | ⏳ uygulandı, elle kontrol bekliyor |
+| A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
 | A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | |
 | A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | |
 | A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | |
@@ -747,6 +780,61 @@ Components · Duration · Ritual · Concentration · metin.
 
 **Çıkış kriteri:** büyüler SRD'nin başlık satırlarıyla okunuyor; G7 ve G8 yeşil.
 
+**A2 sonucu** (2026-10-28, kapı 2026-11-03'te `0c68095e` üzerinde yeniden koşuldu; Linux,
+Flutter 3.47; elle kontrol bekliyor):
+
+- **Yapılanlar:**
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    `_spellLines` dört satırı çıkan alanlardan kurar. Casting Time ("Action", "1 minute or Ritual",
+    `reaction_trigger`'dan "Reaction, which you take when …"), Range ("150 feet", "1,000 feet",
+    Self / Touch / Sight / Unlimited), Components ("V, S, M (a diamond worth 500+ GP, which the
+    spell consumes)"), Duration ("Concentration, up to 1 minute", "Until dispelled", "1 round").
+    `freeSrdClosed` (şimdilik `spell`): kapanan kategorinin kartı yalnız kopyanın alanlarını
+    tutar, üstteki açıklaması boşalır (S1, `freeSrdDescription`). `inFreeSrd`: kopyada olmayan
+    kategorinin kartları free pakete girmez. `freeSrdPackVersion = 2`.
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    `_srdLayouts` büyüyü SRD sırasıyla 10 alana indirir (Level · School · Classes · Casting Time ·
+    Range · Components · Duration · Ritual · Concentration · metin); `_srdDroppedSlugs` Duration
+    Unit, Casting Time Unit ve Casting Component'i kopyadan çıkarır. Çıkan alana bakan
+    `filterFieldKeys` girdisi kopyada düşer (genel kural, sonraki fazlar da kullanır).
+  - **Türkçe:** `extract.dart` kapanan kategorilerin free metinlerini de toplar; yeni öneri aracı
+    [suggest.dart](../../flutter_app/tool/srd_l10n/bin/suggest.dart) 236 satırın Türkçesini
+    parçaların çevirisinden kurdu; öneriler elle kontrolde (EA2.6) gözden geçirilir. `_schema.json`'a dört etiket ve Self /
+    Touch / Sight / Unlimited / Special.
+  - Vault: `free_srd_pack`, `free_template`, `extract` notları; yeni `suggest` notu;
+    Content-Pipeline MoC; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - **EA2.3 değişti:** kenar çubuğu `filterFieldKeys`'i okumuyor; tek okuyucusu template
+    ayarlarındaki Filtreler formu (`template_settings_forms.dart`). Kontrol bu yüzden oraya taşındı.
+  - Components'ta tüketim cümlesi yalnız malzeme yazısında yoksa eklenir; hiçbir yazıda olmayan
+    maliyet sona eklenir (R4; yalnız Find Familiar: "…, worth 10+ GP").
+  - Menzili yalnız "Ranged" olan büyü (Dream) "Special" yazılır.
+  - Satırlar paketin verisinden kurulur; PDF'ten farklı olanlar düzeltilmedi (K13), §9.1'e
+    eklendi (23 Bonus Action büyüsü Action, kısaltılmış tetikleyiciler, mil menzilleri, süreler,
+    136 malzeme). Örnek testlerde Counterspell'in tetikleyicisi ve Bless'in malzemesi paketin
+    yazısıyla.
+- **K12, PDF karşılaştırması:** 316 büyü PDF'le satır satır karşılaştırıldı; birebir olanlar
+  Casting Time 275, Range 288, Components 187, Duration 271; dördü birden 146. Örnekler: Fireball,
+  Shield, Identify, Raise Dead, Sequester, Wish, Fire Bolt birebir; Counterspell ve Bless §9.1'deki
+  sapmayla.
+- **Otomatik kapı** (HEAD `0c68095e`):
+  - G1 boş (`main` ile birleşme tabanına karşı) · G2, G3 yeşil (60 test) · G4 32 info, 0 warning,
+    0 error (A1 ile aynı).
+  - G5: `free_srd_pack_test` (A2 grubu: 11 örnek büyünün dört satırı, 341 büyünün dört satırı dolu
+    ve yalnız kopyanın alanları, S1, üç lookup'ın kopyadan ve paketten çıkışı, Spell = 10 alan) ve
+    dokunulan dosyaların testleri (`free_template`, `free_field_styles`, `package_free_template`,
+    `user_templates_provider`, `srd_l10n_coverage`): 62/62.
+  - G6 (`entity_card_flush` hariç): 1951 geçti (A1'in 1946'sı + 5 yeni), 3 kırmızı; üçü de temel
+    çizgidekiyle aynı (`bundled_pack_resolve` M1, `free_character_sheet` uzun dinlenme,
+    `srd_tr_entity_card` TR okuma). Yeni kırmızı yok.
+  - G7: bekçi yeşil; kapanan Spell 10 alan. Kopyada tanımsız dolu alanlar A1'deki gibi (Class
+    `spell_slots_by_level` A5, Monster / Animal düz AC / HP / İnisiyatif A6).
+  - G8: `check_pairs` 6643 / 6643, 0 FAIL, 180 UYARI (2'si yeni anahtarlarda, mevcut malzeme
+    çevirisinden); kapsam testi büyünün free satırlarını da istiyor, yeşil.
+- **Nasıl açılır:** [ROADMAP.md](ROADMAP.md) §1.2. Free paket ilk açılışta kendiliğinden yeniden
+  kurulur (sürüm 2). SRD-A'da template güncellemesi teklif edilir (EA2.1).
+- **Elle kontrol:** EA1.1–EA1.9 ve EA2.1–EA2.8 birlikte.
+
 ---
 
 #### A3 — Grant bloğu, Feat ve Trait (§4, §5.7, §5.8)
@@ -782,6 +870,58 @@ direnci Verilenler'de **yok**; Lucky'nin Seviye tablosu A1'deki gibi; R3 taramas
 | EA3.7 | TR; yeni dünya; R turu. | — |
 
 **Çıkış kriteri:** feat ve trait kartları SRD'deki gibi; verilen kartlar karaktere iniyor.
+
+**A3 sonucu** (2026-11-03, `0c68095e` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** dayandığı kararlar §4 tablosu, R3/R5/R6 ve S1. Kullanıcı "devam et" ile onayladı;
+  A1 ve A2'nin elle kontrolü açık.
+- **Yapılanlar:**
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    `_grantItems` grant bloğunun kart listelerini Verilenler'de kart öğesi yapar (hedefler
+    `_grantTargets`: `srdFeatureTargets` + zayıflık, araç, silah/zırh, büyü, cantrip, trait
+    listeleri; duyu satırı kartını verir, menzili metinde kalır). `active_while_state_ref` dolu
+    kart öğe vermez (R6). Yalnız kapanan kategoride çalışır; A4, A5 ve A7 kategorilerini
+    `freeSrdClosed`'a ekleyince kullanır. `freeSrdClosed` += feat, trait; `freeSrdPackVersion = 3`.
+    `free_srd_levels.dart`'ın kart öğesi kurucusu `srdCardItem` olarak açıldı (iki okuyucu).
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    Feat 60 → 5 (Category · Prerequisite · Benefits · Spells by Level · Grants), Trait 46 → 3
+    (Trait Kind · Description · Grants). Yeni `_srdLabels` tutulan alanlara SRD başlıklarını verir
+    ("Prerequisite (narrative)" → Prerequisite, "Flavor / Edge Cases (narrative)" → Benefits,
+    "Resource Pools" → Grants). Trait'in Source filtresi alanla birlikte düştü.
+  - **Türkçe:** `_schema.json`'a iki etiket: Prerequisite "Ön Koşul", Benefits "Faydalar"
+    (Grants "Kazanımlar" zaten vardı). Feat ve trait metinleri yer değiştirmediği için çevirileri
+    aynen geçerli; kapsam testi kapanan iki kategoriyi de istiyor.
+  - Vault: `free_srd_pack`, `free_template`, `free_srd_levels` notları; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - Verilenler'in etiketi yalnız kapanan kategorilerde "Grants" oldu; Tür, Alt tür, Geçmiş ve
+    Büyülü eşyada kendi fazına kadar "Resource Pools".
+  - R3 taraması testte (`free_srd_pack_test` "what a dropped field says is in the card text"):
+    çıkan her dolu alanın bilgisi kartın metninde (sayı, ad, işaret sözcüğü). İstisnalar
+    bilgi kaybı değil: Skill Expert'in tekrar alınabilirliği (§5.7, kart SRD'de yok), üç feat'in
+    çözülmeyen yetenek ref'i (yazıda var, §9.1), Primal Knowledge'ın "another skill"i.
+    Unarmored Defense'in "kalkan serbest" işareti bir kuralın yokluğu, metinde aranmadı.
+  - Verilenler'e 36 kart öğesi indi (feat'lerde; trait'lerin hepsinde blok boş). Mindless Rage'in
+    durum bağışıklıkları da Rage gibi yalnız öfke sırasında, Verilenler'de yok.
+  - Free paket sürümü 3: açılışta kendiliğinden yeniden kurulur.
+- **K12, PDF karşılaştırması:** SRD 5.2.1'de olan 17 feat'in (Alert, Magic Initiate, Savage
+  Attacker, Skilled, Ability Score Improvement, Grappler, dört Fighting Style, yedi Epic Boon)
+  Benefits paragrafları PDF metninde birebir var; Boon of Fate yalnız sayfa sonuyla bölünüyor.
+  Önkoşul yazısı örneği: Grappler "Level 4+, Strength or Dexterity 13+" PDF'teki gibi. SRD'de
+  olmayan 45 feat §9.1'e eklendi (K13).
+- **Otomatik kapı:**
+  - G1 boş · G2, G3 yeşil (60 test) · G4 32 info, 0 warning, 0 error (A2 ile aynı).
+  - G5: `free_srd_pack_test` (A3 grubu: başlıklar ve filtre, 36 R5 öğesi hedefiyle, öğenin
+    kategorisi hedef listeye uyuyor, Rage / Mindless Rage öğe yok, Lucky'nin Luck Points 2→6
+    seviye tablosu, R3 taraması, S1; G7'de Feat 5, Trait 3) ve dokunulan dosyaların testleri
+    (`free_template`, `free_field_styles`, `free_srd_levels`, `free_grants`,
+    `package_free_template`, `srd_l10n_coverage`): 115/115. `free_template` ve
+    `free_field_styles`'daki "feat ability_bonuses" denetimi alan çıktığı için Species'e taşındı.
+  - G6 (`entity_card_flush` hariç): 1958 geçti (A2'nin 1951'i + 7 yeni), 3 kırmızı; üçü de temel
+    çizgidekiyle aynı. Yeni kırmızı yok.
+  - G7: bekçi yeşil; kopyada tanımsız dolu alanlar A1'deki gibi.
+  - G8: `check_pairs` 6645 / 6645, 0 FAIL, 180 UYARI (A2 ile aynı); kapsam testi yeşil.
+- **Elle kontrol:** EA3.5'te kullanılacak feat: **Fey-Touched** (Verilenler: Misty Step →
+  Spells). EA1.1–EA1.9, EA2.1–EA2.8 ve EA3.1–EA3.7 birlikte yapılabilir.
 
 ---
 
@@ -832,6 +972,76 @@ yazısı; G7.
 **Çıkış kriteri:** tür ve alt tür SRD'deki gibi; Verilenler karaktere iniyor; satır yazıları
 çevriliyor.
 
+**A4 sonucu** (2026-11-03, `0c68095e` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** K13 hatırlatıldı (Cüce'nin Darkvision'ı pakette 60 ft, SRD'de 120; free paket 60
+  ft taşır). Dayandığı kararlar §5.4, §5.5, R5/R6, S1 ve K10. Kullanıcı "devam et" ile onayladı;
+  A1–A3'ün elle kontrolü açık.
+- **Yapılanlar:**
+  - **SRD metinleri** ([free_srd_texts.dart](../../flutter_app/lib/domain/services/free_srd_texts.dart),
+    yeni): 9 türün Size satırı, Tiefling'in farklı açılış cümlesi ve Elven Lineages / Fiendish
+    Legacies tablolarının 6 Level 1 hücresi, PDF'ten birebir.
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    - Tür: `size` (SRD satırı; SRD'de olmayan Half-Elf'te boy kartının adı) ve `traits` markdown'u:
+      "As a Dwarf, you have these special traits." ve duyu, trait ve eylem kartları için birer
+      `**Ad.** metin` paragrafı. Ad SRD'deki gibi ekinden arınır ("Keen Senses (Elf)" → Keen
+      Senses), duyu paragrafı menzili yazar, Half-Elf'in `mechanical_notes`'u sona eklenir.
+      Verilenler A3'teki `_grantItems`.
+    - Alt tür: Seviye tablosunun başına Level 1 satırı. Yazı tablodaki hücre, tabloda olmayan soyda
+      verinin SRD cümlesiyle yazılışı (direnç, skill, HP, yetenek artışı, cantrip). Cantrip'ler
+      satırda büyü kartı öğesi. 3. ve 5. seviye satırları bugünkü gibi (büyü kartı + günlük
+      kullanım). Verilenler'e direnç ve eylemler iner; cantrip ve duyu inmez (cantrip satırda,
+      Darkvision kartı türden geliyor, Drow'un 120 ft'i satır yazısında).
+    - `freeSrdClosed` += species, subspecies; `freeSrdPackVersion = 4`.
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    Species 48 → 5 (Creature Type · Size · Speed · Traits · Grants), Subspecies 48 → 3 (Parent
+    Species · Spells by Level · Grants). `speed_ft`'in etiketi "Walking Speed (ft)" → Speed.
+    Yeni satırlardan markdown olanlar `_srdMarkdownLines` (bugün yalnız Traits).
+  - **Çevirmen** ([content_translator.dart](../../flutter_app/lib/domain/services/content_translator.dart)):
+    Seviye tablosu satırının `text`'i ile Seviye tablosu ve Verilenler'deki yazı öğelerinin
+    `label` / `value`'su çevrilir; kart, kaynak adı ve ref'ler aynen kalır. Çıkarma aracı bu
+    metinleri free paketteki **her** kategoriden toplar: sınıf ve alt sınıf satırları da (Faz
+    7b'den beri İngilizceydi) kapsam testine girdi.
+  - **Türkçe:** 266 yeni anahtar. Sınıf (162) ve alt sınıf (63) satırları ile türlerin 10 Traits
+    yazısı öneri aracıyla (`suggest.dart`) parçaların mevcut çevirisinden kuruldu: satırda ad +
+    açıklama, Traits'te açılış cümlesi + `trait.json` / `creature-action.json` / `sense.json`.
+    Size satırları, 18 alt tür satırı ve feat'lerdeki üç yazı öğesi sözlükle elle çevrildi.
+  - Vault: `free_srd_pack`, `free_template`, `content_translator` notları; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - K10'un "trait çevirileri `species.json`'a kopyalanır" adımı, Traits yazısının tamamı tek
+    anahtar olduğundan, parçalardan kurulan tam yazının çevirisi olarak yapıldı. Ayrı paragraf
+    anahtarı eklenmedi (kaynakta olmadıkları için bayat sayılırlardı).
+  - Paragraflar ada göre sıralı. SRD'nin sırası 9 türün 8'inde aynı; Dragonborn'da SRD Draconic
+    Ancestry'yi başa alıyor.
+  - Eylem kartları (Breath Weapon, Adrenaline Rush…) SRD'de trait paragrafı olduğundan Traits
+    yazısına da girdi.
+  - 3. ve 5. seviye satırlarına hücre yazısı konmadı: hücre büyünün adı, büyü kartı öğesi zaten
+    gösteriyor. Goliath soylarının Seviye tablosu boş; boon'ları Verilenler'deki eylem kartı.
+  - Speed sayı alanı olarak kaldı (Monster'daki gibi yazıya dönmedi): SRD satırı "30 feet",
+    alan "30".
+- **K12, PDF karşılaştırması:** 9 Size satırı ve 6 lineage hücresi PDF'ten kopyalandı (Drow'un
+  hücresindeki sıfır genişlikli boşluk atıldı). Tiefling soylarının ve Drow / Wood Elf'in veriden
+  kurulacak yazısı hücreyle aynı çıkıyordu; hücre kullanıldı. Trait paragraflarının metni paketin
+  metni (K13); farklar §9.1'e eklendi (Ork Darkvision 60, Gnomish Lineage yok, High Elf cantrip'i
+  yok, kısaltılmış trait metinleri, SRD 5.1 soyları).
+- **Otomatik kapı:**
+  - G1 boş · G2, G3 yeşil (60 test) · G4 32 info, 0 warning, 0 error (A3 ile aynı).
+  - G5: `free_srd_pack_test` (A4 grubu: başlıklar ve tarzlar, Dwarf'ın Traits paragrafları ve
+    Verilenler'i, Human / Dwarf / Half-Elf Size, Drow satırları 1: hücre + Dancing Lights, 3:
+    Faerie Fire ×1, 5: Darkness ×1, Red Dragonborn direnci, Cloud Giant eylemi, Hill Dwarf
+    satırı, çıkan alanların yazı / satır / Verilenler taraması, S1; G7'de Species 5, Subspecies 3),
+    `content_translator_test` (free Seviye tablosu ve Verilenler) ve dokunulan dosyaların testleri
+    (`free_template`, `free_field_styles`, `free_srd_levels`, `free_grants`,
+    `package_free_template`, `srd_l10n_coverage`): 128/128. `free_template` ve `free_field_styles`'daki "ability_bonuses" denetimi alan
+    Species'ten de çıktığı için Magic Item'a taşındı.
+  - G6 (`entity_card_flush` hariç): 1966 geçti (A3'ün 1958'i + 8 yeni), 3 kırmızı; üçü de temel
+    çizgidekiyle aynı. Yeni kırmızı yok.
+  - G7: bekçi yeşil.
+  - G8: `check_pairs` 6911 / 6911, 0 FAIL, 191 UYARI (+11: hepsi parçalarda zaten kabul edilmiş
+    sözlük uyarısının tam yazıda tekrarı — Turn, Gnomish, Versatile — ya da yanlış alarm: Light,
+    Touch, uzunluk oranı); kapsam testi yeşil.
+- **Elle kontrol:** EA4.1–EA4.7. EA4.6'da sınıf olarak Barbarian (1. satır "**Hiddet.** …").
+
 ---
 
 #### A5 — Sınıf, Alt sınıf ve Geçmiş (§5.2, §5.3, §5.6)
@@ -880,6 +1090,105 @@ Magic Initiate zinciri; G7.
 **Çıkış kriteri:** sınıf ve geçmiş kartları SRD'deki gibi; Faz 7b'nin seviye kontrolleri çift
 kartsız aynı sonucu veriyor.
 
+**A5 sonucu** (2026-11-03, `0c68095e` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** S3 veriyle doğrulandı. 183 sınıf / alt sınıf satırı feat veriyor, 93'ü feat'in
+  yanında başka kart da (planla aynı). Hiçbir feat birden çok satırda yok, yani çakışma çıkmadı ve
+  soru gerekmedi. Kullanıcı "plandan devam et" ile onayladı; A1–A4'ün elle kontrolü açık.
+- **Yapılanlar:**
+  - **SRD metinleri** ([free_srd_texts.dart](../../flutter_app/lib/domain/services/free_srd_texts.dart)):
+    12 sınıfın "Becoming a…" kutusundaki çok sınıf satırı; veriden kurulamayan Core Traits
+    satırları (Fighter "Strength or Dexterity", Bard'ın skill ve çalgı satırı, Monk'un alet
+    satırı); Soldier'ın "Choose one kind of Gaming Set"i; 12 alt sınıfın giriş satırı. Hepsi
+    PDF'ten birebir.
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    - Sınıf: Primary Ability, Skill / Weapon / Tool Proficiencies satırları veriden, SRD'nin
+      yazımıyla ("Choose 2: …, or Survival", "Simple and Martial weapons"). Starting Equipment
+      SRD satırı oldu ("Choose A or B: (A) Greataxe, …, and 15 GP; or (B) 75 GP"; Fighter'da üç
+      şık). Becoming a…: kutunun 1. seviye kısmı ve çok sınıf kısmının ikinci satırı her sınıfta
+      aynı kalıp, büyü kullananlarda büyü yuvası cümlesiyle.
+    - **S3:** feat veren satır yalnız feat'i verir. Satırın diğer kartları feat'in
+      Verilenler'ine geçer: satırda aynı adlı feat varsa ona (Monk's Focus satırının üç eylemi
+      kendi feat'lerine), yoksa ilk feat'e. Feat'le aynı adlı trait düşer; ad karşılaştırmasında
+      parantezli ek ve büyük-küçük harf yok sayılır ("Weapon Mastery" ↔ "Weapon Mastery
+      (Barbarian)", "Lay on Hands (Pool)" ↔ "Lay On Hands"). Sonuç: 61 kopya trait düştü, 39 kart
+      feat'e geçti. Feat'in kendi bloğu aynı kartı zaten veriyorsa (Fast Hands) tekrar eklenmez.
+      Rage'in Verilenler'inde artık Rage eylemi var; öfke sırasındaki dirençler yine yok (R6).
+    - Druidic ve Thieves' Cant: kendi adlı 1. seviye satırında dil kartı.
+    - Geçmiş: Tool Proficiency satırı (araç adı ya da Soldier'ın seçimi), Equipment satırı
+      ("and" yok, SRD'deki gibi), yeni Verilenler: origin feat → Feats, araç → Tool
+      Proficiencies.
+    - Alt sınıf: üstteki açıklama SRD'nin giriş satırı ("Channel Rage into Violent Fury").
+      Sınıf ve geçmişte SRD'de giriş cümlesi yok, açıklama boşaldı (S1).
+    - `freeSrdClosed` += class, subclass, background; `freeSrdPackVersion = 5`.
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    - Class 30 → 14: Complexity · Primary Ability · Hit Point Die · Saving Throw Proficiencies ·
+      Skill / Weapon / Tool Proficiencies · Armor Training · Spellcasting Ability · Starting
+      Equipment · Becoming a … · Features · Cantrips · Prepared Spells. Caster Kind filtresi
+      alanla birlikte düştü.
+    - Subclass 9 → 4: Parent Class · Granted at Level · Flavor · Features.
+    - Background 14 → 6: Ability Scores · Feat · Skill Proficiencies · Tool Proficiency ·
+      Equipment · Grants.
+    - Yeni satırların tipi `_srdLineTypes`'tan (Traits ve Becoming a… markdown, Grants
+      Verilenler); A4'ün `_srdMarkdownLines`'ı bunun içine girdi.
+  - **Türkçe:** 94 yeni anahtar.
+    - Öneri aracıyla (`suggest.dart`), parçaların mevcut çevirisinden: sınıfta 50 (satırlar,
+      Starting Equipment, Becoming a…), geçmişte 27. Ekipman şıkları, eski seçim listesinin
+      etiket çevirisinden.
+    - Elle: 5 şema etiketi (Can Zarı, Büyü Yapma Kabiliyeti, Başlangıç Ekipmanı, "… Olmak",
+      Alet Yetkinliği), 12 alt sınıf giriş satırı, 12 çok sınıf satırı ve PDF'ten gelen 4 satır.
+    - `extract.dart` kapanan kategorinin açıklamasını da topluyor (alt sınıf giriş satırları).
+  - Vault: `free_srd_pack`, `free_template`, `extract`, `suggest` notları (`suggest`'e A4'ün
+    eksik kalan kurucuları da yazıldı); Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - **Çok sınıf önkoşulu (13) yazılmadı.** SRD'nin "Becoming a…" kutusunda değil; Character
+    Creation'ın genel kuralında ("at least 13 in the primary ability", R3). Primary Ability
+    satırı hangi yetenek olduğunu gösteriyor.
+  - Background'ın Tool Proficiency'si bağlantı yerine **yazı satırı** oldu: Soldier'ın aracı
+    veride yalnız bir grup anahtarı (`gaming_set`), bağlantı bunu tutamıyor (R4). Araç kartı
+    yine Verilenler'den karaktere iniyor. Alan sayısı 6.
+  - Core Traits satırları veriden kuruldu, PDF'ten değil (K13). Bu yüzden paketin skill, silah ve
+    ekipman sapmaları satırlarda görünüyor (§9.1).
+  - Satırlardaki "(see “Equipment”)" gibi bölüm göndermeleri PDF'teki gibi kaldı. PDF'ten alınan
+    metinler PDF'in kıvrık tırnak ve kesme işaretini (’ “ ”) taşıyor; veriden kurulanlar paketin
+    düz kesmesini.
+  - Hit Point Die bugünkü alan ("d12"); SRD "D12 per Barbarian level" yazıyor.
+  - Alt sınıfın Flavor alanı kaldı (§5.3). Metni paketin kısaltması, SRD paragrafı değil (K13).
+  - EA5.6: pakette Magic Initiate'in kendi Verilenler'i boş (büyüleri seçim, R6). Zincir, sınıf
+    feat'lerinde görülüyor: Fighter 1'de Second Wind eylemi Second Wind feat'inden geliyor.
+- **K12, PDF karşılaştırması:**
+  - Birebir: 12 sınıfın Primary Ability satırı ve "Becoming a…" kutusu; Barbarian, Cleric,
+    Druid, Monk, Paladin, Ranger, Sorcerer ve Warlock'un skill satırı; Barbarian, Cleric,
+    Paladin, Rogue ve Wizard'ın Starting Equipment satırı; Druid ve Rogue'un araç satırı; 12 alt
+    sınıf giriş satırı.
+  - Farklı (paketten, K13): Fighter / Rogue / Wizard skill listesi, Monk / Rogue silah satırı,
+    7 sınıfın ekipman adları, geçmişlerin ekipman açıklamaları (§9.1).
+- **Bulgu:** `free_srd_pack_test`'in A1 testi ("stored free data shows what the SRD read
+  showed") kapanan kategorilerde hiçbir alanı karşılaştırmıyor. Yerleşik şemanın alan kimlikleri
+  her üretimde yeni; kopya başka bir üretimden geldiği için kimlik eşleşmiyor. A2'den beri böyle.
+  Kapanan kategorilerin kendi testleri olduğundan bırakıldı.
+- **Otomatik kapı:**
+  - G1 boş · G2, G3 yeşil (60 test) · G4 32 info, 0 warning, 0 error (A4 ile aynı).
+  - G5: `free_srd_pack_test` (A5 grubu, 11 test: başlıklar ve tipler; Barbarian'ın Core Traits
+    satırları ve Becoming a… kutusu PDF'le birebir; Fighter'ın üç şıklı Starting Equipment'ı;
+    S3: Rage satırı yalnız feat, Rage eylemi feat'te, Monk's Focus / Fast Hands, bütün satırlarda
+    feat'in yanında kart kalmıyor ve her kart ya düştü ya da feat'te (39 / 61); Druidic ve
+    Thieves' Cant; Acolyte ve Soldier; R3 taraması; S1; **Aria senaryoları dönüşmüş veriyle**:
+    Fighter 1 → 2 → Wizard, çift kart yok, Second Wind / Action Surge / slotlar / Arcane Recovery;
+    Barbarian 1 Rage feat'i ve eylemi, dirençsiz; Barbarian 8 Rage 4; Acolyte → Magic Initiate ve
+    araç; G7'de Class 14, Subclass 4, Background 6) ve dokunulan dosyaların testleri
+    (`free_template`, `free_field_styles`, `free_srd_levels`, `free_grants`,
+    `content_translator`, `package_free_template`, `srd_l10n_coverage`): 139/139. A3'ün R5 testi
+    satırdan gelen öğeleri (`srd-r…`) ayırıyor; Rage testi artık eylemi bekliyor.
+  - G6 (`entity_card_flush` hariç): 1977 geçti (A4'ün 1966'sı + 11 yeni), 3 kırmızı; üçü de
+    temel çizgidekiyle aynı. Yeni kırmızı yok.
+  - G7: bekçi yeşil; kopyada tanımsız dolu alan artık yalnız Monster / Animal'da (A6).
+  - G8: `check_pairs` 7005 / 7005, 0 FAIL, 192 UYARI (+1: alt sınıf giriş satırında uzunluk oranı,
+    yanlış alarm); kapsam testi yeşil.
+- **Elle kontrol:** EA5.1–EA5.7. EA5.3'te Fighter 1'de özette Weapon Mastery trait'i değil
+  Weapon Mastery (Fighter) feat'i; EA5.6'da zinciri Fighter / Barbarian satırlarında gör
+  (Magic Initiate'in Verilenler'i boş).
+
 ---
 
 #### A6 — Canavar, Hayvan ve Eylem (§5.10, §5.11)
@@ -913,6 +1222,77 @@ Warrior, Sprite (DC yazısı), Wolf; `free_encounter` testleri aynı; G7.
 | EA6.5 | TR; yeni dünya; R turu (R5). | — |
 
 **Çıkış kriteri:** stat blokları SRD'deki gibi; encounter aynı çalışıyor.
+
+**A6 sonucu** (2026-11-03, `0c68095e` + çalışma ağacı; Linux, Flutter 3.47; elle kontrol bekliyor):
+
+- **Faz başı:** fazın dayandığı kararlar §5.10, §5.11, R4 ve S1; ayrı bir onay gerekmiyordu.
+  Kullanıcı "devam et" ile başlattı; A1–A5'in elle kontrolü açık.
+- **Yapılanlar:**
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    - Canavar / Hayvan: `speed` SRD satırı ("40 ft., Climb 40 ft., Fly 80 ft.", "5 ft., Fly 40
+      ft. (hover)"; sıra Burrow, Climb, Fly, Swim). Düz XP Savaş değerleri bloğuna girdi; AC / HP
+      / İnisiyatif A1'deki gibi bloktan, düz alanlar artık veride yok.
+    - Eylem: metnin başına SRD başlığındaki sınır: 16 kartta "(Recharge 5–6). ", 9 kartta
+      "(N/Day). ", Ankheg'de "(1/Day). " (uzun dinlenme = SRD'nin X/Day'i), Dragonborn'un Breath
+      Weapon'ında "(Recharge after a Short or Long Rest). ". Metinde zaten yazanlar (Fire Breath,
+      Web, Mind Blast…; Relentless Endurance'ın "Once per Long Rest"i) dokunulmadı. 9 kartta DC:
+      kurtarma satırı olan 5 metalik nefese "DC 14, " satırın içine, diğer 4'üne (Wing Attack,
+      iki Engulf, Sprite'ın Touch'ı) başa "*Dexterity Saving Throw:* DC 19. ".
+    - `freeSrdClosed` += monster, animal, creature-action; `freeSrdPackVersion = 6`.
+  - **Şema** ([free_template.dart](../../flutter_app/lib/domain/services/free_template.dart)):
+    - Monster / Animal 45 → 27 (`_srdStatBlock`): Size · Creature Type · Tags · Alignment · Combat
+      Stats · HP Dice · Speed · Ability Scores · Saving Throws · Skills · Resistances ·
+      Vulnerabilities · Damage Immunities · Condition Immunities · Senses · Passive Perception ·
+      Languages · Telepathy · CR · Proficiency Bonus · Traits · Actions · Bonus Actions ·
+      Reactions · Legendary Action Uses · Legendary Actions · Gear. Senses'in etiketi "Senses
+      (sense + range)" → Senses.
+    - Kart alanları grup grup çizdiği için gruplar da SRD sırasına girdi: Combat, Ability
+      Scores'un üstünde; Speed Combat'ta; Saves ve Skills Ability Scores'ta (SRD'nin stat
+      tablosu kurtarmaları da gösteriyor).
+    - Creature Action 20 → 3: Action Type · Damage Dice · Description; Source filtresi alanla
+      birlikte düştü.
+  - **Türkçe:** 129 yeni anahtar, hepsi öneri aracıyla (`suggest.dart`): 98 Speed satırı
+    ("40 ft., Tırmanma 40 ft., Uçma 80 ft."; sözcükler `_schema`'daki çevirilerden) ve 31 eylem
+    metni (asıl metnin mevcut çevirisi + "(Yenilenme 5–6). " / "(Günde 3). " / "(Kısa ya da Uzun
+    Dinlenmeden sonra yenilenir). " ve "*Çeviklik Kurtarma Zarı:* DC 14").
+  - Vault: `free_srd_pack`, `free_template`, `suggest` notları; Vault-Changelog.
+- **Uygulamada verilen kararlar ve plandan farklar:**
+  - Sınır metnin başına "(Recharge 5–6). " olarak yazıldı: SRD bunu başlıkta adla birlikte
+    yazıyor ("Acid Breath (Recharge 5–6)."), free kartta ad başlıkta, metin altta.
+  - Recharge'ı metnin sonunda yazan kartlar ("… (Recharge 5–6).") yerinde bırakıldı; taşınsaydı
+    çevirileri yeni anahtar isterdi.
+  - DC yazımı iki biçimde: kurtarma satırı varsa SRD'deki gibi satırın içine, yoksa SRD'nin
+    kurtarma satırı başa (SRD'deki Engulf da "Strength Saving Throw: DC 15, …" diye başlıyor).
+  - Gear SRD'de Immunities ile Senses arasında; grubu Traits & Actions olduğu için kartın sonunda
+    kaldı (Defenses grubuna girmesi başlığıyla çelişirdi).
+  - Boşalan Spellcasting grubu kopyada duruyor (alanı olmayan grup kartta çizilmiyor).
+  - Eski iki test kopyanın A6 öncesi hâlini sabitliyordu: `free_template_test` (canavarın grup
+    sırası) ve `free_sheet_test` (`initiative_score`, `ac_note`, `xp`'nin kopyada olması); A6'ya
+    göre güncellendi.
+- **K12, PDF karşılaştırması:** Speed satırlarının 98 farklı yazısından 79'u PDF'te birebir
+  ("Speed 40 ft., Climb 40 ft., Fly 80 ft." Adult Red Dragon'da), 19'u paket sapması (§9.1).
+  Recharge / X/Day / "Recharge after a Short or Long Rest" yazımları PDF'in "Using a Monster"
+  bölümündeki notasyonla aynı. Eylem metinlerinin kendisi paketin metni (K13).
+- **Otomatik kapı:**
+  - G1 boş · G2, G3 yeşil · G4 32 info, 0 warning, 0 error (A5 ile aynı).
+  - G5: `free_srd_pack_test` (A6 grubu, 7 test: başlıklar, alan ve grup sırası; Adult Red
+    Dragon'ın Speed'i, bloğu (XP 18000) ve efsanevi eylemleri, Fire Breath'in kendi Recharge'ı,
+    Commanding Presence'a DC yazılmaması; Goblin / Banshee / Adult White Dragon / Specter / Wolf
+    Speed satırları; Acid Breath, Repulsion Breath, Lightning Strike, Acid Spray ve Sprite'ın
+    Touch'ı; R3 / R4 taraması: 528 eylemde saldırı bonusu, erişim, menzil, DC, Recharge ve N/Day
+    metinde; encounter: Goblin Warrior 7 / 7 HP, AC 12, 1d20+2, Wolf 11; S1; G7'de Monster /
+    Animal 27, Creature Action 3) ve dokunulan dosyaların testleri (`free_template`,
+    `free_sheet`, `free_field_styles`, `free_srd_levels`, `free_grants`, `free_encounter`,
+    `content_translator`, `package_free_template`, `srd_l10n_coverage`, `srd_l10n_check_pairs`):
+    199/199.
+  - G6 (`entity_card_flush` hariç): 1984 geçti (A5'in 1977'si + 7 yeni), 3 kırmızı; üçü de
+    temel çizgidekiyle aynı. Yeni kırmızı yok.
+  - G7: bekçi yeşil; kopyada tanımsız dolu alan artık **hiç** yok (A1'den beri kalan Monster /
+    Animal düz AC / HP / İnisiyatif bitti).
+  - G8: `check_pairs` 7134 / 7134, 0 FAIL, 194 UYARI (+2: Blinded / Deafened sözlük uyarısının
+    yeni metinde tekrarı, asıl metinlerde zaten kabul edilmiş); kapsam testi yeşil.
+- **Elle kontrol:** EA6.1–EA6.5. EA6.2'de Sprite'ın Touch'ı ve Fire Breath'e de bak (Fire
+  Breath'te Recharge metnin sonunda, diğer nefeslerde başında).
 
 ---
 

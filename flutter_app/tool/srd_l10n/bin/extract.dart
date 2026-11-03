@@ -166,13 +166,38 @@ Map<String, List<String>> collectSrdTexts() {
       add('_schema', f.label);
     }
   }
+  // Level table rows and text items (`ContentTranslator.value`) in every
+  // category the free package carries; text lines in the closed ones.
+  void addItems(String slug, Object? items) {
+    for (final i in items is List ? items : const []) {
+      if (i is Map && i['kind'] == 'style') {
+        add(slug, i['label']);
+        add(slug, i['value']);
+      }
+    }
+  }
+
   for (final c in cards.values) {
-    if (!freeSrdClosed.contains(c.categorySlug)) continue;
+    if (!inFreeSrd(c.categorySlug)) continue;
+    final closed = freeSrdClosed.contains(c.categorySlug);
     final fields = freeSrdFields(c, cards);
+    // A subclass's SRD line (S1); the other closed ones have none.
+    if (closed) add(c.categorySlug, freeSrdDescription(c));
     for (final f in free[c.categorySlug]!.fields) {
       final v = fields[f.fieldKey];
-      if (f.fieldType == FieldType.text || f.fieldType == FieldType.markdown) {
-        add(c.categorySlug, v, v is String && _componentLine.hasMatch(v));
+      switch (f.fieldType) {
+        case FieldType.text || FieldType.markdown when closed:
+          add(c.categorySlug, v, v is String && _componentLine.hasMatch(v));
+        case FieldType.progressionTable:
+          for (final r in v is List ? v : const []) {
+            if (r is! Map) continue;
+            add(c.categorySlug, r['text']);
+            addItems(c.categorySlug, r['items']);
+          }
+        case FieldType.grantHolder:
+          addItems(c.categorySlug, v);
+        default:
+          break;
       }
     }
   }

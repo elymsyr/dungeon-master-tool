@@ -73,7 +73,14 @@ void main() {
         final from = froms[i];
         final to = srd.categories[i];
         expect(to.slug, from.slug);
-        expect(to.fieldGroups, from.fieldGroups);
+        // A stat block's groups follow the SRD's order (free_srd_pack_test).
+        expect(
+          {for (final g in to.fieldGroups) g.groupId},
+          {for (final g in from.fieldGroups) g.groupId},
+        );
+        if (!{'monster', 'animal'}.contains(from.slug)) {
+          expect(to.fieldGroups, from.fieldGroups);
+        }
         // Laid out as the SRD writes it: free_srd_pack_test.
         if (freeSrdClosed.contains(from.slug)) continue;
         final flat = {'monster', 'animal'}.contains(from.slug);
@@ -162,8 +169,8 @@ void main() {
       expect(bound('monster', 'save_bonuses'), saves);
       expect(bound('npc', 'saving_throws'), saves);
       expect(bound('monster', 'stat_block'), presets['stat_block']!.fieldId);
-      // Species bonuses have no modifier: not the stat preset.
-      expect(bound('feat', 'ability_bonuses'), isNull);
+      // Granted bonuses have no modifier: not the stat preset.
+      expect(bound('magic-item', 'ability_bonuses'), isNull);
       // Copying a free template keeps its presets.
       final again = copyAsFreeTemplate(srd, id: 'c2', name: 'n', now: _now);
       expect(again.presets, srd.presets);

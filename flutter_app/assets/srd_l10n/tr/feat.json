@@ -747,5 +747,8 @@
   "Fiendish Resilience — Slashing": "Zebani Direnci — Kesici",
   "Resistance to Slashing damage.": "Kesici hasara karşı Direnç.",
   "Fiendish Resilience — Thunder": "Zebani Direnci — Ses",
-  "Resistance to Thunder damage.": "Ses hasarına karşı Direnç."
+  "Resistance to Thunder damage.": "Ses hasarına karşı Direnç.",
+  "Max = CHA modifier (min. 1)": "Azami = KAR katkısı (en az 1)",
+  "Hunter's Mark (Free Casts)": "Avcının İşareti (Ücretsiz Kullanımlar)",
+  "Max = WIS modifier (min. 1)": "Azami = İRF katkısı (en az 1)"
 }

@@ -110,6 +110,21 @@ class ContentTranslator {
         return [
           for (final r in v) r is Map ? row(r, const ['name', 'description']) : r,
         ];
+      // Free styles (SRD-FREE-ALANLAR A4): a Level table row's text and the
+      // text items of it and of Grants. Names and refs stay.
+      case FieldType.progressionTable when hasScope && v is List:
+        return [
+          for (final r in v)
+            if (r is Map)
+              {
+                ...row(r, const ['text']),
+                if (r['items'] is List) 'items': _items(r['items'] as List, t),
+              }
+            else
+              r,
+        ];
+      case FieldType.grantHolder when hasScope && v is List:
+        return _items(v, t);
       case FieldType.equipmentChoiceGroups || FieldType.playerChoices
           when hasScope && v is List:
         return [
@@ -130,4 +145,16 @@ class ContentTranslator {
         return v;
     }
   }
+
+  static List _items(List items, Object? Function(Object?) t) => [
+    for (final i in items)
+      if (i is Map && i['kind'] == 'style')
+        {
+          ...i,
+          for (final k in const ['label', 'value'])
+            if (i[k] is String) k: t(i[k]),
+        }
+      else
+        i,
+  ];
 }

@@ -362,9 +362,11 @@ void main() {
       for (final key in ['ac', 'hp_average', 'initiative_modifier']) {
         expect(field('monster', key), isNull, reason: key);
       }
-      for (final key in ['hp_dice', 'initiative_score', 'ac_note', 'xp']) {
-        expect(field('monster', key), isNotNull, reason: key);
+      // SRD-FREE-ALANLAR A6: the score and the flat XP go too.
+      for (final key in ['initiative_score', 'ac_note', 'xp']) {
+        expect(field('monster', key), isNull, reason: key);
       }
+      expect(field('monster', 'hp_dice'), isNotNull);
       final goblin = {'ac': 12, 'hp_average': 7, 'initiative_modifier': 2};
       final v = freeFieldValue(field('monster', 'combat_stats')!, goblin);
       expect(v, {'hp': 7, 'max_hp': 7, 'ac': 12, 'initiative': '1d20+2'});
