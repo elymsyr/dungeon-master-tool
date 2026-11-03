@@ -102,8 +102,11 @@ void main() {
           if (freeSrdClosed.contains(cat.slug) && !ids.contains(f.fieldId)) {
             continue;
           }
-          // The Armor table's don / doff times (A7) were in no card.
-          if (cat.slug == 'armor-category' && f.fieldKey == 'effects') continue;
+          // The don / doff times (A7) and the lookups' SRD texts (A8) were
+          // in no card.
+          if (f.fieldKey == 'effects' && srdLookupEffects.containsKey(cat.slug)) {
+            continue;
+          }
           if (!same(shown(f, s), shown(f, today))) {
             diffs.add('${c.categorySlug} / ${c.name} / ${f.fieldKey}');
           }
@@ -210,6 +213,39 @@ void main() {
         'ammunition': 4,
         'mount': 4,
         'vehicle': 9,
+        'ability': 3,
+        'skill': 4,
+        'damage-type': 4,
+        'condition': 3,
+        'creature-type': 3,
+        'language': 5,
+        'weapon-property': 3,
+        'weapon-mastery': 3,
+        'spell-school': 3,
+        'magic-item-category': 3,
+        'sense': 3,
+        'hazard': 3,
+        'arcane-focus': 3,
+        'druidic-focus': 3,
+        'holy-symbol': 3,
+        'size': 6,
+        'rarity': 6,
+        'coin': 4,
+        'lifestyle': 4,
+        'alignment': 3,
+        'weapon-category': 3,
+        'armor-category': 3,
+        'tool-category': 3,
+        'feat-category': 3,
+        'action': 3,
+        'area-shape': 3,
+        'attitude': 3,
+        'illumination': 3,
+        'travel-pace': 3,
+        'plane': 3,
+        'speed-type': 3,
+        'cover': 3,
+        'tier-of-play': 3,
       };
       expect(freeSrdClosed, targets.keys.toSet());
       expect({for (final s in targets.keys) s: cats[s]!.fields.length}, targets);
@@ -1313,6 +1349,110 @@ void main() {
         expect(c.description, c.fields['effects'], reason: c.name);
         expect(freeSrdDescription(c), '', reason: c.name);
       }
+    });
+  });
+
+  group('A8 lookups, player card, NPC and the dropped categories', () {
+    Map<String, dynamic> of(String slug, String name) =>
+        converted[id(slug, name)]!;
+    Set<String> keys(String slug) => {
+      for (final f in cats[slug]!.fields) f.fieldKey,
+    };
+
+    test('the lookups lose the icon, the colour and the engine fields', () {
+      for (final c in srdFreeTemplate.categories) {
+        expect(keys(c.slug), isNot(contains('icon_name')), reason: c.slug);
+        expect(keys(c.slug), isNot(contains('color')), reason: c.slug);
+      }
+      expect(keys('condition'), {'abbreviation', 'summary', 'effects'});
+      expect(keys('weapon-mastery'), {'abbreviation', 'summary', 'effects'});
+      expect(keys('damage-type'), contains('example_sources'));
+      expect(keys('size'), containsAll(
+          ['space_ft', 'hit_die_size', 'carrying_multiplier']));
+      expect(keys('language'), containsAll(['tier', 'typical_speakers']));
+    });
+
+    test('Paralyzed, Grappled, Finesse and Topple are the PDF\'s', () {
+      expect(
+        of('condition', 'Paralyzed')['effects'],
+        allOf(
+          startsWith('While you have the Paralyzed condition, you experience '
+              'the following effects.\n\n**Incapacitated.** You have the '
+              'Incapacitated condition.'),
+          endsWith('**Automatic Critical Hits.** Any attack roll that hits '
+              'you is a Critical Hit if the attacker is within 5 feet of '
+              'you.'),
+        ),
+      );
+      expect(
+        of('condition', 'Grappled')['effects'],
+        endsWith('**Movable.** The grappler can drag or carry you when it '
+            'moves, but every foot of movement costs it 1 extra foot unless '
+            'you are Tiny or two or more sizes smaller than it.'),
+      );
+      expect(
+        of('weapon-property', 'Finesse')['effects'],
+        'When making an attack with a Finesse weapon, use your choice of '
+        'your Strength or Dexterity modifier for the attack and damage rolls. '
+        'You must use the same modifier for both rolls.',
+      );
+      expect(
+        of('weapon-mastery', 'Topple')['effects'],
+        'If you hit a creature with this weapon, you can force the creature '
+        'to make a Constitution saving throw (DC 8 plus the ability modifier '
+        'used to make the attack roll and your Proficiency Bonus). On a '
+        'failed save, the creature has the Prone condition.',
+      );
+    });
+
+    test('every condition and mastery has its text; Improvised none', () {
+      final none = [
+        for (final c in raw.values)
+          if (srdLookupEffects[c.categorySlug] case final texts?)
+            if (!texts.containsKey(c.name)) c.name,
+      ];
+      expect(none, ['Improvised']);
+    });
+
+    test('what a dropped flag said is in the text (R3)', () {
+      for (final c in raw.values.where((c) => c.categorySlug == 'condition')) {
+        final text = converted[c.id]!['effects'] as String;
+        if (c.fields['grants_incapacitated'] == true) {
+          expect(text, contains('the Incapacitated'), reason: c.name);
+        }
+        if (c.fields['stacks'] == true) {
+          expect(text, contains('cumulative'), reason: c.name);
+        }
+      }
+    });
+
+    test('the engine and Starter Bundle categories leave the copy', () {
+      for (final slug in ['character-state', 'resource-pool', 'body-slot',
+          'starter-bundle']) {
+        expect(cats.containsKey(slug), isFalse, reason: slug);
+        expect(inFreeSrd(slug), isFalse);
+      }
+    });
+
+    test('the player card and NPC lose the engine helpers', () {
+      expect(keys('player-character'),
+          isNot(anyOf(contains('current_conditions'), contains('extra_hp'),
+              contains('trinket_ref'))));
+      expect(keys('player-character'), contains('trinket'));
+      expect(keys('npc'), isNot(contains('initiative_modifier')));
+    });
+
+    test('the guide and the chips point at fields the card has', () {
+      final pc = cats['player-character']!;
+      final have = {...keys('player-character'), ownerChipField};
+      expect([for (final s in guideOf(pc)) s.field].where((f) => !have.contains(f)),
+          isEmpty);
+      expect([for (final c in sheetChipsOf(pc)) c.field]
+          .where((f) => !have.contains(f)), isEmpty);
+      final step = guideOf(pc).firstWhere((s) => s.id == 'srd-higher-levels');
+      expect(step.field, 'level');
+      expect(step.text, contains('| 11–16 | 5,000 gp plus 1d10 × 250 GP plus '
+          'normal starting equipment | 2 Common, 3 Uncommon, 1 Rare |'));
     });
   });
 }

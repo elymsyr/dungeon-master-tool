@@ -14,6 +14,7 @@ import 'free_encounter.dart' show builtinBattlemapFields, encounterSection;
 import 'free_field_styles.dart';
 import 'free_grants.dart' show LevelMode;
 import 'free_srd_levels.dart';
+import 'free_srd_texts.dart' show srdStartingAtHigherLevels;
 import 'template_edit.dart' show playerCardFieldKey, syncPresets;
 
 /// The one gate between the built-in and the free code paths
@@ -112,6 +113,10 @@ Iterable<FieldSchema> _srdCopyFields(
   FieldSchema f,
   EntityCategorySchema cat,
 ) sync* {
+  if (_srdDroppedKeys.contains(f.fieldKey) ||
+      (_srdDroppedFields[cat.slug]?.contains(f.fieldKey) ?? false)) {
+    return;
+  }
   if (_flatCombatSlugs.contains(cat.slug) &&
       _flatCombatKeys.contains(f.fieldKey)) {
     // The block takes the place of the first of them.
@@ -359,6 +364,32 @@ const _srdDroppedSlugs = {
   'duration-unit',
   'casting-time-unit',
   'casting-component',
+  // The engine's keys (`state:raging`, `pool:rage_uses`); the pools are
+  // named in the Grants. No SRD body slots; the guide holds the bundles.
+  'character-state',
+  'resource-pool',
+  'body-slot',
+  'starter-bundle',
+};
+
+/// Fields the SRD copy leaves out of a category it does not lay out
+/// (§5.13, §5.14): empty, or the engine's. `icon_name` / `color` go from
+/// every lookup.
+const _srdDroppedKeys = {'icon_name', 'color'};
+const _srdDroppedFields = {
+  'condition': {'stacks', 'ends_on', 'grants_incapacitated'},
+  'weapon-property': {'mechanic_kind'},
+  'weapon-mastery': {'effect_kind', 'effect_value', 'save_ability'},
+  'damage-type': {'is_physical', 'bypassable_by_magical'},
+  'creature-type': {'default_skills_note'},
+  'language': {'script'},
+  'magic-item-category': {'crafting_tool_ref'},
+  'sense': {'default_range_ft'},
+  'ability': {'order_index'},
+  'skill': {'examples'},
+  // The Combat stats block holds the conditions and the initiative.
+  'player-character': {'current_conditions', 'extra_hp', 'trinket_ref'},
+  'npc': {'initiative_modifier'},
 };
 
 /// The categories the SRD copy lays out as the SRD writes them
@@ -790,6 +821,11 @@ const List<Map<String, dynamic>> _srdGuide = [
     'field': 'inventory',
     'text': '**Equipment.** Take your class\'s and background\'s starting '
         'equipment, or their gold instead (write it under Currency).',
+  },
+  {
+    'id': 'srd-higher-levels',
+    'field': 'level',
+    'text': srdStartingAtHigherLevels,
   },
   {
     'id': 'srd-spells',

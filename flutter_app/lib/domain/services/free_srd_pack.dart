@@ -14,7 +14,7 @@ import 'free_template.dart' show srdFreeTemplate;
 
 /// Bumped whenever [freeSrdFields] writes something new: the free package
 /// re-seeds on a change (`SrdCorePackageBootstrap._ensureFree`).
-const freeSrdPackVersion = 7;
+const freeSrdPackVersion = 8;
 
 /// The categories finished so far (SRD-FREE-ALANLAR §11): their cards hold
 /// only the copy's fields and no description of their own (S1). One more
@@ -40,6 +40,45 @@ const freeSrdClosed = {
   'ammunition',
   'mount',
   'vehicle',
+  ...freeSrdLookups,
+};
+
+/// The lookups with cards (A8, §5.14): `icon_name` / `color` and the
+/// engine's fields go; a condition, property and mastery gets its SRD text.
+const freeSrdLookups = {
+  'ability',
+  'skill',
+  'damage-type',
+  'condition',
+  'creature-type',
+  'language',
+  'weapon-property',
+  'weapon-mastery',
+  'spell-school',
+  'magic-item-category',
+  'sense',
+  'hazard',
+  'arcane-focus',
+  'druidic-focus',
+  'holy-symbol',
+  'size',
+  'rarity',
+  'coin',
+  'lifestyle',
+  'alignment',
+  'weapon-category',
+  'armor-category',
+  'tool-category',
+  'feat-category',
+  'action',
+  'area-shape',
+  'attitude',
+  'illumination',
+  'travel-pace',
+  'plane',
+  'speed-type',
+  'cover',
+  'tier-of-play',
 };
 
 final Map<String, EntityCategorySchema> _categories = {
@@ -77,9 +116,7 @@ Map<String, dynamic> freeSrdFields(Entity card, Map<String, Entity> byId) {
     if (srdToolCrafts[card.name] case final craft?
         when card.categorySlug == 'tool')
       'craft': craft,
-    if (srdArmorDonDoff[card.name] case final time?
-        when card.categorySlug == 'armor-category')
-      'effects': time,
+    'effects': ?srdLookupEffects[card.categorySlug]?[card.name],
   };
   final out = closed
       ? <String, dynamic>{}
