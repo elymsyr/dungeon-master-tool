@@ -6,9 +6,9 @@ import 'entity_ref.dart';
 
 /// The SRD copy's Level tables and Grants, read from the SRD shapes they
 /// replaced (docs/free-template/DESIGN.md §16.3). The SRD pack never
-/// changes (ROADMAP K1): a free field whose `styleConfig` names a kind
-/// below under `srd_read` shows what is built here until the card is
-/// edited, then it stores its own rows. The output is the free value shape
+/// changes (ROADMAP K1): the free SRD converter writes what is built here
+/// into a free field whose `styleConfig` names a kind below under
+/// `srd_read` (`srdFieldValue`). The output is the free value shape
 /// (`free_grants.dart`); nothing here computes a sheet value (D2).
 
 /// A class / subclass `features` table → Level table rows; the granted

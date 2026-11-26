@@ -3,7 +3,7 @@ import '../entities/schema/entity_category_schema.dart';
 import '../entities/schema/field_schema.dart';
 import 'entity_ref.dart';
 import 'free_field_styles.dart'
-    show RestEffect, RestKind, afterRest, freeFieldValue;
+    show RestEffect, RestKind, afterRest;
 
 /// The free template's level system (docs/free-template/DESIGN.md §8.4,
 /// §8.5, §8.7, §11): Grants, the Level table and the Pool. A card passes
@@ -555,7 +555,7 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
     // The card's own Grants count before its rows (D39).
     for (final f in cat.fields) {
       if (f.fieldType != FieldType.grantHolder) continue;
-      final value = freeFieldValue(f, card.fields, byId: ctx.entities);
+      final value = card.fields[f.fieldKey];
       for (final item in grantItemsOf(value)) {
         emit(item, null);
       }
@@ -563,7 +563,7 @@ GrantResult computeGrants(Map<String, dynamic> fields, GrantContext ctx) {
     final table = levelTableOf(cat);
     if (table != null && level != null) {
       reached[id] = level;
-      final rows = freeFieldValue(table, card.fields, byId: ctx.entities);
+      final rows = card.fields[table.fieldKey];
       for (final row in levelRowsOf(rows)) {
         if (row.level > level) break;
         if (row.text.trim().isNotEmpty) {

@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_grants.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-20
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -30,7 +30,7 @@ tags: [file]
 - Pool values: `poolResourceValue(resource, stored)`, `poolStoredWith`, `poolAfterRest`.
 
 ## Dependencies & Links
-- Depends on: [[entity]], [[entity_category_schema]], [[field_schema]], [[entity_ref]] (`resolveEntityRef`), [[free_field_styles]] (`RestEffect`, `RestKind`, `afterRest`, `freeFieldValue` — a card's Grants and Level table are read through it, so an SRD copy's SRD shapes arrive via [[free_srd_levels]])
+- Depends on: [[entity]], [[entity_category_schema]], [[field_schema]], [[entity_ref]] (`resolveEntityRef`), [[free_field_styles]] (`RestEffect`, `RestKind`, `afterRest`, — a card's Grants and Level table are read as stored since SRD-FREE-ALANLAR A10; [[free_srd_pack]] wrote the SRD shapes as free rows)
 - Used by: [[free_character_sheet]] (level up, grants on a list change, captions, Pool, rests), `entity_card.dart` (card carrier: a list change in a free world settles its cards' Grants, its Pool, reached rows), `free_grant_widgets.dart` (Grants and Level table card widgets, item dialog), `free_style_field_widgets.dart` (`PoolFieldWidget`), `free_level_dialogs.dart` (level up, summary, levels, take-back), [[template_edit]] (once per category, dependency warnings)
 - Domain map: [[World-and-Content]]
 - Spec / reference: `docs/free-template/DESIGN.md` §8.4–§8.7, §10.3, §11, §12; `docs/free-template/ROADMAP.md` Faz 7a

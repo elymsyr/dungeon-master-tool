@@ -4,6 +4,7 @@ import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/services/free_field_styles.dart';
 import 'package:dungeon_master_tool/domain/services/free_grants.dart';
 import 'package:dungeon_master_tool/domain/services/free_srd_levels.dart';
+import 'package:dungeon_master_tool/domain/services/free_srd_pack.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,7 +17,15 @@ void main() {
     name: 'SRD copy',
     now: '2026-10-12T00:00:00.000Z',
   );
-  final entities = buildBuiltinSrdEntities();
+  // The cards as the free package stores them (A10: no read-time SRD
+  // conversion; the converter writes the free shapes).
+  final raw = buildBuiltinSrdEntities();
+  final entities = {
+    for (final e in raw.values)
+      e.id: inFreeSrd(e.categorySlug)
+          ? e.copyWith(fields: freeSrdFields(e, raw))
+          : e,
+  };
   final player = srd.categories.firstWhere((c) => c.isPlayerCard == true);
   final ctx = GrantContext(
     carrier: player,
@@ -70,7 +79,7 @@ void main() {
       const own = [
         {'_id': 'r1', 'level': 1, 'text': 'mine'},
       ];
-      expect(freeFieldValue(f, {'features': own}, byId: entities), own);
+      expect(srdFieldValue(f, {'features': own}, byId: entities), own);
       expect(isSrdLevelShape(null), isTrue);
       expect(isSrdLevelShape(own), isFalse);
     });
@@ -83,7 +92,7 @@ void main() {
       final c = take({'level': 1}, 'class_refs', fighter);
       final added = {for (final g in c.added) nameOf(g.cardId): g.listKey};
       expect(added['Second Wind'], isNotNull);
-      expect(added['Weapon Mastery'], isNotNull);
+      expect(added['Weapon Mastery (Fighter)'], isNotNull);
       expect(added, isNot(contains('Action Surge')));
       expect(
         c.fields['bonus_action_refs'],
@@ -202,7 +211,11 @@ void main() {
         ...at3.fields,
         'subspecies_ref': id('subspecies', 'High Elf'),
       }, ctx);
-      expect(high.stale, [faerie]);
+      // Drow's level 1 cantrip goes with it (SRD 5.2.1 Elven Lineages).
+      expect(
+        high.stale,
+        unorderedEquals([id('spell', 'Dancing Lights'), faerie]),
+      );
       expect(poolMax(high.after, 'Faerie Fire'), isNull);
     });
 

@@ -102,7 +102,7 @@ List<Entity> freeSrdTrinkets(String Function(int roll) id) => [
 bool inFreeSrd(String slug) => _categories.containsKey(slug);
 
 /// [card]'s fields as the free template shows them: what
-/// `freeFieldValue` reads out of the SRD shapes (Level tables, Grants,
+/// `srdFieldValue` reads out of the SRD shapes (Level tables, Grants,
 /// the Combat stats block) and the SRD lists a markdown field shows as
 /// text, written into the data (A1); a closed category's lines in the
 /// SRD's own words, and nothing the copy does not declare. An SRD value
@@ -135,7 +135,7 @@ Map<String, dynamic> freeSrdFields(Entity card, Map<String, Entity> byId) {
       ? <String, dynamic>{}
       : Map<String, dynamic>.from(card.fields);
   for (final f in cat.fields) {
-    var v = freeFieldValue(f, src, byId: byId);
+    var v = srdFieldValue(f, src, byId: byId);
     if (closed && f.fieldType == FieldType.grantHolder) {
       final items = [
         ...?(v as List?),

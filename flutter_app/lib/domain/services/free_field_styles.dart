@@ -5,8 +5,8 @@ import 'template_edit.dart' show keyFromLabel;
 
 /// The free template's combined styles: Table (docs/free-template/DESIGN.md
 /// §8.1), Stat table (§8.2), Skill table (D32), Resource (§8.3) and Combat
-/// stats (§8.6), the rests (§12.3), plus the readers that
-/// show SRD data in them without changing it (§16.3). Pure; the stored
+/// stats (§8.6), the rests (§12.3), plus the readers the free SRD
+/// converter uses to write SRD data into them (§16.3). Pure; the stored
 /// shapes are documented on [FieldType.table], [FieldType.statTable] and
 /// [FieldType.skillTable].
 
@@ -687,13 +687,15 @@ bool isCombatBlock(FieldSchema f) =>
 
 bool _blankValue(Object? v) => v == null || (v is String && v.trim().isEmpty);
 
-/// The block's values on [card] (DESIGN §16.3): as stored, a value the
-/// block lacks read from the SRD monster's flat fields — `hp_average` → HP
-/// and Max HP, `ac` → AC, `initiative_modifier` → `1d20+N`.
-Map<String, dynamic> combatStatsValue(Object? stored, Map<String, dynamic> card) {
-  final out = stored is Map
-      ? Map<String, dynamic>.from(stored)
-      : <String, dynamic>{};
+/// The block's values as stored (none: empty).
+Map<String, dynamic> combatStatsValue(Object? stored) =>
+    stored is Map ? Map<String, dynamic>.from(stored) : <String, dynamic>{};
+
+/// [stored] with a value the block lacks read from the SRD monster's flat
+/// fields (DESIGN §16.3) — `hp_average` → HP and Max HP, `ac` → AC,
+/// `initiative_modifier` → `1d20+N`. Only the free SRD converter reads it.
+Map<String, dynamic> srdCombatStats(Object? stored, Map<String, dynamic> card) {
+  final out = combatStatsValue(stored);
   void fill(String key, Object? v) {
     if (_blankValue(out[key]) && !_blankValue(v)) out[key] = v;
   }
@@ -730,12 +732,12 @@ num? srdNumber(Object? v) {
   return n == null ? null : num.parse(n[0]!);
 }
 
-/// What a free field shows for [card]: the stored value, or what the SRD
-/// shape it replaced holds (the combat block's flat fields, Speed / CR's
-/// text, a class's features as a Level table — that one reads other cards
-/// from [byId]). Fields without settings (the built-in schema) read as
-/// stored.
-Object? freeFieldValue(
+/// What the free SRD converter writes into [f] for the built-in SRD [card]:
+/// the stored value, or what the SRD shape it replaced holds (the combat
+/// block's flat fields, Speed / CR's text, a class's features as a Level
+/// table — that one reads other cards from [byId]). Screens read stored
+/// values; since A10 nothing reads SRD shapes at read time (K14).
+Object? srdFieldValue(
   FieldSchema f,
   Map<String, dynamic> card, {
   Map<String, Entity> byId = const {},
@@ -743,7 +745,7 @@ Object? freeFieldValue(
   final v = card[f.fieldKey];
   final c = f.styleConfig;
   if (c == null) return v;
-  if (f.fieldType == FieldType.combatStats) return combatStatsValue(v, card);
+  if (f.fieldType == FieldType.combatStats) return srdCombatStats(v, card);
   final from = c[srdReadKey];
   if (from is String && srdLevelReads.contains(from)) {
     return isSrdLevelShape(v) ? srdLevelValue(from, v, card, byId) : v;
@@ -776,7 +778,7 @@ Map<String, dynamic> restPatch(
         out[f.fieldKey] = resourceJson((current: next, max: v.max));
       }
     } else if (isCombatBlock(f)) {
-      final stats = combatStatsValue(card[f.fieldKey], card);
+      final stats = combatStatsValue(card[f.fieldKey]);
       final hp = _int(stats[combatHpKey]);
       final next = afterRest(
         CombatStatsSpec.of(f).on(kind),

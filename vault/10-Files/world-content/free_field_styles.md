@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_field_styles.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-12
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -27,16 +27,16 @@ tags: [file]
 - `nextTableRowId(rows)`.
 - `SkillTableSpec.of(field)` — template `rows` (`{_id, name, ability}`), `stat` (stat table key, null = the category's first), `bonus` (number field a mark adds), `nameEditable` (config `name_editable`, default off: a card may rename a row, stored as the row's `label`), `statEditable` (config `stat_editable`, default on: a card may pick another stat); `.table` is the fixed-row `TableSpec` its card rows are read / stored with (SRD proficiency row keys: `name` locked, `ability`, `proficient`, `expertise`, `misc`).
 - `skillStatField(spec, fields)`, `skillBonus(spec, card)`, `skillTotal(spec, row, card:, fields:)`.
-- `structuredListAsMarkdown(rows, nameOf)` — SRD starting equipment / player choices / subspecies options as markdown.
+- `structuredListAsMarkdown(rows, nameOf)` — SRD starting equipment / player choices / subspecies options as markdown. Since SRD-FREE-ALANLAR A10 only [[free_srd_pack]] calls it (the markdown reader shows the stored text).
 - `ResourceSpec.of(field)` — `boxes` (config `display: number|boxes`), `short` / `long` (`RestEffect.fill|empty|keep`; defaults keep / fill). `resourceValue(v)` reads `{current, max}` and the SRD slot's `{count, states|filled}`; `resourceJson`, `afterRest(effect, current, max)` (fill without a max changes nothing).
 - `CombatStatsSpec.of(field)` — `hpLabel`, `short` / `long` for HP, `values: [CombatValue{key, label, type: number|dice|cards, encounter, width?, editable, targets}]` (no −/+ buttons anywhere in the block, user decision 2026-10-12); `keyFor(label)` never gives `hp` / `max_hp` or a taken key; `hasCards` (at most one card list); `applyTo(field)` writes `styleConfig` **and** `subFields` (the encounter reads those until Faz 9). `isCombatBlock(f)` = `combatStats` with settings (the built-in block has none).
-- `combatStatsValue(stored, card)` — the block's values, filling what it lacks from an SRD monster's flat fields: `hp_average` → HP and Max HP, `ac` → AC, `initiative_modifier` → `1d20+N` / `1d20-N`. `combatNumber(v)` reads an int or the encounter's text.
-- `freeFieldValue(field, card)` — what a field shows: stored value; a combat block through `combatStatsValue`; a Speed / CR field with `styleConfig.srd_read` (`srdReadKey`) reads the built-in `combat_stats` text through `srdNumber` ("30 ft." → 30, "1/2" → 0.5). A Level table / Grants field with `srd_read` `class_features` / `spells_at_level` / `resource_pools` reads [[free_srd_levels]] while the stored value is still SRD-shaped (`freeFieldValue(f, card, byId:)` — the world's cards). Fields without settings read as stored, so the built-in path is unchanged.
+- `combatStatsValue(stored)` — the block's values as stored (none: empty). `srdCombatStats(stored, card)` — the same, filling what it lacks from an SRD monster's flat fields: `hp_average` → HP and Max HP, `ac` → AC, `initiative_modifier` → `1d20+N` / `1d20-N`; only the converter reads it (A10). `combatNumber(v)` reads an int or the encounter's text.
+- `srdFieldValue(field, card)` (was `freeFieldValue`; since SRD-FREE-ALANLAR A10, 2026-11-26, only [[free_srd_pack]] calls it — screens, [[free_grants]] and the encounter read the stored value, no read-time SRD conversion, K14) — what the converter writes into a field: stored value; a combat block through `combatStatsValue`; a Speed / CR field with `styleConfig.srd_read` (`srdReadKey`) reads the built-in `combat_stats` text through `srdNumber` ("30 ft." → 30, "1/2" → 0.5). A Level table / Grants field with `srd_read` `class_features` / `spells_at_level` / `resource_pools` reads [[free_srd_levels]] while the stored value is still SRD-shaped (`srdFieldValue(f, card, byId:)` — the pack's cards). Fields without settings read as stored, so the built-in path is unchanged.
 - `restPatch(fields, card, kind)` — the changed values a rest writes: every Resource field and each combat block's HP take that rest's effect; nothing else.
 
 ## Dependencies & Links
 - Depends on: [[field_schema]], [[template_edit]] (`keyFromLabel`)
-- Used by: [[free_template]] (SRD copy v2 / v3 builds the specs), [[free_character_sheet]] (rests, values), `entity_card.dart` (`freeFieldValue`), `free_style_field_widgets.dart` (card widgets, through `field_widget_factory.dart`), [[free_template_editor]] (`template_settings_forms.dart`: stat / table / skill table settings), `field_widget_factory.dart` (markdown reader)
+- Used by: [[free_template]] (SRD copy v2 / v3 builds the specs), [[free_character_sheet]] (rests), [[free_srd_pack]] (`srdFieldValue`, `structuredListAsMarkdown`), `free_style_field_widgets.dart` (card widgets, through `field_widget_factory.dart`), [[free_template_editor]] (`template_settings_forms.dart`: stat / table / skill table settings)
 - Domain map: [[World-and-Content]]
 - Spec / reference: `docs/free-template/DESIGN.md` §8.1, §8.2, §16.3; `docs/free-template/ROADMAP.md` Faz 4a, Faz 6
 

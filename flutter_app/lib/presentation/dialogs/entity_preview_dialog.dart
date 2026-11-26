@@ -13,7 +13,6 @@ import '../widgets/expandable_markdown.dart';
 import '../widgets/field_widgets/field_widget_factory.dart';
 import '../../application/providers/content_translator_provider.dart';
 import '../../domain/services/content_translator.dart';
-import '../../domain/services/free_field_styles.dart' show freeFieldValue;
 
 /// Read-only "quick look" at an entity, shown from a long-press on any ref
 /// link (see `entity_link.dart`). Lets the character sheet and the creation
@@ -82,10 +81,7 @@ class _PreviewBody extends StatelessWidget {
     final slug = entity.categorySlug;
     final name = tx.tr(slug, entity.name);
     final description = tx.tr(slug, entity.description);
-    // A free field may read an SRD shape it replaced (DESIGN §16.3) —
-    // entity_card's path, or a Level table gets SRD rows with no `_id`.
-    Object? valueOf(FieldSchema f) =>
-        freeFieldValue(f, entity.fields, byId: entities);
+    Object? valueOf(FieldSchema f) => entity.fields[f.fieldKey];
     final fields = [
       for (final f in fieldsVisibleToRole(
         category?.fields ?? const [],

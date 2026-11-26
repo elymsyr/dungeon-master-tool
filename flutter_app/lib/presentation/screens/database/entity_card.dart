@@ -23,7 +23,6 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/services/content_translator.dart';
-import '../../../domain/services/free_field_styles.dart' show freeFieldValue;
 import '../../../domain/services/free_grants.dart';
 import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/value_objects/asset_ref.dart';
@@ -847,12 +846,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     DmToolColors palette, {
     bool compact = false,
   }) {
-    // A free field may read an SRD shape it replaced (DESIGN §16.3).
-    final fieldValue = freeFieldValue(
-      field,
-      entity.fields,
-      byId: ref.read(entityProvider),
-    );
+    final fieldValue = entity.fields[field.fieldKey];
     // SRD içerik çevirisi: etiket her modda, değer yalnızca okuma modunda.
     // Çevrilmiş bir değer asla geri yazılmaz (srd-tr K3).
     final tx = ref.read(contentTranslatorProvider).forCard(isSrdCard(entity.source));
@@ -1022,7 +1016,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         if (free && f.fieldType == FieldType.boolean_) return true;
         return _isFieldVisibleInReadOnly(
           f,
-          freeFieldValue(f, entity.fields, byId: ref.read(entityProvider)),
+          entity.fields[f.fieldKey],
         );
       }).toList();
     }

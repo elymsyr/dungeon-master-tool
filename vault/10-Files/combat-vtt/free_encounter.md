@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_encounter.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-10-22
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -26,7 +26,7 @@ tags: [file]
 - `encounterValues(schema)` — that preset's values, in its order; `encounterSortValue` (one of its Number / Dice values), `encounterConditionsValue`.
 - `encounterConfigOf(schema)` — built-in: `schema.encounterConfig`; free: columns = sort value, other shown values (`CombatValue.encounter`), HP (−/+, always), Conditions (when the block's card list is shown); `initiativeSubField` = `sortBySubField` = the sort key (`''` = none).
 - `canRollEncounter(schema)` — V18: a Dice sort value, or a Number one with `sortDice`.
-- `freeCombatantValues(schema, entity)` → `(hp, maxHp, stats)`: the block read like the card (`combatStatsValue`, SRD monster flat fields), blank HP = Max HP, no block = empty HP (0 / 0).
+- `freeCombatantValues(schema, entity)` → `(hp, maxHp, stats)`: the block as stored (`combatStatsValue`; since SRD-FREE-ALANLAR A10 an SRD monster's flat fields are not read — the free package's converter wrote them into the block), blank HP = Max HP, no block = empty HP (0 / 0).
 - `freeSortSpec(schema, stats)` — the roll as a dice spec: Dice as is, Number as `sortDice+N` (just `N` without dice).
 - `battlemapFieldsOf(schema)`, `battlemapImages(entity, keys)`, `isBattlemapFieldType`.
 

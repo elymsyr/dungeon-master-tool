@@ -116,8 +116,8 @@ bool canRollEncounter(WorldSchema s) {
       (s.encounterConfig.sortDice?.trim().isNotEmpty ?? false);
 }
 
-/// A card's encounter values (DESIGN §14.4): its block's values as the card
-/// shows them (§16.3), HP as text like the built-in snapshot. A blank
+/// A card's encounter values (DESIGN §14.4): its block's values as stored,
+/// HP as text like the built-in snapshot. A blank
 /// current HP is the Max HP; a card without a block comes in with empty HP.
 ({int hp, int maxHp, Map<String, dynamic> stats}) freeCombatantValues(
   WorldSchema s,
@@ -126,7 +126,7 @@ bool canRollEncounter(WorldSchema s) {
   final cat = s.categories.where((c) => c.slug == e.categorySlug).firstOrNull;
   final block = cat == null ? null : combatBlockOf(cat);
   if (block == null) return (hp: 0, maxHp: 0, stats: <String, dynamic>{});
-  final stats = combatStatsValue(e.fields[block.fieldKey], e.fields);
+  final stats = combatStatsValue(e.fields[block.fieldKey]);
   final current = combatNumber(stats[combatHpKey]);
   final max = combatNumber(stats[combatMaxHpKey]) ?? current ?? 0;
   final hp = (current ?? max).clamp(0, max);

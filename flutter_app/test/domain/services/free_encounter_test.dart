@@ -94,15 +94,24 @@ void main() {
       id: 'g',
       name: 'Goblin',
       categorySlug: 'monster',
-      fields: {'hp_average': 7, 'ac': 15, 'initiative_modifier': 2},
+      fields: {
+        'combat_stats': {'hp': 7, 'max_hp': 7, 'ac': 15, 'initiative': '1d20+2'},
+      },
     );
 
-    test("the SRD monster's flat fields fill the block", () {
+    test("the monster's block comes in; flat SRD fields are not read", () {
       final v = freeCombatantValues(srd, goblin);
       expect((v.hp, v.maxHp), (7, 7));
       expect(v.stats['ac'], 15);
       expect(v.stats['initiative'], '1d20+2');
       expect(freeSortSpec(srd, v.stats), '1d20+2');
+      // SRD-FREE-ALANLAR A10: only the converter reads them (K14).
+      final flat = goblin.copyWith(
+        fields: const {'hp_average': 7, 'ac': 15, 'initiative_modifier': 2},
+      );
+      final none = freeCombatantValues(srd, flat);
+      expect((none.hp, none.maxHp), (0, 0));
+      expect(none.stats.keys, isNot(anyOf(contains('ac'), contains('initiative'))));
     });
 
     test('a blank current HP is the Max HP; a stored one stays', () {

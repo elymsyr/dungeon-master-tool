@@ -1313,8 +1313,15 @@ isteyen kullanıcı kopyada bu kartlara Verilenler'i kendisi ekler. *(V33)*
 
 ### 16.3 SRD verisi kopyada nasıl okunur?
 
-SRD paketinin verisi değişmez; `builtin/` altındaki içeriğe dokunulmaz (§17). Kopyadaki
-yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
+SRD paketinin verisi değişmez; `builtin/` altındaki içeriğe dokunulmaz (§17). SRD'nin mevcut
+veri şekilleri aşağıdaki kurallarla dönüştürülür.
+
+> **SRD-FREE-ALANLAR A10'dan (2026-11-26) beri veriyle:** dönüşümleri yalnız free SRD paketinin
+> dönüştürücüsü (`free_srd_pack.dart`, `freeSrdFields`) yapar. Free şekiller pakete yazılır,
+> ekranlar da kartın sakladığı değeri okur. Okuma sırasında dönüşüm yapılmaz (`srdFieldValue`
+> ve `srdCombatStats`'i yalnız dönüştürücü çağırır). A1'den önce kopyalanmış eski bir kopyanın
+> SRD şeklindeki verisi artık çevrilmez; bunun için geçiş kodu yazılmaz (K14). Aşağıdaki
+> "okunur" ifadeleri dönüştürücünün yazdığı değeri anlatır.
 
 - **Sınıf özellikleri → seviye tablosu satırı:**
   - `level` → Seviye.
@@ -1360,15 +1367,15 @@ yeni tarzlar SRD'nin mevcut veri şekillerini **okurken** dönüştürür:
   seviye tablosu satırlarında, sayının değiştiği her seviyede `Level N Slots` kaynak öğelerine
   çevrilir. Warlock'ta ad seviye taşımaz (`Pact Slots`): adı değişseydi eskisinin yerine geçmez,
   ikisi birden kalırdı; slot seviyesi sınıfın Pact Magic yazısındadır.
-- **Okuma ve saklama:** kartın değeri SRD şeklindeyse (ya da boşsa) okuyucu çalışır; kart kopyada
-  düzenlenip kaydedilince kendi satırlarını saklar ve okuyucu devreden çıkar. Verme motoru, kart
-  ekranı ve uzun basma önizlemesi aynı okumayı kullanır.
-- **Yapılı listeler → metin:** başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri okunaklı
-  markdown'a çevrilerek gösterilir.
+- **Okuma ve saklama:** kartın değeri SRD şeklindeyse (ya da boşsa) dönüştürücü okuyucuyu çalıştırır
+  ve sonucu pakete yazar. Verme motoru, kart ekranı ve uzun basma önizlemesi saklanan değeri okur.
+- **Yapılı listeler → metin:** başlangıç ekipmanı, oyuncu seçimleri ve alt tür seçenekleri
+  dönüştürücüde okunaklı markdown'a çevrilip öyle saklanır.
 - **Savaş değerleri (D36):**
   - Canavar ve Hayvan kartında blokta değer yoksa düz alanlardan okunur: `hp_average` → HP ve
-    Max HP, `ac` → AC, `initiative_modifier` → İnisiyatif `1d20+N` (N negatifse `1d20−N`). Kart
-    kopyada düzenlenip kaydedilince değerler bloğa yazılır; SRD paketinin kendisi değişmez.
+    Max HP, `ac` → AC, `initiative_modifier` → İnisiyatif `1d20+N` (N negatifse `1d20−N`).
+    Dönüştürücü bu değerleri free paketteki bloğa yazar; SRD paketinin kendisi değişmez. Bloğu
+    olmayan kart encounter'a HP 0 ile girer.
   - Oyuncu ve NPC'de `combat_stats` aynı şekliyle okunur. `speed` ve `cr` metinleri okunurken
     sayıya çevrilir ve bloğun dışındaki Hız / CR alanlarında gösterilir; çevrilemeyen metin boş
     kalır. Bu sayılar encounter'a gitmez.

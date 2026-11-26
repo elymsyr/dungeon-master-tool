@@ -78,7 +78,8 @@ const _srdCombat = CombatStatsSpec(
 const _noCombatSlugs = {'encounter', 'trap'};
 
 /// Monster and animal cards keep their combat values in flat fields; the
-/// copy gives them the block (read from those fields, §16.3) instead.
+/// copy gives them the block (the converter fills it from those fields,
+/// §16.3) instead.
 const _flatCombatSlugs = {'monster', 'animal'};
 const _flatCombatKeys = {'ac', 'hp_average', 'initiative_modifier'};
 
@@ -1091,7 +1092,7 @@ List<({SheetChip chip, String label})> sheetChipChoices(
 ) {
   final f = card.fields.where((f) => f.fieldKey == chip.field).firstOrNull;
   if (f == null) return null;
-  final v = freeFieldValue(f, fields);
+  final v = fields[f.fieldKey];
   String text(Object? v, {bool cards = false}) => switch (v) {
     null || '' => '—',
     bool b => b ? '✓' : '—',

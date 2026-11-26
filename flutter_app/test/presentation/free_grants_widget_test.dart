@@ -12,6 +12,7 @@ import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/domain/services/free_grants.dart';
+import 'package:dungeon_master_tool/domain/services/free_srd_pack.dart';
 import 'package:dungeon_master_tool/domain/services/free_template.dart';
 import 'package:dungeon_master_tool/domain/services/template_edit.dart';
 import 'package:dungeon_master_tool/presentation/dialogs/entity_preview_dialog.dart';
@@ -352,8 +353,13 @@ void main() {
     final entities = buildBuiltinSrdEntities();
     // No art: the image loader needs the app's paths.
     final drow = entities.values
-        .firstWhere((e) => e.categorySlug == 'subspecies' && e.name == 'Drow')
-        .copyWith(imagePath: '', images: const []);
+        .firstWhere((e) => e.categorySlug == 'subspecies' && e.name == 'Drow');
+    // As the free package stores it (A10: the converter writes the rows).
+    final stored = drow.copyWith(
+      fields: freeSrdFields(drow, entities),
+      imagePath: '',
+      images: const [],
+    );
     await tester.pumpWidget(
       ProviderScope(
         overrides: [worldSchemaProvider.overrideWithValue(srd)],
@@ -364,7 +370,7 @@ void main() {
           home: Builder(
             builder: (context) => TextButton(
               onPressed: () =>
-                  showEntityPreview(context, drow, entities: entities),
+                  showEntityPreview(context, stored, entities: entities),
               child: const Text('open'),
             ),
           ),

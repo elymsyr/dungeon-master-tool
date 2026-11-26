@@ -4,6 +4,7 @@ import 'package:dungeon_master_tool/application/services/package_import_service.
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 import 'package:dungeon_master_tool/domain/services/entity_ref.dart';
 import 'package:dungeon_master_tool/domain/services/free_encounter.dart';
@@ -82,7 +83,7 @@ void main() {
   /// What a free card shows for [f]: the read, and a list the way the
   /// markdown field shows it.
   Object? shown(FieldSchema f, Map<String, dynamic> fields) {
-    final v = freeFieldValue(f, fields, byId: world);
+    final v = srdFieldValue(f, fields, byId: world);
     return f.fieldType == FieldType.markdown && v is List
         ? structuredListAsMarkdown(v, (r) => entityRefName(r, world))
         : v;
@@ -254,6 +255,26 @@ void main() {
       };
       expect(freeSrdClosed, targets.keys.toSet());
       expect({for (final s in targets.keys) s: cats[s]!.fields.length}, targets);
+    });
+
+    test('A10: every category with SRD cards is closed; §6 adds up', () {
+      final withCards = {for (final c in raw.values) c.categorySlug};
+      expect(
+        withCards.where((s) => inFreeSrd(s) && !freeSrdClosed.contains(s)),
+        isEmpty,
+      );
+      // §6: the 20 content categories of §5.1–5.12, Trinket and Starter
+      // Bundle. The plan said 521; the schema has 528 (Class 30, not 29;
+      // Monster and Animal 48, not 45).
+      const content = [
+        'spell', 'class', 'subclass', 'species', 'subspecies', 'background',
+        'feat', 'trait', 'magic-item', 'monster', 'animal', 'creature-action',
+        'weapon', 'armor', 'tool', 'adventuring-gear', 'pack', 'ammunition',
+        'mount', 'vehicle', 'trinket', 'starter-bundle',
+      ];
+      int total(Map<String, EntityCategorySchema> of) =>
+          content.map((s) => of[s]?.fields.length ?? 0).sum;
+      expect((total(builtin), total(cats)), (528, 167));
     });
 
     test('every field the copy adds is filled in some card', () {

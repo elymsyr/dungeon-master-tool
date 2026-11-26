@@ -185,18 +185,18 @@ void main() {
 
     test('an SRD monster\'s flat fields fill an empty block (§16.3)', () {
       final goblin = {'ac': 12, 'hp_average': 7, 'initiative_modifier': 2};
-      expect(combatStatsValue(null, goblin), {
+      expect(srdCombatStats(null, goblin), {
         'hp': 7,
         'max_hp': 7,
         'ac': 12,
         'initiative': '1d20+2',
       });
       expect(
-        combatStatsValue(null, {'initiative_modifier': -1})['initiative'],
+        srdCombatStats(null, {'initiative_modifier': -1})['initiative'],
         '1d20-1',
       );
       // What the block holds wins.
-      expect(combatStatsValue({'hp': 3, 'ac': ''}, goblin), {
+      expect(srdCombatStats({'hp': 3, 'ac': ''}, goblin), {
         'hp': 3,
         'max_hp': 7,
         'ac': 12,
@@ -218,17 +218,17 @@ void main() {
       final card = {
         'combat_stats': {'speed': '30 ft.', 'cr': '1/2'},
       };
-      expect(freeFieldValue(speed, card), 30);
-      expect(freeFieldValue(cr, card), 0.5);
-      expect(freeFieldValue(speed, {...card, 'speed': 25}), 25);
+      expect(srdFieldValue(speed, card), 30);
+      expect(srdFieldValue(cr, card), 0.5);
+      expect(srdFieldValue(speed, {...card, 'speed': 25}), 25);
       expect(
-        freeFieldValue(speed, {
+        srdFieldValue(speed, {
           'combat_stats': {'speed': 'fast'},
         }),
         isNull,
       );
       // A field without settings reads as stored.
-      expect(freeFieldValue(_field('x', FieldType.integer), {'x': 4}), 4);
+      expect(srdFieldValue(_field('x', FieldType.integer), {'x': 4}), 4);
     });
   });
 
@@ -368,7 +368,7 @@ void main() {
       }
       expect(field('monster', 'hp_dice'), isNotNull);
       final goblin = {'ac': 12, 'hp_average': 7, 'initiative_modifier': 2};
-      final v = freeFieldValue(field('monster', 'combat_stats')!, goblin);
+      final v = srdFieldValue(field('monster', 'combat_stats')!, goblin);
       expect(v, {'hp': 7, 'max_hp': 7, 'ac': 12, 'initiative': '1d20+2'});
     });
 

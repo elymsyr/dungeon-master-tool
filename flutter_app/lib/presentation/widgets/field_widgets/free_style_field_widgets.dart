@@ -1068,8 +1068,7 @@ class ResourceFieldWidget extends StatelessWidget {
 
 /// Combat stats (DESIGN §8.6): HP / Max HP, then the template's values —
 /// numbers, dice and one card list (conditions). [value] is the block as
-/// `combatStatsValue` reads it, so an edit also stores what was read from
-/// an SRD monster's flat fields.
+/// stored.
 class CombatBlockFieldWidget extends StatelessWidget {
   const CombatBlockFieldWidget({
     super.key,

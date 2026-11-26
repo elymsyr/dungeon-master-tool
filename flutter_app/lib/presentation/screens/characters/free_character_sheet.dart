@@ -1287,7 +1287,7 @@ class _FreeCharacterSheetState extends ConsumerState<FreeCharacterSheet> {
       final levelField = f.fieldType == FieldType.characterLevel;
       final w = FieldWidgetFactory.create(
         schema: tx.field(f),
-        value: freeFieldValue(f, character.entity.fields),
+        value: character.entity.fields[f.fieldKey],
         // The Level changes through Level up and the levels dialog.
         readOnly: _readOnly || levelField,
         play: true,

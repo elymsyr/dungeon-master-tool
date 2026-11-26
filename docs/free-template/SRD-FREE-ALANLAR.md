@@ -1,9 +1,10 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10, ardından kontrol fazları B1–B4. Güncel faz: **A9** (uygulandı,
-> otomatik kapı yeşil). A fazlarının elle kontrolü sona, B1–B4'e toplandı (kullanıcı kararı
-> 2026-11-26, §11.5); A1–A9'un elle kontrolü henüz yapılmadı. A8 `990e21e1` ile commit'lendi.
+> haritası §11'de: A1–A10, ardından kontrol fazları B1–B4. A fazları bitti: **A10** uygulandı,
+> otomatik kapı yeşil; sıradaki **B1**. A fazlarının elle kontrolü sona, B1–B4'e toplandı
+> (kullanıcı kararı 2026-11-26, §11.5); A1–A10'un elle kontrolü henüz yapılmadı. A9 `7b8b5801`,
+> A8 `990e21e1` ile commit'lendi.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -385,7 +386,8 @@ Weapon/Armor, Dirençler, Bağışıklıklar.
 | Tool | Craft | Yazı | `craftable_items` |
 | Monster / Animal | Speed | Yazı | 6 alan |
 
-Toplam: 22 içerik kategorisinde **521 alan → 167**. Lookup'lardan ayrıca 78 alan (`icon_name` /
+Toplam: 22 içerik kategorisinde **521 alan → 167**. (A10'da şemadan sayıldı: önce **528**, çünkü
+Class 30, Monster ve Animal 48 alan; §5'teki 29 ve 45 eksik saymış. Sonraki 167 tutuyor.) Lookup'lardan ayrıca 78 alan (`icon_name` /
 `color`) ve birkaç motor bayrağı çıkar. 7 kategori tamamen çıkar: Character State, Resource Pool,
 Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
 
@@ -573,7 +575,7 @@ kontroller A10'dan sonra **B1–B4**'te (§11.5) topluca yapılır. Kullanıcı 
 | A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ✅ otomatik kapı; elle kontrol B3'te |
 | A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | ✅ otomatik kapı; elle kontrol B3'te |
 | A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | ✅ otomatik kapı; elle kontrol B3'te |
-| A10 | Kapanış | 521 → 167 doğrulanır | S | |
+| A10 | Kapanış | 528 → 167 doğrulanır (plan 521) | S | ✅ otomatik kapı; elle kontrol B1–B4'te |
 | B1 | Kontrol: altyapı ve büyü | EA1, EA2 | M | |
 | B2 | Kontrol: karakterin yapı taşları | EA3, EA4, EA5 | L | |
 | B3 | Kontrol: canavar, eşya, lookup, Trinket | EA6, EA7, EA8, A9 | M | |
@@ -1594,6 +1596,55 @@ sorulur.
 5. Tam test ve analiz (G1–G8). Tam R turu ve uçtan uca tur B4'te.
 
 **Çıkış kriteri:** bütün otomatik kapılar yeşil; B fazlarına geçilir.
+
+##### A10 sonucu (2026-11-26)
+
+- **Faz başı kararı:** "Okumadan kaldır" (kullanıcı). SRD dönüşümleri yalnız dönüştürücüde.
+- **Okuma yolları:**
+  - [free_field_styles.dart](../../flutter_app/lib/domain/services/free_field_styles.dart):
+    `freeFieldValue` → `srdFieldValue`. `combatStatsValue(stored)` artık değeri saklandığı gibi
+    veriyor; düz canavar alanlarından doldurmayı yeni `srdCombatStats(stored, card)` yapıyor.
+    `srdFieldValue`, `srdCombatStats` ve `structuredListAsMarkdown`'ı yalnız
+    [free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart) çağırıyor.
+  - Şu yerler kartın sakladığı değeri okuyor:
+    - kart ekranı (`entity_card.dart`)
+    - uzun basma önizlemesi (`entity_preview_dialog.dart`)
+    - karakter kağıdı (`free_character_sheet.dart`)
+    - verme motoru (`free_grants.dart`)
+    - encounter (`free_encounter.dart`): bloğu olmayan kart HP 0
+    - dinlenme (`restPatch`)
+    - markdown alanı (`field_widget_factory.dart`): liste çevirisi yok
+  - K14 gereği A1'den önce kopyalanmış eski bir kopyanın SRD şeklindeki verisi artık çevrilmiyor.
+- **Bekçi** (`free_srd_pack_test`, yeni test): SRD kartı olan her kategori `freeSrdClosed`'da.
+  Kopyada kalan, açık ve kartlı kategori yok. Çıkan 6 kategorinin kartları pakete girmiyor.
+  §6 toplamı 528 → 167 (§6'daki not).
+- **Test düzeltmeleri:**
+  - `free_srd_levels_test` ve `free_grants_widget_test` kartları `freeSrdFields`'ten geçirerek
+    kuruyor, yani paketin sakladığı gibi.
+  - Fighter 1'de feat `Weapon Mastery (Fighter)` (S3).
+  - Drow → High Elf'te kaldırma önerisine Drow'un 1. seviye cantrip'i Dancing Lights da giriyor.
+    SRD 5.2.1 Elven Lineages'a göre doğru; eski okuma yolu bunu vermiyordu.
+  - `free_encounter_test`: düz alanlı canavar HP 0 / 0, AC ve İnisiyatif yok.
+  - `combat_provider_free_test`: goblin bloğu taşıyor.
+- **Otomatik kapı:**
+  - G1: boş.
+  - G2 / G3: 60/60.
+  - G4: değişen 17 dosyada 2 info, ikisi de `entity_card.dart`'ta (`curly_braces`). Temiz ağaçta
+    da var; yeni uyarı yok.
+  - G5 / G6: tam tur yerine ilgili 11 dosya, tek tek ve `--concurrency=1` (RAM kuralı). Hepsi
+    geçti, 1 kırmızı: `free_character_sheet_test` "long rest fills HP". Kırmızı 5,6 px RenderFlex
+    taşması; temel çizgide de var, satır numarası yalnız kaydı. Yeni kırmızı yok. Tam tur bu
+    makinede çalıştırılamıyor.
+  - G7: `free_srd_pack_test` 61/61.
+  - G8: `check_pairs` 7409 / 7409, 0 FAIL, 207 UYARI (A9'la aynı). Kapsam testi 2/2. `extract`
+    free paketin bütün kategorilerini okuyor (hepsi kapalı).
+- **Belgeler:**
+  - DESIGN §16.3: "A10'dan beri veriyle" notu, okuma ve saklama maddeleri.
+  - ROADMAP §6: not.
+  - Vault notları: free_field_styles, free_srd_pack, free_srd_levels, free_grants, free_template,
+    free_encounter, free_character_sheet, entity_preview_dialog.
+  - `_Architecture-Overview` ve Vault-Changelog.
+- **Elle kontrol:** B1–B4'te.
 
 ---
 

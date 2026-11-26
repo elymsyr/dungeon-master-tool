@@ -243,6 +243,11 @@ rozeti olur.
 | `spellSlotProgression` + büyücü türü | Alan kalkar; sınıfın satırlarında `Level N Slots` (Warlock'ta `Pact Slots`) kaynak öğeleri | 7 |
 | `spellsAtLevel` | Seviye tablosu (+ günlük kullanım için satırda kaynak öğesi) | 7 |
 
+> **Not (SRD-FREE-ALANLAR A10, 2026-11-26):** Bu tablodaki "okunurken" dönüşümler artık
+> okumada yapılmıyor. Free SRD paketinin dönüştürücüsü (`free_srd_pack.dart`) aynı kurallarla
+> free şekilleri veriye yazıyor, ekranlar da saklanan değeri okuyor (DESIGN §16.3). Okuyucuları
+> yalnız dönüştürücü çağırıyor.
+
 > **Önemli:** Bir fazda yeni dönüşüm eklenince önceki fazlarda oluşturulmuş test kopyaları eski
 > haliyle kalır. Kontrol listeleri bu yüzden "SRD'yi yeniden kopyala" adımıyla başlar. Fazlar
 > arası template geçiş kodu yazılmaz (§8, Y1).

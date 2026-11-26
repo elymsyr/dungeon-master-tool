@@ -24,9 +24,7 @@ void main() {
     categorySlug: 'monster',
     // `1d1+N` rolls N + 1: the test knows the result.
     fields: {
-      'hp_average': 7,
-      'ac': 15,
-      'combat_stats': {'initiative': '1d1+1'},
+      'combat_stats': {'hp': 7, 'max_hp': 7, 'ac': 15, 'initiative': '1d1+1'},
     },
   );
   const prone = Entity(id: 'prone', name: 'Prone', categorySlug: 'condition');

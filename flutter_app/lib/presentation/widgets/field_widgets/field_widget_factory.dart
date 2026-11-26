@@ -24,11 +24,10 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
-import '../../../domain/services/entity_ref.dart';
 import '../../../domain/services/free_grants.dart' show GrantResult;
 import '../../../domain/services/free_template.dart' show isFreeTemplate;
 import '../../../domain/services/free_field_styles.dart'
-    show isCombatBlock, structuredListAsMarkdown;
+    show isCombatBlock;
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../screens/map/world_map_notifier.dart';
@@ -291,14 +290,7 @@ class FieldWidgetFactory {
       ),
       FieldType.markdown => _MarkdownFieldWidget(
         schema: schema,
-        // An SRD copy shows the SRD's structured lists (starting equipment,
-        // player choices) as text; the card data itself stays (DESIGN §16.3).
-        value: value is List
-            ? structuredListAsMarkdown(
-                value,
-                (r) => entityRefName(r, entities ?? const {}),
-              )
-            : value,
+        value: value,
         readOnly: readOnly,
         onChanged: onChanged,
         entities: entities,
