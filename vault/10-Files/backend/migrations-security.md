@@ -1,11 +1,11 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/072_security_hardening.sql, 073_revoke_anon_execute.sql, 074_lock_internal_helper.sql, 044_beta_exit_world_purge.sql, 063_beta_slot_cap_90.sql, 064_beta_full_reset.sql, 066_beta_access_requests.sql, 069_notifications.sql
+path: supabase/migrations/072_security_hardening.sql, 073_revoke_anon_execute.sql, 074_lock_internal_helper.sql, 044_beta_exit_world_purge.sql, 063_beta_slot_cap_90.sql, 064_beta_full_reset.sql, 066_beta_access_requests.sql, 069_notifications.sql, 110_notification_images.sql
 layer: backend
 language: sql
 status: stable
-updated: 2026-06-09
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -38,6 +38,7 @@ tags: [file]
 - **064_beta_full_reset** — One-shot IRREVERSIBLE mass wipe: extracts `leave_beta` body into `_leave_beta_for(uid)` (service_role), then a `DO` block runs it for every `beta_participants` user; clears `campaign-backups` + `free-media` storage objects. No-op on re-run.
 - **066_beta_access_requests** — Beta is now admin-approval: `beta_requests` table (PK `user_id`, message ≤500). `_grant_beta_slot(uid)` helper holds slot allocation. `join_beta()` now creates a request (`requested|already|pending|not_signed_in`). `request_beta(msg)` (UPSERT), `cancel_beta_request()`, `admin_list_beta_requests()`, `admin_approve_beta_request`, `admin_reject_beta_request`.
 - **069_notifications** — Admin broadcast: `notifications` (title + JSONB blocks: markdown/poll/input), `notification_responses` (one per user, poll/input answers), `notification_reads` (badge tracking). RLS: published → world-readable; writes only via DEFINER RPCs (`admin_create_notification`, `list_notifications`, `submit_notification_response`, `mark_notification_read`, `dismiss_read_notifications`, `admin_notification_responses`, ...). Both tables added to realtime publication.
+- **110_notification_images** — Public bucket `notification-images` (10 MB, jpeg/png/webp) for broadcast banners and image blocks (`{id,type:'image',url,path,link?,banner?}` in `notifications.blocks`; tables/RPCs unchanged). Path `{adminUid}/{ms}_{blockId}.{ext}`. INSERT/DELETE only `is_admin()`; SELECT owner-folder **or** `is_admin()` (storage `remove()` needs SELECT, and any admin may delete any notification). Self-check: `supabase/scripts/verify_110.sql`.
 
 ## Notes
 - Related but not in this group: 067 (`_purge_beta_user` shared body + `admin_revoke_beta`), 068 (beta quota 100 MB), 070 (14-day inactivity sweep). See [[rpc-reference]].

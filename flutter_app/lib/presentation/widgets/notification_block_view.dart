@@ -44,6 +44,79 @@ class MarkdownBlockView extends StatelessWidget {
   }
 }
 
+/// Image block (also the banner), full width at its natural aspect ratio. A
+/// banner is capped to a square: landscape shows whole, portrait is cropped.
+/// A linked image opens its link externally (like markdown links); an
+/// unlinked one calls [onTapNoLink], or is inert when that is null.
+class ImageBlockView extends StatelessWidget {
+  final ImageBlock block;
+  final BorderRadius? radius;
+  final VoidCallback? onTapNoLink;
+
+  /// Called after a linked image opened its link (e.g. to mark it read).
+  final VoidCallback? onLinkOpened;
+
+  const ImageBlockView({
+    super.key,
+    required this.block,
+    this.radius,
+    this.onTapNoLink,
+    this.onLinkOpened,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    Widget image = Image.network(
+      block.url,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      errorBuilder: (context, _, _) => Container(
+        height: 72,
+        color: palette.htmlCodeBg,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.broken_image_outlined,
+                size: 18, color: palette.sidebarLabelSecondary),
+            const SizedBox(width: 6),
+            Text(
+              L10n.of(context)!.notifImageLoadFailed,
+              style: TextStyle(
+                  fontSize: 12, color: palette.sidebarLabelSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (block.banner) {
+      final inner = image;
+      image = LayoutBuilder(
+        builder: (context, c) => ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: c.maxWidth),
+          child: inner,
+        ),
+      );
+    }
+    if (radius != null) {
+      image = ClipRRect(borderRadius: radius!, child: image);
+    }
+    final link = block.link;
+    final onTap = link != null
+        ? () {
+            launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+            onLinkOpened?.call();
+          }
+        : onTapNoLink;
+    if (onTap == null) return image;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(onTap: onTap, child: image),
+    );
+  }
+}
+
 /// Poll block — single (radio) or multiple (checkbox) choice + submit.
 class PollBlockView extends StatefulWidget {
   final PollBlock block;

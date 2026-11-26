@@ -80,7 +80,7 @@ class _NotificationInboxDialogState
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 820),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 18, 12, 8),
           child: Column(
@@ -157,14 +157,17 @@ class _NotificationRow extends ConsumerWidget {
   final AppNotification notification;
   const _NotificationRow(this.notification);
 
+  Future<void> _markRead(WidgetRef ref) async {
+    if (notification.read) return;
+    final ds = ref.read(notificationsDataSourceProvider);
+    try {
+      await ds.markRead(notification.id);
+    } catch (_) {/* best-effort */}
+    ref.invalidate(notificationsProvider);
+  }
+
   Future<void> _open(BuildContext context, WidgetRef ref) async {
-    if (!notification.read) {
-      final ds = ref.read(notificationsDataSourceProvider);
-      try {
-        await ds.markRead(notification.id);
-      } catch (_) {/* best-effort */}
-      ref.invalidate(notificationsProvider);
-    }
+    await _markRead(ref);
     if (context.mounted) {
       await _NotificationDetailDialog.show(context, notification);
     }
@@ -175,14 +178,9 @@ class _NotificationRow extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final unread = !notification.read;
 
-    return Material(
-      color: palette.featureCardBg,
-      shape: RoundedRectangleBorder(
-        borderRadius: palette.cbr,
-        side: BorderSide(color: palette.featureCardBorder),
-      ),
-      child: InkWell(
-        borderRadius: palette.cbr,
+    final banner = notification.banner;
+    final row = InkWell(
+        borderRadius: banner == null ? palette.cbr : null,
         onTap: () => _open(context, ref),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -218,12 +216,34 @@ class _NotificationRow extends ConsumerWidget {
             ],
           ),
         ),
+      );
+
+    return Material(
+      color: palette.featureCardBg,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: palette.cbr,
+        side: BorderSide(color: palette.featureCardBorder),
       ),
+      child: banner == null
+          ? row
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ImageBlockView(
+                  block: banner,
+                  onTapNoLink: () => _open(context, ref),
+                  onLinkOpened: () => _markRead(ref),
+                ),
+                row,
+              ],
+            ),
     );
   }
 }
 
-/// Full notification view: title + ordered blocks (markdown / poll / input).
+/// Full notification view: full-width banner (if any), title, then ordered
+/// blocks (markdown / poll / input / image).
 class _NotificationDetailDialog extends ConsumerWidget {
   final AppNotification notification;
   const _NotificationDetailDialog(this.notification);
@@ -296,7 +316,7 @@ class _NotificationDetailDialog extends ConsumerWidget {
         this.notification;
 
     final blockWidgets = <Widget>[];
-    for (final b in notification.blocks) {
+    for (final b in notification.bodyBlocks) {
       switch (b) {
         case MarkdownBlock():
           blockWidgets.add(MarkdownBlockView(block: b));
@@ -314,54 +334,57 @@ class _NotificationDetailDialog extends ConsumerWidget {
             onSubmit: (text) =>
                 _submitBlock(context, ref, b.id, {'text': text}),
           ));
+        case ImageBlock():
+          blockWidgets.add(ImageBlockView(block: b, radius: palette.cbr));
       }
     }
 
+    final banner = notification.banner;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+      clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 12, 8),
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 820),
+        // One scroll for banner + body, so a tall banner never squeezes the body.
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(notification.title,
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: palette.tabActiveText)),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
+              // Banner sits outside the padding: always edge to edge.
+              if (banner != null) ImageBlockView(block: banner),
               Padding(
-                padding: const EdgeInsets.only(left: 0, bottom: 4),
-                child: Text(formatRelative(notification.createdAt),
-                    style: TextStyle(
-                        fontSize: 11, color: palette.sidebarLabelSecondary)),
-              ),
-              const SizedBox(height: 8),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(right: 8, bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final w in blockWidgets) ...[
-                        w,
-                        const SizedBox(height: 6),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          // Same size as markdown "#", so body headings never outgrow it.
+                          child: Text(notification.title,
+                              style: notificationMarkdownStyle(palette).h1),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                       ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(formatRelative(notification.createdAt),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: palette.sidebarLabelSecondary)),
+                    ),
+                    const SizedBox(height: 8),
+                    for (final w in blockWidgets) ...[
+                      w,
+                      const SizedBox(height: 6),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],

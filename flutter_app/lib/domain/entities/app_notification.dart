@@ -1,5 +1,26 @@
 import 'dart:convert';
 
+/// Per-file upload cap — matches the `notification-images` bucket (110).
+const int kNotificationImageMaxBytes = 10 * 1024 * 1024;
+
+/// Empty (no link) or an absolute http(s) URL with a host. Anything else —
+/// `javascript:`, `ftp://`, a bare `example.com` — is rejected.
+bool isValidNotificationLink(String s) {
+  if (s.isEmpty) return true;
+  final u = Uri.tryParse(s);
+  return u != null &&
+      (u.scheme == 'http' || u.scheme == 'https') &&
+      u.host.isNotEmpty;
+}
+
+/// MIME for an allowed image extension (case-insensitive), else null.
+String? notificationImageMime(String ext) => switch (ext.toLowerCase()) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => null,
+    };
+
 /// A single content block inside an [AppNotification]. Either rendered markdown
 /// text, or an interactive feedback widget (poll / free-text input).
 sealed class NotificationBlock {
@@ -27,6 +48,15 @@ sealed class NotificationBlock {
           id: id,
           prompt: (json['prompt'] ?? '').toString(),
           multiline: json['multiline'] != false, // default true
+        );
+      case 'image':
+        final link = (json['link'] ?? '').toString();
+        return ImageBlock(
+          id: id,
+          url: (json['url'] ?? '').toString(),
+          path: (json['path'] ?? '').toString(),
+          link: link.isEmpty ? null : link,
+          banner: json['banner'] == true,
         );
       case 'markdown':
       default:
@@ -82,6 +112,33 @@ class InputBlock extends NotificationBlock {
       };
 }
 
+/// An uploaded image (`notification-images` bucket). `path` is the storage
+/// object key, kept so deleting the notification can remove the file. The
+/// block flagged [banner] sits first in the list and is drawn above the body.
+class ImageBlock extends NotificationBlock {
+  final String url;
+  final String path;
+  final String? link;
+  final bool banner;
+  const ImageBlock({
+    required String id,
+    required this.url,
+    required this.path,
+    this.link,
+    this.banner = false,
+  }) : super(id);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': 'image',
+        'url': url,
+        'path': path,
+        if (link != null) 'link': link,
+        if (banner) 'banner': true,
+      };
+}
+
 /// A broadcast notification as seen by an end user: title + ordered blocks,
 /// plus the caller's own prior answers and read state (hydrated by the
 /// `list_notifications` RPC).
@@ -108,6 +165,16 @@ class AppNotification {
   /// True when any block is interactive (poll/input) — i.e. expects a response.
   bool get hasInteractive =>
       blocks.any((b) => b is PollBlock || b is InputBlock);
+
+  /// The banner image, when the first block is one flagged `banner`.
+  ImageBlock? get banner => switch (blocks.firstOrNull) {
+        final ImageBlock b when b.banner => b,
+        _ => null,
+      };
+
+  /// Blocks drawn in the body — everything except the banner.
+  List<NotificationBlock> get bodyBlocks =>
+      banner == null ? blocks : blocks.sublist(1);
 
   static List<NotificationBlock> parseBlocks(dynamic raw) {
     final list = raw is String ? jsonDecode(raw) : raw;

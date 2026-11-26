@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../domain/entities/app_notification.dart';
@@ -63,6 +64,7 @@ class NotificationResponseRow {
 /// Admin broadcast notifications API. Mirrors migration 069 admin RPCs.
 class AdminNotificationsRemoteDataSource {
   SupabaseClient get _client => Supabase.instance.client;
+  static const _bucket = 'notification-images'; // migration 110
 
   Future<List<AdminNotificationSummary>> list() async {
     final res = await _client.rpc('admin_list_notifications');
@@ -81,8 +83,34 @@ class AdminNotificationsRemoteDataSource {
     return res.toString();
   }
 
-  Future<void> delete(String id) async {
+  /// Deletes the notification, then its images ([imagePaths], best-effort).
+  Future<void> delete(String id, {List<String> imagePaths = const []}) async {
     await _client.rpc('admin_delete_notification', params: {'p_id': id});
+    await removeImages(imagePaths);
+  }
+
+  /// Uploads one image to `{adminUid}/{ms}_{blockId}.{ext}` and returns its
+  /// storage path + public URL.
+  Future<({String path, String url})> uploadImage(
+      Uint8List bytes, String ext, String blockId) async {
+    final uid = _client.auth.currentUser!.id;
+    final e = ext.toLowerCase();
+    final path = '$uid/${DateTime.now().millisecondsSinceEpoch}_$blockId.$e';
+    final bucket = _client.storage.from(_bucket);
+    await bucket.uploadBinary(path, bytes,
+        fileOptions:
+            FileOptions(contentType: notificationImageMime(e)!, upsert: false));
+    return (path: path, url: bucket.getPublicUrl(path));
+  }
+
+  /// Best-effort: a failure leaves an orphan file, never blocks the caller.
+  Future<void> removeImages(List<String> paths) async {
+    if (paths.isEmpty) return;
+    try {
+      await _client.storage.from(_bucket).remove(paths);
+    } catch (e) {
+      debugPrint('notification image remove failed: $e');
+    }
   }
 
   Future<List<NotificationResponseRow>> responses(String id) async {

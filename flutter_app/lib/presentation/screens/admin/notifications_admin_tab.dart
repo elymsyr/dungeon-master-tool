@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/admin_notifications_provider.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../data/datasources/remote/admin_notifications_remote_ds.dart';
+import '../../../domain/entities/app_notification.dart';
 import '../../dialogs/notification_composer_dialog.dart';
 import '../../dialogs/notification_responses_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -95,7 +96,11 @@ class _NotificationRow extends ConsumerWidget {
     );
     if (ok != true) return;
     try {
-      await ref.read(adminNotificationsDataSourceProvider).delete(summary.id);
+      await ref.read(adminNotificationsDataSourceProvider).delete(summary.id,
+          imagePaths: summary.blocks
+              .whereType<ImageBlock>()
+              .map((b) => b.path)
+              .toList());
       ref.invalidate(adminNotificationsProvider);
     } catch (e) {
       if (context.mounted) {

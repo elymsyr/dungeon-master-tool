@@ -1,18 +1,26 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/admin_notifications_provider.dart';
+import '../../domain/entities/app_notification.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Mutable draft of one notification block while composing.
 class _DraftBlock {
   final String id;
-  final String type; // 'markdown' | 'poll' | 'input'
+  final String type; // 'markdown' | 'poll' | 'input' | 'image'
   final TextEditingController main = TextEditingController();
   final List<TextEditingController> options = [];
   bool multiple = false;
   bool multiline = true;
+
+  // image: picked bytes stay local until publish uploads them.
+  Uint8List? bytes;
+  String? ext;
+  final TextEditingController link = TextEditingController();
 
   _DraftBlock(this.id, this.type) {
     if (type == 'poll') {
@@ -23,12 +31,14 @@ class _DraftBlock {
 
   void dispose() {
     main.dispose();
+    link.dispose();
     for (final c in options) {
       c.dispose();
     }
   }
 
-  /// Serialize to the JSONB block shape, or null if incomplete.
+  /// Serialize to the JSONB block shape, or null if incomplete. Image drafts
+  /// return null — their JSON is built after upload in `_publish`.
   Map<String, dynamic>? toJson() {
     final m = main.text.trim();
     switch (type) {
@@ -46,6 +56,8 @@ class _DraftBlock {
       case 'input':
         if (m.isEmpty) return null;
         return {'id': id, 'type': 'input', 'prompt': m, 'multiline': multiline};
+      case 'image':
+        return null;
       case 'markdown':
       default:
         if (main.text.trim().isEmpty) return null;
@@ -54,7 +66,8 @@ class _DraftBlock {
   }
 }
 
-/// Admin composer: title + ordered blocks (markdown / poll / input) → publish.
+/// Admin composer: title + optional banner + ordered blocks (markdown / poll /
+/// input / image) → upload images → publish.
 class NotificationComposerDialog extends ConsumerStatefulWidget {
   const NotificationComposerDialog({super.key});
 
@@ -74,6 +87,7 @@ class _NotificationComposerDialogState
     extends ConsumerState<NotificationComposerDialog> {
   final _titleCtrl = TextEditingController();
   final List<_DraftBlock> _blocks = [];
+  _DraftBlock? _banner;
   int _counter = 0;
   bool _busy = false;
   String? _error;
@@ -81,6 +95,7 @@ class _NotificationComposerDialogState
   @override
   void dispose() {
     _titleCtrl.dispose();
+    _banner?.dispose();
     for (final b in _blocks) {
       b.dispose();
     }
@@ -91,6 +106,50 @@ class _NotificationComposerDialogState
     setState(() {
       _counter++;
       _blocks.add(_DraftBlock('b$_counter', type));
+    });
+  }
+
+  /// Picks one image into [d]; rejects files over the bucket's 10 MB cap.
+  Future<void> _pickImage(_DraftBlock d) async {
+    // FileType.image, not a custom extension list: Linux portal globs are
+    // case-sensitive and would hide `IMG_1234.JPG`. The type is checked below.
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    final f = res?.files.singleOrNull;
+    final bytes = f?.bytes;
+    final ext = f?.extension ?? f?.name.split('.').last;
+    if (!mounted || bytes == null || ext == null) return;
+    if (notificationImageMime(ext) == null) {
+      setState(() => _error = L10n.of(context)!.notifImageUnsupported);
+      return;
+    }
+    if (bytes.length > kNotificationImageMaxBytes) {
+      setState(() => _error = L10n.of(context)!.notifImageTooLarge);
+      return;
+    }
+    setState(() {
+      d.bytes = bytes;
+      d.ext = ext;
+      _error = null;
+    });
+  }
+
+  Future<void> _addBanner() async {
+    final d = _DraftBlock('banner', 'image');
+    await _pickImage(d);
+    if (!mounted || d.bytes == null) {
+      d.dispose();
+      return;
+    }
+    setState(() => _banner = d);
+  }
+
+  void _removeBanner() {
+    setState(() {
+      _banner?.dispose();
+      _banner = null;
     });
   }
 
@@ -109,22 +168,48 @@ class _NotificationComposerDialogState
 
   Future<void> _publish() async {
     final title = _titleCtrl.text.trim();
-    final blocks = _blocks
-        .map((b) => b.toJson())
-        .where((m) => m != null)
-        .cast<Map<String, dynamic>>()
-        .toList();
+    // Banner first: AppNotification.banner reads only the first block.
+    final drafts = [?_banner, ..._blocks];
     final l10n = L10n.of(context)!;
-    if (title.isEmpty || blocks.isEmpty) {
+    if (title.isEmpty ||
+        !drafts.any((d) => d.type == 'image' || d.toJson() != null)) {
       setState(() => _error = l10n.notifComposerEmpty);
+      return;
+    }
+    final images = drafts.where((d) => d.type == 'image');
+    if (images.any((d) => d.bytes == null)) {
+      setState(() => _error = l10n.notifImageMissing);
+      return;
+    }
+    if (images.any((d) => !isValidNotificationLink(d.link.text.trim()))) {
+      setState(() => _error = l10n.notifImageLinkInvalid);
       return;
     }
     setState(() {
       _busy = true;
       _error = null;
     });
+    final ds = ref.read(adminNotificationsDataSourceProvider);
+    final uploaded = <String>[];
     try {
-      final ds = ref.read(adminNotificationsDataSourceProvider);
+      final blocks = <Map<String, dynamic>>[];
+      for (final d in drafts) {
+        if (d.type != 'image') {
+          final j = d.toJson();
+          if (j != null) blocks.add(j);
+          continue;
+        }
+        final up = await ds.uploadImage(d.bytes!, d.ext!, d.id);
+        uploaded.add(up.path);
+        final link = d.link.text.trim();
+        blocks.add(ImageBlock(
+          id: d.id,
+          url: up.url,
+          path: up.path,
+          link: link.isEmpty ? null : link,
+          banner: identical(d, _banner),
+        ).toJson());
+      }
       await ds.create(title, blocks);
       ref.invalidate(adminNotificationsProvider);
       if (!mounted) return;
@@ -132,6 +217,8 @@ class _NotificationComposerDialogState
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l10n.notifPublished)));
     } catch (e) {
+      // Nothing was published — don't leave the uploaded files behind.
+      await ds.removeImages(uploaded);
       if (mounted) setState(() => _error = 'Error: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -171,6 +258,27 @@ class _NotificationComposerDialogState
                 ),
               ),
               const SizedBox(height: 8),
+              if (_banner == null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _addBanner,
+                    icon: const Icon(Icons.image_outlined, size: 16),
+                    label: Text(l10n.notifBannerAdd),
+                  ),
+                )
+              else
+                _BlockEditor(
+                  draft: _banner!,
+                  busy: _busy,
+                  label: l10n.notifBannerLabel,
+                  onRemove: _removeBanner,
+                  onUp: null,
+                  onDown: null,
+                  onChanged: () => setState(() {}),
+                  onPickImage: () => _pickImage(_banner!),
+                ),
+              const SizedBox(height: 8),
               Flexible(
                 child: ListView.separated(
                   shrinkWrap: true,
@@ -185,6 +293,7 @@ class _NotificationComposerDialogState
                     onUp: i > 0 ? () => _move(i, -1) : null,
                     onDown: i < _blocks.length - 1 ? () => _move(i, 1) : null,
                     onChanged: () => setState(() {}),
+                    onPickImage: () => _pickImage(_blocks[i]),
                   ),
                 ),
               ),
@@ -206,6 +315,11 @@ class _NotificationComposerDialogState
                     onPressed: _busy ? null : () => _add('input'),
                     icon: const Icon(Icons.short_text, size: 16),
                     label: Text(l10n.notifAddInput),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _add('image'),
+                    icon: const Icon(Icons.image_outlined, size: 16),
+                    label: Text(l10n.notifBlockImage),
                   ),
                 ],
               ),
@@ -248,6 +362,10 @@ class _BlockEditor extends StatelessWidget {
   final VoidCallback? onUp;
   final VoidCallback? onDown;
   final VoidCallback onChanged;
+  final VoidCallback onPickImage;
+
+  /// Header text override (the banner editor); defaults to the block type.
+  final String? label;
 
   const _BlockEditor({
     super.key,
@@ -257,11 +375,14 @@ class _BlockEditor extends StatelessWidget {
     required this.onUp,
     required this.onDown,
     required this.onChanged,
+    required this.onPickImage,
+    this.label,
   });
 
-  String _typeLabel(L10n l10n) => switch (draft.type) {
+  String _typeLabel(L10n l10n) => label ?? switch (draft.type) {
         'poll' => l10n.notifBlockPoll,
         'input' => l10n.notifBlockInput,
+        'image' => l10n.notifBlockImage,
         _ => l10n.notifBlockMarkdown,
       };
 
@@ -288,18 +409,20 @@ class _BlockEditor extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: palette.featureCardAccent)),
               const Spacer(),
-              IconButton(
-                tooltip: l10n.notifMoveUp,
-                icon: const Icon(Icons.arrow_upward, size: 16),
-                onPressed: busy ? null : onUp,
-                visualDensity: VisualDensity.compact,
-              ),
-              IconButton(
-                tooltip: l10n.notifMoveDown,
-                icon: const Icon(Icons.arrow_downward, size: 16),
-                onPressed: busy ? null : onDown,
-                visualDensity: VisualDensity.compact,
-              ),
+              if (label == null) ...[
+                IconButton(
+                  tooltip: l10n.notifMoveUp,
+                  icon: const Icon(Icons.arrow_upward, size: 16),
+                  onPressed: busy ? null : onUp,
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  tooltip: l10n.notifMoveDown,
+                  icon: const Icon(Icons.arrow_downward, size: 16),
+                  onPressed: busy ? null : onDown,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
               IconButton(
                 tooltip: l10n.notifDelete,
                 icon: Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
@@ -308,6 +431,31 @@ class _BlockEditor extends StatelessWidget {
               ),
             ],
           ),
+          if (draft.type == 'image') ...[
+            if (draft.bytes != null) ...[
+              ClipRRect(
+                borderRadius: palette.cbr,
+                child: Image.memory(draft.bytes!,
+                    height: 120, width: double.infinity, fit: BoxFit.cover),
+              ),
+              const SizedBox(height: 6),
+            ],
+            TextButton.icon(
+              onPressed: busy ? null : onPickImage,
+              icon: const Icon(Icons.image_outlined, size: 16),
+              label: Text(l10n.notifImagePick),
+            ),
+            TextField(
+              controller: draft.link,
+              enabled: !busy,
+              style: TextStyle(fontSize: 13, color: palette.tabActiveText),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: l10n.notifImageLinkLabel,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ] else
           // Main field: markdown text / poll question / input prompt
           TextField(
             controller: draft.main,
