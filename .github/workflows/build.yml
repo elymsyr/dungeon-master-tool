@@ -190,7 +190,7 @@ jobs:
   # ── iOS (IPA – no code signing) ────────────────────────────────
   build-ios:
     name: iOS
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -239,7 +239,7 @@ jobs:
   # ── macOS ──────────────────────────────────────────────────────
   build-macos:
     name: macOS
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
