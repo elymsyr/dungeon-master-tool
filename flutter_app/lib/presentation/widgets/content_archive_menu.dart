@@ -114,23 +114,44 @@ class ContentArchiveMenu extends ConsumerWidget {
   Future<void> _export(BuildContext context, WidgetRef ref) async {
     final l10n = L10n.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
+    final fileName = contentArchiveFileName(selectedName ?? 'dmt');
+    // Mobilde kaydetme diyaloğu baytları istiyor: önce geçiciye yaz, sonra sor.
+    final mobile = Platform.isAndroid || Platform.isIOS;
     try {
-      final path =
-          await _savePath(contentArchiveFileName(selectedName ?? 'dmt'));
-      if (path == null) return;
+      final out = mobile
+          ? p.join((await getTemporaryDirectory()).path, fileName)
+          : await _savePath(fileName);
+      if (out == null) return;
       // Faz 9 — medyalı dünyada saniyeler sürüyor; kullanıcı bekliyor.
       final ok = await withLoading(
         ref.read(globalLoadingProvider.notifier),
         'content-archive-export',
-        l10n.contentArchiveExporting(selectedName ?? p.basename(path)),
+        l10n.contentArchiveExporting(selectedName ?? p.basename(out)),
         () => exportContentArchive(
           codec: ref.read(contentCodecProvider),
           type: type,
-          path: path,
+          path: out,
           id: selectedId,
           name: selectedName,
         ),
       );
+      String? path = out;
+      if (mobile) {
+        final tmp = File(out);
+        try {
+          if (ok) {
+            path = await FilePicker.platform.saveFile(
+              fileName: fileName,
+              type: FileType.custom,
+              allowedExtensions: const [kContentArchiveExtension],
+              bytes: await tmp.readAsBytes(),
+            );
+          }
+        } finally {
+          if (await tmp.exists()) await tmp.delete();
+        }
+        if (path == null) return;
+      }
       messenger.showSnackBar(SnackBar(
         content: Text(ok
             ? l10n.contentArchiveExported(path)
@@ -192,15 +213,7 @@ class ContentArchiveMenu extends ConsumerWidget {
     }
   }
 
-  /// ponytail: mobilde kaydetme diyaloğu yok — `FilePicker.saveFile` orada
-  /// baytları istiyor, biz ise diske akıtıyoruz. Dosya Documents'a yazılıp
-  /// yolu snackbar'da gösteriliyor. Paylaşım sayfası istenirse `share_plus`
-  /// eklenir.
   Future<String?> _savePath(String fileName) async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      final dir = await getApplicationDocumentsDirectory();
-      return p.join(dir.path, fileName);
-    }
     final picked = await FilePicker.platform.saveFile(
       fileName: fileName,
       type: FileType.custom,

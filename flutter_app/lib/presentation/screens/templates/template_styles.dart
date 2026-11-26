@@ -356,16 +356,24 @@ class TemplatePill extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final pill = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      height: 18,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
       decoration: BoxDecoration(
         color: palette.sidebarFilterBg,
         borderRadius: palette.br,
       ),
+      // Tight line box: the font's default leading sat the text off-centre.
       child: Text(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 10, color: palette.tabText),
+        style: TextStyle(
+          fontSize: 10,
+          height: 1,
+          leadingDistribution: TextLeadingDistribution.even,
+          color: palette.tabText,
+        ),
       ),
     );
     return tooltip == null ? pill : Tooltip(message: tooltip, child: pill);

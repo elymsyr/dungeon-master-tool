@@ -29,6 +29,7 @@ import '../../../domain/services/free_template.dart' show isSrdLineage;
 import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
+import '../templates/template_styles.dart' show TemplatePill;
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/banner_metrics.dart';
 import '../../widgets/hub_filter_button.dart';
@@ -371,6 +372,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                   isSelected: isSelected,
                                   palette: palette,
                                   layout: MetadataTileLayout.topBanner,
+                                  trailingBadges: [
+                                    if (info.isFree) ...[
+                                      const SizedBox(width: 8),
+                                      TemplatePill(
+                                        l10n.freeTemplateBetaBadge,
+                                        tooltip: l10n.freeTemplateBetaTooltip,
+                                      ),
+                                    ],
+                                  ],
                                   onSettings: () =>
                                       showWorldSettingsDialog(
                                         context, ref, info.id, info.name,

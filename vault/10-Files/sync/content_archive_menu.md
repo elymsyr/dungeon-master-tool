@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/widgets/content_archive_menu.dart
 layer: presentation
 language: dart
 status: active
-updated: 2026-10-11
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 **Inputs**
 - Parametreler: `type` (`ContentItemType`), `selectedId`, `selectedName`, `showImport`.
 - Providers: `contentCodecProvider`; invalidate için `campaignInfoListProvider` / `packageListProvider` / `characterListProvider`.
-- `FilePicker` — masaüstünde `saveFile`/`pickFiles`, mobilde `getApplicationDocumentsDirectory`.
+- `FilePicker` — her platformda `saveFile`/`pickFiles`; mobilde `saveFile` baytları istediği için arşiv önce `getTemporaryDirectory`'ye yazılır.
 
 **Outputs**
 - Diske `.dmtz` yazar ya da okur; uygulanan içerik [[content_codec]] üzerinden Drift'e iner.
@@ -40,7 +40,7 @@ tags: [file]
   - Menü `MenuAnchor` ile **değil** `showMenu` ile açılıyor: uygulamanın öbür dokuz menüsü `PopupMenuButton` ve tema `popupMenuTheme` tanımlıyor; `MenuAnchor` o yüzeyi almaz, tek başına farklı görünürdü. Konum hesabı `PopupMenuButton`'ın kendi içinde yaptığının aynısı.
 - **Tek eylem kalınca menü yok.** `showImport: false` (karakter düzenleyici — kullanıcı kuralı "karakteri yalnızca dünya içinden import edebiliriz") doğrudan `IconButton` döndürür, `iconSize: 18` + `visualDensity: compact` ile yanındaki geri/ileri düğmelerinin ölçüsünde.
 - **İçe aktarma seçili öğeden bağımsız.** Dosyanın manifest'i türü zaten söylüyor; hangi sekmeden açılırsa açılsın çalışır ve `result.ref.type`'a göre doğru listeyi tazeler. Dışa aktarma ise seçim ister — seçim yoksa menü açılır ama o madde kapalıdır.
-- `ponytail:` mobilde kaydetme diyaloğu yok — `FilePicker.saveFile` orada baytları istiyor, biz diske akıtıyoruz. Dosya Documents'a yazılıp yolu snackbar'da gösteriliyor.
+- Dışa aktarma her seferinde konum sorar. Masaüstünde önce diyalog, sonra doğrudan seçilen yola yazılır; mobilde (`saveFile` baytları istiyor) önce geçici dosyaya yazılır, sonra diyalog baytları seçilen konuma kaydeder ve geçici dosya silinir. Mobilde arşiv bir kez belleğe okunur.
 - Arşiv `finally` içinde kapatılır (`ContentArchive.close`), hata yolunda da.
 - **Overlay (Faz 9):** dışa aktarma `withLoading`, içe aktarma `LoadingTask` ile genel overlay'de — dosya seçimiyle son snackbar arasında medyalı dünyada saniyeler geçiyor ve kullanıcı bekliyor. İçe aktarmanın `end`'i `finally`'de, hata yolunda overlay açık kalmasın.
 

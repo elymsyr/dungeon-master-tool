@@ -2388,6 +2388,8 @@
   "tplTier2": "Tier 2 — DM",
   "tplMapIcon": "Harita simgesi",
   "freeWorldNoMultiplayer": "Kendi şablonunu kullanan dünyalar henüz çok oyunculuya açılamaz: oyuncular senin şablonun yerine yerleşik kağıdı görürdü.",
+  "freeTemplateBetaBadge": "Beta",
+  "freeTemplateBetaTooltip": "Kendi şablonların beta bir özellik: biçimi hâlâ değişebilir. Verilerin taşınır ama .dmtz ile yedek al.",
   "freeInstallTitle": "Farklı şablon",
   "freeInstallBody": "Bu paket farklı bir şablonla yapıldı. Kartlar ve alanlar anahtarlarıyla eşleşir. Hiçbir şey kaybolmaz: aşağıdakilerin verisi pakette kalır, sadece bu dünyada görünmez.",
   "freeInstallCategories": "Bu dünyada olmayan kategoriler (kartları görünmez)",

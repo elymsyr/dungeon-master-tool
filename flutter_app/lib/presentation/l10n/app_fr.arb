@@ -2388,6 +2388,8 @@
   "tplTier2": "Tier 2 — MJ",
   "tplMapIcon": "Icône sur la carte",
   "freeWorldNoMultiplayer": "Les mondes avec votre propre modèle ne peuvent pas encore passer en multijoueur : les joueurs verraient la fiche intégrée au lieu de la vôtre.",
+  "freeTemplateBetaBadge": "Bêta",
+  "freeTemplateBetaTooltip": "Les modèles personnalisés sont une fonctionnalité bêta : leur format peut encore changer. Vos données sont conservées, mais gardez une sauvegarde .dmtz.",
   "freeInstallTitle": "Modèle différent",
   "freeInstallBody": "Ce paquet a été créé avec un autre modèle. Les cartes et les champs sont associés par leur clé. Rien n'est perdu : les données ci-dessous restent dans le paquet, elles ne sont simplement pas affichées dans ce monde.",
   "freeInstallCategories": "Catégories absentes de ce monde (leurs cartes ne sont pas affichées)",

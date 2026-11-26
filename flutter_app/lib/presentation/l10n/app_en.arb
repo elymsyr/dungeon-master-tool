@@ -3695,6 +3695,8 @@
   "tplTier2": "Tier 2 — DM",
   "tplMapIcon": "Map icon",
   "freeWorldNoMultiplayer": "Worlds with your own template can't go multiplayer yet: players would get the built-in sheet instead of yours.",
+  "freeTemplateBetaBadge": "Beta",
+  "freeTemplateBetaTooltip": "Your own templates are a beta feature: their format may still change. Your data carries over, but keep a .dmtz backup.",
   "freeInstallTitle": "Different template",
   "freeInstallBody": "This package was made with a different template. Cards and fields are matched by their keys. Nothing is lost: the data below stays in the package, it just isn't shown in this world.",
   "freeInstallCategories": "Categories not in this world (their cards aren't shown)",

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/content_transfer/content_archive.dart
 layer: application
 language: dart
 status: active
-updated: 2026-10-09
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -47,6 +47,6 @@ media/<yol>     baytlar; manifest.data_root'a göreli
 
 ## Notes
 - **ponytail:** aynı yolda farklı içerikli yerel bir dosya varsa üzerine yazılmıyor. Yol `worlds/<isim>/media/...` olduğu için, isim çakışmasından `(2)` olarak açılan bir import yerel dünyanın resmini ezerdi. Tavan: o durumda import edilen kopya yereldeki resmi gösterir. Gerçek çözüm import sırasında dünya klasörünü de yeniden adlandırmak — dünya kimliği işiyle (Faz 2.5) ucuzluyor.
-- **ponytail:** mobilde kaydetme diyaloğu yok — `FilePicker.saveFile` orada baytları istiyor, biz diske akıtıyoruz. Dosya Documents'a yazılıp yolu snackbar'da gösterilir; paylaşım sayfası (`share_plus`) istenirse eklenir.
+- Mobilde de kaydetme diyaloğu açılır: arşiv geçici dosyaya yazılır, `FilePicker.saveFile(bytes:)` seçilen konuma kaydeder (bkz. [[content_archive_menu]]).
 - "Kopya olarak içe aktar" **yok**: `world_entities` birincil anahtarı global `{id}` olduğu için yeni id'li bir kopya, upsert sırasında var olan dünyanın entity satırlarını kendine çekerdi. Aynı gizli hata `WorldRepositoryImpl.copy`'de de duruyor.
 - Test: `test/application/services/content_transfer/content_archive_test.dart` — export/import **iki farklı `AppPaths.dataRoot`** arasında; resmin baytları ve yeniden yazılan yol doğrulanıyor.

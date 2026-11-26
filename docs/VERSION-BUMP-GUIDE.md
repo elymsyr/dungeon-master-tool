@@ -32,10 +32,10 @@ Read every commit message. Classify changes into: new features, bug fixes, break
 | New user-facing features, no breaking changes | **minor** (x.Y+1.0) |
 | Breaking changes, removed features, schema migration that requires action | **major** (X+1.0.0) |
 
-**Default to beta.** Append the pre-release tag unless the user explicitly says otherwise:
+**Stable since v20.0.0.** `appProcess` is `'stable'` in `constants.dart`, and the git tag is `stable-vX.Y.Z` — it must equal `appReleaseTag` (`$appProcess-v$appVersion`), or the in-app update check (`release_check_service.dart`) cannot parse it.
 
-- Beta tag: `beta-vX.Y.Z` (git tag) — `appProcess` stays `'beta'` in `constants.dart`.
-- Stable tag: `vX.Y.Z` — only when the user explicitly requests a stable release; then also change `appProcess` to `'stable'` in `constants.dart` and the status badge in `README.md`.
+- Release candidate: tag `stable-vX.Y.Z-rc.N`, published as a GitHub **pre-release** (never "latest"). The update check reads only `/releases/latest`, so it never offers an RC.
+- Free templates are still a beta *feature* (Beta pill in the Templates tab); that does not change the app's channel.
 
 ## 4. Update version in source files
 

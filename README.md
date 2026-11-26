@@ -2,7 +2,7 @@
 
 <p align="center">
   <b>A portable, offline-first DM and Worldbuilng tool.</b><br>
-  <i>Build worlds, run sessions, share with others, play together — all in one app.</i>
+  <i>Build worlds on your own rules, run sessions, share with others, play together — all in one app.</i>
   <br><i>Not a VTT app.</i>
 </p>
 
@@ -17,8 +17,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v19.1.1-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/status-stable-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v20.0.0-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square&logo=flutter" />
 </p>
@@ -46,10 +46,19 @@
 
 Everything core works **without an account**. You need one only to play online, publish to the marketplace, or download other users' content.
 
+## Your Own Rules 🧩 *(beta)*
+
+Not playing 5e? Build your own game system in **Templates** and run a world on it.
+
+- **Your categories, your fields** — Decide what a card is: categories, fields and their layout, tables and level tables. Cards in a world follow the template you built.
+- **Your character sheet** — Grants, a step-by-step character creation guide, rest buttons that reset what you choose, and your own encounter columns.
+- **Start from SRD** — A ready-made SRD 5.2.1 free template and package are included: copy it and change what you need, or start from an empty template.
+- **Beta** — Free templates stay on your device for now: no multiplayer, no marketplace. The format may still change; your data is carried over, but keep a `.dmtz` backup.
+
 ## Worldbuilding 🗺️
 
 - **Era Timeline** — Split your world's history into eras on a timeline bar and move between them. Each era keeps its own map, pins, nested location maps and day-by-day timeline pins linked to cards and sessions — the same city before the war and after it.
-- **Templates & Packages** — Every world is built on a template (the D&D 5e template is built in) and pulls content from packages: bundles of cards you install into any world, link to other packages, or share on the marketplace. *Custom templates are coming.*
+- **Templates & Packages** — Every world is built on a template (the D&D 5e template is built in, or [build your own](#your-own-rules--beta)) and pulls content from packages: bundles of cards you install into any world, link to other packages, or share on the marketplace.
 - **Codex** — Schema-driven cards for NPCs, monsters, spells, items, locations and more. Every reference is a tappable link; pin cards to the top, preview any card with a long press, and search by name, tag, category or text.
 - **World Map** — Pins, grid and scale, drawing, fog of war, and nested maps you can walk into (districts, dungeons, taverns).
 - **Mind Map** — Infinite canvas with linked nodes, workspaces, freehand drawing and undo/redo.

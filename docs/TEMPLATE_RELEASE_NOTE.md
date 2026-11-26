@@ -21,7 +21,7 @@ This file is the **template and style guide** for every Dungeon Master Tool rele
 
 ## Section order (in the template below)
 
-1. Title + Beta tag + version
+1. Title + version
 2. Release date
 3. Links (GitHub release, website)
 4. One-paragraph intro — what this release is *about*
@@ -46,7 +46,7 @@ Copy everything between the `<!-- BEGIN -->` and `<!-- END -->` markers into `RE
 
 <!-- BEGIN RELEASE TEMPLATE -->
 
-## Dungeon Master Tool v{{MAJOR.MINOR.PATCH}} — {{Theme / one-line subtitle}} (Beta)
+## Dungeon Master Tool v{{MAJOR.MINOR.PATCH}} — {{Theme / one-line subtitle}}
 
 **Release date:** {{Month YYYY}}
 **Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v{{MAJOR.MINOR.PATCH}}) · [elymsyr.github.io](https://elymsyr.github.io/)
@@ -176,6 +176,6 @@ A few additions baked into the template above that the v5.0 release note didn't 
 1. **Explicit `Downloads & source` line** right under the date, with both the GitHub release and the elymsyr.github.io links — previously the reader had to go hunt for the download.
 2. **A dedicated `Bug fixes` section** separate from "Smaller improvements". v5.0 mixed polish and fixes into one bucket; splitting them makes it obvious at a glance what's new capability vs. what's a repair.
 3. **A pre-publish checklist** at the bottom of this guide — catches the "migration file referenced in notes but not committed" class of mistake.
-4. **`(Beta)` baked into the title line** so every release carries the beta tag consistently while the project is pre-1.0-stable, instead of appearing only in some places.
+4. ~~**`(Beta)` baked into the title line**~~ — dropped at v20.0.0, the first stable release. Beta *features* (free templates) are marked in their own section instead.
 
 If any of these feel like overkill for a small patch release, it's fine to drop the corresponding section — just don't leave the heading behind empty.

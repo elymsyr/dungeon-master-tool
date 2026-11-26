@@ -12,6 +12,21 @@ v17.0.0 baseline (14 September 2026): `flutter test` 1509 passing / 0 failing, `
 
 ---
 
+## Beta features
+
+### Free templates (your own templates)
+
+The app is stable since v20.0.0; free templates stay beta. Promise during beta: the format may
+change, but a user's templates, worlds and packages are carried over by a converter — never dropped.
+
+- **No multiplayer** — a world on a free template cannot go online (`freeWorldNoMultiplayer`);
+  players would get the built-in sheet. Free packages cannot go online or to the marketplace (K6).
+- **Character creation guide is not translated** — guide steps show as written
+  ([SRD-FREE-ALANLAR.md](free-template/SRD-FREE-ALANLAR.md) §11.6).
+- **Item charges are not a Pool resource** — charges stay as data on the card (S4).
+- **SRD deviations carry over** — the free SRD package keeps the built-in package's known
+  differences from the SRD text (S2, §9.1).
+
 ## Open
 
 - **Worker JWT check accepts a token with no `iss`** — [jwt.ts](../cloudflare/src/jwt.ts)

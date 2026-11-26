@@ -33,14 +33,18 @@ class ReleaseInfo {
   (String, int, int, int)? get parsed => _parseTag(tag);
 
   /// Returns true if this release is strictly newer than the local tag.
+  /// Channels stay apart, except that a stable release is offered to every
+  /// channel — at the same version it counts as newer than a beta build.
   bool isNewerThan(String localTag) {
     final a = _parseTag(tag);
     final b = _parseTag(localTag);
     if (a == null || b == null) return false;
-    if (a.$1 != b.$1) return false; // different process channel — ignore
+    final remoteStable = a.$1 == 'stable';
+    if (a.$1 != b.$1 && !remoteStable) return false;
     if (a.$2 != b.$2) return a.$2 > b.$2;
     if (a.$3 != b.$3) return a.$3 > b.$3;
-    return a.$4 > b.$4;
+    if (a.$4 != b.$4) return a.$4 > b.$4;
+    return remoteStable && b.$1 != 'stable';
   }
 }
 

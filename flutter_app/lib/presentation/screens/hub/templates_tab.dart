@@ -15,6 +15,7 @@ import '../../widgets/content_archive_menu.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../l10n/app_localizations.dart';
+import '../templates/template_styles.dart' show TemplatePill;
 
 /// Templates library, laid out like the Worlds tab: tap selects, double tap
 /// opens; View/Edit · Copy · Transfer · Delete act on the selection
@@ -55,13 +56,22 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      l10n.tabTemplates,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: palette.tabActiveText,
-                      ),
+                    child: Row(
+                      children: [
+                        Text(
+                          l10n.tabTemplates,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: palette.tabActiveText,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TemplatePill(
+                          l10n.freeTemplateBetaBadge,
+                          tooltip: l10n.freeTemplateBetaTooltip,
+                        ),
+                      ],
                     ),
                   ),
                   Tooltip(

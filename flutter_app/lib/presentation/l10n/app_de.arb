@@ -2388,6 +2388,8 @@
   "tplTier2": "Tier 2 — DM",
   "tplMapIcon": "Kartensymbol",
   "freeWorldNoMultiplayer": "Welten mit eigener Vorlage können noch nicht in den Mehrspielermodus: Spieler sähen statt deiner Vorlage den eingebauten Bogen.",
+  "freeTemplateBetaBadge": "Beta",
+  "freeTemplateBetaTooltip": "Eigene Vorlagen sind eine Beta-Funktion: Ihr Format kann sich noch ändern. Deine Daten werden übernommen, aber sichere sie als .dmtz.",
   "freeInstallTitle": "Andere Vorlage",
   "freeInstallBody": "Dieses Paket wurde mit einer anderen Vorlage erstellt. Karten und Felder werden über ihre Schlüssel zugeordnet. Nichts geht verloren: Die Daten unten bleiben im Paket, sie werden in dieser Welt nur nicht angezeigt.",
   "freeInstallCategories": "Kategorien, die es in dieser Welt nicht gibt (ihre Karten werden nicht angezeigt)",
