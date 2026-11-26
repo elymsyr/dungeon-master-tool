@@ -59,8 +59,8 @@ void main() {
     final list = (await c.read(userTemplatesProvider.future)).skip(1);
     expect(list.map((t) => t.name), ['My SRD', 'Empty']);
     expect(list.map((t) => t.schemaId), [a.schemaId, e.schemaId]);
-    // The SRD copy drops three lookups (SRD-FREE-ALANLAR §5.14).
-    expect(list.first.categories, hasLength(builtin.categories.length - 3));
+    // The SRD copy drops seven categories (SRD-FREE-ALANLAR §5.14, §5.15).
+    expect(list.first.categories, hasLength(builtin.categories.length - 7));
     expect(list.every(isFreeTemplate), isTrue);
     expect(list.first.originalHash, a.originalHash);
     expect(list.first.description, 'mine');

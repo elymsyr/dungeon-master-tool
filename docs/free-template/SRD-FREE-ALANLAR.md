@@ -1,9 +1,9 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10. Güncel faz: **A8** (uygulandı, otomatik kapı yeşil; elle kontrol
-> bekliyor). A1'in elle kontrolü A2'ninkiyle birlikte yapılacak (kullanıcı kararı 2026-10-28);
-> A1–A7'nin elle kontrolü de henüz yapılmadı. A7 `2ac10140` ile commit'lendi.
+> haritası §11'de: A1–A10, ardından kontrol fazları B1–B4. Güncel faz: **A8** (uygulandı,
+> otomatik kapı yeşil). A fazlarının elle kontrolü sona, B1–B4'e toplandı (kullanıcı kararı
+> 2026-11-26, §11.5); A1–A8'in elle kontrolü henüz yapılmadı. A7 `2ac10140` ile commit'lendi.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -548,22 +548,33 @@ Süreç [ROADMAP.md](ROADMAP.md) §1 ile aynı:
   yazılır; durum tablosu güncellenir.
 - Commit ve push yalnız kullanıcı isteyince yapılır. Öneri: her faz kendi commit'iyle kapanır.
 
+**Elle kontrol sona toplandı (kullanıcı kararı 2026-11-26).** Yukarıdaki iki ilk madde A
+fazlarında elle kontrol için geçerli değil: bir A fazı otomatik kapısı (§11.2) yeşil olunca
+kapanır ve sonraki faza geçilir. Her A fazının "Elle kontrol" tablosu (EAx.y) yerinde kalır, ama
+kontroller A10'dan sonra **B1–B4**'te (§11.5) topluca yapılır. Kullanıcı onayı, faz başı kararları
+(A9 envanteri, A10 okuma yolları) için yine istenir.
+
 | Faz | Konu | Alanlar (kopyada) | Boyut | Durum |
 |---|---|---|---|---|
-| A1 | Altyapı: dönüştürücü, free paket, free dünya | değişmez (görünür fark yok) | M | ⏳ uygulandı, elle kontrol A2 ile birlikte |
-| A2 | Büyü | 25 → 10; 3 lookup kategorisi çıkar | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A3 | Grant bloğu, Feat, Trait | 60 → 5, 46 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | ⏳ uygulandı, elle kontrol bekliyor |
-| A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ⏳ uygulandı, elle kontrol bekliyor |
-| A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | ⏳ uygulandı, elle kontrol bekliyor |
+| A1 | Altyapı: dönüştürücü, free paket, free dünya | değişmez (görünür fark yok) | M | ✅ otomatik kapı; elle kontrol B1'de |
+| A2 | Büyü | 25 → 10; 3 lookup kategorisi çıkar | M | ✅ otomatik kapı; elle kontrol B1'de |
+| A3 | Grant bloğu, Feat, Trait | 60 → 5, 46 → 3 | M | ✅ otomatik kapı; elle kontrol B2'de |
+| A4 | Tür, Alt tür | 48 → 5, 48 → 3 | M | ✅ otomatik kapı; elle kontrol B2'de |
+| A5 | Sınıf, Alt sınıf, Geçmiş | 29 → 14, 9 → 4, 14 → 6 | L | ✅ otomatik kapı; elle kontrol B2'de |
+| A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ✅ otomatik kapı; elle kontrol B3'te |
+| A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ✅ otomatik kapı; elle kontrol B3'te |
+| A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | ✅ otomatik kapı; elle kontrol B3'te |
 | A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | |
 | A10 | Kapanış | 521 → 167 doğrulanır | S | |
+| B1 | Kontrol: altyapı ve büyü | EA1, EA2 | M | |
+| B2 | Kontrol: karakterin yapı taşları | EA3, EA4, EA5 | L | |
+| B3 | Kontrol: canavar, eşya, lookup, Trinket | EA6, EA7, EA8, A9 | M | |
+| B4 | Kontrol: Türkçe, yeni dünya, R turu, uçtan uca | hepsi | M | |
 
 Sıra bağımlılığa göre: A1 her şeyin altyapısı. A3'teki grant dönüşümünü A4 (tür), A5 (S3) ve A7
 (büyülü eşya) kullanır. A8, A1'den beri kaynak adları veride olduğu için Resource Pool'u
-kaldırabilir.
+kaldırabilir. B fazları A10'dan sonra ve sırayla: B1'de kurulan dünya ve karakter B2–B4'te
+kullanılır.
 
 ### 11.1 Kesin kurallar
 
@@ -607,7 +618,7 @@ tabanlandığı için yok). Ek olarak:
 
 ### 11.4 Fazlar
 
-Her faz aynı yapıda: **Amaç · Faz başı · Yapılacaklar · Kapsam dışı · Otomatik testler · Elle
+Her A fazı aynı yapıda (B fazlarınınki §11.5'te): **Amaç · Faz başı · Yapılacaklar · Kapsam dışı · Otomatik testler · Elle
 kontrol · Çıkış kriteri.** Her fazda dokunulan yerler aynı: `free_srd_pack.dart` (dönüştürücü),
 `free_srd_texts.dart` (SRD metinleri), `free_template.dart` (`_srdCopyFields`: kopyanın alanları),
 `assets/srd_l10n/tr/*.json` ve `free_srd_pack_test.dart`. Farklı olanlar fazında yazılı.
@@ -1464,7 +1475,10 @@ kategorilere hiçbir kart bağlanmıyor (G7); rehber ve çipler yalnız var olan
     Improvised'ınki yok; R3: `grants_incapacitated` / `stacks` metinde; çıkan 4 kategori;
     oyuncu kartı ve NPC; rehber ve çipler yalnız var olan alanlara bakıyor) ve G7 hedefleri
     33 lookup'la: 57/57.
-  - G6 (`entity_card_flush` hariç): G6_SONUC
+  - G6 (`entity_card_flush` hariç): 1997 geçti (A7'nin 1990'ı + 7 yeni), 3 kırmızı; üçü de temel
+    çizgidekiyle aynı. Yeni kırmızı yok. Eski üç test kopyanın A8 öncesini sabitliyordu ve
+    güncellendi: `free_template_test` (çıkan 7 kategori; oyuncu kartı ve NPC'nin çıkan alanları;
+    rehber 14 adım) ve `user_templates_provider_test` (kopya 7 kategori eksik).
   - G7: bekçi yeşil; 53 kategori kapalı, alan sayıları §5'le aynı.
   - G8: `check_pairs` 7200 / 7200, 0 FAIL, 200 UYARI (+4, hepsi yanlış alarm: Exhaustion'da
     "reaches" → reach, üç ustalık / özellik metninde genel "extra attack" → Extra Attack);
@@ -1490,7 +1504,7 @@ faz raporunda kullanıcıya onaylatılır.
 **Otomatik testler:** örnek sözlük metinleri ve üç Trinket satırı PDF'le birebir; 100 Trinket
 kartı, d100 değerleri 1–100 tekrarsız; G7, G8.
 
-**Elle kontrol:** birkaç lookup kartı (Cover, Illumination, Cone, Darkvision); Trinket listesi ve
+**Elle kontrol** (B3'te, EB3.4; TR ve yeni dünya B4'te): birkaç lookup kartı (Cover, Illumination, Cone, Darkvision); Trinket listesi ve
 d100 alanına dokunma; TR; yeni dünya; R turu.
 
 **Çıkış kriteri:** S5'in bütün metinleri free pakette ve Türkçesiyle.
@@ -1511,14 +1525,98 @@ sorulur.
 3. Türkçe: tam `check_pairs`; kapsam testi bütün free paketi okur.
 4. Belgeler: bu doküman (durum, sonuçlar), DESIGN §16 (SRD kopyası artık veriyle), ROADMAP §6'ya
    not, vault notları, `_Architecture-Overview`, Vault-Changelog.
-5. Tam test ve analiz; tam R turu; uçtan uca tur: hazır template'le dünya → rehberle karakter →
-   5. seviye → dinlenme → encounter → `.dmtz` ile taşıma.
+5. Tam test ve analiz (G1–G8). Tam R turu ve uçtan uca tur B4'te.
 
-**Çıkış kriteri:** kullanıcının uçtan uca turu ve R turu onayı.
+**Çıkış kriteri:** bütün otomatik kapılar yeşil; B fazlarına geçilir.
 
 ---
 
-### 11.5 Kapsam dışı
+### 11.5 Kontrol fazları (B1–B4)
+
+**Amaç:** A1–A10'da yapılanların hepsi uygulamada doğru çalışıyor mu, en sonda ve topluca
+görmek. B fazlarında yeni iş yapılmaz; yalnız kontrol edilir ve bulunan hata düzeltilir.
+
+**Süreç:**
+
+- Kontroller A fazlarının EAx.y tablolarındakilerdir. Buraya kopyalanmadı, numarayla anılır.
+  "Beklenen" sütunu ve "Ax sonucu"ndaki elle kontrol notları (ör. EA3.5'te Fey-Touched) geçerli.
+- **Ortam:** HEAD'den derlenmiş uygulama (A10 sonrası), Linux, Flutter 3.47. A fazları bittiği
+  için her EAx.1'deki "güncellemeyi uygula" adımı ayrı ayrı yapılmaz; güncelleme yolu B1'de bir
+  kez sınanır (EB1.1).
+- **Bulgu:** her bulgu fazın "Bx sonucu"na numarayla yazılır (`Bx-H1`, `Bx-H2`, …): ne yapıldı,
+  ne görüldü, ne beklendi. Düzeltme aynı B fazında yapılır; düzeltmeden sonra otomatik kapı
+  (G4–G8) ve yalnız ilgili kontroller tekrarlanır. Düzeltme bir A fazının kararını değiştirirse
+  (alan listesi, §5 hedefi) önce kullanıcıya sorulur ve ilgili "Ax sonucu"na not düşülür.
+- **Kapı:** bir B fazı, kullanıcı bütün kontrollerini ✅ demeden kapanmaz; sonraki B fazına
+  onaysız geçilmez. B4 bütün işin kapanışıdır.
+- Her B fazının sonunda "Bx sonucu": kontrol başına ✅ / ❌ (bulgu numarasıyla), düzeltmeler ve
+  tekrarlanan kontroller. Durum tablosu (§11) güncellenir.
+
+---
+
+#### B1 — Altyapı ve büyü (EA1, EA2)
+
+**Kapsam:** dönüştürücü, free paket, free dünya, template güncelleme yolu ve büyü kartları.
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| EB1.1 | A1'den sonra kurulmuş eski bir SRD-A varsa aç. | Template güncellemesi teklif edilir; uygulanınca kartlar EB1.3'teki dünyayla aynı görünür. Yoksa atlanır, sonuçta yazılır. |
+| EB1.2 | — | EA1.1–EA1.7, EA1.9 (R1, R2, R6, R7). SRD-A yeni kurulur; Aria burada oluşur ve B2–B4'te kullanılır. |
+| EB1.3 | — | EA2.2–EA2.5 (EA2.1 yerine EB1.1). |
+
+TR kontrolleri (EA1.8, EA2.6) ve yeni dünya (EA2.7) B4'te.
+
+**Çıkış kriteri:** EB1.1–EB1.3 ✅; SRD-A ve Aria B2 için hazır.
+
+#### B2 — Karakterin yapı taşları (EA3, EA4, EA5)
+
+**Kapsam:** grant bloğu, Feat, Trait, Tür, Alt tür, Sınıf, Alt sınıf, Geçmiş ve bunların
+karaktere inişi.
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| EB2.1 | — | EA3.2–EA3.6. EA3.5'te Fey-Touched. |
+| EB2.2 | — | EA4.2–EA4.5. |
+| EB2.3 | — | EA5.2–EA5.6. EA5.3'te Weapon Mastery (Fighter) feat'i; EA5.6'da zincir Fighter / Barbarian satırlarında. |
+| EB2.4 | Aria'yı 1'den 5'e çıkar; her seviyede özet ekranına bak. | Çift kart yok; Havuz değerleri A1'deki gibi (EA1.2–EA1.3 ile tutarlı). |
+
+**Çıkış kriteri:** EB2.1–EB2.4 ✅; verilen kartların hepsi karaktere iniyor, geri alma önerileri
+çalışıyor.
+
+#### B3 — Canavar, eşya, lookup ve Trinket (EA6, EA7, EA8, A9)
+
+**Kapsam:** stat blokları, encounter, büyülü eşya ve ekipman, lookup metinleri, oyuncu kartı,
+NPC, çıkan kategoriler, A9'un sözlük metinleri ve Trinket tablosu.
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| EB3.1 | — | EA6.2–EA6.4 (R5 dahil). EA6.2'de Sprite'ın Touch'ı ve Fire Breath. |
+| EB3.2 | — | EA7.2–EA7.4. EA7.3'te Alchemist's Supplies'ın Craft satırı; EA7.4'te Heavy'nin Effects'i. |
+| EB3.3 | — | EA8.2–EA8.5. EA8.2'de Paralyzed'ın Effects'i; EA8.5'te "Starting at Higher Levels" tablosu. |
+| EB3.4 | — | A9'un elle kontrolü: Cover, Illumination, Cone, Darkvision kartları; Trinket listesi ve d100 alanı. |
+| EB3.5 | Kenar çubuğunu baştan sona gez. | Çıkan 7 kategori yok; kalan her kategori açılıyor, boş görünen alan yok. |
+
+**Çıkış kriteri:** EB3.1–EB3.5 ✅.
+
+#### B4 — Türkçe, yeni dünya, R turu ve uçtan uca tur
+
+**Kapsam:** bütün A fazlarının TR, yeni dünya ve R turu satırları ile A10'dan buraya taşınan uçtan
+uca tur. Bütün işin kapanışı.
+
+| # | Kontrol | Beklenen |
+|---|---|---|
+| EB4.1 | TR modunda B1–B3'teki örnek kartlar. | EA1.8, EA2.6, EA4.6 ve A3–A8'in TR satırları: metinler Türkçe, sayılar ve birimler aynı; A7'de Craft satırları ve "Zırh Sınıfı"; A8'de durum metinleri. |
+| EB4.2 | Hazır free template'le "SRD içeriğini ekle" açık yeni bir dünya. | EA2.7 ve A3–A8'in "yeni dünya" satırları: B1–B3'teki kartlar aynı. |
+| EB4.3 | Tam R turu (R1–R8, [ROADMAP.md](ROADMAP.md) §3.2) yerleşik dünyada. | Yerleşik SRD hiç değişmemiş (K1, K10). |
+| EB4.4 | Uçtan uca tur, EB4.2'deki dünyada: rehberle karakter → 5. seviye → kısa ve uzun dinlenme → encounter → `.dmtz` ile dışa aktar, başka bir kullanıcıda / temiz kurulumda içe al. | Her adım çalışıyor; içe alınan dünya ve karakter aynı. |
+| EB4.5 | B1–B3'te düzeltilen her bulgunun kontrolü. | Bulgular tekrar etmiyor. |
+
+**Çıkış kriteri:** EB4.1–EB4.5 ✅ ve kullanıcının onayı. Belgenin durumu "tamamlandı" olur; DESIGN,
+ROADMAP ve vault notları A10'daki gibi son hâlinde.
+
+---
+
+### 11.6 Kapsam dışı
 
 - **SRD sapmaları** (S2, §9.1): ayrı iş. Free paket yerleşik paketin sapmalarını taşır.
 - **Eşya şarjlarının Havuz'a gitmesi** (S4, 2026-11-03): kapsam dışı.

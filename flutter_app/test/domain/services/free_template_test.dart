@@ -62,8 +62,21 @@ void main() {
       // Keys the copy renames (the player card's own fields, §16.1).
       const renamed = {'class_levels': 'level', 'spell_slots': 'auto_resources'};
       const flatCombat = {'ac', 'hp_average', 'initiative_modifier'};
+      // SRD-FREE-ALANLAR §5.13: the engine's helpers the copy drops.
+      const helpers = {
+        'player-character': {'current_conditions', 'extra_hp', 'trinket_ref'},
+        'npc': {'initiative_modifier'},
+      };
       // SRD-FREE-ALANLAR §5.14: lookups the copy drops.
-      const gone = {'duration-unit', 'casting-time-unit', 'casting-component'};
+      const gone = {
+        'duration-unit',
+        'casting-time-unit',
+        'casting-component',
+        'character-state',
+        'resource-pool',
+        'body-slot',
+        'starter-bundle',
+      };
       final froms = [
         for (final c in builtin.categories)
           if (!gone.contains(c.slug)) c,
@@ -87,7 +100,8 @@ void main() {
         final kept = [
           for (final f in from.fields)
             if (!dropped.contains(f.fieldType) &&
-                !(flat && flatCombat.contains(f.fieldKey)))
+                !(flat && flatCombat.contains(f.fieldKey)) &&
+                !(helpers[from.slug]?.contains(f.fieldKey) ?? false))
               f,
         ]..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
         // The player card's Feats move above its Traits, into their group.
@@ -371,7 +385,7 @@ void main() {
       final pc = freePlayerCard(srd)!;
       final steps = guideOf(pc);
       expect(steps.first.field, 'class_refs');
-      expect(steps.length, 13);
+      expect(steps.length, 14);
       final keys = {for (final f in pc.fields) f.fieldKey};
       for (final s in steps) {
         expect(keys, contains(s.field));

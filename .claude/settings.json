@@ -14,6 +14,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Code search: use codebase-memory first (search_graph / search_code / get_code_snippet, project home-eren-GitHub-dungeon-master-tool). Grep/Glob only for non-code or if the graph came up empty.\"}}'"
+          }
+        ]
+      }
     ]
   }
 }
