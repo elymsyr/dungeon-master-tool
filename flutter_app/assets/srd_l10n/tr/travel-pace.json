@@ -1,5 +1,8 @@
 {
   "Slow": "Yavaş",
   "Normal": "Normal",
-  "Fast": "Hızlı"
+  "Fast": "Hızlı",
+  "| Minute | Hour | Day |\n|---|---|---|\n| 200 feet | 2 miles | 18 miles |\n\nTraveling at a Slow pace grants Advantage on Wisdom (Perception or Survival) checks.": "| Dakika | Saat | Gün |\n|---|---|---|\n| 200 fit | 2 mil | 18 mil |\n\nYavaş tempoda yolculuk etmek İrfan (Algı ya da Hayatta Kalma) zarlarına Avantaj verir.",
+  "| Minute | Hour | Day |\n|---|---|---|\n| 300 feet | 3 miles | 24 miles |\n\nTraveling at a Normal pace imposes Disadvantage on Dexterity (Stealth) checks.": "| Dakika | Saat | Gün |\n|---|---|---|\n| 300 fit | 3 mil | 24 mil |\n\nNormal tempoda yolculuk etmek Çeviklik (Gizlilik) zarlarına Dezavantaj verir.",
+  "| Minute | Hour | Day |\n|---|---|---|\n| 400 feet | 4 miles | 30 miles |\n\nTraveling at a Fast pace imposes Disadvantage on a traveler’s Wisdom (Perception or Survival) and Dexterity (Stealth) checks.": "| Dakika | Saat | Gün |\n|---|---|---|\n| 400 fit | 4 mil | 30 mil |\n\nHızlı tempoda yolculuk etmek, yolcunun İrfan (Algı ya da Hayatta Kalma) ve Çeviklik (Gizlilik) zarlarına Dezavantaj verir."
 }

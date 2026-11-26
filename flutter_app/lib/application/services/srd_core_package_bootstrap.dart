@@ -253,6 +253,17 @@ class SrdCorePackageBootstrap {
               jsonEncode(freeSrdFields(cards[ids[r.id]]!, cards)),
             ),
           ),
+        for (final t in freeSrdTrinkets(
+          (n) => _uuid.v5(_freeNamespace, 'trinket:$n'),
+        ))
+          PackageEntitiesCompanion.insert(
+            id: t.id,
+            packageId: packageId,
+            categorySlug: t.categorySlug,
+            name: t.name,
+            source: const Value(srdSourceTag),
+            fieldsJson: Value(jsonEncode(t.fields)),
+          ),
       ]);
     });
   }

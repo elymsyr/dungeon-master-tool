@@ -131,7 +131,15 @@ void main() {
         if (inFreeSrd(e['type'] as String)) e,
     ];
     expect(kept.length, lessThan(coreIds.length));
-    expect(freeIds, hasLength(kept.length));
+    // A9: the SRD's Trinkets table, cards the core pack has none of.
+    final trinkets = [
+      for (final e in (free['entities'] as Map).values)
+        if (e['type'] == 'trinket') e,
+    ];
+    expect(trinkets, hasLength(100));
+    expect({for (final t in trinkets) t['attributes']['roll_d100']},
+        hasLength(100));
+    expect(freeIds, hasLength(kept.length + trinkets.length));
     expect(freeIds.intersection(coreIds), isEmpty);
     // Paket içi ref'ler yeni kimliklere döndü: hiçbir alan çekirdeği göstermez.
     final fields = [

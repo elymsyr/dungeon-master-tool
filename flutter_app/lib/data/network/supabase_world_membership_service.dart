@@ -105,7 +105,8 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
   }
 
   @override
-  Future<({String worldId, String worldName})> redeemInvite(String code) async {
+  Future<({String worldId, String worldName, bool pending})> redeemInvite(
+      String code) async {
     final rows = await client.rpc('redeem_world_invite', params: {
       'p_code': code.toUpperCase().trim(),
     });
@@ -116,6 +117,7 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
     return (
       worldId: first['world_id'] as String,
       worldName: first['world_name'] as String,
+      pending: first['status'] != 'member',
     );
   }
 
@@ -128,9 +130,35 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
         .from('world_members')
         .select('world_id, user_id, role, joined_at')
         .eq('world_id', worldId);
-    final members = (memberRows as List)
-        .map((r) => r as Map<String, dynamic>)
-        .toList();
+    return _withProfiles(memberRows as List, 'joined_at');
+  }
+
+  @override
+  Future<List<WorldMember>> listJoinRequests(String worldId) async {
+    final rows = await client
+        .from('world_join_requests')
+        .select('world_id, user_id, requested_at')
+        .eq('world_id', worldId)
+        .order('requested_at');
+    return _withProfiles(rows as List, 'requested_at');
+  }
+
+  @override
+  Future<void> answerJoinRequest({
+    required String worldId,
+    required String userId,
+    required bool accept,
+  }) async {
+    await client.rpc('answer_join_request', params: {
+      'p_world_id': worldId,
+      'p_user_id': userId,
+      'p_accept': accept,
+    });
+  }
+
+  /// Satırlara profil bilgisini ekler. İstek satırında `role` yok → player.
+  Future<List<WorldMember>> _withProfiles(List rows, String dateKey) async {
+    final members = rows.map((r) => r as Map<String, dynamic>).toList();
     if (members.isEmpty) return const [];
     final userIds = members
         .map((m) => m['user_id'] as String)
@@ -149,8 +177,8 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
       return WorldMember(
         worldId: m['world_id'] as String,
         userId: m['user_id'] as String,
-        role: _parseRole(m['role'] as String),
-        joinedAt: DateTime.parse(m['joined_at'] as String),
+        role: _parseRole(m['role'] as String? ?? 'player'),
+        joinedAt: DateTime.parse(m[dateKey] as String),
         username: profile?['username'] as String?,
         displayName: profile?['display_name'] as String?,
         avatarUrl: profile?['avatar_url'] as String?,

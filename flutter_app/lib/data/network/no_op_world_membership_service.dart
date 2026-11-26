@@ -39,11 +39,23 @@ class NoOpWorldMembershipService implements WorldMembershipService {
   Future<String> regenerateInvite(String worldId) async => _offline();
 
   @override
-  Future<({String worldId, String worldName})> redeemInvite(String code) async =>
+  Future<({String worldId, String worldName, bool pending})> redeemInvite(
+          String code) async =>
       _offline();
 
   @override
   Future<List<WorldMember>> listMembers(String worldId) async => const [];
+
+  @override
+  Future<List<WorldMember>> listJoinRequests(String worldId) async => const [];
+
+  @override
+  Future<void> answerJoinRequest({
+    required String worldId,
+    required String userId,
+    required bool accept,
+  }) async =>
+      _offline();
 
   @override
   Future<List<WorldInvite>> listInvites(String worldId) async => const [];

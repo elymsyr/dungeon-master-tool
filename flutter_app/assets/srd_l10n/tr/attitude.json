@@ -1,5 +1,8 @@
 {
   "Friendly": "Dost",
   "Indifferent": "Barışçıl",
-  "Hostile": "Düşman"
+  "Hostile": "Düşman",
+  "A Friendly creature views you favorably. You have Advantage on an ability check to influence a Friendly creature. See also “Influence.”": "Dost bir varlık sana olumlu bakar. Dost bir varlığı etkilemek için attığın kabiliyet zarında Avantaja sahipsin. Ayrıca bkz. “Etkileme.”",
+  "An Indifferent creature has no desire to help or hinder you. Indifferent is the default attitude of a monster. See also “Influence.”": "Barışçıl bir varlığın sana ne yardım etme ne de engel olma isteği vardır. Barışçıl, bir canavarın varsayılan tavrıdır. Ayrıca bkz. “Etkileme.”",
+  "A Hostile creature views you unfavorably. You have Disadvantage on an ability check to influence a Hostile creature. See also “Influence.”": "Düşman bir varlık sana olumsuz bakar. Düşman bir varlığı etkilemek için attığın kabiliyet zarında Dezavantaja sahipsin. Ayrıca bkz. “Etkileme.”"
 }

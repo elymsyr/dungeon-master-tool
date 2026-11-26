@@ -1,11 +1,11 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql, 093_world_card_meta.sql, 105_turn_control.sql, 107_turn_move_path.sql, 108_turn_move_seq.sql
+path: supabase/migrations/026_online_worlds.sql, 034_open_world_chars.sql, 051_world_members_replica_full.sql, 052_entity_shares_replica_full.sql, 093_world_card_meta.sql, 105_turn_control.sql, 107_turn_move_path.sql, 108_turn_move_seq.sql, 109_world_join_requests.sql
 layer: backend
 language: sql
 status: stable
-updated: 2026-10-06
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -39,6 +39,7 @@ tags: [file]
 - **051_world_members_replica_full** — `ALTER TABLE world_members REPLICA IDENTITY FULL`. Default identity only carries PK in UPDATE/DELETE CDC; PK is `(world_id,user_id)` so role-change/kick events reached the DM with truncated records. Metadata-only fix.
 - **052_entity_shares_replica_full** — `ALTER TABLE entity_shares REPLICA IDENTITY FULL`. The realtime subscription filters `entity_shares` by `world_id`, but `entity_shares` PK is `id` only → un-share DELETE `oldRecord` lacked `world_id` and was silently dropped (player never saw the un-share). Same class of bug as 051.
 - **093_world_card_meta** — `worlds.meta_json TEXT` (nullable). 077 kaldırdığı `state_json` ile birlikte dünya metadata'sı da gitmişti; katılan oyuncunun hub kartında açıklama ve banner yoktu. Taşınan şey `world_settings.settings_json`'daki `metadata` map'inin whitelist'i: `description`, `tags`, `cover_image_path` — sonuncusu DM'in yerel yolu değil, free-media'ya yüklenmiş bir `dmt-public://` ref'i. Yeni policy yok: yazan `Worlds: dm update`, okuyan `Worlds: members read` (ikisi de 026'dan). İstemci ucu [[world_meta_sync]].
+- **109_world_join_requests** — Güvenlik raporu: "Members: self player insert" (027) ve "Self-add to conversation" (003) düşürüldü — id'yi bilen kendini dünyaya / özel konuşmaya ekleyebiliyordu. Yeni `world_join_requests (world_id, user_id, requested_at)`, yazma politikası yok, okuma DM ya da sahibi. `redeem_world_invite` artık üye yapmaz: `(world_id, world_name, status)` döner, ilk seferde istek yazar (`'pending'`), üyeyse `'member'`; dünya satırı kilitliyken bekleyen istek ≥ 10 ise `P0005` ve satır yazılmaz. `answer_join_request(world, user, accept)` (yalnız DM, `42501`; istek yoksa `P0002`) isteği siler, kabulde `player` ekler. Kovulan oyuncu artık DM onayı olmadan dönemez. `verify_109.sql`. [[world_join_service]] · [[supabase_world_membership_service]]
 - **108_turn_move_seq** — `world_turn_control.seq` (BIGINT) + `move_turn_token`'a `p_seq bigint DEFAULT NULL` (negatif `22023`); 4 ve 6 parametreli imzalar düşürüldü, 107'nin sütunları da `IF NOT EXISTS` ile eklenir (107 atlanmışsa). DM uyguladığı son numarayı yayında `moveAck` olarak geri bildirir; oyuncu yerel tahminini o numaraya kadar tutar. `verify_108.sql`. [[turn_control_provider]]
 - **107_turn_move_path** — `world_turn_control`'e `path` (JSONB, düz `[x0,y0,...]`) + `kind` (smallint 0 devam / 1 yeni sürükleme / 2 geri al). `move_turn_token` 6 parametreli oldu (`p_path float8[]`, `p_kind smallint`, ikisi de DEFAULT'lu — eski 4 parametreli çağrı aynen çalışır); eski imza düşürüldü (PostgREST'te iki aşırı yükleme 4 argümanlı çağrıyı belirsiz yapardı). Yol en fazla 400 nokta, çift sayıda, her değer ±1e6 içinde, `22023`. `verify_107.sql`. İstemci [[turn_control_provider]].
 - **106_dice_log** — `world_dice_rolls` (`id` bigserial, `world_id`, `user_id` → auth.users CASCADE, `character`, `kind` roll|skill|save, `label`, `total`, `detail`, `created_at`): oyuncunun zar atışını DM'in oturum günlüğüne taşıyan kayıt. Yazma politikası yok, tek kapı `log_dice_roll` (SECURITY DEFINER, `user_id = auth.uid()`, üyelik, uzunluk sınırları); SELECT yalnız DM. Her yazma o dünyanın 1 saatten eski satırlarını siler. `supabase_realtime` yayınında; `verify_106.sql`. [[dice_log]]

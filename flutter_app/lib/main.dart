@@ -259,8 +259,9 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       await windowManager.waitUntilReadyToShow(
         const WindowOptions(
           // Debug'da minimum yok — pencereyi telefon boyutuna küçültüp
-          // mobil layout'u denemek için. Release'te eski sınır geçerli.
-          minimumSize: kDebugMode ? Size(300, 400) : Size(900, 800),
+          // mobil layout'u denemek için. Release'te 600: 768px laptop
+          // ekranlarına sığsın (issue #99).
+          minimumSize: kDebugMode ? Size(300, 400) : Size(900, 600),
           title: 'Dungeon Master Tool',
           titleBarStyle: TitleBarStyle.normal,
         ),

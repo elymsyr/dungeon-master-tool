@@ -5,7 +5,7 @@ path: flutter_app/lib/data/network/world_membership_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -26,8 +26,10 @@ tags: [file]
   - `createInvite({worldId, expiresSeconds?, uses=1})` — legacy N-uses code.
   - `ensureInvite(worldId)` — idempotent single shareable code (returns existing or mints one).
   - `regenerateInvite(worldId)` — delete current code, mint a new one.
-  - `redeemInvite(code)` → `(worldId, worldName)` — player joins.
+  - `redeemInvite(code)` → `(worldId, worldName, pending)` — player sends a join request (migration 109); `pending = false` only if already a member.
   - `listMembers(worldId)` / `listInvites(worldId)`.
+  - `listJoinRequests(worldId)` → `[WorldMember]` (role player, `joinedAt` = request time) — DM.
+  - `answerJoinRequest({worldId, userId, accept})` — DM accepts (→ member) or rejects; the request is deleted either way.
   - `removeMember({worldId, userId})` — DM kicks a member.
   - `leaveWorld(worldId)` — self leave (DM must `unpublishWorld` first).
   - `revokeInvite(code)`.

@@ -1,9 +1,9 @@
 # SRD 5.2.1 Free Template — alan ayıklama listesi
 
 > **Durum:** onaylandı, uygulamada (2026-10-28). S1, S2, S3, S5 ve S6 karara bağlandı (§10). Yol
-> haritası §11'de: A1–A10, ardından kontrol fazları B1–B4. Güncel faz: **A8** (uygulandı,
+> haritası §11'de: A1–A10, ardından kontrol fazları B1–B4. Güncel faz: **A9** (uygulandı,
 > otomatik kapı yeşil). A fazlarının elle kontrolü sona, B1–B4'e toplandı (kullanıcı kararı
-> 2026-11-26, §11.5); A1–A8'in elle kontrolü henüz yapılmadı. A7 `2ac10140` ile commit'lendi.
+> 2026-11-26, §11.5); A1–A9'un elle kontrolü henüz yapılmadı. A8 `990e21e1` ile commit'lendi.
 > A1 `feature/free-template`'te `021a0cca` ile commit'lendi; A2'den itibaren iş
 > `feature/free-srd-fields` dalında.
 > **Kaynaklar:** `builtin/content.dart`, `lookups.dart`, `dm.dart`, `free_template.dart`,
@@ -478,6 +478,14 @@ Body Slot, Duration Unit, Casting Time Unit, Casting Component, Starter Bundle.
    - **Lookup'lar (A8'de görüldü).** Pakette 11 silah özelliği var; "Improvised" SRD'nin
      Properties listesinde yok (SRD'de yalnız sözlükteki "Improvised Weapons" kuralı), free'de
      metni boş. Durum, özellik ve ustalık kartlarında bugüne kadar hiç kural metni yoktu (R4).
+   - **Lookup'lar (A9'da görüldü).** Damage Type'ın "Examples" sütunu (`example_sources`) 13
+     türün 9'unda SRD'den farklı sözcüklerle (Bludgeoning: "Blunt force — falling, crushing,
+     clubs", SRD: "Blunt objects, constriction, falling"); free'de aynen kalır. Tier of Play
+     kartlarının adları 2014'ün "Local Heroes … Masters of the World"ü (SRD 5.2.1: "Tier 1
+     (Levels 1–4)" …); free'de ad kalır, metin SRD'nin başlığıyla başlar. Action'daki "Free
+     Action"ın SRD'de karşılığı yok; free'de metni boş. Ability ve Skill özetleri SRD
+     sütunlarının bizim yazdığımız kısaltmasıydı ("Physical power applied directly.", SRD:
+     "Physical might"); free'de SRD'nin kendisi (A9 kararı).
    - Lightning Bolt'un malzemesi 2014 metninden.
    - Metinler genel olarak SRD'nin kısaltılmış hâli.
    - **Büyü başlık satırları (A2'de görüldü).** 316 büyünün satırları PDF'le karşılaştırıldı:
@@ -564,7 +572,7 @@ kontroller A10'dan sonra **B1–B4**'te (§11.5) topluca yapılır. Kullanıcı 
 | A6 | Canavar, Hayvan, Eylem | 45 → 27, 20 → 3 | M | ✅ otomatik kapı; elle kontrol B3'te |
 | A7 | Büyülü eşya ve ekipman | 64 → 10; §5.12 | M | ✅ otomatik kapı; elle kontrol B3'te |
 | A8 | Lookup'lar, oyuncu kartı, NPC, çıkan kategoriler | §5.13–5.15 | M | ✅ otomatik kapı; elle kontrol B3'te |
-| A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | |
+| A9 | SRD sözlük metinleri ve Trinket tablosu | (S5: hepsi) | L | ✅ otomatik kapı; elle kontrol B3'te |
 | A10 | Kapanış | 521 → 167 doğrulanır | S | |
 | B1 | Kontrol: altyapı ve büyü | EA1, EA2 | M | |
 | B2 | Kontrol: karakterin yapı taşları | EA3, EA4, EA5 | L | |
@@ -1509,6 +1517,64 @@ d100 alanına dokunma; TR; yeni dünya; R turu.
 
 **Çıkış kriteri:** S5'in bütün metinleri free pakette ve Türkçesiyle.
 
+**A9 sonucu** (2026-11-26, `990e21e1` + çalışma ağacı; Linux, Flutter 3.47):
+
+- **Faz başı:** envanter PDF'le çıkarıldı ve kullanıcıya onaylatıldı (2026-11-26). Kararlar:
+  - **Metni olan 16 kategori:** Sense, Hazard, Area Shape, Attitude (Rules Glossary), Illumination
+    ("Exploration"daki "Light"; sözlük maddesi yalnız oraya gönderiyor), Action (sözlüğün 15
+    maddesi), Speed Type (Walk ← "Speed" maddesi), Cover ve Travel Pace (tablo satırları + tempo
+    etkileri), Alignment ("The Nine Alignments" + "Unaligned Creatures"), Spell School ("Typical
+    Effects"), Magic Item Category (kategori kuralları), Lifestyle, Tier of Play, Ability ("Score
+    Measures …"), Skill ("Example Uses").
+  - **Ability, Skill ve Spell School:** SRD sütun metni `summary`'ye, paketteki özetin yerine
+    (kullanıcı: "SRD metni summary'ye"; Spell School'un sütunu da aynı türden olduğu için ona da
+    uygulandı). Diğerleri `effects`'e.
+  - **Free Action boş** (SRD'de karşılığı yok, K12), **Walk ← "Speed"**.
+  - **Trinket:** kart adı SRD satırının kendisi, `roll_d100` 1–100 (00 = 100), açıklama boş.
+  - **Metni olmayan, dokunulmayan:** Creature Type (sözlükte yalnız adlar), Damage Type (yalnız
+    "Examples" sütunu, zaten `example_sources`'ta), Language, Size, Rarity, Coin, Weapon / Tool /
+    Feat Category, Plane (SRD'de yok), Arcane / Druidic Focus, Holy Symbol (yalnız tablo satırı).
+  - **Rehber çevirisi** (A8'den kalan): ayrı iş, §11.6.
+- **Yapılanlar:**
+  - **Metinler** ([free_srd_texts.dart](../../flutter_app/lib/domain/services/free_srd_texts.dart)):
+    13 yeni harita (`srdSenses` … `srdTiersOfPlay`, 77 metin) `srdLookupEffects`'e;
+    `srdLookupSummaries` (`srdAbilityMeasures`, `srdSkillUses`, `srdSchoolEffects`, 32 metin);
+    `srdTrinkets` (100 satır). SRD tabloları (Water / Food Needs per Day, Search, Influence
+    Checks, Areas of Knowledge, Potion Miscibility, Cover, Travel Pace) markdown tablo; kalın
+    başlıklar (Truesight'ın maddeleri, Help'in iki yolu, Influence'ın üç tavrı…) A8'deki gibi
+    `**Ad.**`. Sözlüğün "See also …" göndermeleri metinde kaldı (SRD'nin kendi yazısı).
+  - **Dönüştürücü** ([free_srd_pack.dart](../../flutter_app/lib/domain/services/free_srd_pack.dart)):
+    `summary` `srdLookupSummaries`'ten; `freeSrdTrinkets(id)` Trinket kartları;
+    `freeSrdPackVersion = 9`. **Bootstrap** (`_ensureFree`): Trinket kartları free pakete
+    (uuidv5 `trinket:<n>`); çekirdek pakette yoklar, yerleşik değişmedi (K1).
+  - **Türkçe:** 209 anahtar, elle; sözlükle (Kör Görüş, Özgörü, Yayılım, Yoğun / Hafifçe Örtülü,
+    Fırsat Saldırısı, Büyü Eylemi, Uçma Hızı…), kalıplar A8'den ("… durumundayken", "Avantaja
+    sahipsin", "Hızın"), GM → DM, boylar `size.json`'dan. `trinket.json` yeni. Mevcut çeviriye
+    dokunulmadı (K10; betikle: değişen ya da silinen anahtar 0).
+  - **extract.dart:** Trinket adları ve dönüştürücünün değiştirdiği `textarea` (özet) değerleri
+    kapsama girer.
+  - Vault: `free_srd_pack`, `extract` notları; Vault-Changelog.
+- **K12, PDF karşılaştırması:** 77 metnin her paragrafı ve tablo hücresi, 32 özet ve 100 Trinket
+  PDF'in düz metninde birebir geçiyor (betikle). Tek istisna Neutral: PDF'te cümleyi "Unaligned
+  Creatures" kutusu bölüyor, elle karşılaştırıldı. Paragraf sınırları PDF'in düzen çıktısındaki
+  girintiden alındı.
+- **Otomatik kapı:**
+  - G4: dokunulan 6 dosyada analiz temiz.
+  - G5: `free_srd_pack_test` A9 grubu, 3 test (her metin kendi kategorisinin bir kartına; Half
+    Cover, Dim, Cone, Darkvision, Strength ve Stealth özetleri PDF'le birebir; 100 Trinket, d100
+    1–100 tekrarsız, üç satır PDF'le birebir); A1 bekçisi SRD özetlerini ayırıyor; A8'in "yalnız
+    Improvised boş" testi "Improvised ve Free Action" oldu: 60/60. `package_free_template_test`
+    free paketin 100 Trinket kartını sayıyor: 8/8.
+  - G6: tam tur yerine ilgili 12 dosya, tek tek ve `--concurrency=1` (makinenin RAM'i tam turu
+    kaldırmıyor; kullanıcı kuralı 2026-11-26): 184 geçti, 1 kırmızı. Kırmızı `srd_tr_entity_card`
+    ("TR okuma modunda Türkçe…", `Expected: false, Actual: true`), temel çizgidekiyle aynı. Yeni
+    kırmızı yok. Tam tur A10'un kapısında.
+  - G7: bekçi yeşil; Trinket kartlarının alanları kopyada tanımlı.
+  - G8: `check_pairs` 7409 / 7409, 0 FAIL, 207 UYARI (+7, hepsi yanlış alarm: Bright ve
+    Darkvision metninde "Light" → Hafif (zırh), iki aşama metninde küçük harfli "class
+    features", üç kısa Trinket'te uzunluk oranı); kapsam testi yeşil.
+- **Elle kontrol:** B3'te (EB3.4) ve B4'te.
+
 ---
 
 #### A10 — Kapanış
@@ -1621,4 +1687,6 @@ ROADMAP ve vault notları A10'daki gibi son hâlinde.
 - **SRD sapmaları** (S2, §9.1): ayrı iş. Free paket yerleşik paketin sapmalarını taşır.
 - **Eşya şarjlarının Havuz'a gitmesi** (S4, 2026-11-03): kapsam dışı.
 - **Yerleşik SRD template'i ve paketi:** hiç değişmez (K1).
+- **Karakter oluşturma rehberinin Türkçesi** (A9 kararı, 2026-11-26): rehber adımları bugün hiç
+  çevrilmiyor (`MarkdownBody(data: step.text)`); yeni bir çeviri yolu ister, ayrı iş.
 - **Eski SRD kopyalarının ve dünyalarının yeni veriye geçirilmesi** (K14).

@@ -20,7 +20,7 @@ tags: [moc]
 - [[world_membership_service]] · [[supabase_world_membership_service]] — member CRUD via RPC.
 - [[world_membership_provider]] — fetch members/invites/roles.
 - [[world_members_dao]] · [[world_invites_dao]] — local mirror.
-- [[world_join_service]] — accept invite → membership.
+- [[world_join_service]] — invite code → join request → DM approval (migration 109) → membership.
 - [[world_meta_sync]] — dünya kartının açıklaması/etiketleri/kapağı (`worlds.meta_json`, 093): DM yazar, oyuncu katılırken + CDC'de uygular.
 - [[character_claim_service]] — claim/release a PC from the pool.
 - [[auth_provider]] — Supabase auth state.
@@ -34,7 +34,7 @@ tags: [moc]
 - [[heartbeat_service]] — keep `profiles.last_active_at` fresh (15 min).
 
 ## Data Flow
-Invite (Supabase RPC) → [[world_join_service]] → `world_members` row → CDC → [[world_members_dao]] local mirror → [[world_membership_provider]] UI. Character ownership via [[character_claim_service]].
+Invite (Supabase RPC) → [[world_join_service]] → `world_join_requests` row → DM ✓ (`answer_join_request`) → `world_members` row → CDC → [[world_members_dao]] local mirror → [[world_membership_provider]] UI. Character ownership via [[character_claim_service]].
 
 Katılan oyuncu **boş** bir dünya kabuğu alır (`worlds.state_json` 077'de düştü); içerik DM paylaştıkça gelir. Neyin aktığı: [[Share-Broadcast-Flow]]. Tek istisna kartın görünen yüzü — açıklama/etiket/kapak `worlds.meta_json` ile gelir ([[world_meta_sync]], migration 093), yoksa oyuncunun hub'ında isimden ibaret bir kart kalırdı.
 

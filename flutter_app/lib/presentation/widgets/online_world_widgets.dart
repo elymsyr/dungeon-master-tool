@@ -410,16 +410,24 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
 
 /// Tek üye satırı — avatar + display name + DM/PLAYER badge.
 /// [onRemove] non-null ise sağda silme butonu render edilir (DM yetkisi).
+/// [request] ise satır bekleyen istektir: rozet yerine ✓ / ✗ (callback null →
+/// pasif).
 class MemberRow extends StatelessWidget {
   final WorldMember member;
   final DmToolColors palette;
   final VoidCallback? onRemove;
+  final bool request;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
 
   const MemberRow({
     super.key,
     required this.member,
     required this.palette,
     this.onRemove,
+    this.request = false,
+    this.onAccept,
+    this.onReject,
   });
 
   @override
@@ -456,6 +464,12 @@ class MemberRow extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: palette.tabActiveText),
             ),
           ),
+          if (request) ...[
+            _action(Icons.check, palette.successBtnBg,
+                L10n.of(context)!.joinRequestAccept, onAccept),
+            _action(Icons.close, palette.dangerBtnBg,
+                L10n.of(context)!.joinRequestReject, onReject),
+          ] else
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -476,21 +490,25 @@ class MemberRow extends StatelessWidget {
           ),
           if (onRemove != null) ...[
             const SizedBox(width: 4),
-            IconButton(
-              tooltip: L10n.of(context)!.removeFromWorld,
-              icon: Icon(Icons.delete_outline,
-                  size: 14, color: palette.dangerBtnBg),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              onPressed: onRemove,
-            ),
+            _action(Icons.delete_outline, palette.dangerBtnBg,
+                L10n.of(context)!.removeFromWorld, onRemove),
           ],
         ],
       ),
       ),
     );
   }
+
+  Widget _action(
+          IconData icon, Color color, String tooltip, VoidCallback? onTap) =>
+      IconButton(
+        tooltip: tooltip,
+        icon: Icon(icon, size: 14, color: color),
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+        onPressed: onTap,
+      );
 }
 
 /// Player hub'ı / party tab için kompakt yatay roster çubuğu. Avatar +
@@ -639,6 +657,64 @@ class _MemberChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Bekleyen katılma istekleri (DM). [MembersList] ile aynı görünüm; satırda
+/// rozet yerine kabul / ret.
+class JoinRequestsList extends ConsumerWidget {
+  final String worldId;
+  final DmToolColors palette;
+  final void Function(WorldMember, bool accept)? onAnswer;
+
+  const JoinRequestsList({
+    super.key,
+    required this.worldId,
+    required this.palette,
+    this.onAnswer,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(worldJoinRequestsProvider(worldId));
+    return requestsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (e, _) => Text(
+        formatError(e),
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      ),
+      data: (requests) {
+        if (requests.isEmpty) {
+          return Text(
+            L10n.of(context)!.joinRequestsEmpty,
+            style: TextStyle(
+              fontSize: 12,
+              color: palette.sidebarLabelSecondary,
+            ),
+          );
+        }
+        final answer = onAnswer;
+        return Column(
+          children: [
+            for (final m in requests)
+              MemberRow(
+                member: m,
+                palette: palette,
+                request: true,
+                onAccept: answer == null ? null : () => answer(m, true),
+                onReject: answer == null ? null : () => answer(m, false),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -5,7 +5,7 @@ path: flutter_app/lib/data/network/supabase_world_membership_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 - Reads (Supabase tables): `worlds`, `world_members`, `world_invites`, `profiles`.
 
 **Outputs**
-- Supabase RPC called: `publish_world`, `create_world_invite`, `ensure_world_invite`, `regenerate_world_invite`, `redeem_world_invite`.
+- Supabase RPC called: `publish_world`, `create_world_invite`, `ensure_world_invite`, `regenerate_world_invite`, `redeem_world_invite`, `answer_join_request`; table `world_join_requests` (DM read).
 - Supabase table writes: `worlds` delete (unpublish), `world_members` delete (removeMember/leaveWorld), `world_invites` delete (revokeInvite).
 - Returns domain `WorldMember` / `WorldInvite` lists and `(worldId, worldName)` records.
 
@@ -34,8 +34,8 @@ tags: [file]
 - `_uid` getter throws `StateError` if no auth session — every method assumes an authenticated user.
 - **publishWorld**: entire flow delegated to `publish_world` RPC (migration 029): SECURITY DEFINER + row_security off, atomically upserts `worlds` + `world_members`, tolerates orphan rows, throws a clear error if a different account owns the world. PostgrestExceptions are debug-logged (code/msg/details/hint) then rethrown.
 - **unpublishWorld**: PostgREST `delete().eq('id',…).select('id')`; if 0 rows returned, re-checks via `maybeSingle` — absent row = idempotent success, present row = throw `StateError` ("RLS rejected — not owner"). This prevents the local delete flow from being undone by a later refresh.
-- **redeemInvite**: uppercases + trims code before calling `redeem_world_invite`; returns first row's `world_id`/`world_name`.
-- **listMembers**: NO PostgREST embedded join (no FK between `world_members` and `profiles`, both reference `auth.users`). Does two queries — `world_members` then `profiles` filtered by `.inFilter('user_id', userIds)` — and merges client-side into `WorldMember`.
+- **redeemInvite**: uppercases + trims code before calling `redeem_world_invite`; returns first row's `world_id`/`world_name`; `pending = status != 'member'` (109).
+- **listMembers**: NO PostgREST embedded join (no FK between `world_members` and `profiles`, both reference `auth.users`). Does two queries — `world_members` then `profiles` filtered by `.inFilter('user_id', userIds)` — and merges client-side into `WorldMember` (`_withProfiles`, shared with **listJoinRequests**, which reads `world_join_requests` ordered by `requested_at`; a request row has no `role` → player).
 - `_parseRole`: `'dm'→dm`, `'player'→player`, else `none`.
 - Invite codes are normalized to UPPERCASE for revoke/redeem.
 

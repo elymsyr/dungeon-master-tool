@@ -1,5 +1,8 @@
 {
   "Bright": "Parlak Işık",
   "Dim": "Loş Işık",
-  "Darkness": "Karanlık"
+  "Darkness": "Karanlık",
+  "Bright Light lets most creatures see normally. Even gloomy days provide Bright Light, as do torches, lanterns, fires, and other sources of illumination within a specific radius.": "Parlak Işık çoğu varlığın normal görmesini sağlar. Kasvetli günler bile Parlak Işık sağlar; belirli bir yarıçap içinde meşaleler, fenerler, ateşler ve diğer ışık kaynakları da öyle.",
+  "Dim Light, also called shadows, creates a Lightly Obscured area. An area of Dim Light is usually a boundary between Bright Light and surrounding Darkness. The soft light of twilight and dawn also counts as Dim Light. A full moon might bathe the land in Dim Light.": "Gölge de denen Loş Işık, Hafifçe Örtülü bir alan yaratır. Loş Işıklı bir alan genellikle Parlak Işık ile çevreleyen Karanlık arasındaki bir sınırdır. Alacakaranlığın ve şafağın yumuşak ışığı da Loş Işık sayılır. Bir dolunay toprakları Loş Işığa boğabilir.",
+  "Darkness creates a Heavily Obscured area. Characters face Darkness outdoors at night (even most moonlit nights), within the confines of an unlit dungeon, or in an area of magical Darkness.": "Karanlık, Yoğun Örtülü bir alan yaratır. Karakterler geceleyin dışarıda (çoğu mehtaplı gecede bile), ışıksız bir zindanın içinde ya da büyülü Karanlık olan bir alanda Karanlıkla karşılaşır."
 }

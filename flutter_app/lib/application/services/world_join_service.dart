@@ -12,7 +12,8 @@ import 'srd_core_package_bootstrap.dart';
 import 'world_meta_sync.dart';
 
 /// "Join with code" akışını koordine eder:
-///   1. RPC redeem_world_invite → (worldId, worldName)
+///   1. RPC redeem_world_invite → (worldId, worldName, status). İlk seferde
+///      status='pending': DM onaylayana kadar (migration 109) 2 çalışmaz.
 ///   2. [materializeWorld]: lokal Drift'te boş bir Campaign kabuğu upsert et
 ///   3. caller hub list invalidation yapar
 ///
@@ -36,9 +37,14 @@ class WorldJoinService {
     required this.repository,
   });
 
-  Future<({String worldId, String worldName})> joinWithCode(String code) async {
+  /// [pending] = true: DM onayı bekleniyor, yerel kabuk kurulmadı. Onaydan
+  /// sonra dünya [listMemberWorlds]'te görünür; aynı kod da artık katılır.
+  Future<({String worldId, String worldName, bool pending})> joinWithCode(
+      String code) async {
     final res = await membership.redeemInvite(code);
-    return materializeWorld(res.worldId, res.worldName);
+    if (res.pending) return res;
+    final w = await materializeWorld(res.worldId, res.worldName);
+    return (worldId: w.worldId, worldName: w.worldName, pending: false);
   }
 
   /// Faz 5.5a — oyuncu olarak üyesi olduğum, bu cihazda olmayan dünyalar.

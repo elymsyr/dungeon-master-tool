@@ -1,5 +1,8 @@
 {
   "Half Cover": "Yarı Siper",
   "Three-Quarters Cover": "Üç Çeyrek Siper",
-  "Total Cover": "Tam Siper"
+  "Total Cover": "Tam Siper",
+  "| Benefit to Target | Offered By … |\n|---|---|\n| +2 bonus to AC and Dexterity saving throws | Another creature or an object that covers at least half of the target |": "| Hedefe Faydası | Sağlayan … |\n|---|---|\n| Zırh Sınıfı'na ve Çeviklik kurtarma zarlarına +2 katkı | Başka bir varlık ya da hedefin en az yarısını örten bir nesne |",
+  "| Benefit to Target | Offered By … |\n|---|---|\n| +5 bonus to AC and Dexterity saving throws | An object that covers at least three-quarters of the target |": "| Hedefe Faydası | Sağlayan … |\n|---|---|\n| Zırh Sınıfı'na ve Çeviklik kurtarma zarlarına +5 katkı | Hedefin en az dörtte üçünü örten bir nesne |",
+  "| Benefit to Target | Offered By … |\n|---|---|\n| Can’t be targeted directly | An object that covers the whole target |": "| Hedefe Faydası | Sağlayan … |\n|---|---|\n| Doğrudan hedef alınamaz | Hedefin tamamını örten bir nesne |"
 }

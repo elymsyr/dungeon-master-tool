@@ -256,3 +256,12 @@ final worldActiveInviteCodeProvider =
     return null;
   }
 });
+
+/// Bekleyen katılma istekleri (DM, dünya ayarları). `autoDispose`: ayarlar her
+/// açılışta taze çeker; realtime aboneliği yok. Yanıt sonrası invalidate edilir.
+final worldJoinRequestsProvider = FutureProvider.autoDispose
+    .family<List<WorldMember>, String>((ref, worldId) async {
+  final svc = ref.watch(worldMembershipServiceProvider);
+  if (svc is NoOpWorldMembershipService) return const [];
+  return guardedNetwork(ref, () => svc.listJoinRequests(worldId));
+});

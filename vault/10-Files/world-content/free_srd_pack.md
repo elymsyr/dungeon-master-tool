@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/free_srd_pack.dart
 layer: domain
 language: dart
 status: active
-updated: 2026-11-03
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -24,7 +24,8 @@ tags: [file]
 - `freeSrdDescription(card)` → the card's description in the package: `''` for a closed category (S1), else unchanged.
 - `inFreeSrd(slug)` — whether the free package carries the category's cards (the copy drops some, §5.14).
 - `freeSrdClosed` — the categories finished so far (A2: `spell`; A3: `feat`, `trait`; A4: `species`, `subspecies`; A5: `class`, `subclass`, `background`; A6: `monster`, `animal`, `creature-action`; A7: `magic-item`, `weapon`, `armor`, `tool`, `adventuring-gear`, `pack`, `ammunition`, `mount`, `vehicle`; A8: the 33 lookups with cards, `freeSrdLookups`); also read by [[extract]] (their free texts join the TR coverage) and the G7 guard.
-- `freeSrdPackVersion` — bumped whenever the converter writes something new (8 since A8); the free package re-seeds on a change.
+- `freeSrdPackVersion` — bumped whenever the converter writes something new (9 since A9); the free package re-seeds on a change.
+- `freeSrdTrinkets(id)` — the SRD's 1d100 Trinkets table as 100 `trinket` cards (`srdTrinkets`, name = the row, `roll_d100` 1–100); the core pack has none, so `SrdCorePackageBootstrap._ensureFree` adds them to the free package (uuidv5 `trinket:<n>`) and [[extract]] collects their names.
 
 ## Dependencies & Links
 - Depends on: [[free_field_styles]] (`freeFieldValue`, `structuredListAsMarkdown`), [[free_srd_levels]] (through `freeFieldValue`), [[entity_ref]] (`entityRefName`), [[free_template]] (`srdFreeTemplate`), `free_srd_texts.dart` (SRD lines word for word from the PDF: species Size, lineage Level 1 cells)
@@ -43,6 +44,7 @@ tags: [file]
 - **Monster / Animal / Action (A6, §5.10, §5.11):** `_statBlockLines` writes `speed` as the SRD line ("40 ft., Burrow 20 ft., Fly 80 ft. (hover)", from the five `speed_*_ft` and `can_hover`) and puts the flat `xp` into the Combat stats block, which `combatStatsValue` fills with AC / HP / Initiative from the flat fields; the flat fields then go. `_actionText` writes what the SRD puts in an action's heading at the start of its text — "(Recharge 5–6). ", "(3/Day). ", "(1/Day). " for a Long Rest, "(Recharge after a Short or Long Rest). " — unless the text already says it, and a save DC the text lacks ("*Dexterity Saving Throw:* DC 14, …" into the save line, or such a line first); Commanding Presence's DC is its Spellcasting's.
 - **Magic item and equipment (A7, §5.9, §5.12):** `_armorClass` writes an armor's `armor_class` as the Armor table does ("14 + Dex modifier (max 2)", "16", a Shield's "+2") from `base_ac` / `adds_dex` / `dex_cap`; a tool's `craft` is its Craft line from `srdToolCrafts` (`free_srd_texts.dart`, PDF word for word; tools that craft nothing have none); an armor category's `effects` is its don / doff time (`srdArmorDonDoff`, the table's category headings). An open category's card (armor-category) keeps its own fields beside the new one. Magic items lose their description (S1: it was `effects` again); charges stay data (S4).
 - **Lookups (A8, §5.14):** a lookup card's `effects` comes from `srdLookupEffects` (`free_srd_texts.dart`): the armor categories' don / doff times, the Rules Glossary's 15 conditions (what the dropped `stacks` / `grants_incapacitated` flags said, and the rest), the 10 weapon properties and 8 masteries, PDF word for word. The pack's Improvised property is no SRD property and has none. Character State, Resource Pool, Body Slot and Starter Bundle cards leave the package with their categories (`inFreeSrd`).
+- **Glossary texts and Trinkets (A9, S5):** `srdLookupEffects` also holds the SRD text of 13 more lookups — senses, hazards (with their Water / Food tables), areas of effect, attitudes, illumination ("Light" in Exploration), actions (Free Action has none), speeds (Walk is the "Speed" entry), cover and travel pace (their table rows), alignments, magic item categories, lifestyles, tiers of play (headed by the SRD's "Tier 1 (Levels 1–4)"). `srdLookupSummaries` replaces the `summary` of Ability, Skill and Spell School with the SRD table's column ("Physical might", the Example Uses, the Typical Effects). All word for word from the PDF, "See also" references kept.
 - **Spell (A2, §5.1):** `_spellLines` writes the SRD's header lines from the dropped fields: `casting_time` ("Action", "1 minute or Ritual", "Reaction, which you take when …" from `reaction_trigger`), `range` ("150 feet", "1,000 feet", Self / Touch / Sight / Unlimited; a bare Ranged is "Special"), `components` ("V, S, M (a diamond worth 500+ GP, which the spell consumes)": the material lower-cased, the consume clause only when the material text lacks it, a cost no text states appended — Find Familiar), `duration` ("Concentration, up to 1 minute", "Until dispelled", "1 round"). The pack's deviations stay (K13): its builder stored 23 Bonus Action spells as Action.
 
 ## Notes

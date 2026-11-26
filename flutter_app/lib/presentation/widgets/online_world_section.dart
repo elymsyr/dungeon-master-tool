@@ -173,6 +173,14 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
         const SizedBox(height: 8),
         InviteCodeRow(palette: palette, worldId: widget.campaignId),
         const SizedBox(height: 16),
+        OnlineSectionLabel(L10n.of(context)!.joinRequestsWaiting, palette),
+        const SizedBox(height: 8),
+        JoinRequestsList(
+          worldId: widget.campaignId,
+          palette: palette,
+          onAnswer: _busy ? null : _answerRequest,
+        ),
+        const SizedBox(height: 16),
         OnlineSectionLabel('Members', palette),
         const SizedBox(height: 8),
         MembersList(
@@ -313,6 +321,24 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       mirror?.clearExpectedUnpublish(widget.campaignId);
       _showError(e);
     } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _answerRequest(WorldMember m, bool accept) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(worldMembershipServiceProvider).answerJoinRequest(
+            worldId: widget.campaignId,
+            userId: m.userId,
+            accept: accept,
+          );
+      if (accept) ref.invalidate(worldMembersProvider(widget.campaignId));
+    } catch (e) {
+      _showError(e);
+    } finally {
+      // Hata da olsa yenile: istek başka cihazdan yanıtlanmış olabilir.
+      ref.invalidate(worldJoinRequestsProvider(widget.campaignId));
       if (mounted) setState(() => _busy = false);
     }
   }

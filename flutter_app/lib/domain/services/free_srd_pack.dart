@@ -14,7 +14,7 @@ import 'free_template.dart' show srdFreeTemplate;
 
 /// Bumped whenever [freeSrdFields] writes something new: the free package
 /// re-seeds on a change (`SrdCorePackageBootstrap._ensureFree`).
-const freeSrdPackVersion = 8;
+const freeSrdPackVersion = 9;
 
 /// The categories finished so far (SRD-FREE-ALANLAR §11): their cards hold
 /// only the copy's fields and no description of their own (S1). One more
@@ -85,6 +85,18 @@ final Map<String, EntityCategorySchema> _categories = {
   for (final c in srdFreeTemplate.categories) c.slug: c,
 };
 
+/// The SRD's Trinkets table as cards (A9, S5): the core pack has none, so
+/// the free package adds them. [id] gives the card of each d100 roll.
+List<Entity> freeSrdTrinkets(String Function(int roll) id) => [
+  for (final (i, name) in srdTrinkets.indexed)
+    Entity(
+      id: id(i + 1),
+      name: name,
+      categorySlug: 'trinket',
+      fields: {'roll_d100': i + 1},
+    ),
+];
+
 /// Whether the free package carries [slug]'s cards: the copy drops some
 /// categories (§5.14).
 bool inFreeSrd(String slug) => _categories.containsKey(slug);
@@ -117,6 +129,7 @@ Map<String, dynamic> freeSrdFields(Entity card, Map<String, Entity> byId) {
         when card.categorySlug == 'tool')
       'craft': craft,
     'effects': ?srdLookupEffects[card.categorySlug]?[card.name],
+    'summary': ?srdLookupSummaries[card.categorySlug]?[card.name],
   };
   final out = closed
       ? <String, dynamic>{}

@@ -191,6 +191,9 @@ Map<String, List<String>> collectSrdTexts() {
         case FieldType.text || FieldType.markdown
             when closed || v != c.fields[f.fieldKey]:
           add(c.categorySlug, v, v is String && _componentLine.hasMatch(v));
+        // A lookup's SRD summary in place of the core pack's (A9).
+        case FieldType.textarea when v != c.fields[f.fieldKey]:
+          add(c.categorySlug, v);
         case FieldType.progressionTable:
           for (final r in v is List ? v : const []) {
             if (r is! Map) continue;
@@ -203,6 +206,11 @@ Map<String, List<String>> collectSrdTexts() {
           break;
       }
     }
+  }
+
+  // The Trinkets table (A9): cards only the free package has.
+  for (final t in freeSrdTrinkets((n) => '$n')) {
+    add(t.categorySlug, t.name);
   }
 
   return scopes;

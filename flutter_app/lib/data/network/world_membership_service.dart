@@ -39,11 +39,24 @@ abstract class WorldMembershipService {
   /// kullanılamaz.
   Future<String> regenerateInvite(String worldId);
 
-  /// Davet kodunu kullanır (player). World adı ile worldId döner.
-  Future<({String worldId, String worldName})> redeemInvite(String code);
+  /// Davet kodunu kullanır (player). Üye yapmaz: DM onayı için bekleyen istek
+  /// yazar ([pending] = true). Zaten üyeyse [pending] = false.
+  Future<({String worldId, String worldName, bool pending})> redeemInvite(
+      String code);
 
   /// World üyelerini listeler (member görünür).
   Future<List<WorldMember>> listMembers(String worldId);
+
+  /// Bekleyen katılma istekleri (DM). [WorldMember.joinedAt] = istek zamanı.
+  Future<List<WorldMember>> listJoinRequests(String worldId);
+
+  /// Katılma isteğini yanıtlar (DM): [accept] ise oyuncu üye olur; her
+  /// durumda istek silinir.
+  Future<void> answerJoinRequest({
+    required String worldId,
+    required String userId,
+    required bool accept,
+  });
 
   /// Aktif davet kodlarını listeler (DM).
   Future<List<WorldInvite>> listInvites(String worldId);

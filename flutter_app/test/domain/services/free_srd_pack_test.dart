@@ -107,6 +107,11 @@ void main() {
           if (f.fieldKey == 'effects' && srdLookupEffects.containsKey(cat.slug)) {
             continue;
           }
+          // A9: the summaries an SRD table's column replaces.
+          if (f.fieldKey == 'summary' &&
+              srdLookupSummaries[cat.slug]?.containsKey(c.name) == true) {
+            continue;
+          }
           if (!same(shown(f, s), shown(f, today))) {
             diffs.add('${c.categorySlug} / ${c.name} / ${f.fieldKey}');
           }
@@ -1405,13 +1410,14 @@ void main() {
       );
     });
 
-    test('every condition and mastery has its text; Improvised none', () {
+    test('every lookup with SRD text has it; Improvised, Free Action none',
+        () {
       final none = [
         for (final c in raw.values)
           if (srdLookupEffects[c.categorySlug] case final texts?)
             if (!texts.containsKey(c.name)) c.name,
       ];
-      expect(none, ['Improvised']);
+      expect(none, unorderedEquals(['Improvised', 'Free Action']));
     });
 
     test('what a dropped flag said is in the text (R3)', () {
@@ -1453,6 +1459,86 @@ void main() {
       expect(step.field, 'level');
       expect(step.text, contains('| 11–16 | 5,000 gp plus 1d10 × 250 GP plus '
           'normal starting equipment | 2 Common, 3 Uncommon, 1 Rare |'));
+    });
+  });
+
+  group('A9 SRD glossary texts and the Trinkets table', () {
+    Map<String, dynamic> of(String slug, String name) =>
+        converted[id(slug, name)]!;
+
+    test('every text is for a card of its category', () {
+      for (final MapEntry(key: slug, value: texts) in {
+        ...srdLookupEffects,
+        ...srdLookupSummaries,
+      }.entries) {
+        final names = {
+          for (final c in raw.values)
+            if (c.categorySlug == slug) c.name,
+        };
+        expect(names, containsAll(texts.keys), reason: slug);
+      }
+      for (final MapEntry(key: slug, value: texts)
+          in srdLookupSummaries.entries) {
+        for (final c in raw.values.where((c) => c.categorySlug == slug)) {
+          expect(converted[c.id]!['summary'], texts[c.name], reason: c.name);
+        }
+      }
+    });
+
+    test('Cover, Dim Light, Cone, Darkvision and a summary are the PDF\'s',
+        () {
+      expect(
+        of('cover', 'Half Cover')['effects'],
+        '| Benefit to Target | Offered By … |\n|---|---|\n'
+        '| +2 bonus to AC and Dexterity saving throws | Another creature or an '
+        'object that covers at least half of the target |',
+      );
+      expect(
+        of('illumination', 'Dim')['effects'],
+        'Dim Light, also called shadows, creates a Lightly Obscured area. An '
+        'area of Dim Light is usually a boundary between Bright Light and '
+        'surrounding Darkness. The soft light of twilight and dawn also '
+        'counts as Dim Light. A full moon might bathe the land in Dim Light.',
+      );
+      expect(
+        of('area-shape', 'Cone')['effects'],
+        endsWith('The effect that creates a Cone specifies its maximum '
+            'length.\n\nA Cone’s point of origin isn’t included in the area '
+            'of effect unless its creator decides otherwise.'),
+      );
+      expect(
+        of('sense', 'Darkvision')['effects'],
+        'If you have Darkvision, you can see in Dim Light within a specified '
+        'range as if it were Bright Light and in Darkness within that range '
+        'as if it were Dim Light. You discern colors in that Darkness only as '
+        'shades of gray. See also “Playing the Game” (“Exploration”).',
+      );
+      expect(of('ability', 'Strength')['summary'], 'Physical might');
+      expect(
+        of('skill', 'Stealth')['summary'],
+        'Escape notice by moving quietly and hiding behind things.',
+      );
+    });
+
+    test('100 Trinkets, d100 1–100 once each; three rows are the PDF\'s', () {
+      final cards = freeSrdTrinkets((n) => 'trinket-$n');
+      expect(cards, hasLength(100));
+      expect([for (final c in cards) c.fields['roll_d100']],
+          [for (var n = 1; n <= 100; n++) n]);
+      expect({for (final c in cards) c.name}, hasLength(100));
+      expect({for (final c in cards) c.id}, hasLength(100));
+      expect(cards.first.name, 'A mummified goblin hand');
+      expect(
+        cards[46].name,
+        'A metal can that has no opening but sounds as if it is filled with '
+        'liquid, sand, spiders, or broken glass (your choice)',
+      );
+      expect(cards.last.name, 'A metal urn containing the ashes of a hero');
+      final fields = {for (final f in cats['trinket']!.fields) f.fieldKey};
+      for (final c in cards) {
+        expect(c.categorySlug, 'trinket');
+        expect(fields, containsAll(c.fields.keys));
+      }
     });
   });
 }

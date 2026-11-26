@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/world_membership_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-11-26
 tags: [file]
 ---
 
@@ -40,6 +40,7 @@ tags: [file]
   - `applyLeave`: removes by `userId`; no-op if absent.
   - `clear()` resets `_bootstrapped=false` + empties; `refresh()` resets flag and re-bootstraps.
 - **_ProfileBatchLoader (R4 optimization)**: coalesces profile fetches in a **16ms window** into a single `profiles.inFilter('user_id', ids)` query, so a multi-person realtime burst issues one query instead of N. Resolved profiles are session-cached (subsequent join/update events for the same user hit the cache; name changes only refresh via `bootstrap(force:true)` on resubscribe). Pending completers are completed with `null` on dispose.
+- **worldJoinRequestsProvider** (109): `FutureProvider.autoDispose.family` over `listJoinRequests` — the world settings' Waiting list (`JoinRequestsList` + `MemberRow(request: true)` ✓/✗ in `online_world_section.dart`). No realtime: refetched each time settings open, invalidated after `answerJoinRequest`.
 - NoOp service short-circuits: `worldMembersProvider` → `[]`, `worldInvitesProvider` → `[]`, `worldActiveInviteCodeProvider` → `null`.
 - `worldActiveInviteCodeProvider` is `autoDispose` so closing the Save & Sync dialog clears a possibly-null-cached code before an offline→online transition.
 

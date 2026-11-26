@@ -52,6 +52,13 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
     try {
       final svc = ref.read(worldJoinServiceProvider);
       final res = await svc.joinWithCode(code);
+      if (res.pending) {
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(L10n.of(context)!.joinRequestSent(res.worldName))));
+        return;
+      }
       ref.read(onlineWorldIdsProvider.notifier).add(res.worldId);
       // Hub listesini ve metadata cache'lerini invalidate et.
       ref.invalidate(campaignInfoListProvider);
@@ -79,6 +86,9 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
     }
     if (s.contains('P0004') || s.contains('expired')) {
       return 'Invite expired';
+    }
+    if (s.contains('P0005') || s.contains('join request limit')) {
+      return L10n.of(context)!.joinRequestFailed;
     }
     return 'Failed to join: $s';
   }

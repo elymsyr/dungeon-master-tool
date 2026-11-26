@@ -2825,6 +2825,19 @@
     }
   },
   "membersEmpty": "No members yet",
+  "joinRequestsWaiting": "Waiting",
+  "joinRequestsEmpty": "No pending requests",
+  "joinRequestAccept": "Accept",
+  "joinRequestReject": "Reject",
+  "joinRequestSent": "Join request sent to \"{name}\". The DM must approve it.",
+  "@joinRequestSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinRequestFailed": "Request could not be sent: this world has too many pending requests.",
   "projectedToPlayer": "Projected to player screen",
   "projClearAll": "Clear all projections",
   "projEmpty": "No projections yet.\nRight-click an image and choose \"Project\" to send it to the player screen.",
