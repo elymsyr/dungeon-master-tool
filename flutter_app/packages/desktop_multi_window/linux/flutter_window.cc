@@ -50,6 +50,10 @@ FlutterWindow::FlutterWindow(
   const char *entrypoint_args[] = {"multi_window", g_strdup_printf("%ld", id_), args.c_str(), nullptr};
   fl_dart_project_set_dart_entrypoint_arguments(project, const_cast<char **>(entrypoint_args));
 
+  // On X11 GDK leaves the main window's GLX context current on this thread
+  // after a paint; libglvnd then rejects the new engine's eglMakeCurrent
+  // (EGL_BAD_ACCESS) and the projection renders black. Release it first.
+  gdk_gl_context_clear_current();
   auto fl_view = fl_view_new(project);
   gtk_widget_show(GTK_WIDGET(fl_view));
   gtk_container_add(GTK_CONTAINER(window_), GTK_WIDGET(fl_view));
