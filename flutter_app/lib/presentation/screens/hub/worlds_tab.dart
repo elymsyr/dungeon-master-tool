@@ -378,6 +378,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                       TemplatePill(
                                         l10n.freeTemplateBetaBadge,
                                         tooltip: l10n.freeTemplateBetaTooltip,
+                                        height: 18,
                                       ),
                                     ],
                                   ],

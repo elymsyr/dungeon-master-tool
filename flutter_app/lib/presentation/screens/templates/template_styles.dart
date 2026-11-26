@@ -347,16 +347,17 @@ class TemplateColorDot extends StatelessWidget {
 
 /// Small count / note pill ("2 col", "8").
 class TemplatePill extends StatelessWidget {
-  const TemplatePill(this.text, {super.key, this.tooltip});
+  const TemplatePill(this.text, {super.key, this.tooltip, this.height = 18});
 
   final String text;
+  final double height;
   final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final pill = Container(
-      height: 18,
+      height: height,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 7),
       decoration: BoxDecoration(
