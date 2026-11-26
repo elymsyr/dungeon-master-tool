@@ -44,24 +44,25 @@ class MarkdownBlockView extends StatelessWidget {
   }
 }
 
-/// Image block (also the banner), full width at its natural aspect ratio. A
-/// banner is capped to a square: landscape shows whole, portrait is cropped.
-/// A linked image opens its link externally (like markdown links); an
-/// unlinked one calls [onTapNoLink], or is inert when that is null.
+/// Image block (also the banner), full width at its natural aspect ratio (or a
+/// fixed cropped [height]). An uncapped banner is capped to a square: landscape
+/// shows whole, portrait is cropped.
+/// [onTap], when set, wins over the link (inbox card opens the notification);
+/// otherwise a linked image opens its link externally, an unlinked one is inert.
 class ImageBlockView extends StatelessWidget {
   final ImageBlock block;
   final BorderRadius? radius;
-  final VoidCallback? onTapNoLink;
+  final VoidCallback? onTap;
 
-  /// Called after a linked image opened its link (e.g. to mark it read).
-  final VoidCallback? onLinkOpened;
+  /// Fixed height, cropped to fill (inbox list strip). Null = natural size.
+  final double? height;
 
   const ImageBlockView({
     super.key,
     required this.block,
     this.radius,
-    this.onTapNoLink,
-    this.onLinkOpened,
+    this.onTap,
+    this.height,
   });
 
   @override
@@ -71,8 +72,9 @@ class ImageBlockView extends StatelessWidget {
       block.url,
       fit: BoxFit.cover,
       width: double.infinity,
+      height: height,
       errorBuilder: (context, _, _) => Container(
-        height: 72,
+        height: height ?? 72,
         color: palette.htmlCodeBg,
         alignment: Alignment.center,
         child: Row(
@@ -90,7 +92,7 @@ class ImageBlockView extends StatelessWidget {
         ),
       ),
     );
-    if (block.banner) {
+    if (block.banner && height == null) {
       final inner = image;
       image = LayoutBuilder(
         builder: (context, c) => ConstrainedBox(
@@ -103,16 +105,15 @@ class ImageBlockView extends StatelessWidget {
       image = ClipRRect(borderRadius: radius!, child: image);
     }
     final link = block.link;
-    final onTap = link != null
-        ? () {
-            launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
-            onLinkOpened?.call();
-          }
-        : onTapNoLink;
-    if (onTap == null) return image;
+    final tap = onTap ??
+        (link == null
+            ? null
+            : () => launchUrl(Uri.parse(link),
+                mode: LaunchMode.externalApplication));
+    if (tap == null) return image;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(onTap: onTap, child: image),
+      child: GestureDetector(onTap: tap, child: image),
     );
   }
 }

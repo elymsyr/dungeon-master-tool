@@ -232,8 +232,8 @@ class _NotificationRow extends ConsumerWidget {
               children: [
                 ImageBlockView(
                   block: banner,
-                  onTapNoLink: () => _open(context, ref),
-                  onLinkOpened: () => _markRead(ref),
+                  height: 96,
+                  onTap: () => _open(context, ref),
                 ),
                 row,
               ],
@@ -345,50 +345,61 @@ class _NotificationDetailDialog extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720, maxHeight: 820),
-        // One scroll for banner + body, so a tall banner never squeezes the body.
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Banner sits outside the padding: always edge to edge.
-              if (banner != null) ImageBlockView(block: banner),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          children: [
+            // One scroll for banner + body, so a tall banner never squeezes the body.
+            SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Banner sits outside the padding: always edge to edge.
+                  if (banner != null) ImageBlockView(block: banner),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
+                        Padding(
+                          // Room for the pinned close button when there's no banner.
+                          padding: const EdgeInsets.only(right: 36),
                           // Same size as markdown "#", so body headings never outgrow it.
                           child: Text(notification.title,
                               style: notificationMarkdownStyle(palette).h1),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () => Navigator.pop(context),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(formatRelative(notification.createdAt),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: palette.sidebarLabelSecondary)),
                         ),
+                        const SizedBox(height: 8),
+                        for (final w in blockWidgets) ...[
+                          w,
+                          const SizedBox(height: 6),
+                        ],
                       ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(formatRelative(notification.createdAt),
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: palette.sidebarLabelSecondary)),
-                    ),
-                    const SizedBox(height: 8),
-                    for (final w in blockWidgets) ...[
-                      w,
-                      const SizedBox(height: 6),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            // Pinned over the banner; dark backdrop keeps it visible on any image.
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
