@@ -622,8 +622,13 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // leaving it — server-side trigger releases their owned characters
     // back into the claim pool, and the local mirror is purged directly
     // (no `.trash/` indirection). DM keeps the existing soft-delete flow.
-    final role =
-        ref.read(worldRoleProvider(worldId)).valueOrNull ?? WorldRole.none;
+    // Taze oku: önbellek DM onayından (109) önceki `none`'da kalmış olabilir
+    // → oyuncu owner-delete yoluna düşüp "owner değilsiniz" alıyordu.
+    // Ağ yoksa provider `none` döner; o zaman önbellekteki role güven.
+    final cached = ref.read(worldRoleProvider(worldId)).valueOrNull;
+    final fresh = await ref.refresh(worldRoleProvider(worldId).future);
+    if (!mounted) return;
+    final role = fresh != WorldRole.none ? fresh : cached ?? WorldRole.none;
     final isPlayer = role == WorldRole.player;
 
     // Marketplace listing kontrolü — offline-safe local index okuması.
