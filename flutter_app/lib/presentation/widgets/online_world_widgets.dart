@@ -466,9 +466,9 @@ class MemberRow extends StatelessWidget {
           ),
           if (request) ...[
             _action(Icons.check, palette.successBtnBg,
-                L10n.of(context)!.joinRequestAccept, onAccept),
+                L10n.of(context)!.joinRequestAccept, onAccept, size: 20),
             _action(Icons.close, palette.dangerBtnBg,
-                L10n.of(context)!.joinRequestReject, onReject),
+                L10n.of(context)!.joinRequestReject, onReject, size: 20),
           ] else
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -500,13 +500,14 @@ class MemberRow extends StatelessWidget {
   }
 
   Widget _action(
-          IconData icon, Color color, String tooltip, VoidCallback? onTap) =>
+          IconData icon, Color color, String tooltip, VoidCallback? onTap,
+          {double size = 14}) =>
       IconButton(
         tooltip: tooltip,
-        icon: Icon(icon, size: 14, color: color),
+        icon: Icon(icon, size: size, color: color),
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+        constraints: BoxConstraints(minWidth: size + 10, minHeight: size + 10),
         onPressed: onTap,
       );
 }
