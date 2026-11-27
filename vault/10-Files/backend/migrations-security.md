@@ -1,7 +1,7 @@
 ---
 type: file-note
 domain: backend
-path: supabase/migrations/072_security_hardening.sql, 073_revoke_anon_execute.sql, 074_lock_internal_helper.sql, 044_beta_exit_world_purge.sql, 063_beta_slot_cap_90.sql, 064_beta_full_reset.sql, 066_beta_access_requests.sql, 069_notifications.sql, 110_notification_images.sql, 111_guest_notifications.sql
+path: supabase/migrations/072_security_hardening.sql, 073_revoke_anon_execute.sql, 074_lock_internal_helper.sql, 044_beta_exit_world_purge.sql, 063_beta_slot_cap_90.sql, 064_beta_full_reset.sql, 066_beta_access_requests.sql, 069_notifications.sql, 110_notification_images.sql, 111_guest_notifications.sql, 112_promoted_links.sql
 layer: backend
 language: sql
 status: stable
@@ -40,6 +40,7 @@ tags: [file]
 - **069_notifications** — Admin broadcast: `notifications` (title + JSONB blocks: markdown/poll/input), `notification_responses` (one per user, poll/input answers), `notification_reads` (badge tracking). RLS: published → world-readable; writes only via DEFINER RPCs (`admin_create_notification`, `list_notifications`, `submit_notification_response`, `mark_notification_read`, `dismiss_read_notifications`, `admin_notification_responses`, ...). Both tables added to realtime publication.
 - **110_notification_images** — Public bucket `notification-images` (10 MB, jpeg/png/webp) for broadcast banners and image blocks (`{id,type:'image',url,path,link?,banner?}` in `notifications.blocks`; tables/RPCs unchanged). Path `{adminUid}/{ms}_{blockId}.{ext}`. INSERT/DELETE only `is_admin()`; SELECT owner-folder **or** `is_admin()` (storage `remove()` needs SELECT, and any admin may delete any notification). Self-check: `supabase/scripts/verify_110.sql`.
 - **111_guest_notifications** — `list_notifications()` no longer returns early for a NULL `auth.uid()`: a guest gets published notifications with `my_answers` NULL and `read` false; `GRANT EXECUTE ... TO anon` re-opens just this one RPC after 073's blanket revoke. No anon SELECT on the table (081 kept narrow, `admin_id` not exposed). submit/mark_read/dismiss stay `authenticated`-only. Self-check: `supabase/scripts/verify_111.sql`.
+- **112_promoted_links** — Table `promoted_links (label, url, image_url, image_path)` for the support dialog's "Promoted" buttons. SELECT open to `anon` + `authenticated` (explicit GRANT after 081's revoke; no owner column); INSERT/DELETE only `is_admin()`; `url` CHECK `^https?://`. Icon images reuse 110's `notification-images` bucket.
 
 ## Notes
 - Related but not in this group: 067 (`_purge_beta_user` shared body + `admin_revoke_beta`), 068 (beta quota 100 MB), 070 (14-day inactivity sweep). See [[rpc-reference]].

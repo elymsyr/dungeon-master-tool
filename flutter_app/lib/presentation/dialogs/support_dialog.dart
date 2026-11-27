@@ -1,26 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../application/providers/promoted_links_provider.dart';
+import '../../data/datasources/remote/promoted_links_remote_ds.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-class _SupportLink {
-  const _SupportLink({
+class SupportLink {
+  const SupportLink({
     required this.label,
     required this.subtitle,
     required this.url,
     required this.icon,
     required this.color,
+    this.imageUrl,
   });
+
+  /// Admin-managed promoted link; its image (if any) replaces [icon].
+  factory SupportLink.promoted(PromotedLink p, Color color) => SupportLink(
+        label: p.label,
+        subtitle: p.url.replaceFirst(RegExp(r'^https?://', caseSensitive: false), ''),
+        url: p.url,
+        icon: Icons.link,
+        color: color,
+        imageUrl: p.imageUrl,
+      );
 
   final String label;
   final String subtitle;
   final String url;
   final IconData icon;
   final Color color;
+  final String? imageUrl;
 }
 
-class SupportDialog extends StatelessWidget {
+class SupportDialog extends ConsumerWidget {
   const SupportDialog({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -30,22 +45,22 @@ class SupportDialog extends StatelessWidget {
     );
   }
 
-  static const _links = <_SupportLink>[
-    _SupportLink(
+  static const _links = <SupportLink>[
+    SupportLink(
       label: 'Patreon',
       subtitle: 'patreon.com/elymsyr',
       url: 'https://www.patreon.com/elymsyr',
       icon: Icons.favorite,
       color: Color(0xFFF96854),
     ),
-    _SupportLink(
+    SupportLink(
       label: 'thanks.dev',
       subtitle: 'thanks.dev/u/gh/elymsyr',
       url: 'https://thanks.dev/u/gh/elymsyr',
       icon: Icons.volunteer_activism,
       color: Color(0xFF2EBC4F),
     ),
-    _SupportLink(
+    SupportLink(
       label: 'GroupFinder',
       subtitle: 'groupfinder.eu/library/dungeon-master-tool',
       url: 'https://groupfinder.eu/library/dungeon-master-tool',
@@ -55,15 +70,18 @@ class SupportDialog extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    // Hidden while loading / offline / on error — the static links still work.
+    final promoted = ref.watch(promotedLinksProvider).valueOrNull ?? const [];
+    final accent = Theme.of(context).colorScheme.primary;
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       title: Text(l10n.profileMenuSupport),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
-        child: Column(
+        child: SingleChildScrollView(child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -73,11 +91,27 @@ class SupportDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             for (final link in _links) ...[
-              _SupportLinkTile(link: link),
+              SupportLinkTile(link: link),
               const SizedBox(height: 8),
             ],
+            if (promoted.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.supportPromoted,
+                style: TextStyle(
+                  color: palette.tabActiveText,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final p in promoted) ...[
+                SupportLinkTile(link: SupportLink.promoted(p, accent)),
+                const SizedBox(height: 8),
+              ],
+            ],
           ],
-        ),
+        )),
       ),
       actions: [
         TextButton(
@@ -89,10 +123,10 @@ class SupportDialog extends StatelessWidget {
   }
 }
 
-class _SupportLinkTile extends StatelessWidget {
-  const _SupportLinkTile({required this.link});
+class SupportLinkTile extends StatelessWidget {
+  const SupportLinkTile({super.key, required this.link});
 
-  final _SupportLink link;
+  final SupportLink link;
 
   Future<void> _open(BuildContext context) async {
     final uri = Uri.parse(link.url);
@@ -124,7 +158,15 @@ class _SupportLinkTile extends StatelessWidget {
                   color: link.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(link.icon, color: link.color, size: 20),
+                clipBehavior: Clip.antiAlias,
+                child: link.imageUrl == null
+                    ? Icon(link.icon, color: link.color, size: 20)
+                    : Image.network(
+                        link.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) =>
+                            Icon(link.icon, color: link.color, size: 20),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -23,6 +23,7 @@ import 'audit_log_tab.dart';
 import 'bug_reports_tab.dart';
 import 'content_moderation_tab.dart';
 import 'notifications_admin_tab.dart';
+import 'promoted_links_admin_tab.dart';
 import 'restricted_users_tab.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -73,6 +74,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: L10n.of(context)!.adminTabDashboard),
           PillTab(id: 'users', icon: Icons.people_outline, label: L10n.of(context)!.adminTabUsers),
           PillTab(id: 'notifications', icon: Icons.campaign_outlined, label: L10n.of(context)!.notifAdminTab),
+          PillTab(id: 'promoted', icon: Icons.star_outline, label: L10n.of(context)!.supportPromoted),
           PillTab(id: 'content', icon: Icons.forum_outlined, label: L10n.of(context)!.adminTabContent),
           PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: L10n.of(context)!.adminTabReports),
           PillTab(id: 'banned', icon: Icons.block_outlined, label: L10n.of(context)!.adminTabBanned),
@@ -96,6 +98,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
             break;
           case 'notifications':
             content = const NotificationsAdminTab();
+            break;
+          case 'promoted':
+            content = const PromotedLinksAdminTab();
             break;
           case 'content':
             content = const ContentModerationTab();

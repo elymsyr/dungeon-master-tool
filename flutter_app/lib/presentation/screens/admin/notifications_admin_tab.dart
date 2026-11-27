@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../application/providers/admin_notifications_provider.dart';
 import '../../../core/utils/relative_time.dart';
@@ -135,7 +136,7 @@ class _NotificationRow extends ConsumerWidget {
                         color: palette.tabActiveText)),
                 const SizedBox(height: 2),
                 Text(
-                  '${formatRelative(summary.createdAt)} · ${l10n.notifResponseCount(summary.responseCount)}',
+                  '${DateFormat('yyyy-MM-dd HH:mm').format(summary.createdAt)} (${formatRelative(summary.createdAt)}) · ${l10n.notifResponseCount(summary.responseCount)}',
                   style: TextStyle(
                       fontSize: 11, color: palette.sidebarLabelSecondary),
                 ),
