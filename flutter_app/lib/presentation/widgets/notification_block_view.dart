@@ -119,10 +119,11 @@ class ImageBlockView extends StatelessWidget {
 }
 
 /// Poll block — single (radio) or multiple (checkbox) choice + submit.
+/// A null [onSubmit] (guest) shows the poll locked with a sign-in hint.
 class PollBlockView extends StatefulWidget {
   final PollBlock block;
   final List<int> initial;
-  final Future<void> Function(List<int> choice) onSubmit;
+  final Future<void> Function(List<int> choice)? onSubmit;
 
   const PollBlockView({
     super.key,
@@ -158,7 +159,7 @@ class _PollBlockViewState extends State<PollBlockView> {
     setState(() => _busy = true);
     try {
       final choice = _selected.toList()..sort();
-      await widget.onSubmit(choice);
+      await widget.onSubmit!(choice);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -169,6 +170,7 @@ class _PollBlockViewState extends State<PollBlockView> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final answered = widget.initial.isNotEmpty;
+    final locked = widget.onSubmit == null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +188,7 @@ class _PollBlockViewState extends State<PollBlockView> {
           for (int i = 0; i < widget.block.options.length; i++)
             CheckboxListTile(
               value: _selected.contains(i),
-              onChanged: _busy
+              onChanged: _busy || locked
                   ? null
                   : (v) => setState(() =>
                       v == true ? _selected.add(i) : _selected.remove(i)),
@@ -200,7 +202,7 @@ class _PollBlockViewState extends State<PollBlockView> {
           RadioGroup<int>(
             groupValue: _selected.isEmpty ? null : _selected.first,
             onChanged: (v) {
-              if (_busy) return;
+              if (_busy || locked) return;
               setState(() => _selected = v == null ? {} : {v});
             },
             child: Column(
@@ -208,6 +210,7 @@ class _PollBlockViewState extends State<PollBlockView> {
                 for (int i = 0; i < widget.block.options.length; i++)
                   RadioListTile<int>(
                     value: i,
+                    enabled: !locked,
                     title: Text(widget.block.options[i],
                         style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                     contentPadding: EdgeInsets.zero,
@@ -218,7 +221,9 @@ class _PollBlockViewState extends State<PollBlockView> {
           ),
         Align(
           alignment: Alignment.centerRight,
-          child: TextButton(
+          child: locked
+              ? _SignInHint(l10n.notifSignInToAnswer)
+              : TextButton(
             onPressed: (_busy || _selected.isEmpty) ? null : _submit,
             child: _busy
                 ? const SizedBox(
@@ -231,11 +236,11 @@ class _PollBlockViewState extends State<PollBlockView> {
   }
 }
 
-/// Free-text input block + submit.
+/// Free-text input block + submit. A null [onSubmit] (guest) locks it.
 class InputBlockView extends StatefulWidget {
   final InputBlock block;
   final String initial;
-  final Future<void> Function(String text) onSubmit;
+  final Future<void> Function(String text)? onSubmit;
 
   const InputBlockView({
     super.key,
@@ -269,7 +274,7 @@ class _InputBlockViewState extends State<InputBlockView> {
     if (text.isEmpty || _busy) return;
     setState(() => _busy = true);
     try {
-      await widget.onSubmit(text);
+      await widget.onSubmit!(text);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -280,6 +285,7 @@ class _InputBlockViewState extends State<InputBlockView> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final answered = widget.initial.isNotEmpty;
+    final locked = widget.onSubmit == null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +301,7 @@ class _InputBlockViewState extends State<InputBlockView> {
           ),
         TextField(
           controller: _ctrl,
-          enabled: !_busy,
+          enabled: !_busy && !locked,
           minLines: widget.block.multiline ? 2 : 1,
           maxLines: widget.block.multiline ? 5 : 1,
           style: TextStyle(fontSize: 13, color: palette.tabActiveText),
@@ -307,7 +313,9 @@ class _InputBlockViewState extends State<InputBlockView> {
         ),
         Align(
           alignment: Alignment.centerRight,
-          child: TextButton(
+          child: locked
+              ? _SignInHint(l10n.notifSignInToAnswer)
+              : TextButton(
             onPressed: _busy ? null : _submit,
             child: _busy
                 ? const SizedBox(
@@ -316,6 +324,29 @@ class _InputBlockViewState extends State<InputBlockView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Stands in for the submit button when a guest can see but not answer.
+class _SignInHint extends StatelessWidget {
+  final String text;
+  const _SignInHint(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 14, color: palette.sidebarLabelSecondary),
+          const SizedBox(width: 4),
+          Text(text,
+              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+        ],
+      ),
     );
   }
 }

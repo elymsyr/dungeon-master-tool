@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/account_gate.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-11-27
 tags: [file]
 ---
 
@@ -33,7 +33,8 @@ tags: [file]
 ## Key Logic / Variables
 - `resolveAccountAccess`: define yoksa `offlineBuild` (oturum ne derse desin), varsa oturuma göre `guest` / `signedIn`.
 - `resolveSurfaceAccess`: `requiresAccount` false ise **her durumda** `open`. True ise `signedIn → open`, `guest → signInRequired`, `offlineBuild → hidden` — misafire sorulur, auth akışı olmayan build'de ise saklanır (isteyecek bir hesap yok).
-- Kapılı küme (§6 O2'nin saydığı altı): `marketplace`, `cloudBackup`, `worldSharing`, `profile`, `follows`, `notifications`, `admin`.
+- Kapılı küme (§6 O2'nin saydığı altı): `marketplace`, `cloudBackup`, `worldSharing`, `profile`, `follows`, `admin`.
+- **`notifications` 2026-11-27'den beri kapısız** (migration 111): misafir yayınlanmış bildirimleri okur, okundu/temizle durumu cihazda (`GuestNotificationStore`); anket/soru blokları misafire kilitli + "Yanıtlamak için giriş yap".
 - **`firstPartyCatalog` bilerek kapısız.** Fazın kendi premisi katalog indirmesinin Worker'ın JWT zincirinden geçtiğini varsayıyordu; ölçüm tersini gösterdi — `cloudflare/src/worker.ts:331` `GET /catalog/{key}`'i **public, JWT yok** diye belgeliyor, `FirstPartyCatalogService` `Authorization` başlığı göndermiyor ve istek düşerse `assets/first_party/`'ye iniyor. JWT zinciri *kullanıcı asset* yolu (`asset_service.dart:_requireToken`). Kapılamak, sunucunun herkese verdiği içeriği misafirden almak olurdu.
 - **Neden saf + provider ayrımı:** `isConfigured` derleme zamanı define'ı; `flutter test` define'sız koştuğu için gerçek kapı testte hep `offlineBuild` der. Tablo boolean alır, `accountGateProvider` de widget testinin misafir *olmak* için override ettiği dikiş yeridir (`test/application/providers/account_gate_test.dart`, 48 vaka).
 - Ölçüm (2026-08-15): repoda **102** `isConfigured` çağrısı vardı; **48'i** zaten `!isConfigured || auth == null` yazıyordu, gerisi çıplak okuyordu. Presentation tarafı **27 çağrı / 15 dosya → 10 / 6**'ya indi; kalan altısı build düzeyinde okumalar (router, landing auth formu, player alt-penceresi, `startup_sync_gate`, hub sign-out listener).

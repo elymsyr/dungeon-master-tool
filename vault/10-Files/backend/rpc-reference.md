@@ -5,7 +5,7 @@ path: supabase/migrations/*.sql (CREATE FUNCTION catalog)
 layer: backend
 language: sql
 status: stable
-updated: 2026-10-06
+updated: 2026-11-27
 tags: [file]
 ---
 
@@ -69,7 +69,7 @@ tags: [file]
 - `is_beta_active(uuid)`, `get_beta_status()` (anon EXECUTE revoked in 074), `beta_slot_cap()→90` (063), `beta_user_quota_bytes`, `beta_inactivity_days`, `sweep_inactive_beta` (070), `beta_heartbeat`/`user_heartbeat`.
 
 ### Notifications & social
-- `admin_create_notification(...)`, `admin_delete_notification`, `admin_list_notifications`, `admin_notification_responses`, `list_notifications`, `submit_notification_response`, `mark_notification_read`, `dismiss_read_notifications` (069).
+- `admin_create_notification(...)`, `admin_delete_notification`, `admin_list_notifications`, `admin_notification_responses`, `list_notifications`, `submit_notification_response`, `mark_notification_read`, `dismiss_read_notifications` (069). `list_notifications` is also callable by `anon` since 111 (guest inbox, no per-user state).
 - `search_profiles`, `suggested_profiles`, conversation RPCs (`get_my_conversations`, `mark_conversation_read`, `create_group_conversation`, `open_direct_conversation`, ...).
 
 ## Notes

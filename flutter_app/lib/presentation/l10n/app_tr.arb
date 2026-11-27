@@ -1017,6 +1017,7 @@
   "notifSubmit": "Gönder",
   "notifUpdate": "Güncelle",
   "notifSubmitted": "Yanıtın kaydedildi.",
+  "notifSignInToAnswer": "Yanıtlamak için giriş yap.",
   "notifInputHint": "Cevabın…",
   "notifAdminTab": "Bildirimler",
   "notifNewButton": "Yeni bildirim",

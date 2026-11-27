@@ -27,12 +27,13 @@ import 'package:go_router/go_router.dart';
 /// `marketplace` is deliberately NOT in this set: browsing the catalogue is
 /// open to guests (`marketplace_listings` RLS SELECT is `USING (true)`), and
 /// the account requirement sits on the download/publish actions instead.
+/// `notifications` neither: guests read them (migration 111), only answering
+/// needs an account.
 const _roadmapOnlineSurfaces = <AppSurface>{
   AppSurface.mediaStorage,
   AppSurface.worldSharing,
   AppSurface.profile,
   AppSurface.follows,
-  AppSurface.notifications,
   AppSurface.admin,
 };
 

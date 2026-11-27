@@ -1017,6 +1017,7 @@
   "notifSubmit": "Senden",
   "notifUpdate": "Aktualisieren",
   "notifSubmitted": "Antwort gespeichert.",
+  "notifSignInToAnswer": "Zum Antworten anmelden.",
   "notifInputHint": "Deine Antwort…",
   "notifAdminTab": "Benachrichtigungen",
   "notifNewButton": "Neue Benachrichtigung",

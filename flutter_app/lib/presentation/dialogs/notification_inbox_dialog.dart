@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/notifications_provider.dart';
 import '../../core/utils/relative_time.dart';
 import '../../domain/entities/app_notification.dart';
@@ -28,6 +29,15 @@ class NotificationInboxDialog extends ConsumerStatefulWidget {
 
 class _NotificationInboxDialogState
     extends ConsumerState<NotificationInboxDialog> {
+  @override
+  void initState() {
+    super.initState();
+    // Guests have no realtime feed (081), so opening the inbox refreshes it.
+    Future.microtask(() {
+      if (mounted) ref.invalidate(notificationsProvider);
+    });
+  }
+
   Future<void> _markAllRead() async {
     final list = ref.read(notificationsProvider).valueOrNull;
     if (list == null) return;
@@ -314,6 +324,8 @@ class _NotificationDetailDialog extends ConsumerWidget {
               orElse: () => this.notification,
             ) ??
         this.notification;
+    // A guest has no uid to answer with: polls / inputs are shown locked.
+    final canAnswer = ref.watch(authProvider) != null;
 
     final blockWidgets = <Widget>[];
     for (final b in notification.bodyBlocks) {
@@ -324,15 +336,17 @@ class _NotificationDetailDialog extends ConsumerWidget {
           blockWidgets.add(PollBlockView(
             block: b,
             initial: _pollInitial(notification, b.id),
-            onSubmit: (choice) =>
-                _submitBlock(context, ref, b.id, {'choice': choice}),
+            onSubmit: canAnswer
+                ? (choice) => _submitBlock(context, ref, b.id, {'choice': choice})
+                : null,
           ));
         case InputBlock():
           blockWidgets.add(InputBlockView(
             block: b,
             initial: _inputInitial(notification, b.id),
-            onSubmit: (text) =>
-                _submitBlock(context, ref, b.id, {'text': text}),
+            onSubmit: canAnswer
+                ? (text) => _submitBlock(context, ref, b.id, {'text': text})
+                : null,
           ));
         case ImageBlock():
           blockWidgets.add(ImageBlockView(block: b, radius: palette.cbr));

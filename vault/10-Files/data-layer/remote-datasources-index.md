@@ -5,7 +5,7 @@ path: flutter_app/lib/data/datasources/remote/
 layer: data
 language: dart
 status: stable
-updated: 2026-11-26
+updated: 2026-11-27
 tags: [file]
 ---
 
@@ -39,7 +39,7 @@ tags: [file]
 - **`game_listings_remote_ds.dart`** → `GameListingsRemoteDataSource` — "looking for group" board; tables `game_listings` + `game_listing_applications`. `fetchOpen({gameLanguage, system, tag})` newest-first.
 - **`marketplace_listings_remote_ds.dart`** → `MarketplaceListingsRemoteDataSource` — published content packages; table `marketplace_listings`, bucket `shared-payloads` (path `{owner_id}/listings/{listing_id}.json.gz`). Each publish is an immutable independent row (no lineage). `publishSnapshot` (accepts a caller-supplied `listingId` — pinned media is reserved under it before publishing, see [[publish_media_pinner]]), `downloadPayload`, `deleteListing` (also calls `pub_asset_release(listingId)` so the listing's `pinned` media refcount drops), `updateListingCover`, `listAllCurrent`, `fetchListingsByIds`, `listCurrentByOwner`, `fetchListing`.
 - **`bug_reports_remote_ds.dart`** → `BugReportsRemoteDataSource` — user bug reports (status open/read/resolved, captures appVersion/platform/logs); `BugReportRateLimitException` on throttle.
-- **`notifications_remote_ds.dart`** → `NotificationsRemoteDataSource` — end-user notifications inbox (online-only, mig 069 RPCs): `list_notifications`, `submit_notification_response`, `mark_notification_read`, dismiss-all-read.
+- **`notifications_remote_ds.dart`** → `NotificationsRemoteDataSource` — end-user notifications inbox (online-only, mig 069 RPCs): `list_notifications`, `submit_notification_response`, `mark_notification_read`, dismiss-all-read. With no session (guest, mig 111) `list` still hits the RPC but read / dismiss go to `local/guest_notification_store.dart` (SharedPreferences id sets).
 - **`admin_notifications_remote_ds.dart`** → `AdminNotificationsRemoteDataSource` — admin broadcast authoring + response viewing (`AdminNotificationSummary`, `NotificationResponseRow`; blocks = markdown/poll/input/image). Images (banner + body) go to the public `notification-images` bucket (mig 110): `uploadImage(bytes, ext, blockId)` → `{adminUid}/{ms}_{blockId}.{ext}` + public URL, called at publish time by the composer, which rolls back with `removeImages` if `create` fails; `delete(id, imagePaths:)` removes the files best-effort after the RPC.
 - **`admin_beta_requests_remote_ds.dart`** → `AdminBetaRequestsRemoteDataSource` — admin beta request queue: RPCs `admin_list_beta_requests`, `admin_approve_beta_request`, `admin_reject_beta_request`, `admin_list_beta_participants` (`BetaRequestEntry`, `BetaParticipantEntry`, `BetaApproveResult`).
 - **`admin_users_remote_ds.dart`** → `AdminUsersRemoteDataSource` — admin console (~14 KB): RPCs `get_all_users_summary`, `search_users`, `ban_user`/`unban_user`/`get_banned_users`, `get_system_storage_stats`, `set_online_restriction`/`get_restricted_users`/`am_i_online_restricted`, `admin_delete_post/marketplace_listing/game_listing/message`, `admin_list_posts/game_listings/marketplace_listings/audit_log`. Row types: `AdminUserSummary`, `BannedUserEntry`, `RestrictedUserEntry`, `StorageBucketStat`, `OnlineRestriction`, `AdminPostRow`, `AdminGameListingRow`, `AdminMarketplaceListingRow`.

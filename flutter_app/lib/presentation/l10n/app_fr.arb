@@ -1017,6 +1017,7 @@
   "notifSubmit": "Envoyer",
   "notifUpdate": "Mettre à jour",
   "notifSubmitted": "Réponse enregistrée.",
+  "notifSignInToAnswer": "Connectez-vous pour répondre.",
   "notifInputHint": "Votre réponse…",
   "notifAdminTab": "Notifications",
   "notifNewButton": "Nouvelle notification",

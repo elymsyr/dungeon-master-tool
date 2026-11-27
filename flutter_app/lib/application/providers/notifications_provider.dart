@@ -13,13 +13,12 @@ final notificationsDataSourceProvider =
   return NotificationsRemoteDataSource();
 });
 
-/// Published notifications for the signed-in user, with their answers + read
-/// state. Empty when signed-out / unconfigured / offline.
+/// Published notifications with the user's answers + read state. Guests get
+/// them too (migration 111, read state local). Empty when unconfigured / offline.
 final notificationsProvider =
     FutureProvider<List<AppNotification>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  final auth = ref.watch(authProvider);
-  if (auth == null) return const [];
+  ref.watch(authProvider); // refetch on sign-in / sign-out
   final ds = ref.watch(notificationsDataSourceProvider);
   try {
     return await guardedNetwork(ref, () => ds.list());
@@ -39,6 +38,8 @@ final unreadNotificationCountProvider = Provider<int>((ref) {
 
 /// Live updates: subscribe to the global `notifications` table and refresh the
 /// list on any change. Keep alive by `ref.watch`-ing it from the Hub.
+/// Signed-in only: anon has no SELECT on the table (081), so a guest's list
+/// refreshes when the Hub or the inbox opens instead.
 final notificationsRealtimeProvider = Provider<void>((ref) {
   if (!SupabaseConfig.isConfigured) return;
   final auth = ref.watch(authProvider);

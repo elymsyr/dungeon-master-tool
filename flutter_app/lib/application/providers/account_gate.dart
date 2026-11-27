@@ -68,9 +68,6 @@ enum AppSurface {
   /// Follows / followers, which are `auth.uid()`-scoped rows.
   follows(requiresAccount: true),
 
-  /// Notifications, same.
-  notifications(requiresAccount: true),
-
   /// The admin dashboard behind the `is_admin()` RPC.
   admin(requiresAccount: true),
 
@@ -95,6 +92,12 @@ enum AppSurface {
   /// listing row is keyed by `auth.uid()`). Those two check
   /// [hasAccountProvider] at the call site rather than hiding the surface.
   marketplace(requiresAccount: false),
+
+  /// **Reading** admin notifications. Migration 111 opens
+  /// `list_notifications()` to `anon`; a guest's read / dismissed state is
+  /// kept on the device (`GuestNotificationStore`). Answering a poll or an
+  /// input still needs a uid, so those blocks render locked for a guest.
+  notifications(requiresAccount: false),
 
   /// Worlds, characters, templates, packages: local Drift rows.
   worlds(requiresAccount: false),

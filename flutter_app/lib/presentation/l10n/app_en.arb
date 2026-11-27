@@ -1065,6 +1065,7 @@
   "notifSubmit": "Submit",
   "notifUpdate": "Update",
   "notifSubmitted": "Response saved.",
+  "notifSignInToAnswer": "Sign in to answer.",
   "notifInputHint": "Your answer…",
   "notifAdminTab": "Notifications",
   "notifNewButton": "New notification",
