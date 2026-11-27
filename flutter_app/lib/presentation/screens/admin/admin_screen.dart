@@ -445,7 +445,8 @@ class _AdminCard extends StatelessWidget {
         border: Border.all(color: palette.featureCardBorder),
         borderRadius: palette.cbr,
       ),
-      child: child,
+      // ListTile ink must paint above the card's background colour.
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }
