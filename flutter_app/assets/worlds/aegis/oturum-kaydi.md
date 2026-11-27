@@ -16,7 +16,7 @@
 
 | | |
 |---|---|
-| Oyuncular / karakterler | **Wizard** — arşivci, meraktan yolda · **Paladin** — Başkumandan'ı ısrarla ikna edip soruşturmaya geldi · **Ranger** — mertebeli lonca ailesinin dışlanan çocuğu; annesi mücevherci ve Ticaret Loncası'nda kendi hanesinin başı (loncanın başı değil). Annesinin gözüne girmenin peşinde |
+| Oyuncular / karakterler | **Wizard** — arşivci, meraktan yolda · **Paladin (Bızdır)** — Başkumandan'ı ısrarla ikna edip soruşturmaya geldi · **Ranger** — mertebeli lonca ailesinin dışlanan çocuğu; annesi mücevherci ve Ticaret Loncası'nda kendi hanesinin başı (loncanın başı değil). Annesinin gözüne girmenin peşinde |
 | Seviye | |
 | Paket sürümü | 0.8.0 (Oturum 1) · 0.14.0 (Oturum 2) · 0.19.0 (Oturum 3) |
 
@@ -28,8 +28,14 @@
 Her oturumun sonunda güncellenir: kartlardaki başlangıç durumundan bu masada ne
 değişti.
 
-*(Oturum 3 sonu)*
+*(Oturum 5 sonu — **1. Perde bitti**)*
 
+- **Oturum 4–5'te değişenler:** karakterler Elymsyr'den gemiyle açıldı; yolda bir **ork
+  savaş gemisini** yendiler (gemi battı) ve onda **çok sayıda hastalıklı ork** buldular —
+  kaptan hastaların gemisine alınmasına izin vermedi. Ranger **yumurtasına kavuştu**
+  (Elymsyr limanında, valinin işiyle birlikte gelen yan görev). Gemi **ikinci kıtanın
+  kıyısına yaklaştı; kara göründü.** Paladin yeniden hapse atıldı; Votumar'ın alt köyünde
+  erzak hırsızlığı çözüldü (aşağıda, Oturum 4–5).
 - **Gümüşsu:** ayakta. Dönüşüm köye saldırdı, karakterler köyü kurtardı. Oturum 2'de
   bir gece daha orada kaldılar.
 - **Kulübedeki üçlü:** dönüştü ve öldü; cesetler incelendi.
@@ -62,8 +68,10 @@ değişti.
   gemiyle açılma izni hazır. **Oturum 3'te kabul ettiler** ve yolu yürüdüler: ön onay
   kağıdı → kimlik ve eşya → imza (Elymsyr'de, validen) → sırada gemi.
 - **Orvan'ın tavsiyesi:** hastalık hakkında daha çok bilgi için Radenhall'a gitmeleri.
-- **Açık iplikler:** gemiye biniş · Orvan'ın işi (kaybolan gemiler, kanıt) · Radenhall · paladinin cezası (hapis /
-  yargılanma tarihi) ve teklifle çakışması · paladinin hastalığı · Kavkıların sığınağı ·
+- **Açık iplikler:** ikinci kıtada Meclis'te inkâr edilemeyecek hastalık kanıtı (ork gemisindeki hastalar alınamadı) ·
+  Orvan'ın işi (kaybolan gemiler) · Radenhall · paladinin cezası (hapis /
+  yargılanma tarihi) ve teklifle çakışması · paladinin hastalığı · Kavkıların sığınağı (ve masada tam çözülmeyen Kavkı sorunu) ·
+  Votumar'dan getirilen çalışan ve iki çocuğun akıbeti ·
   Kadife'nin kimin adamı olduğu · Sicim'in kitabı · *Kader* ve kaptanı · Mine'ın çizdiği mührün ne olduğu.
 
 ## Oturum 3 için akış — hazırlık
@@ -134,6 +142,91 @@ En yeni en üstte.
 **Sonraki oturum için DM notu:**
 **Tasarıma geri bildirim:** (masada işlemeyen / işleyen — aşağıdaki tabloya da yaz)
 -->
+
+### Oturum 4–5 — (tarih yok; iki oturum birleşik)
+
+> DM iki oturumu tek akış olarak anlattı; sıralamada kayma olabilir. Ayrım yapılamadığı
+> için tek girişte duruyor. Oturum 2–3 girişleriyle çakışan kısımlar (Kadife, Argenfon,
+> Votumar, Meclis, Orvan) anlatımın kendi hâliyle yazıldı; ayrıntı farkları aşağıda
+> *Açık kalan*'ın sonunda.
+
+**Nerede başladı:** Gizli Liman'da Kadife ile konuşma. (Oturum 3'ün sonu — Elymsyr'de
+çay — bu anlatımda yer almıyor.)
+
+**Ne oldu:**
+
+*Kadife → köy → sahil kasabası*
+- Karakterler Kadife ile konuştu. Ranger, **paladinin Meclis'ten olduğunu anladı**.
+  Kadife onlardan haber alıyor ve onları Meclis'e çağırıyor.
+- Dönüşte köye tekrar uğradılar; ardından sahil kasabasındaki **canavar sorununa**
+  yaratıcı bir çözümle geldiler: savaşmadan yaratıklardan **ikisini bayıltıp alıp
+  götürdüler.** Sorunu çözmeden orayı terk ettiler.
+
+*Paladin Kalesi (Votumar)*
+- Kendilerine araçla yardım eden **muhtar** sayesinde Paladin Kalesi'ne gittiler.
+- **Bızdır** orada, izinsiz çıktığı için **hapse atıldı.**
+- Bulgularıyla Meclis'e ve şehirdeki **Başkumandan'a** haber götürmeleri konuşuldu.
+  Beklerken Kale'nin alt köyünde **erzakların kaybolduğu** haberi geldi: bir çalışan,
+  evsiz ve kimsesiz çocuklara yardım etmek için erzak çalıyordu.
+- Karakterler **acımadan** hem çalışanı hem de çocuklardan ikisini yakaladı ve Kale'ye
+  getirdi; ama **pek takdir görmediler.**
+
+*Meclis — Lucid Triton*
+- Sakin bir yolculuktan sonra Meclis'e gittiler, herkes şehirdeki işine dağıldı. Meclisle
+  görüşmede karakterler **hiçbir kanıt getiremedi**; Meclis kararını verdi ve karakterleri
+  **dikkate almadı.**
+- Başkumandan bu **hadsizlik ve emre itaatsizlik** yüzünden **Bızdır'ı hapse gönderdi.**
+
+*Orvan'ın teklifi — Elymsyr*
+- Orvan Sancar karakterleri tek tek **gizli bir mahallenin arasında** topladı ve teklif
+  etti: **ikinci kıtaya** gidip hastalıkla ilgili **gerçek bir kanıt** bulsunlar.
+  Karakterler **kabul etti.**
+- Limanda **liman valisinin isteğini** yerine getirip bir görev aldılar; burada ufak bir
+  yan görev vardı ve **ranger yumurtasına kavuştu.**
+
+*Deniz*
+- Gemiye bindiler, limandan açıldılar. Yolda bir **ork savaş gemisiyle** savaştılar;
+  savaşın sonunda ork gemisi **patladı**, ama savaşı kazandılar.
+- Ork gemisinde **kanıt olarak çok sayıda hastalıklı ork** buldular. **Kaptan** hastaların
+  kendi gemisinde bulunmasına **kesinlikle izin vermedi**: yolun neredeyse ortasındaydılar
+  ve gemide böyle bir şey herkes için ölüm demekti.
+- Biraz daha yolculuktan sonra **kara göründü.** **1. Perde burada bitti.**
+
+**Karşılaşılan NPC'ler ve tutumları:**
+- **Kadife** — karakterlerden haber alıyor, onları Meclis'e çağırıyor.
+- **Muhtar** — sahil kasabasında karakterlere araçla yardım etti; Paladin Kalesi'ne bu
+  sayede gittiler.
+- **Erzak hırsızı çalışan + iki çocuk** — kimsesiz çocuklara yardım için çalmıştı; karakterlerce
+  yakalanıp Kale'ye getirildi.
+- **Paladin Kalesi yönetimi** — hırsızı getirmelerini pek takdir etmedi; Bızdır'ı izinsiz
+  çıktığı için hapse attı.
+- **Meclis** — kanıt yok diye karakterleri dikkate almadı.
+- **Başkumandan** — itaatsizlik yüzünden Bızdır'ı hapse gönderdi.
+- **Orvan Sancar** — gizli mahallede karakterleri topladı, ikinci kıtadan kanıt getirme
+  teklifini yaptı.
+- **Liman Valisi** — bir görev verdi (ufak yan görev).
+- **Gemi kaptanı** — ork gemisindeki hastaların gemiye alınmasına izin vermedi.
+
+**Karakterlerin öğrendiği:** hastalık orklar arasında da yaygın (ork savaş gemisinde çok
+sayıda hasta) · Meclis kanıt olmadan dinlemiyor · Kadife Meclis'e haber taşıyor · Bızdır'ın
+Meclis'ten olduğu ranger'ca biliniyor.
+
+**Açık kalan:**
+- Meclis'e götürülecek gerçek hastalık kanıtı — ork gemisindeki hastalar gemiye alınmadı.
+- İkinci kıtada ne olacağı; karaya çıkış.
+- Bızdır'ın hapsi ve yargılanması.
+- Sahil kasabasındaki canavar sorunu çözülmeden bırakıldı; bayıltılıp götürülen iki
+  yaratığın akıbeti.
+- Erzak hırsızı çalışan ve iki çocuğun Kale'deki akıbeti.
+- *Oturum 2–3 girişleriyle fark:* Argenfon'da Kavkı sorunu orada "çözüldü" yazıyordu, bu
+  anlatımda sorun çözülmeden terk edildi · paladinin hapsi orada Varhan'ın özel konuşmasında,
+  burada Meclis kararından sonra · Gizli Liman → Meclis → Orvan sırası iki yerde de var ama
+  ara olaylar farklı. Hangisinin geçerli olduğu DM'in kararı.
+
+**Sonraki oturum için DM notu:** oturum ikinci kıtanın kıyısında, karanın görüldüğü an
+açılır.
+
+**Tasarıma geri bildirim:** —
 
 ### Oturum 3 — 2026-10-05
 
