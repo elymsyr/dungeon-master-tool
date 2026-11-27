@@ -102,6 +102,9 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
+    # Help wiki pages (help_wiki_dialog.dart); de/fr fall back to en.
+    - assets/help/en/
+    - assets/help/tr/
     # Palette + dice fonts, subsetted (`tool/fonts/bundle_fonts.py`).
     # google_fonts loads them from here; runtime fetching is off (main.dart).
     - assets/fonts/

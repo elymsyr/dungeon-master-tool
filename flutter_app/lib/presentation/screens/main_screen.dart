@@ -38,6 +38,7 @@ import '../l10n/app_localizations.dart';
 import '../../application/providers/visible_entity_provider.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/app_icon_image.dart';
+import '../widgets/help_icon_button.dart';
 import '../widgets/world_open_splash.dart';
 import '../widgets/characters_sidebar.dart';
 import '../widgets/dice/dice_fab.dart';
@@ -788,6 +789,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Save indicator — unified local + cloud + live-link status.
           const SaveSyncIndicator(),
           const SizedBox(width: 4),
+          // Help wiki at the page of the open tab (order = tabLabels).
+          HelpIconButton(
+            page: const [
+              'codex', 'session', 'mind-map', 'world-map',
+              'pdf-soundpad', 'pdf-soundpad', 'characters',
+            ].elementAtOrNull(_tabIndex) ?? 'worlds',
+          ),
           // Edit Mode toggle
           IconButton(
             icon: Icon(

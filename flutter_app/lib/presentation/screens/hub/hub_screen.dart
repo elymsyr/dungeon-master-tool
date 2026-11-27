@@ -216,36 +216,20 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     );
   }
 
-  ({String title, String body}) _helpForTab(
-    L10n l10n,
-    int index,
-    String socialSubTab,
-  ) {
-    switch (index) {
-      case 0:
-        if (socialSubTab == 'marketplace') {
-          return (
-            title: l10n.helpMarketplaceTitle,
-            body: l10n.helpMarketplaceBody,
-          );
-        }
-        return (title: l10n.helpSocialTitle, body: l10n.helpSocialBody);
-      case 1:
-        return (title: l10n.helpSettingsTitle, body: l10n.helpSettingsBody);
-      case 2:
-        return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
-      case 3:
-        return (
-          title: l10n.helpCharactersTitle,
-          body: l10n.helpCharactersBody,
-        );
-      case 4:
-        return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
-      case 5:
-      default:
-        return (title: l10n.helpPackagesTitle, body: l10n.helpPackagesBody);
-    }
-  }
+  /// Help wiki page (see help_wiki_dialog.dart) for the visible tab.
+  String _helpPageForTab(int index, String socialSubTab) => switch (index) {
+        0 => switch (socialSubTab) {
+            'marketplace' => 'marketplace',
+            'messages' => 'messages',
+            'gameListings' => 'game-listings',
+            _ => 'feed',
+          },
+        1 => 'settings',
+        2 => 'worlds',
+        3 => 'characters',
+        4 => 'templates',
+        _ => 'packages',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +243,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final l10n = L10n.of(context)!;
     final socialSubTab = ref.watch(socialSubTabProvider);
     final tabIndex = ref.watch(hubTabIndexProvider);
-    final help = _helpForTab(l10n, tabIndex, socialSubTab);
+    final helpPage = _helpPageForTab(tabIndex, socialSubTab);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -339,7 +323,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         actions: [
           const VersionIndicatorButton(),
           const NotificationIconButton(),
-          HelpIconButton(title: help.title, body: help.body),
+          HelpIconButton(page: helpPage),
           // Bug report duplicates the entry inside the profile menu — keep
           // the desktop/tablet shortcut, hide on phone where space is tight.
           if (screen != ScreenType.phone)

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
+import '../theme/markdown_theme.dart';
 
 /// Uygulama ilk kez açıldığında gösterilen karşılama
-/// dialog'u. Kullanıcıya sistemin kısa tanıtımı, manuel kayıt/sync uyarısı,
+/// dialog'u. Kullanıcıya sistemin kısa (markdown) tanıtımı,
 /// online oyun, gelecek paketler ve GitHub linki iletir. Gösterildikten
 /// sonra `uiStateProvider.welcomeSeen = true` set edilir, bir daha açılmaz.
 class WelcomeDialog {
@@ -30,33 +32,15 @@ class WelcomeDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.welcomeSystemIntro,
-                  style: const TextStyle(height: 1.45, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.welcomeOnlinePlay,
-                  style: const TextStyle(height: 1.4, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.welcomeOnlineStorage,
-                  style: const TextStyle(height: 1.4, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.welcomeRoadmap,
-                  style: const TextStyle(height: 1.4, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.welcomeClosing,
-                  style: const TextStyle(
-                    height: 1.4,
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                  ),
+                MarkdownBody(
+                  data: [
+                    l10n.welcomeSystemIntro,
+                    l10n.welcomeOnlinePlay,
+                    l10n.welcomeOnlineStorage,
+                    l10n.welcomeRoadmap,
+                    l10n.welcomeClosing,
+                  ].join('\n\n'),
+                  styleSheet: dmMarkdownStyle(ctx),
                 ),
                 const SizedBox(height: 16),
                 InkWell(
