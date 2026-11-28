@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_paths.dart';
 import '../../../domain/entities/projection/projection_state.dart';
 import 'player_window_root.dart';
 import 'player_window_state_provider.dart';
@@ -13,9 +14,16 @@ import '../../../application/services/projection_output_screencast.dart';
 /// Receives state from the DM's main engine via a platform channel
 /// (`screencast_render`) instead of `desktop_multi_window` IPC.
 @pragma('vm:entry-point')
-void screencastMain() {
+void screencastMain() async {
   debugPrint('SCREENCAST: screencastMain() entry point started');
   WidgetsFlutterBinding.ensureInitialized();
+  // Own isolate, own statics: without this assetRefResolverProvider throws
+  // on AppPaths.cacheDir and the battle-map background never loads (#102).
+  try {
+    await AppPaths.initialize();
+  } catch (e) {
+    debugPrint('SCREENCAST: AppPaths init failed: $e');
+  }
   runApp(
     ProviderScope(
       overrides: projectionLanguageOverrides,

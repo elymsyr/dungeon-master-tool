@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/screens/player_window/screencast_main.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-11-28
 tags: [file]
 ---
 
@@ -36,6 +36,7 @@ tags: [file]
 - Spec / reference: [[Screencast-Presentation-API]], [[Platform-Targets]]
 
 ## Key Logic / Variables
+- `screencastMain` runs `AppPaths.initialize()` before `runApp` (own isolate, own statics — same as [[player_window_main]]). Without it `assetRefResolverProvider` throws `LateInitializationError` on `AppPaths.cacheDir` and the battle-map background never loads (#102). Supabase is deliberately not initialized here: local paths and `dmt-art://` resolve without it; `dmt-public://`/`dmt-content://` refs stay unresolved on the cast screen.
 - `_handleMethod` branches on `call.method`:
   - `applyState`: if `map['type']=='patch'` → `notifier.applyPatch(payload)`; else parse full `ProjectionState.fromJson(map)` → `notifier.applyFull(state)`. First receipt flips `_hasReceivedState` via `setState` to remove the placeholder.
   - `applyBattleMapPatch`: `notifier.applyBattleMapPatch(itemId, patch)`.
